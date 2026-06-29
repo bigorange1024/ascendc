@@ -8,6 +8,7 @@
 // @depends #include: alg11_fixed_n256.hpp, alg11_gammas.h, alg11_rom_tables.h, alg11_ub_load.hpp, alg11_vec_pipe.hpp, kernel_operator.h, multiply_ntts_config.hpp, alg11_tiling.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file multiply_ntts_vec.hpp
  * @brief Alg.11 MultiplyNTTs 向量实现：SoA 车道、Gather 解交错（B2）、Barrett basemul、interleave 写回。

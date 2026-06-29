@@ -8,6 +8,7 @@
 // @depends compute 树内互引；host 经 main/mmad_custom 与 tiling.h 链接。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file stage3_config.hpp
  * @brief F203 Stage3.1：RouteA 平面四行 Horner 合并后的 mod q 方案选型。

@@ -8,6 +8,7 @@
 // @depends #include: f203_keygen_layout.h, kernel_operator.h
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file f203_keygen_ek_append_entry.cpp
  * @brief Alg.13 行 21：ek_PKE = ByteEncode₁₂(t̂) polyvec ‖ ρ（GM 拼接）。

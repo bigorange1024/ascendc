@@ -8,6 +8,7 @@
 // @depends #include: multiply_ntts_config.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file integration_config.hpp
  * @brief v2 探针行 18–20 集成开关：Alg11 向量 basemul、dot-only、全 poly、ByteEncode、探测与 UB 尺寸常量。

@@ -8,6 +8,7 @@
 // @depends #include: cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file f203_keygen_layout.h
  * @brief Alg.13 KeyGen 行 21 I/O 尺寸（k=4，ML-KEM-768）。

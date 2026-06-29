@@ -8,6 +8,7 @@
 // @depends #include: kernel_operator.h, multiply_ntts_config.hpp, alg11_tiling.h, multiply_ntts_vec.hpp, alg11_gammas.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file multiply_ntts_ub.hpp
  * @brief Alg.11 MultiplyNTTs 的 UB 门面：标量回退 + 向量分发（compute_on_ub / init_rom_luts_ub）。

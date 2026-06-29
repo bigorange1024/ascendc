@@ -8,6 +8,7 @@
 // @depends #include: cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_gammas.hpp
  * @brief 行 18 / 标量 basemul 用 constexpr γ 表与 q=3329（Host 与设备头文件双份之一）。

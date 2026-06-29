@@ -8,6 +8,7 @@
 // @depends compute 树内互引；host 经 main/mmad_custom 与 tiling.h 链接。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file mod_config.hpp
  * @brief 行 18 final mod（Σ basemul + ê 之后）设备变体编号；与 Stage3 mod 解耦。

@@ -1,7 +1,9 @@
 # F203 KeyGen 交付示例（exp-mlkem-f203-pke-keygen-k4）— 技术总结
 
 **读者**：需要从探针晋级为 **自包含交付示例**、或 fork 为 Encrypt 等下一用例的实现者  
-**案例锚点**：[`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/)  
+**定型交付（2026-06-29）**：[`examples/stable/stable-mlkem-f203-pke-keygen-k4/`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) — 验收以 stable 为准。
+
+**案例锚点（incubating 副本）**：[`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/)  
 **探针对照**：[`pass-fix-f203-alg13-device-keygen-k4`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/)（同生产 I/O）  
 **讨论**：[`qa/2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md`](../../qa/2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md) §6  
 **实现方案**：[`exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.tex)
@@ -50,7 +52,7 @@ bash kat_liboqs_vs_ascendc.sh                     # 10 CPU + 1 SIM vs liboqs
 
 解析逻辑：[`scripts/parse_keygen_sim_metrics.py`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/scripts/parse_keygen_sim_metrics.py)（优先 `profile_task_log0.toml`）。
 
-**典型 tick**（Ascend910B4）：prep ≈801k + compute ≈83k → total ≈**884532**。
+**典型 tick**（Ascend910B4）：prep ≈462k + compute ≈80k → total ≈**542393**。
 
 ---
 
@@ -64,7 +66,7 @@ bash kat_liboqs_vs_ascendc.sh                     # 10 CPU + 1 SIM vs liboqs
 | compute 向量 | `mixPass=0`、`HAT_ALG11_VEC=1`、`BYTE_ENCODE12_VEC=1` 等 | customspec §唯一路径 |
 | KAT 超时 | `KEYGEN_KERNEL_BUDGET_SEC≥1200` | `run.sh` |
 
-**已知 open**（与探针共有）：SIM 上 prep **双 AIV 并行 Â** 仍可能 FAIL → 当前 sub0 串行 workaround；见 [HOME-KEYGEN-DEBUG.md](../../HOME-KEYGEN-DEBUG.md)。
+**prep 双 AIV 并行 Â**（2026-06-29）：已与 pass/stable 对齐；见 [F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md](F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md)。
 
 ---
 

@@ -12,6 +12,8 @@
 
 **共用设备原语**（`library/shared/`）：SHAKE/Keccak AscendC、`fips203_se_sample`；见 [`../library/shared/INDEX.md`](../library/shared/INDEX.md)。
 
+**自包含与设备全链**（2026-06-29）：活跃探针/example **不得**跨目录引用源码（`library/shared` 与仓库 `scripts/` CANN 壳除外）；KeyGen 生产路径禁止 Host 辅助密码计算。见 [用例自包含与设备全链约束.md](../docs/engineering/用例自包含与设备全链约束.md)；KeyGen 实例 [`pass-fix-f203-alg13-device-keygen-k4/SELF_CONTAINED.md`](pass-fix-f203-alg13-device-keygen-k4/SELF_CONTAINED.md)。
+
 ---
 
 ## 当前探针
@@ -27,7 +29,7 @@
 | [**pass-fix-f203-alg7-sample-ntt-k4/**](pass-fix-f203-alg7-sample-ntt-k4/) | **Alg.7 SampleNTT**（单 poly `(j,i)`→`â[256]`；672B→d12→rej）；SIM **~80100** tick | ✓ | ✓ |
 | [**pass-fix-f203-alg13-lines3-7-a-hat-k4/**](pass-fix-f203-alg13-lines3-7-a-hat-k4/) | **Alg.13 行 3–7**：16×`Â`→`a_hat[16,256]`；默认双 AIV SIM **381544** tick | ✓ | ✓ |
 | [**pass-fix-f203-alg13-lines8-15-se-k4/**](pass-fix-f203-alg13-lines8-15-se-k4/) | **Alg.13 行 8–15**：`SEED_D`→`src[8,256]`（G+P+C V3）；[`STATUS.md`](pass-fix-f203-alg13-lines8-15-se-k4/STATUS.md) | ✓ | ✓ |
-| [**pass-fix-f203-alg13-device-keygen-k4/**](pass-fix-f203-alg13-device-keygen-k4/) | **Alg.13 全链 KeyGen**（生产 I/O；2 launch；SIM **886801** tick） | ✓ | ✓ |
+| [**pass-fix-f203-alg13-device-keygen-k4/**](pass-fix-f203-alg13-device-keygen-k4/) | **Alg.13 全链 KeyGen**（prep 双 AIV 并行 Â；2 launch；SIM **542339** tick） | ✓ | ✓ |
 | [**pass-fix-f203-alg8-cbd-eta2-k4/**](pass-fix-f203-alg8-cbd-eta2-k4/) | **Alg.8 CBD η=2**：默认 P2 双 AIV SIM **18048** tick（`bash run.sh -r sim`） | ✓ | ✓ |
 | [**pass-fix-f203-stage123-ntt-intt-polyvec8-vec/**](pass-fix-f203-stage123-ntt-intt-polyvec8-vec/) | **8-poly 三段式 NTT/INTT**（紧凑 `[HI₈,LO₈]`；LUT 切换；1 launch；NTT SIM **30347** / INTT **30340**） | ✓ | ✓ |
 | [**pass-shake128-ops-math-toy/**](pass-shake128-ops-math-toy/) | 共享核 **SHAKE128**（`*_toy_ub.hpp` 全 UB 参考） | ✓ | **12285** |

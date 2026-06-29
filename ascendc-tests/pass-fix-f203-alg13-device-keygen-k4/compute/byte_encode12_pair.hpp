@@ -8,6 +8,7 @@
 // @depends #include: byte_encode12_config.hpp, hat_line18_2s1e.hpp, kernel_operator.h, tiling.h, byte_encode12_vec.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file byte_encode12_pair.hpp
  * @brief ByteEncode₁₂ 统一入口：标量 poly_byte_encode12_scalar 与向量 poly_byte_encode12_vec_local 分发。

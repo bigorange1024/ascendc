@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# @exp exp-mlkem-f203-pke-keygen-k4
+# @probe exp-mlkem-f203-pke-keygen-k4
 # @file scripts/keygen_golden.py
 # @layer script
 # @role Host golden：与设备生产 I/O 对齐的 ek_pke/dk_pke 期望。 / Production golden generator.
@@ -10,7 +10,7 @@
 # @verify run.sh 编译前生成 input/；KEYGEN_VERIFY=1 时参与对拍。
 
 # coding=utf-8
-"""Alg.13 全链 KeyGen golden 组装（仅 Host 黑盒，源码自包含于本示例目录）。"""
+"""Alg.13 全链 KeyGen golden 组装（仅 Host 黑盒，源码自包含于本探针目录）。"""
 from __future__ import annotations
 
 import hashlib
@@ -137,9 +137,32 @@ def build_full_keygen(seed_d: int, mix_pass: int = 0) -> dict[str, Any]:
     }
 
 
-def write_golden_only(root: Path, kg: dict[str, Any]) -> None:
-    """仅写 output/golden_ek_pke.bin 与 golden_dk_pke.bin；不污染 input/。"""
+def write_keygen_bins(root: Path, kg: dict[str, Any]) -> None:
+    inp = root / "input"
     out = root / "output"
+    inp.mkdir(exist_ok=True)
     out.mkdir(exist_ok=True)
+
+    (inp / "seed_d.bin").write_bytes(struct.pack("<I", kg["seed_d"]))
+    kg["lut_even"].tofile(inp / "lut_even_stacked.bin")
+    kg["lut_odd"].tofile(inp / "lut_odd_stacked.bin")
+    kg["src"].tofile(inp / "src.bin")
+    kg["a_hat"].tofile(inp / "a_hat.bin")
+    kg["tiling"].tofile(inp / "tiling.bin")
+
+    (out / "golden_rho.bin").write_bytes(kg["rho"])
+    (out / "golden_sigma.bin").write_bytes(kg["sigma"])
+    kg["a_hat"].tofile(out / "golden_a_hat.bin")
+    kg["src"].tofile(out / "golden_src.bin")
+    kg["s0"].tofile(out / "golden_s0.bin")
+    kg["mat_c"].tofile(out / "golden_mat_c.bin")
+    kg["dst"].tofile(out / "golden.bin")
+    kg["t_hat_dot"].tofile(out / "golden_t_hat_dot.bin")
+    kg["t_hat"].tofile(out / "golden_t_hat.bin")
+    kg["ek_polyvec"].tofile(out / "golden_ek_polyvec.bin")
+    kg["sk_polyvec"].tofile(out / "golden_sk_polyvec.bin")
     kg["ek_pke"].tofile(out / "golden_ek_pke.bin")
     kg["dk_pke"].tofile(out / "golden_dk_pke.bin")
+
+    kg["ek_polyvec"].tofile(inp / "ek_polyvec.bin")
+    (inp / "rho.bin").write_bytes(kg["rho"])

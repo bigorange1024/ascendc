@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
-# @exp exp-mlkem-f203-pke-keygen-k4
+# @probe exp-mlkem-f203-pke-keygen-k4
+# @file scripts/kat_liboqs_vs_ascendc.py
+# @layer script
+# @role liboqs KAT 与 AscendC 输出对比（KEYGEN_KAT=1 静默路径）。 / liboqs KAT harness.
+# @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
+# @launch N/A（host / 脚本 / CMake 不参与 device launch）
+# @ai_core N/A（非 AI Core 内核源）
+# @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
+# @verify KEYGEN_KAT=1 bash run.sh 或 kat_*.sh；对比 liboqs。
+
 # coding=utf-8
-"""liboqs PKE KeyGen ↔ AscendC 对拍：默认 10×CPU + 1×SIM，每轮同 SEED_D 随机种子。
+"""liboqs PKE KeyGen ↔ 探针 AscendC 对拍（pass-fix-f203-alg13-device-keygen-k4）。
 
 种子契约（与 run.sh / 设备 DerandFromSeedD 一致）：
-  SEED_D (uint32) → d = SHA3-256("exp-mlkem-f203-2s1e-k4:SEED_D=<decimal>")
-  liboqs：d 作为 ml_kem_1024 indcpa coins[0:32]
-  AscendC：环境变量 SEED_D 传入 run.sh 生产 2-Launch 全链
-
-对拍字节：ek_PKE 1568 B；dk_PKE 1536 B
+  SEED_D → d = SHA3-256("exp-mlkem-f203-2s1e-k4:SEED_D=<decimal>")
+  liboqs：ml_kem_1024 indcpa coins[0:32]
+  AscendC：生产 I/O 全链（**2 launch**：prep | compute+ek‖ρ 内核融合）
 
 用法：
   bash kat_liboqs_vs_ascendc.sh
-  KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh   # 完整 run.sh 日志打到控制台
-
-环境变量：
-  KAT_CPU_COUNT  — CPU 轮数，默认 10
-  KAT_SIM_COUNT  — SIM 轮数，默认 1
-  KAT_VERBOSE    — 1=不静默 run.sh（默认 0）
-  KAT_LOG        — 静默时 run.sh 日志（默认 output/kat_liboqs_vs_ascendc.log）
-  KAT_PROGRESS   — 进度打印间隔（默认 1）
+  KAT_CPU_COUNT=5 KAT_SIM_COUNT=1 bash kat_liboqs_vs_ascendc.sh
+  KAT_SEEDS="20260619,123,456,..." bash kat_liboqs_vs_ascendc.sh  # 11 个整数，前 10 CPU、后 1 SIM
+  KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
 """
 from __future__ import annotations
 
@@ -33,8 +35,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO_ROOT = ROOT.parents[2]
-FIPS203_SE_SCRIPTS = REPO_ROOT / "library" / "shared" / "fips203_se_sample"
+FIPS203_SE_SCRIPTS = ROOT / "scripts" / "prep" / "fips203_se_sample"
 sys.path.insert(0, str(FIPS203_SE_SCRIPTS))
 sys.path.insert(0, str(ROOT / "scripts"))
 
@@ -47,29 +48,10 @@ BUILD_REF_SH = ROOT / "scripts" / "build_liboqs_pke_ref.sh"
 SOC_VERSION = os.environ.get("KAT_SOC_VERSION", "Ascend910B4")
 VERBOSE = os.environ.get("KAT_VERBOSE", "0") == "1"
 LOG_PATH = Path(os.environ.get("KAT_LOG", str(ROOT / "output" / "kat_liboqs_vs_ascendc.log")))
-PROGRESS_EVERY = max(1, int(os.environ.get("KAT_PROGRESS", "1")))
 
 
-def _log_run_header(run_mode: str, seed_d: int, logf) -> None:
-    logf.write(f"\n{'=' * 72}\n")
-    logf.write(f"[kat] {run_mode} seed_d={seed_d}\n")
-    logf.flush()
-
-
-def _tail_log(path: Path, lines: int = 40) -> str:
-    if not path.is_file():
-        return "(no log file)"
-    text = path.read_text(errors="replace").splitlines()
-    return "\n".join(text[-lines:])
-
-
-def print_sim_metrics_console(log_path: Path, case_dir: Path | None = None) -> None:
-    root = case_dir or ROOT
-    from parse_keygen_sim_metrics import build_summary, format_summary_lines  # noqa: WPS433
-
-    summary = build_summary(root, log_path)
-    for line in format_summary_lines(summary):
-        print(f"[kat] {line.replace('[keygen] ', '', 1)}", flush=True)
+def _fail(label: str, round_no: int, total: int, seed_d: int, msg: str) -> None:
+  raise SystemExit(f"[KAT FAIL] {label} round {round_no}/{total} seed_d={seed_d}: {msg}")
 
 
 def _ensure_liboqs_ref() -> Path:
@@ -102,117 +84,86 @@ def liboqs_pke_keygen(d: bytes) -> tuple[np.ndarray, np.ndarray]:
     return ek, dk
 
 
-def run_ascendc_keygen(seed_d: int, run_mode: str, skip_build: bool) -> tuple[np.ndarray, np.ndarray]:
-    if run_mode == "sim":
-        skip_build = False
-    env = os.environ.copy()
-    env["SEED_D"] = str(seed_d)
-    env["KEYGEN_KAT"] = "1"
-    if run_mode == "sim":
-        env["KEYGEN_KERNEL_BUDGET_SEC"] = os.environ.get("KEYGEN_KERNEL_BUDGET_SEC", "1200")
-    if skip_build:
-        env["KEYGEN_SKIP_REBUILD"] = "1"
-    else:
-        env.pop("KEYGEN_SKIP_REBUILD", None)
-
-    cmd = ["bash", "run.sh", "-r", run_mode, "-v", SOC_VERSION]
-    if VERBOSE:
-        rc = subprocess.run(cmd, cwd=ROOT, env=env).returncode
-    else:
-        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with LOG_PATH.open("a", encoding="utf-8") as logf:
-            _log_run_header(run_mode, seed_d, logf)
-            logf.flush()
-        rc = subprocess.run(
-            cmd,
-            cwd=ROOT,
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        ).returncode
-
-    if rc != 0:
-        msg = f"[kat] run.sh({run_mode}) exit={rc} seed_d={seed_d}"
-        if not VERBOSE:
-            msg += f" — see {LOG_PATH}\n{_tail_log(LOG_PATH)}"
-        raise SystemExit(msg)
-
-    ek = np.fromfile(ROOT / "output" / "ek_pke.bin", dtype=np.uint8)
-    dk = np.fromfile(ROOT / "output" / "dk_pke.bin", dtype=np.uint8)
-    if ek.size != EK_PKE_BYTES or dk.size != DK_PKE_BYTES:
-        if not VERBOSE:
-            print(_tail_log(LOG_PATH), file=sys.stderr)
-        raise SystemExit(f"ascendc({run_mode}) output size ek={ek.size} dk={dk.size}")
-    return ek, dk
+def run_ascendc_keygen(seed_d: int, run_mode: str) -> tuple[np.ndarray, np.ndarray]:
+  env = os.environ.copy()
+  env["SEED_D"] = str(seed_d)
+  env["KEYGEN_KAT"] = "0" if VERBOSE else "1"
+  cmd = ["bash", "run.sh", "-r", run_mode, "-v", SOC_VERSION]
+  if VERBOSE:
+    rc = subprocess.run(cmd, cwd=ROOT, env=env).returncode
+  else:
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with LOG_PATH.open("a", encoding="utf-8") as logf:
+      logf.write(f"\n{'='*72}\n[kat] keygen {run_mode} seed_d={seed_d}\n")
+      logf.flush()
+    rc = subprocess.run(cmd, cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode
+  if rc != 0:
+    raise SystemExit(f"run.sh({run_mode}) exit={rc} seed_d={seed_d} — see {LOG_PATH}")
+  ek = np.fromfile(ROOT / "output" / "ek_pke.bin", dtype=np.uint8)
+  dk = np.fromfile(ROOT / "output" / "dk_pke.bin", dtype=np.uint8)
+  if ek.size != EK_PKE_BYTES or dk.size != DK_PKE_BYTES:
+    raise SystemExit(f"g4 output size ek={ek.size} dk={dk.size} seed_d={seed_d}")
+  return ek, dk
 
 
-def compare_pke(
-    seed_d: int,
-    label: str,
-    ek_oqs: np.ndarray,
-    dk_oqs: np.ndarray,
-    ek_dev: np.ndarray,
-    dk_dev: np.ndarray,
-) -> None:
-    if not np.array_equal(ek_dev, ek_oqs):
-        idx = int(np.argmax(ek_dev != ek_oqs))
-        raise SystemExit(
-            f"[KAT FAIL] {label} seed_d={seed_d} ek_pke @ {idx}: "
-            f"ascendc={ek_dev.flat[idx]} liboqs={ek_oqs.flat[idx]} — see {LOG_PATH}"
-        )
-    if not np.array_equal(dk_dev, dk_oqs):
-        idx = int(np.argmax(dk_dev != dk_oqs))
-        raise SystemExit(
-            f"[KAT FAIL] {label} seed_d={seed_d} dk_pke @ {idx}: "
-            f"ascendc={dk_dev.flat[idx]} liboqs={dk_oqs.flat[idx]} — see {LOG_PATH}"
-        )
+def compare_pke(round_no: int, total: int, seed_d: int, label: str, ek_oqs, dk_oqs, ek_dev, dk_dev) -> None:
+  if not np.array_equal(ek_dev, ek_oqs):
+    idx = int(np.argmax(ek_dev != ek_oqs))
+    _fail(label, round_no, total, seed_d, f"ek_pke @ {idx}: ascendc={ek_dev.flat[idx]} liboqs={ek_oqs.flat[idx]}")
+  if not np.array_equal(dk_dev, dk_oqs):
+    idx = int(np.argmax(dk_dev != dk_oqs))
+    _fail(label, round_no, total, seed_d, f"dk_pke @ {idx}: ascendc={dk_dev.flat[idx]} liboqs={dk_oqs.flat[idx]}")
 
 
-def _print_progress(label: str, idx: int, total: int) -> None:
-    if (idx + 1) % PROGRESS_EVERY == 0 or idx + 1 == total:
-        print(f"[kat] {label} OK ({idx + 1}/{total})", flush=True)
+def one_round(seed_d: int, run_mode: str, label: str, round_no: int, total: int) -> None:
+  d = derand_bytes_from_seed(seed_d)
+  ek_oqs, dk_oqs = liboqs_pke_keygen(d)
+  ek_dev, dk_dev = run_ascendc_keygen(seed_d, run_mode)
+  compare_pke(round_no, total, seed_d, label, ek_oqs, dk_oqs, ek_dev, dk_dev)
 
 
-def one_round(seed_d: int, run_mode: str, skip_build: bool, label: str, idx: int, total: int) -> None:
-    d = derand_bytes_from_seed(seed_d)
-    ek_oqs, dk_oqs = liboqs_pke_keygen(d)
-    ek_dev, dk_dev = run_ascendc_keygen(seed_d, run_mode, skip_build)
-    compare_pke(seed_d, label, ek_oqs, dk_oqs, ek_dev, dk_dev)
-    _print_progress(label, idx, total)
-    if run_mode == "sim" and not VERBOSE:
-        print_sim_metrics_console(LOG_PATH)
+def parse_seed_list() -> tuple[list[int], list[int]]:
+  cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
+  sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))
+  if cpu_count < 1 or sim_count < 1:
+    raise SystemExit("KAT_CPU_COUNT and KAT_SIM_COUNT must be >= 1")
+  raw = os.environ.get("KAT_SEEDS", "").strip()
+  if raw:
+    seeds = [int(x.strip()) for x in raw.split(",") if x.strip()]
+    need = cpu_count + sim_count
+    if len(seeds) < need:
+      raise SystemExit(f"KAT_SEEDS has {len(seeds)} values, need {need} (CPU×{cpu_count} + SIM×{sim_count})")
+    return seeds[:cpu_count], seeds[cpu_count : cpu_count + sim_count]
+  cpu_seeds = [random_seed_d() for _ in range(cpu_count)]
+  sim_seeds = [random_seed_d() for _ in range(sim_count)]
+  return cpu_seeds, sim_seeds
 
 
 def main() -> int:
-    cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
-    sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))
-    if cpu_count < 1 and sim_count < 1:
-        raise SystemExit("KAT_CPU_COUNT and KAT_SIM_COUNT cannot both be 0")
-
-    _ensure_liboqs_ref()
-
-    if not VERBOSE:
-        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        LOG_PATH.write_text(f"[kat] log started\n", encoding="utf-8")
-        print(f"[kat] quiet — run.sh logs -> {LOG_PATH}", flush=True)
-
-    print(f"[kat] start: CPU×{cpu_count} + SIM×{sim_count} (每轮独立随机 SEED_D)", flush=True)
-
-    cpu_seeds = [random_seed_d() for _ in range(cpu_count)]
-    for i, seed_d in enumerate(cpu_seeds):
-        one_round(seed_d, "cpu", skip_build=(i > 0), label="CPU", idx=i, total=cpu_count)
-
-    sim_seeds = [random_seed_d() for _ in range(sim_count)]
-    for i, seed_d in enumerate(sim_seeds):
-        one_round(seed_d, "sim", skip_build=False, label="SIM", idx=i, total=sim_count)
-
-    print(
-        f"[kat] PASS CPU×{cpu_count} + SIM×{sim_count} "
-        f"(liboqs ml_kem_1024 PKE vs AscendC KeyGen, same SEED_D per round)",
-        flush=True,
-    )
-    return 0
+  cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
+  sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))
+  _ensure_liboqs_ref()
+  if not VERBOSE:
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LOG_PATH.write_text("[kat] probe keygen vs liboqs\n", encoding="utf-8")
+    print(f"[kat] quiet — logs -> {LOG_PATH}")
+  cpu_seeds, sim_seeds = parse_seed_list()
+  with LOG_PATH.open("a", encoding="utf-8") as logf:
+    logf.write(f"cpu seeds ({cpu_count}): {cpu_seeds}\nsim seeds ({sim_count}): {sim_seeds}\n")
+  print(f"[kat] start CPU×{cpu_count} + SIM×{sim_count} (同 SEED_D：liboqs d=SHA3-256(msg) ↔ 探针 DerandFromSeedD)")
+  os.environ.setdefault("KEYGEN_SKIP_REBUILD", "0")
+  for i, s in enumerate(cpu_seeds):
+    one_round(s, "cpu", "CPU", i + 1, cpu_count)
+    if i == 0:
+      os.environ["KEYGEN_SKIP_REBUILD"] = "1"
+  print(f"[kat] CPU {cpu_count}/{cpu_count} OK", flush=True)
+  for i, s in enumerate(sim_seeds):
+    os.environ.pop("KEYGEN_SKIP_REBUILD", None)
+    one_round(s, "sim", "SIM", i + 1, sim_count)
+  print(f"[kat] SIM {sim_count}/{sim_count} OK", flush=True)
+  print(f"[kat] PASS CPU×{cpu_count} + SIM×{sim_count} (probe keygen vs liboqs)")
+  return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+  raise SystemExit(main())

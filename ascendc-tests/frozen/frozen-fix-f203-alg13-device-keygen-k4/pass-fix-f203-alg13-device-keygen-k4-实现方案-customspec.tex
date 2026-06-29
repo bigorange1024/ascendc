@@ -1,0 +1,124 @@
+% pass-fix-f203-alg13-device-keygen-k4 — FIPS 203 Alg.13 ML-KEM-768 KeyGen 验收探针 (k=4)
+% 编译：bash ../../scripts/xelatex-clean.sh pass-fix-f203-alg13-device-keygen-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{pass-fix-f203-alg13-device-keygen-k4\\FIPS 203 Alg.13 ML-KEM-768 PKE KeyGen 实现方案（k=4）}
+\author{ascendc-tests 验收探针（pass- 终态）}
+\date{2026-06-28}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \textbf{验收探针} \dirname{ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 13}（ML-KEM-768，$K=4$）\textbf{PKE KeyGen} 全设备路径。
+\textbf{生产 I/O}：\texttt{input/} 仅 \texttt{SEED\_D} + NTT LUT；\texttt{output/} 仅 \texttt{ek\_PKE}(1568B)/\texttt{dk\_PKE}(1536B)。
+\textbf{Host 入口}：单进程 \texttt{ascendc\_keygen\_bbit}（\texttt{cmake/keygen}）；\textbf{2 次 device launch}（prep $\vert$ compute+行21融合）。
+源码 \textbf{vendored} 于本目录 \texttt{prep/}、\texttt{compute/}；仅共享 \texttt{library/shared} 的 SHAKE/Keccak。
+交付示例对照：\dirname{examples/incubating/exp-mlkem-f203-pke-keygen-k4/}（用户 I/O 契约相同，本探针为验证基线）。
+全目录源文件含 \texttt{@probe} 注释块（见 \dirname{scripts/inject\_probe\_code\_comments.py}）。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{数学语义（Alg.13，$K=4$）}
+
+\subsection{输入输出}
+\begin{itemize}
+  \item 输入 \texttt{SEED\_D}：\texttt{uint32}；探针约定 \texttt{DerandFromSeedD}（与 liboqs KAT 对齐）。
+  \item 输出 \texttt{ek\_PKE}：1568 B；\texttt{dk\_PKE}：1536 B。
+  \item 中间 GM：单次 \texttt{ascendc\_keygen\_bbit} 进程内驻留；\textbf{禁止}默认写入 \texttt{input/}/\texttt{output/}。
+\end{itemize}
+
+\subsection{流水线}
+\begin{enumerate}
+  \item $G(d\Vert k)\to(\rho,\sigma)$（prep 设备 Keccak）。
+  \item 行 3--7：16$\times$ SampleNTT$(\rho)\to\hat{A}$。
+  \item 行 8--15：PRF$(\sigma)$+ CBD$_{\eta_2}\to\hat{s}$（\texttt{src}）。
+  \item 行 16--20：2s1e NTT + MMAD + 行18内积 + ByteEncode$_{12}$。
+  \item 行 21：\texttt{ek\_PKE = ek\_polyvec $\Vert$ $\rho$}（\texttt{F203\_KEYGEN\_EK\_PKE=1}，与行16--20同次 Launch 2）。
+\end{enumerate}
+
+\section{生产编排与 I/O}
+\label{sec:io}
+
+\begin{longtable}{@{}L{3cm}L{10cm}@{}}
+\toprule
+步骤 & 行为 \\
+\midrule
+准备 & \texttt{scripts/prepare\_production\_input.py} $\to$ \texttt{input/seed\_d.bin} + LUT \\
+构建 & \texttt{cmake/keygen} $\to$ \texttt{ascendc\_keygen\_bbit} \\
+运行 & 2 launch；GM 指针传递；仅落盘 \texttt{ek\_pke.bin}、\texttt{dk\_pke.bin} \\
+清理 & \texttt{\_keygen\_scrub\_output} 删除其它 \texttt{output/} 文件 \\
+SIM & build \textbf{后} \texttt{sim\_env\_export}（WSL stub）；\texttt{camodel\_sim\_log.sh} \\
+\bottomrule
+\end{longtable}
+
+\textbf{禁止}作为生产接口：\texttt{compute\_io/} 磁盘 staging、\texttt{run\_prep}+\texttt{run\_compute} 分段默认路径、向 \texttt{input/} 写 \texttt{a\_hat/src/rho}。
+
+\section{Launch 与 AI Core}
+\label{sec:aicore}
+
+\begin{longtable}{@{}L{2.2cm}L{3.5cm}L{2cm}L{5.3cm}@{}}
+\toprule
+Launch & 内核 & blockDim & SIM profile（910B4） \\
+\midrule
+1 & \texttt{f203\_keygen\_prep} & 2 & \texttt{type=AIV}；0 AIC cycle；2 AIV block（block0 $\gg$ block1） \\
+2 & \texttt{mmad\_custom} & 1 & \texttt{MIXAIC}；1 AIC + 2 AIV；\texttt{core\_list=[0]} \\
+\bottomrule
+\end{longtable}
+
+\begin{itemize}
+  \item 两次 launch \textbf{串行}占用 \textbf{1 颗 AI Core}（非双核并行）。
+  \item prep 当前实现：\texttt{F203\_AHAT16\_BLOCK\_DIM=2} 但 Â 由 block0 \textbf{串行}两片（SIM 曾 block1 并行写 GM maxdiff$\approx$3300）；block1 主要在 P-04 同步。
+  \item CPU \texttt{[SUCCESS][AIC\_x]} 为 tikicpu 芯片拓扑 artifact；\textbf{以} \texttt{sim\_log/profile\_*.toml} \textbf{为准}。
+\end{itemize}
+
+\section{目录与构建}
+
+\begin{verbatim}
+pass-fix-f203-alg13-device-keygen-k4/
+  main_keygen.cpp          # 生产 host（默认 run.sh）
+  cmake/keygen/           # 统一 prep+compute 内核库
+  prep/{ahat,alg7,presample,alg8}/   # vendored 行 3-15
+  compute/                # vendored vec-k4-v2 行 16-21
+  scripts/prepare_production_input.py
+  run.sh
+\end{verbatim}
+
+遗留分段：\texttt{cmake/prep}、\texttt{cmake/compute}、\texttt{main\_keygen\_prep.cpp}、\texttt{main\_compute.cpp}（调试专用）。
+
+\section{数据与 Pipe 同步（prep）}
+
+详表：\dirname{PIPE\_SYNC\_EVAL.md}；原理：\dirname{docs/notes/F203-KeyGen-prep-Pipe细同步技术总结.md}。
+
+prep 与 compute 之间 \textbf{无设备 barrier}；靠 Launch 1 结束 + Host Launch 2 顺序。
+
+\section{验证}
+
+\begin{verbatim}
+cd ascendc-tests/pass-fix-f203-alg13-device-keygen-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
+KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
+bash kat_liboqs_vs_ascendc.sh
+\end{verbatim}
+
+\section{性能（SIM 910B4，生产单入口，2026-06-28）}
+
+Total tick \textbf{886801}（task0 prep $\approx$806k + task1 mmad $\approx$81k）。
+
+\end{document}

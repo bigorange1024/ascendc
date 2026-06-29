@@ -8,6 +8,7 @@
 // @depends #include: cstdint
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file f203_keygen_layout.h
  * @brief Alg.13 KeyGen 行 21 I/O 尺寸（k=4，ML-KEM-768）。

@@ -8,6 +8,7 @@
 // @depends #include: stdint.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_inner_product_ref.h
  * @brief Host/C golden：Alg.11 MultiplyNTTs + 行 18 内积（dot / dot+ê）与 mod 变体 API。

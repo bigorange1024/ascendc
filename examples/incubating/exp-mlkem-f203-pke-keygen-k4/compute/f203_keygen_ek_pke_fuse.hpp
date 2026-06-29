@@ -8,6 +8,7 @@
 // @depends #include: f203_keygen_layout.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file f203_keygen_ek_pke_fuse.hpp
  * @brief 行 21：在 Launch 2（mmad）末尾将 ρ 拼至 ek_polyvec → ek_PKE（仅 F203_KEYGEN_EK_PKE=1）。

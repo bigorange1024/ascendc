@@ -8,6 +8,7 @@
 // @depends #include: stdint.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_gammas.h
  * @brief FIPS 203 kMlkemGammas[128] 编译期表：γ[i]=ζ^(2·BitRev7(i)+1) mod 3329。

@@ -7,27 +7,29 @@
 # @launch N/A（host / 脚本 / CMake 不参与 device launch）
 # @ai_core N/A（非 AI Core 内核源）
 # @depends scripts/prep、scripts/compute、cmake/*、CANN setenv、repo scripts/kernel-run-timeout.sh。
-# @verify bash run.sh -r cpu|sim -v Ascend910B4；cmp ek_pke/dk_pke；SIM_DIRECT=1 sim。
+# @verify bash run.sh -r cpu|sim -v Ascend910B4；bash kat_liboqs_vs_ascendc.sh；无需手动 SIM_DIRECT/HAT_*。
 
-# pass-fix-f203-alg13-device-keygen-k4 — Alg.13 全链 KeyGen（生产 I/O，与 exp 一致）
+
+# pass-fix-f203-alg13-device-keygen-k4 — Alg.13 全链 KeyGen（prep 双 AIV 并行 Â）
 #
 # 生产 I/O：
 #   input/  — seed_d.bin + lut_even/odd_stacked.bin
 #   output/ — ek_pke.bin (1568B) + dk_pke.bin (1536B)
 #
-# 设备 Launch：2 次（prep 行 3–15 | compute+行21 融合）
-# 中间 GM 不落盘。
+# 设备 Launch：2 次（prep 行 3–15 | compute+行21 融合）；中间 GM 不落盘。
 #
-# Usage:
+# Usage（默认 = 全量生产路径；无需手动 export HAT_* / SIM_DIRECT 等）：
 #   bash run.sh -r cpu -v Ascend910B4
-#   bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
+#   bash kat_liboqs_vs_ascendc.sh              # liboqs KAT（CPU×10 + SIM×1）
 #
-# 环境变量：
+# 调试（须显式指定，非默认验收）：
+#   KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
+#   KEYGEN_DEBUG_DUMP=1 bash run.sh -r sim -v Ascend910B4
+#
+# 可选环境变量：
 #   SEED_D — 默认 20260619
-#   KEYGEN_KERNEL_BUDGET_SEC — 默认 900（全链 SIM）
-#   KEYGEN_VERIFY — 1 时与 Host golden 对拍（调试，非默认）
-#   KEYGEN_DEBUG_DUMP — 1 时写 output/debug/ 中间量
-#   KEYGEN_KAT — 1 时静默（liboqs KAT 脚本用）
+#   KEYGEN_KERNEL_BUDGET_SEC — 默认 900（全链 SIM 计算段 timeout）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 

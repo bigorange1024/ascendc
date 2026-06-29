@@ -8,6 +8,7 @@
 // @depends #include: aiv_func.hpp, basic.hpp, byte_encode12_config.hpp, alg11_vec_pipe.hpp, byte_encode12_pair.hpp, hat_dot_layout.hpp, hat_dot_ub_tiling.hpp, hat_alg11_basemul.hpp, hat_gammas.hpp, hat_line18_2s1e.hpp, hat_vec.hpp, innerproduct_mod.hpp, … (+8)
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 #ifndef NTTS_2S1E_POST_NTT_UB_HPP
 #define NTTS_2S1E_POST_NTT_UB_HPP
 

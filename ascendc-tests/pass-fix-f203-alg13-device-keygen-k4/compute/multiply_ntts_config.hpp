@@ -8,6 +8,7 @@
 // @depends compute 树内互引；host 经 main/mmad_custom 与 tiling.h 链接。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file multiply_ntts_config.hpp
  * @brief FIPS 203 Alg.11 MultiplyNTTs 的设备实现选型宏（标量 vs 向量、B1/B2、ROM 导入）。

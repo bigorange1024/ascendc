@@ -8,6 +8,7 @@
 // @depends #include: alg11_gammas.h, kernel_operator.h, stdint.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_rom_tables.h
  * @brief 设备侧 Alg.11 常量 ROM 的 __gm__ 声明（γ、Gather 字节索引、interleave 重排表）。

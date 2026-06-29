@@ -8,6 +8,7 @@
 // @depends #include: iostream, fstream, cstdio, string, vector, iomanip, cassert, fcntl.h, unistd.h, sys/stat.h, acl/acl.h
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file data_utils.h
  * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。

@@ -8,6 +8,7 @@
 // @depends #include: byte_encode12_config.hpp, basic.hpp, kernel_operator.h, tiling.h, byte_encode12_rom_tables.h, byte_encode12_ub_load.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 #ifndef BYTE_ENCODE12_VEC_HPP
 #define BYTE_ENCODE12_VEC_HPP
 

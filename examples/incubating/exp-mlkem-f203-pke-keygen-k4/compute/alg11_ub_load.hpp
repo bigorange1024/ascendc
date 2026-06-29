@@ -8,6 +8,7 @@
 // @depends #include: alg11_rom_tables.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_ub_load.hpp
  * @brief GM 侧 Alg.11 ROM 表导入 UB 的薄封装（DataCopy int32 块）。

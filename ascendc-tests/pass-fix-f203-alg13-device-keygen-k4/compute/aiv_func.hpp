@@ -8,6 +8,7 @@
 // @depends #include: basic.hpp, kernel_operator.h, kyber_limb6.hpp, ntt_vec.hpp, stage1_config.hpp, stage3_config.hpp, tiling.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 #ifndef NTTS_2S1E_AIV_FUNC_HPP
 #define NTTS_2S1E_AIV_FUNC_HPP
 

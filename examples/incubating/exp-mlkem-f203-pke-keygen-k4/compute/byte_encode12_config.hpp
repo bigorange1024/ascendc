@@ -8,6 +8,7 @@
 // @depends compute 树内互引；host 经 main/mmad_custom 与 tiling.h 链接。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file byte_encode12_config.hpp
  * @brief FIPS 203 Alg.5 ByteEncode₁₂ 设备实现选型（标量 vs 向量、交织写回策略）。

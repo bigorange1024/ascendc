@@ -241,4 +241,12 @@ G4 prep 走 **`BuildAHat16ShardWithUb`**（`F203_AHAT16_BATCH_SHAKE=0`）。下�
 
 ---
 
-*文档版本：2026-06-25；随 Phase 实验更新 §11 检查表与合入结论。*
+## 14. CPU `[SUCCESS]` 日志误读（2026-06-29）
+
+见 [fix-dual-aiv/PIPE_SYNC_EVAL.md §14](../fix-f203-alg13-device-keygen-k4-dual-aiv/PIPE_SYNC_EVAL.md#14-cpu-success-日志误读2026-06-29)（pass / fix-dual-aiv / exp 共用 host 路径）。
+
+定稿：[docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md §4.1](../../docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md#41-cpu-successaic_x-与2aic4aiv误读)
+
+---
+
+*文档版本：2026-06-25；§14 2026-06-29。*

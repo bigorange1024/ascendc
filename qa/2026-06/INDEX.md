@@ -9,8 +9,9 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
+| 2026-06-29 | [2026-06-29-KeyGen双AIV并行fork探针.md](2026-06-29-KeyGen双AIV并行fork探针.md) | **fix-dual-aiv** · KAT ✅ · CPU SUCCESS 误读定稿 |
 | 2026-06-28 | [2026-06-28-KeyGen探针pass前缀与生产IO.md](2026-06-28-KeyGen探针pass前缀与生产IO.md) | **pass-fix keygen** · **pass polyvec8 NTT/INTT** · **exp 自包含** · SIM **~884532** · **backup-project.sh 刷新** |
-| 2026-06-26 | [2026-06-26-标量探针冻结.md](2026-06-26-标量探针冻结.md) | **标量 frozen** · **SIM a_hat workaround** · KAT PASS · [HOME-KEYGEN-DEBUG.md](../../HOME-KEYGEN-DEBUG.md) |
+| 2026-06-26 | [2026-06-26-标量探针冻结.md](2026-06-26-标量探针冻结.md) | **标量 frozen** · 历史 workaround（已 superseded）· [2026-06-29 KeyGen](2026-06-29-KeyGen双AIV并行fork探针.md) |
 | 2026-06-25 | [2026-06-25-KeyGen-prep优化路线图.md](2026-06-25-KeyGen-prep优化路线图.md) | **KeyGen Step4** · prep **454170** · Opt-2/4 ✅ · Opt-1/3 **已关闭** · Opt-3 备份 `keygen-opt3-pre_20260625185315` |
 | 2026-06-24 | [2026-06-24-Alg7单poly验收与R5向量compact.md](2026-06-24-Alg7单poly验收与R5向量compact.md) | **单 poly 验收** · **16-poly Â §7** · **504B −25% §7.3** · **KeyGen G0–G4 §8** · [单 poly note](../../docs/notes/F203-Alg7-SampleNTT-单poly技术总结.md) |
 | 2026-06-23 | [2026-06-23-SampleNTT-PhaseA向量化讨论.md](2026-06-23-SampleNTT-PhaseA向量化讨论.md) | **Alg.7 SampleNTT** · **672B §16** · **504 vs 672 tick §17** · **rej 剔除双方案 §18** · [`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/) |
@@ -39,7 +40,7 @@
 - **Alg.13 行 3–7（Â）**：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) CPU+SIM ✅
 - **Alg.13 行 8–15（s/e）**：[`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/) ✅
 - **Phase A 全链（已冻结）**：[`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/) — tick 表只读
-- **KeyGen prep SIM a_hat 并行**：workaround ✅ KAT；恢复双 AIV 并行 → [HOME-KEYGEN-DEBUG.md](../../HOME-KEYGEN-DEBUG.md)
+- **KeyGen prep 双 AIV 并行 Â**：✅ 完成（pass + stable）；见 [2026-06-29](2026-06-29-KeyGen双AIV并行fork探针.md)
 - **CBD 子轨**：[`pass-fix-f203-alg8-cbd-eta2-k4`](../../ascendc-tests/pass-fix-f203-alg8-cbd-eta2-k4/) **`pass-` 终态** CPU+SIM ✅；P2 SIM **18048** tick；P1b **33311**（KeyGen 生产同构）
 
 ---

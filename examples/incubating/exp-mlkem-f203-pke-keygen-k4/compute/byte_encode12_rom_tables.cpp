@@ -8,6 +8,7 @@
 // @depends #include: byte_encode12_rom_tables.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * ByteEncode₁₂ 固定 n=256 Gather 字节索引（与 Alg.11 even/odd 公式一致：8i / 8i+4）。
  */

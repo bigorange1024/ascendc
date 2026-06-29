@@ -21,7 +21,7 @@
 | [NTT-Matmul路线废弃说明.md](NTT-Matmul路线废弃说明.md) | NTT 内 `Matmul<>` 判决 |
 | [F203-Alg7-SampleNTT-单poly技术总结.md](F203-Alg7-SampleNTT-单poly技术总结.md) | **Alg.7 SampleNTT**（[`pass-fix-f203-alg7-sample-ntt-k4`](../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/)）：单 poly `â[256]`、672B XOF、rej、~80k tick |
 | [F203-Alg7-PhaseA-向量化技术总结.md](F203-Alg7-PhaseA-向量化技术总结.md) | Phase A **全链 benchmark**（已冻结 [`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/)）：A-v4 反模式、tick 表 |
-| [F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md](F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md) | KeyGen prep **双 AIV**、SHAKE **ProcessInline**（[`lines3-7-a-hat-k4`](../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) 锚点） |
+| [F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md](F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md) | KeyGen prep **双 AIV**、SHAKE **ProcessInline**；§4.1 **CPU SUCCESS / 2AIC+4AIV 误读** |
 | [F203-KeyGen-prep-Pipe细同步技术总结.md](F203-KeyGen-prep-Pipe细同步技术总结.md) | prep **PipeBarrier** 窄化（Opt-5 CBD 合入） |
 | [F203-KeyGen-exp交付示例技术总结.md](F203-KeyGen-exp交付示例技术总结.md) | **exp-mlkem-f203-pke-keygen-k4** 自包含交付、唯一路径、KAT/SIM 验收 |
 | [F203-polyvec8-stage123-NTT-INTT技术总结.md](F203-polyvec8-stage123-NTT-INTT技术总结.md) | **8-poly 批 NTT/INTT** 三段式向量（[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)） |

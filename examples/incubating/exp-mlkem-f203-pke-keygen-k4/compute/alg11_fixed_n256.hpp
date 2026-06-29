@@ -8,6 +8,7 @@
 // @depends #include: kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_fixed_n256.hpp
  * @brief n=256 固定尺寸：Gather 字节索引用线性公式填表（替代 CreateVecIndex+Muls+Adds）。

@@ -8,6 +8,7 @@
 // @depends #include: basic.hpp, kernel_operator.h, kyber_limb6.hpp, stage1_config.hpp, stage3_config.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file ntt_vec.hpp
  * @brief F203 Tag5T Stage1 limb6 分裂与 Stage3 RouteA 平面 merge/mod（无 Gather）。

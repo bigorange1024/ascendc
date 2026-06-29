@@ -36,7 +36,7 @@
 | T13e | **alg7 微优化**（去重 DataCopy、ROM DataCopy Init、可选仅写 â GM） | 同上 §4 | 可选；期望有限 |
 | T13f | **alg7 tick：504B+lazy tail**（若硬指标） | [INTEGRATION_PLAN §1.5](../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/INTEGRATION_PLAN.md) | 待用户拍板 |
 | T13g | **Alg.13 行 3–7（16×`Â`）**：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) | T13c ✅ | **CPU+SIM ✅**；默认 672B **733859**；504B 对照 **549224**（−25%，非默认）；2 AIV **714150**（−2.7%） |
-| T13h | **KeyGen prep SIM 双 AIV 并行 Â** | [纪要](2026-06/2026-06-26-标量探针冻结.md) · [HOME-KEYGEN-DEBUG.md](../HOME-KEYGEN-DEBUG.md) | **workaround ✅ KAT**（exp + pass 探针）；**待办：恢复并行 Â + SIM 证** |
+| T13h | **KeyGen prep SIM 双 AIV 并行 Â** | [fix 探针](../ascendc-tests/fix-f203-alg13-device-keygen-k4-dual-aiv/) · [pass 基线](../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) | **fix 探针 SIM ✅**（542339 tick）；**liboqs KAT ✅** CPU×10+SIM×1（2026-06-29）；待晋级 pass |
 | T13b | **阶段二**：fork `vec-k4-v2` → `vec-k4-v3`，接入 V3 预采样 + 设备 `a_hat` | T13 | **待开工**（依赖 T13a-v ✅、**T13g** 16-poly） |
 | T13i | **Phase A 全链 benchmark** | [2026-06-28 纪要 §7.2](2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md#72-phase-a-全链-benchmark-冻结) | **已冻结** → [`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/)（2026-06-28） |
 

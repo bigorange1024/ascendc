@@ -8,6 +8,7 @@
 // @depends #include: basic.hpp, kernel_operator.h, kyber_limb6.hpp, mod_config.hpp, stage3_mod_variants.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file mod_variants.hpp
  * @brief 行 18 final mod q 的三种设备实现与 MOD_Q_I32 统一入口。

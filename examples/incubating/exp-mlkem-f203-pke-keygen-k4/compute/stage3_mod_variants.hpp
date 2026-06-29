@@ -8,6 +8,7 @@
 // @depends compute 树内互引；host 经 main/mmad_custom 与 tiling.h 链接。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file stage3_mod_variants.hpp
  * @brief Stage3 RouteA Horner 合并后的三种 mod q 实现（与行 18 mod 分离）。

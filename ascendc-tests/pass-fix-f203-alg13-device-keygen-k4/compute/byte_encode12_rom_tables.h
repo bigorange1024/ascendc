@@ -8,6 +8,7 @@
 // @depends #include: kernel_operator.h, stdint.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 #ifndef BYTE_ENCODE12_ROM_TABLES_H
 #define BYTE_ENCODE12_ROM_TABLES_H
 

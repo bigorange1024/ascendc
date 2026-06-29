@@ -8,6 +8,7 @@
 // @depends #include: data_utils.h, f203_keygen_layout.h, f203_keygen_prep_layout.h, shake_general_tiling_data.h, tiling.h, tiling_host.hpp, cstdint, cstring, cstdlib, sys/stat.h, iostream, acl/acl.h, … (+2)
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file main_keygen.cpp
  * @brief 生产 KeyGen：2 次设备 Launch，GM 全程不落中间盘。

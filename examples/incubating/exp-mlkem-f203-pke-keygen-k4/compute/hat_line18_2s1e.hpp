@@ -8,6 +8,7 @@
 // @depends #include: tiling.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_line18_2s1e.hpp
  * @brief 2s1e 行 18 布局：每 AIV 握完整 ŝ[0..3]、ê 局部行号、p 区间与 Â 偏移辅助。

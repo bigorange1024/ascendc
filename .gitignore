@@ -10,6 +10,12 @@ src/*.o
 **/build/
 **/dump/
 *.log
+*.aux
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 add_custom_cpu
 add_custom_npu
 
@@ -18,7 +24,7 @@ packages/
 samples/
 samples-operator/
 backup/
-thirdparty/
+/thirdparty/
 
 # 探针 / 算子 I/O 与构建产物
 **/input/
@@ -31,4 +37,7 @@ thirdparty/
 *.o
 *.so
 **/ascendc_kernels_bbit
+**/ascendc_keygen_bbit
+**/liboqs_pke_keygen_ref
+!**/liboqs_pke_keygen_ref.c
 **/stub_reg.log

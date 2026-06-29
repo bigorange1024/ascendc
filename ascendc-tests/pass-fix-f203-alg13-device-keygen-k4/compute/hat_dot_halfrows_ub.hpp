@@ -8,6 +8,7 @@
 // @depends #include: hat_dot_layout.hpp, hat_dot_ub_tiling.hpp, innerproduct_mod.hpp, multiply_ntts_ub.hpp, tiling.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_dot_halfrows_ub.hpp
  * @brief 行 18 dot-only 独立瘦 TPipe 探针（legacy half-row 布局，**非生产路径**）。

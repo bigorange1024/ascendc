@@ -15,7 +15,7 @@
 | §1 | 数据契约：Â 16 poly、双 AIV 8+8 分片 |
 | §2 | 工程不变量：内嵌子例程 vs 独立 launch 的 block 语义 |
 | §3 | 故障模式与修复（ProcessInline） |
-| §4 | 验证与性能解读 |
+| §4 | 验证与性能解读（含 §4.1 CPU SUCCESS 误读） |
 | §5 | 可复用模式 |
 | §6 | 案例附录（tick、路径） |
 
@@ -100,6 +100,26 @@ for (groupIdx = GetBlockIdx(); groupIdx < groupCount; groupIdx += GetBlockNum())
 - tick 接近 **双核累加**（非墙钟减半）；Â 占 prep 大头，双 AIV 对 Â 近线性加速
 - compute 段（~78k）不变；全链 852305 → **532074**
 - **禁止**把 tick 改善等同于密码学语义变化；golden 仍仅验 I/O
+
+### 4.1 CPU `[SUCCESS][AIC_x]` 与「2AIC+4AIV」误读
+
+**现象**（CPU 孪生 / KAT 静默 log，一次全链 2 launch 后常见）：
+
+| 段 | 典型 `[SUCCESS]` 行 | 设计语义 |
+|----|---------------------|----------|
+| Launch1 `f203_keygen_prep` | `AIC_0`、`AIV_0`、`AIV_1`、`AIC_1`、`AIV_2`、`AIV_3`（约 6 行） | **AIV_ONLY**，`block_dim=2` → 2 个 AIV block；**0 个 AIC 参与 prep 计算** |
+| Launch2 `mmad_custom` | `AIC_0`、`AIV_0`、`AIV_1`（3 行） | **MIX**，`block_dim=1` → 1×AIC + 2×AIV |
+
+**误读**：把上述行数相加，当成「同时占 2 AIC + 4 AIV」或「多占 AI Core 导致空转」。
+
+**工程不变量**：
+
+1. **`[SUCCESS][AIC_x]` / 额外套路 AIV 行** 是 **tikicpu 按芯片拓扑 spawn 子进程的 artifact**（customspec §Launch：*CPU SUCCESS 中 AIC_x 为 tikicpu 仿真伪影*），**不能**用行数推断占核数或并行度。
+2. **权威剖面**（WSL 可复现）：`sim_log/profile_subtask_log*.toml` 的 `type`、`block_dim`、`core_list`、`duration` — prep 为 `type=AIV, block_dim=2`；mmad 为 `type=MIXAIC, block_dim=1, core_list=[0]`。
+3. **占核契约**：两次 launch **串行**占用 **1 颗 AI Core**（非整卡多核并行 KeyGen）。
+4. **实机**：占核利用率、bubble、是否 idle 须 **NPU msprof** 再验；SIM profile 已优于 CPU SUCCESS 行数。
+
+**案例**：KAT `output/kat_liboqs_vs_ascendc.log` 每轮 seed 后均可能出现 6+3 行 SUCCESS；与 liboqs 对拍 PASS **不矛盾**。
 
 ---
 

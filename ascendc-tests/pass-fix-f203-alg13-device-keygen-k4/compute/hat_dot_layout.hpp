@@ -8,6 +8,7 @@
 // @depends #include: tiling.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_dot_layout.hpp
  * @brief Alg.13 行 18：Â_hat 在 GM/UB 中的行主序偏移公式。

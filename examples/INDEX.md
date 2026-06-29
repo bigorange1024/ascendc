@@ -4,6 +4,8 @@
 
 ---
 
+**自包含**（2026-06-29）：活跃 example 与探针同约束——除 `library/shared` 外不得跨目录引用源码；KeyGen 生产禁止 Host 辅助密码计算。见 [用例自包含与设备全链约束.md](../docs/engineering/用例自包含与设备全链约束.md)。
+
 ## 分层
 
 | 路径 | 角色 |
@@ -20,6 +22,13 @@
 ### `incubating/`、`stable/`
 
 见 [incubating/INDEX.md](incubating/INDEX.md)、[stable/INDEX.md](stable/INDEX.md)。
+### `stable/`
+
+| 目录 | 算什么 | 规模 / dtype | 角色 |
+|------|--------|--------------|------|
+| [stable-mlkem-f203-pke-keygen-k4/](stable/stable-mlkem-f203-pke-keygen-k4/) | FIPS 203 **Alg.13 ML-KEM-768 PKE KeyGen**（k=4）：`SEED_D`→`ek_PKE`/`dk_PKE` | 2 launch；SIM **542393** tick（CPU/SIM/KAT ✓） | **定型交付算子** |
+
+
 
 ---
 

@@ -1,12 +1,14 @@
-// @exp exp-mlkem-f203-pke-keygen-k4
+// @probe exp-mlkem-f203-pke-keygen-k4
 // @file f203_keygen_prep_ub.hpp
 // @layer host
 // @role 头文件/内联：`f203_keygen_prep_ub.hpp` 声明或配置 AscendC/host 接口与常量。 / Header `f203_keygen_prep_ub.hpp`.
 // @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
 // @launch N/A（host / 脚本 / CMake 不参与 device launch）
-// @ai_core SIM 剖面：prep 段 0×AIC + 2×AIV block（block0 负载更重）；CPU SUCCESS 日志中 AIC_* 为 tikicpu 仿真伪影，非 prep 真拓扑。
+// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
 // @depends #include: f203_a_hat16_layout.h, f203_a_hat16_ub.hpp, f203_alg7_g.hpp, f203_cbd_eta2.hpp, f203_keygen_prep_layout.h, f203_se_vector_prf.hpp, shake_general_tiling_data.h
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
+
+
 
 /**
  * @file f203_keygen_prep_ub.hpp
@@ -93,18 +95,10 @@ __aicore__ inline void BuildKeygenPrepSinglePipe(uint32_t seed_d, uint32_t block
     pipe.InitBuffer(aHatQue, 1, kPrepPrfYUbBytes);
     pipe.InitBuffer(scratchBuf, F203Alg7::kScratchInt32ElemsActive * sizeof(int32_t));
 
-#if F203_AHAT16_BLOCK_DIM == 2
-    // 双 AIV 时 Â 由 block0 串行 0+1 两片（SIM 上 block1 并行写 GM 8–15 曾 maxdiff≈3300）
-    if (AscendC::GetBlockIdx() == 0U) {
-        F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, 0U, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf, d1Que,
-                                          d2Que, aHatQue, scratchBuf);
-        F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, 1U, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf, d1Que,
-                                          d2Que, aHatQue, scratchBuf);
-    }
-#else
+    // 双 AIV：blockIdx 0→poly 0–7、1→8–15 并行写 GM（对照 pass 探针 block0 串行 workaround）
+    // 背景：T13h；独立 a_hat 探针 SIM 并行已 PASS，融合 prep 需在 SIM 证 P-02/P-04（见 PIPE_SYNC_EVAL.md）
     F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, blockIdx, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf,
                                       d1Que, d2Que, aHatQue, scratchBuf);
-#endif
 
     F203_PREP_PIPE_ALL();
 

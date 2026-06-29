@@ -8,6 +8,7 @@
 // @depends #include: 2s1e_post_ntt_ub.hpp, aic_func.hpp, aiv_func.hpp, basic.hpp, integration_config.hpp, kernel_operator.h, kyber_limb6.hpp, tiling.h, alg11_rom_tables.cpp, byte_encode12_rom_tables.cpp, f203_keygen_ek_pke_fuse.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file mmad_custom.cpp
  * @brief 2s1e MIX kernel 入口（1×AIC Cube + 2×AIV Vector）。

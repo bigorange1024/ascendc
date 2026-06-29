@@ -8,6 +8,7 @@
 // @depends #include: cstdint
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file f203_keygen_prep_layout.h
  * @brief KeyGen 准备段单内核 I/O 尺寸（行 3–15：Â + presample V3）。

@@ -7,7 +7,7 @@ cross_check_ntt_study_c — 与 ntt_study C 参考实现对拍（独立脚本，
   2. 若存在 output/dst.bin，额外比对 AscendC 设备输出 vs C 参考
   3. sepolyvec8_ntt_f203 交付 input0.bin / golden.bin vs C 参考
 
-依赖：本机已安装 gcc/cmake；thirdparty/ntt_study 可编译。
+依赖：本机已安装 gcc/cmake；本目录 `thirdparty/ntt_study` 可编译。
 
 用法（在探针目录或任意路径）：
   python3 scripts/cross_check_ntt_study_c.py
@@ -27,12 +27,9 @@ import numpy as np
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
-_REPO_ROOT = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../.."))
-_NTT_STUDY = os.path.join(_REPO_ROOT, "thirdparty/ntt_study")
+_NTT_STUDY = os.path.join(_CASE_DIR, "thirdparty/ntt_study")
 _NTT_STUDY_BUILD = os.path.join(_NTT_STUDY, "build")
-_DELIVER = os.path.join(
-    _NTT_STUDY, "examples/mlkem/deliverables/sepolyvec8_ntt_f203"
-)
+_DELIVER = os.path.join(_CASE_DIR, "thirdparty/ntt_study/deliverables/sepolyvec8_ntt_f203")
 _C_SRC = os.path.join(_SCRIPT_DIR, "cross_check_ntt_study_ref.c")
 _C_BIN = os.path.join(_CASE_DIR, "output", "cross_check_ntt_study_ref")
 

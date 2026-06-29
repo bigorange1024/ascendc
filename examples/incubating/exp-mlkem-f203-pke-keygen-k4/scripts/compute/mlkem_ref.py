@@ -19,9 +19,9 @@ K = 8
 M_MAT_A = 2 * K
 OUT_COLS = 512
 
-_REPO = Path(__file__).resolve().parents[2]  # 示例根目录（thirdparty/ 已 vendored）
+_REPO = Path(__file__).resolve().parents[2]  # 探针根目录（自包含 thirdparty/）
 _TABLES_H = _REPO / "thirdparty/ntt_study/include/mlkem/stable/mlkem_ntt_tables.h"
-_F203_CASE = _REPO / "thirdparty/ntt_study/examples/mlkem/deliverables/sepolyvec8_ntt_f203"
+_F203_CASE = _REPO / "thirdparty/ntt_study/deliverables/sepolyvec8_ntt_f203"
 
 
 def _parse_i16_array(text: str, symbol: str, expect: int) -> list:

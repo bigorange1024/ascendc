@@ -8,6 +8,7 @@
 // @depends #include: alg11_rom_tables.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_rom_tables.cpp
  * @brief Alg.11 设备 GM 常量 ROM 定义（γ、Gather 字节索引、interleave 重排表）。

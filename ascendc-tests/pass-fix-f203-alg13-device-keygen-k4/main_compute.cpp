@@ -8,6 +8,7 @@
 // @depends #include: data_utils.h, tiling.h, f203_keygen_layout.h, acl/acl.h, aclrtlaunch_mmad_custom.h, tikicpulib.h
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file main.cpp
  * @brief Host 驱动：读 input bin → launch `mmad_custom` → 写 output bin。

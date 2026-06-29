@@ -8,6 +8,7 @@
 // @depends #include: cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_dot_ub_tiling.hpp
  * @brief 行 18 UB 驻留内积路径的 scratch / ROM / 分核常量（与 hat_dot_halfrows_ub 及 2s1e 管线共用）。

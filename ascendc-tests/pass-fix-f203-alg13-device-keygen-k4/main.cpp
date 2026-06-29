@@ -8,6 +8,7 @@
 // @depends #include: data_utils.h, f203_keygen_layout.h, iostream, acl/acl.h, tikicpulib.h
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file main.cpp
  * @brief Host：G1 门控 — input/ek_polyvec.bin + input/rho.bin → output/ek_pke.bin。

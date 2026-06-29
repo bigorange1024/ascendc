@@ -8,6 +8,7 @@
 // @depends #include: kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_vec_pipe.hpp
  * @brief Alg.11 向量路径的 PIPE / MTE2→V 同步宏（tikicpu 与设备行为差异封装）。

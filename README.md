@@ -20,22 +20,20 @@
 ## 新 Agent 阅读顺序
 
 1. **本文件** — 目标与目录结构  
-2. **[AGENT_HANDOFF.md](AGENT_HANDOFF.md)** — **周末增量 / 备份基线 / 下一步**（给接手 Agent）  
-3. **[HOME-KEYGEN-DEBUG.md](HOME-KEYGEN-DEBUG.md)** — **KeyGen SIM prep 问题 / workaround / 家里续修步骤**（2026-06-26）  
-4. **[qa/INDEX.md](qa/INDEX.md)** — 近期讨论与遗留（**[qa/TODO.md](qa/TODO.md)**）  
-5. **[.cursor/rules/ascendc-development.mdc](.cursor/rules/ascendc-development.mdc)** — 全仓库底线（含 **frozen 禁止抄码**）  
-6. **[docs/notes/研究路线与frozen治理.md](docs/notes/研究路线与frozen治理.md)** — frozen：进门读判决书，出门不带码  
-7. **[.cursor/skills/INDEX.md](.cursor/skills/INDEX.md)** — 场景手册（`【】`→预研，`#…#`→交付）  
-8. 环境复现：**[docs/engineering/环境复现与开发指南.md](docs/engineering/环境复现与开发指南.md)**（§12 Prompt、§14 测试矩阵）  
-9. **ML-KEM NTT**：**[docs/notes/MLKEM-NTT-向量与标量实现指南.md](docs/notes/MLKEM-NTT-向量与标量实现指南.md)** — 活跃探针 `vec-k4-v2`；标量对照组已归档 `frozen-fix-f203-2s1e-alg13-16171820-k4`
+2. **[AGENT_HANDOFF.md](AGENT_HANDOFF.md)** — **办公室 ↔ 家里 Agent 每日交接**（当前真相、GitHub 范围、smoke）  
+3. **[qa/INDEX.md](qa/INDEX.md)** — 近期讨论与遗留（**[qa/TODO.md](qa/TODO.md)**）  
+4. **[.cursor/rules/ascendc-development.mdc](.cursor/rules/ascendc-development.mdc)** — 全仓库底线（含 **frozen 禁止抄码**）  
+5. **[docs/notes/研究路线与frozen治理.md](docs/notes/研究路线与frozen治理.md)** — frozen：进门读判决书，出门不带码  
+6. **[.cursor/skills/INDEX.md](.cursor/skills/INDEX.md)** — 场景手册（`【】`→预研，`#…#`→交付）  
+7. 环境复现：**[docs/engineering/环境复现与开发指南.md](docs/engineering/环境复现与开发指南.md)**（§12 Prompt、§14 测试矩阵）  
+8. **ML-KEM NTT**：**[docs/notes/MLKEM-NTT-向量与标量实现指南.md](docs/notes/MLKEM-NTT-向量与标量实现指南.md)** — 活跃探针 `vec-k4-v2`；标量对照组已归档 `frozen-fix-f203-2s1e-alg13-16171820-k4`
 
 ## 顶层目录结构
 
 ```text
 ~/ascendc/
 ├── README.md                 # 本文件：目标 + 结构（子目录不设 README）
-├── AGENT_HANDOFF.md          # 接手 Agent：周末增量、备份基线、下一步
-├── HOME-KEYGEN-DEBUG.md      # KeyGen SIM prep 问题与家里 Agent 调试步骤（2026-06-26）
+├── AGENT_HANDOFF.md          # 办公室 ↔ 家里 Agent 每日交接（GitHub 范围、smoke）
 ├── .cursor/
 │   ├── rules/                # Rule（变更须用户确认）
 │   └── skills/               # ascendc-impl-spec、pre-research、ascendc-delivery
@@ -73,7 +71,7 @@
 | 安装路径 | `~/Ascend/cann` → `~/Ascend/cann-9.0.0` |
 | 驱动 | 未安装（WSL 无 NPU，正常） |
 | 验证 | `verify-cann.sh` 已通过 |
-| KeyGen 交付 | [`exp-mlkem-f203-pke-keygen-k4`](examples/incubating/exp-mlkem-f203-pke-keygen-k4/) **CPU/SIM/KAT ✓**；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) |
+| KeyGen 交付 | [`stable-mlkem-f203-pke-keygen-k4`](examples/stable/stable-mlkem-f203-pke-keygen-k4/) **CPU/SIM/KAT ✓**（SIM **542393**）；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) |
 | 官方样例 | `samples/` ← [gitee.com/ascend/samples](https://gitee.com/ascend/samples) `master`（`6511a5f`，2026-06 拉取）；AscendC Cube+Vector 融合参考：`samples/operator/ascendc/tutorials/MatmulLeakyReluCustomSample/` |
 
 ## 普通 C 演示（根目录）

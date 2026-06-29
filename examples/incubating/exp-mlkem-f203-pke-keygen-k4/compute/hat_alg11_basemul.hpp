@@ -8,6 +8,7 @@
 // @depends #include: alg11_rom_tables.h, alg11_ub_load.hpp, integration_config.hpp, kernel_operator.h, multiply_ntts_vec.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_alg11_basemul.hpp
  * @brief 行 18 专用：半多项式（128 对）MultiplyNTTs 向量封装与 ROM/ws 绑定。

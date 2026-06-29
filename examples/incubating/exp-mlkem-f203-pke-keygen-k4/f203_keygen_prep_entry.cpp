@@ -1,12 +1,13 @@
-// @exp exp-mlkem-f203-pke-keygen-k4
+// @probe exp-mlkem-f203-pke-keygen-k4
 // @file f203_keygen_prep_entry.cpp
 // @layer host
 // @role prep 设备 kernel 统一 entry（注册 f203_keygen_prep）。 / Prep device entry TU.
 // @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
 // @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 段 0×AIC + 2×AIV block（block0 负载更重）；CPU SUCCESS 日志中 AIC_* 为 tikicpu 仿真伪影，非 prep 真拓扑。
+// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
 // @depends #include: f203_a_hat16_config.h, f203_keygen_prep_ub.hpp
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
+
 
 /**
  * @file f203_keygen_prep_entry.cpp

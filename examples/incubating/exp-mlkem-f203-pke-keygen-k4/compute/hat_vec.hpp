@@ -8,6 +8,7 @@
 // @depends #include: basic.hpp, hat_gammas.hpp, kernel_operator.h, ntt_vec.hpp, mod_variants.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file hat_vec.hpp
  * @brief 行 18 辅助：Alg.11 系数约化、标量半核 basemul、（已冻结）Gather 向量 basemul 遗留代码。

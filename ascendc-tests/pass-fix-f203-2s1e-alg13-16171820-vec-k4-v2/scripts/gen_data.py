@@ -39,12 +39,10 @@ import numpy as np
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
-_SHARED = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../../library/shared"))
-_MLKEM_REF = os.path.normpath(
-    os.path.join(_SCRIPT_DIR, "../../../examples/incubating/exp-sepolyvec8-ntt-k8/scripts")
-)
+_SHARED = os.path.normpath(os.path.join(_CASE_DIR, "../../library/shared"))
+_MLKEM_REF = _SCRIPT_DIR
 _NTT_LUT_HDR = os.path.normpath(
-    os.path.join(_SCRIPT_DIR, "../../../thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h")
+    os.path.join(_CASE_DIR, "thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h")
 )
 sys.path.insert(0, _SHARED)
 sys.path.insert(0, _MLKEM_REF)

@@ -1,4 +1,6 @@
 # examples/incubating — 研究中算子
+**自包含**（2026-06-29）：与探针同约束，见 [用例自包含与设备全链约束.md](../../docs/engineering/用例自包含与设备全链约束.md)；KeyGen 见各目录 `SELF_CONTAINED.md`。
+
 
 **前缀**：`exp-<简述>/`（如 `exp-mlkem-ntt/`）。
 
@@ -15,7 +17,7 @@
 | [exp-sepolyvec8-ntt-k8/](exp-sepolyvec8-ntt-k8/) | **纯 $k{=}8$ 批 NTT**（8 条互异随机 poly；交错 S0；**非** KeyGen 集成）；[PDF](exp-sepolyvec8-ntt-k8/exp-sepolyvec8-ntt-k8-实现方案.pdf) | **CPU ✓ / SIM ✓**；NTT 内核回归对照；[STATUS](exp-sepolyvec8-ntt-k8/STATUS.md) |
 | [exp-mlkem-f203-stage1-encode-vec/](exp-mlkem-f203-stage1-encode-vec/) | F203 Stage1 纯向量 encode；[customspec](exp-mlkem-f203-stage1-encode-vec/exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.pdf) | `aiv=1/2/8` 对拍 |
 | [exp-mlkem-f203-stage3-routea-mod-vec/](exp-mlkem-f203-stage3-routea-mod-vec/) | F203 Stage3 RouteA+mod 向量预研；[customspec](exp-mlkem-f203-stage3-routea-mod-vec/exp-mlkem-f203-stage3-routea-mod-vec-实现方案-customspec.pdf) | `aiv=1/2/8` 对拍 |
-| [exp-mlkem-f203-pke-keygen-k4/](exp-mlkem-f203-pke-keygen-k4/) | FIPS 203 **Alg.13 PKE KeyGen** k=4（**自包含**唯一路径；`ek_PKE`/`dk_PKE`）；[customspec](exp-mlkem-f203-pke-keygen-k4/exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.pdf) | **CPU ✓ / SIM ✓ / KAT ✓**；SIM total≈**884532**；[STATUS](exp-mlkem-f203-pke-keygen-k4/STATUS.md) · [note](../../docs/notes/F203-KeyGen-exp交付示例技术总结.md) |
+| [exp-mlkem-f203-pke-keygen-k4/](exp-mlkem-f203-pke-keygen-k4/) | FIPS 203 **Alg.13 PKE KeyGen** k=4（**已晋级** [`stable-mlkem-f203-pke-keygen-k4`](../stable/stable-mlkem-f203-pke-keygen-k4/)）；[customspec](exp-mlkem-f203-pke-keygen-k4/exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.pdf) | 副本保留；交付以 **stable** 为准 · [STATUS](exp-mlkem-f203-pke-keygen-k4/STATUS.md) |
 | [exp-mlkem-f203-alg13-16171820-2s1e-k4/](exp-mlkem-f203-alg13-16171820-2s1e-k4/) | Alg.13 行 16–20：2s1e MIX+UB；**Host Python** 提供 FIPS CBD $\mathbf{s}$/$\mathbf{e}$（	exttt{src.bin}）；ByteEncode **prefetch**；[customspec](exp-mlkem-f203-alg13-16171820-2s1e-k4/exp-mlkem-f203-alg13-16171820-2s1e-k4-实现方案-customspec.pdf) | **CPU ✓ / SIM ✓** tick≈**78k** |
 
 NTT 主路径：`AicMmad` + merged\_kyber FSM（非 `Matmul<>`）。**块紧凑 S0 `[HI_8|LO_8]` 已否决** → [`frozen-exp-mlkem-sepolyvec8-ntt-k4-block`](../frozen/frozen-exp-mlkem-sepolyvec8-ntt-k4-block/) + 探针 `poly8-block-s123`（**禁止参考**）。**8-poly 紧凑向量终态** → [`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)；历史 exp → `exp-sepolyvec8-ntt-k8`；全链路 → `exp-k4` / `vec-k4-v2`。

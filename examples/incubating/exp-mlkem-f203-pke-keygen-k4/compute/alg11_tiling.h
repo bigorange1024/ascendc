@@ -8,6 +8,7 @@
 // @depends #include: cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file alg11_tiling.h
  * @brief Alg.11 向量 basemul 的静态尺寸：N、pairCount、VecWs 槽位数。

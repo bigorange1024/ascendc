@@ -8,6 +8,7 @@
 // @depends #include: kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file innerproduct_mod.hpp
  * @brief 行 18 内积累加后的 final mod q（与 Stage3 mod 解耦）。

@@ -8,6 +8,7 @@
 // @depends #include: stdint.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file byte_encode12_ref.h
  * @brief Host/C golden：FIPS 203 Alg.5 ByteEncode₁₂ 单 poly / polyvec API。

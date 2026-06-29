@@ -10,13 +10,17 @@
 
 ## 按时间（新→旧）
 
+### 2026-06-29 — [KeyGen 双 AIV 并行 fork 探针](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
+
+**fix-dual-aiv** · liboqs KAT ✅ · **CPU SUCCESS 占核误读** §4.1 定稿
+
 ### 2026-06-28 — [KeyGen pass 前缀 / 子轨重命名 / Phase A 冻结 / exp 交付](2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md)
 
 **pass-fix keygen** · **alg7/lines3-7/lines8-15 子轨重命名** · **Phase A frozen** · **exp 自包含** · **KAT** · **backup-project.sh**
 
 ### 2026-06-26 — [标量探针冻结 / KeyGen SIM prep a_hat workaround](2026-06/2026-06-26-标量探针冻结.md)
 
-标量探针 **frozen** · **设备 ρ+ek** · **SIM a_hat 8–15 并行 FAIL** · sub0 **串行 workaround** · KAT PASS · [HOME-KEYGEN-DEBUG.md](../HOME-KEYGEN-DEBUG.md)
+KeyGen **stable** · prep **双 AIV 并行 Â** ✅ · KAT ✅ · [AGENT_HANDOFF.md](../AGENT_HANDOFF.md) 每日交接
 
 ### 2026-06-25 — [KeyGen prep 单 TPipe / 性能优化路线图 2134](2026-06/2026-06-25-KeyGen-prep优化路线图.md)
 

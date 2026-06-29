@@ -8,6 +8,7 @@
 // @depends #include: data_utils.h, f203_keygen_prep_layout.h, shake_general_tiling_data.h, tiling_host.hpp, cstdint, cstring, iostream, acl/acl.h, tikicpulib.h
 // @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+
 /**
  * @file main_keygen_prep.cpp
  * @brief Host：G4 准备段 — SEED_D → 单内核 f203_keygen_prep → a_hat + src GM。

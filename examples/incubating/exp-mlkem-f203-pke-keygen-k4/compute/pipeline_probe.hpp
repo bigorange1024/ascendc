@@ -8,6 +8,7 @@
 // @depends #include: integration_config.hpp, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file pipeline_probe.hpp
  * @brief 开发期流水线中间态探测：CPU printf 抽样系数（不改 GM、不破坏 UB 不变量）。

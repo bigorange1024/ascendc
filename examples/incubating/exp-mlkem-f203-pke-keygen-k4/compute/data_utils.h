@@ -8,6 +8,7 @@
 // @depends #include: iostream, fstream, cstdio, string, vector, iomanip, cassert, fcntl.h, unistd.h, sys/stat.h, acl/acl.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
+
 /**
  * @file data_utils.h
  * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。

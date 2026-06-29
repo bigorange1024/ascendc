@@ -45,8 +45,8 @@ LAUNCH_MMAD = "mmad launch: blockDim=1, MIX_AIC_1_2（1×AIC + 2×AIV 融合 NTT
 LAUNCH_NA = "N/A（host / 脚本 / CMake 不参与 device launch）"
 
 AI_CORE_PREP = (
-    "SIM 剖面：prep 段 0×AIC + 2×AIV block（block0 负载更重）；"
-    "CPU SUCCESS 日志中 AIC_* 为 tikicpu 仿真伪影，非 prep 真拓扑。"
+    "SIM 剖面：prep 段 0×AIC + 2×AIV；双 AIV 并行 BuildAHat16ShardWithUb（blockIdx 0/1 各 8 poly）；"
+    "block0 独占 PRF+CBD；CPU [SUCCESS] 中 AIC_* 为 tikicpu 伪影，以 profile_subtask_log*.toml 为准。"
 )
 AI_CORE_MMAD = (
     "SIM 剖面：mmad 段 1×AIC + 2×AIV；CPU SUCCESS 中 AIC_x 为 tikicpu artifact。"
@@ -228,7 +228,7 @@ def verify_for(rel_posix: str, layer: str) -> str:
     if rel_posix.startswith("scripts/kat") or rel_posix.startswith("kat_liboqs"):
         return "KEYGEN_KAT=1 bash run.sh 或 kat_*.sh；对比 liboqs。"
     if rel_posix == "run.sh":
-        return "bash run.sh -r cpu|sim -v Ascend910B4；cmp ek_pke/dk_pke；SIM_DIRECT=1 sim。"
+        return "bash run.sh -r cpu|sim -v Ascend910B4；bash kat_liboqs_vs_ascendc.sh；无需手动 SIM_DIRECT/HAT_*。"
     if layer in {"prep", "compute"}:
         return "经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。"
     if layer == "cmake":
