@@ -1,0 +1,238 @@
+% exp-mlkem-sepolyvec8-ntt-k4-block — Alg.13 行 16–17 批 NTT（块紧凑 S0）
+% 编译：bash ../../../../scripts/xelatex-clean.sh exp-mlkem-sepolyvec8-ntt-k4-block-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-mlkem-sepolyvec8-ntt-k4-block\\FIPS 203 Alg.13 行 16–17：$k{=}4$ 八多项式批 NTT\\（块紧凑 \texttt{[HI\_8|LO\_8]} 实现方案）}
+\author{ascendc 工程（预研）}
+\date{2026-06-11}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档为 \texttt{examples/incubating/exp-mlkem-sepolyvec8-ntt-k4-block/} 的\textbf{规格说明书}（customspec）。
+算子语义：对 \textbf{8 条互不相同、随机生成} 的 $Z_q$ 系数多项式（$n{=}256$，$q{=}3329$）各做 Kyber NTT，输出 \texttt{[8,256] int32}。
+\textbf{算法语境}对齐 ML-KEM-1024 \textbf{K-PKE.KeyGen（Algorithm 13）行 16–17}：$k{=}4$ 时 $\hat{\mathbf{s}}\leftarrow\mathrm{NTT}(\mathbf{s})$、$\hat{\mathbf{e}}\leftarrow\mathrm{NTT}(\mathbf{e})$ 共 8 路批处理。
+\textbf{工程壳}以已调通探针
+\texttt{ascendc-tests/frozen/frozen-fix-merged-kyber-ntt256-limb6-poly8-block-s123/} 为\textbf{唯一实现参照}（块紧凑 Stage1/Stage3 写址；Stage2 与交错版相同）。
+与 \texttt{exp-sepolyvec8-ntt-k8}（交错 \texttt{[hi0,lo0,\ldots]} 布局）\textbf{仅 GM 行序不同}；用户实测 SIM 性能\textbf{无显著差异}，本方案选用 Alg.13 编码一致的块布局。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{定位与边界}
+
+\subsection{用例性质}
+\begin{itemize}
+  \item \textbf{研究/预研}：代码落在 \texttt{examples/incubating/exp-*}；验收 \textbf{仅 I/O 对拍}（\texttt{max\_abs\_diff=0}）。
+  \item \textbf{算法片段}：Alg.13 行 16–17 的\textbf{批 NTT 核}；\textbf{不含}行 18 内积、采样、SHA3、完整 KeyGen。
+  \item \textbf{输入默认}：8 条\textbf{互异}随机 poly（固定 \texttt{seed}）；\textbf{可选}模式将行 $0..3$ / $4..7$ 标注为 $\mathbf{s}$ / $\mathbf{e}$（见 §\ref{sec:alg13}）。
+  \item \textbf{不在本用例}：Encaps/Decaps、FIPS 204、多 NPU 性能调优、\texttt{Matmul<>} 融合路线（已冻结）。
+\end{itemize}
+
+\subsection{与姊妹用例、探针的关系}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}L{4.2cm}L{5.2cm}L{4.8cm}@{}}
+    \toprule
+    目录 & Stage1/3 GM 行序 & 输入 / 状态 \\
+    \midrule
+    \texttt{poly8-block-s123} 探针 & 块紧凑 \texttt{[HI\_8|LO\_8]} & 8$\times$\textbf{同} poly；CPU+SIM $\checkmark$ \\
+    \texttt{poly8-s123} 探针 & 交错 \texttt{[hi0,lo0,\ldots]} & 8$\times$同 poly；CPU+SIM $\checkmark$ \\
+    \texttt{exp-sepolyvec8-ntt-k8} & 交错（照抄 poly8-s123） & 8$\times$\textbf{异}随机；CPU+SIM $\checkmark$ \\
+    \textbf{本 exp（待实现）} & \textbf{块紧凑}（照抄 block-s123） & 8$\times$\textbf{异}随机；\textbf{方案阶段} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{目标平台}
+\begin{itemize}
+  \item CANN 9.0.0；KernelLaunch（\texttt{run.sh cpu/sim/npu}）。
+  \item \textbf{Atlas A2}（\texttt{Ascend910B4}）；\texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}；\texttt{blockDim=1}。
+  \item 验证：WSL CPU + \texttt{SIM\_DIRECT=1} sim；有实机时补 \texttt{npu}。
+\end{itemize}
+
+\section{FIPS 203 Algorithm 13 行 16–17 语义}
+\label{sec:alg13}
+
+\subsection{原文职责（K-PKE.KeyGen，$k$ 为模块秩）}
+\begin{itemize}
+  \item \textbf{行 16}：对秘密向量 $\mathbf{s}=(s_0,\ldots,s_{k-1})$ 的每个多项式做 NTT，得 $\hat{\mathbf{s}}$。
+  \item \textbf{行 17}：对误差向量 $\mathbf{e}=(e_0,\ldots,e_{k-1})$ 的每个多项式做 NTT，得 $\hat{\mathbf{e}}$。
+  \item \textbf{本仓首版目标参数}：$k{=}4$ $\Rightarrow$ 共 \textbf{8 路} NTT（与 \texttt{se\_polyvec} 批维一致）。
+\end{itemize}
+
+\subsection{与 AscendC 张量映射}
+\begin{itemize}
+  \item 逻辑输入 \texttt{se\_polyvec\_gm}：形状 $[8,256]$ \texttt{int32}，行 $i$ 为 $Z_q$ 系数向量。
+  \item \textbf{默认} \texttt{gen\_data}：8 行\textbf{两两不等}的随机系数（\texttt{seed} 文档化，建议 \texttt{20260611}），\textbf{不强制}与 CBD 采样分布一致——仅验证 NTT 算子 I/O。
+  \item \textbf{可选回归} \texttt{--alg13-keygen-layout}：行 $0..3$ 标为 $s_i$，$4..7$ 标为 $e_i$；系数仍由同一 \texttt{seed} 生成，便于与 \texttt{ntt\_study} 交付件对照命名。
+  \item 输出 \texttt{dst} / \texttt{golden}：$[8,256]$ \texttt{int32}；第 $i$ 行为 $\mathrm{NTT}(a_i)\bmod q$。
+\end{itemize}
+
+\subsection{Stage1 编码与 Alg.13 左矩阵布局}
+Alg.13 行 16–17 之前的编码（及 \texttt{exp-mlkem-f203-stage1-encode-vec}）规定左矩阵 \texttt{mat\_a [16,256] int8} 行序为：
+\[
+  \text{行 }0..7 = HI(s_0),\ldots,HI(s_{k-1}),\quad
+  \text{行 }8..15 = LO(s_0),\ldots,LO(s_{k-1})
+\]
+即 \textbf{先全体 $HI$，再全体 $LO$}（块紧凑，\textbf{非}逐 poly 交错）。本 MIX 核 Stage1 写 \texttt{S0} 须与此一致，以便后续与 Stage1 纯向量 encode、KeyGen 流水线\textbf{同一 GM 契约}。
+
+\section{计算语义：merged\_kyber 6bit 三段式（$k_{\mathrm{polys}}{=}8$）}
+
+对每条输入多项式 $a_i$，目标 $y_i=\mathrm{NTT}(a_i)\bmod q$。拓扑与 \texttt{frozen/frozen-merged-kyber-ntt256-limb6} 一致，批维 $8$：
+
+\begin{enumerate}
+  \item \textbf{Stage1 Split}（AIV）：\texttt{src [8,256] int32} $\rightarrow$ \texttt{S0 [16,256] int8}。
+    \begin{itemize}
+      \item 6bit limb：$hi=\lfloor a/64\rfloor$，$lo=a-64\cdot hi$（$a\in[0,q)$）。
+      \item \textbf{块紧凑写址}（\textbf{本 exp 与 block-s123 一致}）：poly $p$ 的 $HI$ 写行 $p$，$LO$ 写行 $8{+}p$：
+      \[
+        \texttt{S0}[p,\cdot]=hi_p,\quad \texttt{S0}[8{+}p,\cdot]=lo_p.
+      \]
+    \end{itemize}
+  \item \textbf{Stage2 Mmad}（AIC）：$A_0=\texttt{S0}\cdot M_0$，$A_1=\texttt{S0}\cdot M_1$；\texttt{AicMmad(16,256,256)} 两次；\textbf{与交错版完全相同}（LUT \texttt{M4.bin} / \texttt{mat\_b\_lut\_gm} 不变）。
+  \item \textbf{Stage3 Merge + Barrett}（AIV）：从 \texttt{A0/A1} 按\textbf{块 Gather} 取行 $p$ 与 $8{+}p$（\textbf{非}交错版的 $2p$ / $2p{+}1$），再 Merge + Barrett，写 \texttt{dst [8,256] int32}。
+\end{enumerate}
+
+\subsection{GM 行序对照（实现时禁止混用）}
+\label{sec:layout}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    张量 & 块紧凑（\textbf{本 exp}） & 交错（\texttt{exp-…-k4}） \\
+    \midrule
+    \texttt{S0} $HI$ 行 & $0,1,\ldots,7$ & $0,2,4,\ldots,14$ \\
+    \texttt{S0} $LO$ 行 & $8,9,\ldots,15$ & $1,3,5,\ldots,15$ \\
+    Merge 读 \texttt{A0/A1} & 行 $p$、$8{+}p$ & 行 $2p$、$2p{+}1$ \\
+    Stage2 Cube & \multicolumn{2}{c}{相同：$M{=}16,K{=}N{=}256$，int8$\rightarrow$int32} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{数学 NTT 结果一致}：对同一 \texttt{src [8,256]}，两种布局仅中间 \texttt{S0/A0/A1} 寻址不同；\texttt{dst} 逐行须与 Python 逐行 \texttt{ntt\_forward} 一致。探针 \texttt{block-s123} 已证：8$\times$同 poly 时 \texttt{dst} $\equiv$ \texttt{poly8-s123}。
+
+\subsection{workspace 与 LUT}
+与 \texttt{block-s123/tiling.h} 一致：
+\[
+  \texttt{ws}: M_0,M_1,M_2,M_3\;(256^2\;\text{int8}),\; S_0[16,256],\; A_0,A_1[16,256]\;\text{int32}.
+\]
+对外 LUT 文件：\texttt{input/mat\_b\_lut\_gm.bin}，形状 $[256,512]$ \texttt{int8}（四块 $256\times256$ 拼接），与 limb6 / \texttt{M4.bin} 布局兼容。
+
+\subsection{MIX 同步（FSM）}
+\begin{itemize}
+  \item 单次 launch；\texttt{CrossCoreSetFlag}/\texttt{CrossCoreWaitFlag} 与 \texttt{merged\_kyber} / block-s123 相同（如 \texttt{kSyncStage1Done=7}、\texttt{kSyncStage2Done=9}）。
+  \item 每 \texttt{AivSplit}/\texttt{AivMerge}：\textbf{一个} \texttt{TPipe}；\texttt{tileLength}= $8\times128=1024$；\textbf{禁止} \texttt{for (p)\{AivSplit...\}}。
+\end{itemize}
+
+\section{I/O 与 Golden 契约}
+
+\subsection{文件（\texttt{gen\_data} 与 \texttt{main} 逐字一致）}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}llll@{}}
+    \toprule
+    路径 & 形状 & dtype & 语义 \\
+    \midrule
+    \texttt{input/se\_polyvec\_gm.bin} & $[8,256]$ & int32 & 8 条互异随机 poly \\
+    \texttt{input/mat\_b\_lut\_gm.bin} & $[256,512]$ & int8 & $M_0\Vert M_1\Vert M_2\Vert M_3$ \\
+    \texttt{input/tiling.bin} & $(256,8)$ & int32 & $n$、$k_{\mathrm{polys}}$ \\
+    \texttt{output/output.bin} & $[8,256]$ & int32 & 内核结果 \\
+    \texttt{output/golden.bin} & $[8,256]$ & int32 & Python 逐行 NTT \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{\texttt{gen\_data.py} 要求}
+\begin{enumerate}
+  \item \texttt{rng = np.random.default\_rng(seed)}；\texttt{seed} 默认 \texttt{20260611}（写入 \texttt{STATUS.md}）。
+  \item 生成 $[8,256]$，\textbf{8 行系数向量两两不等}（\texttt{assert len(unique)==8}）。
+  \item Golden：对每行 \texttt{ntt\_sim\_kyber.ntt\_forward} + \texttt{ntt\_test01} 交叉断言。
+  \item 写 LUT：与 \texttt{frozen/frozen-merged-kyber-ntt256-limb6} 四块 int8 一致（同 \texttt{exp-…-k4}）。
+  \item \textbf{禁止} \texttt{np.tile} 同一 poly（那是探针 block-s123 行为，非本 exp）。
+\end{enumerate}
+
+\subsection{验收}
+\begin{verbatim}
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+python3 scripts/verify_result.py output/output.bin output/golden.bin
+\end{verbatim}
+要求 \texttt{max\_abs\_diff=0}。SIM 须 \texttt{source scripts/camodel\_sim\_log.sh}，dump 仅在 \texttt{OPPROF\_*/dump/}。
+
+\section{实现规划}
+
+\subsection{参照文件（照抄顺序）}
+\begin{enumerate}
+  \item \textbf{骨架}：自 \texttt{ascendc-tests/frozen/frozen-fix-merged-kyber-ntt256-limb6-poly8-block-s123/} 复制
+    \texttt{mmad\_custom.cpp}、\texttt{main.cpp}、\texttt{tiling.h}、\texttt{aiv\_func.hpp}（块版）、\texttt{ntt\_vec.hpp}、\texttt{kyber\_limb6.hpp}、\texttt{cmake/}、\texttt{run.sh}。
+  \item \textbf{勿用} \texttt{poly8-s123/aiv\_func.hpp}（交错写址）；\textbf{勿用} \texttt{thirdparty/merged\_kyber/aiv\_func.hpp}（单 poly API）。
+  \item \textbf{改} \texttt{scripts/gen\_data.py}：自 \texttt{exp-sepolyvec8-ntt-k8/scripts/gen\_data.py} 迁入 8 互异随机逻辑；输入文件名与上表一致。
+  \item 内核文件名建议：\texttt{sepolyvec8\_ntt\_block\_custom.cpp}（与姊妹 \texttt{sepolyvec8\_ntt\_custom.cpp} 区分）。
+\end{enumerate}
+
+\subsection{计划目录}
+\begin{verbatim}
+exp-mlkem-sepolyvec8-ntt-k4-block/
+  exp-mlkem-sepolyvec8-ntt-k4-block-实现方案-customspec.tex / .pdf
+  STATUS.md
+  sepolyvec8_ntt_block_custom.cpp      # 待：block FSM
+  sepolyvec8_ntt_block_custom_tiling.cpp
+  main.cpp, CMakeLists.txt, run.sh
+  aiv_func.hpp, ntt_vec.hpp, kyber_limb6.hpp, tiling.h
+  scripts/gen_data.py, verify_result.py
+\end{verbatim}
+
+\subsection{分步验收}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}cll@{}}
+    \toprule
+    步 & 内容 & 验收 \\
+    \midrule
+    S0 & 本 customspec PDF & 文档就绪 \\
+    S1 & \texttt{gen\_data}：8 互异随机 + golden & 逐行 NTT 一致 \\
+    S2 & 迁入 block-s123 内核 + 改输入路径 & CPU \texttt{max\_diff=0} \\
+    S3 & SIM 单趟 MIX launch & 无挂死；dump 路径合规 \\
+    S4 & 与 \texttt{exp-…-k4} 同 \texttt{src} 对拍 & 两 exp \texttt{dst} 逐行相同 \\
+    S5 & A2 \texttt{npu} & 后续 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{性能与布局选型说明}
+
+\begin{itemize}
+  \item 用户对比 \texttt{poly8-block-s123} 与 \texttt{poly8-s123} 的 SIM：\textbf{模拟性能无显著差异}。
+  \item 选用块紧凑布局的理由：与 Alg.13 行 16–17 前编码（\texttt{mat\_a [HI(8),LO(8)]}）、\texttt{exp-mlkem-f203-stage1-encode-vec}、\texttt{ntt\_study} F203 交付语义一致；避免 KeyGen 流水线中 Stage1 encode 与 Stage2/NTT 混用两种行序。
+  \item \texttt{exp-sepolyvec8-ntt-k8}（交错版）\textbf{保留}为对照与回归；本 exp 为 KeyGen 路径的\textbf{推荐批 NTT 实现}。
+\end{itemize}
+
+\section{已废弃路径（勿 fork）}
+
+\begin{itemize}
+  \item NTT 内 \texttt{Matmul<>} / 两段式 Stage2：见 \texttt{ascendc-tests/frozen/}、\texttt{qa/2026-06/2026-06-11-ascendc-engineering-notes与数据搬运.md\#ntt-matmul路线废弃冻结}。
+  \item \texttt{[16,512]} RouteA 宽表作 Stage2 输出（ONNX 语义）与本 limb6 紧凑 \texttt{[16,256]} 契约不同。
+\end{itemize}
+
+\section{关联文档}
+
+\begin{itemize}
+  \item 探针：\texttt{ascendc-tests/frozen/frozen-fix-merged-kyber-ntt256-limb6-poly8-block-s123/STATUS.md}
+  \item 姊妹 exp：\texttt{examples/incubating/exp-sepolyvec8-ntt-k8/}
+  \item Stage1 encode：\texttt{exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.pdf}
+  \item 策略：\texttt{docs/notes/F203-merged-kyber-MIX路线技术总结.md}
+\end{itemize}
+
+\end{document}

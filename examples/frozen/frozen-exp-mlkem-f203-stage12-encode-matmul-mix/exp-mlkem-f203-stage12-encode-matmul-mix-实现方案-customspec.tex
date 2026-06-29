@@ -1,0 +1,313 @@
+% exp-mlkem-f203-stage12-encode-matmul-mix — Stage1+2 融合（MIX）实现方案
+% 修订：2026-06-10 — 改按 merged_kyber FSM 壳（参照 ascendc-tests/frozen/frozen-merged-kyber-ntt256-limb6）
+% 编译：bash ../../../../scripts/xelatex-clean.sh exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-mlkem-f203-stage12-encode-matmul-mix\\F203 Stage1+2 融合方案（merged\_kyber 三段式壳）}
+\author{ascendc 工程（预研）}
+\date{2026-06-10（修订）}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档为 \texttt{examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/} 的\textbf{实现规格书（修订版）}。
+
+\textbf{语义目标}：与 \texttt{ntt\_study} 交付件 \texttt{sepolyvec8\_ntt\_f203} 的 \textbf{Stage1+Stage2} 一致——对 $K{=}8$ 条多项式（\textbf{s$\|$e 拼接}，KeyGen 中 $s$ 与 $e$ 各 4 条）同时做 6bit limb 编码与 NTT 矩阵乘，输出 \texttt{mat\_c [16,512] int32}；\textbf{不含 Stage3}（RouteA 四象限合成 + mod $q$）。
+
+\textbf{实现路径（已定）}：放弃 LeakyRelu 式 \texttt{Matmul<>} 融合模板；\textbf{fork} 探针 \dirname{ascendc-tests/frozen/frozen-merged-kyber-ntt256-limb6/} 的 merged\_kyber 手写 FSM，Stage2 \textbf{复用 D 的 \texttt{AicMmad}}（\texttt{Process}$\times 2$ on \texttt{M0}/\texttt{M1}）。Stage3 \texttt{AivMerge} 在本用例\textbf{不执行}。
+
+\textbf{本文档阶段}：仅修订规格；\textbf{源码按新规格重写}，当前目录内旧融合核（\texttt{Matmul<>} 胶水）\textbf{不作}实现基线。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{背景与范围}
+
+\subsection{三段式 NTT 与 F203 的对应关系}
+Tag5T / merged\_kyber 与 F203 交付 ONNX 共享同一计算骨架：
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+NTT 段 & merged\_kyber（D$'$） & 本用例（F203 Stage1+2） \\
+\midrule
+分解 & \texttt{AivSplit}：$v\to(hi,lo)$ 6bit & \texttt{AivEncode}：$K{=}8$ poly $\to$ \texttt{mat\_a [16,256]} \\
+矩阵乘 & \texttt{AicMmad}$\times 2$ + \texttt{ws+M0}/\texttt{M1} & \textbf{同左}：复用 D$'$ \texttt{AicMmad}，$m$ 扩至 $16$ \\
+合并取模 & \texttt{AivMerge} + Barrett $\bmod q$ & \textbf{本用例不做}（留给 Stage3 用例） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{对齐的交付语义}
+\begin{itemize}
+  \item 参考图：\texttt{thirdparty/ntt\_study/.../sepolyvec8\_ntt\_f203/sepolyvec8\_ntt\_f203\_pipeline.py}。
+  \item 输入 \texttt{se\_polyvec\_i32}：$[8,256]$ \texttt{int32}，系数 $\in [0,q)$，$q{=}3329$（FIPS\,203 规范表示）。
+  \item 输入 \texttt{mat\_b\_lut}：$[256,512]$；交付为 \texttt{fp16}，AscendC 实现为 \texttt{int8} 饱和（与 \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} 一致）。
+  \item 输出 \texttt{mat\_c}：$[16,512]$ \texttt{int32}，等价于交付图 \texttt{stage2\_matmul} 输出（\textbf{非} \texttt{stage3\_mod\_i32}）。
+  \item 左矩阵布局：Alg13 行 16+17 双 polyvec 紧凑编码 $[HI(8),LO(8)]$，\textbf{无}单 polyvec 的 $[HI,ZERO,LO,ZERO]$ 行间填充（与 Stage2 隔离 \texttt{gen\_data.py} 一致）。
+\end{itemize}
+
+\subsection{本阶段不做}
+\begin{itemize}
+  \item Stage3 RouteA、mod $q$、输出 \texttt{stage3\_mod\_i32 [8,256]}。
+  \item LeakyRelu / \texttt{Matmul<>}+\texttt{REGIST\_MATMUL\_OBJ} 融合模板；MIX 内 Stage2 \textbf{不用} \texttt{Matmul<>}（算术 golden 仍可对照 \dirname{exp-mlkem-f203-stage2-int8-matmul-cube}）。
+  \item 多 AI Core launch（首版 \texttt{aicore=1}）；多核须另开 spec 修订。
+\end{itemize}
+
+\subsection{参考实现与隔离用例}
+\begin{longtable}{@{}L{4.8cm}L{8.5cm}@{}}
+\toprule
+路径 & 角色 \\
+\midrule
+\dirname{ascendc-tests/frozen/frozen-merged-kyber-ntt256-limb6/} &
+  \textbf{MIX 壳 + Stage2 矩阵乘唯一参考}：\texttt{mmad\_custom.cpp}、\texttt{thirdparty/merged\_kyber/aic\_func.hpp}（\texttt{AicMmad}）；CPU+sim 已通过 \\
+\dirname{exp-mlkem-f203-stage1-encode-vec} &
+  Stage1 向量算术（\texttt{ShiftRight}/\texttt{Sub}/\texttt{Cast}）；$hi{=}v\gg 6$，$lo{=}v-hi\cdot 64$ \\
+\dirname{exp-mlkem-f203-stage2-int8-matmul-cube} &
+  \textbf{仅 golden 对照}（\texttt{np.matmul}）；\textbf{非} MIX Stage2 实现路径 \\
+\dirname{ntt\_study/.../sepolyvec8\_ntt\_f203/} &
+  交付 \texttt{input0.bin}/\texttt{input1.bin}/\texttt{golden.bin}（Stage3 全链 golden；本用例只取 Stage1+2 段） \\
+\bottomrule
+\end{longtable}
+
+\section{数学语义}
+
+\subsection{输入输出（黑盒 I/O）}
+\begin{itemize}
+  \item \texttt{se\_polyvec\_gm}：$[8,256]$ \texttt{int32}。
+  \item \texttt{mat\_b\_lut\_gm}：$[256,512]$ \texttt{int8}。
+  \item \texttt{mat\_c\_gm}：$[16,512]$ \texttt{int32}（Host 写回；或经 \texttt{ws} 中转后 D2H）。
+\end{itemize}
+
+\subsection{Stage1：6bit limb 分解（编码）}
+对每条 poly $p\in[0,K)$、系数 $v\in[0,q)$：
+\begin{align}
+  hi &= \lfloor v / 64 \rfloor = v \gg 6 \\
+  lo &= v - hi \cdot 64 \quad (\text{在 } v\ge 0 \text{ 时等价于 } v \bmod 64)
+\end{align}
+写入 \texttt{mat\_a} 行 $p$（$HI$）与 $K{+}p$（$LO$），窄化为 \texttt{int8}。
+与 D$'$ 探针 \texttt{split\_2xint6}（\texttt{\&0x3f}，\texttt{>>6}）\textbf{位宽一致}；差异在于 F203 按 \textbf{8 poly 批} 组织为 $16$ 行矩阵，而非单 poly $256$ 向量原地拆分到 \texttt{S0/S1}。
+
+\subsection{Stage2：NTT 矩阵乘}
+\begin{equation}
+  C = A \times B,\quad
+  A=\texttt{mat\_a}\;(16\times 256),\;
+  B=\texttt{mat\_b\_lut}\;(256\times 512),\;
+  C=\texttt{mat\_c}\;(16\times 512)
+\end{equation}
+$ND$ 布局，LUT 在右；与交付 \texttt{MatMul(mat\_a, mat\_b\_f16)} 拓扑一致（dtype 为 int8$\to$int32）。
+
+\subsection{与交付全链的关系}
+交付全链在 Stage2 之后还有 Stage3/3.1 将 $C$ 规约为 $[8,256]$ \texttt{int32}。
+本用例验收边界为 \textbf{Stage2 输出 $C$}，与 \texttt{exp-mlkem-f203-stage2-int8-matmul-cube} 在相同 \texttt{se}/LUT 下 \texttt{mat\_c} 逐元一致。
+
+\subsection{Golden}
+\begin{itemize}
+  \item \texttt{scripts/gen\_data.py}：读交付 \texttt{input0}/\texttt{input1} $\rightarrow$ \texttt{encode\_mat\_a(se)} $\rightarrow$ \texttt{np.matmul(mat\_a, mat\_b)} $\rightarrow$ \texttt{golden.bin}。
+  \item 与 \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} 的 \texttt{gen\_data.py} 同公式。
+\end{itemize}
+
+\section{AscendC 实现规划（merged\_kyber 壳）}
+
+\subsection{总体原则}
+\begin{enumerate}
+  \item \textbf{Fork 点}：\dirname{ascendc-tests/frozen/frozen-merged-kyber-ntt256-limb6/}（非本目录现行 \texttt{f203\_stage12\_encode\_matmul\_mix\_custom.cpp}）。
+  \item \textbf{核类型}：\texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}（1 Cube + 2 Vector / AI Core）。
+  \item \textbf{调度}：手写 \texttt{enum MachineState} + \texttt{\_\_WAIT}/\texttt{\_\_SET}，事件 ID 与 D$'$ 同构；\textbf{双 AIV 均参与 FSM}，禁止 subBlock 提前 \texttt{return}。
+  \item \textbf{同步}：SIM/NPU 在 AIV$\leftrightarrow$AIC 边界及段内关键 API 后 \texttt{PipeBarrier<PIPE\_ALL>}（\texttt{KYBER\_PIPE\_ALL}）；CPU 可不强制。
+  \item \textbf{禁止}：auto\_gen MIX 壳、\texttt{REGIST\_MATMUL\_OBJ} 绑进单趟 launch 的 LeakyRelu 模板。
+\end{enumerate}
+
+\subsection{FSM 状态机（本用例：两段，无 Merge）}
+对照 D$'$ \texttt{mmad\_custom.cpp}，本用例状态流为：
+\begin{enumerate}
+  \item \textbf{AIV\_ENCODE}（替代 \texttt{AIV\_SPLIT}）：读 \texttt{se\_gm}，写 \texttt{ws} 内 \texttt{mat\_a}；末 \texttt{SET(AIV\_ENCODE)}。
+  \item \textbf{AIC\_MMAD}：\texttt{WAIT(AIV\_ENCODE)}；\texttt{AicMmad::Init} + \texttt{Process}$\times 2$（\texttt{ws+M0}/\texttt{M1}，同 D$'$）；写 \texttt{mat\_c}；末 \texttt{SET(AIC\_MMAD)}。
+  \item \textbf{（无 \texttt{AIV\_MERGE}）}：AIV 在 \texttt{WAIT(AIC\_MMAD)} 后可空转或仅参与握手；\textbf{不}做 Barrett / RouteA。
+\end{enumerate}
+
+\textbf{AIC 分支}（\texttt{GetSubBlockNum()==1}）伪代码结构：
+\begin{verbatim}
+STATE = AIV_ENCODE;  WAIT;
+STATE = AIC_MMAD;
+  AicMmad mmad(...); mmad.Init();
+  mmad.Process(mat_c+0,   mat_a, ws+M0);
+  KYBER_PIPE_ALL();
+  mmad.Process(mat_c+off, mat_a, ws+M1);
+  KYBER_PIPE_ALL();
+SET;
+\end{verbatim}
+
+\textbf{AIV 分支}（双 subBlock）伪代码结构：
+\begin{verbatim}
+STATE = AIV_ENCODE;
+  /* 按 subBlock 分片 encode 8 poly -> mat_a */
+  KYBER_PIPE_ALL();  SET;
+STATE = AIC_MMAD;  WAIT;
+/* 本用例无 Merge */
+\end{verbatim}
+
+\subsection{AI Core 规模（首版）}
+\begin{longtable}{@{}L{2.8cm}L{10.5cm}@{}}
+\toprule
+项 & 约定 \\
+\midrule
+规模 & \texttt{blockDim=1}，\texttt{LAUNCH\_PROFILE=aicore=1} \\
+验证 & \texttt{bash run.sh -r cpu -v Ascend910B4 --aicore 1}；通过后 \texttt{SIM\_DIRECT=1 ... -r sim} \\
+多档 & 首版仅单 AI Core；\texttt{aicore=4} 等须 spec 修订 \\
+\bottomrule
+\end{longtable}
+
+\subsection{GM / Workspace 布局（规划）}
+Host 签名建议对齐 D$'$ 四元组风格，具体偏移实现时固定于头文件：
+\begin{itemize}
+  \item \texttt{se\_gm}：$8\times 256$ \texttt{int32}（输入）。
+  \item \texttt{mat\_c\_gm}：$16\times 512$ \texttt{int32}（输出；或 \texttt{dst}）。
+  \item \texttt{ws}：LUT + 中间区。参考 D$'$ \texttt{tiling.h} 命名：
+  \begin{itemize}
+    \item \texttt{M0}、\texttt{M1}：LUT 列两半，各 $256\times 256$ \texttt{int8}（$B$ 的 $[0:256)$ 与 $[256:512)$ 列，布局同 D$'$ \texttt{tiling.h}）。
+    \item \texttt{mat\_a} 区：编码后 $16\times 256$ \texttt{int8}（4096\,B）；对应 D$'$ 中左矩阵 $A$ 的 GM 首地址。
+    \item \texttt{A0}、\texttt{A1}（或 \texttt{mat\_c} 两半）：两次 \texttt{Process} 的 int32 输出区，各 $16\times 256$。
+  \end{itemize}
+  \item \texttt{TilingData}：\texttt{tileLength} 等（同 D$'$）；\textbf{不需} \texttt{TCubeTiling}/\texttt{Matmul<>}。
+\end{itemize}
+
+\subsection{Stage1：AIV 编码（相对 D$'$ 的改动）}
+\begin{itemize}
+  \item \textbf{保留}：6bit 分解语义（\texttt{kKyberLimbBits=6}）；\texttt{ShiftRight}/\texttt{Muls}/\texttt{Sub}/\texttt{Cast} 链（见 Stage1 隔离 spec）。
+  \item \textbf{替换}：D$'$ 单 poly \texttt{AivSplit} $\rightarrow$ \textbf{批处理} $K{=}8$：每 poly 256 系数，写 \texttt{mat\_a} 的 HI/LO 行。
+  \item \textbf{双 AIV 分片}：与 D$'$ 相同，按 \texttt{GetSubBlockIdx()} 划分系数或 poly 子集；两路均须 \texttt{SET} 前 \texttt{KYBER\_PIPE\_ALL}。
+  \item \textbf{tile}：建议 \texttt{kTileLength=32} 或 $64$（与现行 Stage1 隔离二选一，实现时固定一种）。
+\end{itemize}
+
+\subsection{Stage2：AIC 矩阵乘（复用 D 的 \texttt{AicMmad}）}
+\label{sec:stage2}
+\textbf{已定}：Stage2 \textbf{直接复用} D$'$ 的矩阵乘实现方式——\texttt{thirdparty/merged\_kyber/aic\_func.hpp} 中的 \texttt{AicMmad} 类及其 \texttt{Init}/\texttt{Process} 流水（\texttt{Nd2Nz} $\rightarrow$ \texttt{LoadData} $\rightarrow$ \texttt{Mmad} $\rightarrow$ 写回），\textbf{不}使用 \texttt{Matmul<>} 库。
+
+\paragraph{与 D$'$ 同构的调用模式}
+对照 \texttt{mmad\_custom.cpp} 中 \texttt{AIC\_MMAD} 状态：
+\begin{verbatim}
+AicMmad mmad(m, k, n);   // D': m=2, k=n=256
+mmad.Init();
+mmad.Process(dst0, mat_a, ws + M0);
+KYBER_PIPE_ALL();
+mmad.Process(dst1, mat_a, ws + M1);
+KYBER_PIPE_ALL();
+\end{verbatim}
+\begin{itemize}
+  \item \texttt{ws+M0}、\texttt{ws+M1}：LUT $B[256,512]$ 的列区间 $[0,256)$、$[256,512)$，各视为 $256\times 256$ \texttt{int8}（Host 加载 \texttt{mat\_b\_lut\_gm} 时按 D$'$ 规则切片写入）。
+  \item 两次 \texttt{Process} 输出拼接为 \texttt{mat\_c [16,512] int32}（\texttt{dst0} $\parallel$ \texttt{dst1} 沿列维）。
+  \item 两次 \texttt{Process} 之间及之后须 \texttt{KYBER_PIPE_ALL()}（与 D$'$ 一致）。
+\end{itemize}
+
+\paragraph{相对 D$'$ 的唯一扩展：左矩阵行数 $m$}
+D$'$ 单 poly：$m{=}2$（\texttt{S0} 上 hi/lo 两行语义）、$k{=}n{=}256$。
+本用例：$m{=}16$（\texttt{mat\_a} 的 $[HI(8),LO(8)]$），$k{=}256$，单次 \texttt{Process} 的 $n{=}256$。
+构造 \texttt{AicMmad(16, 256, 256)}（或等价参数化），\textbf{仍用同一 \texttt{Process} 接口}；若 Cube 对 $m$ 有对齐约束，在 $m$ 维按 D$'$ 已有 \texttt{max(16,m)}$ 逻辑处理，\textbf{不}改 API 选型。
+
+\paragraph{禁止}
+\begin{itemize}
+  \item MIX 内 Stage2 使用 \texttt{Matmul<>}/\texttt{REGIST\_MATMUL\_OBJ}/\texttt{TCubeTiling}。
+  \item 以 \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} 的 Cube 库路径作为实现参考（仅作 golden）。
+\end{itemize}
+
+\section{全量 API 清单}
+\label{sec:api-table}
+
+\subsection{MIX 壳与同步（AIV + AIC 共用）}
+\begin{longtable}{@{}L{2.6cm}L{1.5cm}L{2.4cm}L{0.8cm}L{3.6cm}L{3.5cm}@{}}
+\toprule
+API & 分类 & 在线文档 ID & A2 & 本用例 & 备注 \\
+\midrule
+\endhead
+\apiname{KERNEL\_TASK\_TYPE\_DEFAULT} & Utils & 编程指南 & $\checkmark$ & \texttt{MIX\_AIC\_1\_2} & 同 D$'$ \\
+\apiname{CrossCoreSetFlag} & Utils & API 列表 & $\checkmark$ & \texttt{PIPE\_MTE2} & FSM \texttt{SET} \\
+\apiname{CrossCoreWaitFlag} & Utils & API 列表 & $\checkmark$ & 配对事件 ID & FSM \texttt{WAIT} \\
+\apiname{PipeBarrier} & Utils & 编程指南 & $\checkmark$ & \texttt{PIPE\_ALL} & \texttt{KYBER\_PIPE\_ALL} \\
+\apiname{GetSubBlockIdx} & 系统变量 & 07\_0185 & $\checkmark$ & 0/1 & 双 AIV 分片 \\
+\apiname{GetSubBlockNum} & 系统变量 & 07\_0185 & $\checkmark$ & AIC/AIV 分支 & \\
+\bottomrule
+\end{longtable}
+
+\subsection{Stage1 向量（AIV\_ENCODE）}
+\begin{longtable}{@{}L{2.6cm}L{1.5cm}L{2.4cm}L{0.8cm}L{3.6cm}L{3.5cm}@{}}
+\toprule
+API & 分类 & 在线文档 ID & A2 & dtype & 备注 \\
+\midrule
+\endhead
+\apiname{DataCopy} & 2.3.1 & 07\_0101 & $\checkmark$ & \texttt{int32}/\texttt{int8} & \texttt{se} $\leftrightarrow$ \texttt{mat\_a} \\
+\apiname{ShiftRight} & 2.3.3 & 07\_0059 & $\checkmark$ & \texttt{int32} & $hi=v\gg 6$ \\
+\apiname{Muls} & 2.3.3 & 07\_0055 & $\checkmark$ & \texttt{int32} & $hi\times 64$ \\
+\apiname{Sub} & 2.3.3 & 07\_0036 & $\checkmark$ & \texttt{int32} & $lo$ \\
+\apiname{Cast} & 2.3.3 & 07\_0073 & $\checkmark$ & \texttt{i32}$\rightarrow$\texttt{i8} & 三段链 \\
+\apiname{TPipe}/\texttt{TQue}/\texttt{TBuf} & 2.3 资源 & 07\_0108 & $\checkmark$ & --- & 向量流水 \\
+\bottomrule
+\end{longtable}
+
+\subsection{Stage2 Cube（AIC\_MMAD，\texttt{AicMmad}）}
+\begin{longtable}{@{}L{2.6cm}L{1.5cm}L{2.4cm}L{0.8cm}L{3.6cm}L{3.5cm}@{}}
+\toprule
+API & 分类 & A2 & 本用例 & 备注 \\
+\midrule
+\endhead
+\apiname{AicMmad::Init} & merged\_kyber & $\checkmark$ & 同 D$'$ & \texttt{TPipe} 缓冲 \\
+\apiname{AicMmad::Process} & merged\_kyber & $\checkmark$ & $\times 2$ & \texttt{M0} then \texttt{M1} \\
+\apiname{DataCopy}（Nd2Nz） & 2.3.1 & $\checkmark$ & \texttt{int8}/\texttt{int32} & \texttt{aic\_func.hpp} 内 \\
+\apiname{LoadData} & Cube & $\checkmark$ & \texttt{int8} & \texttt{SplitA}/\texttt{SplitB} \\
+\apiname{Mmad} & Cube & $\checkmark$ & \texttt{i8}$\times$\texttt{i8}$\rightarrow$\texttt{i32} & \texttt{Compute} \\
+\bottomrule
+\end{longtable}
+
+\section{逐步覆盖率评估}
+\begin{longtable}{@{}L{0.9cm}L{3.2cm}L{3.6cm}L{1.6cm}L{3.9cm}@{}}
+\toprule
+步 & 阶段 & 机制 & 覆盖 & 备注 \\
+\midrule
+F0 & launch & \texttt{MIX\_AIC\_1\_2}, FSM & 100\% & fork D$'$ \\
+S1 & encode & AIV 向量 API & 100\% & 隔离 Stage1 已验 \\
+X1 & S1$\rightarrow$S2 & \texttt{CrossCore*}+\texttt{PipeBarrier} & 100\% & D$'$ 已验 MIX 握手 \\
+S2 & mmad & \texttt{AicMmad}$\times 2$（D$'$） & 100\% & $m$ 扩至 $16$ \\
+H1 & 写回 & \texttt{mat\_c\_gm} D2H & 100\% & 无 Stage3 \\
+\midrule
+\multicolumn{3}{l}{\textbf{主路径（Stage1+2，无 Merge）}} & \textbf{100\%} & Stage3 另案 \\
+\bottomrule
+\end{longtable}
+
+\section{实现与验证（计划）}
+
+\subsection{计划文件（重写，非改旧核）}
+\begin{itemize}
+  \item 从 \dirname{frozen/frozen-merged-kyber-ntt256-limb6/} fork 后迁入本目录（或先在 \texttt{ascendc-tests/} 探针验证再回迁）：
+  \texttt{f203\_stage12\_mix\_custom.cpp}、\texttt{aic\_func.hpp}、\texttt{aiv\_func.hpp}、\texttt{ntt\_vec.hpp}、\texttt{kyber\_limb6.hpp}、\texttt{tiling.h}、\texttt{main.cpp}、\texttt{run.sh}。
+  \item \textbf{删除/替换}：现行 \texttt{f203\_stage12\_encode\_matmul\_mix\_custom.cpp} 中的 LeakyRelu 式 \texttt{REGIST\_MATMUL\_OBJ} 融合路径。
+\end{itemize}
+
+\subsection{验收标准}
+\begin{itemize}
+  \item \texttt{bash run.sh -r cpu -v Ascend910B4 --aicore 1} $\rightarrow$ \texttt{mat\_c\_gm.bin} 与 \texttt{golden.bin}，\texttt{max\_abs\_diff=0}。
+  \item 与 \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} 同输入下 \texttt{mat\_c} 一致。
+  \item SIM：\texttt{SIM\_DIRECT=1 bash run.sh -r sim -v Ascend910B4 --aicore 1}（目标与 D$'$ 同级稳定性）。
+\end{itemize}
+
+\section{风险与未决项}
+\begin{itemize}
+  \item \textbf{$m{=}16$ 参数化}：\texttt{AicMmad(16,256,256)} 在 CPU/sim 上的数值与 golden 对齐须在 \texttt{ascendc-tests/} 探针先验，再回迁本目录。
+  \item \textbf{事件 ID}：与 D$'$ 复用或独立编号须在核头注释；勿与库保留值冲突。
+  \item \textbf{旧代码误导}：本目录现行融合核为\textbf{废止路径}，勿以其为 code review 基线。
+  \item \textbf{文档}：策略讨论见 \texttt{qa/2026-06/2026-06-10-F203-MIX-merged\_kyber路线与limb6.md}。
+\end{itemize}
+
+\end{document}

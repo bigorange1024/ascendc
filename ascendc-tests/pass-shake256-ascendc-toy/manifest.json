@@ -1,0 +1,72 @@
+{
+  "active": "abc",
+  "rate_bytes": 136,
+  "cases": [
+    {
+      "name": "abc",
+      "batch": 1,
+      "maxMsgLen": 3,
+      "outLen": 32,
+      "lengths": [
+        3
+      ]
+    },
+    {
+      "name": "empty",
+      "batch": 1,
+      "maxMsgLen": 1,
+      "outLen": 32,
+      "lengths": [
+        0
+      ]
+    },
+    {
+      "name": "prf_sigma_n0",
+      "batch": 1,
+      "maxMsgLen": 33,
+      "outLen": 128,
+      "lengths": [
+        33
+      ]
+    },
+    {
+      "name": "rate_135",
+      "batch": 1,
+      "maxMsgLen": 135,
+      "outLen": 64,
+      "lengths": [
+        135
+      ]
+    },
+    {
+      "name": "rate_136",
+      "batch": 1,
+      "maxMsgLen": 136,
+      "outLen": 64,
+      "lengths": [
+        136
+      ]
+    },
+    {
+      "name": "rate_137",
+      "batch": 1,
+      "maxMsgLen": 137,
+      "outLen": 64,
+      "lengths": [
+        137
+      ]
+    },
+    {
+      "name": "batch_mixed",
+      "batch": 4,
+      "maxMsgLen": 137,
+      "outLen": 64,
+      "lengths": [
+        0,
+        3,
+        64,
+        137
+      ]
+    }
+  ]
+}

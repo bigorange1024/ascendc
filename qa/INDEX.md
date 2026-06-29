@@ -1,0 +1,85 @@
+# qa — 讨论回忆索引
+
+**本 INDEX 的重点**：用**关键字 + 短句**概括**每一天**的讨论，便于定位当月纪要；细节见 `qa/YYYY-MM/YYYY-MM-DD-<关键词>.md`。
+
+遗留总表：[TODO.md](TODO.md)。当月目录：[2026-06/INDEX.md](2026-06/INDEX.md)、[2026-05/INDEX.md](2026-05/INDEX.md)。
+
+正式交付文档见 `docs/`。
+
+---
+
+## 按时间（新→旧）
+
+### 2026-06-28 — [KeyGen pass 前缀 / 子轨重命名 / Phase A 冻结 / exp 交付](2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md)
+
+**pass-fix keygen** · **alg7/lines3-7/lines8-15 子轨重命名** · **Phase A frozen** · **exp 自包含** · **KAT** · **backup-project.sh**
+
+### 2026-06-26 — [标量探针冻结 / KeyGen SIM prep a_hat workaround](2026-06/2026-06-26-标量探针冻结.md)
+
+标量探针 **frozen** · **设备 ρ+ek** · **SIM a_hat 8–15 并行 FAIL** · sub0 **串行 workaround** · KAT PASS · [HOME-KEYGEN-DEBUG.md](../HOME-KEYGEN-DEBUG.md)
+
+### 2026-06-25 — [KeyGen prep 单 TPipe / 性能优化路线图 2134](2026-06/2026-06-25-KeyGen-prep优化路线图.md)
+
+Step4 **2 launch** · prep **454170** · Opt-2/4 ✅ · **exp-keygen-k4** 夜间批跑
+
+### 2026-06-24 — [Alg.7 单 poly 验收 / R5 compact / 16-poly Â](2026-06/2026-06-24-Alg7单poly验收与R5向量compact.md)
+
+单 poly **â PASS** · R5 向量 compact **暂停** · **16-poly Â** · **KeyGen G0–G4 CPU+SIM PASS**
+
+### 2026-06-23 — [Alg.7 SampleNTT / Phase A 向量化实验](2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md)
+
+设备 `a_hat` Phase 1 PASS · A-v1~v4b SIM tick · **d12 POC PASS** · **rej 批量+Min+mod §13** · **d1/d2 交错 ROM Gather §14** · **shake_xof LocalTensor I/O §15** · **XOF 672B §16** · **672 vs 504 tick §17** · **rej 剔除双方案 §18** · 默认 **`F203_ALG7_REJ_IMPL=1`**
+
+### 2026-06-19 — [ByteEncode prefetch 合入 v2 + SIM 性能复测](2026-06/2026-06-19-ByteEncode12-only探针与prefetch实验.md)
+
+prefetch 合入 vec-k4-v2 · **77958 全链路 tick** · NTT/内积/ByteEncode 单用例 SIM 表
+
+### 2026-06-18 — [内积 a_hat 布局 & 2s1e NTT+行18 UB 融合 & exp-k4 FIPS 预研](2026-06/2026-06-18-内积布局与NTT内积UB融合讨论.md)
+
+NTT+内积 UB 融合 · **全链路 86120 tick**（tile32 encode，6/19 被 prefetch **77958** 取代） · exp-k4 FIPS CBD CPU/SIM ✓
+
+### 2026-06-15 — [ByteEncode₁₂ 向量、Scatter 与剩余热点](2026-06/2026-06-15-ByteEncode12向量与Scatter讨论.md)
+
+ByteEncode₁₂ 向量探针 · 910B4 无 Scatter · pack+DataCopy · basemul 仍标量 · CPU/SIM ✓
+
+### 2026-06-12 — [F203 Alg.13 行 18、TQue、MLKEM NTT poly-batch 定稿](2026-06/2026-06-12-F203-alg13行18-TQue与模运算讨论.md)
+
+alg13 16–18 验收 · TQue/mod · **poly-batch 权威探针定稿** · 每 AIV 完整 poly · alg13 待迁移 T11
+
+### 2026-06-11 — [engineering-notes、DataCopy、exp-int8 tiling](2026-06/2026-06-11-ascendc-engineering-notes与数据搬运.md)
+
+engineering-notes · DataCopy 知识库定稿 · exp-int8 多核 tiling · NTT `Matmul<>` 废弃冻结 · CPU/SIM 同步
+
+### 2026-06-10 — [F203 MIX：merged_kyber 与 limb6](2026-06/2026-06-10-F203-MIX-merged_kyber路线与limb6.md)
+
+merged_kyber 探针 · poly2/8 batch NTT · exp-sepolyvec8-ntt-k4 CPU+SIM
+
+### 2026-06-09 — [AscendC 平台与 CANN 文档索引](2026-06/2026-06-09-AscendC平台与CANN文档索引.md)
+
+AscendC 9.0.0 · KernelLaunch §六 · NTT 实现备忘 §七（int8 Cube、位运算、mod 多方案未定）
+
+### 2026-06-08 — [Rule/Skill 落地与 FIPS 203/204 终极目标](2026-06/2026-06-08-Rule-Skill落地与FIPS203-204终极目标.md)
+
+Rule/Skill · ML-KEM1024 KeyGen规划 · liboqs · 明日开工 · FIPS203+204
+
+### 2026-05-19 — [目录规划与资料库结构](2026-05/2026-05-19-目录规划与资料库结构.md)
+
+library/docs/qa 分工 · 仅根 README · 各目录 INDEX 侧重点
+
+---
+
+## 命名与归档（强制）
+
+| 规则 | 说明 |
+|------|------|
+| **路径** | `qa/YYYY-MM/YYYY-MM-DD-<中文关键词>.md` |
+| **每日一篇** | 同一自然日**只有一份**纪要；新讨论**刷新/追加**到当日文件，**禁止**同日新建第二个 `.md` |
+| **标题** | 文件名与文首标题含当日讨论**关键词**（可随当日追加话题更新文件名/标题，须同步 INDEX） |
+| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`** 与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
+
+---
+
+## 维护
+
+- 当日有新讨论 → 编辑 `qa/YYYY-MM/YYYY-MM-DD-….md`，更新本 INDEX **一行**关键字、当月 `INDEX.md`、`TODO.md`（若有遗留变更）。
+- 新日 → 在对应月目录**新建一篇**，勿复制昨日文件当模板除非有意延续结构。

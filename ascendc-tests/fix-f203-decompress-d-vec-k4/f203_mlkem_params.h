@@ -1,0 +1,7 @@
+#ifndef F203_MLKEM_PARAMS_H
+#define F203_MLKEM_PARAMS_H
+
+#define F203_MLKEM_Q 3329
+#define F203_MLKEM_N 256
+
+#endif

@@ -1,0 +1,34 @@
+build/
+src/*.o
+**/OPPROF_*/
+**/prof_sim/
+**/prof_npu/
+**/sim_log/
+**/cceprint/
+**/npuchk/
+**/build_*/
+**/build/
+**/dump/
+*.log
+add_custom_cpu
+add_custom_npu
+
+# 大目录 / 本地缓存（见 docs/engineering/环境复现与开发指南.md）
+packages/
+samples/
+samples-operator/
+backup/
+thirdparty/
+
+# 探针 / 算子 I/O 与构建产物
+**/input/
+**/output/
+**/out/
+**/out_*/
+**/auto_gen/
+**/__pycache__/
+*.bin
+*.o
+*.so
+**/ascendc_kernels_bbit
+**/stub_reg.log

@@ -1,0 +1,61 @@
+======== [baseline_1core] M=128 N=512 K=512 blockDim=1 usedCoreNum=1 single=(128,512) ========
+[gen_data] M=128 N=512 K=512 golden=(128, 512)
+[#13] 0x0000000000006d4b: main at /home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/main.cpp:49 (discriminator 4)
+[#14] 0x0000000000008524: _start at ??:?
+
+Traceback (most recent call last):
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 36, in <module>
+    sys.exit(0 if verify_result(out, gold) else 1)
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 19, in verify_result
+    output = np.fromfile(output_path, dtype=np.int32).reshape(M, N)
+FileNotFoundError: [Errno 2] No such file or directory: './output/output.bin'
+[RESULT] baseline_1core -> MISMATCH
+======== [half_M] M=64 N=512 K=512 blockDim=1 usedCoreNum=1 single=(64,512) ========
+[gen_data] M=64 N=512 K=512 golden=(64, 512)
+[#13] 0x0000000000006d4b: main at /home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/main.cpp:49 (discriminator 4)
+[#14] 0x0000000000008524: _start at ??:?
+
+Traceback (most recent call last):
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 36, in <module>
+    sys.exit(0 if verify_result(out, gold) else 1)
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 19, in verify_result
+    output = np.fromfile(output_path, dtype=np.int32).reshape(M, N)
+FileNotFoundError: [Errno 2] No such file or directory: './output/output.bin'
+[RESULT] half_M -> MISMATCH
+======== [quarter_M] M=32 N=512 K=512 blockDim=1 usedCoreNum=1 single=(32,512) ========
+[gen_data] M=32 N=512 K=512 golden=(32, 512)
+[#14] 0x0000000000008524: _start at ??:?
+
+[SUCCESS][AIV_0][pid 414374] exit success!
+Traceback (most recent call last):
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 36, in <module>
+    sys.exit(0 if verify_result(out, gold) else 1)
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 19, in verify_result
+    output = np.fromfile(output_path, dtype=np.int32).reshape(M, N)
+FileNotFoundError: [Errno 2] No such file or directory: './output/output.bin'
+[RESULT] quarter_M -> MISMATCH
+======== [M16_K512] M=16 N=512 K=512 blockDim=1 usedCoreNum=1 single=(16,512) ========
+[gen_data] M=16 N=512 K=512 golden=(16, 512)
+[#14] 0x0000000000008524: _start at ??:?
+
+[SUCCESS][AIV_0][pid 414474] exit success!
+Traceback (most recent call last):
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 36, in <module>
+    sys.exit(0 if verify_result(out, gold) else 1)
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 19, in verify_result
+    output = np.fromfile(output_path, dtype=np.int32).reshape(M, N)
+FileNotFoundError: [Errno 2] No such file or directory: './output/output.bin'
+[RESULT] M16_K512 -> MISMATCH
+======== [kyber_stage2] M=16 N=256 K=512 blockDim=1 usedCoreNum=1 single=(16,256) ========
+[gen_data] M=16 N=256 K=512 golden=(16, 256)
+[#14] 0x0000000000008524: _start at ??:?
+
+[SUCCESS][AIV_0][pid 414575] exit success!
+Traceback (most recent call last):
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 36, in <module>
+    sys.exit(0 if verify_result(out, gold) else 1)
+  File "/home/yuanye/ascendc/ascendc-tests/int8-matmul-cube-128x512x512/scripts/verify_result.py", line 19, in verify_result
+    output = np.fromfile(output_path, dtype=np.int32).reshape(M, N)
+FileNotFoundError: [Errno 2] No such file or directory: './output/output.bin'
+[RESULT] kyber_stage2 -> MISMATCH
+[SWEEP] all steps PASS

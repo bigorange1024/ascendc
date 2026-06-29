@@ -1,0 +1,22 @@
+#ifndef BYTE_DECODE_D_CONFIG_HPP
+#define BYTE_DECODE_D_CONFIG_HPP
+
+#ifndef F203_BYTE_DECODE_D
+#define F203_BYTE_DECODE_D 4
+#endif
+
+#ifndef BYTE_DECODE_D_VEC
+#define BYTE_DECODE_D_VEC 1
+#endif
+
+#if F203_BYTE_DECODE_D != 4 && F203_BYTE_DECODE_D != 10
+#error "F203_BYTE_DECODE_D must be 4 or 10"
+#endif
+
+#if F203_BYTE_DECODE_D == 4
+#define F203_BYTE_DECODE_POLY_BYTES 128
+#elif F203_BYTE_DECODE_D == 10
+#define F203_BYTE_DECODE_POLY_BYTES 320
+#endif
+
+#endif

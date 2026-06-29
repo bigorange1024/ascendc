@@ -1,0 +1,220 @@
+% 融合算子多核 MatMul tiling 策略指南（AscendC / Atlas A2）
+% 编译：xelatex -interaction=nonstopmode 融合算子多核tiling策略指南.tex（两遍）
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{listings}
+\geometry{margin=2.2cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single}
+
+\title{融合算子多核 Tiling 策略指南\\{\large AscendC KernelLaunch · Atlas A2 · 以 int8 MatMul 实验为据}}
+\author{ascendc 工程}
+\date{2026-06-11}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档从 \texttt{ascendc-tests/int8-matmul-cube-128x512x512/} 的多核 CPU 实验归纳
+\textbf{Host 侧 MatMul tiling} 与 \textbf{Launch} 的闭合条件，并扩展到
+\textbf{Cube + Vector 融合算子}（如 MatmulLeakyRelu）的配参思路。
+实验平台为 CANN 9.0.0、Atlas A2（910B4）；讨论纪要见
+\texttt{qa/2026-06/2026-06-11-ascendc-engineering-notes与数据搬运.md}。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{适用范围与术语}
+
+\subsection{适用范围}
+\begin{itemize}
+  \item \textbf{范式}：KernelLaunch；算子在 \texttt{*\_custom.cpp}，\texttt{main.cpp} 为应用壳。
+  \item \textbf{硬件}：Atlas A2（AIC:AIV = 1:2）；\textbf{不}覆盖 Ascend 310P 等特例。
+  \item \textbf{矩阵乘段}：\texttt{MultiCoreMatmulTiling} + 高阶 \texttt{Matmul<>}（纯 Cube 或融合 Vector 段）。
+  \item \textbf{dtype 示例}：int8 $\times$ int8 $\rightarrow$ int32（实验）；fp16 等需替换最小 tile 与 base 倍数。
+\end{itemize}
+
+\subsection{两层分块}
+\begin{table}[h]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    层级 & Host 接口 & 决定内容 \\
+    \midrule
+    宏分片 & \texttt{SetDim}、\texttt{SetSingleShape}、\texttt{GetTiling} & 每个 \texttt{blockIdx} 负责 $C$ 的子块 \\
+    微分片 & \texttt{SetFixSplit(baseM, baseN, baseK)} & 每个 AIC 内部 L0/Cube 迭代粒度 \\
+  \end{tabular}
+\end{table}
+
+\textbf{常见误区}：认为只改 \texttt{blockDim} 与 \texttt{SetDim} 即可扩核。
+宏分块数由 \texttt{GetTiling}（或 \texttt{SetSingleShape} 闭合公式）决定，与 launch 数必须一致。
+
+\subsection{Launch 与 \texttt{usedCoreNum}（A2）}
+\begin{itemize}
+  \item \texttt{main.cpp} 中 \texttt{blockDim}：本次 launch 的 \textbf{AI Core（AIC）个数}。
+  \item \texttt{SetDim(usedCoreNum)}：参与 MatMul 的 \textbf{AIV 规模}；本工程取
+        $\texttt{usedCoreNum} = \texttt{blockDim} \times 2$。
+  \item 内核用 \texttt{GetBlockIdx()}（0 $\ldots$ \texttt{blockDim}$-1$）配合
+        \texttt{CalcGMOffset} 计算 GM 偏移。
+\end{itemize}
+
+\section{Tiling 闭合条件（用户定稿）}
+
+以下在 \textbf{step/depth 不手改}、\textbf{baseK = -1}（K 向微块由 API 选择）、
+\textbf{SingleCoreK = K}（宏上 K 不切，利于搬运与融合段衔接）时成立。
+
+\subsection{硬件与 base}
+\begin{enumerate}
+  \item 实验设备 int8 入 / int32 出时，Cube 最小 tile 约为
+        $16 \times 32 \times 16$（$M\times N\times K$）。
+  \item 故 $\texttt{baseM}$ 为 \textbf{16 的倍数}，$\texttt{baseN}$ 为 \textbf{32 的倍数}。
+  \item $\texttt{SetFixSplit(baseM, baseN, -1)}$；\texttt{baseK=-1} 不表示 K 向宏切分。
+\end{enumerate}
+
+\subsection{宏块与微块}
+\begin{enumerate}
+  \setcounter{enumi}{3}
+  \item $\texttt{SingleCoreM} \bmod \texttt{baseM} = 0$，
+        $\texttt{SingleCoreN} \bmod \texttt{baseN} = 0$。
+  \item L0A/L0B 须能容纳当前 base 与 SingleCore 下的搬入策略（失败时常表现为
+        \texttt{GetTiling} 返回 $-1$ 或 KFC 初始化错误）。
+\end{enumerate}
+
+\subsection{多核网格（核心等式）}
+\begin{equation}
+  \frac{M}{\texttt{SingleCoreM}} \times \frac{N}{\texttt{SingleCoreN}}
+  = \texttt{usedCoreNum}
+  \label{eq:grid}
+\end{equation}
+要求 $M,N$ 与 $\texttt{SingleCoreM,N}$ \textbf{整除}。
+等价形式：
+$\texttt{SingleCoreM} \times \texttt{SingleCoreN} \times \texttt{usedCoreNum} = M \times N$。
+\textbf{$K$ 不参与式 \eqref{eq:grid}}。
+
+\subsection{配参流程}
+\begin{enumerate}
+  \item 选定 $\texttt{usedCoreNum}$（= 宏分块总数 $= m_{\mathrm{blk}} \times n_{\mathrm{blk}}$）。
+  \item 将 $\texttt{usedCoreNum}$ 因子分解，赋值
+        $m_{\mathrm{blk}} = M/\texttt{SingleCoreM}$，
+        $n_{\mathrm{blk}} = N/\texttt{SingleCoreN}$。
+  \item 计算 $\texttt{SingleCoreM} = M/m_{\mathrm{blk}}$，
+        $\texttt{SingleCoreN} = N/n_{\mathrm{blk}}$，$\texttt{SingleCoreK} = K$。
+  \item 校验对 base 的倍数关系与 L0。
+  \item Host：\texttt{SetSingleShape(SingleCoreM, SingleCoreN, K)}（推荐显式闭合），
+        \texttt{SetDim(usedCoreNum)}，\texttt{SetFixSplit}。
+  \item Launch：$\texttt{blockDim} = \texttt{usedCoreNum}/2$（A2）。
+  \item \texttt{GetTiling} 后建议断言 $\texttt{res} \neq -1$，并核对
+        \texttt{TCubeTiling} 中 \texttt{singleCoreM/N} 与预期一致。
+\end{enumerate}
+
+\section{实验用例：$128 \times 512 \times 512$ int8 MatMul}
+
+\subsection{符号}
+$A \in \mathbb{Z}^{128 \times 512}$，$B \in \mathbb{Z}^{512 \times 512}$，
+$C \in \mathbb{Z}^{128 \times 512}$，int8 $\times$ int8 $\rightarrow$ int32。
+
+\subsection{已验证配置摘要}
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{ccccp{4.5cm}}
+    \toprule
+    AIC 数 & usedCoreNum & SetFixSplit & SetSingleShape & 结果 \\
+    \midrule
+    1 & 2 & (16,32,*) & 无 & 通过 \\
+    4 & 8 & (16,32,-1) & 无 & 通过 \\
+    8 & 16 & (32,32,-1) & 无 & 失败（GetTiling / SIGFPE） \\
+    8 & 16 & (16,32,-1) & 无 & 通过（自动约 8 路 N 切） \\
+    16 & 32 & (16,32,-1) & 无 & 失败（launch 16，tiling 约 8 块） \\
+    16 & 32 & (16,32,-1) & (32,64,K) 等三种 & 通过 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{16 AIC 下三种等价 SetSingleShape}
+$\texttt{usedCoreNum}=32$，$\texttt{blockDim}=16$，均满足式 \eqref{eq:grid}：
+\begin{itemize}
+  \item $(32,64,K)$：$4 \times 8 = 32$
+  \item $(64,32,K)$：$2 \times 16 = 32$
+  \item $(16,128,K)$：$8 \times 4 = 32$
+\end{itemize}
+差异在 M/N \textbf{切分几何}与缓存局部性，非数学结果。
+
+\subsection{反例：未闭合的 SetSingleShape}
+$(128,32,K)$：$1 \times 16 = 16 \neq 32$ $\Rightarrow$ \texttt{blockIdx}$\geq 8$ 时
+\texttt{tailN} 为负，\texttt{CheckTails} 断言失败。
+
+\subsection{无 SetSingleShape 时的并行上界}
+对 $N=512$、$\texttt{baseN}=32$，N 向理论最大块数
+$\lfloor N / \texttt{baseN} \rfloor = 16$；但 \texttt{GetTiling} 在
+本实验中 \textbf{自动} 常停在约 8 路（$\texttt{singleCoreN}=64$）。
+欲稳定达到 16 路，需按 §2 显式 \texttt{SetSingleShape} 闭合。
+
+\section{融合算子扩展（Matmul + Vector）}
+
+\subsection{与纯 MatMul 的相同点}
+\begin{itemize}
+  \item MatMul 段仍遵守 §2 全部条件；\texttt{REGIST\_MATMUL\_OBJ}、
+        \texttt{CalcGMOffset}、\texttt{SetTail}（或 device 侧 \texttt{SetSingleShape}）
+        与 \texttt{TCubeTiling} 一致。
+  \item A2 上 Cube:Vector = 1:2；\texttt{baseM}:\texttt{baseN} 宜为 1:2（如 16:32），
+        与 int8 最小 tile 一致。
+\end{itemize}
+
+\subsection{融合段额外注意}
+\begin{itemize}
+  \item \textbf{VECIN/VECOUT} 队列深度与 \texttt{stepM/stepN}：实验约定 \textbf{不手改}
+        除非整体验证；改 step 会牵动 Cube--Vector 流水线。
+  \item Vector 段按 \texttt{singleCoreM} $\times$ \texttt{singleCoreN} 子块消费 Cube 输出；
+        宏分片错误时 Cube 与 Vector 同步错位。
+  \item 多 AIC 融合算子在 CPU 孪生上可能遇跨核 Matmul 同步问题；优先保证
+        §2 闭合，再查融合 API；避免未闭合 tiling 时用多次 launch 掩盖根因（除非明确为 CPU 绕行）。
+\end{itemize}
+
+\subsection{推荐 Host 模板（伪代码）}
+\begin{lstlisting}
+// 1. 定 usedCoreNum, 因子分解, 算 SingleCoreM/N
+tilingApi.SetDim(usedCoreNum);
+tilingApi.SetOrgShape(M, N, K);
+tilingApi.SetShape(M, N, K);
+tilingApi.SetSingleShape(singleCoreM, singleCoreN, K);
+tilingApi.SetFixSplit(baseM, baseN, -1);
+tilingApi.SetBufferSpace(-1, -1, -1);
+if (tilingApi.GetTiling(tilingData) == -1) { /* abort */ }
+// 2. launch
+blockDim = usedCoreNum / 2;  // A2
+\end{lstlisting}
+
+\section{故障诊断}
+
+\begin{table}[h]
+  \centering
+  \small
+  \begin{tabular}{lp{8cm}}
+    \toprule
+    现象 & 优先检查 \\
+    \midrule
+    \texttt{Ceiling} SIGFPE & \texttt{GetTiling} 是否 $-1$；\texttt{singleCoreM} 是否为 0 \\
+    \texttt{tailN} 负 / \texttt{CheckTails} & 式 \eqref{eq:grid}；\texttt{blockDim} 是否大于宏块数 \\
+    \texttt{totalIter\_}=0 & 该 \texttt{blockIdx} 无 N 向合法子块 \\
+    部分 Block 成功 & launch 块数 $>$ \texttt{Ceiling(M,sM)*Ceiling(N,sN)} \\
+    改 base 后高核数才过 & 微块约束导致 \texttt{GetTiling} 在高并行度下无解 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{参考路径}
+
+\begin{itemize}
+  \item 实验目录：\texttt{ascendc-tests/int8-matmul-cube-128x512x512/}
+  \item 讨论纪要：\texttt{qa/2026-06/2026-06-11-ascendc-engineering-notes与数据搬运.md}
+  \item 模板：\texttt{MatmulInvocationNeo}、\texttt{MatmulLeakyReluInvocation}
+  \item 平台纪要 §7.5：\texttt{qa/2026-06/2026-06-09-AscendC平台与CANN文档索引.md}
+\end{itemize}
+
+\end{document}

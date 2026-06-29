@@ -1,0 +1,70 @@
+{
+  "files.watcherExclude": {
+    "**/samples/**": true,
+    "**/packages/**": true,
+    "**/examples/**/build/**": true
+  },
+  "search.exclude": {
+    "**/samples": true,
+    "**/packages": true,
+    "**/examples/**/build": true
+  },
+  "terminal.integrated.scrollback": 10000,
+  "C_Cpp.default.compilerPath": "/usr/bin/gcc",
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/include",
+    "${workspaceFolder}/src"
+  ],
+  "C_Cpp.errorSquiggles": "enabled",
+  "debug.defaultConfiguration": "Debug main (src/main.c → build/app)",
+  "cmake.configureOnOpen": false,
+  "cmake.ignoreCMakeListsMissing": true,
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "cmake.buildDirectory": "${workspaceFolder}/build/cmake",
+  "C_Cpp_Runner.cCompilerPath": "gcc",
+  "C_Cpp_Runner.cppCompilerPath": "g++",
+  "C_Cpp_Runner.debuggerPath": "/usr/bin/gdb",
+  "C_Cpp_Runner.cStandard": "c11",
+  "C_Cpp_Runner.useMsvc": false,
+  "C_Cpp_Runner.runInTerminal": true,
+  "C_Cpp_Runner.enableWarnings": true,
+  "C_Cpp_Runner.includePaths": [
+    "${workspaceFolder}/include"
+  ],
+  "C_Cpp_Runner.compilerArgs": [
+    "-I${workspaceFolder}/include"
+  ],
+  "C_Cpp_Runner.cwd": "${workspaceFolder}",
+  "C_Cpp_Runner.includeSearch": [
+    "*",
+    "**/*"
+  ],
+  "C_Cpp_Runner.excludeSearch": [
+    "**/build",
+    "**/build/**",
+    "**/examples/**",
+    "**/samples/**",
+    "**/packages/**",
+    "**/scripts/**",
+    "**/.git/**",
+    "**/.vscode/**"
+  ],
+  "C_Cpp_Runner.msvcBatchPath": "",
+  "C_Cpp_Runner.cppStandard": "",
+  "C_Cpp_Runner.warnings": [
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic"
+  ],
+  "C_Cpp_Runner.warningsAsError": false,
+  "C_Cpp_Runner.linkerArgs": [],
+  "C_Cpp_Runner.useAddressSanitizer": false,
+  "C_Cpp_Runner.useUndefinedSanitizer": false,
+  "C_Cpp_Runner.useLeakSanitizer": false,
+  "C_Cpp_Runner.showCompilationTime": false,
+  "C_Cpp_Runner.useLinkTimeOptimization": false,
+  "C_Cpp_Runner.msvcSecureNoWarnings": false
+}

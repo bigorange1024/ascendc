@@ -1,0 +1,109 @@
+/**
+ * @file f203_se_vector_prf.hpp
+ * @brief Phase P：σ → 8× SHAKE256 PRF（单 TPipe UB shake，链末 DataCopy 对拍 prf_out GM）。
+ */
+#pragma once
+
+#include "f203_se_vector_g.hpp"
+#include "shake_general.h"
+#include "shake_general_tiling_data.h"
+#include "shake_ub_helpers.hpp"
+
+#include <cstdint>
+
+namespace F203SeVector {
+
+#define F203_SE_PRF_PIPE_ALL() ShakeXofUb::PipeAll()
+
+constexpr uint32_t PRF_BATCH = 8U;
+/** 有效 PRF 消息长度 σ‖N（FIPS 203）。 */
+constexpr uint32_t PRF_MSG_LEN = 33U;
+/**
+ * UB x 行 stride：须 8B 对齐，供 shake_general XorBlock32 的 uint64 块读。
+ * 背景：maxMsgLen=33 时 msgBase=33,66,99… 非 8B 对齐 → SIM pem_lsu 告警（2026-06-25 回归）。
+ * lengths[i] 仍为 PRF_MSG_LEN；仅布局 stride 垫到 64。
+ */
+constexpr uint32_t PRF_MSG_STRIDE = ShakeXofUb::CeilAlign32(PRF_MSG_LEN);
+constexpr uint32_t PRF_OUT_LEN = 128U;
+constexpr uint32_t PRF_X_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * PRF_MSG_STRIDE);
+constexpr uint32_t PRF_LEN_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * static_cast<uint32_t>(sizeof(uint32_t)));
+constexpr uint32_t PRF_Y_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * PRF_OUT_LEN);
+
+__aicore__ inline void LoadTilingFromGm(GM_ADDR tiling, ShakeGeneralTilingData &td)
+{
+    const __gm__ uint32_t *p = reinterpret_cast<const __gm__ uint32_t *>(tiling);
+    td.batch = p[0];
+    td.maxMsgLen = p[1];
+    td.outLen = p[2];
+    td.rate = p[3];
+    td.blockDim = p[4];
+    td.groupSize = p[5];
+    td.reserved0 = p[6];
+    td.reserved1 = p[7];
+    td.reserved2 = p[8];
+}
+
+/** σ‖N 写入 UB x/lengths（batch=8，行优先）。 */
+__aicore__ inline void FillPrfMessagesUb(const uint8_t sigma[32], AscendC::LocalTensor<uint8_t> &xUb,
+                                         AscendC::LocalTensor<uint32_t> &lengthsUb)
+{
+    for (uint32_t nonce = 0U; nonce < PRF_BATCH; ++nonce) {
+        const uint32_t rowBase = nonce * PRF_MSG_STRIDE;
+        ShakeXofUb::FillShakeRowUb(sigma, 32U, static_cast<uint8_t>(nonce & 0xFFU), xUb, rowBase);
+        lengthsUb.SetValue(nonce, PRF_MSG_LEN);
+    }
+    F203_SE_PRF_PIPE_ALL();
+}
+
+/** UB SHAKE batch → prf_out GM；yQue 须已 InitBuffer(1, PRF_Y_UB_BYTES)。 */
+__aicore__ inline void RunShakePrfBatchUbWithUb(const uint8_t sigma[32], __gm__ uint8_t *prf_out_gm,
+                                                const ShakeGeneralTilingData &tilingLocal,
+                                                AscendC::TBuf<AscendC::TPosition::VECCALC> &xBuf,
+                                                AscendC::TBuf<AscendC::TPosition::VECCALC> &lenBuf,
+                                                AscendC::TBuf<AscendC::TPosition::VECCALC> &stagingBuf,
+                                                AscendC::TQue<AscendC::TPosition::VECOUT, 1> &yQue)
+{
+    AscendC::LocalTensor<uint8_t> xUb = xBuf.Get<uint8_t>();
+    AscendC::LocalTensor<uint32_t> lengthsUb = lenBuf.Get<uint32_t>();
+    AscendC::LocalTensor<uint8_t> stagingUb = stagingBuf.Get<uint8_t>();
+
+    FillPrfMessagesUb(sigma, xUb, lengthsUb);
+    AscendC::LocalTensor<uint8_t> yUb = yQue.AllocTensor<uint8_t>();
+    ShakeXofUb::RunKernelShakeGeneralUb(xUb, lengthsUb, yUb, stagingUb, &tilingLocal);
+    F203_SE_PRF_PIPE_ALL();
+
+    AscendC::GlobalTensor<uint8_t> prfGm;
+    prfGm.SetGlobalBuffer(prf_out_gm, PRF_BATCH * PRF_OUT_LEN);
+    AscendC::DataCopy(prfGm, yUb, PRF_BATCH * PRF_OUT_LEN);
+    F203_SE_PRF_PIPE_ALL();
+    yQue.FreeTensor(yUb);
+}
+
+/** 单 TPipe：UB SHAKE batch → prf_out GM。 */
+__aicore__ inline void RunShakePrfBatchUb(const uint8_t sigma[32], __gm__ uint8_t *prf_out_gm,
+                                          const ShakeGeneralTilingData &tilingLocal)
+{
+    AscendC::TPipe pipe;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> xBuf;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> lenBuf;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> stagingBuf;
+    AscendC::TQue<AscendC::TPosition::VECOUT, 1> yQue;
+    pipe.InitBuffer(xBuf, PRF_X_UB_BYTES);
+    pipe.InitBuffer(lenBuf, PRF_LEN_UB_BYTES);
+    pipe.InitBuffer(stagingBuf, ShakeXofKernel::SHAKE_XOF_STAGING_BYTES);
+    pipe.InitBuffer(yQue, 1, PRF_Y_UB_BYTES);
+
+    RunShakePrfBatchUbWithUb(sigma, prf_out_gm, tilingLocal, xBuf, lenBuf, stagingBuf, yQue);
+}
+
+__aicore__ inline void BuildPrfOutFromSeedD(uint32_t seed_d, GM_ADDR prf_out_gm, GM_ADDR tiling_gm)
+{
+    uint8_t sigma[32];
+    BuildSigmaFromSeedD(seed_d, sigma);
+
+    ShakeGeneralTilingData tilingLocal{};
+    LoadTilingFromGm(tiling_gm, tilingLocal);
+    RunShakePrfBatchUb(sigma, reinterpret_cast<__gm__ uint8_t *>(prf_out_gm), tilingLocal);
+}
+
+}  // namespace F203SeVector

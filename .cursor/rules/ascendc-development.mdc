@@ -1,0 +1,427 @@
+---
+description: AscendC+PQC 研究型工程；golden 仅验 I/O；exp/stable 分层；WSL 仿真；Rule/Skill 变更须用户确认
+alwaysApply: true
+---
+
+# AscendC 工程约束（ascendc 仓库）
+
+## 项目定位
+
+- **性质**：探索类**研究型**工程，在 **AscendC** 上探索 **PQC（后量子密码）** 相关算法；方案随调研推进，允许试错。
+- **路线会大量废弃**：前期探针与 `exp-*` 极多，多数经迭代后**判决关闭**并迁入 `**/frozen/`**；**仅**各 `INDEX.md` 列出的**当前**目录 + `docs/notes/` 定稿为**写码**来源。`frozen/` 内**可读关闭说明**，**禁止把代码带出**（详见 [研究路线与frozen治理.md](../../docs/notes/研究路线与frozen治理.md)）。
+- **运行环境**：**WSL** + CANN 9.0；**无**昇腾 AI Core 实机，依赖 **CPU 孪生 / CAModel 仿真**（`examples/*/run.sh`、`ascendc-tests/*/run.sh`）验证 AscendC。
+- **勿**将「编译通过」或「仿真能跑」等同于密码学最终正确性；论证与记录见 `docs/`。
+
+## README.md（工程总览，强制）
+
+- 根目录 **`README.md`** 面向 **新 Agent / 新协作者**：说明工程**目标**与**顶层目录结构**；不替代各目录 `INDEX.md` 的细节。
+- Agent 开新任务：**先读 `README.md`**，再读 `qa/INDEX.md` 与本 Rule；做算子时读 `examples/INDEX.md`。
+- 增删顶层目录、变更 incubating/stable 政策、或备份前整理时，**须同步刷新** `README.md` 中目标与结构相关段落。
+- 子目录**不设** README（`thirdparty/` 上游工程自带 README 除外）；细节写在对应 `INDEX.md` 或 `docs/`。
+
+## 文档与索引
+
+| 路径 | 侧重 |
+|------|------|
+| `docs/INDEX.md` | 项目文档与何时阅读 |
+| `library/INDEX.md` | 外部资料 |
+| `qa/INDEX.md` | 按日讨论回忆（关键字 + 短句） |
+| `qa/TODO.md` | 遗留事项总表 |
+| `examples/INDEX.md` | 各子目录算什么 |
+| `ascendc-tests/INDEX.md` | 平台功能探针 |
+| `.cursor/skills/INDEX.md` | 场景 Skill 列表与触发 |
+| `library/documents/CANN-AscendC算子开发接口参考-查阅索引.md` | CANN 9.0 AscendC API **查阅记录**（写码前必查；查 PDF 后必刷新） |
+
+- `docs/` 子目录：`specs/`（含 baseline-registry）、`engineering/`、`notes/`、`reports/` — 各有 `INDEX.md`（**无** `research/`）。
+- **`docs/notes/`**：定稿技术总结须 **原理优先**（数学/不变量/可复用模式），案例与标识符放附录；见 [docs-archiving.mdc](docs-archiving.mdc)「写作质量」。
+- **`qa/`**：讨论过程、决策要点；**非**完整踩坑教科书（详文链到 `docs/notes`）。
+- **`ascendc-tests/<探针>/`**：仅实现方案（`INTEGRATION_PLAN.md`）、`STATUS.md`；**禁止** `LESSONS_LEARNED.md` 等长篇总结 → 见 [docs-archiving.mdc](docs-archiving.mdc)。
+- 环境复现：`docs/engineering/环境复现与开发指南.md`（§12 Agent Prompt、§13 清单、§14 测试矩阵）。
+- 技术总结模板：`docs/notes/技术总结写作模板.md`。
+- 外部资料：`library/`；讨论：`qa/`；第三方工程：`thirdparty/`。
+- 增删文件时**须同步更新**对应 `INDEX.md`（及 `qa/TODO.md`、当月 `qa/YYYY-MM/INDEX.md` 若涉及遗留变更）。
+
+## `qa/` 讨论纪要（强制）
+
+| 规则 | 说明 |
+|------|------|
+| **路径** | `qa/YYYY-MM/YYYY-MM-DD-<中文关键词>.md`（按**月**分子目录） |
+| **每日一篇** | 同一自然日**仅一份**纪要；新话题**追加/刷新**到**当日**文件，**禁止**同日再建第二个 `.md` |
+| **标题** | 文件名与文首标题须含当日讨论**关键词**（话题增多时可更新关键词，并同步 `qa/INDEX.md`） |
+| **根目录** | `qa/` 根下仅 `INDEX.md`、`TODO.md` 与 `YYYY-MM/` 月目录；**不**在根下直接放日纪要 |
+| **索引** | 更新当日正文后，同步 `qa/INDEX.md`（一行关键字）、`qa/YYYY-MM/INDEX.md`；遗留变更同步 `qa/TODO.md` |
+
+## Rule 与 Skill 变更（强制）
+
+- **`.cursor/rules/`** 与 **`.cursor/skills/`** 下任意文件的**新增、修改、删除**，均须用户在**当次任务中明确确认一次**后方可执行。
+- Agent 只可提议理由与草案；**未获确认不得写入**。
+- 本约束本身亦须用户同意后才能修改。
+
+## 实现参数锁定（强制）
+
+任务中已与用户确认、或任务描述已明确的**实现参数**（含但不限于：矩阵/张量形状与布局、batch/k、tiling/`SetSingleShape`/`blockDim`/`usedCoreNum`、launch profile、数据编码规则、golden 几何、目录名与命名）视为**已锁定**。
+
+| 禁止 | 要求 |
+|------|------|
+| 未经用户同意，在实现过程中**擅自改参数**以绕过编译错误、尺寸不一致、对拍失败等，**强行继续编码** | 严格按已锁定参数实现；遇阻时**停下**说明阻塞点 |
+| 用「自洽对拍通过」替代「语义参数正确」作为继续依据 | 对参数有**任何质疑或歧义**（含文档与代码不一致、多种合理解释）时，**中止工作**，列出选项并与用户**确认参数**后再继续 |
+| 静默采用与任务不同的「工程捷径」参数 | 若确需改参数，须**先**说明原因、影响范围与建议值，**获用户明确同意**后方可改代码 |
+
+**典型红旗**：`ReadFile` 尺寸不符 → 直接改 `M`/`N`；注释写 16 行、实现改成 32 行；golden 与 kernel 形状不一致时只改 verify 或只改一侧而不确认语义。
+
+## Cursor Skills（`.cursor/skills/`，强制）
+
+- 项目 Skill **仅**位于 **`.cursor/skills/<name>/SKILL.md`**；仓库根**不得**设立 `skills/` 目录。
+- 场景手册：`ascendc-impl-spec`、`pre-research`、`ascendc-delivery`；索引见 `.cursor/skills/INDEX.md`。
+
+### Skill 激活
+
+| 触发 | Skill |
+|------|-------|
+| 点名「按 ascendc-impl-spec / pre-research / ascendc-delivery skill」 | 对应 Skill |
+| 任务含 **`$关键词$`**（如 `$方案$` `$写方案$` `$计划$` `$写计划$` `$规格$`） | **ascendc-impl-spec**（产出 `*-customspec.*`） |
+| 任务含 **`【关键词】`**（如【预研】【调研】【实验】【迭代】） | **pre-research** |
+| 任务含 **`#关键词#`**（左右各一个 `#`，如 `#交付#` `#验收#` `#修改#`） | **ascendc-delivery** |
+| 仅「测试」等、**无 `$…$` 且无【】且无 `#…#`** | **不自动**套 Skill；须询问或请用户加符号 |
+| **同一句同时出现【】和 `#…#`** | **告警、禁止仓库操作**，请用户指定 Skill |
+| **`$…$` 与【】同句** | 默认 **先 customspec，再预研写码** |
+
+### customspec 与 examples 写码（强制）
+
+| 门禁 | 说明 |
+|------|------|
+| **customspec** | **`examples/incubating/exp-*` 或 `examples/stable/stable-*`** 下 kernel、main、CMake、`run.sh`、`scripts/` 等必须以用户指明的 **`*-customspec.*`** 为据（由 **ascendc-impl-spec** 产出或用户指定**活跃**路径；**禁止**使用 `examples/frozen/` 内 customspec） |
+| **无 customspec** | **禁止**在 `examples/` 内增删改上述代码；只能写 customspec 或反复索要路径；**不得**因用户催促而放弃 |
+| **注释与实现同轮** | 自研 **Python / C / AscendC** 须与实现**同一轮任务、同 PR / 同次提交**同步写入达到下节验收标准的详细中文注释；**不禁止**后续轮次继续补充、细化注释 |
+| **examples 外** | **`ascendc-tests/`、`src/`、`thirdparty/`、`include/`、`docs/`、`qa/`、`library/` 等**不受 customspec 限制；**注释与实现同轮**仍适用自研代码 |
+
+## `ascendc-tests/`（平台功能探针）
+
+| 项 | 规则 |
+|----|------|
+| **路径** | `ascendc-tests/<简述>/`（**不加** `exp-` 前缀） |
+| **用途** | 单功能 AscendC 验证（MatMul tiling、API 行为等） |
+| **customspec** | **不适用** |
+| **stable** | **不复制**到 `examples/stable/` |
+| **索引** | `ascendc-tests/INDEX.md`；各用例可有 `STATUS.md` |
+
+## `**/frozen/` 路线关闭（强制）
+
+本仓库为**研究型**项目：调研路线与用例会持续增减，**大多数会废弃**。关闭后的代码迁入 `frozen/`，表示该路线**永久不再采纳**——无论当年是否「能跑」、是否「曾经权威」。
+
+**Agent 默认行为（写码 / 调研时）**：
+
+1. 查 **`ascendc-tests/INDEX.md`**、**`examples/incubating/INDEX.md`**（及任务指定的活跃探针 / `exp-*`）确定**实现基线**。
+2. 任务涉及某条**已关闭路线**时，**可进入**对应 `frozen/` 目录，读 **`FROZEN.md`**、`STATUS.md`、`frozen/INDEX.md`、`qa/` 纪要，弄清**为何关闭、继任是谁** —— **读完即退，不把代码带出来**。
+3. **禁止**把 frozen 内源码、数据面、FSM、类名、customspec **复制 / 移植 / fork** 到活跃目录；**禁止**为实现新功能而以 frozen 内 `.hpp/.cpp/.py` 为**参考模板**（判决书已足够说明「别走这条路」）。
+
+**一句话**：**进门读关闭说明，出门不带码。** 无需刻意从搜索中排除 `frozen/`；约束的是 **frozen → 活跃代码** 的流向，不是禁止阅读判决书。
+
+下列目录表示**未采纳的研究路线已判决关闭**（调研中止、跑不通、路线错误、或被继任方案取代）。**不是**可复用代码库、**不是**实现参考归档、**不是** customspec 依据。
+
+| 路径 | 前缀 | 合法继任代码来源 |
+|------|------|------------------|
+| `ascendc-tests/frozen/` | `frozen-<原名>/` | `ascendc-tests/INDEX.md` 中**当前探针**（非 frozen） |
+| `examples/frozen/` | `frozen-exp-<简述>/` | `examples/incubating/exp-*`、`examples/stable/stable-*`（**非** frozen-exp） |
+
+| 允许 | 禁止 |
+|------|------|
+| 进入 `frozen/`，读 **`FROZEN.md`**、`STATUS.md`、`frozen/INDEX.md`、`qa/` 纪要，了解**为何不采纳**、继任路线/探针 | 从 **`ascendc-tests/frozen/**` 或 `examples/frozen/**`** **复制、移植、改写、fork** 到活跃目录 |
+| 在文档中列出 frozen 目录作**已关闭路线索引**（附冻结原因） | 将 frozen 内 kernel / 数据面 / FSM / 同步壳 **写入** 新探针或新 `exp-*` |
+| 搜索或浏览命中 `frozen/` 时，**只读判决书后退出** | 在注释/文档中写「参考 frozen-xxx 实现」「从 frozen 移植」「照抄 frozen-exp」 |
+| | **跑 CI**；把 frozen 标为「上游」「权威探针」「参考 exp」 |
+| | 以 `examples/frozen/` 内 **`*-customspec.*`** 作为新 `exp-*` / `stable-*` 的实现依据 |
+
+**新实现唯一合法代码来源**：上表继任来源 + `docs/notes/` / `docs/specs/` 定稿文档 + 用户当次指定的**活跃** customspec（须在 `incubating/exp-*` 或 `stable-*`，**非** frozen）。
+
+**审查红旗**：活跃代码 `#include` 或路径指向 `frozen/`；新 exp 从 `frozen-exp-*` `cp` 改名；文档写「对照 frozen 实现可借鉴」；新任务引用 frozen 目录内 PDF customspec；实现中出现从 frozen **搬出的** 类名/布局/FSM；**未查活跃 INDEX 就把 frozen 源码当实现起点**。
+
+**用户冻结新路线时**：须写 `FROZEN.md`（原因 + 继任）、更新对应 `frozen/INDEX.md`、从活跃 `INDEX.md` 移除；避免仅 `mv` 而不留判决文书。
+
+## 代码资产：incubating / stable（强制）
+
+| 阶段 | 路径 | 规则 |
+|------|------|------|
+| **研究中** | `examples/incubating/exp-<简述>/` | 研究类代码**只能先写这里**；**禁止**从 `examples/frozen/` 抄码或沿用其路线 |
+| **定型** | `examples/stable/stable-<简述>/` 或 `stable-<简述>-vN` | **禁止**在 stable **从零直接开写**首版；只能从**活跃** `exp-*` **复制**晋级（**非** frozen-exp） |
+| **修订** | 新建 `stable-<简述>-vN` | 不宜在旧 stable 上大改；旧版在 `examples/stable/INDEX.md` 标 **已取代**；**不必**搬回 incubating |
+
+- 前缀：**`exp-`**（incubating）、**`stable-`**（stable）。
+- **动手写/改 `exp-*` 或 `stable-*` 内代码之前**，须先请用户确认（新建 / 同方案迭代 / 复制晋级 / 新版本号），**确认后再动手**。
+- `ascendc-tests/add_custom/`：AscendC 工具链冒烟模板；算子预研/交付走 `exp-` → `stable-`。
+
+## Golden、基准与 baseline-registry（强制）
+
+**基准 / golden**（Python 或 C 生成 `input`/`golden`）：
+
+- **作用**：仅提供**合法输入**与**期望输出**（黑盒 oracle），供 `run.sh` + `cmp` 对拍。
+- **严禁**：把基准当作 AscendC **必须复刻**的实现规格。
+
+**实际实现**（尤其 AscendC）：
+
+- 依据 **讨论结论**、`docs/specs/` **研究计划**、**标准 / 论文**（`library/`、`docs/notes/`）等约定方案。
+- **验收表述**仅「**I/O 与 golden 一致**」，禁止「与基准源码实现一致」。
+
+**交付侧基准计算**（`docs/specs/<主题>-baseline-registry.md`）：
+
+- 生成 golden 的**计算内核**只能使用登记表中**已验证**的 API 与 LUT。
+- **禁止**对登记表未覆盖的计算块（如 NTT 核心）自行重写；新写部分仅限胶水（循环、初始化、打印、bin I/O 等）。
+- **缺项** → **停下**，请用户选择补来源或回预研。
+
+| 必须满足 | 明确不要求 |
+|----------|------------|
+| **I/O 等价** | **实现同构**、逐行移植参考源码 |
+| AscendC 面向 AI Core 的专用实现（分核、流水、tiling；见 `docs/notes/` 原理总结） | 以「和参考实现长得像」为验收依据 |
+
+**审查红旗**：AscendC 与参考实现逐步对应；注释「移植自」「与 xxx.c 保持一致」；未见分核/流水说明的 CPU 式标量循环。
+
+## 自研代码：中文注释（强制）
+
+凡**本仓库自研**代码（Python、C、AscendC），须**明确、详细的中文注释**。第三方库源码除外。
+
+### 注释与实现同轮（与实现同 PR / 同次提交；后续可继续补注释）
+
+| 要求 | 说明 |
+|------|------|
+| **函数/核函数头** | 每个非平凡函数须注释：**作用**、**输入/输出**（含 GM/workspace 指针语义）、**dtype 与形状**（如 `[16,256] int8`）、**前置条件**（如 `blockIdx==0` 才执行） |
+| **函数体内** | 非自解释逻辑须**分段/逐块**中文注释：循环在算什么、索引含义（行/列/poly）、中间变量物理意义、分支为何存在；**该注释的不要省**（含 tiling 偏移、Stage 边界、同步点） |
+| **文件头** | 本文件在流水线中的位置、对齐的交付/规范引用（如 `sepolyvec8_ntt_f203`）、与 golden 的关系 |
+| **魔数与布局** | 常量、stride、tiling 闭合理由须注明来源（公式、交付 ONNX、`qa/` 纪要、`docs/specs/`） |
+| **讨论上下文** | 若接口或**函数体内某段**来自讨论结论，须在**该代码块紧上方**写明：**背景**、**结论**、**未采用项**（一句话即可） |
+| **禁止（同轮）** | 仅有函数头注释而函数体大段无说明；同轮以裸实现或笼统注释当作该轮完成、指望后续再补；用英文注释代替本仓自研代码的中文说明 |
+| **允许（后续）** | 在已有注释基础上补充背景、细化分段说明、随讨论结论更新注释 |
+
+**示例（函数头）**：
+
+```cpp
+/**
+ * F203 Stage2：mat_a[16,256] int8 × mat_b_lut[256,512] int8 → mat_c[16,512] int32。
+ * @param matAGm 左矩阵（Stage1 编码输出，行优先 ND）
+ * @param lutGm  右 LUT，与交付 input1 同形状，本路径为 int8 饱和
+ * 背景：对齐 sepolyvec8_ntt_f203；禁止 Tag3 左 LUT [512,256]（见 qa/2026-06-09）。
+ */
+
+// 函数体内示例：按 poly 取 mat_c 偶/奇列，合并为 NTT 系数（RouteA，与 ONNX Gather+Slice 一致）
+// hh：hi 行第 j 个系数的偶列；lo 行在偏移 +8 行（双 polyvec 无 ZERO 填充，见 qa 纪要）
+```
+
+**验收**：读函数体时不查外部文档也能理解每段在做什么；仅 `i++`/`offset+=` 级自解释行可省略行尾注释。
+
+## C 语言
+
+| 约定 | 说明 |
+|------|------|
+| **唯一 `main`** | 仅 `src/main.c` |
+| **布局** | `src/*.c`、`include/*.h`；根 `Makefile` → `build/app` |
+| **与 AscendC** | C 可作 golden，**不得**当作 AscendC 算法规格 |
+
+## Python（golden）
+
+与算子同目录（如 `ascendc-tests/add_custom/gen_data.py`）；生成 bin、由 `run.sh` 调用。可有 `__main__`，不受 C 单 main 约束。
+
+## AscendC API 查阅（强制）
+
+凡**新建或修改 AscendC 代码**（`ascendc-tests/`、`examples/`、`library/shared/` 内 `.cpp/.hpp` 等 kernel / 设备侧逻辑），在选用或调用任一 **AscendC API**（含 `AscendC::` 矢量/矩阵/搬运/同步 intrinsic）**之前**，须完成查阅；**不得**凭记忆或仿抄邻近代码直接写。
+
+| 步骤 | 要求 |
+|------|------|
+| **1. 查索引** | 打开 [`library/documents/CANN-AscendC算子开发接口参考-查阅索引.md`](../../library/documents/CANN-AscendC算子开发接口参考-查阅索引.md)，搜索拟用 API 名；**有记录**则按表中 PDF 页码 / 在线链接与「概括」列（含 A2 数据类型、`CMPMODE`、对齐、输出布局等约束）实现。 |
+| **2. 查 PDF** | **索引无记录**或记录不足以支撑当前用法时，查 [`library/documents/CANN社区版 9.0.0 Ascend C算子开发接口参考 01.pdf`](../../library/documents/CANN社区版%209.0.0%20Ascend%20C算子开发接口参考%2001.pdf)（`pdftotext` + 目录页码，或社区在线 API 页）。 |
+| **3. 写回索引** | 查阅后**同一轮任务内**在索引「查阅记录」**顶部**追加一行：日期、API 主题、章/节/页、约束与用法概括；避免后续重复翻 PDF。 |
+
+| 范围 | 说明 |
+|------|------|
+| **适用** | 所有 AscendC kernel / 设备侧实现与探针 |
+| **不适用** | 纯 host `main.cpp`、golden Python/C、CMake/`run.sh`（除非其中嵌入 AscendC API 说明性片段） |
+
+**审查红旗**：实现中出现 `Compares`/`GatherMask`/`GetCmpMask`/`DataCopyPad` 等 API，但索引与当次 git diff 均无对应查阅记录追加；把 `Compares` 的 `uint8` bit 打包 `dst` 当逐 lane 布尔读；A2 上对 `int32` 使用 `Compares`/`Compare` 的 `LT/NE` 等非法 `CMPMODE`。
+
+## AscendC 算子
+
+- 交付形态：`examples/stable/stable-*`。
+- 文件：`<op>.cpp` + `main.cpp` + golden 脚本；开放版直调。
+- WSL **禁止** `./run.sh npu`。
+
+## 用例计算超时（强制）
+
+本仓库 **`ascendc-tests/`、`examples/`** 下任意用例，**kernel / 可执行计算阶段**（通常为 `./ascendc_kernels_bbit` 或等价二进制）的**最长计算时间默认为 15 秒**。
+
+| 规则 | 说明 |
+|------|------|
+| **时限** | `KERNEL_COMPUTE_BUDGET_SEC` 默认 **15**；仅统计**计算任务**本身，不含编译、`gen_data`、CMake install |
+| **死锁判定** | 超过 15 秒仍未正常结束 → **视为死锁**，**强制退出**（`timeout` exit **124**） |
+| **实现** | `run.sh` 必须用 `timeout` 包裹 kernel 启动；推荐调用 `bash scripts/kernel-run-timeout.sh ./ascendc_kernels_bbit` |
+| **Agent 跑用例** | 执行 `run.sh` 或单独跑 kernel 时同样遵守；不得无限等待；超时须报 **阻塞/死锁** 并停下排错 |
+| **例外** | 仅当用户**当次任务明确**放宽秒数时可改 `KERNEL_COMPUTE_BUDGET_SEC`；不得静默加长 |
+
+```bash
+# run.sh 推荐写法（计算段）
+KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-15}"
+bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit
+```
+
+## 默认编译与运行选项（强制）
+
+**范围**：`ascendc-tests/`、`examples/`、`src/` 下所有用例与可执行（含 `CMakeLists.txt`、`cmake/*.cmake`、`run.sh`、`Makefile`）。
+
+| 必须 | 禁止 |
+|------|------|
+| **默认 = 生产全量路径**：全链路计算 + 已交付优化**全部开启** | 默认关闭行 18/19–20、向量路径、prefetch、ROM 等「省 tick 调试开关」 |
+| `CMakeLists.txt` 的 `CACHE STRING` 默认值、`run.sh` 的 `${VAR:-…}` 默认值须与**生产验收**一致 | 文档/STATUS/customspec/Agent 示例命令要求用户手动 `export HAT_*=0/1` 才能跑全量 |
+| 验收命令写 **`bash run.sh -r cpu -v Ascend910B4`** / **`bash run.sh -r sim -v Ascend910B4`**（或该目录等价入口） | 把「显式写全默认 env」当作标准用法（如 `HAT_LINE18_DOT_ONLY=0 HAT_BYTE_ENCODE=1 bash run.sh …`） |
+| **分段/对照/降级**须**显式覆盖** env，且在 `run.sh` 头注释与文档中标 **「调试 / 非默认」** | 静默把 debug 配置设为 default；新增宏默认 `0` 却未在注释说明 |
+
+**新增或修改编译开关时**：
+
+1. 先问：生产全链路是否需要？需要 → **默认 `1` / 全量 mixPass**；仅调试对照 → 默认仍全量，对照值写在注释示例里。
+2. `run.sh` 头注释须含 **Usage（默认）** 与 **调试（须显式指定）** 两段（参照 `vec-k4-v2/run.sh`）。
+3. Agent 跑用例、写 STATUS、customspec §验收、qa 纪要：**不得**要求用户手动补默认 env。
+
+```bash
+# ✅ 默认即全链路 + 优化（exp-k4 / vec-k4-v2 等）
+bash run.sh -r sim -v Ascend910B4
+
+# ✅ 调试分段（须标注非默认）
+HAT_LINE18_DOT_ONLY=1 HAT_BYTE_ENCODE=0 bash run.sh -r sim -v Ascend910B4
+
+# ❌ 禁止作为标准文档写法（与 default 重复，误导为必用手动选项）
+HAT_LINE18_DOT_ONLY=0 HAT_BYTE_ENCODE=1 bash run.sh -r sim -v Ascend910B4
+```
+
+**审查红旗**：`run.sh` 默认 `HAT_BYTE_ENCODE=0`；STATUS 验收段带一长串与 default 相同的 export；新探针 README 写「先 export 再 run」；Agent 声称通过却用非默认 env 而未说明。
+
+## Agent 跑用例验收（`ascendc-tests/`、`examples/`；强制）
+
+Agent **声称用例通过**前，须在**同一用例目录**依次执行（不得只跑 CPU）：
+
+```bash
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+```
+
+| 规则 | 说明 |
+|------|------|
+| **双模式** | 仅 CPU 通过 ≠ 完成验收；**SIM 是同步与搬运的试金石**（见 engineering-notes §7–8） |
+| **SIM 日志目录** | `run.sh` 须在 **kernel 启动前** `source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"`；`kernel-run-timeout.sh` 也会按 `$(pwd)` 强制绑定，**禁止** `${CAMODEL_LOG_PATH:-...}` 保留 shell 残留 |
+| **收拢 stray** | kernel 结束后调用 `camodel_sim_collect_stray "${CURRENT_DIR}"`（见 `scripts/camodel_sim_log.sh`） |
+| **dump 位置** | CaModel / msprof 产物（`core*.dump`、`profile_*_log*.toml` 等）**只允许**在 `OPPROF_<timestamp>_<pid>/dump/`；**禁止**落在用例根目录 |
+| **根目录检查** | 验收后若用例根目录仍有上述 stray dump → 视为 `run.sh` 或环境未配好，**不得报通过**，须修 `camodel_sim_log.sh` 接入或清理后重跑 |
+| **可接受产物** | `OPPROF_*` / `OPPROF_latest` 软链、`build/`、`out/`、`input/`、`output/`（`dst.bin` 等 golden 对拍） |
+
+## 验证阶梯（交付；声称完成前至少满足任务声明级别）
+
+1. `bash ~/ascendc/scripts/verify-cann.sh`
+2. `cd examples/<op> && ./run.sh cpu 910B4` → `[SUCCESS] output matches golden`（kernel 计算 ≤15s，超时即失败）
+3. `./run.sh sim-build 910B4` → `ldd ./*_npu | grep runtime_camodel`
+4. `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` → golden 一致；dump 仅在 `OPPROF_*/dump/`，用例根无 stray dump
+5. `bash run.sh -r sim -v Ascend910B4` → msprof + `OPPROF_*`（可选，全量 profiling）
+
+## ML-KEM / FIPS 203 Tag5T NTT（强制）
+
+本仓库 **ML-KEM 正向 NTT + Alg.13 集成** 的 AscendC 实现以探针 **`ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`** 为活跃基线；标量对照组 **`frozen-fix-f203-2s1e-alg13-16171820-k4`** 已归档（2026-06-19）。
+
+| 必须 | 禁止 |
+|------|------|
+| **poly-batch** 语义：Stage2 后 **每个 AIV 握有完整 poly 的 hi+lo** | **单 poly 的 hi 与 lo 分属不同 AIV**（limbsplit） |
+| **平面 mat_c**；**三段式 NTT（S1–S3）内禁止 `Gather`**；行 18–20 **UB 融合**；host **1s+1e**、设备内复制 ŝ | **单 poly 的 hi 与 lo 分属不同 AIV**（limbsplit）；**NTT S1–S3 内** `AscendC::Gather`（mat_c / RouteA 偶奇 deinterleave 等） |
+| Stage1 `AivSplitPolyBatch` 按 **poly 批**切分；`lo = v - hi*64`（非 `And(v,63)`） | **`SHAT_PEER` / se_pair GM 交换**；从 `frozen/` **抄实现**（见 frozen 禁令） |
+
+**`Gather` 禁令范围（强制）**：仅 **Tag5T 三段式 NTT**（Stage1 limb 编码 → Stage2 AIC MMAD → Stage3 merge/mod）的 AscendC 实现。**不**适用于 NTT 之后的步骤（如 Alg.13 行 18 basemul、行 19–20 `ByteEncode₁₂` 等）；后者若用 `Gather` 需单独论证性能与 UB，不受本条自动禁止。
+
+定稿：[docs/notes/MLKEM-NTT-实现总结.md](../../docs/notes/MLKEM-NTT-实现总结.md)（数学契约）、[docs/notes/MLKEM-NTT-向量与标量实现指南.md](../../docs/notes/MLKEM-NTT-向量与标量实现指南.md) §Gather 范围（设备实现）。  
+已关闭路线（polybatch-s123、sepair、onelaunch、merged_kyber 等）见 `ascendc-tests/frozen/INDEX.md` 与各 `FROZEN.md` — **只读判决理由，不读源码抄码**。
+
+## 其它目录
+
+- **勿**默认改 `samples/`（可能与 CANN 9.0 不兼容）。
+- `packages/`、`build/`、`OPPROF_*` 为工具链或产物，非研究结论载体。
+
+## 备份前整理与 `backup/`（强制）
+
+**运行 `./backup-project.sh` 之前**，须先完成：
+
+1. 本次变更涉及目录内容的收尾；
+2. 所有受影响路径的 **`INDEX.md`**（及 `qa/TODO.md`、当月 `qa/YYYY-MM/INDEX.md` 若有遗留变更）；
+3. 根 **`README.md`**（目标与顶层结构是否与现状一致）。
+
+**禁止**在索引或 README 明显过时时直接备份。
+
+- `backup/` 快照由 `./backup-project.sh` 生成；每次**新建**子目录，不覆盖旧快照。
+- **`backup/` 只读**：不得编辑、删除或「同步更新」已有快照；除非用户**明确要求**操作 `backup/`。
+- **备份范围**（以 `backup-project.sh` 为准）：
+  - `include/`、`qa/`、`src/`、`docs/`、`library/`（扩展名白名单，同脚本）
+  - **`ascendc-tests/`、`examples/` 整棵用例树**：源码（`.c/.h/.hpp/.cpp`）、脚本（`.py/.sh`）、`cmake/`、`CMakeLists.txt`、**规格书**（`.md/.tex/.pdf/.txt`，含 `*-customspec.*`、`STATUS.md`）
+  - 根 `README.md`、`.cursor/rules/`、`.cursor/skills/`
+- **用例树永不备份**：`build/`、`out/`、`input/`、`output/`、`dump/`、`logs/`、`auto_gen/`、`OPPROF_*/`、`*.log`、`*.bin` 及编译产物（`.o/.so` 等）。
+
+## 调研 vs 交付
+
+| 阶段 | 完成标准 |
+|------|----------|
+| **调研 / 预研** | `qa/` 讨论 + `examples/incubating/exp-*/STATUS.md`；定稿原理写 `docs/notes/`（见写作模板）；不要求完整 stable golden |
+| **交付算子** | `examples/stable/stable-*`：登记表约束的 golden + 验证阶梯；**I/O 等价**即可 |
+
+## LaTeX / PDF（强制）
+
+Agent **新建或修改**本仓内任意 `.tex` 后，须在同一轮任务内**自动**完成 PDF 生成与清理，**不得**只提交 `.tex` 而不编译、**不得**把中间文件留在工作区。
+
+### 流程（按序执行）
+
+1. **写 `.tex`**（或改 `.tex`）。
+2. **自动编译 PDF**：**必须**调用仓库脚本（禁止裸跑 `xelatex` 后遗漏清理）：
+   ```bash
+   bash scripts/xelatex-clean.sh <path/to/file>.tex
+   ```
+   脚本在 `.tex` 同目录 `xelatex` **两遍**，成功则删中间文件，仅保留 `.tex` + `.pdf`。
+3. **确认成功**：以脚本 **exit code 0** 且输出 `OK: ...pdf` 为准；失败则修 `.tex` 后重跑脚本，**不得**删中间文件冒充完成。
+4. **编译成功后自动删除临时文件**（同主文件名、同目录；`xelatex-clean.sh` 已包含）：
+
+| 保留 | 删除 |
+|------|------|
+| 源 `.tex`、成品 `.pdf` | `.aux` `.log` `.toc` `.out` `.fls` `.fdb_latexmk` `.synctex.gz` 等 |
+
+- **禁止**将 LaTeX 中间文件提交进 git 或留在 `docs/`、`examples/` 树中。
+- 仅当编译**失败**且需排错时，可暂留 `.log`；**修复并编译成功后仍须删除**。
+
+## 任务状态（汇报用词）
+
+| 状态 | 含义 |
+|------|------|
+| **完成** | 约定核对通过且由用户认定 |
+| **有条件完成** | 只做到某验证级别（须写明差什么） |
+| **阻塞** | 缺环境/资料或工具未解 |
+| **需要再讨论** | 路线/范围须用户定 |
+| **应回退或关闭** | 此路不通 |
+
+汇报须用状态词 + **证据**（diff、命令、log、`run.sh`+`cmp`）；不信口吻。
+
+## Agent 协作
+
+| 要求 | 说明 |
+|------|------|
+| **开任务** | `README.md` → `qa/INDEX.md` → 本 Rule；**先**读活跃 `INDEX.md` 定基线；涉及已关闭路线时可读 `frozen/` 内**判决书**，**不带出代码**；**写 AscendC 前**读 API 查阅索引（见「AscendC API 查阅」） |
+| **证据验收** | 信 diff、命令、完整 log、对拍；不信「做完了」 |
+| **归档** | 关键决策 → **当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（无则新建，有则追加）；刷新 `qa/INDEX.md`；动目录则更新对应 `INDEX.md` |
+
+**须喊停**：改交付范围或验证级别；工具报错无完整 log；与 `qa` 已记录决策冲突；未确认目录就写 `exp-*`/`stable-*`；**要在 `examples/` 写码但未指定 `*-customspec.*` 路径**；用户要求跳过 customspec 直接改 `examples/` 代码；**同轮交付的自研代码达不到本节注释验收标准**；登记表缺项却写基准计算；Rule/Skill 未确认即要改；同句【】与 `#…#` 冲突；**对已锁定实现参数有质疑或需擅自改参才能继续**；**从 frozen 向活跃目录抄实现、抄路线**（读 `FROZEN.md` 了解关闭原因**不属**须喊停）；**写 AscendC 代码前未查 API 查阅索引、或查 PDF 后未刷新索引**。
+
+## Agent 任务提示（新会话可粘贴）
+
+```text
+先读 README.md、qa/INDEX.md 与本 Rule。
+本仓库是研究型工程：历史路线在 **/frozen/** 已关闭。写码只认各 INDEX 活跃项 + docs/notes 定稿。
+frozen：可进入读 FROZEN.md/INDEX 了解关闭原因，读完退出；禁止把 frozen 内源码/路线/customspec 带入活跃目录。
+golden 仅验 I/O（run.sh + cmp）；禁止把参考源码逻辑复刻到 AscendC。
+研究代码只在 examples/incubating/exp-*；定型在 examples/stable/stable-*（复制晋级）。
+场景 Skill 见 .cursor/skills/INDEX.md；$…$ → ascendc-impl-spec；【】→ pre-research，#…# → ascendc-delivery。
+examples/ 写码须有 *-customspec.* 路径；ascendc-tests/ 与 examples/ 外不受此限。
+平台探针见 ascendc-tests/INDEX.md（无 customspec、不晋级 stable）。
+ascendc-tests/frozen/ 与 examples/frozen/：进门读判决书（FROZEN.md/INDEX），出门不带码；禁止抄实现、抄路线、用 frozen customspec。
+新 exp 只从 examples/incubating/exp-*（活跃）出发；新探针从 ascendc-tests/INDEX 活跃项出发。
+MLKEM 活跃探针：pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2（见 docs/notes/MLKEM-NTT-向量与标量实现指南.md）。
+已锁定实现参数不得擅自修改；有歧义须停下与用户确认后再编码。
+写 AscendC 前必查 library/documents/CANN-AscendC算子开发接口参考-查阅索引.md；索引无记录则查 CANN 9.0 API PDF，查完同一轮刷新索引。
+注释与实现同轮：自研 Python/C/AscendC 须与实现同步写详细中文注释（文件头 + 函数头 + 函数体内该注尽注）；后续可继续补注释，但同轮不得以裸实现充当完成。
+用例 kernel 计算默认最长 15s（KERNEL_COMPUTE_BUDGET_SEC）；超时视为死锁，强制退出。
+默认编译/运行 = 全量计算 + 全量优化（ascendc-tests/examples/src）；文档与 run.sh 不得要求手动 export 默认 env；仅调试分段须显式覆盖并标非默认。
+```

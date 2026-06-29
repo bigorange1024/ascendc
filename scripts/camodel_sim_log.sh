@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# CaModel SIM 日志目录与 stray dump 收拢（各 ascendc-tests run.sh source 本脚本）。
+# kernel-run-timeout.sh 也会在 exec 前按 $(pwd) 再次 source，CPU/SIM 均绑定当前目录。
+# Usage:
+#   source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
+#   ... kernel ...
+#   camodel_sim_collect_stray "${CURRENT_DIR}"
+
+_camodel_case_dir="${1:-.}"
+if [[ ! -d "${_camodel_case_dir}" ]]; then
+  echo "[camodel_sim_log] WARN: case dir not found: ${_camodel_case_dir}" >&2
+fi
+
+# 始终绑定当前用例目录，勿用 ${VAR:-} 保留 shell 里残留的旧路径（重命名用例后会写到幽灵目录）
+export CAMODEL_LOG_PATH="${_camodel_case_dir}/sim_log"
+mkdir -p "${CAMODEL_LOG_PATH}"
+
+export ASCEND_PROCESS_LOG_PATH="${CAMODEL_LOG_PATH}"
+export ASCEND_WORK_PATH="${CAMODEL_LOG_PATH}"
+
+camodel_sim_collect_stray() {
+  local root="${1:-.}"
+  local dest="${root}/sim_log"
+  mkdir -p "${dest}"
+  local moved=0
+  shopt -s nullglob
+  for f in "${root}"/core*.dump "${root}"/profile_*_log*.toml "${root}"/cceprint "${root}"/npuchk; do
+    if [[ -e "${f}" ]]; then
+      mv -f "${f}" "${dest}/" 2>/dev/null && moved=$((moved + 1)) || true
+    fi
+  done
+  shopt -u nullglob
+  if [[ "${moved}" -gt 0 ]]; then
+    echo "[camodel_sim_log] moved ${moved} stray artifact(s) -> ${dest}"
+  fi
+}

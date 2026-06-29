@@ -1,0 +1,270 @@
+% F203 Stage1+2 融合 — CPU 孪生调试经验
+% 编译：bash ../../scripts/xelatex-clean.sh F203-Stage12融合CPU调试经验.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single,numbers=left,numberstyle=\tiny}
+
+\title{F203 Stage1+2 融合\\CPU 孪生调试经验与 Checklist}
+\author{ascendc 工程}
+\date{2026-06-10}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档记录 \dirname{examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/}
+在 CANN 9.0.0、Ascend910B4 CPU 孪生路径上，从\textbf{长时间挂死}到\textbf{对拍通过}
+的完整调试过程。涵盖现象、根因、分步排查、最终方案，以及可复用的失败/成功经验。
+真机单趟 MIX 融合待 NPU 实测；CPU 路径采用两趟 launch（encode $\rightarrow$ 隔离 Cube Matmul）。
+
+\textbf{勘误}：\dirname{exp-sepolyvec8-ntt-k8} 全链 CPU \textbf{未跑通}（与 Stage12 同类的 MIX+CrossCore 挂死，10\,s 计算预算内无结果）。
+本文此前误写为「已通过」，以本文修订为准。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{目标与基线}
+
+\subsection{融合语义}
+在单个 MIX 核（\texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}，\texttt{aicore=1}，\texttt{blockDim=1}）内完成：
+\begin{itemize}
+  \item \textbf{Stage1（AIV）}：\texttt{se [8,256] int32} $\rightarrow$ \texttt{mat\_a [16,256] int8}
+  \item \textbf{CrossCore}：AIV 写完 \texttt{mat\_a} 后通知 AIC
+  \item \textbf{Stage2（AIC）}：\texttt{mat\_a} $\times$ \texttt{lut [256,512] int8} $\rightarrow$ \texttt{mat\_c [16,512] int32}
+\end{itemize}
+
+\texttt{userWorkspace} 布局：\texttt{mat\_a@0}（4096\,B）+ \texttt{mat\_c@4096}（32768\,B）。
+
+\subsection{Golden 与隔离基线}
+Golden 由 \texttt{mlkem\_ref.encode\_mat\_a} + \texttt{matmul\_int8\_i32} 生成；
+\texttt{golden.bin} md5=\texttt{c5f1ead741f152ab46786363edba6da6}，与 Stage2 隔离用例一致。
+
+\begin{table}[h]
+  \centering
+  \caption{隔离用例基线（调试前均已通过）}
+  \begin{tabular}{@{}L{5.5cm}L{2cm}L{5.5cm}@{}}
+    \toprule
+    用例 & CPU 耗时 & 说明 \\
+    \midrule
+    \dirname{exp-mlkem-f203-stage1-encode-vec} & 数秒 & 纯 AIV encode \\
+    \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} & 计算 $<$10\,s & 纯 Cube Matmul，CPU 已通过 \\
+    \dirname{exp-sepolyvec8-ntt-k8} & 超时 & Stage1+2+3 全融合，CPU \textbf{未通过}（MIX 单趟挂死） \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{主要问题（按发现顺序）}
+
+\subsection{问题 1：CPU 对拍长时间无输出}
+\textbf{现象}：编译、\texttt{gen\_data}、tiling 打印正常；出现
+\texttt{[TmSim]: Run in serial mode.} 后\textbf{数十分钟无输出}；进程 CPU $\approx$102\%；
+未生成 \texttt{output/mat\_c\_gm.bin}。
+
+\textbf{对比}：同 tiling 的 Stage2 隔离在\textbf{计算预算}内即打印三路
+\texttt{[SUCCESS][AIC\_0][AIV\_0][AIV\_1]}。
+
+\subsection{问题 2：调试策略——长时间等待}
+工程约定：\textbf{纯计算}（自首次 \texttt{[TmSim]} 或核内实质调度起，至全部 \texttt{[SUCCESS]} 止）
+不应超过 \textbf{10\,s}。\textbf{不含}软件栈启动、库加载、空转、工作流固定开销、编译、\texttt{gen\_data} 等。
+超过即异常，应中止并排查。此前多次长时间 \texttt{Await}，延误定位。
+
+\subsection{问题 3：CrossCore 结构与参考不一致}
+初版将 \apiname{CrossCoreWaitFlag} 与 \texttt{Stage2MatmulCube} 放在同一
+\texttt{ASCEND\_IS\_AIC} 块。\texttt{sepolyvec8} 参考为分块：Stage1 块内 AIC 仅 Wait，Stage2 块内再 Matmul。
+对齐后结构更规范，但\textbf{仍未解决 CPU 挂死}。
+
+\subsection{问题 4：Stage1 tile 参数}
+初版沿用 Stage1 隔离：\texttt{kTileLen=32}，\texttt{kBufferNum=2}。
+融合参考 \texttt{sepolyvec8} 使用 \texttt{kStage1TileLen=64}，\texttt{kStage1BufferNum=1}。
+非挂死根因，但为减少变量已对齐。
+
+\subsection{问题 5：CPU 串行仿真 + CrossCore 死锁（根因之一）}
+CPU 孪生 \texttt{[TmSim]: Run in serial mode.} 表示\textbf{串行调度}，且默认\textbf{先跑 AIC}。
+
+从 \texttt{cceprint} 可见：
+\begin{itemize}
+  \item AIC 入口：\texttt{wait\_flag\_dev(7)} —— 启动即等待 Stage1
+  \item AIV 入口：encode 结束后 \texttt{ffts\_cross\_core\_sync(PIPE\_MTE3, 0x721)}
+\end{itemize}
+
+执行顺序变为：AIC 在 \texttt{WaitFlag} 永久阻塞 $\rightarrow$ AIV 尚未调度 $\rightarrow$ 死锁。
+真机 MIX 上 AIC/AIV 并行，不会出现此问题。
+
+\subsection{问题 6：MIX 核内 Matmul 在 CPU 上挂死（根因之二）}
+两趟 launch 绕过 CrossCore 后（pass1 仅 encode、pass2 仅 matmul），在\textbf{融合核}内执行
+\texttt{Stage2MatmulCube} + \texttt{IterateAll} 仍卡满 10\,s。
+
+进一步试验：
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}L{6cm}L{6.5cm}@{}}
+    \toprule
+    改动 & 结果 \\
+    \midrule
+    CPU 下去掉 \texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2} & pass2 不再无限挂，但出现新错误 \\
+    Stage2 内再 \texttt{new TPipe} & \texttt{event id cannot be set twice}（SIGABRT） \\
+    继续共享 \texttt{TPipe} & 仍超时；输出全 0 或半成品 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+结论：\textbf{CPU 孪生不宜在 MIX 融合核内直接跑 Matmul IterateAll}。
+
+\subsection{问题 7：\texttt{run.sh} 超时与退出码}
+初版无 \texttt{timeout}；曾用子 shell 包裹内核，超时退出码被吞，外层误报成功。
+
+\subsection{问题 8：单独跑内核时库路径}
+直接执行 \texttt{./ascendc\_kernels\_bbit} 可能缺 \texttt{libpem\_davinci.so}；
+需完整 tikicpulib / simulator 的 \texttt{LD\_LIBRARY\_PATH}（\texttt{run.sh} 已配置）。
+
+\section{调试过程（分步）}
+
+\subsection{步骤 1：确认基线未坏}
+Stage1 / Stage2 隔离均 \texttt{max\_abs\_diff=0} $\Rightarrow$ 问题在融合胶水层，非 tiling 或 golden。
+
+\subsection{步骤 2：建立计算预算与 wall-clock 超时}
+\begin{itemize}
+  \item \textbf{计算预算} \texttt{KERNEL\_COMPUTE\_BUDGET\_SEC=10}：仅约束核内计算，不含栈启动等固定开销。
+  \item \textbf{wall-clock} \texttt{KERNEL\_TIMEOUT\_SEC}：默认 \texttt{STARTUP\_MARGIN + COMPUTE\_BUDGET}（如 $8+10=18$\,s），
+        用 \texttt{timeout} 包住 \texttt{./ascendc\_kernels\_bbit}，exit=124 即判定 hang/deadlock。
+  \item 去掉吞退出码的子 shell。
+\end{itemize}
+
+\subsection{步骤 3：对齐 sepolyvec8 CrossCore 分块}
+Wait 移入 \texttt{runStage1} 块，Matmul 独立 \texttt{runStage2} 块；Stage1 tile 改为 64/1。
+$\Rightarrow$ 仍超时。
+
+\subsection{步骤 4：分析 cceprint}
+确认 AIC 先 \texttt{wait\_flag\_dev}、AIV 后 \texttt{ffts\_cross\_core\_sync}，结合 serial mode 推断 CrossCore 顺序死锁。
+
+\subsection{步骤 5：CPU 两趟 launch（绕过 CrossCore）}
+引入 \texttt{g\_f203\_stage12\_cpu\_pass}：
+\begin{itemize}
+  \item \textbf{pass1}：仅 Stage1 encode（\texttt{needS1ToS2Sync=false}）
+  \item \textbf{pass2}：仅 Stage2 matmul（读 pass1 写入的 \texttt{mat\_a}）
+\end{itemize}
+
+pass1 日志示例：
+\begin{verbatim}
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0] exit success!
+[SUCCESS][AIV_1] exit success!
+\end{verbatim}
+CrossCore 死锁已绕过；pass2 在融合核内仍超时。
+
+\subsection{步骤 6：剥离 MIX 宏与 TPipe 试验}
+\texttt{\#ifndef ASCENDC\_CPU\_DEBUG} 才设 \texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}；
+禁止 Stage2 内再 \texttt{new TPipe}。pass2 仍不可靠。
+
+\subsection{步骤 7：最终方案——pass2 调用 Stage2 隔离核}
+CPU 路径：
+\begin{lstlisting}[language=C++]
+g_f203_stage12_cpu_pass = 1;
+ICPU_RUN_KF(f203_stage12_encode_matmul_mix_custom, blockDim, ...);
+ICPU_RUN_KF(mlkem_stage2_matmul_custom, blockDim,
+            userWorkspace, lut, userWorkspace + kMatABytes, workspace, tiling);
+\end{lstlisting}
+\texttt{CMakeLists.txt} 链接 \texttt{mlkem\_stage2\_matmul\_custom.cpp}。
+
+\textbf{结果}：核内计算在 10\,s 预算内完成，\texttt{max\_abs\_diff=0}，md5 与 golden 一致。
+
+\section{最终架构}
+
+\subsection{CPU 孪生（已验证）}
+\begin{enumerate}
+  \item pass1：\texttt{f203\_stage12\_...\_custom}（\texttt{pass=1}，仅 AIV encode）
+  \item pass2：\texttt{mlkem\_stage2\_matmul\_custom}（隔离 Cube，语义与融合 Stage2 一致）
+\end{enumerate}
+GM 复用：\texttt{userWorkspace[0..4095]=mat\_a}，\texttt{userWorkspace[4096..]=mat\_c}。
+
+\subsection{NPU / 真机（设计目标，待实测）}
+单趟 \texttt{f203\_stage12\_...\_custom}：
+AIV encode $\rightarrow$ \apiname{CrossCoreSetFlag} $\rightarrow$ AIC \apiname{CrossCoreWaitFlag} $\rightarrow$ Matmul；
+保留 \texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}。
+
+\section{失败经验（应避免）}
+
+\begin{enumerate}
+  \item \textbf{勿用隔离耗时外推融合耗时}：Stage2 计算快 $\neq$ Stage12 融合一定快。
+  \item \textbf{勿将 sepolyvec8 全链当作 CPU 已通过基线}：该用例 CPU 仍超时；仅作 CrossCore 代码结构参考。
+  \item \textbf{CPU 孪生 $\neq$ 真机并行}：serial mode + AIC 先跑时，AIV$\rightarrow$AIC 的 CrossCore 单趟必死锁。
+  \item \textbf{勿长时间等待}：10\,s 无 \texttt{[SUCCESS]} / 无输出文件即异常。
+  \item \textbf{勿吞子 shell 退出码}：\texttt{timeout} 杀进程后脚本须正确失败。
+  \item \textbf{勿在 CPU MIX 融合核内强行 IterateAll}：应复用已验证的隔离 Cube 核做 pass2。
+  \item \textbf{勿多趟 launch 重复 new TPipe}：触发 \texttt{event id cannot be set twice}。
+  \item \textbf{勿假设对齐 sepolyvec8 结构即可通过}：须以 CPU 实测为准。
+\end{enumerate}
+
+\section{成功经验（可复用）}
+
+\begin{enumerate}
+  \item \textbf{隔离先行}：Stage1 / Stage2 / golden 各自通过后再加胶水。
+  \item \textbf{Golden 与 Stage2 共用 md5}：便于分阶段对拍。
+  \item \textbf{workspace 布局固定}：\texttt{mat\_a@0} + \texttt{mat\_c@4096}，与 customspec 一致。
+  \item \textbf{分层对照参考}：
+    CrossCore 分块 $\rightarrow$ \texttt{sepolyvec8}；
+    MIX 角色 $\rightarrow$ \texttt{baremix}；
+    Matmul 本体 $\rightarrow$ Stage2 隔离核。
+  \item \textbf{cceprint 定位 Wait/Set 顺序}：比盲猜死锁快。
+  \item \textbf{CPU 路径显式文档化}：\texttt{STATUS.md}、\texttt{main.cpp} 注释说明两趟原因。
+  \item \textbf{区分计算预算与 wall-clock}：\texttt{COMPUTE\_BUDGET=10\,s}；\texttt{TIMEOUT} 含启动余量。
+\end{enumerate}
+
+\section{后续融合 Checklist}
+
+\begin{longtable}{@{}L{0.6cm}L{5.5cm}L{7.5cm}@{}}
+\toprule
+\# & 检查项 & 说明 \\
+\midrule
+\endhead
+1 & 隔离 CPU 对拍 & Stage1 / Stage2 / golden 各自通过 \\
+2 & 计算预算 10\,s & 纯计算；\texttt{TIMEOUT} 另含栈启动余量 \\
+3 & CPU hang 时查 serial mode & AIC 是否先 \texttt{WaitFlag} \\
+4 & CPU Matmul hang & pass2 改用隔离 Cube 核；真机再测单趟 \\
+5 & \texttt{ASCENDC\_CPU\_DEBUG} 分支 & MIX 宏与 launch 策略分路径 \\
+6 & cceprint & 确认 Wait/Set 与调度顺序 \\
+7 & 三重确认 & 输出文件 + md5 + \texttt{verify\_result.py} \\
+\bottomrule
+\end{longtable}
+
+\section{当前状态}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{@{}L{4.5cm}L{8cm}@{}}
+    \toprule
+    项目 & 状态 \\
+    \midrule
+    customspec + 实现 & 完成 \\
+    CPU \texttt{aicore=1} 对拍 & \textbf{通过}（计算 $<$10\,s，\texttt{max\_abs\_diff=0}） \\
+    sepolyvec8 全链 CPU & \textbf{未通过}（10\,s 计算预算内挂死/超时） \\
+    NPU 单趟融合 & 未测 \\
+    \texttt{aicore=4} / Stage3 融合 & spec 首版不做 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+验证命令：
+\begin{verbatim}
+cd examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix
+bash run.sh -r cpu -v Ascend910B4 --aicore 1
+\end{verbatim}
+
+相关路径：\dirname{examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/STATUS.md}。
+
+\end{document}
