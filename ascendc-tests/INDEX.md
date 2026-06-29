@@ -51,6 +51,7 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | [**fix-f203-byteencode-d-vec-k4/**](fix-f203-byteencode-d-vec-k4/) | **Alg.5 ByteEncode_d** 向量（Encrypt c₁/c₂ 打包；d=4 SIM **5435**） |
 | [**fix-f203-compress-d-vec-k4/**](fix-f203-compress-d-vec-k4/) | **§4.2.1 Compress_d** 向量（Alg.14 前半；d=4 SIM **3247**） |
 | [**fix-f203-decompress-d-vec-k4/**](fix-f203-decompress-d-vec-k4/) | **§4.2.1 Decompress_d** 向量（Alg.15 前半；d=4 SIM **3177**） |
+| [**fix-f203-alg14-pke-encrypt-correctness-k4/**](fix-f203-alg14-pke-encrypt-correctness-k4/) | **Alg.14 PKE Encrypt 设备拼装**（**G5 CPU 全链 ✅**；SIM G1–G3 ✅ / **SIM c.bin 阻塞**；见 [`STATUS.md`](fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md)） |
 
 **ByteEncode₁₂（KeyGen）**：保持 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/) 不变；Encrypt 侧 **d=4/10** 见 [`fix-f203-byteencode-d-vec-k4`](fix-f203-byteencode-d-vec-k4/)。
 

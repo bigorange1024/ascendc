@@ -484,3 +484,26 @@ compact 后再统一 Sub(q) 还原 â∈[0,q)
 
 **遗留**：R5 向量 compact **暂停**（见 note §5）；生产默认 **`F203_ALG7_REJ_IMPL=1`**，标量 `0` 仅回归。
 
+---
+
+## Alg.14 Encrypt G3 修正（fix-f203-alg14-pke-encrypt-correctness-k4）
+
+**用户意见（2026-06-23）**：事实须**原封不动**记录；**在推进 G4/G5 之前先修正 G3**；SIM 耗时长，改前想清楚、少做无效实验。
+
+### 已记录事实（全文见探针 [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md)）
+
+1. CPU 始终 1× `f203_encrypt_g3_linear`；修正前 SIM 为 2× `at_r` + Host **fake-Â**（`t_hat` 填矩阵列 0，row0 当 `tr_hat`）。
+2. 独立 `t_dot_r` SIM 向量路径曾全零；同 session 双 launch 写回异常 → 多 ACL session + fake-Â workaround。
+3. `t_hat` 由 Host `decode_t_hat.py` staging；G3 设备未解码 `ek`。
+4. 对拍非抄 golden，但 **CPU/SIM 路径不对等**；历史 G4 SIM PASS ≠ G3 核 SIM 已验收。
+
+### 终态（2026-06-29 验收）
+
+| 模式 | 结果 |
+|------|------|
+| CPU G3 | **PASS** `g3_linear`；u_hat/tr_hat max=0 |
+| SIM G3 | **PASS** max=0；wall **327s** |
+
+**SIM 路径**：`at_r(真 a_hat)→u_hat` + `at_r(t̂ 列 0)→row0=tr_hat`（与 `t_dot_r` 数学等价）。`t_dot_r` / `g3_linear` 五参 launch 在 SIM 返回 **507000**（审计 §7–§8）。
+
+**状态**：**G3 修正完成**；G4 全链 SIM 可择机复验；G5 未动。

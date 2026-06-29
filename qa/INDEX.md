@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-06-29 — [KeyGen 双 AIV 并行 fork 探针](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
+### 2026-06-29 — [KeyGen 双 AIV / Encrypt G5](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
 
-**fix-dual-aiv** · liboqs KAT ✅ · **CPU SUCCESS 占核误读** §4.1 定稿
+**fix-dual-aiv** · liboqs KAT ✅ · **Alg.14 Encrypt G5 CPU 全链 ✅** · **SIM c.bin 阻塞** · G3 审计 §9.9–§10
 
 ### 2026-06-28 — [KeyGen pass 前缀 / 子轨重命名 / Phase A 冻结 / exp 交付](2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md)
 
@@ -32,7 +32,7 @@ Step4 **2 launch** · prep **454170** · Opt-2/4 ✅ · **exp-keygen-k4** 夜间
 
 ### 2026-06-23 — [Alg.7 SampleNTT / Phase A 向量化实验](2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md)
 
-设备 `a_hat` Phase 1 PASS · A-v1~v4b SIM tick · **d12 POC PASS** · **rej 批量+Min+mod §13** · **d1/d2 交错 ROM Gather §14** · **shake_xof LocalTensor I/O §15** · **XOF 672B §16** · **672 vs 504 tick §17** · **rej 剔除双方案 §18** · 默认 **`F203_ALG7_REJ_IMPL=1`**
+设备 `a_hat` Phase 1 PASS · A-v1~v4b SIM tick · **d12 POC PASS** · **rej 批量+Min+mod §13** · **d1/d2 交错 ROM Gather §14** · **shake_xof LocalTensor I/O §15** · **XOF 672B §16** · **672 vs 504 tick §17** · **rej 剔除双方案 §18** · 默认 **`F203_ALG7_REJ_IMPL=1`** · **Alg.14 Encrypt G3 fake-Â 审计+统一 g3_linear §Alg.14**
 
 ### 2026-06-19 — [ByteEncode prefetch 合入 v2 + SIM 性能复测](2026-06/2026-06-19-ByteEncode12-only探针与prefetch实验.md)
 

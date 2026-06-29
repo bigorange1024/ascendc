@@ -24,6 +24,8 @@ NTT 主路径：`AicMmad` + merged\_kyber FSM（非 `Matmul<>`）。**块紧凑 
 
 **行 8–15 设备 $s$/$e$**：[`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/)（向量 V3 ✅）；标量对照 [`frozen-fix-f203-alg13-se-device-scalar-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-se-device-scalar-k4/)（2026-06-26 冻结）。
 
+**Alg.14 Encrypt 正确性验证**（非 examples）：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) — Phase 0 探针.
+
 ---
 
 ## 维护

@@ -9,7 +9,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-06-29 | [2026-06-29-KeyGen双AIV并行fork探针.md](2026-06-29-KeyGen双AIV并行fork探针.md) | **fix-dual-aiv** · KAT ✅ · CPU SUCCESS 误读定稿 |
+| 2026-06-29 | [2026-06-29-KeyGen双AIV并行fork探针.md](2026-06-29-KeyGen双AIV并行fork探针.md) | **fix-dual-aiv** · KAT ✅ · **Encrypt G5 CPU ✅ SIM c 阻塞** · G3 审计 §9.9 |
 | 2026-06-28 | [2026-06-28-KeyGen探针pass前缀与生产IO.md](2026-06-28-KeyGen探针pass前缀与生产IO.md) | **pass-fix keygen** · **pass polyvec8 NTT/INTT** · **exp 自包含** · SIM **~884532** · **backup-project.sh 刷新** |
 | 2026-06-26 | [2026-06-26-标量探针冻结.md](2026-06-26-标量探针冻结.md) | **标量 frozen** · 历史 workaround（已 superseded）· [2026-06-29 KeyGen](2026-06-29-KeyGen双AIV并行fork探针.md) |
 | 2026-06-25 | [2026-06-25-KeyGen-prep优化路线图.md](2026-06-25-KeyGen-prep优化路线图.md) | **KeyGen Step4** · prep **454170** · Opt-2/4 ✅ · Opt-1/3 **已关闭** · Opt-3 备份 `keygen-opt3-pre_20260625185315` |

@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-06-28（KeyGen 子轨重命名；Phase A 全链 frozen；见 [2026-06-28 纪要 §7](2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md#7-keygen-子轨探针重命名--phase-a-全链冻结)）
+**最近刷新**：2026-06-29（Encrypt G5）
 
 ---
 
@@ -10,6 +10,7 @@
 
 | ID | 事项 | 来源 | 状态 |
 |----|------|------|------|
+| **T14** | **Alg.14 Encrypt G5 SIM 全链**：CPU `ENCRYPT_VERIFY=1` ✅；SIM G1–G3 ✅；SIM c.bin @382 FAIL；507000 + `free()` | [2026-06-29 纪要 §G5](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md) · [STATUS](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) | **P0 阻塞（明日汇报）** |
 | T1 | Rule/Skill 与目录结构落地 | [2026-06-08 纪要](2026-06/2026-06-08-Rule-Skill落地与FIPS203-204终极目标.md) §一 | **已完成** |
 | T2 | **ML-KEM-1024 PKE.KeyGen（Alg.13）** 功能原型：AscendC NTT + 嵌入 C（内积/编解码） | 同上 §六 | **进行中**（**全链 exp + pass 探针 CPU/SIM/KAT ✓**；Alg.16 / NPU 未做） |
 | T2a | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | §6.5 | 待开工 |

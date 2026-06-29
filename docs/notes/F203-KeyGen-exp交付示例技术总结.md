@@ -70,9 +70,13 @@ bash kat_liboqs_vs_ascendc.sh                     # 10 CPU + 1 SIM vs liboqs
 
 ---
 
-## 5. fork 下一用例（如 PKE Encrypt）的最小步骤
+## 5. fork 下一用例（PKE Encrypt）
 
-1. **rsync** 本 exp 目录 → `exp-mlkem-f203-pke-encrypt-k4`（新名）。  
+**正确性验证**（已建）：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) — **AscendC 多 launch 拼装**探针（G0 壳）；**禁 liboqs 生产路径**。
+
+**定型交付**（验证通过后另建）最小步骤：
+
+1. **rsync** KeyGen stable → `exp-mlkem-f203-pke-encrypt-k4`（或晋级 `stable-mlkem-f203-pke-encrypt-k4`）。  
 2. **先写 customspec**：I/O、Launch、CPU/设备表；**勿**继承 ntt_study 目标 4 的算子切分。  
 3. 改 Host golden / `prepare_production_input.py`；保留 `run.sh` 编排模式。  
 4. compute 增量（Encrypt 需 INTT、Compress 等）在 vendored `compute/` 内 fork，仍保持 **唯一路径**。  

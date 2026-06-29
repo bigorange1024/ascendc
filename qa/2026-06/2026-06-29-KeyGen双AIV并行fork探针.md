@@ -61,17 +61,77 @@ liboqs：`thirdparty/liboqs` tag **0.15.0**（静态 `liboqs.a`）；`scripts/bu
 
 **定稿**：[docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md §4.1](../../docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md#41-cpu-successaic_x-与2aic4aiv误读) · **STATUS/PIPE**：pass + fix-dual-aiv §14
 
-## 根目录幽灵探针目录清理（2026-06-29）
+## Alg.14 Encrypt 探针迁入 ascendc-tests
 
-误建路径（自包含 vendoring 脚本漏写 `ascendc-tests/` 前缀，`mkdir -p` 仅留下空 `thirdparty/.../stable/`）已删除：
+**背景**：Encrypt 正确性验证最初误建在 `examples/incubating/exp-mlkem-f203-pke-encrypt-correctness-k4/`；用户明确应为 **ascendc-tests 探针**，非 examples 交付。
 
-- `pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/`（仓库根，**非**探针）
-- `pass-fix-f203-stage123-ntt-intt-polyvec8-vec/`（仓库根，**非**探针）
+**结论**：
 
-活跃探针仍在 `ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/`、`ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/`。
+| 项 | 路径 |
+|----|------|
+| 活跃探针 | [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) |
+| 路线 | **AscendC 积木拼装**（INTEGRATION_PLAN Launch 表）；**已删 liboqs** |
+| G0 | marker launch 壳；`ENCRYPT_VERIFY=0` 默认 |
+| 定型交付 | 另建 `exp-mlkem-f203-pke-encrypt-k4` / `stable-*`（须 customspec） |
 
-## 交接与 GitHub（2026-06-29 晚）
+已更新：`ascendc-tests/INDEX.md`、`INTEGRATION_PLAN.md`、`STATUS.md`、`docs/notes/F203-KeyGen-exp交付示例技术总结.md` §5。  
+待手动：`examples/incubating/INDEX.md` 删除 exp-encrypt-correctness 行（工具权限受限）。
 
-- 删除 `HOME-KEYGEN-DEBUG.md`；**`AGENT_HANDOFF.md` 改为每日刷新**（办公室 ↔ 家里唯一短交接）。
-- `.gitignore`：`thirdparty/` → `/thirdparty/`（仅忽略仓库根 liboqs；**探针/example 内 vendored `thirdparty/ntt_study` 须进 Git**）。
-- 家里 Agent：**优先 `git pull`**，勿依赖旧 `backup/v0.1_20260626*`（缺 scripts、stable、vendored LUT）。
+## Alg.14 Encrypt G1–G4 设备拼装验收
+
+**路线**：vendored 活跃探针多 launch 拼全链；**禁 liboqs**；golden 仅 `scripts/host_golden/`。
+
+**G3 错误与修正（详 [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9）**：
+
+| 问题 | 原因 | 修正 |
+|------|------|------|
+| 修正前 SIM 双 fake-Â | `t_dot_r` SIM 曾全零；未接 `g3_linear` | `u_hat` 改真 `at_r` |
+| `g3_linear` 五参 launch | SIM `507000`（ACL internal error） | CPU 仍 `g3_linear`；SIM 不走五参 |
+| `t_dot_r` launch | 同/独 session 均 `507000` | `tr_hat`：`pack_t_hat_as_at_r_col0` + `at_r` row0（数学等价） |
+
+| Gate | 内容 | CPU/SIM（G3 修正后） |
+|------|------|----------------------|
+| G1 | ρ→a_hat + coins→r,e₁,e₂ | ✅ |
+| G2 | NTT(r)→r̂ | ✅ |
+| G3 | Âᵀ·r̂→û̂、t̂·r̂→tr̂ | ✅ CPU `g3_linear`；SIM 真 at_r + at_r col0；max=0 |
+| G4 | INTT+噪声+μ+Compress₁₁/₅ pack→c | gate ✅ CPU+SIM；**c.bin VERIFY=1 仅 CPU ✅** |
+
+### G4 复验（G3 修正后，2026-06-29）
+
+| 模式 | verify_gate G1–G3 | ENCRYPT_VERIFY=1 c.bin | wall |
+|------|-------------------|------------------------|------|
+| CPU G4/G5 | max=0 | **max=0** 1568B | ~10s |
+| SIM G4/G5 | max=0 | **FAIL** @382 | ~360–426s |
+
+SIM 日志仍有 507000 + 末尾 `free(): invalid pointer`（G4 tail 待修，非 G3 回退）。
+
+## Alg.14 Encrypt G5 推进与 SIM 全链阻塞（2026-06-29 晚）
+
+**背景**：领导验收「整条 Encrypt 在 device」；默认 `ENCRYPT_GATE=5`；禁止 Host `t_hat.bin` staging。
+
+**已完成**：
+
+| 项 | 证据 |
+|----|------|
+| 设备 ByteDecode ek→t̂ | `prep/decode_ek/`；SIM t̂ max=0 |
+| CPU G5 全链 | `ENCRYPT_VERIFY=1` → c.bin **max=0** ~10s |
+| SIM G5 G1–G3 | `verify_gate` û/tr̂ **max=0** |
+| SIM 双 session tr̂ | 同 session 第 2 次 at_r 错 → 改 `run_g3_at_r_device_once` 后 tr̂ max=0 |
+
+**阻塞（明日汇报前须解）**：
+
+| # | 现象 | 范围 |
+|---|------|------|
+| 1 | SIM `ENCRYPT_VERIFY=1` c.bin FAIL @382（0 vs 255） | G4 **与** G5 共用 G4 tail |
+| 2 | 507000（未挡 gate 对拍） | 已知 runtime 债 |
+| 3 | `free(): invalid pointer` 末尾崩溃 | 疑 ACL 多段 Init/Finalize |
+
+**明日 demo 保底（CPU）**：
+
+```bash
+cd ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4
+ENCRYPT_VERIFY=1 ENCRYPT_GATE=5 bash run.sh -r cpu -v Ascend910B4
+```
+
+**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.9–§10；修 SIM c.bin，勿回退 Host decode。
+
