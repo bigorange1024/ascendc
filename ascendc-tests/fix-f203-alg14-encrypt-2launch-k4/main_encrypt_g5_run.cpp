@@ -19,9 +19,8 @@
 #include "aclrtlaunch_f203_encrypt_prep_re.h"
 #include "aclrtlaunch_f203_encrypt_ntt_r.h"
 #include "aclrtlaunch_f203_encrypt_decode_t_hat.h"
-// G3 单 launch 合并核 at_r5：一次出 [û|tr̂]（单 session MIX 后仅一次自定义 AIV launch 可靠）。
+// G3 单 launch 合并核 at_r5：一次出 [û|tr̂]。SIM AIV 核压到 ≤5 使 at_r5 落 func_key≤4（病根门禁）。
 #include "aclrtlaunch_f203_encrypt_at_r5.h"
-#include "aclrtlaunch_f203_encrypt_at_r.h" // [DIAG] 受控实验：proven at_r（4-poly û）隔离 env vs at_r5
 #include "aclrtlaunch_f203_encrypt_intt.h"
 #include "aclrtlaunch_f203_encrypt_g4_noise.h"
 #include "aclrtlaunch_f203_encrypt_g4_noise_ws.h"
@@ -564,6 +563,10 @@ int run_encrypt_g5_sim_full(const std::string &case_dir, const uint8_t *ek, cons
     // 故 G3 必须把 û+tr̂ 收进**一次** launch：host 拼 5×4 矩阵 matM（列步长 5，p<4=Â[j,p]、p=4=t̂[j]），
     //   at_r5(matM,r̂) 输出 uTrDev=[û(4)=Âᵀ·r̂ | tr̂(1)=t̂·r̂]。与 proven ProcessAtR 同算法，仅 kPOut 4→5。
     {
+        // 病根修正（2026-06-30）：matM 由 host 读回 aHatDev/tHatDev 拼装；必须先同步 stream，
+        //   否则 prep_a_hat/decode_t_hat 的异步 launch 未完成时 D2H 取到 0 → matM 的 Â 列全 0
+        //   → at_r5 算出 û=Σ0·r̂=0（实测 u_hat 全 0 即此因；proven at_r 直接在设备读 aHatDev 故无此问题）。
+        CHECK_ACL(aclrtSynchronizeStream(stream));
         constexpr int kN = 256;
         std::vector<int32_t> aHatHost(static_cast<size_t>(F203_AHAT_BYTES) / sizeof(int32_t));
         std::vector<int32_t> tHatHost(static_cast<size_t>(F203_T_HAT_BYTES) / sizeof(int32_t));
@@ -584,21 +587,11 @@ int run_encrypt_g5_sim_full(const std::string &case_dir, const uint8_t *ek, cons
         const size_t matBytes = matHost.size() * sizeof(int32_t);
         CHECK_ACL(aclrtMemcpy(matDev, matBytes, matHost.data(), matBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     }
-#if defined(DIAG_G3_PROVEN_AT_R) // [DIAG] 受控实验：定义此宏→只 launch proven at_r 隔离 env vs at_r5
-    // [DIAG] 仅 launch proven at_r（key4，4-poly û→uTrDev 前 4 poly），隔离 env/build 是否 OK。
-    // 实测结论（2026-06-30）：此分支 û PASS、无 507000 → env/build 正常；at_r5(key5) 才 507000。
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r)(kG3BlockDim, stream, aHatDev, rHatDev, uTrDev);
-    if (ret != 0) {
-        std::fprintf(stderr, "[g5_sim][DIAG] at_r(u_hat) launch ret=%u\n", ret);
-        return 54;
-    }
-#else
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r5)(kG3BlockDim, stream, matDev, rHatDev, uTrDev);
     if (ret != 0) {
         std::fprintf(stderr, "[g5_sim] at_r5(u_hat|tr_hat) launch ret=%u\n", ret);
         return 54;
     }
-#endif
     CHECK_ACL(aclrtSynchronizeStream(stream));
 
     // Session A 结束：D2H G1–G3 中间量（设备已算完 NTT 域 û/tr̂）

@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。  
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。  
-> **最后刷新**：2026-06-30（晨 · Encrypt 单 session 重建 + SIM 507000 病根定位）
+> **最后刷新**：2026-06-30（午 · Encrypt 单 session 全链 CPU+SIM 打通 max=0 ✅）
 
 ---
 
@@ -21,39 +21,42 @@
 
 ### Encrypt Alg.14（**汇报优先**）
 
-**两个探针并存**——优先看新探针：
+**两个探针并存**——以新探针为活跃基线：
 
 | 探针 | 角色 | 状态 |
 |------|------|------|
-| **新（活跃）** [`ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/`](ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/) | **单 ACL session** 重建全链（按用户要求新建目录重搭） | CPU 全链 ✅ max=0；SIM 卡在 G3 `at_r5` **507000**（病根已定位，见下） |
-| 旧 [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) | 旧多 session 路线 + G4 tail 调试 | CPU 全链 ✅；SIM 多 session → 507000（已被新探针单 session 取代） |
+| **新（活跃）** [`ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/`](ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/) | **单 ACL session** 重建全链 | **CPU + SIM 全链 c.bin 1568B max=0 ✅** |
+| 旧 [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) | 旧多 session 路线 | CPU ✅；SIM 多 session 507000（已被新探针取代） |
 
-**新探针 CPU 全链 demo（已 PASS，可汇报）**：
+**验收（默认命令，无手动 export）**：
 
 ```bash
 cd ascendc-tests/fix-f203-alg14-encrypt-2launch-k4
-ENCRYPT_VERIFY=1 SIM_DIRECT=1 bash run.sh -r cpu -v Ascend910B4
-# → G1/G2/G3 verify_gate max=0；[verify] PASS max=0 (1568 bytes)
+ENCRYPT_VERIFY=1 bash run.sh -r cpu -v Ascend910B4                                   # CPU
+ENCRYPT_KERNEL_BUDGET_SEC=1000 ENCRYPT_VERIFY=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # SIM ~13min
+# 两者均 → G1/G2/G3 verify_gate max=0；[verify] PASS max=0 (1568 bytes)；用例根无 stray dump
 ```
 
-### ⭐ SIM 507000 病根（今日最重要发现，务必传给对侧）
+### ⭐ SIM 单 session 两大病根 + 解法（务必传给对侧）
 
-**结论：CAModel 单 binary 内 AIV kernel 的 `func_key ≥ 5 一律 507000；≤4 正常。**
+**病根 1：CAModel 单 binary 内 AIV kernel `func_key ≥ 5 一律 507000`，≤4 正常。**
 
-- 全链单 session 已打通（之前多 session→507000 的病根已除）；G1/G2 SIM max=0、device decode t̂ 正常。
-- G3 合并核 `f203_encrypt_at_r5`（一次出 [û|tr̂]）launch 即 **507000**，且 CAModel 同步执行→ core dump(signal 11)。
-- **受控实验链（章法：逐步隔离）**：
-  1. 把 G3 换成 proven `at_r`（4-poly û，`-DDIAG_G3_PROVEN_AT_R`）→ **û PASS、无 507000** ⇒ env/build/binary 正常，"MIX 后第 N 发 AIV 不可靠"假说**被推翻**。
-  2. 把 `at_r5` 退化成 `kP5=4`（逐字≈at_r）→ **仍 507000** ⇒ 不是 5-poly/scratch/DataCopy 增量的锅。
-  3. `nm device_aiv.o`：`f203_encrypt_at_r5_5`（**key5**）符号存在且索引一致 ⇒ 不是没编进。
-  4. 对照 host_stub func_key：AIV binary = marker(0) prep_a_hat(1) prep_re(2) g4_noise(3) **at_r(4)✅** **at_r5(5)❌** g3_linear(6)❌ g3_linear4(7)❌ t_dot_r(8)❌。历史 `G3_SIM_AUDIT` 里 g3_linear(6)/g3_linear4(7) 也都 507000。**边界恰在 4↔5。**
-- **func_key 不按定义序**（文件里 g3_linear 在前却拿 key6，at_r 在后拿 key4）→ 不能靠重排可靠控制。
+- 受控实验（章法）：proven `at_r`(key4) PASS、`at_r5`(key5) FAIL、`at_r5` 退化 `kP5=4` 仍 FAIL、`nm` 确认符号在；
+  历史 `g3_linear`(key6)/`g3_linear4`(key7) 亦 507000。边界恰在 4↔5。**KeyGen 能跑正因其恰好 5 个 AIV 核(key0-4)。**
+- `func_key` 不按定义序，不能靠重排控制。
+- **解法**：SIM 设备侧 `g3_linear.cpp` **只编 `at_r5`**；`g3_linear/g3_linear4/at_r/t_dot_r` 用 `#ifdef ASCENDC_CPU_DEBUG`
+  仅留 CPU（CPU 独立 binary，func_key 无意义）→ SIM AIV 核 = marker/prep_a_hat/prep_re/g4_noise/at_r5 共 5 个，
+  `at_r5` 落 key4。删 `main_encrypt.cpp` 旧 staged gate<5 SIM G3 + 旧 `<<<>>>` `*_do` 壳。
+- **通用守则**：新增 SIM AIV 核须 `nm device_aiv.o` 复核 key≤4；AIV 核总数控制 ≤5。
 
-**修复方向（家里继续做）**：把 **SIM 设备编译里 AIV kernel 总数压到 ≤5**，使合并核 `at_r5` 落到 key≤4。即把 `at_r / g3_linear / g3_linear4 / t_dot_r` 这些 SIM 不 launch 的 AIV 核 **用 `#ifdef ASCENDC_CPU_DEBUG` 仅留给 CPU**（CPU 是独立 binary、func_key 无所谓；CPU 走 `g3_linear4`），SIM 设备侧仅编 `at_r5`。同时 `main_encrypt.cpp` 旧 staged 路径（line 29/324 等引用 at_r/g3_linear/t_dot_r）需对 SIM 关掉，避免 `aclrtlaunch_*.h` 缺失编译错。
-- **未验证假设**：以上修复基于"≤5 个 AIV 核 ⇒ at_r5 落 key≤4 ⇒ 不再 507000"。落地后**第一件事**：`nm` 确认 at_r5 的 key、再跑 SIM 看 507000 是否消失。若 key≤4 仍 507000，则病根另有其因，需回到受控实验。
-- **时间成本提醒**：SIM 崩溃约 70s 出结果（快）；**跑通全链约 13 分钟**（G4/G5 tail 慢）。安排等待预算时注意。
+**病根 2：host 拼 `matM` 前缺 `aclrtSynchronizeStream` → û 全 0。**
 
-**纪要**：[`qa/2026-06/`](qa/2026-06/) 当日（func_key≥5 病根）；旧审计 [`G3_SIM_AUDIT.md`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.9。
+- `at_r5` 用 host 读回 `aHatDev/tHatDev` 拼 5×4 矩阵；D2H 前未同步 → 异步 launch 未完成 → matM 的 Â 列取 0
+  → û=Σ0·r̂=0。proven `at_r` 直接在设备读 aHatDev 故无此问题（曾误导为「2nd AIV 不可靠」）。
+- **解法**：host 打包 D2H 前 `aclrtSynchronizeStream(stream)`。
+- **通用守则**：任何 host↔device 往返打包前必同步 stream。
+
+**纪要**：[`qa/2026-06/`](qa/2026-06/) 2026-06-30；新探针 [`STATUS.md`](ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/STATUS.md)。
 
 ### KeyGen（k=4，生产路径）
 
@@ -120,7 +123,7 @@ bash backup-project.sh   # → backup/v0.1_YYYYMMDDHHMMSS/
 
 | 优先级 | ID | 事项 |
 |--------|-----|------|
-| **P0** | **T14** | **Encrypt 新探针 SIM 全链** — 按 §SIM 507000 病根：把 SIM AIV 核压到 ≤5 使 `at_r5` 落 key≤4；先 `nm` 验 key 再跑 SIM |
+| ~~P0~~ | ~~T14~~ | ~~Encrypt 新探针 SIM 全链~~ — **✅ 已完成**（CPU+SIM c.bin max=0）。后续：晋级 stable / 性能优化 |
 | 1 | T13b | vec-k4-v3（设备 `a_hat` + V3 预采样） |
 | 2 | T11 | 2s1e exp → stable 晋级 |
 
@@ -129,14 +132,10 @@ bash backup-project.sh   # → backup/v0.1_YYYYMMDDHHMMSS/
 ## 5. smoke（拉代码后）
 
 ```bash
-# P0：Encrypt 新探针 CPU 全链（应 PASS max=0）
+# Encrypt 新探针 CPU+SIM 全链（均应 PASS max=0）
 cd ascendc-tests/fix-f203-alg14-encrypt-2launch-k4
-ENCRYPT_VERIFY=1 SIM_DIRECT=1 bash run.sh -r cpu -v Ascend910B4
-
-# SIM 复现 507000（约 70s 崩在 at_r5）—— 修复目标
-ENCRYPT_KERNEL_BUDGET_SEC=1000 ENCRYPT_VERIFY=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-# 受控实验：proven at_r 隔离（应 û PASS 无 507000；约 13 分钟跑全链）
-#   在 CMake/编译期加 -DDIAG_G3_PROVEN_AT_R 即走该分支
+ENCRYPT_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
+ENCRYPT_KERNEL_BUDGET_SEC=1000 ENCRYPT_VERIFY=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # ~13min
 
 # KeyGen
 cd ../../examples/stable/stable-mlkem-f203-pke-keygen-k4

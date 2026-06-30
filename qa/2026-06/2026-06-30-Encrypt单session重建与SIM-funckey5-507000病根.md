@@ -34,7 +34,25 @@
 
 SIM 崩溃 ~70s 出结果；**跑通全链 ~13 分钟**（G4/G5 tail 慢）。安排等待预算注意。
 
-## 5. 现状
+## 5. 解法落地 + 全链打通 ✅
 
-- CPU 全链 PASS（可汇报）。
-- 代码当前为设计态（`kP5=5`、main 走 at_r5）；DIAG 受控实验保留为 `-DDIAG_G3_PROVEN_AT_R` 宏开关。
+### 病根 1 解法（func_key≥5）
+
+SIM 设备侧 `g3_linear.cpp` **只编 `at_r5`**；`g3_linear/g3_linear4/at_r/t_dot_r` 用 `#ifdef ASCENDC_CPU_DEBUG`
+仅留 CPU（CPU 独立 binary，func_key 无意义）→ SIM AIV 核 = marker/prep_a_hat/prep_re/g4_noise/at_r5 共 5 个。
+`nm`/host_stub 复核：`at_r5` 落 **func_key 4**，507000 消失。删 `main_encrypt.cpp` 旧 staged gate<5 SIM G3
+（独立 session at_r×N）+ 旧 `<<<>>>` `*_do` 壳。
+
+### 病根 2（解 507000 后暴露）：û 全 0
+
+at_r5 launch 成功但 `u_hat` 全 0。根因：g5_run 用 host 读回 `aHatDev/tHatDev` 拼 5×4 `matM`，**D2H 前未
+`aclrtSynchronizeStream`** → prep_a_hat/decode_t_hat 异步未完成 → matM 的 Â 列取到 0 → û=Σ0·r̂=0。
+proven `at_r` 直接在设备读 aHatDev 故无此问题（曾误导为「2nd AIV 不可靠」）。**解法**：打包 D2H 前加 sync。
+
+**通用守则**：任何 host↔device 往返打包前必同步 stream。
+
+### 现状（证据）
+
+- **CPU 全链**：`[verify] PASS max=0 (1568 bytes)`、`[SUCCESS] (cpu)`。
+- **SIM 全链**：G1/G2/G3 verify_gate max=0、`[verify] PASS max=0 (1568 bytes)`、`[SUCCESS] (sim)`；用例根无 stray dump。
+- 代码设计态：`kP5=5`、SIM 走 at_r5（key4）；DIAG `-DDIAG_G3_PROVEN_AT_R` 已随 at_r CPU-only 移除（at_r 不再编入 SIM）。

@@ -24,9 +24,8 @@
 #include "aclrtlaunch_f203_encrypt_prep_a_hat.h"
 #include "aclrtlaunch_f203_encrypt_prep_re.h"
 #include "aclrtlaunch_f203_encrypt_ntt_r.h"
-// 注：SIM/NPU 的 G3 走 compute/at_r/f203_encrypt_at_r_mix.cpp（单 MIX at_r，一次出 û+tr̂），
-//   不再编译 g3_linear / t_dot_r，故此处不 include 它们的 launch 头（仅 CPU 经 #else 走 g3_linear）。
-#include "aclrtlaunch_f203_encrypt_at_r.h"
+// 注（2026-06-30 病根修正）：SIM 设备 binary 内 AIV func_key≥5→507000，故 SIM 不再编 at_r/t_dot_r；
+//   G3 走 g5 单 session 的 at_r5（key≤4）。此处不 include at_r/g3_linear/t_dot_r 的 launch 头。
 #include "aclrtlaunch_f203_encrypt_intt.h"
 #include "aclrtlaunch_f203_encrypt_g4_noise.h"
 #include "aclrtlaunch_f203_encrypt_pack.h"
@@ -291,102 +290,10 @@ int run_ntt_r(LaunchFn &&launch, const uint8_t *r_in, const uint8_t *lut_even, c
     return 0;
 }
 
-#ifndef ASCENDC_CPU_DEBUG
-/** SIM/NPU：独立 ACL session 单次 at_r（Âᵀ·r̂ → u_hat）。 */
-int run_g3_at_r_device_once(const uint8_t *a_in, const uint8_t *r_in, uint8_t *u_out)
-{
-    const size_t aBytes = static_cast<size_t>(innerproduct_tiling::kAHatBytes);
-    const size_t rBytes = static_cast<size_t>(innerproduct_tiling::kSHatBytes);
-    const size_t uBytes = static_cast<size_t>(innerproduct_tiling::kTHatBytes);
-
-    CHECK_ACL(aclInit(nullptr));
-    int32_t deviceId = 0;
-    CHECK_ACL(aclrtSetDevice(deviceId));
-    aclrtStream stream = nullptr;
-    CHECK_ACL(aclrtCreateStream(&stream));
-
-    uint8_t *aHost = nullptr;
-    uint8_t *rHost = nullptr;
-    uint8_t *uHost = nullptr;
-    uint8_t *aDev = nullptr;
-    uint8_t *rDev = nullptr;
-    uint8_t *uDev = nullptr;
-    CHECK_ACL(aclrtMallocHost((void **)&aHost, aBytes));
-    CHECK_ACL(aclrtMallocHost((void **)&rHost, rBytes));
-    CHECK_ACL(aclrtMallocHost((void **)&uHost, uBytes));
-    CHECK_ACL(aclrtMalloc((void **)&aDev, aBytes, ACL_MEM_MALLOC_HUGE_FIRST));
-    CHECK_ACL(aclrtMalloc((void **)&rDev, rBytes, ACL_MEM_MALLOC_HUGE_FIRST));
-    CHECK_ACL(aclrtMalloc((void **)&uDev, uBytes, ACL_MEM_MALLOC_HUGE_FIRST));
-    std::memcpy(aHost, a_in, aBytes);
-    std::memcpy(rHost, r_in, rBytes);
-    CHECK_ACL(aclrtMemcpy(aDev, aBytes, aHost, aBytes, ACL_MEMCPY_HOST_TO_DEVICE));
-    CHECK_ACL(aclrtMemcpy(rDev, rBytes, rHost, rBytes, ACL_MEMCPY_HOST_TO_DEVICE));
-    const uint32_t ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r)(kAtRBlockDim, stream, aDev, rDev, uDev);
-    if (ret != 0) {
-        std::fprintf(stderr, "[main_encrypt] G3 at_r launch failed ret=%u\n", ret);
-        CHECK_ACL(aclrtDestroyStream(stream));
-        CHECK_ACL(aclrtResetDevice(deviceId));
-        CHECK_ACL(aclFinalize());
-        return 12;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-    CHECK_ACL(aclrtMemcpy(uHost, uBytes, uDev, uBytes, ACL_MEMCPY_DEVICE_TO_HOST));
-    std::memcpy(u_out, uHost, uBytes);
-    CHECK_ACL(aclrtFree(aDev));
-    CHECK_ACL(aclrtFree(rDev));
-    CHECK_ACL(aclrtFree(uDev));
-    CHECK_ACL(aclrtFreeHost(aHost));
-    CHECK_ACL(aclrtFreeHost(rHost));
-    CHECK_ACL(aclrtFreeHost(uHost));
-    CHECK_ACL(aclrtDestroyStream(stream));
-    CHECK_ACL(aclrtResetDevice(deviceId));
-    CHECK_ACL(aclFinalize());
-    return 0;
-}
-
-/**
- * t̂[j] 填入 Â 列 p=0：flat (j*K+0)*N，供 at_r 算 row0 = t̂·r̂。
- * 背景：SIM 上 f203_encrypt_t_dot_r launch 507000；与 t_dot_r 核数学等价（见 G3_SIM_AUDIT.md §8）。
- */
-static void pack_t_hat_as_at_r_col0(const uint8_t *t_hat, uint8_t *a_hat_col0)
-{
-    const size_t polyBytes = static_cast<size_t>(F203_ENCRYPT_N * sizeof(int32_t));
-    std::memset(a_hat_col0, 0, F203_AHAT_BYTES);
-    for (uint32_t j = 0; j < F203_ENCRYPT_K; ++j) {
-        const size_t dstOff = (static_cast<size_t>(j) * F203_ENCRYPT_K) * polyBytes;
-        std::memcpy(a_hat_col0 + dstOff, t_hat + j * polyBytes, polyBytes);
-    }
-}
-
-/** SIM：at_r + 仅 row0 → tr_hat（t̂ 列 0 编码，非 u_hat 路径 workaround）。 */
-int run_g3_tr_via_at_r_device_once(const uint8_t *t_in, const uint8_t *r_in, uint8_t *tr_out)
-{
-    std::vector<uint8_t> aCol0(F203_AHAT_BYTES);
-    pack_t_hat_as_at_r_col0(t_in, aCol0.data());
-    std::vector<uint8_t> uBuf(F203_U_HAT_BYTES);
-    if (run_g3_at_r_device_once(aCol0.data(), r_in, uBuf.data()) != 0) {
-        return 13;
-    }
-    std::memcpy(tr_out, uBuf.data(), F203_TR_HAT_BYTES);
-    return 0;
-}
-
-/**
- * SIM G3：两次独立 ACL session — at_r(真 a_hat)→u_hat；at_r(t̂ 列 0)→tr_hat。
- * t_dot_r / g3_linear 五参 launch 在 SIM 均 507000（§7–§8）。
- */
-int run_g3_device_sim_once(const uint8_t *a_in, const uint8_t *r_in, const uint8_t *t_in, uint8_t *u_out,
-                           uint8_t *tr_out)
-{
-    if (run_g3_at_r_device_once(a_in, r_in, u_out) != 0) {
-        return 12;
-    }
-    if (run_g3_tr_via_at_r_device_once(t_in, r_in, tr_out) != 0) {
-        return 13;
-    }
-    return 0;
-}
-#endif
+// 注（2026-06-30 病根修正）：旧「分阶段独立 ACL session」G3 helper（run_g3_at_r_device_once /
+//   run_g3_tr_via_at_r_device_once / run_g3_device_sim_once）已删除。它们依赖 SIM 侧的 at_r/t_dot_r
+//   AIV 核，而 SIM 设备 binary 内 AIV func_key≥5→507000（见 g3_linear.cpp 门禁注释），故 SIM 不再
+//   编 at_r/t_dot_r。SIM 全链唯一路径 = gate>=5 的 g5 单 session（run_encrypt_g5_sim_full，G3 走 at_r5）。
 
 /** G4 INTT：NTT 域 src [k,256] → 时域 dst（INTT LUT 在 ws 前缀）。 */
 template <typename LaunchFn>
@@ -807,7 +714,7 @@ int32_t main(int32_t argc, char *argv[])
         return 11;
     }
 
-    std::printf("[main_encrypt] G3 linear ENCRYPT_GATE=%d blockDim=%u (cpu=g3_linear sim=at_r+at_r_col0)\n",
+    std::printf("[main_encrypt] G3 linear ENCRYPT_GATE=%d blockDim=%u (cpu=g3_linear; SIM 仅 gate>=5 g5 at_r5)\n",
                 encrypt_gate, kAtRBlockDim);
 
 #ifdef ASCENDC_CPU_DEBUG
@@ -834,9 +741,11 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(uGm);
     AscendC::GmFree(trGm);
 #else
-    if (run_g3_device_sim_once(a_hat.data(), r_hat.data(), t_hat.data(), u_hat.data(), tr_hat.data()) != 0) {
-        return 12;
-    }
+    // 病根修正后（2026-06-30）：SIM 设备侧不再编 at_r/t_dot_r（AIV func_key≥5→507000），
+    //   gate<5 的旧「分阶段独立 session」G3 已废弃；SIM 全链唯一路径是 gate>=5 的 g5 单 session。
+    (void)a_hat; (void)r_hat; (void)t_hat;
+    std::fprintf(stderr, "[main_encrypt] SIM 仅支持 ENCRYPT_GATE>=5（单 session 全链）；gate<5 staged G3 已废弃\n");
+    return 12;
 #endif
     if (!WriteFile(case_dir + "/output/u_hat.bin", u_hat.data(), u_hat.size())) {
         std::fprintf(stderr, "[main_encrypt] write u_hat.bin failed\n");

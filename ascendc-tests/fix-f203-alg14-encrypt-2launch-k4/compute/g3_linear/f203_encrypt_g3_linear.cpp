@@ -388,6 +388,15 @@ private:
 
 } // namespace
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SIM/NPU 设备 binary 的 AIV kernel **数量门禁**（病根，2026-06-30）：
+//   CAModel 单 binary 内 AIV kernel 的 func_key **≥5 一律 507000**、≤4 正常（受控实验：
+//   proven at_r=key4 PASS、at_r5=key5 FAIL、kP5=4 退化仍 FAIL、nm 确认符号在；历史
+//   g3_linear=key6/g3_linear4=key7 亦 507000）。KeyGen 能跑正因其恰好 5 个 AIV 核（key0-4）。
+//   故 SIM 设备侧 g3_linear.cpp **只编 at_r5**；g3_linear/g3_linear4/at_r/t_dot_r 仅 CPU 用
+//   （CPU 是独立 binary，func_key 无意义）→ SIM AIV 核 = marker/prep_a_hat/prep_re/g4_noise/at_r5
+//   共 5 个，at_r5 落 key4。详见 qa/2026-06-30 与 AGENT_HANDOFF.md。
+#ifdef ASCENDC_CPU_DEBUG
 extern "C" __global__ __aicore__ void f203_encrypt_g3_linear(GM_ADDR aHat, GM_ADDR rHat, GM_ADDR tHat, GM_ADDR uHat,
                                                              GM_ADDR trHat)
 {
@@ -431,6 +440,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_at_r(GM_ADDR aHat, GM_ADDR rH
     op.InitAtR(aHat, rHat, uHat);
     op.ProcessAtR();
 }
+#endif // ASCENDC_CPU_DEBUG（g3_linear/g3_linear4/at_r 仅 CPU）
 
 /**
  * G3 单 launch 合并核（SIM/NPU 生产路径，2026-06-30 病根修正）：一次出 û(4)+tr̂(1)。
@@ -451,6 +461,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_at_r5(GM_ADDR matM, GM_ADDR r
     op.ProcessAtR5();
 }
 
+#ifdef ASCENDC_CPU_DEBUG
 extern "C" __global__ __aicore__ void f203_encrypt_t_dot_r(GM_ADDR tHat, GM_ADDR rHat, GM_ADDR trHat)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
@@ -461,28 +472,8 @@ extern "C" __global__ __aicore__ void f203_encrypt_t_dot_r(GM_ADDR tHat, GM_ADDR
     op.InitTDotR(tHat, rHat, trHat);
     op.ProcessTDotR();
 }
+#endif // ASCENDC_CPU_DEBUG（t_dot_r 仅 CPU）
 
-#ifndef __CCE_KT_TEST__
-void f203_encrypt_g3_linear_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *aHat, uint8_t *rHat,
-                               uint8_t *tHat, uint8_t *uHat, uint8_t *trHat)
-{
-    f203_encrypt_g3_linear<<<blockDim, l2ctrl, stream>>>(aHat, rHat, tHat, uHat, trHat);
-}
-
-void f203_encrypt_g3_linear4_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *aHat, uint8_t *rHat,
-                                uint8_t *tHat, uint8_t *uTrOut)
-{
-    f203_encrypt_g3_linear4<<<blockDim, l2ctrl, stream>>>(aHat, rHat, tHat, uTrOut);
-}
-
-void f203_encrypt_at_r_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *aHat, uint8_t *rHat, uint8_t *uHat)
-{
-    f203_encrypt_at_r<<<blockDim, l2ctrl, stream>>>(aHat, rHat, uHat);
-}
-
-void f203_encrypt_t_dot_r_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *tHat, uint8_t *rHat,
-                             uint8_t *trHat)
-{
-    f203_encrypt_t_dot_r<<<blockDim, l2ctrl, stream>>>(tHat, rHat, trHat);
-}
-#endif
+// 注（2026-06-30）：旧 <<<>>> 启动壳 *_do（g3_linear/g3_linear4/at_r/t_dot_r）已删除——本探针经
+//   aclrtlaunch(auto_gen) 启动，不用 _do；且这些核已 CPU-only（SIM AIV func_key≥5 门禁），而 _do 处于
+//   #ifndef __CCE_KT_TEST__（SIM/NPU），二者互斥必然找不到核。at_r5 同样无 _do，经 aclrtlaunch 启动。
