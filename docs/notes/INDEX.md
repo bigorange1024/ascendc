@@ -24,7 +24,7 @@
 | [F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md](F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md) | KeyGen prep **双 AIV**、SHAKE **ProcessInline**；§4.1 **CPU SUCCESS / 2AIC+4AIV 误读** |
 | [F203-KeyGen-prep-Pipe细同步技术总结.md](F203-KeyGen-prep-Pipe细同步技术总结.md) | prep **PipeBarrier** 窄化（Opt-5 CBD 合入） |
 | [F203-KeyGen-exp交付示例技术总结.md](F203-KeyGen-exp交付示例技术总结.md) | **exp-mlkem-f203-pke-keygen-k4** 自包含交付、唯一路径、KAT/SIM 验收 |
-| [F203-polyvec8-stage123-NTT-INTT技术总结.md](F203-polyvec8-stage123-NTT-INTT技术总结.md) | **8-poly 批 NTT/INTT** 三段式向量（[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)） |
+| [F203-Alg15-Decrypt-2launch编排技术总结.md](F203-Alg15-Decrypt-2launch编排技术总结.md) | **Alg.15 Decrypt** 2-launch 切分；prep/NTT 分离、NTT/INTT 分 kernel；[`fix-f203-alg15-pke-decrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) |
 
 ## AscendC 平台
 

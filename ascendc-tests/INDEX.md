@@ -52,6 +52,7 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | [**fix-f203-compress-d-vec-k4/**](fix-f203-compress-d-vec-k4/) | **§4.2.1 Compress_d** 向量（Alg.14 前半；d=4 SIM **3247**） |
 | [**fix-f203-decompress-d-vec-k4/**](fix-f203-decompress-d-vec-k4/) | **§4.2.1 Decompress_d** 向量（Alg.15 前半；d=4 SIM **3177**） |
 | [**fix-f203-alg14-pke-encrypt-correctness-k4/**](fix-f203-alg14-pke-encrypt-correctness-k4/) | **Alg.14 Encrypt G5 ✅**（唯一活跃；G0–G4 → `frozen-gates/`）；CPU+SIM c.bin max=0；SIM tick **922441** |
+| [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（dk+c→m 全 device；**2 launch** prep \| ntt+intt）；CPU+SIM m.bin max=0；SIM tick **~427k** |
 | ~~fix-f203-alg14-encrypt-2launch-k4~~ | **已冻结** → [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（家里 agent `27cc93b`，办公室未复验） |
 
 **ByteEncode₁₂（KeyGen）**：保持 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/) 不变；Encrypt 侧 **d=4/10** 见 [`fix-f203-byteencode-d-vec-k4`](fix-f203-byteencode-d-vec-k4/)。
