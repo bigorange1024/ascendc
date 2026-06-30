@@ -171,7 +171,8 @@ public:
         interleaveReorderQue_.EnQue(interleaveLocal);
         wsQue_.FreeTensor(wsLocal);
         DataCopy(uGm_[0], outLine, kIpPOut * kIpN);
-        ALG11_PIPE_MTE2();
+        ALG11_PIPE_ALL(); // 等待输出 DataCopy(UB→GM=MTE3) 完成；单独用 at_r 时 kernel 随即结束，
+                          // 若仅挡 MTE2 则 SIM 下 u_hat 搬运未完成(got=0)。
 #endif
     }
 
@@ -223,7 +224,7 @@ public:
         interleaveReorderQue_.EnQue(interleaveLocal);
         wsQue_.FreeTensor(wsLocal);
         DataCopy(trGm_[0], trLine, kIpN);
-        ALG11_PIPE_MTE2();
+        ALG11_PIPE_ALL(); // 同 ProcessAtR：等待输出 DataCopy(MTE3) 完成再结束 kernel。
 #endif
     }
 
@@ -284,6 +285,10 @@ extern "C" __global__ __aicore__ void f203_encrypt_g3_linear(GM_ADDR aHat, GM_AD
 /** 四 GM 指针变体：规避 SIM 五参 launch 507000（数学同 g3_linear）。 */
 extern "C" __global__ __aicore__ void f203_encrypt_g3_linear4(GM_ADDR aHat, GM_ADDR rHat, GM_ADDR tHat, GM_ADDR uTrOut)
 {
+    // 纯 AIV_ONLY：CPU 全链经此(ProcessFull→g3_linear_scalar)算 u_hat+tr_hat；
+    // SIM 不 launch 本核(改走已验证的 at_r×2，见 main_encrypt_g5_run.cpp 与 at_r 注释)。
+    // 关键：ascendc auto_gen 对「单文件多 MIX kernel」会把 MIX 全降级为 AIV(实测 K_TYPE_AIV)，
+    // 故本文件内只保留 at_r 一个 MIX kernel；g3_linear4 维持 AIV_ONLY，避免触发降级。
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     if (GetBlockIdx() >= kIpUseCores) {
         return;
@@ -295,10 +300,25 @@ extern "C" __global__ __aicore__ void f203_encrypt_g3_linear4(GM_ADDR aHat, GM_A
 
 extern "C" __global__ __aicore__ void f203_encrypt_at_r(GM_ADDR aHat, GM_ADDR rHat, GM_ADDR uHat)
 {
+    // ── MIX 占位（仅 SIM/NPU；CPU 保持 AIV-only）──
+    // 全链 SIM 中 u_hat=Âᵀ·r̂ 与 tr_hat=t̂·r̂(t̂当Â列0=aCol0) 均用本 ProcessAtR 矩阵乘
+    // (与 keygen 同源、历史 SIM 已 PASS)，于 NTT(MIX) 之后 launch；CAModel 下 MIX binary
+    // 加载后 device_aiv.o 注册失效(107000)→AIV-only launch 507000，故声明 MIX_AIC_1_2
+    // 并入 device.o。本核 kIpUseCores=kBlockDim=1(单核)，仅 AIV subcore 0 执行，语义不变。
+#ifdef ASCENDC_CPU_DEBUG
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     if (GetBlockIdx() >= kIpUseCores) {
         return;
     }
+#else
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+    if (GetSubBlockNum() == 1) {
+        return; // AIC：不参与，仅占位
+    }
+    if (GetSubBlockIdx() != 0) {
+        return; // 仅 AIV subcore 0 执行 Âᵀ·r̂
+    }
+#endif
     KernelG3Linear op;
     op.InitAtR(aHat, rHat, uHat);
     op.ProcessAtR();

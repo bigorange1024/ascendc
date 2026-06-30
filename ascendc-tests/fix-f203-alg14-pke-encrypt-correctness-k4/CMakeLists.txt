@@ -53,6 +53,7 @@ set(KERNEL_FILES
     ${G3_LINEAR_INC}/f203_encrypt_g3_linear.cpp
     ${INTT_INC}/f203_encrypt_intt_entry.cpp
     ${G4_INC}/f203_encrypt_g4_noise_entry.cpp
+    ${G4_INC}/f203_encrypt_g4_noise_ws_entry.cpp
     ${PACK_INC}/f203_encrypt_pack_entry.cpp
 )
 set(CUSTOM_ASCEND310P_LIST "Ascend310P1" "Ascend310P3")

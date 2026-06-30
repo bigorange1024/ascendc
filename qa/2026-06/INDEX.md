@@ -42,6 +42,7 @@
 - **Phase A 全链（已冻结）**：[`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/) — tick 表只读
 - **KeyGen prep 双 AIV 并行 Â**：✅ 完成（pass + stable）；见 [2026-06-29](2026-06-29-KeyGen双AIV并行fork探针.md)
 - **CBD 子轨**：[`pass-fix-f203-alg8-cbd-eta2-k4`](../../ascendc-tests/pass-fix-f203-alg8-cbd-eta2-k4/) **`pass-` 终态** CPU+SIM ✅；P2 SIM **18048** tick；P1b **33311**（KeyGen 生产同构）
+- **Encrypt 单 session 重建 + SIM func_key≥5→507000 病根**：新探针 `fix-f203-alg14-encrypt-2launch-k4` CPU 全链 ✅；SIM 卡 G3 `at_r5`（AIV key5）；见 [2026-06-30](2026-06-30-Encrypt单session重建与SIM-funckey5-507000病根.md)
 
 ---
 

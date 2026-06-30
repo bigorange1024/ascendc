@@ -684,27 +684,19 @@ int32_t main(int32_t argc, char *argv[])
                                                  lut_intt_odd.data(), c_out.data());
         return g5rc != 0 ? g5rc : 0;
 #else
-        std::printf("[main_encrypt] G5 SIM: phase1 + G4 at_r(tr) + G4 tail\n");
-        std::vector<uint8_t> a_col0(F203_AHAT_BYTES);
-        const int p1 = run_g5_sim_phase1(ek_buf.data(), coins_buf.data(), a_hat.data(), re_flat.data(), r_hat.data(),
-                                         t_hat.data(), u_hat.data(), a_col0.data(), lut_even.data(), lut_odd.data());
-        if (p1 != 0) {
-            return p1;
+        std::vector<uint8_t> c_out(F203_CT_PKE_BYTES);
+        // tail-only 快跑：跳过 prep/NTT/G3，读 golden u_hat/tr_hat/e1/e2 只跑 INTT→noise→pack，
+        // 始终分阶段 dump，供逐步定位 SIM tail（INTT/noise/pack）首个对不上的阶段。
+        const char *tailEnv = std::getenv("ENCRYPT_TAIL_ONLY");
+        if (tailEnv != nullptr && std::atoi(tailEnv) != 0) {
+            const int trc = run_encrypt_g4_tail_only_sim(case_dir, lut_intt_even.data(), lut_intt_odd.data(),
+                                                         c_out.data());
+            return trc != 0 ? trc : 0;
         }
-        if (run_g3_at_r_device_once(a_col0.data(), r_hat.data(), tr_hat.data()) != 0) {
-            return 13;
-        }
-        const int wo = write_g1_outputs(case_dir + "/output", a_hat.data(), re_flat.data());
-        if (wo != 0) {
-            return 6;
-        }
-        if (!WriteFile(case_dir + "/output/r_hat.bin", r_hat.data(), r_hat.size()) ||
-            !WriteFile(case_dir + "/output/t_hat.bin", t_hat.data(), t_hat.size()) ||
-            !WriteFile(case_dir + "/output/u_hat.bin", u_hat.data(), u_hat.size()) ||
-            !WriteFile(case_dir + "/output/tr_hat.bin", tr_hat.data(), tr_hat.size())) {
-            return 10;
-        }
-        g5_sim_prelude = true;
+        const int g5rc = run_encrypt_g5_sim_full(case_dir, ek_buf.data(), coins_buf.data(), m_buf.data(),
+                                               lut_even.data(), lut_odd.data(), lut_intt_even.data(),
+                                               lut_intt_odd.data(), c_out.data());
+        return g5rc != 0 ? g5rc : 0;
 #endif
     }
 
