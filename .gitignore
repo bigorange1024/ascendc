@@ -26,6 +26,10 @@ samples-operator/
 backup/
 /thirdparty/
 
+# Windows/WSL 从 NTFS 拷贝产生的 Zone.Identifier 旁路文件（勿提交）
+*:Zone.Identifier
+*.Identifier
+
 # 探针 / 算子 I/O 与构建产物
 **/input/
 **/output/

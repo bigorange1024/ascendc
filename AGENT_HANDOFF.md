@@ -118,6 +118,27 @@ bash run.sh -r sim -v Ascend910B4
 
 **推荐**：`git pull origin main`
 
+### `thirdparty/` — 本地依赖（**不进 GitHub**）
+
+`.gitignore` 排除整个 `/thirdparty/`；**禁止** `git add thirdparty/`、禁止 `git clean -fdx` 后不重装就报「探针 PASS」。
+
+| 目录 | 来源 | 用途 |
+|------|------|------|
+| `ntt_study/` | 用户本机 tree / 与 `~/ntt_study` 同步 | golden 对照、`mlkem_ref.py`、文档 |
+| `merged_kyber/` | 用户本机 tree | frozen 探针脚本、MIX FSM 参考 |
+| `tiny_sha3/` | `git clone https://github.com/mjosaarinen/tiny_sha3` | Host SHA3/SHAKE golden（[`mjosaarinen/tiny_sha3`](https://github.com/mjosaarinen/tiny_sha3)） |
+| `liboqs/` | tag **0.15.0** clone + build | KAT / `keygen_golden.py` |
+
+**新机器 / `git clean -fdx` 后**（拉代码**不会**带回 thirdparty）：
+
+```bash
+# tiny_sha3（公开 upstream）
+git clone --depth 1 https://github.com/mjosaarinen/tiny_sha3.git thirdparty/tiny_sha3
+# ntt_study、merged_kyber、liboqs：从办公室备份或 ~/ntt_study 等拷贝/软链
+```
+
+**Agent 禁令**：勿删 `thirdparty/` 子目录；勿把 thirdparty 内容 commit 进 ascendc 仓。
+
 ---
 
 ## 3. 建议下一步（见 [`qa/TODO.md`](qa/TODO.md)）
