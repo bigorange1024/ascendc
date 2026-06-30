@@ -80,10 +80,21 @@ __aicore__ inline void pack_one_poly_v5(__gm__ uint8_t *out, const __gm__ int32_
 
 extern "C" __global__ __aicore__ void f203_encrypt_pack(GM_ADDR uGm, GM_ADDR vGm, GM_ADDR cGm)
 {
+#if defined(ASCENDC_CPU_DEBUG)
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     if (GetBlockIdx() != 0) {
         return;
     }
+#else
+    // SIM/NPU：MIX 占位（Compress+ByteEncode 逻辑仍在 AIV 段；AIC 空跑释 AIV func_key）
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+    if (AscendC::GetSubBlockNum() == 1) {
+        return;
+    }
+    if (GetBlockIdx() != 0) {
+        return;
+    }
+#endif
     const auto *uIn = reinterpret_cast<const __gm__ int32_t *>(uGm);
     const auto *vIn = reinterpret_cast<const __gm__ int32_t *>(vGm);
     auto *cOut = reinterpret_cast<__gm__ uint8_t *>(cGm);

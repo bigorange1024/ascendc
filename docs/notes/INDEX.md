@@ -32,6 +32,7 @@
 |------|------|
 | [ascendc-DataCopy与数据搬运知识库.md](ascendc-DataCopy与数据搬运知识库.md) | MTE、API 谱系、搬运方法论 |
 | [ascendc-TQue与Pipe框架知识库.md](ascendc-TQue与Pipe框架知识库.md) | TPipe/TQue/TBuf、event≤8 |
+| [AscendC-CAModel-SIM-funckey与单session约束知识库.md](AscendC-CAModel-SIM-funckey与单session约束知识库.md) | **SIM `aclrtLaunchKernel` 507000 病根**（R1 AIV-only `func_key ≤ 4` / R2 单 ACL session + `aclrtSynchronizeStream`）；P1–P6 可复用模式；案例 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) `at_r5` 落地 |
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
 
 ## 治理与模板

@@ -79,7 +79,7 @@ def main() -> None:
         )
         print(f"[gen_data] SEED_D={seed_d} golden_c OK")
     else:
-        print(f"[gen_data] SEED_D={seed_d} ek={EK_BYTES}B m+coins OK (ENCRYPT_VERIFY=0, 无 golden_c)")
+        print(f"[gen_data] SEED_D={seed_d} ek={EK_BYTES}B m+coins + golden_c OK (ENCRYPT_VERIFY=1 默认)")
 
 
 if __name__ == "__main__":

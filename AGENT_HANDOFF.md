@@ -2,7 +2,27 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。  
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。  
-> **最后刷新**：2026-06-29（晚 · Encrypt G5）
+> **最后刷新**：2026-06-30（晚 · 原探针 G5 PASS · 家里 2launch 探针冻结）
+
+---
+
+## ★ SIM 测试通过声明（2026-06-30）
+
+**结论：`fix-f203-alg14-pke-encrypt-correctness-k4` SIM 路径首次完整测试通过**（507000 病根永久治愈，单 ACL session + `at_r5` 合并核）。
+
+| 项 | 内容 |
+|----|------|
+| 日期 | 2026-06-30 12:58（UTC+8）|
+| 命令 | `bash run.sh -r sim -v Ascend910B4`（默认含 c.bin 对拍） |
+| 工作目录 | `ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/` |
+| 退出码 | **0** |
+| 关键日志 | `[verify_gate] G3 u_hat + tr_hat PASS` / `[verify] PASS max=0 (1568 bytes)` / `[SUCCESS] fix-f203-alg14-pke-encrypt-correctness-k4 gate=G5 (sim) ENCRYPT_VERIFY=1` |
+| `Total tick`（CAModel）| **922441**（prep..pack 全 device）|
+| `aclrtLaunchKernel` 返回 `507000` | **无任何一次** |
+| host binary `nm` 残留 `g3_linear/at_r/t_dot_r` | 空 |
+| CPU 孪生（同命令 `-r cpu`）| 退出码 0、`[verify] PASS max=0 (1568 bytes)` |
+
+详 [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) §SIM 测试通过声明 / [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md) §6 / [`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §8。
 
 ---
 
@@ -19,27 +39,25 @@
 
 ---
 
-## 1. 当前真相（2026-06-29 晚）
+## 1. 当前真相（2026-06-30 午）
 
-### Encrypt Alg.14（**明日汇报优先**）
+### Encrypt Alg.14（**G5 双模式 PASS — 唯一活跃探针**）
 
 | 路径 | [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) |
 |------|------|
-| **默认** | `ENCRYPT_GATE=5`（设备 decode，无 `input/t_hat.bin`） |
-| **CPU 全链** | ✅ `ENCRYPT_VERIFY=1` → c.bin max=0（**可 demo**） |
-| **SIM G1–G3** | ✅ `verify_gate` max=0（含 G5 device decode + 双 session tr̂） |
-| **SIM 全链** | ❌ `ENCRYPT_VERIFY=1` c.bin FAIL @382（G4/G5 共用 INTT/noise/pack tail） |
-
-**明日保底 demo**：
+| **验收** | 默认 `bash run.sh` → CPU+SIM **c.bin max=0** 1568B；详 §SIM 测试通过声明 |
+| **G3** | **`at_r5` 合并核**（kP=5）；旧 G3 四核 → `compute/frozen/` |
+| **Gate** | **G5 唯一生产**；G0–G4 过渡 → `frozen-gates/FROZEN.md` |
+| **已关闭** | 家里分叉 [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（`27cc93b`，**办公室未复验**） |
 
 ```bash
 cd ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4
-ENCRYPT_VERIFY=1 ENCRYPT_GATE=5 bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
 ```
 
-**今晚/家里必做**：修 SIM `c.bin`（见 [`STATUS.md`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.9–§10）。**禁止**回退 Host `t_hat.bin` / fake-Â。
-
-**纪要**：[`qa/2026-06/2026-06-29-KeyGen双AIV并行fork探针.md`](qa/2026-06/2026-06-29-KeyGen双AIV并行fork探针.md) §G5
+**纪要**：[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §8–§11  
+**原理沉淀**：[`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md)
 
 ### KeyGen（k=4，生产路径）
 
@@ -106,18 +124,18 @@ bash backup-project.sh   # → backup/v0.1_YYYYMMDDHHMMSS/
 
 | 优先级 | ID | 事项 |
 |--------|-----|------|
-| **P0** | **T14** | **Encrypt G5 SIM 全链** — 修 G4 tail c.bin；CPU 已 PASS |
-| 1 | T13b | vec-k4-v3（设备 `a_hat` + V3 预采样） |
-| 2 | T11 | 2s1e exp → stable 晋级 |
+| 1 | T13b | vec-k4-v3 |
+| 2 | T11 | 2s1e exp → stable |
 
 ---
 
 ## 5. 家里 smoke（拉代码后）
 
 ```bash
-# P0：Encrypt CPU 全链（应 PASS）
+# P0：Encrypt 双模式（CPU 应 PASS；SIM 应 PASS 且无 507000）
 cd ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4
-ENCRYPT_VERIFY=1 ENCRYPT_GATE=5 bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
 
 # KeyGen
 cd ../../examples/stable/stable-mlkem-f203-pke-keygen-k4

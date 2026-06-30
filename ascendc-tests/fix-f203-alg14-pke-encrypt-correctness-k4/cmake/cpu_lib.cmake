@@ -5,7 +5,7 @@ find_package(tikicpulib REQUIRED)
 add_library(ascendc_kernels_${RUN_MODE} SHARED ${KERNEL_FILES})
 target_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE
     ${TEST_ROOT} ${PREP_AHAT_INC} ${PREP_ALG7_INC} ${PREP_RE_INC} ${PREP_CBD_INC}
-    ${NTT_R_INC} ${ALG11_INC} ${G3_LINEAR_INC} ${INTT_INC} ${G4_INC} ${PACK_INC} ${AT_R_INC} ${T_DOT_R_INC}
+    ${NTT_R_INC} ${ALG11_INC} ${INTT_INC} ${G4_INC} ${PACK_INC} ${AT_R5_INC}
     ${SHAKE_XOF_INC} ${KECCAK_INC})
 target_link_libraries(ascendc_kernels_${RUN_MODE} PUBLIC tikicpulib::${SOC_VERSION})
 target_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE

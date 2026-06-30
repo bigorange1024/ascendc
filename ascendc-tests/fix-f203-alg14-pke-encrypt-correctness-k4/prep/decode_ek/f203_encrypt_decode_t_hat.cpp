@@ -112,10 +112,22 @@ private:
 
 extern "C" __global__ __aicore__ void f203_encrypt_decode_t_hat(GM_ADDR ekGm, GM_ADDR tHatGm, GM_ADDR aCol0Gm)
 {
+#if defined(ASCENDC_CPU_DEBUG)
+    // CPU 孪生：AIV_ONLY，与 tikicpu AIV_MODE 一致
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
     if (GetBlockIdx() >= kUseCores) {
         return;
     }
+#else
+    // SIM/NPU：MIX_AIC_1_2 占位，让出 AIV func_key 名额（INTEGRATION_PLAN §4 / 家里 27cc93b 方案）
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+    if (AscendC::GetSubBlockNum() == 1) {
+        return;
+    }
+    if (GetBlockIdx() >= kUseCores) {
+        return;
+    }
+#endif
     KernelDecodeTHat op;
     op.Init(ekGm, tHatGm, aCol0Gm);
     op.Process();

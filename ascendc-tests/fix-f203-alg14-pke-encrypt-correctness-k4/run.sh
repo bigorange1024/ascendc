@@ -5,18 +5,18 @@
 #   input/  — ek_pke.bin (1568B) + m.bin (32B) + coins.bin (32B)
 #   output/ — c.bin (1568B) 占位；G1 另写 a_hat/r/e1/e2
 #
-# G5（当前默认）：单 session 全链；设备 ByteDecode ek→t̂；无 input/t_hat.bin
-# G4：G3 + INTT + 噪声/μ + Compress/ByteEncode → c.bin 1568B（staging t_hat.bin）
-# G0：ENCRYPT_GATE=0 → marker 壳 only
-# 字节对拍：ENCRYPT_VERIFY=1（须 host_golden/golden_c.py，G4 后启用）
+# G5（唯一生产路径，默认 ENCRYPT_GATE=5）：单 session 全 device 链；无 input/t_hat.bin
+# 验收（默认）：gate_g1/g2/g3 + c.bin 字节对拍
 #
-# Usage（默认）：
+# G0–G4：过渡路线，G5 测通后已冻结（frozen-gates/FROZEN.md）；每测通下一 Gate 即冻结上一 Gate
+#
+# Usage（默认，无需手动 export）：
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4
 #
 # 调试（非默认）：
-#   ENCRYPT_GATE=0 bash run.sh -r cpu -v Ascend910B4
-#   ENCRYPT_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
+#   ENCRYPT_VERIFY=0 bash run.sh -r cpu -v Ascend910B4   # 仅 gate，跳过 c.bin 对拍
+#   ENCRYPT_GATE=0..4 bash run.sh …                      # 过渡回放（已冻结，会 WARN）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 _REPO_CAND="$(cd "${CURRENT_DIR}/../.." && pwd)"
@@ -32,8 +32,12 @@ SOC_VERSION="Ascend910B4"
 RUN_MODE="cpu"
 export SEED_D="${SEED_D:-20260619}"
 export ENCRYPT_GATE="${ENCRYPT_GATE:-5}"
-export ENCRYPT_VERIFY="${ENCRYPT_VERIFY:-0}"
+export ENCRYPT_VERIFY="${ENCRYPT_VERIFY:-1}"
 export KERNEL_COMPUTE_BUDGET_SEC="${ENCRYPT_KERNEL_BUDGET_SEC:-600}"
+
+if [ "${ENCRYPT_GATE}" != "5" ]; then
+    echo "[WARN] ENCRYPT_GATE=${ENCRYPT_GATE}：过渡路线已冻结；生产验收请用默认 G5（见 frozen-gates/FROZEN.md）" >&2
+fi
 
 SHORT=r:,v:,i:,b:,p:
 LONG=run-mode:,soc-version:,install-path:,build-type:,install-prefix:

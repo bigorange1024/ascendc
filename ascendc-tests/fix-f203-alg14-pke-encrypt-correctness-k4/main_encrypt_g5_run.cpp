@@ -10,6 +10,7 @@
 #include "f203_encrypt_intt_tiling.h"
 #include "f203_encrypt_pack_config.hpp"
 #include "innerproduct_tiling.h"
+#include "f203_encrypt_at_r5_tiling.h"  // G3 合并核 at_r5 维度（INTEGRATION_PLAN §2.3）
 #include "shake_general_tiling_data.h"
 #include "tiling_host.hpp"
 
@@ -19,12 +20,14 @@
 #include "aclrtlaunch_f203_encrypt_prep_re.h"
 #include "aclrtlaunch_f203_encrypt_ntt_r.h"
 #include "aclrtlaunch_f203_encrypt_decode_t_hat.h"
-#include "aclrtlaunch_f203_encrypt_g3_linear.h"
-#include "aclrtlaunch_f203_encrypt_g3_linear4.h"
-#include "aclrtlaunch_f203_encrypt_at_r.h"
+#if !defined(F203_FUNCKEY_EXPERIMENT)
+#include "aclrtlaunch_f203_encrypt_at_r5.h"   // G3 合并核 at_r5（INTEGRATION_PLAN §2.3 取代旧 g3_linear*/at_r/t_dot_r）
+#endif
 #include "aclrtlaunch_f203_encrypt_intt.h"
 #include "aclrtlaunch_f203_encrypt_g4_noise.h"
+#if !defined(F203_FUNCKEY_EXPERIMENT)
 #include "aclrtlaunch_f203_encrypt_pack.h"
+#endif
 #else
 #include "tikicpulib.h"
 #ifndef GM_ADDR
@@ -35,9 +38,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_prep_re(GM_ADDR coins_gm, GM_
                                                          GM_ADDR tiling);
 extern "C" __global__ __aicore__ void f203_encrypt_ntt_r(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tiling);
 extern "C" __global__ __aicore__ void f203_encrypt_decode_t_hat(GM_ADDR ekGm, GM_ADDR tHatGm, GM_ADDR aCol0Gm);
-extern "C" __global__ __aicore__ void f203_encrypt_g3_linear(GM_ADDR aHat, GM_ADDR rHat, GM_ADDR tHat, GM_ADDR uHat,
-                                                             GM_ADDR trHat);
-extern "C" __global__ __aicore__ void f203_encrypt_g3_linear4(GM_ADDR aHat, GM_ADDR rHat, GM_ADDR tHat, GM_ADDR uTrOut);
+extern "C" __global__ __aicore__ void f203_encrypt_at_r5(GM_ADDR matM, GM_ADDR rHat, GM_ADDR uTr);
 extern "C" __global__ __aicore__ void f203_encrypt_intt(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tiling);
 extern "C" __global__ __aicore__ void f203_encrypt_g4_noise(GM_ADDR uGm, GM_ADDR e1Gm, GM_ADDR trGm, GM_ADDR e2Gm,
                                                           GM_ADDR mGm, GM_ADDR vGm);
@@ -152,8 +153,28 @@ int run_g5_cpu_session(const uint8_t *ek, const uint8_t *coins, const uint8_t *m
     ICPU_RUN_KF(f203_encrypt_decode_t_hat, kDecodeBlockDim, ekGm, tHatGm, aCol0Gm);
     std::memcpy(t_hat, tHatGm, F203_T_HAT_BYTES);
 
-    uint8_t *uTrGm = (uint8_t *)AscendC::GmAlloc(kUTrBytes);
-    ICPU_RUN_KF(f203_encrypt_g3_linear4, kG3BlockDim, aHatGm, rHatGm, tHatGm, uTrGm);
+    // G3 合并核 at_r5（INTEGRATION_PLAN §2.3）：host 拼 matM[(j*kP+p)*kN+c]
+    //   p<4 取 Â[j,p]（aHatGm[(j*K+p)*N+c]，p=4 取 t̂[j]（tHatGm[j*N+c]），
+    //   单 launch 输出 uTr=[û(4 行)|tr̂(1 行)]。替代旧 g3_linear4 同算法 4-合-1 路径。
+    uint8_t *matGm = (uint8_t *)AscendC::GmAlloc(at_r5_tiling::kMatBytes);
+    uint8_t *uTrGm = (uint8_t *)AscendC::GmAlloc(at_r5_tiling::kOutBytes);
+    {
+        constexpr int32_t kK_g3 = at_r5_tiling::kK;
+        constexpr int32_t kP_g3 = at_r5_tiling::kP;
+        constexpr int32_t kN_g3 = at_r5_tiling::kN;
+        const int32_t *aSrc = reinterpret_cast<const int32_t *>(aHatGm);
+        const int32_t *tSrc = reinterpret_cast<const int32_t *>(tHatGm);
+        int32_t *matDst = reinterpret_cast<int32_t *>(matGm);
+        for (int32_t j = 0; j < kK_g3; ++j) {
+            for (int32_t p = 0; p < kP_g3; ++p) {
+                int32_t *dst = matDst + (static_cast<size_t>(j) * kP_g3 + static_cast<size_t>(p)) * kN_g3;
+                const int32_t *src = (p < kK_g3) ? (aSrc + (static_cast<size_t>(j) * kK_g3 + static_cast<size_t>(p)) * kN_g3)
+                                                  : (tSrc + static_cast<size_t>(j) * kN_g3);
+                std::memcpy(dst, src, static_cast<size_t>(kN_g3) * sizeof(int32_t));
+            }
+        }
+    }
+    ICPU_RUN_KF(f203_encrypt_at_r5, kG3BlockDim, matGm, rHatGm, uTrGm);
     std::memcpy(u_hat, uTrGm, F203_U_HAT_BYTES);
     std::memcpy(tr_hat, uTrGm + F203_U_HAT_BYTES, F203_TR_HAT_BYTES);
 
@@ -195,6 +216,7 @@ int run_g5_cpu_session(const uint8_t *ek, const uint8_t *coins, const uint8_t *m
     AscendC::GmFree(nttWsGm);
     AscendC::GmFree(tHatGm);
     AscendC::GmFree(aCol0Gm);
+    AscendC::GmFree(matGm);
     AscendC::GmFree(uTrGm);
     AscendC::GmFree(uTimeGm);
     AscendC::GmFree(trPaddedGm);
@@ -210,17 +232,25 @@ int run_g5_cpu_session(const uint8_t *ek, const uint8_t *coins, const uint8_t *m
 } // namespace
 
 #ifndef ASCENDC_CPU_DEBUG
-int run_g5_sim_phase1(const uint8_t *ek, const uint8_t *coins, uint8_t *a_hat, uint8_t *re_flat, uint8_t *r_hat,
-                      uint8_t *t_hat, uint8_t *u_hat, uint8_t *a_col0_out, const uint8_t *lut_ntt_even,
-                      const uint8_t *lut_ntt_odd)
+/**
+ * SIM 全链：单 ACL session prep..pack → c.bin（INTEGRATION_PLAN §4，2026-06-30 P2）。
+ *
+ * G3：at_r5 合并核 + host 拼 matM（§2.3 病根 2 同步点）。
+ * G4：INTT×2 + g4_noise + pack 全 device（decode/pack 为 MIX 占位释 AIV func_key）。
+ */
+int run_g5_sim_full(const uint8_t *ek, const uint8_t *coins, const uint8_t *m, uint8_t *a_hat, uint8_t *re_flat,
+                    uint8_t *r_hat, uint8_t *t_hat, uint8_t *u_hat, uint8_t *tr_hat, const uint8_t *lut_ntt_even,
+                    const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
+                    uint8_t *c_out)
 {
     using namespace tiling;
     constexpr uint32_t kAhatBlockDim = 2U;
     constexpr uint32_t kReBlockDim = 1U;
     constexpr uint32_t kNttBlockDim = 1U;
-    constexpr uint32_t kG3BlockDim = 1U;
+    constexpr uint32_t kG3BlockDim = at_r5_tiling::kBlockDim;
     constexpr uint32_t kDecodeBlockDim = 1U;
     constexpr uint32_t kNttMixPass = 3U;
+    constexpr uint32_t kInttMixPass = 3U;
     constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 
     ShakeGeneralTilingData shakeTiling{};
@@ -231,6 +261,9 @@ int run_g5_sim_phase1(const uint8_t *ek, const uint8_t *coins, uint8_t *a_hat, u
     nttTiling.tileLength = static_cast<int32_t>(n);
     nttTiling.kPolys = static_cast<int32_t>(kK);
     nttTiling.mixPass = static_cast<int32_t>(kNttMixPass);
+
+    TilingData inttTiling = nttTiling;
+    inttTiling.mixPass = static_cast<int32_t>(kInttMixPass);
 
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
@@ -248,8 +281,17 @@ int run_g5_sim_phase1(const uint8_t *ek, const uint8_t *coins, uint8_t *a_hat, u
     uint8_t *nttWsDev = nullptr;
     TilingData *nttTilingHost = nullptr;
     uint8_t *tHatDev = nullptr;
-    uint8_t *uHatDev = nullptr;
-    uint8_t *aCol0Dev = nullptr;
+    uint8_t *aCol0DevUnused = nullptr;  // decode_t_hat 的第 3 参，保留 dummy buffer（kernel 不影响 t̂ 计算）
+    uint8_t *matDev = nullptr;          // at_r5 输入 matM [kK, kP, kN] int32
+    uint8_t *uTrDev = nullptr;          // at_r5 输出 [û(4 行) | tr̂(1 行)]
+    uint8_t *inttWsDev = nullptr;
+    TilingData *inttTilingHost = nullptr;
+    uint8_t *uTimeDev = nullptr;
+    uint8_t *trPaddedDev = nullptr;
+    uint8_t *trTimeDev = nullptr;
+    uint8_t *mDev = nullptr;
+    uint8_t *vDev = nullptr;
+    uint8_t *cDev = nullptr;
 
     CHECK_ACL(aclrtMalloc((void **)&ekDev, F203_EK_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&coinsDev, F203_ENC_COINS_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -261,10 +303,30 @@ int run_g5_sim_phase1(const uint8_t *ek, const uint8_t *coins, uint8_t *a_hat, u
     CHECK_ACL(aclrtMalloc((void **)&nttWsDev, wssize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMallocHost((void **)&nttTilingHost, sizeof(TilingData)));
     CHECK_ACL(aclrtMalloc((void **)&tHatDev, F203_T_HAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
-    CHECK_ACL(aclrtMalloc((void **)&uHatDev, F203_U_HAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
-    CHECK_ACL(aclrtMalloc((void **)&aCol0Dev, F203_AHAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&aCol0DevUnused, F203_AHAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&matDev, at_r5_tiling::kMatBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&uTrDev, at_r5_tiling::kOutBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&inttWsDev, wssize, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMallocHost((void **)&inttTilingHost, sizeof(TilingData)));
+    CHECK_ACL(aclrtMalloc((void **)&uTimeDev, dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&trPaddedDev, dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&trTimeDev, dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&mDev, F203_MSG_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&vDev, F203_E2_POLY_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&cDev, F203_CT_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
 
-    CHECK_ACL(aclrtMemcpy(ekDev, F203_EK_PKE_BYTES, ek, F203_EK_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+    *nttTilingHost = nttTiling;
+    *inttTilingHost = inttTiling;
+    CHECK_ACL(aclrtMemcpy(mDev, F203_MSG_BYTES, m, F203_MSG_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+    {
+        std::vector<uint8_t> inttWsHost(wssize, 0);
+        std::memcpy(inttWsHost.data() + LUT_EVEN_STACKED, lut_intt_even, lutEvenOddFileBytes);
+        std::memcpy(inttWsHost.data() + LUT_ODD_STACKED, lut_intt_odd, lutEvenOddFileBytes);
+        CHECK_ACL(aclrtMemcpy(inttWsDev + LUT_EVEN_STACKED, lutEvenOddFileBytes, inttWsHost.data() + LUT_EVEN_STACKED,
+                              lutEvenOddFileBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+        CHECK_ACL(aclrtMemcpy(inttWsDev + LUT_ODD_STACKED, lutEvenOddFileBytes, inttWsHost.data() + LUT_ODD_STACKED,
+                              lutEvenOddFileBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+    }
     CHECK_ACL(aclrtMemcpy(coinsDev, F203_ENC_COINS_BYTES, coins, F203_ENC_COINS_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(shakeTilingDev, kShakeTilingBytes, &shakeTiling, kShakeTilingBytes, ACL_MEMCPY_HOST_TO_DEVICE));
 
@@ -276,41 +338,123 @@ int run_g5_sim_phase1(const uint8_t *ek, const uint8_t *coins, uint8_t *a_hat, u
     CHECK_ACL(aclrtMemcpy(nttWsDev + LUT_ODD_STACKED, lutEvenOddFileBytes, wsHost.data() + LUT_ODD_STACKED,
                           lutEvenOddFileBytes, ACL_MEMCPY_HOST_TO_DEVICE));
 
-    *nttTilingHost = nttTiling;
-
+    CHECK_ACL(aclrtMemcpy(ekDev, F203_EK_PKE_BYTES, ek, F203_EK_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     uint8_t *rhoDev = ekDev + F203_EK_RHO_OFFSET;
     uint32_t ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_a_hat)(kAhatBlockDim, stream, rhoDev, aHatDev);
     if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] prep_a_hat launch ret=%u\n", ret);
         return 30;
     }
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_re)(kReBlockDim, stream, coinsDev, prfDev, reDev, shakeTilingDev);
     if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] prep_re launch ret=%u\n", ret);
         return 31;
     }
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_r)(kNttBlockDim, stream, rHatDev, reDev, nttWsDev, nttTilingHost);
     if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] ntt_r launch ret=%u\n", ret);
         return 32;
     }
-    CHECK_ACL(aclrtMemset(aCol0Dev, F203_AHAT_BYTES, 0, F203_AHAT_BYTES));
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_decode_t_hat)(kDecodeBlockDim, stream, ekDev, tHatDev, aCol0Dev);
+    CHECK_ACL(aclrtMemset(aCol0DevUnused, F203_AHAT_BYTES, 0, F203_AHAT_BYTES));
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_decode_t_hat)(kDecodeBlockDim, stream, ekDev, tHatDev, aCol0DevUnused);
     if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] decode_t_hat launch ret=%u\n", ret);
         return 33;
     }
+    // 同步：等 prep_a_hat/decode_t_hat 完成，否则下面 D2H 拼 matM 时 aHat/tHat 可能未写完（§2.3 病根 2）
     CHECK_ACL(aclrtSynchronizeStream(stream));
 
-    std::printf("[g5] SIM phase1: decode→aCol0 + at_r→u_hat (tr_hat 另 session)\n");
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r)(kG3BlockDim, stream, aHatDev, rHatDev, uHatDev);
+#if defined(F203_FUNCKEY_EXPERIMENT)
+    // funckey 实验：at_r5 已从 KERNEL_FILES 移除（FUNCKEY=1 时），不 launch；fake [u_hat | tr_hat] = 0。
+    // 目的是让 main_encrypt 后续 INTT/G4 仍能跑到 g4_noise probe，观察 g4_noise launch ret。
+    std::printf("[funckey-exp] SIM phase1: skip at_r5 (u_hat/tr_hat fake=0)\n");
+    CHECK_ACL(aclrtMemset(uTrDev, at_r5_tiling::kOutBytes, 0, at_r5_tiling::kOutBytes));
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+#else
+    // host 拼 matM：D2H aHat/tHat → 按 (j*kP+p)*kN 排布 → H2D matDev（详 INTEGRATION_PLAN §2.3）
+    {
+        std::vector<uint8_t> aHatHost(F203_AHAT_BYTES);
+        std::vector<uint8_t> tHatHost(F203_T_HAT_BYTES);
+        CHECK_ACL(aclrtMemcpy(aHatHost.data(), F203_AHAT_BYTES, aHatDev, F203_AHAT_BYTES,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(tHatHost.data(), F203_T_HAT_BYTES, tHatDev, F203_T_HAT_BYTES,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        std::vector<uint8_t> matHost(at_r5_tiling::kMatBytes);
+        constexpr int32_t kK_g3 = at_r5_tiling::kK;
+        constexpr int32_t kP_g3 = at_r5_tiling::kP;
+        constexpr int32_t kN_g3 = at_r5_tiling::kN;
+        const int32_t *aSrc = reinterpret_cast<const int32_t *>(aHatHost.data());
+        const int32_t *tSrc = reinterpret_cast<const int32_t *>(tHatHost.data());
+        int32_t *matDst = reinterpret_cast<int32_t *>(matHost.data());
+        for (int32_t j = 0; j < kK_g3; ++j) {
+            for (int32_t p = 0; p < kP_g3; ++p) {
+                int32_t *dst = matDst + (static_cast<size_t>(j) * kP_g3 + static_cast<size_t>(p)) * kN_g3;
+                const int32_t *src = (p < kK_g3) ? (aSrc + (static_cast<size_t>(j) * kK_g3 + static_cast<size_t>(p)) * kN_g3)
+                                                  : (tSrc + static_cast<size_t>(j) * kN_g3);
+                std::memcpy(dst, src, static_cast<size_t>(kN_g3) * sizeof(int32_t));
+            }
+        }
+        CHECK_ACL(aclrtMemcpy(matDev, at_r5_tiling::kMatBytes, matHost.data(), at_r5_tiling::kMatBytes,
+                              ACL_MEMCPY_HOST_TO_DEVICE));
+    }
+    std::printf("[g5] SIM: prep+ntt+decode+at_r5 单 session\n");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r5)(kG3BlockDim, stream, matDev, rHatDev, uTrDev);
     if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] at_r5 launch ret=%u\n", ret);
         return 34;
     }
     CHECK_ACL(aclrtSynchronizeStream(stream));
+#endif
 
+    // D2H 中间张量（verify_gate）；G4 仍在 device 上继续
     CHECK_ACL(aclrtMemcpy(a_hat, F203_AHAT_BYTES, aHatDev, F203_AHAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(re_flat, F203_RE_TOTAL_BYTES, reDev, F203_RE_TOTAL_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(r_hat, dstFileBytes, rHatDev, dstFileBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(t_hat, F203_T_HAT_BYTES, tHatDev, F203_T_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(u_hat, F203_U_HAT_BYTES, uHatDev, F203_U_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(a_col0_out, F203_AHAT_BYTES, aCol0Dev, F203_AHAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
+    CHECK_ACL(aclrtMemcpy(u_hat, F203_U_HAT_BYTES, uTrDev, F203_U_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
+    CHECK_ACL(aclrtMemcpy(tr_hat, F203_TR_HAT_BYTES,
+                          uTrDev + static_cast<size_t>(F203_U_HAT_BYTES), F203_TR_HAT_BYTES,
+                          ACL_MEMCPY_DEVICE_TO_HOST));
+
+#if !defined(F203_FUNCKEY_EXPERIMENT)
+    // G4 device tail：INTT×2 → g4_noise → pack（同 CPU run_g5_cpu_session 顺序）
+    CHECK_ACL(aclrtMemset(trPaddedDev, dstFileBytes, 0, dstFileBytes));
+    CHECK_ACL(aclrtMemcpy(trPaddedDev, F203_TR_HAT_BYTES,
+                          uTrDev + static_cast<size_t>(F203_U_HAT_BYTES), F203_TR_HAT_BYTES,
+                          ACL_MEMCPY_DEVICE_TO_DEVICE));
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, uTimeDev, uTrDev, inttWsDev, inttTilingHost);
+    if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] INTT u launch ret=%u\n", ret);
+        return 35;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, trTimeDev, trPaddedDev, inttWsDev,
+                                                 inttTilingHost);
+    if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] INTT tr launch ret=%u\n", ret);
+        return 36;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    uint8_t *e1Dev = reDev + F203_R_POLYVEC_BYTES;
+    uint8_t *e2Dev = reDev + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES;
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_g4_noise)(kG4NoiseBlockDim, stream, uTimeDev, e1Dev, trTimeDev, e2Dev,
+                                                     mDev, vDev);
+    if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] g4_noise launch ret=%u\n", ret);
+        return 37;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_pack)(kPackBlockDim, stream, uTimeDev, vDev, cDev);
+    if (ret != 0) {
+        std::fprintf(stderr, "[g5_sim] pack launch ret=%u\n", ret);
+        return 38;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(aclrtMemcpy(c_out, F203_CT_PKE_BYTES, cDev, F203_CT_PKE_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
+#else
+    // funckey 实验：G4 device 路径跳过；c_out 由 caller 的 host fallback 处理
+    (void)c_out;
+#endif
 
     CHECK_ACL(aclrtFree(ekDev));
     CHECK_ACL(aclrtFree(coinsDev));
@@ -322,12 +466,21 @@ int run_g5_sim_phase1(const uint8_t *ek, const uint8_t *coins, uint8_t *a_hat, u
     CHECK_ACL(aclrtFree(nttWsDev));
     CHECK_ACL(aclrtFreeHost(nttTilingHost));
     CHECK_ACL(aclrtFree(tHatDev));
-    CHECK_ACL(aclrtFree(uHatDev));
-    CHECK_ACL(aclrtFree(aCol0Dev));
+    CHECK_ACL(aclrtFree(aCol0DevUnused));
+    CHECK_ACL(aclrtFree(matDev));
+    CHECK_ACL(aclrtFree(uTrDev));
+    CHECK_ACL(aclrtFree(inttWsDev));
+    CHECK_ACL(aclrtFreeHost(inttTilingHost));
+    CHECK_ACL(aclrtFree(uTimeDev));
+    CHECK_ACL(aclrtFree(trPaddedDev));
+    CHECK_ACL(aclrtFree(trTimeDev));
+    CHECK_ACL(aclrtFree(mDev));
+    CHECK_ACL(aclrtFree(vDev));
+    CHECK_ACL(aclrtFree(cDev));
     CHECK_ACL(aclrtDestroyStream(stream));
     CHECK_ACL(aclrtResetDevice(deviceId));
     CHECK_ACL(aclFinalize());
-    std::printf("[g5] SIM phase1 done (prep..G3)\n");
+    std::printf("[g5] SIM full done (prep..pack device 单 session)\n");
     return 0;
 }
 #endif
@@ -347,7 +500,7 @@ int run_encrypt_g5_cpu_full(const std::string &case_dir, const uint8_t *ek, cons
     std::vector<uint8_t> tr_time(F203_U_HAT_BYTES);
     std::vector<uint8_t> v_poly(F203_E2_POLY_BYTES);
 
-    std::printf("[main_encrypt] G5 production single-session (device decode + g3_linear4)\n");
+    std::printf("[main_encrypt] G5 production single-session (device decode + at_r5 + device G4)\n");
 
     const int rc = run_g5_cpu_session(ek, coins, m, lut_ntt_even, lut_ntt_odd, lut_intt_even, lut_intt_odd,
                                       a_hat.data(), re_flat.data(), r_hat.data(), t_hat.data(), u_hat.data(),

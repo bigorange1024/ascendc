@@ -1,0 +1,117 @@
+/**
+ * @file f203_encrypt_pack_entry.cpp
+ * @brief G4 Launch：u polyvec + v poly → c.bin（c₁=ByteEncode₁₁(Compress₁₁(u))，c₂=ByteEncode₅(Compress₅(v))）。
+ */
+#include "f203_encrypt_layout.h"
+#include "f203_encrypt_pack_config.hpp"
+#include "kernel_operator.h"
+
+using namespace AscendC;
+
+namespace {
+
+constexpr int32_t kN = F203_ENCRYPT_N;
+constexpr int32_t kK = F203_ENCRYPT_K;
+
+__aicore__ inline uint32_t compress_d5_u32(uint32_t u)
+{
+    uint32_t d0 = u * 1290176u;
+    return ((d0 + (1u << 27)) >> 27) & 0x1fu;
+}
+
+__aicore__ inline uint32_t compress_d11_u32(uint32_t u)
+{
+    uint64_t d0 = static_cast<uint64_t>(u) * 5284526080ull;
+    d0 = (d0 + (static_cast<uint64_t>(1) << 32)) >> 33;
+    return static_cast<uint32_t>(d0 & 0x7ffu);
+}
+
+__aicore__ inline void byte_encode_bits_scalar(__gm__ uint8_t *out, const int32_t *comp, uint32_t dBits)
+{
+    uint32_t bitPos = 0U;
+    uint8_t cur = 0U;
+    uint32_t outIdx = 0U;
+    const uint32_t mask = (dBits >= 32U) ? 0xFFFFFFFFu : ((1U << dBits) - 1U);
+    for (uint32_t i = 0; i < static_cast<uint32_t>(kN); ++i) {
+        uint32_t a = static_cast<uint32_t>(comp[i]) & mask;
+        for (uint32_t j = 0; j < dBits; ++j) {
+            if ((a >> j) & 1U) {
+                cur |= static_cast<uint8_t>(1U << (bitPos & 7U));
+            }
+            ++bitPos;
+            if ((bitPos & 7U) == 0U) {
+                out[outIdx++] = cur;
+                cur = 0U;
+            }
+        }
+    }
+    if ((bitPos & 7U) != 0U) {
+        out[outIdx] = cur;
+    }
+}
+
+__aicore__ inline void pack_one_poly_u11(__gm__ uint8_t *out, const __gm__ int32_t *polyIn)
+{
+    int32_t comp[kN];
+    for (int32_t i = 0; i < kN; ++i) {
+        uint32_t u = static_cast<uint32_t>(polyIn[i]);
+        if (u >= static_cast<uint32_t>(F203_ENCRYPT_Q)) {
+            u = static_cast<uint32_t>(F203_ENCRYPT_Q) - 1U;
+        }
+        comp[i] = static_cast<int32_t>(compress_d11_u32(u));
+    }
+    byte_encode_bits_scalar(out, comp, 11U);
+}
+
+__aicore__ inline void pack_one_poly_v5(__gm__ uint8_t *out, const __gm__ int32_t *polyIn)
+{
+    int32_t comp[kN];
+    for (int32_t i = 0; i < kN; ++i) {
+        uint32_t u = static_cast<uint32_t>(polyIn[i]);
+        if (u >= static_cast<uint32_t>(F203_ENCRYPT_Q)) {
+            u = static_cast<uint32_t>(F203_ENCRYPT_Q) - 1U;
+        }
+        comp[i] = static_cast<int32_t>(compress_d5_u32(u));
+    }
+    byte_encode_bits_scalar(out, comp, 5U);
+}
+
+} // namespace
+
+extern "C" __global__ __aicore__ void f203_encrypt_pack(GM_ADDR uGm, GM_ADDR vGm, GM_ADDR cGm)
+{
+    // ── MIX 占位（仅 SIM/NPU；CPU 保持 AIV-only）──
+    // 同 f203_encrypt_g4_noise_ws：纯 AIV-only 核单独编入 device_aiv.o，CAModel 下 MIX binary
+    // 加载后该 AIV binary 注册失效 (107000) → launch 507000。SIM/NPU 声明 MIX_AIC_1_2 使其与
+    // INTT 同处 device.o；AIC 与 AIV subcore!=0 空跑，真正标量打包仅在 AIV subcore 0 执行。
+    // CPU debug 保持原 AIV_ONLY 单核路径（基线已 PASS）。
+#ifdef ASCENDC_CPU_DEBUG
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
+    if (GetBlockIdx() != 0) {
+        return;
+    }
+#else
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+    if (GetSubBlockNum() == 1) {
+        return; // AIC：不参与
+    }
+    if (GetSubBlockIdx() != 0) {
+        return; // 仅 AIV subcore 0 做标量 pack
+    }
+#endif
+    const auto *uIn = reinterpret_cast<const __gm__ int32_t *>(uGm);
+    const auto *vIn = reinterpret_cast<const __gm__ int32_t *>(vGm);
+    auto *cOut = reinterpret_cast<__gm__ uint8_t *>(cGm);
+
+    for (int32_t p = 0; p < kK; ++p) {
+        pack_one_poly_u11(cOut + static_cast<uint32_t>(p) * F203_C1_POLY_BYTES, uIn + p * kN);
+    }
+    pack_one_poly_v5(cOut + F203_C1_BYTES, vIn);
+}
+
+#ifndef __CCE_KT_TEST__
+void f203_encrypt_pack_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *uGm, uint8_t *vGm, uint8_t *cGm)
+{
+    f203_encrypt_pack<<<blockDim, l2ctrl, stream>>>(uGm, vGm, cGm);
+}
+#endif

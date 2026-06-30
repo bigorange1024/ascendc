@@ -68,7 +68,66 @@ Encrypt：`û[p] = Σ_j MultiplyNTTs( A[j,p], r̂[j] )`（即 `Âᵀ[p,·]·r̂`
 | `t̂` polyvec | 4×384 B | vendored [`alg6-bytedecode-d`](../fix-f203-alg6-bytedecode-d-vec-k4/) 的 **d=12** 路径（与 KeyGen ByteEncode₁₂ 互逆） |
 | `ρ` | 32 B | `ek_pke[1536:1568]`，供 L1 SampleNTT |
 
-### 2.3 `d_u=11` / `d_v=5`（非阻塞）
+### 2.3 `at_r5` G3 合并核 — 数学约定（2026-06-30）
+
+**背景**：本地已证实 [`func_key ≥ 5 → 507000`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) 病根。SIM `device_aiv.o` AIV-only 核须压到 **5 个**，G3 必须收进**单次 launch**（旧 `g3_linear`/`g3_linear4`/`at_r×2 多 session`/`t_dot_r` 均无解：拆核失败、多 session 失败、func_key 越界）。
+
+**核心思路**：把现有 `at_r`（k=4 输入、`kPOut=4` 输出，`out[p] = Σ_j Â[j,p] *_NTT r̂[j]` = `û[p]`）扩到 `kPOut=5`，第 5 列把 `t̂[j]` 当作 Â 的「虚拟列 4」即得 `tr̂ = Σ_j t̂[j] *_NTT r̂[j]`。
+
+**Host matM 拼装**（`[k=4, kP=5, N=256] int32` 行主序，索引 `(j*kP + p)*N + n`）：
+
+| j | p | matM[j,p,·] 来源 |
+|---|----|-------------------|
+| 0..3 | 0..3 | GM aHat 对应位置：`aHat[(j*K + p)*N]`（即 `Â[j, p]`，与 `a_hat_offset(j, p)` 一致）|
+| 0..3 | 4 | GM tHat 对应位置：`tHat[j*N]`（即 `t̂[j]`） |
+
+**Host 流程**（必须按序）：
+
+```
+prep_a_hat → aHatDev    （AIV_ONLY launch）
+decode_t_hat → tHatDev  （AIV_ONLY 或 MIX_AIC_1_2 占位 launch）
+aclrtSynchronizeStream(stream)              ← 关键：D2H 前必同步（病根 2）
+D2H aHatDev → aHatHost
+D2H tHatDev → tHatHost
+host 拼 matHost[(j*5+p)*N+n] = (p<4) ? aHatHost[(j*4+p)*N+n] : tHatHost[j*N+n]
+H2D matHost → matDev
+ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r5)(blockDim, stream, matDev, rHatDev, uTrDev)
+```
+
+**Device 算法**（与现有 `at_r` 同 innerproduct UB 流水，仅 `kPOut`/`kSVec` 维度更换）：
+
+```
+for p_out ∈ [0..kP-1]:                        // kP=5
+    acc[p_out] = 0
+    for j ∈ [0..k-1]:                         // k=4
+        f = matM[(j*kP + p_out)*N : ...]      // = matM[j, p_out]
+        g = rHat[j*N : ...]                   // = r̂[j]
+        acc[p_out] += multiply_ntts(f, g)
+    uTr[p_out*N : ...] = barrett_mod_q(acc[p_out])
+```
+
+**输出 uTrDev `[kP=5, N] int32` 行主序**：
+
+| p | 内容 | 数学等价 |
+|---|------|----------|
+| 0..3 | `uTr[p] = Σ_j Â[j, p] *_NTT r̂[j]` | `û[p]` = `(Âᵀ·r̂)[p]`（FIPS 203 Alg.14 §18） |
+| 4 | `uTr[4] = Σ_j t̂[j] *_NTT r̂[j]` | `tr̂` = `(t̂·r̂)`（FIPS 203 Alg.14 §19 前置） |
+
+**Host D2H 拆分**：`uHatDev = uTrDev[0 : 4*N*4 B]`、`trHatDev = uTrDev[4*N*4 B : 5*N*4 B]`（拼接式连续布局；无需独立 GM 块）。
+
+**与旧路径的关系**：
+
+| 旧 | 新 |
+|---|---|
+| 4 个独立 G3 核（`g3_linear`/`g3_linear4`/`at_r`/`t_dot_r`）+ 多 session 绕行 | 1 个 `at_r5` + 单 session |
+| SIM AIV-only 占用 4 个 key | SIM AIV-only 占用 1 个 key（释放配额给 `g4_noise`/`pack` 等） |
+| `tr̂` 路径需 `pack_t_hat_as_at_r_col0` workaround 或 `t_dot_r` | 单核内一次出 `tr̂` |
+
+CPU `#ifdef ASCENDC_CPU_DEBUG` 走 host scalar 版（与 device 同公式），用于孪生对拍；SIM/NPU 走向量 UB 实现。旧 4 个 G3 核在 SIM/NPU 端从 `KERNEL_FILES` 移除（CPU build 保留以确保历史 ICPU_RUN_KF 兼容性，或同步删除）。
+
+---
+
+### 2.4 `d_u=11` / `d_v=5`（非阻塞）
 
 [`compress-d`](../fix-f203-compress-d-vec-k4/IMPLEMENTATION_PLAN.md) 已列 Barrett 常数（d=11/5）；[`byteencode-d`](../fix-f203-byteencode-d-vec-k4/) 为参数化 pack。拼装时 vendored 拷贝 + `F203_COMPRESS_D` / `F203_BYTE_ENCODE_D` 编译开关即可，与 d=4/10 同模板。
 
@@ -81,37 +140,88 @@ Encrypt：`û[p] = Σ_j MultiplyNTTs( A[j,p], r̂[j] )`（即 `Âᵀ[p,·]·r̂`
 
 ---
 
-## 3. 分阶段 Gate（仅设备拼装）
+## 3. 分阶段 Gate（过渡 → 生产）
 
-| Gate | 设备路径 | Host 允许 | 验收 |
-|------|----------|-----------|------|
-| **G0** launch 壳 | marker AIV×1 | 写 `ek,m,coins`；**无**密码学 | CPU/SIM kernel 正常结束 |
-| **G1** prep | L1 + L2（2 launch） | 仅种子 | 中间 GM / staging 对 `host_golden` 分段 |
-| **G2** NTT 域 | L3 on `r̂` | — | `r̂` vs golden |
-| **G3** 线性层 | L4–L6（Âᵀ 索引 `(j,p)` + t̂·r̂ + 噪声） | — | 中间 `û`/`v` vs golden |
-| **G4** 落盘 | L7 + L8 | — | `c.bin` 1568B `max=0` |
-| **G5** 生产 I/O | 单次或少量 launch 合并 | `input/` 仅 `ek,m,coins` | 同 G4；无 staging 依赖 |
+**治理规则**（2026-06-30）：**G5** = 唯一生产验收；**G0–G4** = 过渡路线，**每测通下一 Gate 即冻结上一 Gate**。G5 双模式 PASS 后 G0–G4 **全部关闭**。详 [`frozen-gates/FROZEN.md`](frozen-gates/FROZEN.md)。
 
-**当前**：**G4**（全链至 `c.bin`）；**G5** 合并 launch 待做。
+| Gate | 设备路径 | 状态 | 验收（历史） |
+|------|----------|------|--------------|
+| **G0** launch 壳 | marker AIV×1 | **已冻结** | kernel 正常结束 |
+| **G1** prep | L1 + L2（2 launch） | **已冻结** | 中间 GM vs golden |
+| **G2** NTT 域 | L3 on `r̂` | **已冻结** | `r̂` vs golden |
+| **G3** 线性层 | L4–L6 | **已冻结** | `û`/`tr̂` vs golden；旧四核 → `compute/frozen/` |
+| **G4** 落盘 | L7 + L8（含 Host scalar tail） | **已冻结** | `c.bin` max=0（G5 前 SIM 绕行） |
+| **G5** 生产 I/O | 单 session 全 device | **活跃** | gate + `c.bin` max=0；`input/` 仅 ek/m/coins |
+
+**当前**：**G5 双模式 PASS — SIM 已测通**（2026-06-30）。标准验收：`bash run.sh -r cpu/sim -v Ascend910B4`（默认 G5，勿写 `ENCRYPT_GATE`）。
+
+> SIM 是否测通：**通过**。命令 `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4`，退出码 0，关键日志 `[verify_gate] G3 u_hat + tr_hat PASS` / `[verify] PASS max=0 (1568 bytes)` / `[SUCCESS] gate=G5 (sim) ENCRYPT_VERIFY=1`，全程无 `507000`。详 [`STATUS.md`](STATUS.md) §SIM 测试通过声明。
+
+| 验证条目 | CPU | SIM |
+|---|---|---|
+| `bash run.sh -r <mode> -v Ascend910B4` G5 gate (`ENCRYPT_VERIFY=0`) | ✅ `gate_g1/g2/g3` 全 PASS、`c.bin` 1568B 写出 | ✅ 同左，**无 507000** |
+| `ENCRYPT_VERIFY=1` (`c.bin` vs `golden_c.bin`) | ✅ `[verify] PASS max=0 (1568 bytes)` | ✅ `[verify] PASS max=0 (1568 bytes)` |
+| host binary 仅引用 `aclrtlaunch_f203_encrypt_at_r5`（`nm` 无 `g3_linear/at_r/t_dot_r`） | — | ✅ |
+| `out/include/ascendc_kernels_sim/aclrtlaunch_*.h` 列表 = 11 个活跃核（无 g3_linear/at_r/t_dot_r） | — | ✅ |
+| SIM `Total tick`（CAModel） | n/a | **43479** |
+
+旧 4 核已迁入 [`compute/frozen/`](compute/frozen/)（`frozen-g3_linear` / `frozen-at_r` / `frozen-t_dot_r`），**禁止**加回 `KERNEL_FILES`。`F203_FUNCKEY_EXPERIMENT=0` 仍是生产默认。
 
 ---
 
-## 4. Launch 编排（终态草图）
+## 4. Launch 编排（终态：单 ACL session，2026-06-30 重做）
+
+**SIM device_aiv.o AIV-only 核**（**严格 ≤ 5**，按 nm func_key 验证）：
+
+| key | kernel | KERNEL_TASK_TYPE | 备注 |
+|-----|--------|------------------|------|
+| 0 | `f203_encrypt_marker_custom` | AIV_ONLY | launch 壳健康检查 |
+| 1 | `f203_encrypt_prep_a_hat` | AIV_ONLY | ρ → 16 poly Â（含 SHAKE + Alg.7） |
+| 2 | `f203_encrypt_prep_re` | AIV_ONLY | coins → r/e₁/e₂（CBD η₁/η₂） |
+| 3 | `f203_encrypt_g4_noise` | AIV_ONLY | u_time/tr_time + e₁/e₂ + μ → uOut + vOut |
+| 4 | `f203_encrypt_at_r5` | AIV_ONLY | **新 G3 合并核**（§2.3） |
+
+**MIX 核 / MIX 占位**（SIM/NPU 走 MIX_AIC_1_2；CPU 仍 AIV_ONLY）：
+
+| kernel | 角色 |
+|--------|------|
+| `f203_encrypt_ntt_r` | MIX（已有） |
+| `f203_encrypt_intt` | MIX（已有） |
+| `f203_encrypt_decode_t_hat` | **MIX 占位**（ek → t̂；占位绕 §C4 风险） |
+| `f203_encrypt_pack` | **MIX 占位**（Compress₁₁/₅ + ByteEncode → c） |
+
+> **若 P2 验证 `g4_noise` 走 AIV_ONLY (key=3) PASS**：完成；否则将 `g4_noise` 也改 MIX 占位，释出的 key 由其它需要 launch 的核占。
+
+**单 session 编排**：
 
 ```text
-input/ek_pke.bin, m.bin, coins.bin
+aclInit / aclrtSetDevice / aclrtCreateStream                                ← 1 次
   │
-  ├─ Launch-1  f203_encrypt_prep_a_hat     ← vendored from lines3-7（ρ from ek tail）
-  ├─ Launch-2  f203_encrypt_prep_re        ← vendored from lines8-15（coins→r,e₁,e₂）
-  ├─ Launch-3  f203_encrypt_ntt_r          ← vendored stage123（polyvec NTT）
-  ├─ Launch-4  f203_encrypt_at_r           ← innerproduct：`a_hat_offset(j,p)` 读 Âᵀ
-  ├─ Launch-5  f203_encrypt_t_dot_r        ← fork vec-k4-v2 hat_dot（t̂ from ek decode）
-  ├─ Launch-6  f203_encrypt_add_noise       ← +e₁, embed μ, +e₂
-  ├─ Launch-7  f203_encrypt_intt_uv        ← INTT
-  └─ Launch-8  f203_encrypt_pack           ← compress_d + byteencode_d → c.bin
+  ├─ marker_custom                                       （壳）
+  ├─ prep_a_hat   → aHatDev          [4*4*256 i32]
+  ├─ prep_re      → reDev            [4+4+1 polys]      （含 r/e₁/e₂）
+  ├─ ntt_r        → rHatDev          [4*256 i32]
+  ├─ decode_t_hat → tHatDev          [4*256 i32]        （MIX 占位）
+  ├─ aclrtSynchronizeStream(stream)                      ← §2.3 病根 2
+  ├─ host D2H aHat/tHat → 拼 matM[(j*5+p)*N+n] → H2D matDev
+  ├─ at_r5(matDev, rHatDev, uTrDev)  → uTrDev[5*256 i32]
+  ├─ INTT(uTrDev[0..3*256])   → uTimeDev   [4*256 i32]   (MIX)
+  ├─ INTT(uTrDev[4*256..5*256])→ trTimeDev [256 i32]     (MIX；polyvec INTT 单 poly tail)
+  ├─ g4_noise(uTimeDev, e₁Dev, trTimeDev, e₂Dev, mDev, vDev)
+  │       → uTimeDev += e₁、vDev = NTT⁻¹(trHat)+e₂+Decompress₁(m)
+  ├─ pack(uTimeDev, vDev, cDev)                          （MIX 占位）
+  └─ D2H cDev → c.bin
+aclrtSynchronizeStream → DestroyStream → ResetDevice → aclFinalize           ← 1 次
 ```
 
-合并策略（性能阶段，G5 之后）：prep 双 AIV 并行（同 KeyGen）；compute 按 UB 预算合并 launch，**不**牺牲 poly-batch 语义。
+**关键守则**（执行前必核）：
+
+1. `nm build/ascendc_kernels_sim_aiv_device_dir/device_aiv.o | grep "^[0-9a-f]\+ T f203"` 必显示**恰好 5 行**，且**要 launch 的核 func_key ≤ 4**。
+2. 每次 host↔device 往返打包前 `aclrtSynchronizeStream(stream)`。
+3. 全链**只**一次 `aclInit/aclFinalize`，避免 `free(): invalid pointer`。
+4. `g4_noise` 改为「直接消费 INTT 时域 + e/μ」六参 launch，不再走 host 标量；`pack` 同样 device 化。
+5. 旧 G3 4 核（`g3_linear`/`g3_linear4`/`at_r`/`t_dot_r`）从 SIM/NPU `KERNEL_FILES` 移除；CPU 保留 `at_r5` host scalar 走孪生路径。
+6. `F203_FUNCKEY_EXPERIMENT` 实验开关保留默认 OFF，仅作[病根证据](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)；不与新 G3 路径相互依赖。
 
 ---
 
@@ -182,4 +292,65 @@ rg '#include.*ascendc-tests/(pass|fix)-' prep compute pack *.cpp
 | 噪声 | η, η, η (s,e) | η₁ (r,e₁), η₂ (e₂) |
 | 矩阵乘 | `Â·ŝ`：读 `A[p,j]` | `Âᵀ·r̂`：读 `A[j,p]`（**同 GM**，索引对调） |
 | 输出 pack | ByteEncode₁₂ → ek | Compress+ByteEncode **d_u/d_v** → c |
-| 已有全链 | pass keygen ✅ | **无**；本探针目标 |
+| 已有全链 | pass keygen ✅ | **at_r5 落地 PASS ✅**（2026-06-30，详 §9）|
+
+---
+
+## 9. 排查史与 PASS 路径回顾（2026-06-30）
+
+> 完整原理沉淀：[`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md)（**先读它**，本节只是本探针局部时间线）。  
+> 讨论纪要：[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)（§9 排查回顾、§10 性能、§11 经验）。  
+> 历史错误判读原文：[`G3_SIM_AUDIT.md`](G3_SIM_AUDIT.md) §1–§11，**已被 §12 修正**。
+
+### 9.1 真正病根
+
+| # | 病根 | 触发面 |
+|---|------|--------|
+| R1 | CAModel SIM 单 binary 内 **AIV-only kernel `func_key ≥ 5`** 一律 `aclrtLaunchKernel` 返回 `507000` | 编译期（`KERNEL_FILES` 集合 + ascendc 的 `func_key` 分配） |
+| R2 | host D2H 前未 `aclrtSynchronizeStream`，或一次推理内多次 `aclInit/aclFinalize` | 运行期（host 编排） |
+
+### 9.2 错误尝试 ↔ 真因映射
+
+| 当时（2026-06-19 ~ 06-29）的判读 | 实际是 R1/R2 哪一面 |
+|-------------------------------|--------------------|
+| 「`f203_encrypt_t_dot_r` 入口 SIM 注册失效」→ 用 `at_r(t̂_col0)` 等价绕开 | `t_dot_r` `func_key=7`，踩 R1 |
+| 「`f203_encrypt_g3_linear` 五参 ABI SIM 不兼容」→ 退化为两次 `at_r` 独立 session | `g3_linear` `func_key=5`，踩 R1；多 session 又踩 R2 |
+| 「SIM 上必须多段 `aclInit/aclFinalize`」 | 反了；多 session 反而是 R2 触发面 |
+| 「`g4_noise` / `pack` SIM 不支持，必须 host scalar」 | `g4_noise` `func_key=8`、`pack` `func_key=11`，全部踩 R1（这两个核没坏）|
+| 「SIM 末尾 `free(): invalid pointer` 疑 ACL 多段副作用」 | 单 session 后此现象消失，本质就是 R2 |
+
+### 9.3 正确路径（at_r5 + 单 session）
+
+1. 家里 agent 在远端 `27cc93b` 用对照实验提出 R1 命题；本地拒 pull，改在原探针做正向证伪。
+2. 加 `F203_FUNCKEY_EXPERIMENT` CMake 开关：ON 时移除 4 个文件，`device_aiv.o` 缩到 5 个 AIV-only 核。
+3. 同一份 `f203_encrypt_g4_noise` kernel：默认 build `func_key=8` → 507000；实验 build `func_key=4` → **ret=0**。R1 坐实。
+4. 结构性重做 G3：`at_r5` 合并核（kP=5）单 launch 出 `[û \| tr̂]`；host 拼 `matM`；prep + NTT + decode + at_r5 单 session。
+5. `aclrtSynchronizeStream` 在所有 host 读 device GM 之前显式放置（R2 闭合）。
+6. 从 `KERNEL_FILES` 永久剔除 `compute/g3_linear/f203_encrypt_g3_linear.cpp`（连带 `g3_linear` / `g3_linear4` / `at_r` / `t_dot_r` 4 个旧 kernel）；源文件保留为历史证据。
+7. `F203_FUNCKEY_EXPERIMENT` 守卫永久保留（默认 OFF），保证「R1 边界可重现实验」始终可重跑。
+
+### 9.4 验收与性能
+
+| 命令 | 结果 |
+|------|------|
+| `bash run.sh -r cpu -v Ascend910B4` | `gate_g1/g2/g3` PASS、c.bin 1568B |
+| `ENCRYPT_VERIFY=1 bash run.sh -r cpu -v Ascend910B4` | `[verify] PASS max=0 (1568 bytes)` |
+| `bash run.sh -r sim -v Ascend910B4` | `gate_g1/g2/g3` PASS、**无 507000** |
+| `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4` | `[verify] PASS max=0 (1568 bytes)` |
+| SIM `Total tick`（CAModel）| **43479**（旧两次 `at_r` ≈ 87600，~50% 节省，**结构性**而非 vector 加速）|
+| SIM `wall_sec`（含 build + verify） | ~334s |
+
+### 9.5 经验提炼（要在后续探针**第一时间**想到）
+
+| L | 内容 |
+|---|------|
+| L1 | SIM `507000` 第一反应：`nm device_aiv.o` 看 `func_key`，再看是不是单 session；算法/入口/ABI 留到最后查 |
+| L2 | AIV-only 核数 ≤ 5 是**设计期资源**；开新算子前先列「目标核清单 + `func_key` 名额预算」 |
+| L3 | 能合并就合并（多输出单 launch）；剩余复杂度靠 host 拼装吸收 |
+| L4 | `aclInit / aclFinalize` 在一次推理内只一次；任何「子函数里另开 session」都是隐患 |
+| L5 | `aclrtMemcpy(... DEVICE_TO_HOST)` 前显式 `aclrtSynchronizeStream`，不靠 launch 返回 = 完成的错觉 |
+| L6 | 受控实验代码（`F203_FUNCKEY_EXPERIMENT`）默认 OFF + 永久保留，比文档管用十倍 |
+| L7 | CPU PASS **不能**代表 SIM PASS；CPU 不暴露 R1/R2 |
+| L8 | 性能比较只用 `Total tick`，不用 `wall_sec` |
+
+G0–G4 过渡路线已标准化冻结 → [`frozen-gates/FROZEN.md`](frozen-gates/FROZEN.md)（含 `g4_add_e1`/`g4_make_v` 拆分核）。

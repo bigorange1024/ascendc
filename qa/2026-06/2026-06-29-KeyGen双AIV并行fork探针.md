@@ -133,5 +133,13 @@ cd ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4
 ENCRYPT_VERIFY=1 ENCRYPT_GATE=5 bash run.sh -r cpu -v Ascend910B4
 ```
 
-**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.9–§10；修 SIM c.bin，勿回退 Host decode。
+**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.11。
+
+### G5 SIM 全链 PASS（2026-06-29 深夜）
+
+| 项 | 结论 |
+|----|------|
+| 根因 | `g4_noise`/`pack` SIM launch **507000**（INTT 正常） |
+| 修复 | device INTT×2 + host 标量 noise/pack（`f203_encrypt_g4_host_scalar.hpp`、`f203_encrypt_pack_host_scalar.hpp`） |
+| 验收 | `ENCRYPT_VERIFY=1 ENCRYPT_GATE=5` SIM **max=0** ~367s |
 

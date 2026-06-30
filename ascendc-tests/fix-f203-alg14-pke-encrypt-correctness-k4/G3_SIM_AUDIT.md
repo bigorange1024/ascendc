@@ -2,9 +2,11 @@
 
 **探针**：`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`  
 **关联**：[`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) · [`STATUS.md`](STATUS.md)  
-**讨论**：`qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md` §Alg.14 G3
+**讨论**：`qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md` §Alg.14 G3、[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)
 
-本文**原封不动**保留 G3 阶段曾出现的事实与 workaround 历史；修正完成后在 §6 更新「已修复」项，**不删除** §1–§5 原文。
+> ⚠️ **2026-06-30 修正注（先读 §12）**：本文 §1–§11 含**已证伪的错误归因**（把 `func_key ≥ 5` 边界与单 ACL session 未同步问题误判为「`t_dot_r` 入口失效」「五参 ABI 不兼容」「`g4_noise/pack` SIM 不支持」等）。原文保留作历史证据与「同类反模式」教学样本；当前实现以 §12 + [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §2.3 为准。原理沉淀见 [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md)。
+
+本文**原封不动**保留 G3 阶段曾出现的事实与 workaround 历史；修正完成后在 §6 / §12 更新「已修复」项，**不删除** §1–§11 原文。
 
 ---
 
@@ -224,3 +226,68 @@ SIM:  run_g3_at_r_device_once(a_hat, r_hat → u_hat)          // 独立 ACL ses
 | 日志 | 507000 + `free(): invalid pointer` |
 
 **下一刀**：查 G4 tail（`run_intt` / `run_g4_noise` / `run_pack`）在 SIM 多段 ACL 后的写回与 `c.bin` 落盘；**不是** G3 回退。
+
+### 9.11 G5 SIM 全链 PASS（2026-06-29 晚）
+
+| 项 | 结论 |
+|----|------|
+| 根因 | `g4_noise`（6 GM）/`pack`（3 GM）SIM **launch 507000**；INTT 正常 |
+| 修复 | SIM G4 tail：**device INTT×2** + **host 标量** noise/pack（与 golden 一致） |
+| 验收 | `ENCRYPT_VERIFY=1 ENCRYPT_GATE=5` SIM **c.bin max=0** ~367s |
+| CPU | 仍 **全 device** kernel 路径，max=0 |
+
+代码：`run_g4_tail_sim_once` · `compute/g4/f203_encrypt_g4_host_scalar.hpp` · `pack/f203_encrypt_pack_host_scalar.hpp`。
+
+> 上述「根因」是**当时的判读**，已被 §12 修正：`g4_noise` / `pack` SIM 不是「这两个核 SIM 不支持」，而是它们落在 `func_key=8 / 11`，全部踩中 `func_key ≥ 5 → 507000` 边界。把它们改为 host scalar 只是绕开边界，没解决病根；正确解法见 §12。
+
+---
+
+## 12. 病根判决与 at_r5 取代（2026-06-30 修正）
+
+### 12.1 真正病根（两条独立必要条件）
+
+| # | 病根 | 触发面 |
+|---|------|--------|
+| R1 | CAModel 单 binary 内 **AIV-only kernel `func_key ≥ 5`** 一律 `aclrtLaunchKernel` 返回 `507000` | 编译期（`KERNEL_FILES` 集合 + ascendc 的 `func_key` 分配） |
+| R2 | host D2H 前未 `aclrtSynchronizeStream`；一次推理内多次 `aclInit/aclFinalize`（多 ACL session）会清空 device binary cache，反复触发 R1 | 运行期（host 编排）|
+
+证据：[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §2（`nm device_aiv.o` 显示边界完美落在 key=4↔5）、§3（同一份 `g4_noise` kernel，默认 build `func_key=8` 时 507000、`F203_FUNCKEY_EXPERIMENT=1` 收缩 `KERNEL_FILES` 后 `func_key=4` 时 ret=0）。
+
+### 12.2 §1–§11 误诊 ↔ 真因映射
+
+| §x 当时判读 | 实际真因 |
+|------------|---------|
+| §3.1 / §8 「`t_dot_r` 入口 SIM 注册失效」 | `t_dot_r` `func_key=7`，踩 R1 |
+| §7 / §9.6 「`g3_linear` 五参 ABI SIM 不兼容」 | `g3_linear` `func_key=5`，踩 R1 |
+| §9.2 / §9.7 「SIM 上必须多段 `aclInit/aclFinalize`」 | 反了；多 session 是 R2 触发面，「能跑」是因为重载后 `func_key` 偶尔落回 ≤4 |
+| §9.11 「`g4_noise`/`pack` 这两个核 SIM 不支持」 | `g4_noise` `func_key=8`、`pack` `func_key=11`，全部踩 R1 |
+| §10.3 / §10.6 「INTT 仅 SIM 与 g4_noise 单独 launch 中能 PASS，merge 后失败」 | 同上；merge 后 `func_key` 漂移到 ≥ 5 |
+
+### 12.3 修复（`at_r5` 合并核 + 单 ACL session）
+
+| 改动 | 内容 |
+|------|------|
+| 新建 `compute/at_r5/f203_encrypt_at_r5_kernel.cpp` | `kP=5` 合并核：单 launch 算 `[û[0..3] \| tr̂]` |
+| host 拼 `matM` | `matM[(j*kP+p)*N+n]`：`p<4` 取 `Â[j,p]`、`p=4` 取 `t̂[j]` |
+| 单 ACL session（`run_g5_sim_phase1`）| `aclInit` 一次；prep / NTT / decode / at_r5 全在同一 `stream` |
+| `aclrtSynchronizeStream` | 每次 host 读 device GM 之前显式同步（病根 R2） |
+| `KERNEL_FILES` 移除 `compute/g3_linear/f203_encrypt_g3_linear.cpp` | 旧 4 个 G3 kernel（`g3_linear` / `g3_linear4` / `at_r` / `t_dot_r`）从 SIM device binary 永久剔除；源文件留作历史证据 |
+| `F203_FUNCKEY_EXPERIMENT` 守卫 | 默认 OFF（生产），ON 时移除 `at_r5` + `g4_*` + `pack`，独立验证 R1 边界 |
+
+详 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §2.3 / §4。
+
+### 12.4 当前 PASS 证据
+
+| 命令 | 退出 | 关键日志 |
+|------|------|----------|
+| `bash run.sh -r cpu -v Ascend910B4` | 0 | `[verify_gate] G3 u_hat + tr_hat PASS` |
+| `ENCRYPT_VERIFY=1 bash run.sh -r cpu -v Ascend910B4` | 0 | `[verify] PASS max=0 (1568 bytes)` |
+| `bash run.sh -r sim -v Ascend910B4` | 0 | `[verify_gate] G3 u_hat + tr_hat PASS` **无 507000** |
+| `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4` | 0 | `[verify] PASS max=0 (1568 bytes)` |
+
+性能（CAModel）：`Total tick` 旧两次 `at_r` ≈ 87600 → 新单次 `at_r5` **43479**，~50% 节省（结构性，非 vector 加速）。
+
+### 12.5 仍未解决（下一步）
+
+- ~~G4 tail host scalar~~ → **已解决**（2026-06-30 晚）：`decode_t_hat` / `pack` 改 **MIX_AIC_1_2 占位**（参考家里 `27cc93b`）；`run_g5_sim_full` 单 session 跑 INTT×2 + `g4_noise` + `pack`；`ENCRYPT_VERIFY=1` SIM **max=0**。
+- `g4_add_e1` / `g4_make_v` 源文件仍留 `compute/g4/`（未参编），可选迁入 `compute/frozen/`。

@@ -9,6 +9,8 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
+| 2026-06-30 | [2026-06-30-funckey-507000本地独立验证.md](2026-06-30-funckey-507000本地独立验证.md) | **funckey ≥ 5 → 507000** · at_r5 原探针 G5 PASS · Gate 冻结 · **2launch 探针冻结 §14** |
+| 2026-06-30 | [2026-06-30-Encrypt单session重建与SIM-funckey5-507000病根.md](2026-06-30-Encrypt单session重建与SIM-funckey5-507000病根.md) | **（已冻结探针）** 家里 agent 单 session 重建 · R1/R2 受控实验 · commit `27cc93b` |
 | 2026-06-29 | [2026-06-29-KeyGen双AIV并行fork探针.md](2026-06-29-KeyGen双AIV并行fork探针.md) | **fix-dual-aiv** · KAT ✅ · **Encrypt G5 CPU ✅ SIM c 阻塞** · G3 审计 §9.9 |
 | 2026-06-28 | [2026-06-28-KeyGen探针pass前缀与生产IO.md](2026-06-28-KeyGen探针pass前缀与生产IO.md) | **pass-fix keygen** · **pass polyvec8 NTT/INTT** · **exp 自包含** · SIM **~884532** · **backup-project.sh 刷新** |
 | 2026-06-26 | [2026-06-26-标量探针冻结.md](2026-06-26-标量探针冻结.md) | **标量 frozen** · 历史 workaround（已 superseded）· [2026-06-29 KeyGen](2026-06-29-KeyGen双AIV并行fork探针.md) |

@@ -15,6 +15,12 @@
 
 
 
+## 2026-06-30 — Encrypt 家里分叉探针关闭（办公室未复验）
+
+| 目录 | 原角色 | 关闭原因（摘要） | 继任 |
+|------|--------|------------------|------|
+| [frozen-fix-f203-alg14-encrypt-2launch-k4/](frozen-fix-f203-alg14-encrypt-2launch-k4/) | 家里 agent 单 session 重建 Encrypt 整树（commit `27cc93b`） | **办公室未复验** PASS；与原探针分叉；R1/R2 结论已在原探针 G5 落地 | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) G5 |
+
 ## 2026-06-29 — KeyGen 串行 Â pass 归档（dual-aiv 晋级）
 
 | 目录 | 原角色 | 归档原因（摘要） | 继任 |

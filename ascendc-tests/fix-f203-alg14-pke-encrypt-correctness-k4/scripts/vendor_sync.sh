@@ -148,10 +148,9 @@ sed -i 's|"tiling.h"|"f203_ntt_r_tiling.h"|g' "${NTT_DST}/aiv_func.hpp"
 ALG11_SRC="${TESTS}/pass-fix-f203-alg11-12-multiplyntts-k4"
 IP_SRC="${TESTS}/pass-fix-f203-alg11-12-innerproduct-k4"
 ALG11_DST="${CASE_DIR}/compute/alg11"
-AT_R_DST="${CASE_DIR}/compute/at_r"
-T_DOT_R_DST="${CASE_DIR}/compute/t_dot_r"
+AT_R5_DST="${CASE_DIR}/compute/at_r5"
 
-mkdir -p "${ALG11_DST}" "${AT_R_DST}" "${T_DOT_R_DST}"
+mkdir -p "${ALG11_DST}" "${AT_R5_DST}"
 
 for f in \
     multiply_ntts_ub.hpp multiply_ntts_vec.hpp multiply_ntts_config.hpp \
@@ -161,11 +160,8 @@ for f in \
 done
 
 for f in innerproduct_tiling.h innerproduct_mod.hpp; do
-    copy_file "${IP_SRC}/${f}" "${AT_R_DST}/${f}"
-    copy_file "${IP_SRC}/${f}" "${T_DOT_R_DST}/${f}"
+    copy_file "${IP_SRC}/${f}" "${AT_R5_DST}/${f}"
 done
 
-# at_r / t_dot_r 内核为 Encrypt 定制（Âᵀ 索引 / 单 poly dot），不覆盖
-echo "[vendor_sync] compute/at_r + t_dot_r kernels kept (Encrypt-specific)"
-
-echo "[vendor_sync] OK — prep/a_hat + prep/re + compute/ntt_r + compute/alg11 + compute/at_r vendored"
+echo "[vendor_sync] compute/at_r5 innerproduct headers vendored (旧 at_r/t_dot_r 已冻结/删除)"
+echo "[vendor_sync] OK — prep/a_hat + prep/re + compute/ntt_r + compute/alg11 + compute/at_r5 vendored"

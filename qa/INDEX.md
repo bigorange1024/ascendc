@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-06-30 — [funckey ≥ 5 → 507000 本地独立验证 + at_r5 G5 PASS + 2launch 冻结](2026-06/2026-06-30-funckey-507000本地独立验证.md)
+
+`F203_FUNCKEY_EXPERIMENT` · 原探针 G5 CPU+SIM c.bin max=0 · Gate G0–G4 冻结 · 家里 `2launch-k4` → `frozen/`（办公室未复验）
+
 ### 2026-06-29 — [KeyGen 双 AIV / Encrypt G5](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
 
 **fix-dual-aiv** · liboqs KAT ✅ · **Alg.14 Encrypt G5 CPU 全链 ✅** · **SIM c.bin 阻塞** · G3 审计 §9.9–§10
