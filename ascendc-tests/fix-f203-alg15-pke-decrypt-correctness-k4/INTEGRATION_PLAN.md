@@ -102,6 +102,8 @@ aclFinalize
 2. `golden_c.py`（Encrypt host_golden 复制语义）→ `input/c.bin`
 3. `golden_m.py` → `output/golden_m.bin`
 
+**仓库级 liboqs L2**（2026-07-01）：[`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) 用 AscendC **dk + c** 对拍 **m** vs liboqs；不进本探针 `run.sh`。Encrypt 侧 `Compress_5` 修复后 L2 **CPU+SIM max=0**。详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) · [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](../../qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)。
+
 ---
 
 ## 6. 目录骨架

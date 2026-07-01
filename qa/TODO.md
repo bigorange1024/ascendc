@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-06-30（关闭 **T14b** liboqs 三阶段交叉验证、**T15**/**T16**；打开项 T13b/T11/T14a/T15a）
+**最近刷新**：2026-07-01（关闭 **T14b** liboqs 三阶段交叉验证）
 
 ---
 
@@ -48,7 +48,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
-| **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh) KeyGen+Encrypt+Decrypt vs liboqs；`SEED_D=20260619` CPU+SIM **max=0**；根因 **`Compress_5` 舍入 `(1<<27)→(1<<26)`**；见 qa §17 | 2026-06-30 |
+| **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh)；`SEED_D=20260619` CPU+SIM max=0；根因 **`Compress_5` `(1<<26)`**；见 [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md) | 2026-07-01 |
 | **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen 密钥 → Encrypt `c.bin` → Decrypt `m.bin`；CPU+SIM **max=0**（32B）；见 qa §16 | 2026-06-30 |
 | **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**（prep \| ntt+intt）；SIM **~427k** tick | 2026-06-30 |
 | **T14** | Encrypt G5：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) CPU+SIM c.bin max=0；家里 `2launch-k4` → frozen | 2026-06-30 |

@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。  
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。  
-> **最后刷新**：2026-06-30（夜 · **liboqs PKE 三阶段 CPU+SIM max=0** + `Compress_5` 修复）
+> **最后刷新**：2026-07-01（**liboqs PKE 三阶段** + `Compress_5` 修复 · 详 [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)）
 
 ---
 
@@ -24,7 +24,7 @@ bash scripts/liboqs_pke_vs_ascendc.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash scripts/liboqs_pke_vs_ascendc.sh -r sim -v Ascend910B4
 ```
 
-**根因（Encrypt c 曾 FAIL）**：`Compress_5` 定点舍入误用 `(1<<27)`，应为 liboqs/FIPS 203 的 `(1<<26)`；c₁（d=11）一直正确。详 [`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §17。
+**根因（Encrypt c 曾 FAIL）**：`Compress_5` 定点舍入误用 `(1<<27)`，应为 `(1<<26)`。详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) · 纪要 [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)。
 
 ### Encrypt
 
@@ -150,7 +150,8 @@ bash kat_liboqs_vs_ascendc.sh
 
 | 主题 | 链接 |
 |------|------|
-| liboqs 交叉验证纪要 | [`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §17 |
+| liboqs 交叉验证纪要 | [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md) |
+| Compress / liboqs note | [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) |
 | Encrypt STATUS | [`fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) |
 | Decrypt STATUS | [`fix-f203-alg15-pke-decrypt-correctness-k4/STATUS.md`](ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/STATUS.md) |
 | 活跃探针 | [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) |

@@ -127,9 +127,18 @@ CPU `#ifdef ASCENDC_CPU_DEBUG` 走 host scalar 版（与 device 同公式），�
 
 ---
 
-### 2.4 `d_u=11` / `d_v=5`（非阻塞）
+### 2.4 `d_u=11` / `d_v=5`（2026-07-01 对齐 liboqs）
 
 [`compress-d`](../fix-f203-compress-d-vec-k4/IMPLEMENTATION_PLAN.md) 已列 Barrett 常数（d=11/5）；[`byteencode-d`](../fix-f203-byteencode-d-vec-k4/) 为参数化 pack。拼装时 vendored 拷贝 + `F203_COMPRESS_D` / `F203_BYTE_ENCODE_D` 编译开关即可，与 d=4/10 同模板。
+
+**`Compress_5` 定点契约**（pack 路径，与 liboqs ref 一致）：
+
+```text
+d0 = u * 1290176
+out = (d0 + (1 << 26)) >> 27    // 再 & 0x1F；勿用 (1<<27)
+```
+
+`Compress_11` 仍为 `(d0 + (1<<32)) >> 33`。详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) §2。
 
 **ek 输入**（生产已有 `ek_pke.bin`）：
 
@@ -354,3 +363,27 @@ rg '#include.*ascendc-tests/(pass|fix)-' prep compute pack *.cpp
 | L8 | 性能比较只用 `Total tick`，不用 `wall_sec` |
 
 G0–G4 过渡路线已标准化冻结 → [`frozen-gates/FROZEN.md`](frozen-gates/FROZEN.md)（含 `g4_add_e1`/`g4_make_v` 拆分核）。
+
+---
+
+## 10. 仓库级 liboqs 交叉验证（2026-07-01）
+
+**边界**：本探针 [`SELF_CONTAINED.md`](SELF_CONTAINED.md) **禁止** liboqs 进入默认 `run.sh` / 设备核。与 liboqs 的字节对拍由 **仓库根** 脚本承担，作为 L1（host golden）之外的 **L2 外部 oracle**。
+
+| 脚本 | 作用 |
+|------|------|
+| [`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) | KeyGen / Encrypt / Decrypt 三阶段 vs liboqs |
+| [`scripts/build_liboqs_pke_ref.sh`](../../scripts/build_liboqs_pke_ref.sh) | 编译 `liboqs_pke_ref`（依赖 `thirdparty/liboqs`） |
+
+**Encrypt 段 I/O**：AscendC **ek**（本探针或 KeyGen 产出）+ liboqs fixture 的 **m/coins** → 对拍 **c.bin**（1568B）。
+
+**2026-07-01 修复**：`pack/` 与 `scripts/host_golden/` 中 **`Compress_5` 舍入偏置** 由 `(1<<27)` 改为 `(1<<26)`（与 liboqs `mlk_scalar_compress_d5` 一致）。修前 c₁（d=11）已对、仅 c₂ 错；修后 L2 **CPU+SIM max=0**（`SEED_D=20260619`）。
+
+详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) · 纪要 [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](../../qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)。
+
+```bash
+bash scripts/liboqs_pke_vs_ascendc.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash scripts/liboqs_pke_vs_ascendc.sh -r sim -v Ascend910B4
+```
+
+**与 L3 round-trip 关系**：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../../scripts/roundtrip_pke_encrypt_decrypt.sh) 证明 device c→m 闭环；L2 证明各阶段与 liboqs 一致。三层互补，见 note §3。

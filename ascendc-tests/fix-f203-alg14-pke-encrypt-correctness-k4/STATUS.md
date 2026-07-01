@@ -2,7 +2,21 @@
 
 **定位**：Alg.14 **设备 AscendC 拼装**正确性探针（见 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md)、[`SELF_CONTAINED.md`](SELF_CONTAINED.md)）。
 
-**阶段**：**G5 双模式 PASS — SIM 全 device 单 session**（2026-06-30 晚：at_r5 + MIX 占位 G4 + 旧 G3 四核冻结）。
+**阶段**：**G5 双模式 PASS**；**2026-07-01** 起 L2 **liboqs 三阶段交叉验证 CPU+SIM max=0**（`Compress_5` 舍入修复后）。
+
+---
+
+## liboqs 交叉验证（2026-07-01 · L2）
+
+| 项 | 内容 |
+|----|------|
+| 脚本 | [`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) |
+| SEED_D | 20260619 |
+| Encrypt c | **max=0** vs liboqs（修 `Compress_5` bias `(1<<26)` 后） |
+| 定稿 | [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) |
+| 实现方案 | 本目录 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §10 |
+
+探针默认 `run.sh` 仍为 L1（host golden）；liboqs **不进**本目录 binary。
 
 ---
 
@@ -97,6 +111,11 @@ bash run.sh -r sim -v Ascend910B4
 
 无阻塞项。G0–G4 过渡路线已标准化冻结 → [`frozen-gates/FROZEN.md`](frozen-gates/FROZEN.md)；`main_encrypt.cpp` 内 gate&lt;5 分支仅历史回放（启动 WARN）。
 
-## 跨探针 round-trip（补充验收）
+## 跨探针验收（补充）
 
-单探针默认 `ENCRYPT_VERIFY=1` 对拍 host `golden_c.bin`。device **c → Decrypt → m** 闭环见 [`scripts/roundtrip_pke_encrypt_decrypt.sh`](../../scripts/roundtrip_pke_encrypt_decrypt.sh)（KeyGen 密钥 + `SEED_D=20260619`）；CPU+SIM **max=0**（2026-06-30，[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §16）。
+| 层 | 脚本 | 结果 |
+|----|------|------|
+| L3 round-trip | [`roundtrip_pke_encrypt_decrypt.sh`](../../scripts/roundtrip_pke_encrypt_decrypt.sh) | CPU+SIM max=0（[`qa/2026-06/...§16`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)） |
+| **L2 liboqs 三阶段** | [`liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) | **CPU+SIM max=0**（2026-07-01；含本探针 **m** 对拍） |
+
+单探针 `run.sh` = L1（host golden）。

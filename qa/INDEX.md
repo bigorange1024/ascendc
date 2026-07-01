@@ -2,7 +2,7 @@
 
 **本 INDEX 的重点**：用**关键字 + 短句**概括**每一天**的讨论，便于定位当月纪要；细节见 `qa/YYYY-MM/YYYY-MM-DD-<关键词>.md`。
 
-遗留总表：[TODO.md](TODO.md)。当月目录：[2026-06/INDEX.md](2026-06/INDEX.md)、[2026-05/INDEX.md](2026-05/INDEX.md)。
+遗留总表：[TODO.md](TODO.md)。当月目录：[2026-07/INDEX.md](2026-07/INDEX.md)、[2026-06/INDEX.md](2026-06/INDEX.md)、[2026-05/INDEX.md](2026-05/INDEX.md)。
 
 正式交付文档见 `docs/`。
 
@@ -10,9 +10,13 @@
 
 ## 按时间（新→旧）
 
-### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip + liboqs 三阶段](2026-06/2026-06-30-funckey-507000本地独立验证.md)
+### 2026-07-01 — [liboqs 三阶段交叉验证与 Compress_5 修复](2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)
 
-`F203_FUNCKEY_EXPERIMENT` · G5/G4 CPU+SIM max=0 · **`scripts/roundtrip_pke_*` device 闭环** · **`liboqs_pke_vs_ascendc` KeyGen+Encrypt+Decrypt CPU+SIM max=0** · **`Compress_5` 舍入 `(1<<26)` 修复** · T14b 关闭
+**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · c₂ 分段定位 · KeyGen+Encrypt+Decrypt CPU+SIM max=0 · T14b 关闭
+
+### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
+
+`F203_FUNCKEY_EXPERIMENT` · G5/G4 CPU+SIM max=0 · **`scripts/roundtrip_pke_*` device 闭环** · Gate/2launch 冻结
 
 ### 2026-06-29 — [KeyGen 双 AIV / Encrypt G5](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
 
