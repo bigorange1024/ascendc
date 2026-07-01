@@ -45,4 +45,6 @@ backup/
 **/ascendc_keygen_bbit
 **/liboqs_pke_keygen_ref
 !**/liboqs_pke_keygen_ref.c
+scripts/liboqs_pke_ref
+**/.liboqs_vs_built_mode
 **/stub_reg.log

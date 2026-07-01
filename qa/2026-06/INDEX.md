@@ -9,7 +9,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-06-30 | [2026-06-30-funckey-507000本地独立验证.md](2026-06-30-funckey-507000本地独立验证.md) | **funckey ≥ 5 → 507000** · Encrypt G5 · Decrypt G4 2-launch · **`roundtrip_pke_*` CPU+SIM 闭环 max=0** · Gate/2launch 冻结 · T15/T16 关闭 |
+| 2026-06-30 | [2026-06-30-funckey-507000本地独立验证.md](2026-06-30-funckey-507000本地独立验证.md) | **funckey ≥ 5 → 507000** · Encrypt G5 · Decrypt G4 · **`roundtrip_pke_*` 闭环** · **`liboqs_pke_vs_ascendc` 三阶段 CPU+SIM max=0** · **`Compress_5` `(1<<26)` 修复** · T14b/T15/T16 关闭 |
 | 2026-06-30 | [2026-06-30-Encrypt单session重建与SIM-funckey5-507000病根.md](2026-06-30-Encrypt单session重建与SIM-funckey5-507000病根.md) | **（已冻结探针）** 家里 agent 单 session 重建 · R1/R2 受控实验 · commit `27cc93b` |
 | 2026-06-29 | [2026-06-29-KeyGen双AIV并行fork探针.md](2026-06-29-KeyGen双AIV并行fork探针.md) | **fix-dual-aiv** · KAT ✅ · **Encrypt G5 CPU ✅ SIM c 阻塞** · G3 审计 §9.9 |
 | 2026-06-28 | [2026-06-28-KeyGen探针pass前缀与生产IO.md](2026-06-28-KeyGen探针pass前缀与生产IO.md) | **pass-fix keygen** · **pass polyvec8 NTT/INTT** · **exp 自包含** · SIM **~884532** · **backup-project.sh 刷新** |

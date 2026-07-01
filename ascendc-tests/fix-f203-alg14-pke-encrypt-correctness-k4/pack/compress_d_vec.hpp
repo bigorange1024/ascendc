@@ -19,7 +19,7 @@ __aicore__ inline uint32_t scalar_compress_d4_u32(uint32_t u)
 __aicore__ inline uint32_t scalar_compress_d5_u32(uint32_t u)
 {
     uint32_t d0 = u * 1290176u;
-    return ((d0 + (1u << 27)) >> 27) & 0x1fu;
+    return ((d0 + (1u << 26)) >> 27) & 0x1fu;
 }
 
 __aicore__ inline uint32_t scalar_compress_d10_u32(uint32_t u)

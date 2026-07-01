@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-06-30（关闭 **T15** Decrypt G4、**T16** PKE round-trip；打开项 T13b/T11/T14a/T15a）
+**最近刷新**：2026-06-30（关闭 **T14b** liboqs 三阶段交叉验证、**T15**/**T16**；打开项 T13b/T11/T14a/T15a）
 
 ---
 
@@ -14,7 +14,6 @@
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | **P3** | **T14a** | **Encrypt** 探针 G5 → `examples/stable/stable-mlkem-f203-pke-encrypt-k4`（名待定）晋级 | G5 探针 CPU+SIM ✅；**stable 未建** |
 | **P4** | **T15a** | **Decrypt** 探针 G4 → `examples/stable/stable-mlkem-f203-pke-decrypt-k4`（名待定）晋级 | G4 探针 CPU+SIM ✅；**stable 未建** |
-| P5 | **T14b** | Encrypt **liboqs KAT**（可选；探针当前刻意不做） | 未开工 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
 | — | **T2b / T5** | `docs/specs/fips203-baseline-registry.md` 初稿 + liboqs/ntt_study API 登记 | 待开工（stable 交付 golden 依赖） |
 | — | **T2** | KeyGen **后继**：Alg.16、ML-KEM-1024 规格泛化、**NPU 实机** | k=4 探针+stable **已交付**（见 T13h 关闭） |
@@ -49,6 +48,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh) KeyGen+Encrypt+Decrypt vs liboqs；`SEED_D=20260619` CPU+SIM **max=0**；根因 **`Compress_5` 舍入 `(1<<27)→(1<<26)`**；见 qa §17 | 2026-06-30 |
 | **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen 密钥 → Encrypt `c.bin` → Decrypt `m.bin`；CPU+SIM **max=0**（32B）；见 qa §16 | 2026-06-30 |
 | **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**（prep \| ntt+intt）；SIM **~427k** tick | 2026-06-30 |
 | **T14** | Encrypt G5：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) CPU+SIM c.bin max=0；家里 `2launch-k4` → frozen | 2026-06-30 |

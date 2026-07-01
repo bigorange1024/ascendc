@@ -178,8 +178,9 @@ def stage123_transform(polys: np.ndarray, mode: str) -> np.ndarray:
 def compress_d_scalar(u: int, d: int) -> int:
     u = int(u) % Q
     if d == 5:
+        # FIPS 203 Compress_5 / liboqs mlk_scalar_compress_d5：round(u*32/q) 用 (1<<26) 偏置
         d0 = u * 1290176
-        return ((d0 + (1 << 27)) >> 27) & 0x1F
+        return ((d0 + (1 << 26)) >> 27) & 0x1F
     if d == 11:
         d0 = u * 5284526080
         d0 = (d0 + (1 << 32)) >> 33

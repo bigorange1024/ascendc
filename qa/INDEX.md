@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
+### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip + liboqs 三阶段](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 
-`F203_FUNCKEY_EXPERIMENT` · G5/G4 CPU+SIM max=0 · **`scripts/roundtrip_pke_*` device 闭环 CPU+SIM max=0** · Gate/2launch 冻结
+`F203_FUNCKEY_EXPERIMENT` · G5/G4 CPU+SIM max=0 · **`scripts/roundtrip_pke_*` device 闭环** · **`liboqs_pke_vs_ascendc` KeyGen+Encrypt+Decrypt CPU+SIM max=0** · **`Compress_5` 舍入 `(1<<26)` 修复** · T14b 关闭
 
 ### 2026-06-29 — [KeyGen 双 AIV / Encrypt G5](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
 
