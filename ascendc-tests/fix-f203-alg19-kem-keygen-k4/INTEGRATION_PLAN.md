@@ -1,6 +1,6 @@
-# INTEGRATION_PLAN — fix-f203-alg16-kem-keygen-k4
+# INTEGRATION_PLAN — fix-f203-alg19-kem-keygen-k4
 
-**定位**：`ascendc-tests/` **Alg.16 ML-KEM.KeyGen 设备全链正确性探针**（**ml_kem_1024 / k=4**）。在已交付 **PKE KeyGen（Alg.13）** 之上完成 KEM 封装层；**非** `examples/` 交付。
+**定位**：`ascendc-tests/` **Alg.19 `ML-KEM.KeyGen()` 设备全链正确性探针**（**ml_kem_1024 / k=4**）。对外实现 FIPS 203 Algorithm 19；内部经 **Alg.16 `KeyGen_internal(d,z)`** 拼装 PKE 与 KEM 尾段；**非** `examples/` 交付。
 
 **自包含约束**：[`SELF_CONTAINED.md`](SELF_CONTAINED.md) · 工程通则 [`用例自包含与设备全链约束.md`](../../docs/engineering/用例自包含与设备全链约束.md)。
 
@@ -13,18 +13,27 @@
 | **Enc/Dec** | 本探针**不含**；后续 Alg.17/18 用 [`fix-f203-alg14`](../fix-f203-alg14-pke-encrypt-correctness-k4/) / [`fix-f203-alg15`](../fix-f203-alg15-pke-decrypt-correctness-k4/) |
 | **参数集表述** | 全文 **ml_kem_1024（k=4）**；勿与历史笔误「768」混用 |
 | **SHA3** | 设备路径经 `library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`（语义对齐 tiny_sha3）；Host tiny_sha3 **仅** golden / `VERIFY=1` |
+| **Alg.19 随机性 `d`/`z`** | **均在 device AscendC 上生成**（首版 **UB 驻留**）；**禁止**导出/落盘/GM 持久化 `d`/`z` 本体；仅允许消费派生量（如 `ρ`/`σ`→PKE 链、`H(ek)`、`dk_kem` 最终输出） |
 
 ---
 
 ## 1. 目标与不变量
 
-### 1.1 FIPS 203 Algorithm 16（相对 Alg.13 的增量）
+### 1.1 FIPS 203：Alg.19 → Alg.16（相对 PKE 的增量）
+
+**对外生产路径实现 Algorithm 19** `ML-KEM.KeyGen()`（非仅 Alg.16 internal 胶水）：
 
 ```text
-(ek_PKE, dk_PKE) ← K-PKE.KeyGen()          // Alg.13，已有 stable
-ek  ← ek_PKE                                 // 1568B，与 PKE 公钥相同
-z   ←$ B^32                                  // 隐式拒绝秘密
-dk  ← dk_PKE || H(ek) || z                   // 代数最小形态
+d ←$ B^32          // Alg.19 行 1：device AscendC 生成（UB 驻留，不导出）
+z ←$ B^32          // Alg.19 行 2：device AscendC 生成（UB 驻留，不导出）
+(ek, dk) ← ML-KEM.KeyGen_internal(d, z)   // Alg.16
+```
+
+Alg.16 internal 在 PKE 段之后追加：
+
+```text
+ek  ← ek_PKE
+dk  ← dk_PKE || H(ek) || z
 ```
 
 **liboqs / PQClean 展开秘密钥**（本探针 **I/O 锁定**，与 `OQS_KEM_ml_kem_1024` 对拍）：
@@ -40,7 +49,7 @@ ek_kem = ek_PKE                                                    → 1568B
 |--------|------|
 | **设备全链** | 默认 `run.sh`：`seed_d` → 设备 Alg.13 全链 → 设备 `H(ek)` → 设备采 `z` → 设备拼接 → `output/` |
 | **拼装来源** | stable KeyGen **vendor 到** `vendor/pke_keygen/` + `library/shared`；禁止跨探针 `#include` |
-| **Golden** | `scripts/host_golden/` **仅** `KEM_KEYGEN_VERIFY=1`；liboqs 走仓库 `scripts/liboqs_kem_vs_ascendc.sh`（待建） |
+| **Golden** | `scripts/host_golden/` **仅** `KEM_KEYGEN_VERIFY=1`；liboqs 走仓库 `scripts/liboqs_kem_vs_ascendc.sh` |
 | **Launch** | **单进程、单 ACL session**（对齐 Encrypt G5 / Decrypt G4）；禁止子进程调 stable `run.sh` |
 | **SIM** | 遵守 func_key / 单 session；见 [`AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md) |
 
@@ -56,11 +65,11 @@ ek_kem = ek_PKE                                                    → 1568B
 
 ## 2. 已验收上游（拼装清单）
 
-| Alg.16 段 | FIPS | 上游 | 本目录策略 |
+| **KeyGen_internal 段** | FIPS | 上游 | 本目录策略 |
 |-----------|------|------|------------|
 | **L0** PKE KeyGen 全链 | Alg.13 | [`stable-mlkem-f203-pke-keygen-k4`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) | **vendor** `prep/` + `compute/` + `main_keygen` 编排到 `vendor/pke_keygen/`（**复制**，非 `#include`） |
 | **L1** `H(ek)` | Hash | `fips203_device_sha3.hpp` → `Sha3OneShot(h, 32, ek, 1568)` | 新核 `f203_kem_kg_hash_ek` 或并入 L2 标量段 |
-| **L2** 采 `z` | Alg.16 行 3 | 设备随机：从 `seed_d` 派生或与 PKE `d` 同链的 XOF/SHAKE（**须在设备**） | 与 stable 采 `d` 规则对齐；见 §4.2 |
+| **L2** 采 `z` | Alg.19 行 2 + Alg.16 行 3 | **device UB**：与 `d` 同 session 内生成；**禁止** D2H / `output/z.bin` / GM 持久化 |
 | **L3** 拼 `dk_kem` | Alg.16 行 4 | GM `memcpy` 式拼接（AIV 标量） | `dk_pke‖ek‖h‖z` → `dk_kem.bin` |
 
 **SHA3 分层（用户要求，实现时遵守）**：
@@ -98,16 +107,25 @@ ek_kem = ek_PKE                                                    → 1568B
 2. **vendor 的 PKE 段** 与 stable **launch 序、GM 布局、sync 点** 一致；改动的仅是尾段追加 KEM 步骤，不重写 NTT/内积。
 3. PKE 中间 GM（`a_hat`、`src` 等）在单 session 内由 PKE 段写入、KEM 尾段只读 `ek`/`dk_pke` 最终缓冲。
 
-### 4.2 `z` 的采样的推荐契约（待实现锁定）
+### 4.2 `d` / `z` 设备采样契约（**用户锁定 · 2026-07-01**）
 
-与 liboqs `OQS_KEM_ml_kem_1024_keypair_derand` 对齐：
+依据 **FIPS 203 Algorithm 19**：`d` 与 `z` **均须在 AI Core 上以 AscendC 方式生成**；计算过程**不得导出保存**（生产路径）。
 
-| 方案 | 说明 | 建议 |
-|------|------|------|
-| **A** | `z` 由 `seed_d` 经设备 SHAKE256 XOF 独立域分离（domain sep）导出 | **推荐**：可复现、与 `SEED_D` 单种子验收一致 |
-| **B** | `z` 与 PKE 的 `d` 共用 64B `kem_seed` 后半 | 须与 liboqs `keypair_derand` 字节级对齐后选用 |
+| 约束 | 说明 |
+|------|------|
+| **驻留** | `d[32]`、`z[32]` 首版在 **UB**（`uint8_t d[32]` / `z[32]` 或 `TBuf`）完成派生/采样；PKE 段可沿用 stable `DerandFromSeedD` + `BuildRhoSigmaFromSeedD` 模式 |
+| **禁止** | D2H `d`/`z`；`output/d.bin` / `output/z.bin`；`KEYGEN_DEBUG_DUMP` 类路径写出 `d`/`z`；Host 预填 64B `kem_seed` 冒充设备随机性 |
+| **允许** | `ρ`/`σ` 等 **派生中间量** 按 PKE vendor 既有 GM 契约落盘（非 `d`/`z` 本体）；最终仅 D2H `ek_kem`/`dk_kem` |
+| **API** | `F203SeDeviceKeccak::Sha3OneShot` / `Shake256OneShot`（`fips203_device_sha3.hpp`）；与 stable prep 同 Keccak 门面 |
 
-**实现前**：用 `scripts/liboqs_kem_fixture.py`（待建）dump liboqs 在固定 `SEED_D` 下的 `z`/`H(ek)`，锁定方案 A 或 B。
+**可复现验收（`SEED_D=20260619`）**：Host 仅写 `input/seed_d.bin`（4B uint32）；device 在 UB 内：
+
+1. **`d`**：`DerandFromSeedD(seed_d, d)`（与 stable / liboqs PKE 已验路径一致）。
+2. **`z`**：独立域分离的设备 SHA3/SHAKE（如 `DerandZFromSeedD`），**不得**复用 `d` 缓冲、不得 Host 侧先算再 H2D。
+
+实现前用 `scripts/liboqs_kem_fixture.py`（待建）dump liboqs `keypair_derand` 在固定 `SEED_D` 下的 **64B `d‖z`**，锁定 `DerandZFromSeedD` 消息格式；L2 对拍以 liboqs 为准。
+
+> **与旧 §4.2 方案 A/B 的关系**：不再二选一「Host 域分离 vs kem_seed 后半」；**唯一路径**为 device UB 双采样 + Alg.16 internal。
 
 ### 4.3 首版 launch 草图
 
@@ -116,14 +134,14 @@ aclInit / CreateStream
   │
   ├─ [可选] Launch-0: f203_kem_kg_marker
   │
-  ├─ Launch-1: f203_kem_kg_pke          // vendor 自 stable：prep + NTT + encode
-  │            → ek_gm[1568], dk_pke_gm[1536]
+  ├─ Launch-1: f203_kem_kg_pke          // vendor stable：UB 内 d→ρ/σ → prep + NTT + encode
+  │            → ek_gm[1568], dk_pke_gm[1536]   // d/z 不落 GM
   │            aclrtSynchronizeStream
   │
-  └─ Launch-2: f203_kem_kg_finish       // AIV 标量
-               H(ek) → h_gm[32]
-               sample z → z_gm[32]
+  └─ Launch-2: f203_kem_kg_finish       // AIV 标量；UB 内已有/再生 z[32]
+               H(ek) → h_gm[32] 或 UB→拼接缓冲
                concat → dk_kem_gm[3168], copy ek → ek_kem_gm
+               // 全程不写 d.bin/z.bin；z 仅出现在 dk_kem 尾 32B
                aclrtSynchronizeStream
   │
   D2H → output/ek_kem.bin, dk_kem.bin
@@ -137,7 +155,7 @@ aclFinalize
 ## 5. 目录结构（实现阶段）
 
 ```text
-fix-f203-alg16-kem-keygen-k4/
+fix-f203-alg19-kem-keygen-k4/
 ├── INTEGRATION_PLAN.md
 ├── STATUS.md
 ├── SELF_CONTAINED.md
@@ -147,6 +165,7 @@ fix-f203-alg16-kem-keygen-k4/
 ├── vendor/
 │   └── pke_keygen/          # 自 stable 同步复制（vendor_sync 脚本）
 ├── kem/
+│   ├── f203_kem_kg_derand_ub.hpp       // DerandZFromSeedD 等；d/z UB 驻留
 │   ├── f203_kem_kg_finish.hpp
 │   └── f203_kem_kg_finish_entry.cpp
 ├── scripts/
@@ -165,11 +184,11 @@ fix-f203-alg16-kem-keygen-k4/
 
 ```bash
 # 探针内（host golden）
-cd ascendc-tests/fix-f203-alg16-kem-keygen-k4
+cd ascendc-tests/fix-f203-alg19-kem-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
-# L2 liboqs（仓库根，待建）
+# L2 liboqs（仓库根）
 bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 ```
@@ -180,7 +199,7 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 
 | 探针 | 算法 | 关系 |
 |------|------|------|
-| **本目录** | Alg.16 KeyGen | `ek_kem` / `dk_kem` |
+| **本目录** | Alg.19 KeyGen | `ek_kem` / `dk_kem` |
 | `fix-f203-alg17-kem-encaps-k4`（待建） | Alg.17 | 消费 `ek_kem`；vendor alg14 Encrypt |
 | `fix-f203-alg18-kem-decaps-k4`（待建） | Alg.18 | 消费 `dk_kem`；vendor alg15 Decrypt |
 
@@ -192,11 +211,10 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 
 1. `scripts/vendor_sync_from_stable_keygen.sh` + 最小 `CMakeLists` / `run.sh` 壳（G0）。
 2. vendor PKE 段单跑 G1，与 stable 同 `seed_d` 对拍 `ek_pke`/`dk_pke`。
-3. 设备 `H(ek)` G2（`Sha3OneShot`）；host golden 对齐 tiny_sha3。
-4. 锁定 `z` 采样方案后对拍 liboqs fixture。
-5. G3 拼接 + `KEM_KEYGEN_VERIFY=1` CPU+SIM。
-6. 仓库 `scripts/liboqs_kem_vs_ascendc.sh` L2 对拍。
-7. 刷新 `STATUS.md`、[`docs/notes/F203-KEM-Alg16-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg16-KeyGen设备全链技术总结.md)、当日 `qa/`。
+3. 设备 `H(ek)` G2；**UB 内 `DerandZFromSeedD`**（对齐 liboqs `d‖z` fixture）。
+4. G3 拼接 + `KEM_KEYGEN_VERIFY=1` CPU+SIM。
+5. 仓库 `scripts/liboqs_kem_vs_ascendc.sh`（待建）L2 对拍（64B seed 仅 fixture 侧，不进探针生产路径）。
+6. 刷新 `STATUS.md`、[`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md)、当日 `qa/`。
 
 ---
 
@@ -206,8 +224,8 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 |------|------|
 | vendor PKE 与 stable 漂移 | `vendor_sync` 清单 + G1 回归 |
 | SIM 多 launch / func_key | 优先 2 launch；必要时合并尾段 |
-| `z` 与 liboqs derand 不一致 | 先 fixture dump 再写设备采样 |
-| 误用 Host SHA3 | `SELF_CONTAINED` 审查 + 生产路径禁 `tiny_sha3` link |
+| `z` 与 liboqs derand 不一致 | 先 `liboqs_kem_fixture` dump **64B `d‖z`**，再实现 `DerandZFromSeedD` |
+| 误导出 `d`/`z` | `SELF_CONTAINED` 审查 + 禁 `DEBUG_DUMP` 写 secret；生产 `run.sh` 仅 `ek_kem`/`dk_kem` |
 
 ---
 
@@ -219,4 +237,4 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 | stable KeyGen | [`examples/stable/stable-mlkem-f203-pke-keygen-k4/`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) |
 | 设备 SHA3 | [`library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`](../../library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp) |
 | SIM 约束 | [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md) |
-| 讨论纪要 | [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md) |
+| 讨论纪要 | [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md) |

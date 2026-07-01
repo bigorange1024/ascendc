@@ -1,10 +1,10 @@
-# F203 KEM Alg.16 KeyGen 设备全链 — 技术总结
+# F203 KEM Alg.19 KeyGen 设备全链 — 技术总结
 
 **读者**：未参与本仓库开发的实现者 / Agent  
-**目的**：说明 ML-KEM.KeyGen（Alg.16）在 **ml_kem_1024（k=4）** 上相对 PKE KeyGen 的**数学增量**、**I/O 契约**与**设备拼装不变量**  
-**案例锚点**：[`ascendc-tests/fix-f203-alg16-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg16-kem-keygen-k4/)（规划阶段）  
-**讨论**：[`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md)  
-**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg16-kem-keygen-k4/INTEGRATION_PLAN.md)
+**目的**：说明 FIPS 203 **Algorithm 19** `ML-KEM.KeyGen()` 在 **ml_kem_1024（k=4）** 上的**随机性契约**、经 **Alg.16 `KeyGen_internal`** 的拼装增量、**I/O 契约**与**设备全链不变量**  
+**案例锚点**：[`ascendc-tests/fix-f203-alg19-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/)（**G3 CPU+SIM PASS**）  
+**讨论**：[`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)  
+**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md)
 
 ---
 
@@ -27,19 +27,27 @@
 
 **ml_kem_1024**：\(n=256\)，\(q=3329\)，\(k=4\)。与 PKE KeyGen / Encrypt / Decrypt 探针同一参数集；文档中勿与历史笔误「768」混用。
 
-### 1.2 Algorithm 16 相对 Algorithm 13
+### 1.2 Algorithm 16 internal（给定 `d`, `z`）
 
-PKE KeyGen（Alg.13）产出 \((ek_{PKE}, dk_{PKE})\)。ML-KEM.KeyGen（Alg.16）在此基础上：
+PKE KeyGen（Alg.13）由 `d` 驱动；ML-KEM.KeyGen_internal 在 PKE 输出上追加 `H(ek)` 与 `z`：
 
 ```text
+(ek_PKE, dk_PKE) ← K-PKE.KeyGen(d)
 ek  ← ek_PKE
-z   ←$ {0,1}^256   （32 字节，隐式拒绝秘密）
 dk  ← dk_PKE || H(ek) || z
 ```
 
-其中 **H** 为 FIPS 203 **Hash** = **SHA3-256**，输出 32 字节。
+### 1.3 Algorithm 19（本探针生产路径）
 
-### 1.3 liboqs 展开秘密钥（本仓 I/O 锁定）
+```text
+d ←$ B^32    // device AscendC，UB 驻留，不导出
+z ←$ B^32    // device AscendC，UB 驻留，不导出
+(ek, dk) ← ML-KEM.KeyGen_internal(d, z)
+```
+
+**用户锁定（2026-07-01）**：`d`/`z` 的生成与中间计算**不得导出保存**；首版在 **UB** 完成（复用 stable `DerandFromSeedD` 模式 + 新增 `DerandZFromSeedD`）。可复现验收时 Host 仅提供 `seed_d.bin`（4B），**不**提供 64B `kem_seed`。
+
+### 1.4 liboqs 展开秘密钥（本仓 I/O 锁定）
 
 与 `OQS_KEM_ml_kem_1024` 对拍时，秘密钥为 **3168 字节**：
 
@@ -57,6 +65,7 @@ ek_kem = ek_PKE (1568)
 | 不变量 | 说明 |
 |--------|------|
 | **设备全链** | `H(ek)`、采 `z`、拼接 `dk_kem` 均在 AI Core 完成；Host 只写 `seed_d`、读 output、`VERIFY=1` 对拍 |
+| **Alg.19 `d`/`z`** | **均在 device AscendC 生成**；UB 驻留；**禁止** D2H/落盘 `d`/`z` 本体 |
 | **无 Host 胶水** | 禁止 Host `tiny_sha3` / liboqs 参与默认 `run.sh` 生产路径 |
 | **单进程 launch** | 禁止子进程调 stable / 其它探针 `run.sh`；单 ACL session 内 vendor PKE + KEM 尾段 |
 | **自包含** | PKE 能力 **vendor 复制**到本探针目录；仅可 `#include` `library/shared/` |
@@ -66,7 +75,7 @@ ek_kem = ek_PKE (1568)
 
 ## 3. PKE 复用模型
 
-Alg.16 **不重写** NTT、内积、ByteEncode₁₂ 等 PKE 设备核。
+Alg.19 KeyGen **不重写** NTT、内积、ByteEncode₁₂ 等 PKE 设备核（经 KeyGen_internal 调用 Alg.13）。
 
 | 角色 | 路径 | 用法 |
 |------|------|------|
@@ -86,7 +95,7 @@ Alg.16 **不重写** NTT、内积、ByteEncode₁₂ 等 PKE 设备核。
 3. **当前**内部可实现为标量 Keccak-f[1600]（语义对齐 `thirdparty/tiny_sha3`）。  
 4. **未来** CANN 矢量 SHA3 就绪后，**只替换 backend 实现**，调用方不变。
 
-Alg.16 首版主要用 **单次 SHA3-256**（`H(ek)`）；若 `z` 由 XOF 导出，可走 `shake_xof_kernel` + `SHAKE256_RATE_BYTES`（与 KeyGen prep PRF 同「SHAKE256 接口、通用 Keccak 核 + rate」模式）。
+本探针首版主要用 **单次 SHA3-256**（`H(ek)`）；`d`/`z` 派生同样走 `Sha3OneShot`（与 stable `DerandFromSeedD` 一致）。若 `z` 需 XOF 形态，可走 `Shake256OneShot` + domain sep，但**输出仍只留在 UB**直至写入 `dk_kem`。
 
 Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_vs_ascendc`（待建）。
 
@@ -110,7 +119,7 @@ Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_v
 
 | 项 | 值 |
 |----|-----|
-| 探针目录 | `ascendc-tests/fix-f203-alg16-kem-keygen-k4` |
+| 探针目录 | `ascendc-tests/fix-f203-alg19-kem-keygen-k4` |
 | 状态 | **规划**（INTEGRATION_PLAN 已写，代码待实现） |
 | 后继 | Alg.17 Encaps / Alg.18 Decaps 独立探针（`ascendc-tests/`） |
 | TODO | **T6** 进行中 |
@@ -119,6 +128,6 @@ Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_v
 
 ## 7. 可复用模式
 
-1. **KEM = PKE 积木 + 短哈希尾**：大算力段 vendor PKE；KEM 专属仅 SHA3 + 拼接。  
+1. **KEM = PKE 积木 + Alg.19 双随机 UB 尾**：`d`/`z` 设备生成不导出；大算力段 vendor PKE；尾段 SHA3 + 拼接。  
 2. **liboqs I/O 优先于 FIPS 最小 dk**：展开 `dk_pke‖ek‖H‖z` 避免与生态工具链尺寸不一致。  
-3. **SHA3 门面 + 可换 backend**：设备路径永不回退 Host；实现可渐进矢量化。
+3. **SHA3 门面 + 可换 backend**：设备路径永不回退 Host；`d`/`z`/`H(ek)` 同门面。

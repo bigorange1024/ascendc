@@ -43,8 +43,10 @@ backup/
 **/ascendc_kernels_bbit
 **/.roundtrip_built_mode
 **/ascendc_keygen_bbit
+**/ascendc_kem_keygen_bbit
 **/liboqs_pke_keygen_ref
 !**/liboqs_pke_keygen_ref.c
 scripts/liboqs_pke_ref
+scripts/liboqs_kem_ref
 **/.liboqs_vs_built_mode
 **/stub_reg.log

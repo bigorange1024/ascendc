@@ -1,4 +1,4 @@
-# 自包含与设备全链约束 — fix-f203-alg16-kem-keygen-k4
+# 自包含与设备全链约束 — fix-f203-alg19-kem-keygen-k4
 
 对齐 PKE Encrypt/Decrypt 探针治理：**外部黑盒（liboqs）不得渗入默认 `run.sh`**；**KEM 密码学全在 device**。
 
@@ -19,7 +19,7 @@
 
 ```text
 input/  seed_d.bin（或契约约定的 derand 种子）
-   → Launch…（设备：Alg.13 PKE KeyGen + Alg.16 增量）
+   → Launch…（设备：Alg.19 KeyGen = Alg.13 PKE + KeyGen_internal 尾段）
 output/ ek_kem.bin (1568B) + dk_kem.bin (3168B，liboqs 展开布局)
 ```
 
@@ -28,6 +28,7 @@ output/ ek_kem.bin (1568B) + dk_kem.bin (3168B，liboqs 展开布局)
 | `gen_data.py` 写 **合法 input**（固定 `SEED_D` 等） | Host 调 `OQS_KEM_keypair` / liboqs 写 `ek`/`dk` |
 | `KEM_KEYGEN_VERIFY=1`：对拍 `golden_*.bin` 或仓库 `scripts/liboqs_kem_*`（VERIFY 专用） | Host `tiny_sha3` 算 `H(ek)` / 拼 `dk_kem` 冒充设备 |
 | `scripts/host_golden/`：分阶段期望（禁 liboqs API） | 子进程 `cd` 其它探针 `run.sh` 作默认全链 |
+| | **D2H / 落盘 `d[32]`、`z[32]`**（Alg.19 随机性本体；`dk_kem` 尾 32B 为输出契约，非 debug dump） |
 
 ## 3. Golden 分层
 

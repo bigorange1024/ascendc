@@ -1,13 +1,16 @@
-# STATUS — fix-f203-alg16-kem-keygen-k4
+# STATUS — fix-f203-alg19-kem-keygen-k4
 
-FIPS 203 **Algorithm 16 ML-KEM.KeyGen**（**ml_kem_1024 / k=4**）；**规划阶段**，代码未开工。
+FIPS 203 **Algorithm 19 `ML-KEM.KeyGen()`**（**ml_kem_1024 / k=4**）；经 **Alg.16 `KeyGen_internal`** 完成 PKE+KEM 拼装。
 
 | 项 | 值 |
 |---|---|
-| **阶段** | 仅 `INTEGRATION_PLAN.md` + 本文件；**待家里 Agent 实现** |
+| **阶段** | **G3 CPU+SIM PASS**（2026-07-01）；3 launch：prep \| mmad \| kem_finish |
+| **SIM tick** | **742558**（含 KEM 尾段） |
 | **参数集** | ml_kem_1024（k=4）；与 PKE 探针 / stable 一致 |
 | **I/O（锁定）** | `ek_kem` **1568B** · `dk_kem` **3168B**（liboqs 展开：`dk_pke‖ek‖H(ek)‖z`） |
-| **SEED_D** | **20260619**（与 PKE liboqs 交叉验证同源，待实现时锁定） |
+| **SEED_D** | **20260619**（Host 仅 4B `seed_d`；`d`/`z` 由 device UB 派生） |
+
+**Alg.19 约束**：`d`/`z` device UB 生成、不导出；见 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §4.2。
 
 ## 上游依赖（已 PASS）
 
@@ -21,9 +24,9 @@ FIPS 203 **Algorithm 16 ML-KEM.KeyGen**（**ml_kem_1024 / k=4**）；**规划阶
 
 | 模式 | 命令 | 目标 |
 |------|------|------|
-| CPU | `bash run.sh -r cpu -v Ascend910B4` | G1–G3 max=0 |
-| SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | 同上；无 507000 |
-| L2 liboqs | `bash scripts/liboqs_kem_vs_ascendc.sh`（仓库根，**待建**） | ek/dk **3168+1568** max=0 |
+| CPU | `bash run.sh -r cpu -v Ascend910B4` | **PASS** ek/dk max=0（`KEM_KEYGEN_VERIFY=1`） |
+| SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | **PASS**；tick **742558**；无 507000 |
+| L2 liboqs | `bash scripts/liboqs_kem_vs_ascendc.sh` | CPU+SIM **PASS** max=0 |
 
 ## 备注
 

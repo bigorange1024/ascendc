@@ -10,9 +10,13 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.16 KeyGen 规划](2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md)
+### 2026-07-02 — [KEM Alg.19 交付收尾、命名纠正与顺利原因](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)
 
-**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg16-kem-keygen-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
+**T6 PASS** · **fix-f203-alg19-kem-keygen-k4** · **alg16→alg19** · **Alg.20 Encaps 预研**
+
+### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.19 KeyGen](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)
+
+**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg19-kem-keygen-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
 
 ### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 
