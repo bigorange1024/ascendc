@@ -8,4 +8,4 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-01 | [2026-07-01-liboqs三阶段交叉验证与Compress5修复.md](2026-07-01-liboqs三阶段交叉验证与Compress5修复.md) | **liboqs PKE 三阶段** · **`Compress_5` `(1<<26)`** · c₂ 分段定位 · `liboqs_pke_vs_ascendc` CPU+SIM max=0 · T14b 关闭 |
+| 2026-07-01 | [2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md](2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md) | **liboqs PKE 三阶段** · **`Compress_5`** · **KEM Alg.16 探针规划** · `fix-f203-alg16-kem-keygen-k4` · T6 进行中 |

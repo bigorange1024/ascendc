@@ -379,7 +379,7 @@ G0–G4 过渡路线已标准化冻结 → [`frozen-gates/FROZEN.md`](frozen-gat
 
 **2026-07-01 修复**：`pack/` 与 `scripts/host_golden/` 中 **`Compress_5` 舍入偏置** 由 `(1<<27)` 改为 `(1<<26)`（与 liboqs `mlk_scalar_compress_d5` 一致）。修前 c₁（d=11）已对、仅 c₂ 错；修后 L2 **CPU+SIM max=0**（`SEED_D=20260619`）。
 
-详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) · 纪要 [`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](../../qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)。
+详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) · 纪要 [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md)。
 
 ```bash
 bash scripts/liboqs_pke_vs_ascendc.sh -r cpu -v Ascend910B4

@@ -1,0 +1,124 @@
+# F203 KEM Alg.16 KeyGen 设备全链 — 技术总结
+
+**读者**：未参与本仓库开发的实现者 / Agent  
+**目的**：说明 ML-KEM.KeyGen（Alg.16）在 **ml_kem_1024（k=4）** 上相对 PKE KeyGen 的**数学增量**、**I/O 契约**与**设备拼装不变量**  
+**案例锚点**：[`ascendc-tests/fix-f203-alg16-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg16-kem-keygen-k4/)（规划阶段）  
+**讨论**：[`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md)  
+**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg16-kem-keygen-k4/INTEGRATION_PLAN.md)
+
+---
+
+## 0. 本文怎么读
+
+| 章节 | 内容 | 是否依赖本仓库代码名 |
+|------|------|----------------------|
+| §1 | FIPS 代数与 liboqs I/O | 否 |
+| §2 | 设备全链不变量 | 否 |
+| §3 | PKE 复用与 vendor 治理 | 少量 |
+| §4 | SHA3 设备分层（可替换后端） | 少量 |
+| §5 | 验证方法论 | 否 |
+| §6 | 案例对照 | 是 |
+
+---
+
+## 1. 数学与数据契约
+
+### 1.1 参数集
+
+**ml_kem_1024**：\(n=256\)，\(q=3329\)，\(k=4\)。与 PKE KeyGen / Encrypt / Decrypt 探针同一参数集；文档中勿与历史笔误「768」混用。
+
+### 1.2 Algorithm 16 相对 Algorithm 13
+
+PKE KeyGen（Alg.13）产出 \((ek_{PKE}, dk_{PKE})\)。ML-KEM.KeyGen（Alg.16）在此基础上：
+
+```text
+ek  ← ek_PKE
+z   ←$ {0,1}^256   （32 字节，隐式拒绝秘密）
+dk  ← dk_PKE || H(ek) || z
+```
+
+其中 **H** 为 FIPS 203 **Hash** = **SHA3-256**，输出 32 字节。
+
+### 1.3 liboqs 展开秘密钥（本仓 I/O 锁定）
+
+与 `OQS_KEM_ml_kem_1024` 对拍时，秘密钥为 **3168 字节**：
+
+```text
+dk_kem = dk_pke (1536) || ek (1568) || H(ek) (32) || z (32)
+ek_kem = ek_PKE (1568)
+```
+
+代数最小形态 `dk_PKE || H(ek) || z`（1600B）是 FIPS 行级描述；**实现验收以 liboqs 3168B 布局为准**（与 [`scripts/liboqs_pke_ref.c`](../../scripts/liboqs_pke_ref.c) 中 `KEM_SK_BYTES` 一致）。
+
+---
+
+## 2. 工程不变量
+
+| 不变量 | 说明 |
+|--------|------|
+| **设备全链** | `H(ek)`、采 `z`、拼接 `dk_kem` 均在 AI Core 完成；Host 只写 `seed_d`、读 output、`VERIFY=1` 对拍 |
+| **无 Host 胶水** | 禁止 Host `tiny_sha3` / liboqs 参与默认 `run.sh` 生产路径 |
+| **单进程 launch** | 禁止子进程调 stable / 其它探针 `run.sh`；单 ACL session 内 vendor PKE + KEM 尾段 |
+| **自包含** | PKE 能力 **vendor 复制**到本探针目录；仅可 `#include` `library/shared/` |
+| **Golden 角色** | host golden / liboqs 仅 oracle；不作 AscendC 实现规格 |
+
+---
+
+## 3. PKE 复用模型
+
+Alg.16 **不重写** NTT、内积、ByteEncode₁₂ 等 PKE 设备核。
+
+| 角色 | 路径 | 用法 |
+|------|------|------|
+| **权威实现** | `examples/stable/stable-mlkem-f203-pke-keygen-k4` | vendor 源；liboqs ek/dk_pke 已验 |
+| **调试对照** | `ascendc-tests/pass-fix-f203-alg13-device-keygen-k4` | 非生产 `#include` 源 |
+
+**vendor 治理**：`vendor/pke_keygen/` 由 stable 同步复制；G1 Gate 要求同 `SEED_D` 下 `ek_pke`/`dk_pke` 与 stable 输出 max=0。
+
+---
+
+## 4. SHA3 设备分层（可替换后端）
+
+用户约束（2026-07-01）：
+
+1. 密码学哈希**留在 AscendC 工程内、在 device 上执行**。  
+2. 对外暴露稳定设备 API（如 `F203SeDeviceKeccak::Sha3OneShot`）。  
+3. **当前**内部可实现为标量 Keccak-f[1600]（语义对齐 `thirdparty/tiny_sha3`）。  
+4. **未来** CANN 矢量 SHA3 就绪后，**只替换 backend 实现**，调用方不变。
+
+Alg.16 首版主要用 **单次 SHA3-256**（`H(ek)`）；若 `z` 由 XOF 导出，可走 `shake_xof_kernel` + `SHAKE256_RATE_BYTES`（与 KeyGen prep PRF 同「SHAKE256 接口、通用 Keccak 核 + rate」模式）。
+
+Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_vs_ascendc`（待建）。
+
+---
+
+## 5. 验证方法论
+
+| 层级 | 手段 | 证明什么 |
+|------|------|----------|
+| G1 | vendor PKE 段 vs stable | PKE 段未写坏 |
+| G2 | `H(ek)`、`z` 中间张量 vs host golden | KEM 增量正确 |
+| G3 | `ek_kem`/`dk_kem` 端到端 | 探针自洽 |
+| L2 | `liboqs_kem_vs_ascendc.sh`（待建） | 与标准实现字节一致 |
+| CPU+SIM | 双模式 `run.sh` | 同步 / 搬运 / func_key |
+
+固定种子 **`SEED_D=20260619`** 与 PKE liboqs 三阶段同源，便于横向对比。
+
+---
+
+## 6. 案例对照（附录）
+
+| 项 | 值 |
+|----|-----|
+| 探针目录 | `ascendc-tests/fix-f203-alg16-kem-keygen-k4` |
+| 状态 | **规划**（INTEGRATION_PLAN 已写，代码待实现） |
+| 后继 | Alg.17 Encaps / Alg.18 Decaps 独立探针（`ascendc-tests/`） |
+| TODO | **T6** 进行中 |
+
+---
+
+## 7. 可复用模式
+
+1. **KEM = PKE 积木 + 短哈希尾**：大算力段 vendor PKE；KEM 专属仅 SHA3 + 拼接。  
+2. **liboqs I/O 优先于 FIPS 最小 dk**：展开 `dk_pke‖ek‖H‖z` 避免与生态工具链尺寸不一致。  
+3. **SHA3 门面 + 可换 backend**：设备路径永不回退 Host；实现可渐进矢量化。

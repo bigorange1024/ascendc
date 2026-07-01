@@ -1,6 +1,6 @@
-# 2026-07-01 liboqs 三阶段交叉验证与 Compress_5 修复
+# 2026-07-01 liboqs 三阶段交叉验证、Compress_5 修复与 KEM Alg.16 KeyGen 探针规划
 
-关键词：**liboqs** · **PKE 三阶段交叉验证** · **`Compress_5` 舍入偏置** · **`SEED_D=20260619`** · **c₂ 分段定位**
+关键词：**liboqs** · **PKE 三阶段交叉验证** · **`Compress_5` 舍入偏置** · **KEM Alg.16 KeyGen** · **设备全链** · **`SEED_D=20260619`**
 
 > **TL;DR**：仓库根 [`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) 下 KeyGen / Encrypt / Decrypt 分别与 liboqs **CPU+SIM max=0**。Encrypt 曾 FAIL 的根因是 **`Compress_5` 误用 `(1<<27)` 舍入偏置**（应为 `(1<<26)`），与 liboqs `mlk_scalar_compress_d5` / FIPS 203 一致；c₁（d=11）一直正确。定稿 note：[`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md)。
 
@@ -112,3 +112,35 @@ Git：`4d549c3`（代码 + 脚本）；本纪要 + note + 探针 INTEGRATION_PLA
 | liboqs 与探针边界 | liboqs 仅 **仓库级** 交叉验证脚本；探针 `SELF_CONTAINED` 不变 |
 | 三层验收关系 | ① 探针 vs host golden；② **liboqs 三阶段**；③ round-trip device 闭环 — 互补 |
 | TODO | **T14b** 关闭（原「可选 liboqs KAT」已由三阶段脚本覆盖） |
+
+---
+
+## 7. KEM Alg.16 KeyGen 探针规划（追加）
+
+### 7.1 用户拍板（2026-07-01 夜）
+
+| 项 | 结论 |
+|----|------|
+| **落点** | `ascendc-tests/fix-f203-alg16-kem-keygen-k4/`（**非** `examples/exp-*`） |
+| **密码学位置** | KEM 增量（`H(ek)`、采 `z`、拼 `dk_kem`）**全在 device**；拒绝 Host「胶水」 |
+| **PKE 上游** | Alg.13 → **stable** KeyGen；本探针 **vendor 复制**，不 `#include` stable 路径 |
+| **Enc/Dec** | 后续独立探针，调用 fix alg14/15 |
+| **参数集** | **ml_kem_1024（k=4）** |
+| **SHA3** | 设备 `fips203_device_sha3.hpp`；内部可抄 tiny_sha3 语义，后续换 CANN 矢量 backend |
+| **门面 API** | `Fips203Device::HashH/G/J` **暂缓**；实现阶段直接用现有 `Sha3OneShot` |
+
+### 7.2 交付物（本段）
+
+| 路径 | 内容 |
+|------|------|
+| [`ascendc-tests/fix-f203-alg16-kem-keygen-k4/`](../../ascendc-tests/fix-f203-alg16-kem-keygen-k4/) | `INTEGRATION_PLAN.md` · `STATUS.md` · `SELF_CONTAINED.md` |
+| [`docs/notes/F203-KEM-Alg16-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg16-KeyGen设备全链技术总结.md) | 定稿原理 |
+| [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) | 家里 Agent 实现入口 |
+
+**I/O 锁定**：`ek_kem` 1568B · `dk_kem` 3168B（liboqs：`dk_pke‖ek‖H(ek)‖z`）。
+
+### 7.3 家里 Agent 建议顺序
+
+见探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg16-kem-keygen-k4/INTEGRATION_PLAN.md) §8：vendor stable → G1 PKE → G2 H/z → G3 拼接 → liboqs KEM L2（脚本待建）。
+
+**TODO**：**T6** 由「排队」改为**进行中**（探针目录已建，代码未写）。

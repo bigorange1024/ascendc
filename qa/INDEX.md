@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-01 — [liboqs 三阶段交叉验证与 Compress_5 修复](2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)
+### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.16 KeyGen 规划](2026-07/2026-07-01-liboqs验证与KEM-Alg16-KeyGen规划.md)
 
-**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · c₂ 分段定位 · KeyGen+Encrypt+Decrypt CPU+SIM max=0 · T14b 关闭
+**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg16-kem-keygen-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
 
 ### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 

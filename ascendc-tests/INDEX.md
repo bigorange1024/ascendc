@@ -53,6 +53,7 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
 | [**fix-f203-alg14-pke-encrypt-correctness-k4/**](fix-f203-alg14-pke-encrypt-correctness-k4/) | **Alg.14 Encrypt G5 ✅**（唯一活跃；G0–G4 → `frozen-gates/`）；CPU+SIM c.bin max=0；SIM tick **922441**；round-trip 见 [`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) |
 | [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（dk+c→m 全 device；**2 launch** prep \| ntt+intt）；CPU+SIM m.bin max=0；SIM tick **~427k**；同上 round-trip |
+| [**fix-f203-alg16-kem-keygen-k4/**](fix-f203-alg16-kem-keygen-k4/) | **Alg.16 KEM KeyGen**（ml_kem_1024；设备全链；vendor stable PKE + `H(ek)`/`z`/拼接）；**规划** · 代码待实现 |
 | ~~fix-f203-alg14-encrypt-2launch-k4~~ | **已冻结** → [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（家里 agent `27cc93b`，办公室未复验） |
 
 **ByteEncode₁₂（KeyGen）**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/)（**d=12**）。Encrypt/Decrypt 单算子 **d=4/10** 见上表 **`pass-f203-*-d4-d10-vec-k4`**；ml_kem_1024 的 **d=5/d=11** 在全链 Encrypt/Decrypt 探针内联。
