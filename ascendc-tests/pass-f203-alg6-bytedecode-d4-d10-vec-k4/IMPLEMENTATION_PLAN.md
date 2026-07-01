@@ -1,8 +1,9 @@
-# IMPLEMENTATION_PLAN — fix-f203-alg6-bytedecode-d-vec-k4
+# IMPLEMENTATION_PLAN — pass-f203-alg6-bytedecode-d4-d10-vec-k4
 
-**状态**：方案（未实现）  
+**状态**：**pass**（A0：d=**4** / d=**10** CPU+SIM PASS）  
+**验收 d**：**`{4, 10}`** only  
 **FIPS 203**：Algorithm 6 `ByteDecode_d`；§4.2 + §2.4.8  
-**配对探针**：[`fix-f203-byteencode-d-vec-k4`](../fix-f203-byteencode-d-vec-k4/)（Encrypt d=4/10）；d=12 见 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/)
+**配对探针**：[`pass-f203-byteencode-d4-d10-vec-k4`](../pass-f203-byteencode-d4-d10-vec-k4/)（Encrypt **d=4/10**）；d=12 见 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/)
 
 ---
 
@@ -20,7 +21,7 @@ for j = 0 .. 255:
 ```
 
 **d=12** 等价于现有 `poly_frombytes` / `ByteDecode_12`（2 系数 / 3 字节）。  
-**Decrypt 路径**（Alg.15）：`u' ← Decompress_du( ByteDecode_du(c₁) )` — 本探针只做 **ByteDecode**，输出 d-bit 整数数组；Decompress 见 [`fix-f203-decompress-d-vec-k4`](../fix-f203-decompress-d-vec-k4/)。
+**Decrypt 路径**（Alg.15）：`u' ← Decompress_du( ByteDecode_du(c₁) )` — 本探针只做 **ByteDecode**（**d=4/10**）；Decompress 见 [`pass-f203-decompress-d4-d10-vec-k4`](../pass-f203-decompress-d4-d10-vec-k4/)。
 
 ### 1.2 Encrypt 相关 d（k=4 polyvec）
 
@@ -35,7 +36,7 @@ for j = 0 .. 255:
 ## 2. 目录骨架
 
 ```text
-fix-f203-alg6-bytedecode-d-vec-k4/
+pass-f203-alg6-bytedecode-d4-d10-vec-k4/
 ├── IMPLEMENTATION_PLAN.md
 ├── STATUS.md
 ├── byte_decode_d_config.hpp

@@ -10,7 +10,7 @@ from ctypes import CDLL, c_int32, c_void_p
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
-_ENCODE_DIR = os.path.normpath(os.path.join(_CASE_DIR, "..", "fix-f203-byteencode-d-vec-k4"))
+_ENCODE_DIR = os.path.normpath(os.path.join(_CASE_DIR, "..", "pass-f203-byteencode-d4-d10-vec-k4"))
 _DECODE_REF_C = os.path.join(_CASE_DIR, "byte_decode_d_ref.c")
 _ENCODE_REF_C = os.path.join(_ENCODE_DIR, "byte_encode_d_ref.c")
 _REF_SO = os.path.join(_CASE_DIR, "scripts", "libbytedecode_gen.so")

@@ -108,10 +108,10 @@
 
 | 查阅主题 | PDF / 在线位置 | 概括 |
 |----------|----------------|------|
-| **F203 Compress_d** | [`fix-f203-compress-d-vec-k4`](../../ascendc-tests/fix-f203-compress-d-vec-k4/) | d=4：`Muls`+`Adds`+`ShiftRight`+`mask_low_bits`（256-wide）；d=10 设备暂标量 u64 Barrett。 |
-| **F203 Decompress_d** | [`fix-f203-decompress-d-vec-k4`](../../ascendc-tests/fix-f203-decompress-d-vec-k4/) | d=4/10：`Muls(Q)`+`Adds(bias)`+`ShiftRight(d)`（256-wide）；bias=8/512。 |
-| **F203 ByteEncode_d** | [`fix-f203-byteencode-d-vec-k4`](../../ascendc-tests/fix-f203-byteencode-d-vec-k4/) | d=4/10：256-wide `mask_low_bits_i32`（`ShiftRight`+`Muls`+`Sub`）；跨字节 pack 用 `GetValue`/`SetValue`（910B 无 Scatter）。布局同 mlk `poly_compress_d4/10_c` 打包半部。 |
-| **F203 ByteDecode_d** | [`fix-f203-alg6-bytedecode-d-vec-k4`](../../ascendc-tests/fix-f203-alg6-bytedecode-d-vec-k4/) | d=4：128-wide widen + `mask_low_bits` 取低 nibble + 标量取高 nibble；d=10：64 组 5B→4 coef 标量 unpack（mlk 逆布局）。 |
+| **F203 Compress_d** | [`pass-f203-compress-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-compress-d4-d10-vec-k4/) | **d=4/10 PASS**；d=4：`Muls`+`Adds`+`ShiftRight`+`mask_low_bits`；d=10 标量 u64 Barrett。ml_kem_1024 **d=5/11** 见 Encrypt pack。 |
+| **F203 Decompress_d** | [`pass-f203-decompress-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-decompress-d4-d10-vec-k4/) | **d=4/10 PASS**；`Muls(Q)`+`Adds(bias)`+`ShiftRight(d)`。 |
+| **F203 ByteEncode_d** | [`pass-f203-byteencode-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-byteencode-d4-d10-vec-k4/) | **d=4/10 PASS**；256-wide `mask_low_bits_i32`；分组标量 pack。 |
+| **F203 ByteDecode_d** | [`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-alg6-bytedecode-d4-d10-vec-k4/) | **d=4/10 PASS**；d=4 向量 nibble；d=10 5B 组 unpack。 |
 | **mask_low_bits 模板** | 见 Stage1、`byte_encode12_vec.hpp` | `v mod 2^bits`：`ShiftRight(v,bits)` → `Muls(·,2^bits)` → `Sub(v,v,·)`；A2 支持 int32。 |
 | **GetValue / SetValue** | [07\_0006](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0006.html) | ByteEncode_d pack 阶段：nibble / 10-bit 交织写 `uint8` 输出（32/64 组循环）。 |
 

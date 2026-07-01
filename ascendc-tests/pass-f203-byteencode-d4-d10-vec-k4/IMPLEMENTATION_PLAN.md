@@ -1,6 +1,7 @@
-# IMPLEMENTATION_PLAN — fix-f203-byteencode-d-vec-k4
+# IMPLEMENTATION_PLAN — pass-f203-byteencode-d4-d10-vec-k4
 
-**状态**：实现中  
+**状态**：**pass**（A0：d=**4** / d=**10** CPU+SIM PASS）  
+**验收 d**：**`{4, 10}`** only  
 **FIPS 203**：Algorithm 5 `ByteEncode_d`；Alg.14 行 22–23 后半部  
 **参考**：mlkem-native `compress.c` 打包布局；向量模式参考 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/)（**只读，不修改**）
 
@@ -22,7 +23,7 @@
 ## 2. 目录骨架
 
 ```text
-fix-f203-byteencode-d-vec-k4/
+pass-f203-byteencode-d4-d10-vec-k4/
 ├── byte_encode_d_ref.c/h      # Host golden
 ├── byte_encode_d_vec.hpp      # 向量 mask + 分组 pack
 ├── byte_encode_d_custom.cpp   # AIV-only
@@ -45,8 +46,8 @@ fix-f203-byteencode-d-vec-k4/
 
 ## 4. 衔接
 
-- 上游：[`fix-f203-compress-d-vec-k4`](../fix-f203-compress-d-vec-k4/) 输出 comp 域
-- 下游 decode：[`fix-f203-alg6-bytedecode-d-vec-k4`](../fix-f203-alg6-bytedecode-d-vec-k4/)
+- 上游：[`pass-f203-compress-d4-d10-vec-k4`](../pass-f203-compress-d4-d10-vec-k4/) 输出 comp 域
+- 下游 decode：[`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../pass-f203-alg6-bytedecode-d4-d10-vec-k4/)
 
 ---
 

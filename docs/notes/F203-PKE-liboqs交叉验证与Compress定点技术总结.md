@@ -2,7 +2,7 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 PKE 三层验收分工、如何用 liboqs 做分阶段字节 oracle，以及 **`Compress_d` 定点舍入偏置** 的可复用契约  
-**案例锚点**：[`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh)、[`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/)（§附录）  
+**案例锚点**：[`pass-f203-compress-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-compress-d4-d10-vec-k4/)（**d=4/10** PASS）；ml_kem_1024 **d=5/d=11** 见 Encrypt [`pack/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/pack/) · [`liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh)  
 **讨论**：[`qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md`](../../qa/2026-07/2026-07-01-liboqs三阶段交叉验证与Compress5修复.md)  
 **实现方案**：Encrypt [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/INTEGRATION_PLAN.md) §10
 

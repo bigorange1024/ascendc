@@ -124,7 +124,7 @@ F203_BYTE_ENCODE_D=4  bash run.sh -r sim -v Ascend910B4
 
 ### 与 compress 探针衔接
 
-[`fix-f203-compress-d-vec-k4`](../fix-f203-compress-d-vec-k4/) 输出 d-bit 域 → 本探针 `poly_byte_encode_d_local` → GM `encoded.bin`。Phase B 可 fused 单 kernel。
+[`pass-f203-compress-d4-d10-vec-k4`](../pass-f203-compress-d4-d10-vec-k4/) 输出 d-bit 域（**d=4/10**）→ 本探针 `poly_byte_encode_d_local` → GM `encoded.bin`。Phase B 可 fused 单 kernel。
 
 ### 文件演进（规划）
 
@@ -135,4 +135,4 @@ F203_BYTE_ENCODE_D=4  bash run.sh -r sim -v Ascend910B4
 | `byte_encode_d_ref.c` | Host golden（Alg.5 比特流或 mlk 布局） |
 | 保留 `byte_encode12_*.hpp` | d=12 专用路径，避免回归 |
 
-配对 decode：[`fix-f203-alg6-bytedecode-d-vec-k4`](../fix-f203-alg6-bytedecode-d-vec-k4/)。
+配对 decode：[`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../pass-f203-alg6-bytedecode-d4-d10-vec-k4/)。

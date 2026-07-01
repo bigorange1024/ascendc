@@ -1,8 +1,9 @@
-# IMPLEMENTATION_PLAN — fix-f203-decompress-d-vec-k4
+# IMPLEMENTATION_PLAN — pass-f203-decompress-d4-d10-vec-k4
 
-**状态**：方案（未实现）  
+**状态**：**pass**（A0：d=**4** / d=**10** CPU+SIM PASS）  
+**验收 d**：**`{4, 10}`** only  
 **FIPS 203**：§4.2.1 `Decompress_d`（Eq 4.8）；Alg.15 行 4  
-**配对**：[`fix-f203-compress-d-vec-k4`](../fix-f203-compress-d-vec-k4/)（近似逆，非精确）
+**配对**：[`pass-f203-compress-d4-d10-vec-k4`](../pass-f203-compress-d4-d10-vec-k4/)（近似逆，非精确）
 
 ---
 
@@ -37,7 +38,7 @@ v  ← Decompress_dv( ByteDecode_dv(c₂) )
 ## 2. 目录骨架
 
 ```text
-fix-f203-decompress-d-vec-k4/
+pass-f203-decompress-d4-d10-vec-k4/
 ├── IMPLEMENTATION_PLAN.md
 ├── STATUS.md
 ├── decompress_d_config.hpp
@@ -77,7 +78,7 @@ ShiftRight(out, prod, SHIFT_D, 128);  // SHIFT_D = d
 
 ### 3.4 Fused：`Decompress_d(ByteDecode_d(B))`
 
-Phase B 与 [`fix-f203-alg6-bytedecode-d-vec-k4`](../fix-f203-alg6-bytedecode-d-vec-k4/) 合并：
+Phase B 与 [`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../pass-f203-alg6-bytedecode-d4-d10-vec-k4/) 合并：
 
 ```text
 GM c₁[320] → UB uint8 → unpack d=10 → int32[256] d-bit → Decompress → u'[256]

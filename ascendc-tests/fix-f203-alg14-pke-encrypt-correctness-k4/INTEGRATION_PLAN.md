@@ -39,7 +39,7 @@ output: c (1568B) = c₁ ‖ c₂
 | **L5** `t̂·r̂` + 加 `e₁` | 行 18–19 | vendored [`vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) 内积 UB + 噪声加 | 77958 全链 | `t̂` 自 `ek` ByteDecode₁₂（§2.2） |
 | **L6** `μ` 嵌入 + `e₂` | 行 20–21 | vendored lines8-15 / Alg.8 CBD | — | |
 | **L7** INTT `u,v` | 行 21–22 | L3 INTT | — | |
-| **L8** `Compress_d` + `ByteEncode_d` | 行 22–23 | vendored [`compress-d`](../fix-f203-compress-d-vec-k4/) + [`byteencode-d`](../fix-f203-byteencode-d-vec-k4/) | d=4/10 已有 | ml_kem_1024：**d=11/5** = CMake 常数扩展（§2.3） |
+| **L8** `Compress_d` + `ByteEncode_d` | 行 22–23 | vendored [`pass-f203-compress-d4-d10-vec-k4`](../pass-f203-compress-d4-d10-vec-k4/) + [`pass-f203-byteencode-d4-d10-vec-k4`](../pass-f203-byteencode-d4-d10-vec-k4/) | **d=4/10** PASS | ml_kem_1024：**d=11/5** = Encrypt `pack/`（§2.4） |
 
 ### 2.1 `Â` 与 `Âᵀ`：同一 16 poly GM，仅索引对调
 
@@ -65,7 +65,7 @@ Encrypt：`û[p] = Σ_j MultiplyNTTs( A[j,p], r̂[j] )`（即 `Âᵀ[p,·]·r̂`
 
 | 块 | 尺寸 | 做法 |
 |----|------|------|
-| `t̂` polyvec | 4×384 B | vendored [`alg6-bytedecode-d`](../fix-f203-alg6-bytedecode-d-vec-k4/) 的 **d=12** 路径（与 KeyGen ByteEncode₁₂ 互逆） |
+| `t̂` polyvec | 4×384 B | vendored [`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../pass-f203-alg6-bytedecode-d4-d10-vec-k4/) 的 **d=12** 路径（与 KeyGen ByteEncode₁₂ 互逆） |
 | `ρ` | 32 B | `ek_pke[1536:1568]`，供 L1 SampleNTT |
 
 ### 2.3 `at_r5` G3 合并核 — 数学约定（2026-06-30）
@@ -129,7 +129,7 @@ CPU `#ifdef ASCENDC_CPU_DEBUG` 走 host scalar 版（与 device 同公式），�
 
 ### 2.4 `d_u=11` / `d_v=5`（2026-07-01 对齐 liboqs）
 
-[`compress-d`](../fix-f203-compress-d-vec-k4/IMPLEMENTATION_PLAN.md) 已列 Barrett 常数（d=11/5）；[`byteencode-d`](../fix-f203-byteencode-d-vec-k4/) 为参数化 pack。拼装时 vendored 拷贝 + `F203_COMPRESS_D` / `F203_BYTE_ENCODE_D` 编译开关即可，与 d=4/10 同模板。
+[`pass-f203-compress-d4-d10-vec-k4`](../pass-f203-compress-d4-d10-vec-k4/IMPLEMENTATION_PLAN.md) 已列 Barrett 常数（**d=4/10 PASS**；d=5/11 见本探针 `pack/`）；[`pass-f203-byteencode-d4-d10-vec-k4`](../pass-f203-byteencode-d4-d10-vec-k4/) 为参数化 pack。
 
 **`Compress_5` 定点契约**（pack 路径，与 liboqs ref 一致）：
 

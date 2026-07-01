@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# fix-f203-byteencode-d-vec-k4 — FIPS 203 ByteEncode_d（Encrypt u: d=10 / v: d=4）
+# pass-f203-alg6-bytedecode-d4-d10-vec-k4 — FIPS 203 ByteDecode_d（验收 d=4 / d=10）
 #
 # Usage:
 #   bash run.sh -r cpu -v Ascend910B4
-#   F203_BYTE_ENCODE_D=10 bash run.sh -r sim -v Ascend910B4
+#   F203_BYTE_DECODE_D=10 bash run.sh -r sim -v Ascend910B4
 #
 # 环境变量：
-#   F203_BYTE_ENCODE_D — 4（默认，Encrypt v）或 10（Encrypt u）
-#   BYTE_ENCODE_D_VEC  — 0 标量 / 1 向量 mask（默认）
+#   F203_BYTE_DECODE_D — 4（默认，Decrypt v）或 10（Decrypt u）
+#   BYTE_DECODE_D_VEC  — 0 标量 / 1 向量 nibble（d=4 默认向量）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
@@ -17,8 +17,8 @@ INSTALL_PREFIX="${CURRENT_DIR}/out"
 SOC_VERSION="Ascend910B4"
 RUN_MODE="cpu"
 
-export F203_BYTE_ENCODE_D="${F203_BYTE_ENCODE_D:-4}"
-export BYTE_ENCODE_D_VEC="${BYTE_ENCODE_D_VEC:-1}"
+export F203_BYTE_DECODE_D="${F203_BYTE_DECODE_D:-4}"
+export BYTE_DECODE_D_VEC="${BYTE_DECODE_D_VEC:-1}"
 
 SHORT=r:,v:,i:,b:,p:
 LONG=run-mode:,soc-version:,install-path:,build-type:,install-prefix:
@@ -52,7 +52,7 @@ fi
 export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 
-echo "SOC=${SOC_VERSION} RUN_MODE=${RUN_MODE} F203_BYTE_ENCODE_D=${F203_BYTE_ENCODE_D} BYTE_ENCODE_D_VEC=${BYTE_ENCODE_D_VEC}"
+echo "SOC=${SOC_VERSION} RUN_MODE=${RUN_MODE} F203_BYTE_DECODE_D=${F203_BYTE_DECODE_D} BYTE_DECODE_D_VEC=${BYTE_DECODE_D_VEC}"
 
 if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
     # shellcheck source=/dev/null
@@ -78,8 +78,8 @@ cmake -B build \
     -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
     -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}" \
     -DASCEND_CANN_PACKAGE_PATH="${_ASCEND_INSTALL_PATH}" \
-    -DF203_BYTE_ENCODE_D="${F203_BYTE_ENCODE_D}" \
-    -DBYTE_ENCODE_D_VEC="${BYTE_ENCODE_D_VEC}"
+    -DF203_BYTE_DECODE_D="${F203_BYTE_DECODE_D}" \
+    -DBYTE_DECODE_D_VEC="${BYTE_DECODE_D_VEC}"
 cmake --build build -j
 cmake --install build
 
@@ -118,4 +118,4 @@ PY
 fi
 
 python3 "${CURRENT_DIR}/scripts/verify_result.py"
-echo "[SUCCESS] fix-f203-byteencode-d-vec-k4 d=${F203_BYTE_ENCODE_D} (${RUN_MODE})"
+echo "[SUCCESS] pass-f203-alg6-bytedecode-d4-d10-vec-k4 d=${F203_BYTE_DECODE_D} (${RUN_MODE})"

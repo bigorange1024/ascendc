@@ -1,8 +1,9 @@
-# IMPLEMENTATION_PLAN — fix-f203-compress-d-vec-k4
+# IMPLEMENTATION_PLAN — pass-f203-compress-d4-d10-vec-k4
 
-**状态**：方案（未实现）  
+**状态**：**pass**（A0：d=**4** / d=**10** CPU+SIM PASS）  
+**验收 d**：**`{4, 10}`** only；ml_kem_1024 的 d=**5**/d=**11** 不在本目录，见 Encrypt [`pack/`](../fix-f203-alg14-pke-encrypt-correctness-k4/pack/)  
 **FIPS 203**：§4.2.1 `Compress_d`（Eq 4.7）；Alg.14 行 22–23  
-**参考实现**：`thirdparty/liboqs/.../mlkem/src/compress.h`（Barrett 常数已验证）
+**参考实现**：`thirdparty/liboqs/.../mlkem/src/compress.h`（d=4/10 已与 ref 全系数对拍）
 
 ---
 
@@ -24,9 +25,9 @@ Compress_d(u) = ((u · ⌊2^d · 2^N / q⌋ + 2^{N-1}) >> N) mod 2^d
 |---|------|-------------------------|--------|
 | 1 | round(2u/q) | `1290168` | 31 |
 | 4 | round(16u/q) mod 16 | `1290160` | 28 |
-| 5 | round(32u/q) mod 32 | `1290176` | 27 |
-| 10 | round(1024u/q) mod 1024 | `2642263040` (u64) | 33 |
-| 11 | round(2048u/q) mod 2048 | `5284526080` (u64) | 33 |
+| 5 | round(32u/q) mod 32 | `1290176` | 27，bias **`(1<<26)`** | **未在本探针实现**；见 Encrypt pack |
+| 10 | round(1024u/q) mod 1024 | `2642263040` (u64) | 33 | **已实现 PASS** |
+| 11 | round(2048u/q) mod 2048 | `5284526080` (u64) | 33 | **未在本探针实现** |
 
 **Encrypt 用法**（Alg.14，k=4 工程默认 ML-KEM-768 参数）：
 
@@ -42,7 +43,7 @@ Table 2 备选（FIPS k=4 = ML-KEM-1024）：`d_u=11`, `d_v=5`。
 ## 2. 目录骨架
 
 ```text
-fix-f203-compress-d-vec-k4/
+pass-f203-compress-d4-d10-vec-k4/
 ├── IMPLEMENTATION_PLAN.md
 ├── STATUS.md
 ├── compress_d_config.hpp           # F203_COMPRESS_D = 4|5|10|11
@@ -53,7 +54,7 @@ fix-f203-compress-d-vec-k4/
 ├── run.sh / scripts/
 ```
 
-**与 ByteEncode 关系**：本探针输出 **256×int32 压缩域**（值 < 2^d）；[`fix-f203-byteencode-d-vec-k4`](../fix-f203-byteencode-d-vec-k4/) 负责后续 `ByteEncode_d` 打包（d=4/10）。d=12 KeyGen 仍用 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/)。
+**与 ByteEncode 关系**：本探针输出 **256×int32 压缩域**（值 < 2^d）；[`pass-f203-byteencode-d4-d10-vec-k4`](../pass-f203-byteencode-d4-d10-vec-k4/) 负责后续 `ByteEncode_d`（**d=4/10**）。d=12 KeyGen 仍用 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/)。
 
 ---
 
@@ -66,7 +67,7 @@ fix-f203-compress-d-vec-k4/
 ```cpp
 // 伪代码 — 128-wide tile
 Muls(d0, aTile, static_cast<int32_t>(BARRETT_D4), 128);  // u32 overflow OK
-Adds(d0, d0, static_cast<int32_t>(1 << 27), 128);
+Adds(d0, d0, static_cast<int32_t>(1 << 27), 128);  // d=4 only：bias=2^{28-1}
 ShiftRight(out, d0, 28, 128);
 // mod 16: mask_low_bits_i32(out, tmp, 4, 128);
 ```

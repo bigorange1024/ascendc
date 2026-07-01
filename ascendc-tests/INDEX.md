@@ -34,6 +34,10 @@
 | [**pass-fix-f203-stage123-ntt-intt-polyvec8-vec/**](pass-fix-f203-stage123-ntt-intt-polyvec8-vec/) | **8-poly 三段式 NTT/INTT**（紧凑 `[HI₈,LO₈]`；LUT 切换；1 launch；NTT SIM **30347** / INTT **30340**） | ✓ | ✓ |
 | [**pass-shake128-ops-math-toy/**](pass-shake128-ops-math-toy/) | 共享核 **SHAKE128**（`*_toy_ub.hpp` 全 UB 参考） | ✓ | **12285** |
 | [**pass-shake256-ascendc-toy/**](pass-shake256-ascendc-toy/) | 共享 `shake_xof_kernel` + **SHAKE256**（全 UB toy） | ✓ | **12285** |
+| [**pass-f203-alg6-bytedecode-d4-d10-vec-k4/**](pass-f203-alg6-bytedecode-d4-d10-vec-k4/) | **Alg.6 ByteDecode_d**（**d=4/10** PASS；d=4 SIM **9186**） | ✓ | ✓ |
+| [**pass-f203-byteencode-d4-d10-vec-k4/**](pass-f203-byteencode-d4-d10-vec-k4/) | **Alg.5 ByteEncode_d**（**d=4/10** PASS；d=4 SIM **5435**） | ✓ | ✓ |
+| [**pass-f203-compress-d4-d10-vec-k4/**](pass-f203-compress-d4-d10-vec-k4/) | **§4.2.1 Compress_d**（**d=4/10** PASS；d=4 SIM **3247**） | ✓ | ✓ |
+| [**pass-f203-decompress-d4-d10-vec-k4/**](pass-f203-decompress-d4-d10-vec-k4/) | **§4.2.1 Decompress_d**（**d=4/10** PASS；d=4 SIM **3177**） | ✓ | ✓ |
 | [**pass-toy-mix-s123-byteencode-k2/**](pass-toy-mix-s123-byteencode-k2/) | **MIX 玩具**：双 AIV S1 → Cube 64³ → UB Adds+func1（无跨 AIV） | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
@@ -47,15 +51,11 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | 目录 | 说明 |
 |------|------|
 | **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
-| [**fix-f203-alg6-bytedecode-d-vec-k4/**](fix-f203-alg6-bytedecode-d-vec-k4/) | **Alg.6 ByteDecode_d** 向量（Decrypt c₁/c₂ 解包；d=4 SIM **9186**） |
-| [**fix-f203-byteencode-d-vec-k4/**](fix-f203-byteencode-d-vec-k4/) | **Alg.5 ByteEncode_d** 向量（Encrypt c₁/c₂ 打包；d=4 SIM **5435**） |
-| [**fix-f203-compress-d-vec-k4/**](fix-f203-compress-d-vec-k4/) | **§4.2.1 Compress_d** 向量（Alg.14 前半；d=4 SIM **3247**） |
-| [**fix-f203-decompress-d-vec-k4/**](fix-f203-decompress-d-vec-k4/) | **§4.2.1 Decompress_d** 向量（Alg.15 前半；d=4 SIM **3177**） |
 | [**fix-f203-alg14-pke-encrypt-correctness-k4/**](fix-f203-alg14-pke-encrypt-correctness-k4/) | **Alg.14 Encrypt G5 ✅**（唯一活跃；G0–G4 → `frozen-gates/`）；CPU+SIM c.bin max=0；SIM tick **922441**；round-trip 见 [`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) |
 | [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（dk+c→m 全 device；**2 launch** prep \| ntt+intt）；CPU+SIM m.bin max=0；SIM tick **~427k**；同上 round-trip |
 | ~~fix-f203-alg14-encrypt-2launch-k4~~ | **已冻结** → [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（家里 agent `27cc93b`，办公室未复验） |
 
-**ByteEncode₁₂（KeyGen）**：保持 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/) 不变；Encrypt 侧 **d=4/10** 见 [`fix-f203-byteencode-d-vec-k4`](fix-f203-byteencode-d-vec-k4/)。
+**ByteEncode₁₂（KeyGen）**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/)（**d=12**）。Encrypt/Decrypt 单算子 **d=4/10** 见上表 **`pass-f203-*-d4-d10-vec-k4`**；ml_kem_1024 的 **d=5/d=11** 在全链 Encrypt/Decrypt 探针内联。
 
 ---
 
