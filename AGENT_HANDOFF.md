@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。  
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。  
-> **最后刷新**：2026-06-30（晚 · Encrypt G5 + **Decrypt G4 2-launch PASS**）
+> **最后刷新**：2026-06-30（晚 · Encrypt G5 + Decrypt G4 + **PKE round-trip CPU+SIM**）
 
 ---
 
@@ -32,6 +32,24 @@
 | 定稿 note | [`docs/notes/F203-Alg15-Decrypt-2launch编排技术总结.md`](docs/notes/F203-Alg15-Decrypt-2launch编排技术总结.md) |
 
 详 Encrypt [`STATUS.md`](ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) · Decrypt [`STATUS.md`](ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/STATUS.md)
+
+### PKE round-trip（device 闭环，新增）
+
+**结论**：KeyGen 密钥 → device Encrypt `c.bin` → device Decrypt `m.bin`；**CPU+SIM 对拍 max=0**（32B）。
+
+| 项 | 内容 |
+|----|------|
+| 脚本 | [`scripts/roundtrip_pke_encrypt_decrypt.sh`](scripts/roundtrip_pke_encrypt_decrypt.sh) |
+| 密钥 | `pass-fix-f203-alg13-device-keygen-k4/output/`（`ROUNDTRIP_BOOTSTRAP_KEYGEN=1` 可缺省 bootstrap） |
+| SEED_D | 20260619 |
+| SIM 耗时 | Encrypt ~633s + Decrypt ~253s（wall；tick Decrypt ~427k） |
+
+```bash
+bash scripts/roundtrip_pke_encrypt_decrypt.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash scripts/roundtrip_pke_encrypt_decrypt.sh -r sim -v Ascend910B4
+```
+
+> 单探针 `run.sh` 仍用 host golden；round-trip **补充**跨算子 device I/O 闭环，不替代各探针 oracle 验收。
 
 ---
 
@@ -162,6 +180,10 @@ bash run.sh -r sim -v Ascend910B4
 cd ../fix-f203-alg15-pke-decrypt-correctness-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+
+# 跨探针 device 闭环（KeyGen 密钥 → Encrypt c → Decrypt m）
+bash ../../scripts/roundtrip_pke_encrypt_decrypt.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash ../../scripts/roundtrip_pke_encrypt_decrypt.sh -r sim -v Ascend910B4
 
 cd ../../examples/stable/stable-mlkem-f203-pke-keygen-k4
 bash run.sh -r cpu -v Ascend910B4

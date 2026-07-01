@@ -96,3 +96,7 @@ bash run.sh -r sim -v Ascend910B4
 ## 遗留
 
 无阻塞项。G0–G4 过渡路线已标准化冻结 → [`frozen-gates/FROZEN.md`](frozen-gates/FROZEN.md)；`main_encrypt.cpp` 内 gate&lt;5 分支仅历史回放（启动 WARN）。
+
+## 跨探针 round-trip（补充验收）
+
+单探针默认 `ENCRYPT_VERIFY=1` 对拍 host `golden_c.bin`。device **c → Decrypt → m** 闭环见 [`scripts/roundtrip_pke_encrypt_decrypt.sh`](../../scripts/roundtrip_pke_encrypt_decrypt.sh)（KeyGen 密钥 + `SEED_D=20260619`）；CPU+SIM **max=0**（2026-06-30，[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §16）。

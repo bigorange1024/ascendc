@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 PASS + Decrypt G4 2-launch PASS](2026-06/2026-06-30-funckey-507000本地独立验证.md)
+### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 
-`F203_FUNCKEY_EXPERIMENT` · 原探针 G5 CPU+SIM c.bin max=0 · Gate G0–G4 冻结 · 家里 `2launch-k4` → `frozen/`（办公室未复验）
+`F203_FUNCKEY_EXPERIMENT` · G5/G4 CPU+SIM max=0 · **`scripts/roundtrip_pke_*` device 闭环 CPU+SIM max=0** · Gate/2launch 冻结
 
 ### 2026-06-29 — [KeyGen 双 AIV / Encrypt G5](2026-06/2026-06-29-KeyGen双AIV并行fork探针.md)
 

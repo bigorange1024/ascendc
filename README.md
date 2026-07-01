@@ -46,7 +46,7 @@
 │   ├── incubating/exp-*/     # 研究中
 │   └── stable/stable-*/      # 定型
 ├── src/  include/  Makefile  # 普通 C（唯一 main：src/main.c）
-├── scripts/                  # env.sh、verify-cann.sh、install-cann-9.0.sh
+├── scripts/                  # env.sh、verify-cann.sh、roundtrip_pke_*（Encrypt→Decrypt 闭环）
 ├── backup-project.sh         # 备份前须先刷新 INDEX 与本 README；含 ascendc-tests/、examples/ 用例树（排除 build/OPPROF/dump 等产物）
 └── packages/  samples/       # Gitee ascend/samples（参考用，含 AscendC MatmulLeakyRelu 等）
 ```

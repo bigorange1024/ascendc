@@ -8,6 +8,8 @@ FIPS 203 **Alg.15 PKE Decrypt**（ml_kem_1024 / k=4）；Host 仅 I/O + LUT 搬�
 | **I/O** | dk 1536B · c 1568B · m 32B |
 | **SEED_D** | 20260619（与 Encrypt round-trip） |
 
+**跨探针闭环**：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../../scripts/roundtrip_pke_encrypt_decrypt.sh) — device `c.bin`（Encrypt）→ `m.bin`（本探针）；CPU+SIM **max=0**（2026-06-30，见 [`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) §16）。
+
 ## 验收
 
 | 模式 | 命令 | 结果 |

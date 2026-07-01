@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-06-30（关闭 **T15** Decrypt G4；打开项 T13b/T11/T14a/T15a）
+**最近刷新**：2026-06-30（关闭 **T15** Decrypt G4、**T16** PKE round-trip；打开项 T13b/T11/T14a/T15a）
 
 ---
 
@@ -49,6 +49,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen 密钥 → Encrypt `c.bin` → Decrypt `m.bin`；CPU+SIM **max=0**（32B）；见 qa §16 | 2026-06-30 |
 | **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**（prep \| ntt+intt）；SIM **~427k** tick | 2026-06-30 |
 | **T14** | Encrypt G5：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) CPU+SIM c.bin max=0；家里 `2launch-k4` → frozen | 2026-06-30 |
 | **T13h** | KeyGen prep **双 AIV 并行 Â**：[`pass-fix-f203-alg13-device-keygen-k4`](../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) SIM **542339** + KAT；晋级 [`stable-mlkem-f203-pke-keygen-k4`](../examples/stable/stable-mlkem-f203-pke-keygen-k4/) | 2026-06-29 |
