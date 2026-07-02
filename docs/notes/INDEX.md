@@ -27,6 +27,7 @@
 | [F203-Alg15-Decrypt-2launch编排技术总结.md](F203-Alg15-Decrypt-2launch编排技术总结.md) | **Alg.15 Decrypt** 2-launch 切分；prep/NTT 分离、NTT/INTT 分 kernel；[`fix-f203-alg15-pke-decrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) |
 | [F203-PKE-liboqs交叉验证与Compress定点技术总结.md](F203-PKE-liboqs交叉验证与Compress定点技术总结.md) | **PKE L2 liboqs 三阶段** oracle、`Compress_d` 定点 bias 契约（d=5 `(1<<26)`）；[`liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) |
 | [F203-KEM-Alg19-KeyGen设备全链技术总结.md](F203-KEM-Alg19-KeyGen设备全链技术总结.md) | **Alg.19 KEM KeyGen** 随机性契约、KeyGen_internal 增量、3168B dk 契约、vendor PKE + 设备 SHA3；[`fix-f203-alg19-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
+| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps** 设备全链契约、FO 合法/拒绝路径、SIM 单 session 污染诊断；[`fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
 
 ## AscendC 平台
 

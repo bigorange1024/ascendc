@@ -54,7 +54,8 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | [**fix-f203-alg14-pke-encrypt-correctness-k4/**](fix-f203-alg14-pke-encrypt-correctness-k4/) | **Alg.14 Encrypt G5 ✅**（唯一活跃；G0–G4 → `frozen-gates/`）；CPU+SIM c.bin max=0；SIM tick **922441**；round-trip 见 [`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) |
 | [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（dk+c→m 全 device；**2 launch** prep \| ntt+intt）；CPU+SIM m.bin max=0；SIM tick **~427k**；同上 round-trip |
 | [**fix-f203-alg19-kem-keygen-k4/**](fix-f203-alg19-kem-keygen-k4/) | **Alg.19 KEM KeyGen ✅**（d/z UB + vendor PKE + KeyGen_internal 尾段）；CPU+SIM+liboqs max=0；SIM **742558** tick |
-| [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（`ek`←alg19 · vendor Encrypt G5 · KEM 头并入 prep_re）；**CPU PASS** · SIM 待复验 | ✓ | ⏳ |
+| [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（`ek`←alg19 · vendor Encrypt G5 · KEM 头并入 prep_re）；**CPU+SIM PASS** | ✓ | ✓ |
+| [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（dk+c→K；vendor D+E + FO）；**G4 CPU+SIM PASS**（SIM 两段 session workaround） | ✓ | ✓ |
 | ~~fix-f203-alg14-encrypt-2launch-k4~~ | **已冻结** → [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（家里 agent `27cc93b`，办公室未复验） |
 
 **ByteEncode₁₂（KeyGen）**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/)（**d=12**）。Encrypt/Decrypt 单算子 **d=4/10** 见上表 **`pass-f203-*-d4-d10-vec-k4`**；ml_kem_1024 的 **d=5/d=11** 在全链 Encrypt/Decrypt 探针内联。

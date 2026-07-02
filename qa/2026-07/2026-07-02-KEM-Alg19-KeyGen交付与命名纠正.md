@@ -169,7 +169,7 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 | 项 | 结论 |
 |----|------|
 | **目录** | [`ascendc-tests/fix-f203-alg20-kem-encaps-k4/`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) |
-| **流程** | **先方案后代码**；当前仅 `INTEGRATION_PLAN` / `STATUS` / `SELF_CONTAINED` |
+| **流程** | **先方案后代码**；当前文档主线为 `INTEGRATION_PLAN` / `qa` / `docs/notes` |
 | **公钥 `pk`** | **读 alg19 产出** `output/ek_kem.bin` → 本探针 `input/`（`gen_data` + `EK_KEM_SRC` 默认相对路径） |
 | **随机性 `m`** | device UB（`DerandMFromSeedD`）；Host 仅 `seed_d` |
 | **TODO** | **T7a** P0 规划中 |
@@ -217,4 +217,46 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 3. **alg14 run.sh** 按 §6.3 对齐 + CPU/SIM 回归 `c.bin`
 4. 扩 `scripts/liboqs_kem_vs_ascendc.sh` **encaps** 段（keygen 已有）
 5. （可选）`docs/notes/` Alg.20 技术总结 · SIM tick 写入 STATUS
+
+---
+
+## 7. Alg.21 Decaps 首版写码与 SIM 单 session 问题（同日追加）
+
+关键词：**Alg.21 Decaps** · **fix-f203-alg21-kem-decaps-k4** · **T7c** · **SIM CAModel 污染** · **两段 session workaround**
+
+### 7.1 交付状态
+
+| 项 | 结论 |
+|----|------|
+| **探针** | [`ascendc-tests/fix-f203-alg21-kem-decaps-k4/`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
+| **架构** | vendor alg15 Decrypt G4 + alg14 Encrypt G5 + `kem/` K1 `G` + K2 FO |
+| **I/O** | `dk_kem` 3168B + `c` 1568B → `K` 32B；输入复制 alg19/20（`SEED_D=20260619`） |
+| **G4 CPU** | **PASS** `K max=0`（单 session 设备 FO） |
+| **G4 SIM** | **PASS** `K max=0`（**两段 session** + host `memcmp(c,c')`） |
+| **TODO** | **T7c** → **有条件 PASS**（SIM workaround；单 session / 拒绝路径待修） |
+
+### 7.2 相对 INTEGRATION_PLAN 的偏差
+
+- K1 **独立 AIV** `f203_kem_dec_g`（非 intt 尾嵌入）
+- decrypt / encrypt **分库**（`tiling` 重定义）
+- SIM：**非** §4.1 单 session；Phase-E 用 vendored `run_g5_sim_full` fresh session
+
+### 7.3 SIM 根因（已确认）
+
+**不是**种子或 `m'/coins` 错：
+
+- dump `m'`、`K'`、`coins` **max=0**
+- 同组输入单独 alg14 G5 SIM **max=0**
+
+**是**单 session 内 Decrypt 后 Encrypt → **`c' max=244`** → FO 拒绝 → **`K max=216`**。
+
+释放 GM / 重载 LUT **未修复**。fresh alg14 session **可规避**。
+
+### 7.4 遗留
+
+1. 深挖 CAModel 单 session 状态污染，恢复单 session + 设备 FO（SIM）
+2. 拒绝路径 SIM（`KEM_DECAPS_VERIFY=2`）
+3. `nm` func_key · liboqs decaps 段
+
+文档：**老三样**已刷新（`INTEGRATION_PLAN.md` §11、本 qa §7、[`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md)）。
 

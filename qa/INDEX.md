@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-02 — [KEM Alg.19 交付、Alg.20 Encaps 写码与生产 I/O 治理](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)
+### 2026-07-02 — [KEM Alg.19 交付、Alg.20 Encaps 写码、Alg.21 Decaps 首版与 SIM 污染](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)
 
-**T6 PASS** · **T7a CPU PASS** · **Alg.20 Encaps** · **中间量不落盘** · **alg14 run.sh 待对齐**
+**T6 PASS** · **T7a CPU+SIM PASS** · **T7c 有条件 PASS** · **Alg.21 SIM 两段 session** · **单 session c' 污染待修**
 
 ### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.19 KeyGen](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)
 
