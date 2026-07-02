@@ -200,8 +200,8 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 | 探针 | 算法 | 关系 |
 |------|------|------|
 | **本目录** | Alg.19 KeyGen | `ek_kem` / `dk_kem` |
-| `fix-f203-alg17-kem-encaps-k4`（待建） | Alg.17 | 消费 `ek_kem`；vendor alg14 Encrypt |
-| `fix-f203-alg18-kem-decaps-k4`（待建） | Alg.18 | 消费 `dk_kem`；vendor alg15 Decrypt |
+| `fix-f203-alg20-kem-encaps-k4`（待建） | Alg.20 | 消费 alg19 `ek_kem`；vendor alg14 Encrypt |
+| `fix-f203-alg21-kem-decaps-k4`（待建） | Alg.21 | 消费 `dk_kem`；vendor alg15 Decrypt |
 
 **不在 `examples/incubating/exp-*` 首版**；KEM 全阶段均在 `ascendc-tests/`。
 

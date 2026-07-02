@@ -8,7 +8,7 @@
  *
  * 生产 I/O（G5）：
  *   input/  — ek_pke.bin + m.bin + coins.bin + LUT
- *   output/ — c.bin (1568B) + 中间张量（verify_gate）
+ *   output/ — c.bin (1568B)（唯一算法输出）
  */
 #include "data_utils.h"
 #include "f203_encrypt_g5_run.hpp"
@@ -776,20 +776,12 @@ int write_placeholder_ct(const std::string &path)
     return 0;
 }
 
+/** 已废弃：G1 中间张量落盘；frozen ENCRYPT_GATE<5 回放不再写盘。 */
 int write_g1_outputs(const std::string &out_dir, const uint8_t *a_hat, const uint8_t *re_flat)
 {
-    if (!WriteFile(out_dir + "/a_hat.bin", a_hat, F203_AHAT_BYTES)) {
-        return -1;
-    }
-    if (!WriteFile(out_dir + "/r.bin", re_flat, F203_R_POLYVEC_BYTES)) {
-        return -2;
-    }
-    if (!WriteFile(out_dir + "/e1.bin", re_flat + F203_R_POLYVEC_BYTES, F203_E1_POLYVEC_BYTES)) {
-        return -3;
-    }
-    if (!WriteFile(out_dir + "/e2.bin", re_flat + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES, F203_E2_POLY_BYTES)) {
-        return -4;
-    }
+    (void)out_dir;
+    (void)a_hat;
+    (void)re_flat;
     return 0;
 }
 
@@ -868,21 +860,12 @@ int32_t main(int32_t argc, char *argv[])
 #else
         std::vector<uint8_t> c_out(F203_CT_PKE_BYTES);
         std::printf("[main_encrypt] G5 SIM: 单 session prep..pack（device G4，INTEGRATION_PLAN §4）\n");
-        const int rc = run_g5_sim_full(ek_buf.data(), coins_buf.data(), m_buf.data(), a_hat.data(), re_flat.data(),
-                                       r_hat.data(), t_hat.data(), u_hat.data(), tr_hat.data(), lut_even.data(),
-                                       lut_odd.data(), lut_intt_even.data(), lut_intt_odd.data(), c_out.data());
+        const int rc = run_g5_sim_full(ek_buf.data(), coins_buf.data(), m_buf.data(), lut_even.data(), lut_odd.data(),
+                                       lut_intt_even.data(), lut_intt_odd.data(), c_out.data());
         if (rc != 0) {
             return rc;
         }
-        const int wo = write_g1_outputs(case_dir + "/output", a_hat.data(), re_flat.data());
-        if (wo != 0) {
-            return 6;
-        }
-        if (!WriteFile(case_dir + "/output/r_hat.bin", r_hat.data(), r_hat.size()) ||
-            !WriteFile(case_dir + "/output/t_hat.bin", t_hat.data(), t_hat.size()) ||
-            !WriteFile(case_dir + "/output/u_hat.bin", u_hat.data(), u_hat.size()) ||
-            !WriteFile(case_dir + "/output/tr_hat.bin", tr_hat.data(), tr_hat.size()) ||
-            !WriteFile(case_dir + "/output/c.bin", c_out.data(), c_out.size())) {
+        if (!WriteFile(case_dir + "/output/c.bin", c_out.data(), c_out.size())) {
             return 10;
         }
         std::printf("[main_encrypt] G5 done c.bin=%uB (SIM device 全链)\n", F203_CT_PKE_BYTES);
@@ -982,10 +965,6 @@ int32_t main(int32_t argc, char *argv[])
     if (run_ntt_r(launch_ntt, re_flat.data(), lut_even.data(), lut_odd.data(), r_hat.data()) != 0) {
         return 9;
     }
-    if (!WriteFile(case_dir + "/output/r_hat.bin", r_hat.data(), r_hat.size())) {
-        std::fprintf(stderr, "[main_encrypt] write r_hat.bin failed\n");
-        return 10;
-    }
     std::printf("[main_encrypt] G2 NTT r_hat done %uB\n", F203_R_HAT_BYTES);
 
     if (encrypt_gate < 3) {
@@ -1050,14 +1029,6 @@ int32_t main(int32_t argc, char *argv[])
         return 12;
     }
 #endif
-    if (!WriteFile(case_dir + "/output/u_hat.bin", u_hat.data(), u_hat.size())) {
-        std::fprintf(stderr, "[main_encrypt] write u_hat.bin failed\n");
-        return 14;
-    }
-    if (!WriteFile(case_dir + "/output/tr_hat.bin", tr_hat.data(), tr_hat.size())) {
-        std::fprintf(stderr, "[main_encrypt] write tr_hat.bin failed\n");
-        return 15;
-    }
     std::printf("[main_encrypt] G3 linear done u_hat=%uB tr_hat=%uB\n", F203_U_HAT_BYTES, F203_TR_HAT_BYTES);
     } // !g5_sim_prelude
 

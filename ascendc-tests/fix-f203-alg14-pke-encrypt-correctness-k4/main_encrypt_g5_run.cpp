@@ -84,23 +84,6 @@ constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 constexpr size_t kUTrBytes = F203_U_HAT_BYTES + F203_TR_HAT_BYTES;
 
 #ifdef ASCENDC_CPU_DEBUG
-int write_g1_outputs(const std::string &out_dir, const uint8_t *a_hat, const uint8_t *re_flat)
-{
-    if (!WriteFile(out_dir + "/a_hat.bin", a_hat, F203_AHAT_BYTES)) {
-        return -1;
-    }
-    if (!WriteFile(out_dir + "/r.bin", re_flat, F203_R_POLYVEC_BYTES)) {
-        return -2;
-    }
-    if (!WriteFile(out_dir + "/e1.bin", re_flat + F203_R_POLYVEC_BYTES, F203_E1_POLYVEC_BYTES)) {
-        return -3;
-    }
-    if (!WriteFile(out_dir + "/e2.bin", re_flat + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES, F203_E2_POLY_BYTES)) {
-        return -4;
-    }
-    return 0;
-}
-
 int run_g5_cpu_session(const uint8_t *ek, const uint8_t *coins, const uint8_t *m, const uint8_t *lut_ntt_even,
                        const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
                        uint8_t *a_hat, uint8_t *re_flat, uint8_t *r_hat, uint8_t *t_hat, uint8_t *u_hat,
@@ -238,8 +221,7 @@ int run_g5_cpu_session(const uint8_t *ek, const uint8_t *coins, const uint8_t *m
  * G3：at_r5 合并核 + host 拼 matM（§2.3 病根 2 同步点）。
  * G4：INTT×2 + g4_noise + pack 全 device（decode/pack 为 MIX 占位释 AIV func_key）。
  */
-int run_g5_sim_full(const uint8_t *ek, const uint8_t *coins, const uint8_t *m, uint8_t *a_hat, uint8_t *re_flat,
-                    uint8_t *r_hat, uint8_t *t_hat, uint8_t *u_hat, uint8_t *tr_hat, const uint8_t *lut_ntt_even,
+int run_g5_sim_full(const uint8_t *ek, const uint8_t *coins, const uint8_t *m, const uint8_t *lut_ntt_even,
                     const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
                     uint8_t *c_out)
 {
@@ -406,16 +388,6 @@ int run_g5_sim_full(const uint8_t *ek, const uint8_t *coins, const uint8_t *m, u
     CHECK_ACL(aclrtSynchronizeStream(stream));
 #endif
 
-    // D2H 中间张量（verify_gate）；G4 仍在 device 上继续
-    CHECK_ACL(aclrtMemcpy(a_hat, F203_AHAT_BYTES, aHatDev, F203_AHAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(re_flat, F203_RE_TOTAL_BYTES, reDev, F203_RE_TOTAL_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(r_hat, dstFileBytes, rHatDev, dstFileBytes, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(t_hat, F203_T_HAT_BYTES, tHatDev, F203_T_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(u_hat, F203_U_HAT_BYTES, uTrDev, F203_U_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-    CHECK_ACL(aclrtMemcpy(tr_hat, F203_TR_HAT_BYTES,
-                          uTrDev + static_cast<size_t>(F203_U_HAT_BYTES), F203_TR_HAT_BYTES,
-                          ACL_MEMCPY_DEVICE_TO_HOST));
-
 #if !defined(F203_FUNCKEY_EXPERIMENT)
     // G4 device tail：INTT×2 → g4_noise → pack（同 CPU run_g5_cpu_session 顺序）
     CHECK_ACL(aclrtMemset(trPaddedDev, dstFileBytes, 0, dstFileBytes));
@@ -510,23 +482,6 @@ int run_encrypt_g5_cpu_full(const std::string &case_dir, const uint8_t *ek, cons
     }
 
     const std::string out_dir = case_dir + "/output";
-    const int wo = write_g1_outputs(out_dir, a_hat.data(), re_flat.data());
-    if (wo != 0) {
-        std::fprintf(stderr, "[g5] write G1 outputs failed code=%d\n", wo);
-        return 40;
-    }
-    if (!WriteFile(out_dir + "/r_hat.bin", r_hat.data(), r_hat.size())) {
-        return 41;
-    }
-    if (!WriteFile(out_dir + "/t_hat.bin", t_hat.data(), t_hat.size())) {
-        return 42;
-    }
-    if (!WriteFile(out_dir + "/u_hat.bin", u_hat.data(), u_hat.size())) {
-        return 43;
-    }
-    if (!WriteFile(out_dir + "/tr_hat.bin", tr_hat.data(), tr_hat.size())) {
-        return 44;
-    }
     if (!WriteFile(out_dir + "/c.bin", c_out, F203_CT_PKE_BYTES)) {
         return 45;
     }

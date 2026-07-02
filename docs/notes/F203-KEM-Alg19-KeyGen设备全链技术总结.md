@@ -121,7 +121,7 @@ Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_v
 |----|-----|
 | 探针目录 | `ascendc-tests/fix-f203-alg19-kem-keygen-k4` |
 | 状态 | **规划**（INTEGRATION_PLAN 已写，代码待实现） |
-| 后继 | Alg.17 Encaps / Alg.18 Decaps 独立探针（`ascendc-tests/`） |
+| 后继 | Alg.20 Encaps [`fix-f203-alg20-kem-encaps-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) · Alg.21 Decaps 独立探针 |
 | TODO | **T6** 进行中 |
 
 ---

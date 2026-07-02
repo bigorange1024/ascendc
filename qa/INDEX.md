@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-02 — [KEM Alg.19 交付收尾、命名纠正与顺利原因](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)
+### 2026-07-02 — [KEM Alg.19 交付、Alg.20 Encaps 写码与生产 I/O 治理](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)
 
-**T6 PASS** · **fix-f203-alg19-kem-keygen-k4** · **alg16→alg19** · **Alg.20 Encaps 预研**
+**T6 PASS** · **T7a CPU PASS** · **Alg.20 Encaps** · **中间量不落盘** · **alg14 run.sh 待对齐**
 
 ### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.19 KeyGen](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)
 

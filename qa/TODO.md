@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-02（**T6** 收尾 · 探针 **alg19** 命名 · 见 [`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)）
+**最近刷新**：2026-07-02（**T7a** Alg.20 Encaps **CPU PASS** · SIM 待复验 · alg14 run.sh 待对齐）
 
 ---
 
@@ -10,6 +10,8 @@
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
+| **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) · `ek` 读 alg19 `ek_kem.bin` | **CPU PASS** · **SIM 待复验** · liboqs encaps 脚本待扩 |
+| **P0** | **T7b** | alg14 **`run.sh` 资源友好化**（对齐 alg20：`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | **待开工**（G5 代码已仅输出 `c.bin`） |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick） |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**，接入 V3 预采样 + 设备 `a_hat` | **待开工**（上游 T13a-v / T13g 均已 PASS） |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
@@ -17,7 +19,7 @@
 | **P4** | **T15a** | **Decrypt** 探针 G4 → `examples/stable/stable-mlkem-f203-pke-decrypt-k4`（名待定）晋级 | G4 探针 CPU+SIM ✅；**stable 未建** |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
 | — | **T2b / T5** | `docs/specs/fips203-baseline-registry.md` 初稿 + liboqs/ntt_study API 登记 | 待开工（stable 交付 golden 依赖） |
-| — | **T2** | KeyGen **后继**：Alg.17/18 Encaps/Decaps、**NPU 实机** | Alg.19 KeyGen **PASS**；Encaps/Decaps 待建 |
+| — | **T2** | KEM **后继**：Alg.21 Decaps、**NPU 实机** | Alg.19 **PASS** · Alg.20 → **T7a** |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
 | — | **T4** | 换机后可选重编 liboqs（OpenSSL） | 可选 |

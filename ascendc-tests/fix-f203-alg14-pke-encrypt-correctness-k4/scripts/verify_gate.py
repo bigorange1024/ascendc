@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""verify_gate.py — G1/G2/G3 中间张量对拍。"""
+"""verify_gate.py — 已废弃：G1/G2/G3 中间张量对拍（仅 frozen ENCRYPT_GATE=1..4 手工回放用）。
+
+G5 生产路径禁止落盘/比对中间张量；默认 run.sh 不再调用本脚本。
+"""
 from __future__ import annotations
 
 import os

@@ -3,10 +3,10 @@
 #
 # 生产 I/O：
 #   input/  — ek_pke.bin (1568B) + m.bin (32B) + coins.bin (32B)
-#   output/ — c.bin (1568B) 占位；G1 另写 a_hat/r/e1/e2
+#   output/ — c.bin (1568B)（唯一算法输出；中间张量不落盘）
 #
 # G5（唯一生产路径，默认 ENCRYPT_GATE=5）：单 session 全 device 链；无 input/t_hat.bin
-# 验收（默认）：gate_g1/g2/g3 + c.bin 字节对拍
+# 验收（默认）：c.bin 与 golden 对拍（verify_result.py）
 #
 # G0–G4：过渡路线，G5 测通后已冻结（frozen-gates/FROZEN.md）；每测通下一 Gate 即冻结上一 Gate
 #
@@ -15,7 +15,7 @@
 #   bash run.sh -r sim -v Ascend910B4
 #
 # 调试（非默认）：
-#   ENCRYPT_VERIFY=0 bash run.sh -r cpu -v Ascend910B4   # 仅 gate，跳过 c.bin 对拍
+#   ENCRYPT_VERIFY=0 bash run.sh -r cpu -v Ascend910B4   # 跳过 c.bin 对拍
 #   ENCRYPT_GATE=0..4 bash run.sh …                      # 过渡回放（已冻结，会 WARN）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -109,10 +109,6 @@ fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"
-fi
-
-if [ "${ENCRYPT_GATE}" != "0" ]; then
-    ENCRYPT_GATE="${ENCRYPT_GATE}" python3 "${CURRENT_DIR}/scripts/verify_gate.py"
 fi
 
 if [ "${ENCRYPT_VERIFY}" = "1" ]; then

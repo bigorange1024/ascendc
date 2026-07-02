@@ -160,5 +160,61 @@ Alg.17 Encaps_internal(ek, m)
 
 Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重加密比对 + implicit rejection `J(z‖c)`。可 vendor [`fix-f203-alg15`](../fix-f203-alg15-pke-decrypt-correctness-k4/) + 更厚的 KEM 尾段；**Encaps 探针应预留 `dk_kem` 3168B 布局解析**（`dk_pke‖ek‖H(ek)‖z`）供后续 Decaps 探针复用。
 
-**TODO**：新开 **T7a**（或并入 T2）— Alg.20 探针 **规划**；写码前须用户确认目录 + customspec 不适用（`ascendc-tests` 探针）。
+**TODO**：新开 **T7a** — Alg.20 探针 **规划**；写码前须用户确认目录 + customspec 不适用（`ascendc-tests` 探针）。
+
+---
+
+## 5. Alg.20 探针目录建立（用户拍板 · 2026-07-02 续）
+
+| 项 | 结论 |
+|----|------|
+| **目录** | [`ascendc-tests/fix-f203-alg20-kem-encaps-k4/`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) |
+| **流程** | **先方案后代码**；当前仅 `INTEGRATION_PLAN` / `STATUS` / `SELF_CONTAINED` |
+| **公钥 `pk`** | **读 alg19 产出** `output/ek_kem.bin` → 本探针 `input/`（`gen_data` + `EK_KEM_SRC` 默认相对路径） |
+| **随机性 `m`** | device UB（`DerandMFromSeedD`）；Host 仅 `seed_d` |
+| **TODO** | **T7a** P0 规划中 |
+
+---
+
+## 6. Alg.20 Encaps 首版写码与生产 I/O 治理（2026-07-02 续 · 家里）
+
+### 6.1 实现与验收
+
+| 项 | 结论 |
+|----|------|
+| **代码** | vendor alg14 G5 + KEM 头并入 `f203_kem_enc_prep_re`（无第 6 AIV 核） |
+| **pk** | **只复制** alg19 `output/ek_kem.bin` → `input/`；**禁止** alg20 `run.sh` 内嵌 KeyGen |
+| **生产 output** | 仅 **`c.bin` + `K.bin`**；**禁止**落盘 `a_hat`/`r_hat` 等中间张量 |
+| **CPU** | `KEM_ENCAPS_VERIFY=1 bash run.sh -r cpu` → **c/K max=0 PASS**（~51s，`CMAKE_BUILD_JOBS=2`） |
+| **SIM** | 早前单 session **PASS** tick **1029406**；本轮改 run.sh 后 **待办公室复验** |
+| **TODO** | **T7a** → **CPU PASS / SIM 待复验** |
+
+### 6.2 `run.sh` 重写（alg20，已落地）
+
+- `KEM_ENCAPS_SKIP_REBUILD=1`：RUN_MODE 未变且二进制在则跳过 cmake
+- `KEM_ENCAPS_FORCE_REBUILD=1`：才 `rm -rf build out`
+- 默认 `CMAKE_BUILD_JOBS=2`（WSL 勿 `-j` 满核）
+- 缺 `EK_KEM_SRC` **直接 exit 2**，不拉 alg19
+
+### 6.3 alg14 同步（代码已改 · **run.sh 待对齐**）
+
+| 已做 | 待做（办公室 P0） |
+|------|-------------------|
+| G5 仅写 `c.bin`；去掉默认 `verify_gate` | `run.sh` 对齐 alg20：`ENCRYPT_SKIP_REBUILD` / `FORCE_REBUILD` / `CMAKE_BUILD_JOBS=2` |
+| `main_encrypt_g5_run` SIM 去掉中间量 D2H | 去掉默认 `rm -rf build out`；保留 `rm -rf input output` → 改为 `mkdir -p` |
+| `verify_gate.py` 标废弃（frozen G1–G4 手工回放） | CPU+SIM 各跑一轮 `verify_result.py` 回归 |
+
+### 6.4 WSL 资源教训（Agent 勿再犯）
+
+- **禁止**并行跑多个 SIM / 多个全量 `cmake -j` 编译
+- alg20 SIM ~15min + 高内存；磁盘 100% 多因 **每次 rm -rf build + 满核 bisheng**
+- 验收顺序：**先 CPU（SKIP_REBUILD）→ 单独 SIM**
+
+### 6.5 办公室 Agent 接续清单
+
+1. `git pull` → 读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)
+2. **T7a**：`KEM_ENCAPS_SKIP_REBUILD=1 KEM_ENCAPS_VERIFY=1 bash run.sh -r sim`（勿并行其他 SIM）
+3. **alg14 run.sh** 按 §6.3 对齐 + CPU/SIM 回归 `c.bin`
+4. 扩 `scripts/liboqs_kem_vs_ascendc.sh` **encaps** 段（keygen 已有）
+5. （可选）`docs/notes/` Alg.20 技术总结 · SIM tick 写入 STATUS
 
