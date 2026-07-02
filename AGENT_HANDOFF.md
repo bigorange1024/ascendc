@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。  
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。  
-> **最后刷新**：2026-07-02（**Alg.21 Decaps 单设备库合并 · CPU 单 session PASS**；SIM 单 session + `nm` 待公司验证 · 详 [`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7）
+> **最后刷新**：2026-07-03（**Alg.21 Decaps 单库合并 · CPU PASS**；**07-03 家里 SIM 实测卡死在 Phase-E 重加密**，单库消除双库/`max=244` 但 Phase-E 单 session 仍死锁待公司定位 · 详 [`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7.5）
 
 ---
 
@@ -14,10 +14,11 @@
 - 根因修正：SIM 单 session 重加密 `c' max=244` **不是**「泛化 CAModel 污染」，而是探针曾用 **decrypt/encrypt 双设备库**在一个 ACL session 内 **func_key 空间重叠 / 装载边界冲突**。本仓过关 SIM 探针皆单库；decaps 唯一双库=差异变量。
 - 修法：合并单库 `ascendc_kernels_${RUN_MODE}`；双树同名头仅 `aiv_func.hpp` 内容分歧 → decrypt 改 `dec_aiv_func.hpp`（sync 脚本幂等重放）；合库 AIV-only=5 触 R1 → `kem_dec_g` 改 **MIX 占位**回落 4；main 默认单 session，两段 session 降为 `KEM_DECAPS_SIM_2SESSION=1` 回退。
 - **CPU 证据**：`KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `K max=0 PASS`；`out/lib/` 仅 `libascendc_kernels_cpu.so`。
+- **⚠️ 07-03 家里 SIM 实测（新增，务必先读）**：单库合并后实跑 `run.sh -r sim`，**编译/链接 OK、Phase-D（decrypt→G）走通**（`dbg_{m_prime,coins,K_prime}.bin` 产出），但 **Phase-E 重加密后一个 vector core 在 CAModel 无限自旋**（`sim_log/core0.veccore0.instr_log.dump` 单核 65MB+ 持续涨、255% CPU、~7min 不退，手动 kill）。→ 「双库 func_key 冲突」**不是唯一病根**；单库合并只解掉了编译/链接双库 + `max=244` 污染，**Phase-E 单 session 重加密链本身在 SIM 仍死锁**（历史两段 session 正为绕开）。详见 STATUS「07-03 SIM 实测」节。
 
 **公司待做（SIM，家里 WSL 不跑重型 SIM）**：
 
-1. **SIM 单 session 验收**：`SIM_DIRECT=1 KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` → 期望 `K max=0`、`aclrtLaunchKernel 507000` 次数=0、`output/dbg_c_prime.bin == c`（不再 max=244）。
+1. **SIM 单 session 卡死定位（优先级最高）**：`SIM_DIRECT=1 KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` **家里实测卡死在 Phase-E**。从 `sim_log/core0.veccore0.instr_log.dump` 末尾定位自旋指令，查 Phase-E 首个 launch kernel 的同步点 / 循环终止条件；若暂不解，`KEM_DECAPS_SIM_2SESSION=1` 两段 session 回退先验 `K max=0` 保底。目标最终：`K max=0`、`507000` 次数=0、`output/dbg_c_prime.bin == c`。
 2. **`nm` 审计**：`nm build/CMakeFiles/ascendc_kernels_sim_aiv_device_dir/device_aiv.o | grep funckey` → **AIV-only ≤ 4**（预期 prep_a_hat/prep_re/g4_noise/at_r5）；若出现 507000 说明仍 >4，再挑一个数据通路 AIV 核（如 `decode_t_hat` 已是 MIX，可看 `g4_noise`/`prep_*`）改 MIX 占位。
 3. **拒绝路径 SIM**：篡改 `c` 一字节 → `K` 应 `= J(z‖c)`（建议 `KEM_DECAPS_VERIFY=2`）。
 4. 扩 `scripts/liboqs_kem_vs_ascendc.sh` **decaps** 段。

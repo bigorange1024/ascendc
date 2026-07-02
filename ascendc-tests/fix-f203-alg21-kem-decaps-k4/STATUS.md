@@ -22,8 +22,10 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 
 **证据（CPU）**：`KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `[verify_kem_decaps] K max=0 PASS`；`out/lib/` 仅 `libascendc_kernels_cpu.so`（单库确认）；root 无 stray dump。
 
-**公司待验（SIM，本机 WSL 不跑重型 SIM）**：
-1. `SIM_DIRECT=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` → 默认单 session，`K max=0`、`aclrtLaunchKernel 507000` 次数=0、`dbg_c_prime` 应 `= c`（不再 max=244）。
+**家里 07-03 SIM 实测结论（重要，修正上文乐观预期）**：单库合并解决了「编译期双树头冲突」与「链接期双库」，且 **Phase-D（decrypt→G）在 SIM 单 session 下走通**（`dbg_m_prime/coins/K_prime` 均产出）。但进入 **Phase-E（Re-Encrypt）后一个 vector core 在 CAModel 内无限自旋**（`sim_log/core0.veccore0.instr_log.dump` 持续暴涨、单核 65MB+，~7min 不退），已手动终止。→ 「双库 func_key 冲突」不是唯一病根；**Phase-E 单 session 重加密链本身在 SIM 存在死锁/坏循环边界**（正是当初两段 session workaround 想绕开处）。公司排查应聚焦 **Phase-E 首个 launch 的 kernel 同步点 / 循环终止条件**，而非仅 nm func_key。
+
+**公司待验（SIM）**：
+1. `SIM_DIRECT=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` → 默认单 session。**当前家里实测卡死在 Phase-E**；需定位 Phase-E 首个自旋 kernel（看 `sim_log/core0.veccore0.instr_log.dump` 停在哪条指令）。若暂不解，可用 `KEM_DECAPS_SIM_2SESSION=1` 两段 session 回退先验 `K max=0`。
 2. `nm build/CMakeFiles/ascendc_kernels_sim_aiv_device_dir/device_aiv.o | grep funckey` → **AIV-only ≤ 4**；若 507000 说明仍 >4，再挑一个数据通路 AIV 核改 MIX。
 3. 拒绝路径 SIM（篡改 `c` 一字节 → `K = J(z‖c)`）。
 4. `scripts/liboqs_kem_vs_ascendc.sh` 扩 decaps 段。
@@ -34,7 +36,7 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 | Gate | 状态 | 证据 |
 |------|------|------|
 | G4 全链 CPU（单库合并后） | **PASS** | `KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `K max=0` |
-| G4 SIM 单 session（合法 c） | **待公司验证** | 合库+`kem_dec_g` MIX 后应 `K max=0` 且 `507000`=0；本机 WSL 不跑重型 SIM |
+| G4 SIM 单 session（合法 c） | **卡死（家里 07-03 实测）** | 合库编译/链接成功、Phase-D 走通（`output/dbg_{m_prime,coins,K_prime}.bin` 产出）；进入 **Phase-E 重加密后 veccore0 `instr_log` 无限自旋**（单核 65MB+ 且持续增长，~7min 无退出，255% CPU），非 `max=244` 输出污染而是**死循环**；已手动终止。详见「SIM 问题详情 07-03」 |
 | func_key 审计（`nm`） | **待公司** | 合库 AIV-only 预期=4（kem_dec_g 已改 MIX）；≥5 则再挑数据通路核改 MIX |
 | 拒绝路径 SIM | **未验** | 篡改 `c` 一字节 → `K=J(z‖c)` |
 
@@ -65,7 +67,21 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 
 ### 根因结论（2026-07-02 已定位）
 
-**曾用 decrypt/encrypt 双设备库**在同一 ACL session 内 **func_key 空间重叠 / 装载边界冲突**：decrypt 库先加载即「活跃」，encrypt 核 launch 被派发到错误 binary 位置 → `c'` 形状对值全错；fresh session 里 decrypt 核不 launch，encrypt 库独占故恢复。**非** GM 数据、`SEED_D` 或算法参数问题。已由**合并单设备库**（单 func_key 空间）修复，见文首「单库合并」节。
+**曾用 decrypt/encrypt 双设备库**在同一 ACL session 内 **func_key 空间重叠 / 装载边界冲突**：decrypt 库先加载即「活跃」，encrypt 核 launch 被派发到错误 binary 位置 → `c'` 形状对值全错；fresh session 里 decrypt 核不 launch，encrypt 库独占故恢复。**非** GM 数据、`SEED_D` 或算法参数问题。**合并单设备库**（单 func_key 空间）已消除此「双库」层面冲突（编译期头冲突 + 链接期双 `.so`）。
+
+> ⚠️ 但这**不是**唯一病根，见下节：07-03 SIM 实测显示单库单 session 下 Phase-E 仍自旋卡死。
+
+### 07-03 SIM 实测：Phase-E 自旋卡死（家里，未解）
+
+单库合并后 `SIM_DIRECT=1 KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim` 实测：
+
+| 阶段 | 现象 |
+|------|------|
+| 编译 / 链接 | **OK**，产出单 `libascendc_kernels_sim.so` + `ascendc_kem_decaps_bbit` |
+| Phase-D（decrypt→G） | **走通**：`output/dbg_{m_prime,coins,K_prime}.bin` 于 kernel 阶段产出 |
+| Phase-E（Re-Encrypt） | **卡死**：`sim_log/core0.veccore0.instr_log.dump` 持续暴涨（单核 65MB+），进程 255% CPU 自旋 ~7min 无退出 → 手动 `kill` |
+
+**判读**：不是 `max=244` 输出污染（那是双库症状，已消除），而是 **Phase-E 重加密链在 CAModel 单 session 下死循环/等不到同步**——这正是历史两段 session workaround 当初想绕开的点。**下一步（公司）**：从 `core0.veccore0.instr_log.dump` 末尾定位自旋指令 / Phase-E 首个 launch 的 kernel 同步点与循环终止条件；或先用 `KEM_DECAPS_SIM_2SESSION=1` 两段 session 回退验 `K max=0` 保底。
 
 ### 历史 workaround（现降级为非默认回退）
 

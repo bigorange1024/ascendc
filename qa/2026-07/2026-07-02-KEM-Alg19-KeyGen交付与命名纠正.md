@@ -281,3 +281,5 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 
 **知识库升级**：`AscendC-CAModel-SIM-funckey与单session约束知识库` 应补 **R3：一个 ACL session 内多个设备 `.so` → 无错误码但后段输出污染**（详见 Alg.21 note §4.3）。
 
+**07-03 家里 SIM 实测（重要修正）**：`SIM_DIRECT=1 … run.sh -r sim` 实跑单库单 session：编译/链接 OK、**Phase-D（decrypt→G）走通**（`dbg_{m_prime,coins,K_prime}.bin` 产出），但 **Phase-E 重加密后一个 vector core 在 CAModel 无限自旋**（`sim_log/core0.veccore0.instr_log.dump` 单核 65MB+ 持续增长、255% CPU、~7min 不退，手动 kill）。→ 「双库 func_key 冲突」**不是唯一病根**；单库合并只消除了编译/链接层面的双库问题与 `max=244` 污染，**Phase-E 单 session 重加密链本身在 SIM 仍有死锁**（历史两段 session workaround 正为绕开此处）。公司排查聚焦 **Phase-E 首个自旋 kernel 的同步点/循环终止条件**（从 instr_log 末尾定位），或 `KEM_DECAPS_SIM_2SESSION=1` 两段回退保底。CPU 仍 `K max=0 PASS`，逻辑正确性不受影响。
+

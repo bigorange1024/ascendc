@@ -4,7 +4,7 @@
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
 **案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 单 session + `nm` 待验证）  
 
-> **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）修复 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
+> **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。**⚠️ 2026-07-03 SIM 实测补充**：单库合并解掉了编译/链接双库与 `max=244` 污染，且 Phase-D 走通，但 **Phase-E 重加密在 SIM 单 session 下仍有 vector core 无限自旋（死锁）**，即「双库」不是唯一病根 —— 详见案例 STATUS「07-03 SIM 实测」节与 qa §7.5，公司待定位 Phase-E 自旋点。
 **讨论**：[`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7  
 **实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/INTEGRATION_PLAN.md)
 
