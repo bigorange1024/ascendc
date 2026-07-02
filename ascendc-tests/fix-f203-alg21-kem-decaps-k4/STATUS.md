@@ -4,20 +4,39 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 
 | 项 | 值 |
 |---|---|
-| **阶段** | 首版实现；**G4 CPU+SIM PASS**（合法 `c` 路径 `K` 与 Encaps 一致） |
+| **阶段** | **单设备库合并版**（2026-07-02 家里）：CPU 单 session `K max=0` **PASS**；SIM 单 session + `nm` 审计**待公司验证** |
 | **I/O** | `dk_kem` **3168B** · `c` **1568B** · `K` **32B** |
 | **输入来源** | alg19 `dk_kem.bin` + alg20 `c.bin`（`SEED_D=20260619`） |
-| **SIM tick** | Phase-D **~534k** + fresh Phase-E **~899k**（两段 session 合计；非原规划单 session ~1.43M） |
+
+## 2026-07-02 单库合并（家里 agent · SIM 单 session 修复）
+
+**根因修正**：SIM 单 session 重加密 `c' max=244` **不是**「泛化 CAModel 状态污染」，而是探针曾用 **decrypt/encrypt 双设备库**在一个 ACL session 内 **func_key 空间重叠 / 装载边界冲突**（decrypt 库先加载即「活跃」，encrypt 核 launch 被派发到错误 binary 位置 → `c'` 形状对值全错；fresh session 里 decrypt 核不 launch 故恢复）。本仓所有过关 SIM 探针皆单库单 session；decaps 是唯一双库，即差异变量。
+
+**修法（本轮）**：
+| 改动 | 文件 |
+|------|------|
+| decrypt+encrypt+kem **合并单设备库** `ascendc_kernels_${RUN_MODE}` | `cmake/decaps/CMakeLists.txt` |
+| 双树同名头**仅 `aiv_func.hpp` 内容分歧**（其余 20 个逐字节相同）→ decrypt 侧改名 `dec_aiv_func.hpp` + 4 包含者改 include；`vendor_sync_from_alg15_decrypt.sh` 每次 sync 后重放该改名 | `vendor/pke_decrypt/compute/{ntt_u,intt_w}/*` · `scripts/vendor_sync_from_alg15_decrypt.sh` |
+| 合库后 AIV-only=5（kem_dec_g+prep_a_hat+prep_re+g4_noise+at_r5）触 R1 → `kem_dec_g` 改 **MIX_AIC_1_2 占位**，SIM AIV-only 回落 4 | `kem/f203_kem_dec_g_entry.cpp` |
+| main **默认单 session** `D→G→E→FO`；两段 session 降级为 `KEM_DECAPS_SIM_2SESSION=1` 非默认回退 | `main_kem_dec_g5_run.cpp` · `run.sh` |
+
+**证据（CPU）**：`KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `[verify_kem_decaps] K max=0 PASS`；`out/lib/` 仅 `libascendc_kernels_cpu.so`（单库确认）；root 无 stray dump。
+
+**公司待验（SIM，本机 WSL 不跑重型 SIM）**：
+1. `SIM_DIRECT=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` → 默认单 session，`K max=0`、`aclrtLaunchKernel 507000` 次数=0、`dbg_c_prime` 应 `= c`（不再 max=244）。
+2. `nm build/CMakeFiles/ascendc_kernels_sim_aiv_device_dir/device_aiv.o | grep funckey` → **AIV-only ≤ 4**；若 507000 说明仍 >4，再挑一个数据通路 AIV 核改 MIX。
+3. 拒绝路径 SIM（篡改 `c` 一字节 → `K = J(z‖c)`）。
+4. `scripts/liboqs_kem_vs_ascendc.sh` 扩 decaps 段。
+5. 单库 SIM 稳定后可删 `KEM_DECAPS_SIM_2SESSION` 回退与 `main_encrypt_g5_run.cpp` 链接。
 
 ## 验证
 
 | Gate | 状态 | 证据 |
 |------|------|------|
-| G4 全链 CPU | **PASS** | `KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `K max=0` |
-| G4 SIM（合法 c） | **PASS** | `KEM_DECAPS_VERIFY=1 bash run.sh -r sim` → `K max=0` |
-| G1–G3 分段 gate 脚本 | 未跑 | 首版直 G4 |
-| func_key 审计 | 待跑 | decrypt/encrypt **分库**（4+1 decrypt AIV + encrypt 侧含 pack 双份） |
-| 拒绝路径 SIM | **未验** | 见 §SIM  workaround |
+| G4 全链 CPU（单库合并后） | **PASS** | `KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `K max=0` |
+| G4 SIM 单 session（合法 c） | **待公司验证** | 合库+`kem_dec_g` MIX 后应 `K max=0` 且 `507000`=0；本机 WSL 不跑重型 SIM |
+| func_key 审计（`nm`） | **待公司** | 合库 AIV-only 预期=4（kem_dec_g 已改 MIX）；≥5 则再挑数据通路核改 MIX |
+| 拒绝路径 SIM | **未验** | 篡改 `c` 一字节 → `K=J(z‖c)` |
 
 ## 实现要点（相对 INTEGRATION_PLAN 首版）
 
@@ -25,8 +44,8 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 |----|------|----------|
 | K1 `G` | 嵌入 `chain_intt` 尾 | **独立 AIV launch** `f203_kem_dec_g`（`sync` 后读 `mGm`） |
 | K2 FO | 嵌入 `pack` 尾 | CPU：**设备** `f203_kem_dec_pack`；SIM：**host `memcmp(c,c')` + 取 `K'`**（workaround） |
-| kernel 库 | 单 `.so` | **decrypt / encrypt 分库**（避免 `tiling` 头重定义） |
-| SIM session | 单 session D+E | **两段 session**：D+G → `aclFinalize` → fresh alg14 `run_g5_sim_full` |
+| kernel 库 | 单 `.so` | **已合并单 `.so`**（2026-07-02）；`aiv_func.hpp` 改名解双树头冲突 |
+| SIM session | 单 session D+E | **默认单 session**（合库后）；两段 session 降为 `KEM_DECAPS_SIM_2SESSION=1` 回退 |
 
 ## SIM 问题详情（2026-07-02）
 
@@ -44,15 +63,13 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 | 单 session 内 `dbg_c_prime` vs `c` | **max=244**（几乎全字节错） |
 | 释放 decrypt GM + 重载 encrypt LUT（仍单 session） | **仍 FAIL** |
 
-### 根因结论（当前置信度）
+### 根因结论（2026-07-02 已定位）
 
-**CAModel/ACL 超长单 session 内「Decrypt 后立即 Encrypt」的状态问题**——不是输入数据错、不是 `SEED_D` 不一致。确切污染点（哪个 GM/全局 SIM 状态）**尚未定位**。
+**曾用 decrypt/encrypt 双设备库**在同一 ACL session 内 **func_key 空间重叠 / 装载边界冲突**：decrypt 库先加载即「活跃」，encrypt 核 launch 被派发到错误 binary 位置 → `c'` 形状对值全错；fresh session 里 decrypt 核不 launch，encrypt 库独占故恢复。**非** GM 数据、`SEED_D` 或算法参数问题。已由**合并单设备库**（单 func_key 空间）修复，见文首「单库合并」节。
 
-### 当前 workaround（SIM 合法路径）
+### 历史 workaround（现降级为非默认回退）
 
-1. Phase-D + `f203_kem_dec_g` 于 **session-1** 完成；D2H 校验 `m'/K'/coins`（调试 dump）。
-2. `aclFinalize` 后 **session-2** 调用 vendored `run_g5_sim_full(ek, coins, m, …)` 得 `c'`。
-3. Host **`memcmp(c, c')==0`** → 输出 `K'`；否则 **return 61**（**未**在 SIM 跑设备 `J`）。
+`KEM_DECAPS_SIM_2SESSION=1` 保留原两段 session（`aclFinalize` 后 fresh `run_g5_sim_full` + host `memcmp`），仅供对照/排障；默认已走单库单 session 设备 FO。
 
 ### 与 CPU 路径差异
 
@@ -68,10 +85,11 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 | `kem/f203_kem_dec_g_entry.cpp` | K1 独立 AIV 核 |
 | `kem/f203_kem_dec_chain_intt_entry.cpp` | 仅 extract `m'`（不含 G） |
 | `kem/f203_kem_dec_pack_entry.cpp` | pack + FO（CPU 路径） |
-| `main_kem_dec_g5_run.cpp` | CPU 单 session；SIM 两段 + fresh encrypt |
-| `cmake/decaps/CMakeLists.txt` | decrypt/encrypt 分库；SIM 链 `main_encrypt_g5_run.cpp` |
-| `scripts/vendor_sync_from_alg14_encrypt.sh` | 同步 `main_encrypt_g5_run.cpp` + `f203_encrypt_g5_run.hpp` |
-| `run.sh` | `KEM_DECAPS_SKIP_REBUILD=1` 默认；`KERNEL_COMPUTE_BUDGET_SEC=1800` |
+| `main_kem_dec_g5_run.cpp` | CPU 单 session；SIM **默认单 session** + `KEM_DECAPS_SIM_2SESSION=1` 回退 |
+| `cmake/decaps/CMakeLists.txt` | **decrypt+encrypt 合并单库** `ascendc_kernels_${RUN_MODE}` |
+| `vendor/pke_decrypt/compute/ntt_u/dec_aiv_func.hpp` | 由 `aiv_func.hpp` 改名（解双树同名头冲突）；4 包含者改 include |
+| `scripts/vendor_sync_from_alg15_decrypt.sh` | sync 后重放 `dec_aiv_func` 改名（幂等） |
+| `run.sh` | 单库名 SKIP_REBUILD；`KERNEL_COMPUTE_BUDGET_SEC=1800` |
 
 ## 遗留
 

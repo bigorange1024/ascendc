@@ -6,7 +6,7 @@
  * 输入 src [k,256] int32（NTT 域）；输出 dst [k,256] int32（时域 canonical）。
  */
 #include "aic_func.hpp"
-#include "aiv_func.hpp"
+#include "dec_aiv_func.hpp"
 #include "basic.hpp"
 #include "f203_decrypt_intt_w_tiling.h"
 #include "kernel_operator.h"

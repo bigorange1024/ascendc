@@ -2,7 +2,9 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
-**案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/)（首版 **CPU PASS**；SIM 合法密文路径以两段 session workaround PASS）  
+**案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 单 session + `nm` 待验证）  
+
+> **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）修复 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
 **讨论**：[`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7  
 **实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/INTEGRATION_PLAN.md)
 
@@ -143,11 +145,16 @@ K        max=216 ✗
 
 本轮尝试过在同一 session 内释放 decrypt GM、重载 encrypt LUT，`c'` 仍错；而 `aclFinalize` 后 fresh alg14 G5 session 可恢复 `c' max=0`。
 
-可复用结论：
+可复用结论（2026-07-02 定论）：
 
-> 当 A、B 两段各自 SIM PASS，A→B 单 session 下 B 的输入 dump 正确但输出错，应先怀疑 CAModel/ACL session 状态或 device binary 装载边界，而不是马上改算法参数。
+> 当 A、B 两段各自 SIM PASS，A→B 单 session 下 B 的输入 dump 正确但输出错，**首先检查是否 A、B 分属两个设备 `.so`**。CAModel 一个 ACL session 只登记一份「活跃」device binary / func_key 空间；两份设备库同 session 时，后加载库的核 launch 会被派发到错误 binary → 输出形状对值全错（本例 `c' max=244`），fresh session 只 launch 一侧则恢复。**修法：合并单设备库**（单 func_key 空间）。这也解释了为何本仓所有过关 SIM 探针都是单库单 session。
 
-该结论与既有 [`AscendC-CAModel-SIM-funckey与单session约束知识库.md`](AscendC-CAModel-SIM-funckey与单session约束知识库.md) 互补：既有知识库主要覆盖 `507000` 与同步，本轮是**无错误码但后段输出污染**。
+**合库落地要点**（本案例）：
+- 双 vendor 树同名头逐个 `diff`：本例 21 个同名头**仅 `aiv_func.hpp` 内容分歧**（NTT-forward vs NTT+INTT），其余 20 个逐字节相同。分歧头必须改名（decrypt→`dec_aiv_func.hpp`），否则单一 `-I` 路径下裸名 `#include` 会拉错树 → `namespace tiling` 重定义（CPU 编译即暴露，是可 CPU 复现的护栏）。
+- 合库后 AIV-only func_key 会累加：本例 5（`kem_dec_g`+encrypt 侧 4）触 R1（≥5→507000），把数据/哈希通路核 `kem_dec_g` 改 **MIX_AIC_1_2 占位**回落 4。
+- vendor 由 sync 脚本 `rsync --delete` 覆盖时，改名须写进 sync 脚本**每次重放**（幂等），否则重建即被还原。
+
+该结论把既有 [`AscendC-CAModel-SIM-funckey与单session约束知识库.md`](AscendC-CAModel-SIM-funckey与单session约束知识库.md) 的 R1/R2 补上第三条触发面 **R3：一个 session 多个设备 `.so`**（无错误码、后段输出污染）。
 
 ---
 

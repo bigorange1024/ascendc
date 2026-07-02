@@ -7,7 +7,7 @@
  * workspace 含 even/odd stacked LUT（host 自 input/ 写入 ws 前缀）。
  */
 #include "aic_func.hpp"
-#include "aiv_func.hpp"
+#include "dec_aiv_func.hpp"
 #include "basic.hpp"
 #include "f203_decrypt_ntt_u_tiling.h"
 #include "kernel_operator.h"

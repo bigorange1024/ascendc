@@ -37,6 +37,7 @@
 |---|------|--------|----------|
 | **R1** | CAModel 单个 SIM binary 内 **AIV-only kernel `func_key ≥ 5`** 一律 launch 返回 `507000` | 编译期（`KERNEL_FILES` 集合 + ascendc 的 `func_key` 分配） | 某个 device kernel 被 `aclrtLaunchKernel` 投递时立即返回非零；其他 `func_key ≤ 4` 的同类核完全正常 |
 | **R2** | host 在 D2H 读 device 写出的 GM 之前**未调用** `aclrtSynchronizeStream`；或一次 PKE 内**多次 `aclInit + aclrtSetDevice + aclFinalize`** | 运行期（host 编排） | D2H 数据全 0 / 旧值；或后续 launch 莫名 `507000`；或 SIM 末尾 `free(): invalid pointer` |
+| **R3** | 一个 ACL session 内链接/加载**多个设备 `.so`**（多个 `ascendc_library`），其 `func_key` 空间重叠 | 编译期（多 `ascendc_library` 目标）+ 运行期（同 session 跨库 launch） | **无错误码**：先加载库「活跃」，后加载库的核 launch 被派发到错误 binary → 输出**形状对值全错**（本仓 Alg.21 Decaps 重加密 `c' max=244`）；fresh session 只 launch 一侧则恢复。**修法：合并单设备库**（详见 [`F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) §4.3） |
 
 `func_key ≤ 4` **并非** ascendc 文档承诺的稳定 ABI；它是 **CAModel 9.0 + 我们当前 SoC（Ascend910B4）** 的经验下界。文档没明确该上限，故应作为**工程硬约束**对待，而不是 best-practice。
 

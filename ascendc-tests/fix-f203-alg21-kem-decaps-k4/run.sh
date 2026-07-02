@@ -17,6 +17,8 @@
 #
 # 调试（非默认）：
 #   KEM_DECAPS_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
+#   KEM_DECAPS_SIM_2SESSION=1  — SIM 回退：两段 session（aclFinalize 后 fresh 重加密），
+#                                 仅在单库单 session 出问题时对照用；默认走单库单 session D→G→E→FO。
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
@@ -94,8 +96,7 @@ _need_build=1
 if [ "${KEM_DECAPS_FORCE_REBUILD}" = "1" ]; then
     _need_build=1
 elif [ "${KEM_DECAPS_SKIP_REBUILD}" = "1" ] && [ -x "${CURRENT_DIR}/ascendc_kem_decaps_bbit" ] && \
-     [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_decrypt_${RUN_MODE}.so" ] && \
-     [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_encrypt_${RUN_MODE}.so" ] && \
+     [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_${RUN_MODE}.so" ] && \
      [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" = "${RUN_MODE}" ]; then
     _need_build=0
 fi

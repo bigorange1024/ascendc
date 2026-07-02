@@ -76,6 +76,16 @@ set(ENCRYPT_KERNEL_FILES
     ${KEM_DIR}/f203_kem_dec_pack_entry.cpp
 )
 
+# 单设备库：decrypt + encrypt + kem 全部核入口合并进 ascendc_kernels_${RUN_MODE}。
+# 背景（2026-07-02 家里 agent）：原双库（decrypt/encrypt 分库）在 CAModel 单 ACL session 内
+#   「Decrypt→Encrypt」重加密 c' 全错（max=244），fresh session 又能 max=0——根因是两份设备
+#   binary 在一个 session 内 func_key 空间重叠 / 装载边界冲突（详 docs/notes Alg.21 §3.3/§4.3）。
+#   合并为单库单 func_key 空间即消除该分歧；两侧 alg11 ROM(gAlg11*) 已按 .o 宏改名
+#   （decrypt→gSuDot* / encrypt→gAtR5*），单库内无重定义。
+# func_key 预算：合并后 AIV-only=5（kem_dec_g/prep_a_hat/prep_re/g4_noise/at_r5）触 R1(≥5→507000)，
+#   已把 kem_dec_g 改 MIX 占位（见 kem/f203_kem_dec_g_entry.cpp），SIM AIV-only 回落到 4。
+set(ALL_KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
+
 set(CUSTOM_ASCEND310P_LIST "Ascend310P1" "Ascend310P3")
 
 set(_DECRYPT_INCLUDES ${DEC_VENDOR} ${DEC_ROOT} ${KEM_DIR} ${KECCAK_INC}
@@ -87,36 +97,29 @@ set(_ENCRYPT_INCLUDES ${ENC_VENDOR} ${DEC_ROOT} ${KEM_DIR} ${KECCAK_INC}
     ${PREP_DECODE_INC} ${NTT_R_INC} ${ALG11_ENC_INC} ${INTT_INC} ${G4_INC} ${PACK_INC}
     ${AT_R5_INC} ${COMPUTE_FROZEN_INC} ${SHAKE_XOF_INC})
 
+# 单库合并 include：decrypt 树在前、encrypt 树在后。两树仅 alg11(tiling.h/alg11_*.h) 同名，
+# 且内容逐字节相同（已 diff 验证），解析顺序不影响正确性；其余 header 均以 encrypt_/decrypt_ 前缀区分。
+set(_ALL_INCLUDES ${_DECRYPT_INCLUDES} ${_ENCRYPT_INCLUDES})
+
 if("${RUN_MODE}" STREQUAL "cpu")
     if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
         set(CMAKE_PREFIX_PATH ${ASCEND_CANN_PACKAGE_PATH}/tools/tikicpulib/lib/cmake)
     endif()
     find_package(tikicpulib REQUIRED)
 
-    add_library(ascendc_kernels_decrypt_${RUN_MODE} SHARED ${DECRYPT_KERNEL_FILES})
-    add_library(ascendc_kernels_encrypt_${RUN_MODE} SHARED ${ENCRYPT_KERNEL_FILES})
+    add_library(ascendc_kernels_${RUN_MODE} SHARED ${ALL_KERNEL_FILES})
 
     set_source_files_properties(${PREP_ALG7_INC}/f203_alg7_rej_scalar.c PROPERTIES LANGUAGE CXX)
 
-    foreach(_tgt ascendc_kernels_decrypt_${RUN_MODE} ascendc_kernels_encrypt_${RUN_MODE})
-        target_compile_definitions(${_tgt} PRIVATE
-            $<$<BOOL:$<IN_LIST:${SOC_VERSION},${CUSTOM_ASCEND310P_LIST}>>:CUSTOM_ASCEND310P>
-            $<$<STREQUAL:${RUN_MODE},cpu>:ASCENDC_CPU_DEBUG>
-            F203_STAGE1_SPLIT=${F203_STAGE1_SPLIT}
-            F203_STAGE3_MOD=${F203_STAGE3_MOD}
-            ALG11_IMPL=${ALG11_IMPL}
-            ALG11_VEC_VARIANT=${ALG11_VEC_VARIANT}
-            ALG11_VEC_OPTS=${ALG11_VEC_OPTS}
-            ALG11_MEM_OPS=${ALG11_MEM_OPS}
-        )
-        target_compile_options(${_tgt} PRIVATE -g -O0
-            $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
-            $<$<COMPILE_LANGUAGE:C>:-std=c11>)
-        target_link_libraries(${_tgt} PUBLIC tikicpulib::${SOC_VERSION})
-        install(TARGETS ${_tgt} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    endforeach()
-
-    target_compile_definitions(ascendc_kernels_encrypt_${RUN_MODE} PRIVATE
+    target_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE
+        $<$<BOOL:$<IN_LIST:${SOC_VERSION},${CUSTOM_ASCEND310P_LIST}>>:CUSTOM_ASCEND310P>
+        $<$<STREQUAL:${RUN_MODE},cpu>:ASCENDC_CPU_DEBUG>
+        F203_STAGE1_SPLIT=${F203_STAGE1_SPLIT}
+        F203_STAGE3_MOD=${F203_STAGE3_MOD}
+        ALG11_IMPL=${ALG11_IMPL}
+        ALG11_VEC_VARIANT=${ALG11_VEC_VARIANT}
+        ALG11_VEC_OPTS=${ALG11_VEC_OPTS}
+        ALG11_MEM_OPS=${ALG11_MEM_OPS}
         F203_ALG7_REJ_IMPL=${F203_ALG7_REJ_IMPL}
         F203_ALG7_D12_GATHER=${F203_ALG7_D12_GATHER}
         F203_AHAT16_BLOCK_DIM=${F203_AHAT16_BLOCK_DIM}
@@ -125,6 +128,11 @@ if("${RUN_MODE}" STREQUAL "cpu")
         F203_CBD_BLOCK_DIM=${F203_CBD_BLOCK_DIM}
         F203_SE_VECTOR_V3=1
     )
+    target_compile_options(ascendc_kernels_${RUN_MODE} PRIVATE -g -O0
+        $<$<COMPILE_LANGUAGE:CXX>:-std=c++17>
+        $<$<COMPILE_LANGUAGE:C>:-std=c11>)
+    target_link_libraries(ascendc_kernels_${RUN_MODE} PUBLIC tikicpulib::${SOC_VERSION})
+    install(TARGETS ascendc_kernels_${RUN_MODE} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
     if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
@@ -136,27 +144,19 @@ elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
     endif()
     include(${ASCENDC_CMAKE_DIR}/ascendc.cmake)
 
-    ascendc_library(ascendc_kernels_decrypt_${RUN_MODE} SHARED ${DECRYPT_KERNEL_FILES})
-    ascendc_library(ascendc_kernels_encrypt_${RUN_MODE} SHARED ${ENCRYPT_KERNEL_FILES})
+    ascendc_library(ascendc_kernels_${RUN_MODE} SHARED ${ALL_KERNEL_FILES})
 
     # SIM/NPU：include 须经 ascendc_include_directories 传到 precompile 步（target_include_directories 不生效）
-    ascendc_include_directories(ascendc_kernels_decrypt_${RUN_MODE} PRIVATE ${_DECRYPT_INCLUDES})
-    ascendc_include_directories(ascendc_kernels_encrypt_${RUN_MODE} PRIVATE ${_ENCRYPT_INCLUDES})
+    ascendc_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${_ALL_INCLUDES})
 
-    foreach(_tgt ascendc_kernels_decrypt_${RUN_MODE} ascendc_kernels_encrypt_${RUN_MODE})
-        ascendc_compile_definitions(${_tgt} PRIVATE
-            $<$<BOOL:$<IN_LIST:${SOC_VERSION},${CUSTOM_ASCEND310P_LIST}>>:CUSTOM_ASCEND310P>
-            F203_STAGE1_SPLIT=${F203_STAGE1_SPLIT}
-            F203_STAGE3_MOD=${F203_STAGE3_MOD}
-            ALG11_IMPL=${ALG11_IMPL}
-            ALG11_VEC_VARIANT=${ALG11_VEC_VARIANT}
-            ALG11_VEC_OPTS=${ALG11_VEC_OPTS}
-            ALG11_MEM_OPS=${ALG11_MEM_OPS}
-        )
-        install(TARGETS ${_tgt} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    endforeach()
-
-    ascendc_compile_definitions(ascendc_kernels_encrypt_${RUN_MODE} PRIVATE
+    ascendc_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE
+        $<$<BOOL:$<IN_LIST:${SOC_VERSION},${CUSTOM_ASCEND310P_LIST}>>:CUSTOM_ASCEND310P>
+        F203_STAGE1_SPLIT=${F203_STAGE1_SPLIT}
+        F203_STAGE3_MOD=${F203_STAGE3_MOD}
+        ALG11_IMPL=${ALG11_IMPL}
+        ALG11_VEC_VARIANT=${ALG11_VEC_VARIANT}
+        ALG11_VEC_OPTS=${ALG11_VEC_OPTS}
+        ALG11_MEM_OPS=${ALG11_MEM_OPS}
         F203_ALG7_REJ_IMPL=${F203_ALG7_REJ_IMPL}
         F203_ALG7_D12_GATHER=${F203_ALG7_D12_GATHER}
         F203_AHAT16_BLOCK_DIM=${F203_AHAT16_BLOCK_DIM}
@@ -165,14 +165,16 @@ elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
         F203_CBD_BLOCK_DIM=${F203_CBD_BLOCK_DIM}
         F203_SE_VECTOR_V3=1
     )
+    install(TARGETS ascendc_kernels_${RUN_MODE} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 else()
     message(FATAL_ERROR "invalid RUN_MODE: ${RUN_MODE}")
 endif()
 
-target_include_directories(ascendc_kernels_decrypt_${RUN_MODE} PRIVATE ${_DECRYPT_INCLUDES})
-target_include_directories(ascendc_kernels_encrypt_${RUN_MODE} PRIVATE ${_ENCRYPT_INCLUDES})
+target_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${_ALL_INCLUDES})
 
 set(_DECAPS_HOST_SOURCES ${DEC_ROOT}/main_kem_decaps.cpp ${DEC_ROOT}/main_kem_dec_g5_run.cpp)
+# main_encrypt_g5_run.cpp 仅供 SIM 两段 session 回退（KEM_DECAPS_SIM_2SESSION=1，非默认）；
+# 默认 SIM 走单库单 session D→G→E→FO，不调用 run_g5_sim_full。
 if(NOT "${RUN_MODE}" STREQUAL "cpu")
     list(APPEND _DECAPS_HOST_SOURCES ${ENC_VENDOR}/main_encrypt_g5_run.cpp)
 endif()
@@ -213,8 +215,7 @@ target_compile_definitions(ascendc_kem_decaps_bbit PRIVATE
 target_link_libraries(ascendc_kem_decaps_bbit PRIVATE
     $<BUILD_INTERFACE:$<$<OR:$<STREQUAL:${RUN_MODE},npu>,$<STREQUAL:${RUN_MODE},sim>>:host_intf_pub>>
     $<BUILD_INTERFACE:$<$<STREQUAL:${RUN_MODE},cpu>:ascendcl>>
-    ascendc_kernels_decrypt_${RUN_MODE}
-    ascendc_kernels_encrypt_${RUN_MODE}
+    ascendc_kernels_${RUN_MODE}
     tiling_api register platform ascendalog unified_dlog dl
 )
 

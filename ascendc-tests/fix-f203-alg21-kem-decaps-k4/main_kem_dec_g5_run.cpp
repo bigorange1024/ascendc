@@ -433,8 +433,14 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         WriteFile("./output/dbg_K_prime.bin", kpHost.data(), kpHost.size());
         WriteFile("./output/dbg_coins.bin", coinsHost.data(), coinsHost.size());
 
-        // Phase-D 完成：释放 decrypt 专用 GM，避免长 session 内与 Phase-E 互相干扰（对齐 alg14 单 session 布局）
-        CHECK_ACL(aclrtFree(dkDev));
+        // 默认（单库单 session 修复后）：不在此 aclFinalize，直接落到下方 Phase-E（Re-Encrypt + 设备 FO）。
+        // KEM_DECAPS_SIM_2SESSION=1 = 非默认回退：保留原双库时代的两段 session 排障路径
+        //   （aclFinalize 后 fresh run_g5_sim_full 重加密 + host memcmp 取 K'）。
+        //   单库合并（decrypt+encrypt 同 func_key 空间）已消除双库单 session c' 污染，故默认走单 session。
+        const char *w2s = std::getenv("KEM_DECAPS_SIM_2SESSION");
+        if (w2s != nullptr && w2s[0] == '1') {
+            // Phase-D 完成：释放 decrypt 专用 GM，避免长 session 内与 Phase-E 互相干扰（对齐 alg14 单 session 布局）
+            CHECK_ACL(aclrtFree(dkDev));
         CHECK_ACL(aclrtFree(uDev));
         CHECK_ACL(aclrtFree(vDev));
         CHECK_ACL(aclrtFree(sHatDev));
@@ -517,9 +523,12 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
             std::fprintf(stderr, "[kem_decaps] fresh encrypt c' != c\n");
             return 61;
         }
-        std::memcpy(K_out, kpHost.data(), F203KemDec::kSharedSecretBytes);
-        std::printf("[kem_decaps] SIM fresh Phase-E valid path done\n");
-        return 0;
+            std::memcpy(K_out, kpHost.data(), F203KemDec::kSharedSecretBytes);
+            std::printf("[kem_decaps] SIM 2-session (fallback) valid path done\n");
+            return 0;
+        }
+        // 默认继续单 session Phase-E：mDev/coinsDev 仍持 Phase-D 输出，LUT workspace 已装载。
+        std::printf("[kem_decaps] SIM single-session Phase-E (Re-Encrypt + device FO)\n");
     }
 #endif
 

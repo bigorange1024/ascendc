@@ -6,7 +6,7 @@
 #define F203_DECRYPT_NTT_U_IMPL_HPP
 
 #include "aic_func.hpp"
-#include "aiv_func.hpp"
+#include "dec_aiv_func.hpp"
 #include "basic.hpp"
 #include "f203_decrypt_ntt_u_tiling.h"
 #include "kernel_operator.h"

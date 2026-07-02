@@ -2,42 +2,40 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。  
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。  
-> **最后刷新**：2026-07-02（**Alg.21 Decaps 首版 CPU PASS + SIM 合法路径 workaround PASS**；单 session SIM 待修 · 详 [`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7）
+> **最后刷新**：2026-07-02（**Alg.21 Decaps 单设备库合并 · CPU 单 session PASS**；SIM 单 session + `nm` 待公司验证 · 详 [`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7）
 
 ---
 
 ## ★ 下一任务（家里 Agent · P0）
 
-### 1. Alg.21 Decaps — 修 SIM 单 session + 拒绝路径
+### 1. Alg.21 Decaps — SIM 单 session 验证 + `nm` 审计（承家里合库）
 
-**现状**：合法密文路径 **CPU PASS（单 session + 设备 FO）**、**SIM PASS（两段 session workaround）**。SIM 单 session 与拒绝路径**未过**。
+**家里已做（2026-07-02）**：**根因定位 + 单设备库合并 + CPU PASS**。
+- 根因修正：SIM 单 session 重加密 `c' max=244` **不是**「泛化 CAModel 污染」，而是探针曾用 **decrypt/encrypt 双设备库**在一个 ACL session 内 **func_key 空间重叠 / 装载边界冲突**。本仓过关 SIM 探针皆单库；decaps 唯一双库=差异变量。
+- 修法：合并单库 `ascendc_kernels_${RUN_MODE}`；双树同名头仅 `aiv_func.hpp` 内容分歧 → decrypt 改 `dec_aiv_func.hpp`（sync 脚本幂等重放）；合库 AIV-only=5 触 R1 → `kem_dec_g` 改 **MIX 占位**回落 4；main 默认单 session，两段 session 降为 `KEM_DECAPS_SIM_2SESSION=1` 回退。
+- **CPU 证据**：`KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `K max=0 PASS`；`out/lib/` 仅 `libascendc_kernels_cpu.so`。
 
-| 项 | 内容 |
-|----|------|
-| **目录** | [`ascendc-tests/fix-f203-alg21-kem-decaps-k4/`](ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
-| **老三样** | 方案 [`INTEGRATION_PLAN.md`](ascendc-tests/fix-f203-alg21-kem-decaps-k4/INTEGRATION_PLAN.md) §11 · qa §7 · note [`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) |
-| **根因（已确认）** | SIM 单 session 内 Decrypt→Encrypt，`m'/K'/coins` dump **max=0** 但重加密 `c' max=244` → FO 走 `J(z‖c)` → `K` 错。**非**种子/输入问题；同组 `m'/coins` 单独 alg14 G5 SIM `c' max=0`。 |
-| **workaround（当前 SIM）** | Phase-D+G → `aclFinalize` → fresh `run_g5_sim_full` 重加密 → host `memcmp(c,c')` 取 `K'`（**未跑设备 FO / 拒绝路径**） |
+**公司待做（SIM，家里 WSL 不跑重型 SIM）**：
 
-**待办**：
-
-1. 定位 CAModel/ACL 超长单 session 状态污染点，恢复 §4.1 单 session D→G→E→FO（SIM）。
-2. SIM **拒绝路径**（篡改 `c` 一字节 → `K` 应 `= J(z‖c)`；建议 `KEM_DECAPS_VERIFY=2`）。
-3. `nm build/.../device_aiv.o` **func_key 分库审计**（decrypt / encrypt 分库；encrypt 侧同时含原 pack 与 dec pack）。
+1. **SIM 单 session 验收**：`SIM_DIRECT=1 KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` → 期望 `K max=0`、`aclrtLaunchKernel 507000` 次数=0、`output/dbg_c_prime.bin == c`（不再 max=244）。
+2. **`nm` 审计**：`nm build/CMakeFiles/ascendc_kernels_sim_aiv_device_dir/device_aiv.o | grep funckey` → **AIV-only ≤ 4**（预期 prep_a_hat/prep_re/g4_noise/at_r5）；若出现 507000 说明仍 >4，再挑一个数据通路 AIV 核（如 `decode_t_hat` 已是 MIX，可看 `g4_noise`/`prep_*`）改 MIX 占位。
+3. **拒绝路径 SIM**：篡改 `c` 一字节 → `K` 应 `= J(z‖c)`（建议 `KEM_DECAPS_VERIFY=2`）。
 4. 扩 `scripts/liboqs_kem_vs_ascendc.sh` **decaps** 段。
+5. 单库 SIM 稳定后可删 `KEM_DECAPS_SIM_2SESSION` 回退与 `main_encrypt_g5_run.cpp` 链接。
 
 ```bash
 # 前置（各跑一次即可；后续 SKIP_REBUILD）
 cd ascendc-tests/fix-f203-alg19-kem-keygen-k4 && bash run.sh -r cpu -v Ascend910B4
 cd ../fix-f203-alg20-kem-encaps-k4 && KEM_ENCAPS_SKIP_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
 
-# Decaps 复现（CPU 单 session 全链；SIM 当前 workaround）
+# Decaps CPU 回归（家里已过）
 cd ../fix-f203-alg21-kem-decaps-k4
-KEM_DECAPS_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
-KEM_DECAPS_SKIP_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4
+KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
+# Decaps SIM 单 session（公司验证；首次务必 FORCE_REBUILD 清旧双库产物）
+SIM_DIRECT=1 KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4
 ```
 
-**WSL 约束**：默认 `CMAKE_BUILD_JOBS=2`；`KERNEL_COMPUTE_BUDGET_SEC=1800`（SIM 长）；勿 `cmake -j` 满核；勿并行多 SIM（decrypt+encrypt 两段库编译体量大）。
+**WSL 约束**：默认 `CMAKE_BUILD_JOBS=2`；`KERNEL_COMPUTE_BUDGET_SEC=1800`（SIM 长）；勿 `cmake -j` 满核；勿并行多 SIM。
 
 ---
 
@@ -62,10 +60,10 @@ SIM_DIRECT=1 ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4
 
 | 项 | 内容 |
 |----|------|
-| **架构** | vendor alg15 Decrypt G4 + alg14 Encrypt G5 + `kem/` K1 `G(m'‖h)` + K2 FO；decrypt/encrypt **分库** |
+| **架构** | vendor alg15 Decrypt G4 + alg14 Encrypt G5 + `kem/` K1 `G(m'‖h)` + K2 FO；**已合并单设备库** |
 | **I/O** | `dk_kem`(3168)+`c`(1568) → **`K.bin`(32) only**；输入复制 alg19/20（`SEED_D=20260619`） |
-| **CPU** | **PASS** `K max=0`（单 session + 设备 FO） |
-| **SIM** | **PASS** `K max=0`（两段 session workaround；tick D~534k + E~899k） |
+| **CPU** | **PASS** `K max=0`（单库单 session + 设备 FO；2026-07-02 合库后回归） |
+| **SIM** | **待公司验证**（合库+`kem_dec_g` MIX 后单 session；见 §下一任务 1） |
 
 ### Alg.19 KeyGen（T6 PASS） / Alg.20 Encaps（T7a PASS）
 

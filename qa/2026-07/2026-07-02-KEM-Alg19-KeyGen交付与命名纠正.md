@@ -260,3 +260,24 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 
 文档：**老三样**已刷新（`INTEGRATION_PLAN.md` §11、本 qa §7、[`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md)）。
 
+### 7.5 根因定位 + 单设备库合并（同日续 · 家里，公司拉库后接手）
+
+关键词：**双设备库 func_key 冲突** · **单库合并** · **dec_aiv_func 改名** · **kem_dec_g 改 MIX** · **R3 触发面**
+
+**根因修正**：§7.3 的 SIM `c' max=244` **不是**「泛化 CAModel 单 session 污染」。真因是探针曾用 **decrypt/encrypt 双设备 `.so`**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，decrypt 库先加载即「活跃」，encrypt 核 launch 被派发到错误 binary → `c'` 形状对值全错；fresh session 只 launch 一侧故恢复。本仓所有过关 SIM 探针皆单库单 session，decaps 唯一双库 = 差异变量。
+
+**修法（用户拍板：单库合并；家里做重构+CPU，SIM 交公司）**：
+
+| 改动 | 说明 |
+|------|------|
+| 合并单库 `ascendc_kernels_${RUN_MODE}` | `cmake/decaps/CMakeLists.txt` decrypt+encrypt+kem 同一 `ascendc_library` |
+| `dec_aiv_func.hpp` 改名 | 双树 21 同名头逐个 `diff`：**仅 `aiv_func.hpp` 分歧**（NTT-forward vs NTT+INTT），单 `-I` 混路径裸名 include 拉错树 → CPU 编译报 `namespace tiling` 重定义。decrypt 改名 + 4 包含者改 include；`vendor_sync_from_alg15_decrypt.sh` sync 后幂等重放 |
+| `kem_dec_g` AIV→MIX 占位 | 合库 AIV-only=5 触 R1（≥5→507000），改 MIX 回落 4 |
+| main 默认单 session | 两段 session 降为 `KEM_DECAPS_SIM_2SESSION=1` 非默认回退 |
+
+**证据（CPU）**：`KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu` → `K max=0 PASS`；`out/lib/` 仅 `libascendc_kernels_cpu.so`。
+
+**公司待验（SIM，家里 WSL 不跑重型 SIM）**：`SIM_DIRECT=1 KEM_DECAPS_FORCE_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim` → `K max=0`、`507000`=0、`dbg_c_prime==c`；`nm ...device_aiv.o` AIV-only ≤4；拒绝路径；liboqs decaps 段。
+
+**知识库升级**：`AscendC-CAModel-SIM-funckey与单session约束知识库` 应补 **R3：一个 ACL session 内多个设备 `.so` → 无错误码但后段输出污染**（详见 Alg.21 note §4.3）。
+
