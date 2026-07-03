@@ -38,6 +38,8 @@ _STRAY_INPUT = (
     "ek_polyvec.bin",
     "tiling.bin",
 )
+# kat / KEM_KG_EXT_SEED=1 旁路 A 专用；生产路径（extseed=0）须清掉，避免 input/ 混态。
+_STRAY_INPUT_PRODUCTION_ONLY = ("kem_seed.bin",)
 
 
 def write_lut_if_missing(inp: Path) -> None:
@@ -52,7 +54,11 @@ def write_lut_if_missing(inp: Path) -> None:
 
 
 def scrub_stray_input(inp: Path) -> None:
-    for name in _STRAY_INPUT:
+    extseed = os.environ.get("KEM_KG_EXT_SEED", "0") == "1"
+    names = list(_STRAY_INPUT)
+    if not extseed:
+        names.extend(_STRAY_INPUT_PRODUCTION_ONLY)
+    for name in names:
         p = inp / name
         if p.is_file():
             p.unlink()

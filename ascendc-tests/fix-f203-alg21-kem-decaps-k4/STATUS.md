@@ -51,6 +51,17 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 | kernel 库 | 单 `.so` | **已合并单 `.so`**（2026-07-02）；`aiv_func.hpp` 改名解双树头冲突 |
 | SIM session | 单 session D+E | **默认 2-session**（`KEM_DECAPS_SIM_2SESSION=1`）；单 session / PhaseE-only 仅作排障 |
 
+### run.sh profile 隔离（2026-07-03）
+
+`run.sh` 已按 `profile × RUN_MODE` 隔离 build/install 目录，避免 kat 与 round-trip 共用构建状态：
+
+| profile | 触发 | 目录 |
+|---------|------|------|
+| `prod` | 默认生产 / round-trip | `build_prod_<mode>` / `out_prod_<mode>` |
+| `kat` | `KEM_DECAPS_KAT=1` quiet 分项 kat | `build_kat_<mode>` / `out_kat_<mode>` |
+
+`KEM_DECAPS_BUILD_PROFILE=<name>` 可显式覆盖。CPU 回归：`roundtrip` prod 建库后，`liboqs_kem_decaps_batch.sh` CPU×1 走 kat profile PASS；回到 `roundtrip_kem_decaps.sh -r cpu` 仍 `skip rebuild (profile=prod)` 且 agreement PASS。
+
 ## SIM 问题详情（2026-07-02）
 
 ### 现象

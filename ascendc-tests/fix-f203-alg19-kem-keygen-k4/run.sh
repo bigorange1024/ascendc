@@ -17,6 +17,12 @@
 # 调试（非默认）：
 #   KEM_KEYGEN_VERIFY=0 bash run.sh -r cpu -v Ascend910B4   — 仅检查输出尺寸
 #   KEM_KEYGEN_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
+#
+# Build profile 隔离（2026-07-03）：
+#   生产/round-trip（KEM_KG_EXT_SEED=0）与 liboqs kat 旁路 A（=1）使用**独立** build/install 目录，
+#   目录键 = profile(prod|extseed) × RUN_MODE(cpu|sim)，例如 build_prod_cpu / out_extseed_sim。
+#   如此从物理上杜绝双入口 f203_keygen_prep(_extseed).cpp 的 .o 残留在 host_stub 链接阶段撞符号，
+#   两种用途互不重编、互不污染。可用 KEM_KEYGEN_BUILD_PROFILE=prod|extseed 显式覆盖。
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
@@ -28,7 +34,8 @@ if [ "${KEM_KEYGEN_KAT:-0}" = "1" ]; then
 fi
 
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
-INSTALL_PREFIX="${CURRENT_DIR}/out"
+# 空 = 未经 -p 覆盖；解析选项后按 build profile 隔离目录填充（out_<profile>_<run_mode>）。
+INSTALL_PREFIX=""
 SCRIPTS_PREP="${CURRENT_DIR}/scripts/prep"
 
 export SEED_D="${SEED_D:-20260619}"
@@ -61,6 +68,19 @@ while :; do
     esac
 done
 
+# --- Build profile 隔离：prod（KEM_KG_EXT_SEED=0）与 extseed（=1）各自独立 build/install ---
+# RUN_MODE 已解析完毕，可安全组目录键；避免 prod↔extseed / cpu↔sim 共用目录导致 .o 残留冲突。
+if [ "${KEM_KG_EXT_SEED}" = "1" ]; then
+    _DEFAULT_PROFILE="extseed"
+else
+    _DEFAULT_PROFILE="prod"
+fi
+BUILD_PROFILE="${KEM_KEYGEN_BUILD_PROFILE:-${_DEFAULT_PROFILE}}"
+BUILD_DIR="${CURRENT_DIR}/build_${BUILD_PROFILE}_${RUN_MODE}"
+if [ -z "${INSTALL_PREFIX}" ]; then
+    INSTALL_PREFIX="${CURRENT_DIR}/out_${BUILD_PROFILE}_${RUN_MODE}"
+fi
+
 if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
     # shellcheck source=/dev/null
     source "${HOME}/ascendc/scripts/env.sh"
@@ -86,7 +106,7 @@ elif [ "${RUN_MODE}" = "cpu" ]; then
 fi
 
 if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
-    echo "[kem_keygen] RUN_MODE=${RUN_MODE} SEED_D=${SEED_D} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"
+    echo "[kem_keygen] RUN_MODE=${RUN_MODE} SEED_D=${SEED_D} profile=${BUILD_PROFILE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"
 fi
 
 _keygen_gen_alg7_roms() {
@@ -95,13 +115,13 @@ _keygen_gen_alg7_roms() {
     python3 "${SCRIPTS_PREP}/gen_alg7_compact_lut.py"
 }
 
-_build_stamp="${CURRENT_DIR}/build/.kem_keygen_run_mode"
-# stamp 含 KEM_KG_EXT_SEED：生产↔旁路 A 切换须强制重编（prep 入口与 z 来源不同）
-_build_tag="${RUN_MODE}:extseed=${KEM_KG_EXT_SEED}"
+_build_stamp="${BUILD_DIR}/.kem_keygen_run_mode"
+# stamp 含 profile+RUN_MODE：目录已按 profile 隔离，正常不会变；仅作构建完成标记 + 异常护栏。
+_build_tag="${BUILD_PROFILE}:${RUN_MODE}:extseed=${KEM_KG_EXT_SEED}"
 _need_build=1
 if [ "${KEM_KEYGEN_FORCE_REBUILD}" = "1" ]; then
     _need_build=1
-elif [ "${KEM_KEYGEN_SKIP_REBUILD}" = "1" ] && [ -x "${CURRENT_DIR}/ascendc_kem_keygen_bbit" ] && \
+elif [ "${KEM_KEYGEN_SKIP_REBUILD}" = "1" ] && [ -x "${INSTALL_PREFIX}/bin/ascendc_kem_keygen_bbit" ] && \
      [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_${RUN_MODE}.so" ] && \
      [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" = "${_build_tag}" ]; then
     _need_build=0
@@ -109,12 +129,17 @@ fi
 
 _kem_build() {
     bash "${CURRENT_DIR}/scripts/vendor_sync_from_stable_keygen.sh"
-    if [ "${KEM_KEYGEN_FORCE_REBUILD}" = "1" ]; then
-        rm -rf "${CURRENT_DIR}/build" "${INSTALL_PREFIX}"
+    # build/install 目录已按 profile(prod|extseed)×RUN_MODE 隔离（见文件头），双入口 .o 天然不共存。
+    # 清理仅两种情形：
+    #   1) 显式 FORCE_REBUILD；
+    #   2) stamp tag 与当前不符（异常护栏：如手动改 cmake 开关后复用同目录）。
+    if [ "${KEM_KEYGEN_FORCE_REBUILD}" = "1" ] || \
+       { [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" != "${_build_tag}" ]; }; then
+        rm -rf "${BUILD_DIR}" "${INSTALL_PREFIX}"
     fi
-    mkdir -p "${CURRENT_DIR}/build"
+    mkdir -p "${BUILD_DIR}"
     _keygen_gen_alg7_roms
-    cmake -B "${CURRENT_DIR}/build" \
+    cmake -B "${BUILD_DIR}" \
         -S "${CURRENT_DIR}/cmake/keygen" \
         -DRUN_MODE="${RUN_MODE}" \
         -DSOC_VERSION="${SOC_VERSION}" \
@@ -140,8 +165,8 @@ _kem_build() {
         -DALG11_VEC_OPTS=1 \
         -DALG11_MEM_OPS=1 \
         -DKEM_KG_EXT_SEED="${KEM_KG_EXT_SEED}"
-    cmake --build "${CURRENT_DIR}/build" -j"${CMAKE_BUILD_JOBS}"
-    cmake --install "${CURRENT_DIR}/build"
+    cmake --build "${BUILD_DIR}" -j"${CMAKE_BUILD_JOBS}"
+    cmake --install "${BUILD_DIR}"
     echo "${_build_tag}" >"${_build_stamp}"
 }
 
@@ -150,12 +175,12 @@ mkdir -p "${CURRENT_DIR}/input" "${CURRENT_DIR}/output"
 python3 "${CURRENT_DIR}/scripts/prepare_production_input.py"
 if [ "${_need_build}" = "1" ]; then
     if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
-        echo "[run.sh] build RUN_MODE=${RUN_MODE} jobs=${CMAKE_BUILD_JOBS}"
+        echo "[run.sh] build profile=${BUILD_PROFILE} RUN_MODE=${RUN_MODE} dir=${BUILD_DIR##*/} jobs=${CMAKE_BUILD_JOBS}"
     fi
     _kem_build
 else
     if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
-        echo "[run.sh] skip rebuild (KEM_KEYGEN_SKIP_REBUILD=1, RUN_MODE=${RUN_MODE})"
+        echo "[run.sh] skip rebuild (profile=${BUILD_PROFILE}, RUN_MODE=${RUN_MODE})"
     fi
     bash "${CURRENT_DIR}/scripts/vendor_sync_from_stable_keygen.sh"
 fi

@@ -38,6 +38,28 @@ kem.keygen 只吃随机性。为验证 KeyGen 核在**任意随机**下正确，
 - **结果**：`ek_kem`/`dk_kem` 与 liboqs 逐字节 max=0，**11/11 PASS**。
 - **CMake 教训**：SIM/NPU 宏须 `ascendc_compile_definitions`；用 `target_compile_definitions` 只对 CPU 生效，SIM 会退回 seed_d 分支致全错（已修）。
 
+## run.sh profile 隔离（2026-07-03）
+
+为避免生产/round-trip 与 liboqs kat 旁路 A 来回切换时共用 `build/`、`out/`，`run.sh` 已按 `profile × RUN_MODE` 隔离构建产物：
+
+| profile | 触发 | 目录 |
+|---------|------|------|
+| `prod` | 默认 `KEM_KG_EXT_SEED=0`（生产 / round-trip） | `build_prod_<cpu|sim>` / `out_prod_<cpu|sim>` |
+| `extseed` | `KEM_KG_EXT_SEED=1`（liboqs keygen kat） | `build_extseed_<cpu|sim>` / `out_extseed_<cpu|sim>` |
+
+- `KEM_KEYGEN_BUILD_PROFILE=<name>` 可显式覆盖；`-p` 仍可覆盖 install prefix。
+- CPU 回归：`prod → extseed kat → prod` 后，prod 再跑仍 `skip rebuild`；extseed 与 prod 互不污染。
+
+## 待定位 flaky（2026-07-03，证据修正）
+
+**现象（历史一次）**：build profile 隔离改造过程中观察到一次 CPU `verify FAIL`、紧接复跑 PASS。差异首字节在 `ek_kem[768]`；`dk_kem` 差异从 `2304=1536+768` 起——即 `dk_kem` 内嵌那份 `ek` 的第 768 字节，与 `ek_kem[768]` 是**同一份数据**。故错源唯一：**`t_hat` 后半（第 2、3 个 poly，`384×2=768`）**，由 Launch2 `mmad_custom`（即 PKE KeyGen / Alg.13 计算核）产出；`kem_finish` 只原样搬运，不改值。
+
+**层归属**：错在 **PKE KeyGen 的 `t_hat` 计算**，不是 KEM 尾段。
+
+**复现实验（2026-07-03）**：profile 隔离后，`prod_cpu` 做 4 轮「彻底重建后首跑」+ 4 轮「同二进制复跑」，共 8 次**全部 PASS**；此前连跑 5 次亦全 PASS。**目前无法在干净隔离环境重现。**
+
+**判读（不再二选一断言）**：历史那次 FAIL 紧邻 `extseed↔prod` 共享 `build/` 结构切换，**高度怀疑是构建污染（双 entry `.o` 混链 / 半新旧 `.o`）的残留表现**；无法排除 `mmad_custom`（MIX，CPU 孪生多线程）低频运行时竞态。两类假设均未证实。**不加脚本重试掩盖**。若再现，定位法：先 `KEM_KEYGEN_FORCE_REBUILD=1` 干净跑排除污染，再对同二进制连跑批量采样确认是否运行时非确定，命中后沿 `src → a_hat → t_hat/ek_pke → kem_finish` 加 debug 切片二分。
+
 ## 备注
 
 - 实现方案见 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md)。

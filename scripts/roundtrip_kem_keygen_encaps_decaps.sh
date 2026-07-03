@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # roundtrip_kem_keygen_encaps_decaps.sh — device KeyGen→Encaps→Decaps 纯设备闭环（不借 liboqs）
 #
+# 分项脚本（推荐，CPU/SIM 分开、各跑一次）：
+#   bash scripts/roundtrip_kem_keygen.sh  -r cpu|sim -v Ascend910B4
+#   bash scripts/roundtrip_kem_encaps.sh  -r cpu|sim -v Ascend910B4
+#   bash scripts/roundtrip_kem_decaps.sh  -r cpu|sim -v Ascend910B4
+# stash：output/roundtrip_kem/<cpu|sim>/
+#
 # 验证 ML-KEM 核心正确性：Decaps(dk, Encaps(ek).c) 的共享秘密 == Encaps(ek).K（shared-secret agreement）。
 # 拒绝路径：device 内部篡改 coins（KEM_DECAPS_TAMPER_C=1）使重加密 c'≠c → 隐式拒绝 → K == J(z‖c) 且 != Encaps K。
 # 所有 golden 由 device 输出 + FIPS 203 J 自算，全程无外部参考实现。

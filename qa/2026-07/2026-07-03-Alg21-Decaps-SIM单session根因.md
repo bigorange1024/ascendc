@@ -71,3 +71,36 @@ kem.keygen 不吃输入、只吃随机性。用户要求让 liboqs 与探针吃*
 - **分项结果**：KeyGen `CPU×3+SIM×1`、Encaps `CPU×10+SIM×1`、Decaps `CPU×10+SIM×1` 均 PASS；Decaps SIM 证据为 `KEM_DEC_CPU_TRIALS=0 KEM_DEC_SIM_TRIALS=1` 复跑后 `SIM 1/1 OK`。
 - **坑**：kat 曾设 `EK_KEM_SRC=input/ek_kem.bin` 与 gen_data 目标同路径 → `SameFileError`；改为 `EK_KEM_SRC=stash/ek`，Decaps `C_SRC` 用临时文件；gen_data 同路径 skip copy。
 - **Decaps SIM 构建坑**：`vendor/pke_encrypt/prep/a_hat/alg7/f203_alg7_rej_scalar.c` 是 CPU/参考语义文件，不参与设备热路径；若进入 `ascendc_library`，AIC/AIV 合并阶段 `ld.lld -m aicorelinux` 报 `.c.o unknown file type`。修法：CPU twin 编入该 `.c`，SIM/NPU 设备库只保留 `.cpp` kernel 入口与 `.hpp` 内联逻辑。
+
+## KEM run.sh build profile 隔离 + keygen flaky 决策（本日续）
+
+用户选择：**1A**（keygen flaky 单独定位，不加脚本重试掩盖） + **2B**（keygen/encaps/decaps 三探针均做 build profile 隔离）。
+
+### profile 规则
+
+| 探针 | profile | 触发 | 目录 |
+|------|---------|------|------|
+| Alg.19 KeyGen | `prod` | 默认 / round-trip（`KEM_KG_EXT_SEED=0`） | `build_prod_<mode>` / `out_prod_<mode>` |
+| Alg.19 KeyGen | `extseed` | liboqs keygen kat（`KEM_KG_EXT_SEED=1`） | `build_extseed_<mode>` / `out_extseed_<mode>` |
+| Alg.20 Encaps | `prod` | 默认 / round-trip（`KEM_ENC_EXT_SEED=0`） | `build_prod_<mode>` / `out_prod_<mode>` |
+| Alg.20 Encaps | `extseed` | liboqs encaps kat（`KEM_ENC_EXT_SEED=1`） | `build_extseed_<mode>` / `out_extseed_<mode>` |
+| Alg.21 Decaps | `prod` | 默认 / round-trip | `build_prod_<mode>` / `out_prod_<mode>` |
+| Alg.21 Decaps | `kat` | liboqs decaps kat（`KEM_DECAPS_KAT=1`） | `build_kat_<mode>` / `out_kat_<mode>` |
+
+各探针均支持 `KEM_*_BUILD_PROFILE=<name>` 显式覆盖；`-p` 仍可覆盖 install prefix。目的：不同用途物理隔离构建产物，避免 `KEM_*_EXT_SEED`/KAT 与 round-trip 共用 `build/`、`out/`，减少宏切换、旧 `.o`、install glob 造成的“打地鼠”式污染。
+
+### CPU 验证
+
+- `roundtrip_kem_keygen.sh -r cpu`：`profile=prod`，stash OK。
+- `roundtrip_kem_encaps.sh -r cpu`：首次建 `build_prod_cpu/out_prod_cpu`，c/K stash OK；KAT CPU×1 走 `build_extseed_cpu/out_extseed_cpu` PASS；回到 round-trip prod 仍 `skip rebuild (profile=prod)`。
+- `roundtrip_kem_decaps.sh -r cpu`：首次建 `build_prod_cpu/out_prod_cpu`，agreement PASS；KAT CPU×1 走 `build_kat_cpu/out_kat_cpu` PASS；回到 round-trip prod 仍 `skip rebuild (profile=prod)` 且 agreement PASS。
+
+### keygen flaky（不掩盖）
+
+**现象**：build profile 隔离改造过程中观察到一次 CPU `verify FAIL`、紧接复跑 PASS。差异首字节 `ek_kem[768]`，`dk_kem` 差异从 `2304=1536+768` 起——即 `dk_kem` 内嵌那份 `ek` 的第 768 字节，与 `ek_kem[768]` **同一份数据**。故错源唯一：**`t_hat` 后半（poly 2、3，`384×2=768`）**，由 Launch2 `mmad_custom`（PKE KeyGen / Alg.13 计算核）产出；`kem_finish` 只搬运。**是 PKE KeyGen 的 `t_hat`，非 KEM 尾段。**
+
+**复现实验（本日续二）**：profile 隔离后 `prod_cpu` 做 4×「彻底重建首跑」+ 4×「同二进制复跑」= 8 次全 PASS（此前连跑 5 次亦全 PASS），**干净隔离环境无法重现**。
+
+**污染点定位**：计算核已多次验证、SHA3 为第三方正确实现，计算不可能错 → 只能是**构建产物污染**。触发条件三者叠加：① prep entry 双文件 `f203_keygen_prep_entry.cpp`(prod) 与 `f203_keygen_prep_entry_extseed.cpp`(extseed) **定义同名符号** `f203_keygen_prep`（CMakeLists 50–54 二选一进 `KERNEL_FILES`）；② 旧结构 `build/`+`out/` 共享；③ 同目录来回切 `KEM_KG_EXT_SEED`。SIM/host link 表现为 `multiple definition`；CPU 表现为增量漏重编「半新旧」`.so` → `t_hat` 分片里某片用旧对象 → 前 2 poly 对、后 2 poly 错（与 `d/z` 无关，否则 4 poly 全错）。
+
+**结论**：profile 隔离（`build_prod_cpu`/`build_extseed_cpu`、`out_prod_cpu`/`out_extseed_cpu` 完全分开）消掉「同目录切宏」触发条件，问题随旧结构消失，8 次未再现印证。保留为待定位项、**不加脚本重试掩盖**；若再现则先 `FORCE_REBUILD` 排污染、再同二进制批量采样，命中后沿 `src → a_hat → t_hat/ek_pke → kem_finish` 切片二分。

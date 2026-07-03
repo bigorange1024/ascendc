@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-03（**KEM 三分项 kat 全绿**：KeyGen/Encaps/Decaps 均 **CPU+SIM PASS**；Decaps SIM 默认 **2-session** 可靠，liboqs 造密文分项 kat `CPU×10+SIM×1 PASS`）
+**最近刷新**：2026-07-03（KEM 三探针 **build profile 隔离**；KeyGen/Encaps/Decaps 分项 kat 与 round-trip CPU 回归通过；KeyGen CPU 首跑偶发半对 flaky 已立项，禁止自动重试掩盖）
 
 ---
 
@@ -12,8 +12,9 @@
 |--------|-----|------|------|
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_encaps_batch.sh`，`KEM_ENC_EXT_SEED` 旁路 `m`） |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_decaps_batch.sh`）；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
+| **P0** | **T6f** | ML-KEM **Alg.19 KeyGen CPU flaky**：build 隔离改造中一次 `verify FAIL`/复跑 PASS；差异首字节 `ek_kem[768]`=`t_hat` 后半（PKE KeyGen `mmad_custom` 产出，非 KEM 尾段） | **隔离后 8 次未再现**（4×重建首跑 + 4×同二进制复跑全 PASS）；高度疑为**共享 build 双 entry `.o` 混链残留**，未排除 `mmad_custom` MIX 低频竞态；不加脚本重试；再现则先 FORCE_REBUILD 排污染再采样定位 |
 | **P0** | **T7b** | alg14 **`run.sh` 资源友好化**（对齐 alg20：`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | **待开工**（G5 代码已仅输出 `c.bin`） |
-| **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_keygen_batch.sh`，`KEM_KG_EXT_SEED` 同 64B 种子） |
+| **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick）；**分项 kat `CPU×10+SIM×1 PASS`**；`prod/extseed` build profile 已隔离 |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**，接入 V3 预采样 + 设备 `a_hat` | **待开工**（上游 T13a-v / T13g 均已 PASS） |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | **P3** | **T14a** | **Encrypt** 探针 G5 → `examples/stable/stable-mlkem-f203-pke-encrypt-k4`（名待定）晋级 | G5 探针 CPU+SIM ✅；**stable 未建** |

@@ -34,8 +34,11 @@ FIPS 203 **Algorithm 20 `ML-KEM.Encaps(ek)`**（**ml_kem_1024 / k=4**）；经 *
 - `KEM_ENCAPS_SKIP_REBUILD=1` — 跳过 cmake（日常 smoke）
 - `KEM_ENCAPS_KAT=1` — kat 批测 quiet（尺寸校验，log 重定向）
 - `KEM_ENC_EXT_SEED=1` — **仅 kat**；读 `input/encaps_seed.bin` 旁路 `m`（见 INTEGRATION_PLAN §4.2.1）
+- **Build profile 隔离（2026-07-03）**：默认 `KEM_ENC_EXT_SEED=0` 走 `build_prod_<mode>/out_prod_<mode>`；kat 旁路 `KEM_ENC_EXT_SEED=1` 走 `build_extseed_<mode>/out_extseed_<mode>`。`KEM_ENCAPS_BUILD_PROFILE=<name>` 可显式覆盖。
 - `CMAKE_BUILD_JOBS=2` — 默认（WSL 勿满核）
 - 缺 `EK_KEM_SRC` → exit 2（不拉 alg19）
+
+CPU 回归：`roundtrip` prod 建库后，`liboqs_kem_encaps_batch.sh` CPU×1 走 extseed profile PASS；回到 `roundtrip_kem_encaps.sh -r cpu` 仍 `skip rebuild (profile=prod)`，无互相污染。
 
 ## 备注
 

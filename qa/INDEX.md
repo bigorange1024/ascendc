@@ -12,7 +12,7 @@
 
 ### 2026-07-03 — [Alg.21 Decaps SIM 单 session 根因定位 + 设备 FO + liboqs KEM 测试脚本](2026-07/2026-07-03-Alg21-Decaps-SIM单session根因.md)
 
-**PhaseE-only PASS** · **完整单 session 首错 at_r5** · **Phase-D 触发 CAModel session 状态残留** · SIM 默认 2-session · **设备 FO/拒绝路径** · **KEM run.sh 默认全量** · **`liboqs_kem_vs_ascendc` 四阶段 + `roundtrip_kem` 闭环 CPU 全绿** · **kem.keygen 旁路 A（`KEM_KG_EXT_SEED`）相同随机字节批测 11/11** · **Encaps/Decaps 分项 kat（固定 stash；liboqs 造 c 测 decaps）CPU+SIM PASS**
+**PhaseE-only PASS** · **完整单 session 首错 at_r5** · **Phase-D 触发 CAModel session 状态残留** · SIM 默认 2-session · **设备 FO/拒绝路径** · **KEM run.sh 默认全量** · **`liboqs_kem_vs_ascendc` 四阶段 + `roundtrip_kem` 闭环 CPU 全绿** · **kem.keygen 旁路 A（`KEM_KG_EXT_SEED`）相同随机字节批测 11/11** · **Encaps/Decaps 分项 kat（固定 stash；liboqs 造 c 测 decaps）CPU+SIM PASS** · **KEM 三探针 build profile 隔离** · **keygen flaky 不加重试，单独定位**
 
 ### 2026-07-02 — [KEM Alg.19 交付、Alg.20 Encaps 写码、Alg.21 Decaps 首版与 SIM 污染](2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md)
 
