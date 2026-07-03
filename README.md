@@ -72,6 +72,7 @@
 | 驱动 | 未安装（WSL 无 NPU，正常） |
 | 验证 | `verify-cann.sh` 已通过 |
 | KeyGen 交付 | [`stable-mlkem-f203-pke-keygen-k4`](examples/stable/stable-mlkem-f203-pke-keygen-k4/) **CPU/SIM/KAT ✓**（SIM **542393**）；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) |
+| KEM 三分项 | **Alg.19 KeyGen / Alg.20 Encaps / Alg.21 Decaps** 探针均 **CPU+SIM PASS**；liboqs 分项 kat `CPU×10+SIM×1 PASS`（`scripts/liboqs_kem_{keygen,encaps,decaps}_batch.sh`）；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) |
 | 官方样例 | `samples/` ← [gitee.com/ascend/samples](https://gitee.com/ascend/samples) `master`（`6511a5f`，2026-06 拉取）；AscendC Cube+Vector 融合参考：`samples/operator/ascendc/tutorials/MatmulLeakyReluCustomSample/` |
 
 ## 普通 C 演示（根目录）

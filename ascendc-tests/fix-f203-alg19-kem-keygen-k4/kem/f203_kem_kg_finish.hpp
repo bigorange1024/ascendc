@@ -28,11 +28,19 @@ __aicore__ inline void GmMemcpyU8(__gm__ uint8_t *dst, __gm__ const uint8_t *src
 __aicore__ inline void KemKgFinishImpl(__gm__ uint8_t *seed_d_gm, __gm__ uint8_t *ek_pke_gm, __gm__ uint8_t *dk_pke_gm,
                                        __gm__ uint8_t *ek_kem_gm, __gm__ uint8_t *dk_kem_gm)
 {
-    const uint32_t seed_d = *reinterpret_cast<__gm__ uint32_t *>(seed_d_gm);
-
     // Alg.19：z 在 UB 生成，禁止写独立 GM / debug 文件
     uint8_t z[kZBytes];
+#if KEM_KG_EXT_SEED
+    // 旁路 A（test-only）：seed_d_gm 承载 64B kem_seed = d(32)‖z(32)；finish 取后 32B 作 z。
+    // 与 prep 取前 32B 作 d 对称，使两侧吃相同 host 随机字节；宏关时走 device 派生。
+    const __gm__ uint8_t *seedBytes = reinterpret_cast<const __gm__ uint8_t *>(seed_d_gm);
+    for (uint32_t i = 0; i < kZBytes; ++i) {
+        z[i] = seedBytes[32U + i];
+    }
+#else
+    const uint32_t seed_d = *reinterpret_cast<__gm__ uint32_t *>(seed_d_gm);
     DerandZFromSeedD(seed_d, z);
+#endif
 
     // ek_kem ← ek_PKE
     GmMemcpyU8(ek_kem_gm, ek_pke_gm, kEkKemBytes);

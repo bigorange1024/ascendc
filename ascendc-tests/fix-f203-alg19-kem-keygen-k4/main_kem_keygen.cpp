@@ -99,10 +99,25 @@ int32_t main(int32_t argc, char *argv[])
 
     uint32_t seed_d = 0U;
     size_t rs = 0;
+#if KEM_KG_EXT_SEED
+    // 旁路 A（test-only）：host 直接提供 64B kem_seed = d(32)‖z(32)，喂 device，令 liboqs
+    // keypair_derand 与本用例吃相同随机字节。默认关（生产走 seed_d → device UB 派生 d/z）。
+    uint8_t extSeed[F203KemKg::kExtSeedBytes];
+    rs = sizeof(extSeed);
+    if (!ReadFile("./input/kem_seed.bin", rs, extSeed, sizeof(extSeed)) || rs != sizeof(extSeed)) {
+        std::cerr << "[FAIL] read input/kem_seed.bin (KEM_KG_EXT_SEED)\n";
+        return 1;
+    }
+    const size_t kSeedGmBytes = F203KemKg::kExtSeedBytes;  // 64B
+    const void *seedSrc = extSeed;
+#else
     if (!ReadFile("./input/seed_d.bin", rs, &seed_d, kSeedBytes) || rs != kSeedBytes) {
         std::cerr << "[FAIL] read input/seed_d.bin\n";
         return 1;
     }
+    const size_t kSeedGmBytes = kSeedBytes;  // 4B uint32 LE
+    const void *seedSrc = &seed_d;
+#endif
 
     ShakeGeneralTilingData shakeTilingHost{};
     FillShakeTiling(&shakeTilingHost, kSeBatch, kSeMaxMsgLen, kSePrfOutLen, SHAKE256_RATE_BYTES);
@@ -128,7 +143,7 @@ int32_t main(int32_t argc, char *argv[])
      * block0 独占 PRF+CBD；block1 仅参与 Â 分片，末尾 PIPE_ALL 与 block0 对齐。
      */
 #ifdef __CCE_KT_TEST__
-    uint8_t *seedGm = static_cast<uint8_t *>(AscendC::GmAlloc(kSeedBytes));
+    uint8_t *seedGm = static_cast<uint8_t *>(AscendC::GmAlloc(kSeedGmBytes));
     uint8_t *aHatGm = static_cast<uint8_t *>(AscendC::GmAlloc(kAHatBytes));
     uint8_t *prfGm = static_cast<uint8_t *>(AscendC::GmAlloc(kPrfBytes));
     uint8_t *srcGm = static_cast<uint8_t *>(AscendC::GmAlloc(kSrcBytes));
@@ -147,7 +162,7 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *dkKemGm = static_cast<uint8_t *>(AscendC::GmAlloc(F203KemKg::kDkKemBytes));
     uint8_t *wsGm = static_cast<uint8_t *>(AscendC::GmAlloc(wsFileSize > 1024 ? wsFileSize : 1024));
 
-    std::memcpy(seedGm, &seed_d, kSeedBytes);
+    std::memcpy(seedGm, seedSrc, kSeedGmBytes);
     std::memcpy(shakeTilingGm, &shakeTilingHost, kShakeTilingBytes);
     for (size_t i = 0; i < wsFileSize; ++i) {
         wsGm[i] = 0;
@@ -233,8 +248,8 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *wsHost = nullptr;
     uint8_t *wsDev = nullptr;
 
-    CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&seedHost), kSeedBytes));
-    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&seedDev), kSeedBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&seedHost), kSeedGmBytes));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&seedDev), kSeedGmBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&aHatDev), kAHatBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&prfDev), kPrfBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&srcDev), kSrcBytes, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -255,13 +270,13 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dkKemDev), F203KemKg::kDkKemBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&wsDev), wsFileSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&wsHost), wsFileSize));
-    std::memcpy(seedHost, &seed_d, kSeedBytes);
+    std::memcpy(seedHost, seedSrc, kSeedGmBytes);
     std::memset(wsHost, 0, wsFileSize);
     rs = lutFileSize;
     ReadFile("./input/lut_even_stacked.bin", rs, wsHost + tiling::LUT_EVEN_STACKED, lutFileSize);
     rs = lutFileSize;
     ReadFile("./input/lut_odd_stacked.bin", rs, wsHost + tiling::LUT_ODD_STACKED, lutFileSize);
-    CHECK_ACL(aclrtMemcpy(seedDev, kSeedBytes, seedHost, kSeedBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(seedDev, kSeedGmBytes, seedHost, kSeedGmBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(shakeTilingDev, kShakeTilingBytes, &shakeTilingHost, kShakeTilingBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(wsDev, wsFileSize, wsHost, wsFileSize, ACL_MEMCPY_HOST_TO_DEVICE));
 

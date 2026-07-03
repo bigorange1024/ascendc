@@ -36,6 +36,8 @@ set(ALG11_IMPL "1" CACHE STRING "Alg11")
 set(ALG11_VEC_VARIANT "2" CACHE STRING "Alg11 variant")
 set(ALG11_VEC_OPTS "1" CACHE STRING "Alg11 opts")
 set(ALG11_MEM_OPS "1" CACHE STRING "Alg11 mem")
+# 旁路 A（test-only，默认关）：=1 时读 input/encaps_seed.bin（32B m）喂 device，供 liboqs 交叉验证。
+set(KEM_ENC_EXT_SEED "0" CACHE STRING "test-only: feed host encaps_seed m (default off)")
 set(ASCEND_CANN_PACKAGE_PATH "/usr/local/Ascend/ascend-toolkit/latest" CACHE STRING "CANN path")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -69,6 +71,13 @@ else()
 endif()
 
 target_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${KEM_DIR} ${ENC_ROOT})
+
+# 旁路 A 宏：SIM/NPU 须 ascendc_compile_definitions（见 keygen kat 教训）
+if("${RUN_MODE}" STREQUAL "cpu")
+    target_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE KEM_ENC_EXT_SEED=${KEM_ENC_EXT_SEED})
+else()
+    ascendc_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE KEM_ENC_EXT_SEED=${KEM_ENC_EXT_SEED})
+endif()
 
 add_executable(ascendc_kem_encaps_bbit ${ENC_ROOT}/main_kem_encaps.cpp ${ENC_ROOT}/main_kem_enc_g5_run.cpp)
 
@@ -117,6 +126,7 @@ target_compile_definitions(ascendc_kem_encaps_bbit PRIVATE
     ALG11_VEC_VARIANT=${ALG11_VEC_VARIANT}
     ALG11_VEC_OPTS=${ALG11_VEC_OPTS}
     ALG11_MEM_OPS=${ALG11_MEM_OPS}
+    KEM_ENC_EXT_SEED=${KEM_ENC_EXT_SEED}
 )
 
 target_link_libraries(ascendc_kem_encaps_bbit PRIVATE

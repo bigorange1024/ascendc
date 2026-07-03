@@ -122,7 +122,15 @@ bash run.sh -r cpu -v Ascend910B4
 | **可复现** | Host 仅 `seed_d.bin`；消息前缀建议 `exp-mlkem-f203-kem-encaps-k4:SEED_M=` + decimal(`SEED_D`)（实现前用 `liboqs_kem_fixture` 锁定期望 `m`） |
 | **`G` 输入** | `buf = m[32] ‖ h[32]`，共 64B → SHA3-512 → `kr[64]`；`K=kr[0:32]`，`coins=kr[32:64]` |
 
-### 4.3 首版 launch 草图
+### 4.2.1 测试旁路 A（`KEM_ENC_EXT_SEED`，**仅 kat，默认关**）
+
+| 项 | 说明 |
+|---|---|
+| **目的** | Encaps 分项 kat：固定 stash `ek`，每轮 `os.urandom(32B)` 作 `m`，与 liboqs `encaps_derand(ek,m)` 对拍 `c/K` |
+| **机制** | 宏开：`input/encaps_seed.bin`（32B）经 GM 注入 `m`；**仍** device 内 `H(ek)` + `G(m‖H(ek))` → `coins/K`（**禁止** host 预填 `coins`） |
+| **脚本** | `scripts/kat_liboqs_kem_encaps.py` + `liboqs_kem_encaps_batch.sh`；前置 `output/kem_keypair_stash/`（`kem_keypair_stash_bootstrap.sh`） |
+| **生产** | `KEM_ENC_EXT_SEED=0`（默认）；`run.sh` / CMake 无影响 |
+
 
 ```text
 aclInit / CreateStream

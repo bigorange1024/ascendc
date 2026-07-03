@@ -26,11 +26,14 @@ FIPS 203 **Algorithm 20 `ML-KEM.Encaps(ek)`**（**ml_kem_1024 / k=4**）；经 *
 |------|------|------|
 | CPU | `KEM_ENCAPS_VERIFY=1 bash run.sh -r cpu -v Ascend910B4` | **PASS** c/K max=0 |
 | SIM | `KEM_ENCAPS_SKIP_REBUILD=1 KEM_ENCAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4` | **待复验**（早前 tick **1029406** PASS） |
-| L2 liboqs | `bash scripts/liboqs_kem_vs_ascendc.sh` encaps 段 | 脚本待扩 |
+| L2 liboqs 分项 | `bash scripts/liboqs_kem_encaps_batch.sh` | **CPU×2 冒烟 PASS**（2026-07-03）；默认 CPU×10+SIM×1，固定 stash `ek` + `KEM_ENC_EXT_SEED=1` 旁路 `m` |
+| L2 liboqs 全链 | `bash scripts/liboqs_kem_vs_ascendc.sh` encaps 段 | 脚本待扩 |
 
 ## run.sh 要点
 
 - `KEM_ENCAPS_SKIP_REBUILD=1` — 跳过 cmake（日常 smoke）
+- `KEM_ENCAPS_KAT=1` — kat 批测 quiet（尺寸校验，log 重定向）
+- `KEM_ENC_EXT_SEED=1` — **仅 kat**；读 `input/encaps_seed.bin` 旁路 `m`（见 INTEGRATION_PLAN §4.2.1）
 - `CMAKE_BUILD_JOBS=2` — 默认（WSL 勿满核）
 - 缺 `EK_KEM_SRC` → exit 2（不拉 alg19）
 

@@ -55,7 +55,11 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（dk+c→m 全 device；**2 launch** prep \| ntt+intt）；CPU+SIM m.bin max=0；SIM tick **~427k**；同上 round-trip |
 | [**fix-f203-alg19-kem-keygen-k4/**](fix-f203-alg19-kem-keygen-k4/) | **Alg.19 KEM KeyGen ✅**（d/z UB + vendor PKE + KeyGen_internal 尾段）；CPU+SIM+liboqs max=0；SIM **742558** tick |
 | [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（`ek`←alg19 · vendor Encrypt G5 · KEM 头并入 prep_re）；**CPU+SIM PASS** | ✓ | ✓ |
-| [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（dk+c→K；vendor D+E + FO）；**单设备库合并** · CPU 单 session `K max=0` PASS；SIM 单 session+`nm` 待公司验证 | ✓ | (SIM 待验) |
+| [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（dk+c→K；vendor D+E + **设备 FO**）；单设备库 · CPU 单 session `K max=0` PASS · **SIM 默认 2-session `K max=0` PASS** · 拒绝路径 `K=J(z‖c)` CPU PASS | ✓ | ✓（2-session） |
+
+**KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；`roundtrip_kem_keygen_encaps_decaps.sh`（纯 device 闭环 `Decaps(Encaps.c)==Encaps.K` + 拒绝 `J(z‖c)`，不借 liboqs）。CPU 全绿；`-r sim` 一等入口（Decaps 2-session ~11min/段）。
+
+**KEM 分项 kat（固定 stash 密钥 + 每轮随机量，逐字节对 liboqs）**：`liboqs_kem_keygen_batch.sh`（`KEM_KG_EXT_SEED` 同 64B 种子）· `liboqs_kem_encaps_batch.sh`（`KEM_ENC_EXT_SEED` 旁路 `m`）· `liboqs_kem_decaps_batch.sh`（liboqs `encaps_derand` 造 `c`）；三者默认 `CPU×10+SIM×1`，均 **PASS**。密钥经 `kem_keypair_stash_bootstrap.sh` 落 `output/kem_keypair_stash/`。旁路宏均 test-only，生产默认关闭。
 | ~~fix-f203-alg14-encrypt-2launch-k4~~ | **已冻结** → [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（家里 agent `27cc93b`，办公室未复验） |
 
 **ByteEncode₁₂（KeyGen）**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](pass-fix-f203-2s1e-byteencode12-vec-k4/)（**d=12**）。Encrypt/Decrypt 单算子 **d=4/10** 见上表 **`pass-f203-*-d4-d10-vec-k4`**；ml_kem_1024 的 **d=5/d=11** 在全链 Encrypt/Decrypt 探针内联。

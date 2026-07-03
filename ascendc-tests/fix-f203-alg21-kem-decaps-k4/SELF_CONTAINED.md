@@ -31,15 +31,15 @@ input/  dk_kem.bin (3168B) + c.bin (1568B) + LUT
 | 模式 | Session | Phase-D/K1 | Phase-E | FO |
 |------|---------|------------|---------|-----|
 | **CPU** | **单 session** | device Decrypt + `f203_kem_dec_g` | device Encrypt G5 | device `f203_kem_dec_pack` |
-| **SIM** | **两段 session** | session-1：device D+G | session-2：vendored `run_g5_sim_full` | **host `memcmp(c,c')` + `K'`** |
+| **SIM** | **两段 session** | session-1：device D+G | session-2：fresh session Phase-E + **设备 FO** | **设备 `KemDecFo`** |
 
 **SIM 例外原因**：CAModel 单 session 内 Decrypt 后立即 Encrypt 导致 `c'` 污染（`m'/coins` 已证正确；同输入单独 alg14 G5 SIM PASS）。详见 [`STATUS.md`](STATUS.md) §SIM 问题详情。
 
 **审查含义**：
 
-- CPU 路径满足「单 session 设备全链 + 设备 FO」。
-- SIM 路径当前为 **有条件完成**：合法 `c` 路径 PASS；**拒绝路径与设备 FO 在 SIM 未验收**。
-- 后续须 **真修单 session SIM** 或 **补设备 FO 单测**，再收回本例外。
+- CPU / SIM 生产路径 FO 均为设备 `KemDecFo`（`f203_kem_dec_pack`），**无 host `memcmp(c,c')`**。
+- SIM 仍为 **有条件完成**：默认 2-session 合法路径 PASS；单 session D→E 仍 `c'` 污染（CAModel session 残留）。
+- 拒绝路径：`KEM_DECAPS_TAMPER_C=1` 在 device 改 `coins[0]` → FO 走 `J(z‖c)`；CPU **REJECT PASS**。
 
 ## 4. Golden 分层
 

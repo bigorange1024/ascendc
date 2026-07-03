@@ -9,6 +9,7 @@ gen_data.py — Alg.21 Decaps 生产 input。
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import shutil
 import sys
@@ -39,8 +40,12 @@ def main() -> None:
         print(f"[gen_data] missing c source: {c_src} (run alg20 Encaps first)", file=sys.stderr)
         sys.exit(3)
 
-    shutil.copy2(dk_src, inp / "dk_kem.bin")
-    shutil.copy2(c_src, inp / "c.bin")
+    dk_dst = inp / "dk_kem.bin"
+    c_dst = inp / "c.bin"
+    if dk_src.resolve() != dk_dst.resolve():
+        shutil.copy2(dk_src, dk_dst)
+    if c_src.resolve() != c_dst.resolve():
+        shutil.copy2(c_src, c_dst)
 
     import subprocess
 
@@ -52,7 +57,12 @@ def main() -> None:
             print(f"[gen_data] missing K golden source: {k_src}", file=sys.stderr)
             sys.exit(4)
         shutil.copy2(k_src, out / "golden_K.bin")
+        dk = (inp / "dk_kem.bin").read_bytes()
+        c = (inp / "c.bin").read_bytes()
+        z = dk[3136:3168]
+        (out / "golden_K_reject.bin").write_bytes(hashlib.shake_256(z + c).digest(32))
         print(f"[gen_data] golden_K from {k_src}")
+        print("[gen_data] golden_K_reject = J(z||c)")
     else:
         print(f"[gen_data] dk_kem from {dk_src}, c from {c_src}")
 

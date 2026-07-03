@@ -27,6 +27,16 @@ FIPS 203 **Algorithm 19 `ML-KEM.KeyGen()`**（**ml_kem_1024 / k=4**）；经 **A
 | CPU | `bash run.sh -r cpu -v Ascend910B4` | **PASS** ek/dk max=0（`KEM_KEYGEN_VERIFY=1`） |
 | SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | **PASS**；tick **742558**；无 507000 |
 | L2 liboqs | `bash scripts/liboqs_kem_vs_ascendc.sh` | CPU+SIM **PASS** max=0 |
+| 旁路 A 批测 | `bash scripts/liboqs_kem_keygen_batch.sh` | **11/11 PASS**（CPU×10+SIM×1，os.urandom 相同随机字节）2026-07-03 |
+
+## KEM_KG_EXT_SEED 旁路 A 正确性批测（test-only · 2026-07-03）
+
+kem.keygen 只吃随机性。为验证 KeyGen 核在**任意随机**下正确，令 liboqs `keypair_derand` 与本探针吃**逐字节相同**的 `os.urandom` 64B `kem_seed = d‖z`：
+
+- **宏 `KEM_KG_EXT_SEED`（默认 0）**：=1 时 prep 取 `kem_seed[0:32]` 作 `d`、finish 取 `[32:64]` 作 `z`（不经 SEED_D 派生）；生产/默认路径与 stable/vendor **零改动**。见 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §4.2.1。
+- **脚本**：`scripts/liboqs_kem_keygen_fixture.py`（随机 kem_seed + liboqs golden）、`scripts/liboqs_kem_keygen_batch.sh`（CPU×10+SIM×1 驱动，复用 `liboqs_kem_vs_ascendc_verify.py --stage keygen`）。
+- **结果**：`ek_kem`/`dk_kem` 与 liboqs 逐字节 max=0，**11/11 PASS**。
+- **CMake 教训**：SIM/NPU 宏须 `ascendc_compile_definitions`；用 `target_compile_definitions` 只对 CPU 生效，SIM 会退回 seed_d 分支致全错（已修）。
 
 ## 备注
 

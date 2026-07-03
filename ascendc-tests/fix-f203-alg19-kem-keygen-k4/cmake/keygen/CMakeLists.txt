@@ -35,6 +35,9 @@ set(ALG11_IMPL "1" CACHE STRING "Alg11 impl")
 set(ALG11_VEC_VARIANT "2" CACHE STRING "Alg11 variant")
 set(ALG11_VEC_OPTS "1" CACHE STRING "Alg11 opts")
 set(ALG11_MEM_OPS "1" CACHE STRING "Alg11 mem")
+# 旁路 A（test-only，默认关）：=1 时 prep 取 host kem_seed[0:32] 作 d、finish 取 [32:64] 作 z，
+# 供 liboqs keypair_derand 交叉验证吃相同随机字节；生产/默认路径仍由 device UB 派生 d/z。
+set(KEM_KG_EXT_SEED "0" CACHE STRING "test-only: feed host kem_seed d||z (default off)")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
@@ -43,8 +46,14 @@ if(CMAKE_INSTALL_PREFIX STREQUAL /usr/local)
     set(CMAKE_INSTALL_PREFIX "${KEM_ROOT}/out" CACHE STRING "install prefix" FORCE)
 endif()
 
+# 旁路 A：宏开时用 probe-local prep 入口（外部 d 注入）替代 vendored 入口；符号名 f203_keygen_prep 不变。
+if(KEM_KG_EXT_SEED STREQUAL "1")
+    set(_KEYGEN_PREP_ENTRY ${KEM_DIR}/f203_keygen_prep_entry_extseed.cpp)
+else()
+    set(_KEYGEN_PREP_ENTRY ${TEST_ROOT}/f203_keygen_prep_entry.cpp)
+endif()
 set(KERNEL_FILES
-    ${TEST_ROOT}/f203_keygen_prep_entry.cpp
+    ${_KEYGEN_PREP_ENTRY}
     ${COMPUTE_ROOT}/mmad_custom.cpp
     ${KEM_DIR}/f203_kem_kg_finish_entry.cpp
 )
@@ -60,6 +69,15 @@ else()
 endif()
 
 target_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${KEM_DIR} ${KEM_ROOT})
+
+# 旁路 A 宏传给 kernel 库（lib cmake 为 vendored，此处 probe-local 追加，抗 rsync 覆盖）。
+# 关键：CPU 为普通 g++ 库用 target_compile_definitions；SIM/NPU 走 CCE 设备编译，
+# 必须用 ascendc_compile_definitions，否则宏不进设备侧 → kernel 退回 seed_d 生产分支（SIM 全错）。
+if("${RUN_MODE}" STREQUAL "cpu")
+    target_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE KEM_KG_EXT_SEED=${KEM_KG_EXT_SEED})
+else()
+    ascendc_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE KEM_KG_EXT_SEED=${KEM_KG_EXT_SEED})
+endif()
 
 add_executable(ascendc_kem_keygen_bbit ${KEM_ROOT}/main_kem_keygen.cpp)
 
@@ -88,6 +106,7 @@ target_compile_definitions(ascendc_kem_keygen_bbit PRIVATE
     $<$<STREQUAL:${RUN_MODE},cpu>:ASCENDC_CPU_DEBUG>
     SOC_VERSION="${SOC_VERSION}"
     F203_AHAT16_BLOCK_DIM=${F203_AHAT16_BLOCK_DIM}
+    KEM_KG_EXT_SEED=${KEM_KG_EXT_SEED}
 )
 
 target_link_libraries(ascendc_kem_keygen_bbit PRIVATE

@@ -5,29 +5,41 @@
 #   input/  — dk_kem.bin（alg19）+ c.bin（alg20）+ LUT
 #   output/ — K.bin (32B)
 #
-# Usage（默认）：
+# Usage（默认 = 生产全量 + golden 对拍，无需额外 env）：
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4
 #
+# 默认行为（2026-07-03）：
+#   KEM_DECAPS_VERIFY=1         — 对拍 golden_K（alg20 K.bin）
+#   KEM_DECAPS_SKIP_REBUILD=1   — 二进制与 RUN_MODE stamp 在则跳过 cmake
+#   SIM 模式 KEM_DECAPS_SIM_2SESSION=1 — 2-session + 设备 FO（CAModel 可靠路径）
+#
 # 环境（可选）：
-#   KEM_DECAPS_SKIP_REBUILD=1   — 已有二进制且 RUN_MODE 未变时跳过 cmake
 #   KEM_DECAPS_FORCE_REBUILD=1  — 强制 rm -rf build out 后全量重编
 #   CMAKE_BUILD_JOBS=2
 #   DK_KEM_SRC / C_SRC / K_ENC_SRC
 #
 # 调试（非默认）：
-#   KEM_DECAPS_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
-#   KEM_DECAPS_SIM_2SESSION=1  — SIM 回退：两段 session（aclFinalize 后 fresh 重加密），
-#                                 仅在单库单 session 出问题时对照用；默认走单库单 session D→G→E→FO。
+#   KEM_DECAPS_VERIFY=0 bash run.sh -r cpu -v Ascend910B4
+#   KEM_DECAPS_SIM_2SESSION=0  — 强制 SIM 单 session（CAModel 下 c' 污染，仅排障用）
+#   KEM_DECAPS_TAMPER_C=1 bash run.sh -r sim  — 设备 FO 拒绝路径 J(z‖c)
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+if [ "${KEM_DECAPS_KAT:-0}" = "1" ]; then
+    mkdir -p "${CURRENT_DIR}/output"
+    export CI=1
+    exec >>"${CURRENT_DIR}/output/kat_liboqs_kem_decaps.log" 2>&1
+fi
+
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 INSTALL_PREFIX="${CURRENT_DIR}/out"
 export SEED_D="${SEED_D:-20260619}"
 export DK_KEM_SRC="${DK_KEM_SRC:-${CURRENT_DIR}/../fix-f203-alg19-kem-keygen-k4/output/dk_kem.bin}"
 export C_SRC="${C_SRC:-${CURRENT_DIR}/../fix-f203-alg20-kem-encaps-k4/output/c.bin}"
 export K_ENC_SRC="${K_ENC_SRC:-${CURRENT_DIR}/../fix-f203-alg20-kem-encaps-k4/output/K.bin}"
-export KEM_DECAPS_VERIFY="${KEM_DECAPS_VERIFY:-0}"
+export KEM_DECAPS_VERIFY="${KEM_DECAPS_VERIFY:-1}"
+export KEM_DECAPS_TAMPER_C="${KEM_DECAPS_TAMPER_C:-0}"
 export KEM_DECAPS_SKIP_REBUILD="${KEM_DECAPS_SKIP_REBUILD:-1}"
 export KEM_DECAPS_FORCE_REBUILD="${KEM_DECAPS_FORCE_REBUILD:-0}"
 export CMAKE_BUILD_JOBS="${CMAKE_BUILD_JOBS:-2}"
@@ -52,6 +64,11 @@ while :; do
     *) echo "[ERROR] Unexpected option: $1"; exit 1 ;;
     esac
 done
+
+# SIM：默认两段 session（Phase-D aclFinalize 后 fresh Phase-E）；单 session 见头注释。
+if [ "${RUN_MODE}" = "sim" ]; then
+    export KEM_DECAPS_SIM_2SESSION="${KEM_DECAPS_SIM_2SESSION:-1}"
+fi
 
 if [ ! -f "${DK_KEM_SRC}" ]; then
     echo "[run.sh] ERROR: dk_kem not found: ${DK_KEM_SRC}" >&2
@@ -121,10 +138,14 @@ _decaps_build() {
 
 set -e
 if [ "${_need_build}" = "1" ]; then
-    echo "[run.sh] build RUN_MODE=${RUN_MODE} jobs=${CMAKE_BUILD_JOBS}"
+    if [ "${KEM_DECAPS_KAT:-0}" != "1" ]; then
+        echo "[run.sh] build RUN_MODE=${RUN_MODE} jobs=${CMAKE_BUILD_JOBS}"
+    fi
     (cd "${CURRENT_DIR}" && _decaps_build)
 else
-    echo "[run.sh] skip rebuild (KEM_DECAPS_SKIP_REBUILD=1, RUN_MODE=${RUN_MODE})"
+    if [ "${KEM_DECAPS_KAT:-0}" != "1" ]; then
+        echo "[run.sh] skip rebuild (KEM_DECAPS_SKIP_REBUILD=1, RUN_MODE=${RUN_MODE})"
+    fi
     bash "${CURRENT_DIR}/scripts/vendor_sync_from_alg15_decrypt.sh"
     bash "${CURRENT_DIR}/scripts/vendor_sync_from_alg14_encrypt.sh"
 fi
@@ -133,7 +154,7 @@ rm -f "${CURRENT_DIR}/ascendc_kem_decaps_bbit"
 cp -f "${INSTALL_PREFIX}/bin/ascendc_kem_decaps_bbit" "${CURRENT_DIR}/"
 mkdir -p "${CURRENT_DIR}/input" "${CURRENT_DIR}/output"
 
-export SEED_D DK_KEM_SRC C_SRC K_ENC_SRC
+export SEED_D DK_KEM_SRC C_SRC K_ENC_SRC KEM_DECAPS_TAMPER_C
 python3 "${CURRENT_DIR}/scripts/gen_data.py"
 
 export LD_LIBRARY_PATH="${CURRENT_DIR}/out/lib:${CURRENT_DIR}/out/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
@@ -155,8 +176,16 @@ if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"
 fi
 
-if [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
+if [ "${KEM_DECAPS_KAT:-0}" = "1" ]; then
+    k_sz=$(wc -c <"${CURRENT_DIR}/output/K.bin")
+    if [ "${k_sz}" -ne 32 ]; then
+        echo "[ERROR] output K size=${k_sz}"
+        exit 1
+    fi
+elif [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
     python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py"
 fi
 
-echo "[SUCCESS] fix-f203-alg21-kem-decaps-k4 (${RUN_MODE}) SEED_D=${SEED_D}"
+if [ "${KEM_DECAPS_KAT:-0}" != "1" ]; then
+    echo "[SUCCESS] fix-f203-alg21-kem-decaps-k4 (${RUN_MODE}) SEED_D=${SEED_D}"
+fi

@@ -9,6 +9,9 @@
 namespace F203KemKg {
 
 constexpr uint32_t kSeedBytes = 4U;
+// 旁路 A（KEM_KG_EXT_SEED，test-only）：host 直接提供的 kem_seed 长度 = d(32)‖z(32)。
+// 生产路径（宏关）仍只吃 4B seed_d，由 device UB 派生 d/z；本常量仅供测试构建扩 seed GM 缓冲。
+constexpr uint32_t kExtSeedBytes = 64U;
 constexpr uint32_t kDkPkeBytes = 1536U;
 constexpr uint32_t kEkKemBytes = 1568U;
 constexpr uint32_t kHashEkBytes = 32U;

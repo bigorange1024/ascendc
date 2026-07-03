@@ -1,6 +1,9 @@
 /**
  * @file main_kem_encaps.cpp
- * @brief Alg.20 ML-KEM.Encaps(ek) host 入口：读 ek_kem + seed_d，写 c/K。
+ * @brief Alg.20 ML-KEM.Encaps(ek) host 入口：读 ek_kem + seed，写 c/K。
+ *
+ * 生产：input/seed_d.bin（4B）→ device DerandMFromSeedD。
+ * 旁路 A（KEM_ENC_EXT_SEED=1，test-only）：input/encaps_seed.bin（32B m）直接喂 device。
  */
 #include "data_utils.h"
 #include "f203_encrypt_layout.h"
@@ -11,6 +14,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <vector>
 
 int32_t main(int32_t argc, char *argv[])
@@ -26,11 +30,21 @@ int32_t main(int32_t argc, char *argv[])
         return 1;
     }
 
+    std::vector<uint8_t> seed_buf(F203KemEnc::kSeedGmBytes);
+#if KEM_ENC_EXT_SEED
+    if (!ReadFile(case_dir + "/input/encaps_seed.bin", rs, seed_buf.data(), seed_buf.size()) ||
+        rs != seed_buf.size()) {
+        std::fprintf(stderr, "[main_kem_enc] bad encaps_seed.bin (KEM_ENC_EXT_SEED)\n");
+        return 2;
+    }
+#else
     uint32_t seed_d = 20260619U;
     if (!ReadFile(case_dir + "/input/seed_d.bin", rs, &seed_d, sizeof(seed_d)) || rs != sizeof(seed_d)) {
         std::fprintf(stderr, "[main_kem_enc] bad seed_d.bin\n");
         return 2;
     }
+    std::memcpy(seed_buf.data(), &seed_d, sizeof(seed_d));
+#endif
 
     std::vector<uint8_t> lut_even(tiling::lutEvenOddFileBytes);
     std::vector<uint8_t> lut_odd(tiling::lutEvenOddFileBytes);
@@ -57,12 +71,12 @@ int32_t main(int32_t argc, char *argv[])
     std::vector<uint8_t> K_out(F203KemEnc::kSharedSecretBytes);
 
 #ifdef ASCENDC_CPU_DEBUG
-    const int rc = run_kem_enc_g5_cpu_full(case_dir, ek_buf.data(), seed_d, lut_even.data(), lut_odd.data(),
+    const int rc = run_kem_enc_g5_cpu_full(case_dir, ek_buf.data(), seed_buf.data(), lut_even.data(), lut_odd.data(),
                                            lut_intt_even.data(), lut_intt_odd.data(), c_out.data(), K_out.data());
     return rc != 0 ? rc : 0;
 #else
-    const int rc = run_g5_sim_full(ek_buf.data(), seed_d, lut_even.data(), lut_odd.data(), lut_intt_even.data(),
-                                   lut_intt_odd.data(), c_out.data(), K_out.data());
+    const int rc = run_g5_sim_full(ek_buf.data(), seed_buf.data(), lut_even.data(), lut_odd.data(),
+                                   lut_intt_even.data(), lut_intt_odd.data(), c_out.data(), K_out.data());
     if (rc != 0) {
         return rc;
     }

@@ -2,9 +2,15 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
-**案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 单 session + `nm` 待验证）  
+**案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 默认 **2-session** PASS + 设备 FO；liboqs 分项 kat `CPU×10+SIM×1 PASS`）  
 
-> **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。**⚠️ 2026-07-03 SIM 实测补充**：单库合并解掉了编译/链接双库与 `max=244` 污染，且 Phase-D 走通，但 **Phase-E 重加密在 SIM 单 session 下仍有 vector core 无限自旋（死锁）**，即「双库」不是唯一病根 —— 详见案例 STATUS「07-03 SIM 实测」节与 qa §7.5，公司待定位 Phase-E 自旋点。
+> **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
+>
+> **2026-07-03 更新（SIM 定论，纠正“死锁”误判）**：
+> 1. **非死锁**：早期把 Phase-E 慢跑（Alg.7 rej 环活跃自旋 ~7min 无输出）误判为 hang，实为慢跑。
+> 2. **SIM 默认 2-session 可靠**（`KEM_DECAPS_SIM_2SESSION=1`）：Phase-D `aclFinalize` 后 fresh session 跑 Phase-E + **设备 FO**（无 host memcmp）→ `K max=0`；`liboqs_kem_decaps_batch.sh` 逐轮换 `c` 对拍 `CPU×10+SIM×1 PASS`。
+> 3. **单 session 首错在 `at_r5`**（`KEM_DECAPS_SIM_2SESSION=0`，排障用）：Phase-D 后 `m'/coins max=0`，Phase-E `c' max=244`，而 **PhaseE-only 对照 `K max=0`** → 系 **Phase-D 已执行触发的 CAModel session 级状态残留**（非 GM 输入 / 同步 / LUT / 算法错）。单 session 真修仍 open，2-session 为可靠保底。
+> 4. **单库 SIM 构建坑**：`vendor/.../f203_alg7_rej_scalar.c` 是 CPU/参考语义文件，不参与设备热路径；若进 `ascendc_library`，AIC/AIV 合并阶段 `ld.lld -m aicorelinux` 报 `.c.o unknown file type`。修法：仅 CPU twin 库链入该 `.c`，SIM/NPU 设备库只保留 `.cpp` kernel 入口 + `.hpp` 内联逻辑（见 `cmake/decaps/CMakeLists.txt`）。
 **讨论**：[`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7  
 **实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/INTEGRATION_PLAN.md)
 
@@ -178,21 +184,22 @@ K        max=216 ✗
 |----|-----|
 | 探针 | `ascendc-tests/fix-f203-alg21-kem-decaps-k4` |
 | 输入 | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
-| CPU | G4 合法 `c` 路径 PASS，单 session + 设备 FO |
-| SIM | G4 合法 `c` 路径 PASS，两段 session workaround |
+| CPU | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
+| SIM | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |
 | SIM tick | Phase-D 约 534k + fresh Phase-E 约 899k |
-| 未完成 | 单 session SIM、拒绝路径 SIM、`nm` func_key、liboqs decaps 段 |
+| liboqs 分项 kat | `liboqs_kem_decaps_batch.sh` 逐轮换 `c` → `K max=0`，`CPU×10+SIM×1 PASS` |
+| 未完成 | 单 session SIM 真修（`at_r5` 首错）、`nm` func_key 审计、拒绝路径 SIM 长测、NPU 实机 |
 
-### 6.2 首版 workaround
+### 6.2 SIM 默认 2-session（设备 FO，非 host workaround）
 
 ```text
-session-1: Decrypt + G → m', K', coins
+session-1: Decrypt + G → m', K', coins           # Phase-D
 aclFinalize
-session-2: fresh run_g5_sim_full(ek, m', coins) → c'
-host: memcmp(c, c') == 0 时输出 K'
+session-2: fresh run_g5_sim_full(ek, m', coins)  # Phase-E 重加密 + 设备 FO
+           → 设备 f203_kem_dec_pack(KemDecFo): c vs c' 常数时间选择 → K
 ```
 
-该路径只证明：在 CAModel fresh session 中，Phase-D 结果能驱动 Phase-E 得到合法密文，并与 Encaps 共享秘密一致。它**不证明** SIM 下设备 FO 拒绝路径。
+与首版 host `memcmp` workaround 不同：**FO 比对与选择在设备完成**（`KemDecFo`），SIM 2-session 只是把单 session 拆成两段以规避 Phase-D→Phase-E 的 CAModel session 级状态残留（单 session `at_r5` 首错）。拒绝路径（篡改 device `coins[0]` → `c'≠c` → `J(z‖c)`）CPU 已 PASS，SIM 2-session 架构相同。
 
 ### 6.3 后续关闭条件
 

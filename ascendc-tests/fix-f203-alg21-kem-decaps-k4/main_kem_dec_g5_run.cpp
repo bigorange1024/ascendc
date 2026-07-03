@@ -58,6 +58,7 @@ extern volatile int g_f203_intt_mix_pass;
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -65,9 +66,23 @@ extern volatile int g_f203_intt_mix_pass;
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size);
 
 #ifndef ASCENDC_CPU_DEBUG
-int run_g5_sim_full(const uint8_t *ek, const uint8_t *coins, const uint8_t *m, const uint8_t *lut_ntt_even,
-                    const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
-                    uint8_t *c_out);
+static bool ReadDiagFile(const std::string &filePath, std::vector<uint8_t> &buffer)
+{
+    // 诊断用 host 文件读取：PhaseE-only 对照实验复用上一轮 Phase-D 已验证输出。
+    // 这些文件只作为 CAModel 单 session 污染定位输入，不进入生产默认路径。
+    std::ifstream in(filePath, std::ios::binary);
+    if (!in.good()) {
+        std::fprintf(stderr, "[kem_decaps] missing diagnostic input: %s\n", filePath.c_str());
+        return false;
+    }
+    in.read(reinterpret_cast<char *>(buffer.data()), static_cast<std::streamsize>(buffer.size()));
+    if (in.gcount() != static_cast<std::streamsize>(buffer.size())) {
+        std::fprintf(stderr, "[kem_decaps] bad diagnostic input size: %s got=%lld expect=%zu\n", filePath.c_str(),
+                     static_cast<long long>(in.gcount()), buffer.size());
+        return false;
+    }
+    return true;
+}
 #endif
 
 #ifndef ASCENDC_CPU_DEBUG
@@ -131,6 +146,288 @@ static void build_at_r5_mat(const uint8_t *a_hat, const uint8_t *t_hat, uint8_t 
         }
     }
 }
+
+static bool KemDecapsTamperCEnabled()
+{
+    const char *flag = std::getenv("KEM_DECAPS_TAMPER_C");
+    return flag != nullptr && flag[0] == '1';
+}
+
+#ifndef ASCENDC_CPU_DEBUG
+static void TamperRejectPathOnDevice(uint8_t *coinsDev)
+{
+    // 拒绝路径测试：篡改 coins 使 c'≠c，但输入 c 保持不变，设备 FO 仍按 J(z‖c) 计算。
+    uint8_t b0 = 0U;
+    CHECK_ACL(aclrtMemcpy(&b0, 1, coinsDev, 1, ACL_MEMCPY_DEVICE_TO_HOST));
+    b0 ^= 0x01U;
+    CHECK_ACL(aclrtMemcpy(coinsDev, 1, &b0, 1, ACL_MEMCPY_HOST_TO_DEVICE));
+    std::fprintf(stderr, "[kem_decaps] KEM_DECAPS_TAMPER_C=1: coins[0] toggled to force c'!=c (c unchanged)\n");
+}
+#else
+static void TamperRejectPathGm(uint8_t *coinsGm)
+{
+    coinsGm[0] ^= 0x01U;
+    std::fprintf(stderr, "[kem_decaps] KEM_DECAPS_TAMPER_C=1: coins[0] toggled to force c'!=c (c unchanged)\n");
+}
+#endif
+
+#ifndef ASCENDC_CPU_DEBUG
+struct PhaseEDevBuf {
+    uint8_t *cDev = nullptr;
+    uint8_t *zDev = nullptr;
+    uint8_t *mDev = nullptr;
+    uint8_t *KprimeDev = nullptr;
+    uint8_t *KoutDev = nullptr;
+    uint8_t *ekDev = nullptr;
+    uint8_t *coinsDev = nullptr;
+    uint8_t *aHatDev = nullptr;
+    uint8_t *prfDev = nullptr;
+    uint8_t *reDev = nullptr;
+    uint8_t *shakeTilingDev = nullptr;
+    uint8_t *rHatDev = nullptr;
+    uint8_t *nttEncWsDev = nullptr;
+    TilingData *nttTilingHost = nullptr;
+    uint8_t *tHatDev = nullptr;
+    uint8_t *aCol0Dev = nullptr;
+    uint8_t *matDev = nullptr;
+    uint8_t *uTrDev = nullptr;
+    uint8_t *inttEncWsDev = nullptr;
+    TilingData *inttTilingHost = nullptr;
+    uint8_t *uTimeDev = nullptr;
+    uint8_t *trPaddedDev = nullptr;
+    uint8_t *trTimeDev = nullptr;
+    uint8_t *vPolyDev = nullptr;
+    uint8_t *cPrimeDev = nullptr;
+};
+
+static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uint8_t *K_out)
+{
+    using namespace tiling;
+    const bool kDecapsTrace = []() {
+        const char *t = std::getenv("KEM_DECAPS_TRACE");
+        return t != nullptr && t[0] == '1';
+    }();
+#define DECAPS_TRACE_SUBMIT(name)                                        \
+    do {                                                                 \
+        if (kDecapsTrace) {                                              \
+            std::fprintf(stderr, "[decaps-trace] submit %s\n", (name));  \
+            std::fflush(stderr);                                         \
+        }                                                                \
+    } while (0)
+#define DECAPS_TRACE_DONE(name)                                          \
+    do {                                                                 \
+        if (kDecapsTrace) {                                              \
+            CHECK_ACL(aclrtSynchronizeStream(stream));                   \
+            std::fprintf(stderr, "[decaps-trace] done   %s\n", (name));  \
+            std::fflush(stderr);                                         \
+        }                                                                \
+    } while (0)
+
+    uint32_t ret = 0;
+    uint8_t *rhoDev = dev.ekDev + F203_EK_RHO_OFFSET;
+    DECAPS_TRACE_SUBMIT("prep_a_hat");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_a_hat)(kAhatBlockDim, stream, rhoDev, dev.aHatDev);
+    if (ret != 0) {
+        return 34;
+    }
+    DECAPS_TRACE_DONE("prep_a_hat");
+    if (KemDecapsTamperCEnabled()) {
+        TamperRejectPathOnDevice(dev.coinsDev);
+    }
+    DECAPS_TRACE_SUBMIT("prep_re");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_re)(kReBlockDim, stream, dev.coinsDev, dev.prfDev, dev.reDev,
+                                                    dev.shakeTilingDev);
+    if (ret != 0) {
+        return 35;
+    }
+    DECAPS_TRACE_DONE("prep_re");
+    DECAPS_TRACE_SUBMIT("ntt_r");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_r)(kNttBlockDim, stream, dev.rHatDev, dev.reDev, dev.nttEncWsDev,
+                                                  dev.nttTilingHost);
+    if (ret != 0) {
+        return 36;
+    }
+    DECAPS_TRACE_DONE("ntt_r");
+    CHECK_ACL(aclrtMemset(dev.aCol0Dev, F203_AHAT_BYTES, 0, F203_AHAT_BYTES));
+    DECAPS_TRACE_SUBMIT("decode_t_hat");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_decode_t_hat)(kDecodeBlockDim, stream, dev.ekDev, dev.tHatDev, dev.aCol0Dev);
+    if (ret != 0) {
+        return 37;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    DECAPS_TRACE_DONE("decode_t_hat");
+
+    {
+        std::vector<uint8_t> aHatHost(F203_AHAT_BYTES);
+        std::vector<uint8_t> tHatHost(F203_T_HAT_BYTES);
+        CHECK_ACL(aclrtMemcpy(aHatHost.data(), F203_AHAT_BYTES, dev.aHatDev, F203_AHAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(tHatHost.data(), F203_T_HAT_BYTES, dev.tHatDev, F203_T_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
+        std::vector<uint8_t> matHost(at_r5_tiling::kMatBytes);
+        build_at_r5_mat(aHatHost.data(), tHatHost.data(), matHost.data());
+        CHECK_ACL(aclrtMemcpy(dev.matDev, at_r5_tiling::kMatBytes, matHost.data(), at_r5_tiling::kMatBytes,
+                              ACL_MEMCPY_HOST_TO_DEVICE));
+    }
+
+    DECAPS_TRACE_SUBMIT("at_r5");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r5)(kG3BlockDim, stream, dev.matDev, dev.rHatDev, dev.uTrDev);
+    if (ret != 0) {
+        return 38;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    DECAPS_TRACE_DONE("at_r5");
+
+    CHECK_ACL(aclrtMemset(dev.trPaddedDev, dstFileBytes, 0, dstFileBytes));
+    CHECK_ACL(aclrtMemcpy(dev.trPaddedDev, F203_TR_HAT_BYTES, dev.uTrDev + F203_U_HAT_BYTES, F203_TR_HAT_BYTES,
+                          ACL_MEMCPY_DEVICE_TO_DEVICE));
+    DECAPS_TRACE_SUBMIT("intt#1(u)");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, dev.uTimeDev, dev.uTrDev, dev.inttEncWsDev,
+                                                 dev.inttTilingHost);
+    if (ret != 0) {
+        return 39;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    DECAPS_TRACE_DONE("intt#1(u)");
+    DECAPS_TRACE_SUBMIT("intt#2(tr)");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, dev.trTimeDev, dev.trPaddedDev, dev.inttEncWsDev,
+                                                 dev.inttTilingHost);
+    if (ret != 0) {
+        return 40;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    DECAPS_TRACE_DONE("intt#2(tr)");
+
+    uint8_t *e1Dev = dev.reDev + F203_R_POLYVEC_BYTES;
+    uint8_t *e2Dev = dev.reDev + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES;
+    DECAPS_TRACE_SUBMIT("g4_noise");
+    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_g4_noise)(kG4NoiseBlockDim, stream, dev.uTimeDev, e1Dev, dev.trTimeDev, e2Dev,
+                                                     dev.mDev, dev.vPolyDev);
+    if (ret != 0) {
+        return 41;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    DECAPS_TRACE_DONE("g4_noise");
+
+    DECAPS_TRACE_SUBMIT("kem_dec_pack");
+    ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_pack)(kPackBlockDim, stream, dev.uTimeDev, dev.vPolyDev, dev.cPrimeDev,
+                                                 dev.cDev, dev.zDev, dev.KprimeDev, dev.KoutDev);
+    if (ret != 0) {
+        return 42;
+    }
+    CHECK_ACL(aclrtSynchronizeStream(stream));
+    DECAPS_TRACE_DONE("kem_dec_pack");
+#undef DECAPS_TRACE_SUBMIT
+#undef DECAPS_TRACE_DONE
+
+    CHECK_ACL(aclrtMemcpy(K_out, F203KemDec::kSharedSecretBytes, dev.KoutDev, F203KemDec::kSharedSecretBytes,
+                          ACL_MEMCPY_DEVICE_TO_HOST));
+    return 0;
+}
+
+static int run_phase_e_fresh_session(const uint8_t *ek, const uint8_t *c_in, const uint8_t *z, const uint8_t *m,
+                                     const uint8_t *Kprime, const uint8_t *coins, const uint8_t *lut_ntt_even,
+                                     const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even,
+                                     const uint8_t *lut_intt_odd, uint8_t *K_out)
+{
+    using namespace tiling;
+    TilingData nttTiling{};
+    nttTiling.tileLength = static_cast<int32_t>(n);
+    nttTiling.kPolys = static_cast<int32_t>(kK);
+    nttTiling.mixPass = static_cast<int32_t>(kNttMixPass);
+    TilingData inttTiling = nttTiling;
+    inttTiling.mixPass = static_cast<int32_t>(kInttMixPass);
+
+    ShakeGeneralTilingData shakeTiling{};
+    FillShakeTiling(&shakeTiling, kPrfBatch, kPrfMaxMsgLen, kPrfOutLen, SHAKE256_RATE_BYTES);
+    shakeTiling.blockDim = kReBlockDim;
+
+    CHECK_ACL(aclInit(nullptr));
+    int32_t deviceId = 0;
+    CHECK_ACL(aclrtSetDevice(deviceId));
+    aclrtStream stream = nullptr;
+    CHECK_ACL(aclrtCreateStream(&stream));
+
+    PhaseEDevBuf dev{};
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.cDev), F203_CT_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.zDev), F203KemDec::kHashBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.mDev), F203_MSG_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.KprimeDev), F203KemDec::kSharedSecretBytes,
+                          ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.KoutDev), F203KemDec::kSharedSecretBytes,
+                          ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.ekDev), F203_EK_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.coinsDev), F203_ENC_COINS_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.aHatDev), F203_AHAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.prfDev), F203_ENCRYPT_PRF_TOTAL_BYTES,
+                          ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.reDev), F203_RE_TOTAL_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.shakeTilingDev), kShakeTilingBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.rHatDev), dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.nttEncWsDev), wssize, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&dev.nttTilingHost), sizeof(TilingData)));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.tHatDev), F203_T_HAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.aCol0Dev), F203_AHAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.matDev), at_r5_tiling::kMatBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.uTrDev), at_r5_tiling::kOutBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.inttEncWsDev), wssize, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&dev.inttTilingHost), sizeof(TilingData)));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.uTimeDev), dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.trPaddedDev), dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.trTimeDev), dstFileBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.vPolyDev), F203_E2_POLY_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&dev.cPrimeDev), F203_CT_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
+    *dev.nttTilingHost = nttTiling;
+    *dev.inttTilingHost = inttTiling;
+
+    CHECK_ACL(aclrtMemcpy(dev.cDev, F203_CT_PKE_BYTES, c_in, F203_CT_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(dev.zDev, F203KemDec::kHashBytes, z, F203KemDec::kHashBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(dev.mDev, F203_MSG_BYTES, m, F203_MSG_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(dev.KprimeDev, F203KemDec::kSharedSecretBytes, Kprime, F203KemDec::kSharedSecretBytes,
+                          ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(dev.coinsDev, F203_ENC_COINS_BYTES, coins, F203_ENC_COINS_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(dev.ekDev, F203_EK_PKE_BYTES, ek, F203_EK_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(dev.shakeTilingDev, kShakeTilingBytes, &shakeTiling, kShakeTilingBytes,
+                          ACL_MEMCPY_HOST_TO_DEVICE));
+    {
+        std::vector<uint8_t> wsHost(wssize, 0);
+        fill_ntt_ws(wsHost.data(), wssize, lut_ntt_even, lut_ntt_odd);
+        CHECK_ACL(aclrtMemcpy(dev.nttEncWsDev, wssize, wsHost.data(), wssize, ACL_MEMCPY_HOST_TO_DEVICE));
+        fill_ntt_ws(wsHost.data(), wssize, lut_intt_even, lut_intt_odd);
+        CHECK_ACL(aclrtMemcpy(dev.inttEncWsDev, wssize, wsHost.data(), wssize, ACL_MEMCPY_HOST_TO_DEVICE));
+    }
+
+    const int peRc = LaunchPhaseEReencryptAndFo(stream, dev, K_out);
+
+    CHECK_ACL(aclrtFree(dev.cDev));
+    CHECK_ACL(aclrtFree(dev.zDev));
+    CHECK_ACL(aclrtFree(dev.mDev));
+    CHECK_ACL(aclrtFree(dev.KprimeDev));
+    CHECK_ACL(aclrtFree(dev.KoutDev));
+    CHECK_ACL(aclrtFree(dev.ekDev));
+    CHECK_ACL(aclrtFree(dev.coinsDev));
+    CHECK_ACL(aclrtFree(dev.aHatDev));
+    CHECK_ACL(aclrtFree(dev.prfDev));
+    CHECK_ACL(aclrtFree(dev.reDev));
+    CHECK_ACL(aclrtFree(dev.shakeTilingDev));
+    CHECK_ACL(aclrtFree(dev.rHatDev));
+    CHECK_ACL(aclrtFree(dev.nttEncWsDev));
+    CHECK_ACL(aclrtFreeHost(dev.nttTilingHost));
+    CHECK_ACL(aclrtFree(dev.tHatDev));
+    CHECK_ACL(aclrtFree(dev.aCol0Dev));
+    CHECK_ACL(aclrtFree(dev.matDev));
+    CHECK_ACL(aclrtFree(dev.uTrDev));
+    CHECK_ACL(aclrtFree(dev.inttEncWsDev));
+    CHECK_ACL(aclrtFreeHost(dev.inttTilingHost));
+    CHECK_ACL(aclrtFree(dev.uTimeDev));
+    CHECK_ACL(aclrtFree(dev.trPaddedDev));
+    CHECK_ACL(aclrtFree(dev.trTimeDev));
+    CHECK_ACL(aclrtFree(dev.vPolyDev));
+    CHECK_ACL(aclrtFree(dev.cPrimeDev));
+    CHECK_ACL(aclrtDestroyStream(stream));
+    CHECK_ACL(aclrtResetDevice(deviceId));
+    CHECK_ACL(aclFinalize());
+    return peRc;
+}
+#endif
 
 int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t *lut_ntt_even,
                        const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
@@ -221,6 +518,9 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     uint8_t *rhoGm = ekGm + F203_EK_RHO_OFFSET;
     ICPU_RUN_KF(f203_encrypt_prep_a_hat, kAhatBlockDim, rhoGm, aHatGm);
+    if (KemDecapsTamperCEnabled()) {
+        TamperRejectPathGm(coinsGm);
+    }
     ICPU_RUN_KF(f203_encrypt_prep_re, kReBlockDim, coinsGm, prfGm, reGm, shakeTilingGm);
 
     g_f203_ntt_r_mix_pass = static_cast<int>(kNttMixPass);
@@ -393,34 +693,58 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         CHECK_ACL(aclrtMemcpy(inttEncWsDev, wssize, wsHost.data(), wssize, ACL_MEMCPY_HOST_TO_DEVICE));
     }
 
-    uint32_t ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_prep)(kG4BlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev);
-    if (ret != 0) {
-        return 30;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    uint32_t ret = 0;
+    const bool kPhaseEOnly = []() {
+        const char *flag = std::getenv("KEM_DECAPS_PHASEE_ONLY");
+        return flag != nullptr && flag[0] == '1';
+    }();
+    if (kPhaseEOnly) {
+        // 对照实验：跳过 Phase-D，只在同一 decaps binary/session 中跑 Phase-E。
+        // 背景：已定位单 session 首错在 at_r5；这里复用上一轮 Phase-D 已验证的
+        //   m'/K'/coins，排除「长链位置本身」与「Phase-D 污染后续」两种解释。
+        std::vector<uint8_t> mHost(F203_MSG_BYTES), kpHost(F203KemDec::kSharedSecretBytes),
+            coinsHost(F203_ENC_COINS_BYTES);
+        if (!ReadDiagFile("./output/dbg_m_prime.bin", mHost) ||
+            !ReadDiagFile("./output/dbg_K_prime.bin", kpHost) ||
+            !ReadDiagFile("./output/dbg_coins.bin", coinsHost)) {
+            return 34;
+        }
+        CHECK_ACL(aclrtMemcpy(mDev, F203_MSG_BYTES, mHost.data(), F203_MSG_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
+        CHECK_ACL(aclrtMemcpy(KprimeDev, F203KemDec::kSharedSecretBytes, kpHost.data(),
+                              F203KemDec::kSharedSecretBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+        CHECK_ACL(aclrtMemcpy(coinsDev, F203_ENC_COINS_BYTES, coinsHost.data(), F203_ENC_COINS_BYTES,
+                              ACL_MEMCPY_HOST_TO_DEVICE));
+        std::printf("[kem_decaps] diagnostic PhaseE-only: skipped Phase-D, reloaded m'/K'/coins\n");
+    } else {
+        ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_prep)(kG4BlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev);
+        if (ret != 0) {
+            return 30;
+        }
+        CHECK_ACL(aclrtSynchronizeStream(stream));
 
-    ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_chain_ntt)(kG4BlockDim, stream, uDev, sHatDev, uHatDev, wHatDev,
-                                                         wPaddedDev, nttWsDev, g4TilingHost);
-    if (ret != 0) {
-        return 31;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+        ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_chain_ntt)(kG4BlockDim, stream, uDev, sHatDev, uHatDev, wHatDev,
+                                                             wPaddedDev, nttWsDev, g4TilingHost);
+        if (ret != 0) {
+            return 31;
+        }
+        CHECK_ACL(aclrtSynchronizeStream(stream));
 
-    ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_chain_intt)(kG4BlockDim, stream, vDev, wPaddedDev, wTimeDev, mDev,
-                                                       inttWsDev, g4TilingHost);
-    if (ret != 0) {
-        return 32;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+        ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_chain_intt)(kG4BlockDim, stream, vDev, wPaddedDev, wTimeDev, mDev,
+                                                           inttWsDev, g4TilingHost);
+        if (ret != 0) {
+            return 32;
+        }
+        CHECK_ACL(aclrtSynchronizeStream(stream));
 
-    ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_g)(kKemGBlockDim, stream, mDev, hDev, KprimeDev, coinsDev);
-    if (ret != 0) {
-        return 33;
+        ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_g)(kKemGBlockDim, stream, mDev, hDev, KprimeDev, coinsDev);
+        if (ret != 0) {
+            return 33;
+        }
+        CHECK_ACL(aclrtSynchronizeStream(stream));
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
 
 #ifndef ASCENDC_CPU_DEBUG
-    // SIM 诊断：Phase-D 结束后 dump m'/K'/coins（定位 c'≠c 分歧点）
+    // SIM 诊断：Phase-D 结束后（或 PhaseE-only 重载后）dump m'/K'/coins（定位 c'≠c 分歧点）
     {
         std::vector<uint8_t> mHost(F203_MSG_BYTES), kpHost(F203KemDec::kSharedSecretBytes),
             coinsHost(F203_ENC_COINS_BYTES);
@@ -433,14 +757,10 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         WriteFile("./output/dbg_K_prime.bin", kpHost.data(), kpHost.size());
         WriteFile("./output/dbg_coins.bin", coinsHost.data(), coinsHost.size());
 
-        // 默认（单库单 session 修复后）：不在此 aclFinalize，直接落到下方 Phase-E（Re-Encrypt + 设备 FO）。
-        // KEM_DECAPS_SIM_2SESSION=1 = 非默认回退：保留原双库时代的两段 session 排障路径
-        //   （aclFinalize 后 fresh run_g5_sim_full 重加密 + host memcmp 取 K'）。
-        //   单库合并（decrypt+encrypt 同 func_key 空间）已消除双库单 session c' 污染，故默认走单 session。
-        const char *w2s = std::getenv("KEM_DECAPS_SIM_2SESSION");
-        if (w2s != nullptr && w2s[0] == '1') {
-            // Phase-D 完成：释放 decrypt 专用 GM，避免长 session 内与 Phase-E 互相干扰（对齐 alg14 单 session 布局）
-            CHECK_ACL(aclrtFree(dkDev));
+        // Phase-D→E 边界清理（单 session 默认 + 2-session 回退共用）。
+        // 背景（2026-07-03）：Phase-D 后 m'/coins max=0，单 session Phase-E 仍 c' max=244；
+        //   2-session aclFinalize+fresh encrypt 则 K max=0。双库时代 hygiene 仍 FAIL，合库后须重试。
+        CHECK_ACL(aclrtFree(dkDev));
         CHECK_ACL(aclrtFree(uDev));
         CHECK_ACL(aclrtFree(vDev));
         CHECK_ACL(aclrtFree(sHatDev));
@@ -453,7 +773,6 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         dkDev = nullptr;
         uDev = vDev = sHatDev = uHatDev = wHatDev = wPaddedDev = wTimeDev = nttWsDev = inttWsDev = nullptr;
 
-        // 重载 Phase-E workspace LUT（与 alg14/alg20 SIM 一致：按 offset 写入）
         {
             std::vector<uint8_t> inttWsHost(wssize, 0);
             std::memcpy(inttWsHost.data() + LUT_EVEN_STACKED, lut_intt_even, lutEvenOddFileBytes);
@@ -474,13 +793,13 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
                                   nttWsHost.data() + LUT_ODD_STACKED, lutEvenOddFileBytes,
                                   ACL_MEMCPY_HOST_TO_DEVICE));
         }
-        // 重新 H2D m/coins，确保 Phase-E prep_re 读到 Phase-D 最终值
         CHECK_ACL(aclrtMemcpy(mDev, F203_MSG_BYTES, mHost.data(), F203_MSG_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
         CHECK_ACL(aclrtMemcpy(coinsDev, F203_ENC_COINS_BYTES, coinsHost.data(), F203_ENC_COINS_BYTES,
                               ACL_MEMCPY_HOST_TO_DEVICE));
 
-        // CAModel 对 Decrypt+Encrypt 超长单 session 存在状态污染：Phase-D/K1 已验证 max=0，
-        // 因此首版 SIM 正确性采用 fresh alg14 G5 session 重加密，先验证合法密文路径。
+        // KEM_DECAPS_SIM_2SESSION=1：Phase-D 后 aclFinalize，fresh session 跑 Phase-E + 设备 FO（无 host memcmp）。
+        const char *w2s = std::getenv("KEM_DECAPS_SIM_2SESSION");
+        if (w2s != nullptr && w2s[0] == '1') {
         CHECK_ACL(aclrtFree(cDev));
         CHECK_ACL(aclrtFree(hDev));
         CHECK_ACL(aclrtFree(zDev));
@@ -512,96 +831,49 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         CHECK_ACL(aclrtResetDevice(deviceId));
         CHECK_ACL(aclFinalize());
 
-        std::vector<uint8_t> cFresh(F203KemDec::kCtBytes);
-        const int encRc = run_g5_sim_full(ek, coinsHost.data(), mHost.data(), lut_ntt_even, lut_ntt_odd,
-                                          lut_intt_even, lut_intt_odd, cFresh.data());
-        if (encRc != 0) {
-            return 60 + encRc;
+        const int peRc = run_phase_e_fresh_session(ek, c_in, z, mHost.data(), kpHost.data(), coinsHost.data(),
+                                                   lut_ntt_even, lut_ntt_odd, lut_intt_even, lut_intt_odd, K_out);
+        if (peRc != 0) {
+            return 60 + peRc;
         }
-        WriteFile("./output/dbg_c_prime.bin", cFresh.data(), cFresh.size());
-        if (std::memcmp(cFresh.data(), c_in, F203KemDec::kCtBytes) != 0) {
-            std::fprintf(stderr, "[kem_decaps] fresh encrypt c' != c\n");
-            return 61;
+        std::printf("[kem_decaps] SIM 2-session Phase-E + device FO done\n");
+        return 0;
         }
-            std::memcpy(K_out, kpHost.data(), F203KemDec::kSharedSecretBytes);
-            std::printf("[kem_decaps] SIM 2-session (fallback) valid path done\n");
-            return 0;
-        }
-        // 默认继续单 session Phase-E：mDev/coinsDev 仍持 Phase-D 输出，LUT workspace 已装载。
+        // 默认：同 session 继续 Phase-E（Re-Encrypt + 设备 FO）；上方已做 D→E 边界清理。
         std::printf("[kem_decaps] SIM single-session Phase-E (Re-Encrypt + device FO)\n");
     }
 #endif
 
-    uint8_t *rhoDev = ekDev + F203_EK_RHO_OFFSET;
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_a_hat)(kAhatBlockDim, stream, rhoDev, aHatDev);
+    PhaseEDevBuf phaseE{};
+    phaseE.cDev = cDev;
+    phaseE.zDev = zDev;
+    phaseE.mDev = mDev;
+    phaseE.KprimeDev = KprimeDev;
+    phaseE.KoutDev = KoutDev;
+    phaseE.ekDev = ekDev;
+    phaseE.coinsDev = coinsDev;
+    phaseE.aHatDev = aHatDev;
+    phaseE.prfDev = prfDev;
+    phaseE.reDev = reDev;
+    phaseE.shakeTilingDev = shakeTilingDev;
+    phaseE.rHatDev = rHatDev;
+    phaseE.nttEncWsDev = nttEncWsDev;
+    phaseE.nttTilingHost = nttTilingHost;
+    phaseE.tHatDev = tHatDev;
+    phaseE.aCol0Dev = aCol0Dev;
+    phaseE.matDev = matDev;
+    phaseE.uTrDev = uTrDev;
+    phaseE.inttEncWsDev = inttEncWsDev;
+    phaseE.inttTilingHost = inttTilingHost;
+    phaseE.uTimeDev = uTimeDev;
+    phaseE.trPaddedDev = trPaddedDev;
+    phaseE.trTimeDev = trTimeDev;
+    phaseE.vPolyDev = vPolyDev;
+    phaseE.cPrimeDev = cPrimeDev;
+    ret = static_cast<uint32_t>(LaunchPhaseEReencryptAndFo(stream, phaseE, K_out));
     if (ret != 0) {
-        return 34;
+        return static_cast<int>(ret);
     }
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_re)(kReBlockDim, stream, coinsDev, prfDev, reDev, shakeTilingDev);
-    if (ret != 0) {
-        return 35;
-    }
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_r)(kNttBlockDim, stream, rHatDev, reDev, nttEncWsDev, nttTilingHost);
-    if (ret != 0) {
-        return 36;
-    }
-    CHECK_ACL(aclrtMemset(aCol0Dev, F203_AHAT_BYTES, 0, F203_AHAT_BYTES));
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_decode_t_hat)(kDecodeBlockDim, stream, ekDev, tHatDev, aCol0Dev);
-    if (ret != 0) {
-        return 37;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-
-    {
-        std::vector<uint8_t> aHatHost(F203_AHAT_BYTES);
-        std::vector<uint8_t> tHatHost(F203_T_HAT_BYTES);
-        CHECK_ACL(aclrtMemcpy(aHatHost.data(), F203_AHAT_BYTES, aHatDev, F203_AHAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-        CHECK_ACL(aclrtMemcpy(tHatHost.data(), F203_T_HAT_BYTES, tHatDev, F203_T_HAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
-        std::vector<uint8_t> matHost(at_r5_tiling::kMatBytes);
-        build_at_r5_mat(aHatHost.data(), tHatHost.data(), matHost.data());
-        CHECK_ACL(aclrtMemcpy(matDev, at_r5_tiling::kMatBytes, matHost.data(), at_r5_tiling::kMatBytes,
-                              ACL_MEMCPY_HOST_TO_DEVICE));
-    }
-
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_at_r5)(kG3BlockDim, stream, matDev, rHatDev, uTrDev);
-    if (ret != 0) {
-        return 38;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-
-    CHECK_ACL(aclrtMemset(trPaddedDev, dstFileBytes, 0, dstFileBytes));
-    CHECK_ACL(aclrtMemcpy(trPaddedDev, F203_TR_HAT_BYTES, uTrDev + F203_U_HAT_BYTES, F203_TR_HAT_BYTES,
-                          ACL_MEMCPY_DEVICE_TO_DEVICE));
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, uTimeDev, uTrDev, inttEncWsDev, inttTilingHost);
-    if (ret != 0) {
-        return 39;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, trTimeDev, trPaddedDev, inttEncWsDev,
-                                                 inttTilingHost);
-    if (ret != 0) {
-        return 40;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-
-    uint8_t *e1Dev = reDev + F203_R_POLYVEC_BYTES;
-    uint8_t *e2Dev = reDev + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES;
-    ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_g4_noise)(kG4NoiseBlockDim, stream, uTimeDev, e1Dev, trTimeDev, e2Dev, mDev,
-                                                     vPolyDev);
-    if (ret != 0) {
-        return 41;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-
-    ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_pack)(kPackBlockDim, stream, uTimeDev, vPolyDev, cPrimeDev, cDev, zDev,
-                                                 KprimeDev, KoutDev);
-    if (ret != 0) {
-        return 42;
-    }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-
-    CHECK_ACL(aclrtMemcpy(K_out, F203KemDec::kSharedSecretBytes, KoutDev, F203KemDec::kSharedSecretBytes,
-                          ACL_MEMCPY_DEVICE_TO_HOST));
 
 #ifndef ASCENDC_CPU_DEBUG
     {
@@ -627,6 +899,35 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         WriteFile("./output/dbg_K_prime.bin", kpHost.data(), kpHost.size());
         WriteFile("./output/dbg_coins.bin", coinsHost.data(), coinsHost.size());
         WriteFile("./output/dbg_c_prime.bin", cpHost.data(), cpHost.size());
+
+        // Phase-E 逐级中间量 dump（定位单 session c' 污染源，2026-07-03）。
+        //   aHat 仅依赖 ek 的 ρ（不依赖 Phase-D）：若单 session 下 aHat 已错，则铁证 CAModel
+        //   同 session 第二批 launch 的核算错/装载错（与数据流污染无关）；若 aHat 对而后级错，
+        //   则污染沿数据流某一级注入。各 buffer 此刻均未 free，可安全 D2H。
+        std::vector<uint8_t> aHatHostD(F203_AHAT_BYTES), reHostD(F203_RE_TOTAL_BYTES),
+            rHatHostD(dstFileBytes), tHatHostD(F203_T_HAT_BYTES), uTrHostD(at_r5_tiling::kOutBytes),
+            vPolyHostD(F203_E2_POLY_BYTES);
+        CHECK_ACL(aclrtMemcpy(aHatHostD.data(), F203_AHAT_BYTES, aHatDev, F203_AHAT_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(reHostD.data(), F203_RE_TOTAL_BYTES, reDev, F203_RE_TOTAL_BYTES,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(rHatHostD.data(), dstFileBytes, rHatDev, dstFileBytes, ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(tHatHostD.data(), F203_T_HAT_BYTES, tHatDev, F203_T_HAT_BYTES,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(uTrHostD.data(), at_r5_tiling::kOutBytes, uTrDev, at_r5_tiling::kOutBytes,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        CHECK_ACL(aclrtMemcpy(vPolyHostD.data(), F203_E2_POLY_BYTES, vPolyDev, F203_E2_POLY_BYTES,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        WriteFile("./output/dbg_a_hat.bin", aHatHostD.data(), aHatHostD.size());
+        WriteFile("./output/dbg_re.bin", reHostD.data(), reHostD.size());
+        WriteFile("./output/dbg_r_hat.bin", rHatHostD.data(), rHatHostD.size());
+        WriteFile("./output/dbg_t_hat.bin", tHatHostD.data(), tHatHostD.size());
+        WriteFile("./output/dbg_u_tr.bin", uTrHostD.data(), uTrHostD.size());
+        WriteFile("./output/dbg_v_poly.bin", vPolyHostD.data(), vPolyHostD.size());
+        // ek（含 ρ = ek[1536:1568]）供离线 golden 独立复算 a_hat（不依赖 Phase-D）。
+        std::vector<uint8_t> ekHostD(F203_EK_PKE_BYTES);
+        CHECK_ACL(aclrtMemcpy(ekHostD.data(), F203_EK_PKE_BYTES, ekDev, F203_EK_PKE_BYTES,
+                              ACL_MEMCPY_DEVICE_TO_HOST));
+        WriteFile("./output/dbg_ek.bin", ekHostD.data(), ekHostD.size());
     }
 
     CHECK_ACL(aclrtFree(cDev));

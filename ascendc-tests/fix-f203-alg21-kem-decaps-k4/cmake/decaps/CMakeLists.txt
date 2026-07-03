@@ -66,7 +66,6 @@ set(DECRYPT_KERNEL_FILES
 set(ENCRYPT_KERNEL_FILES
     ${PREP_AHAT_INC}/f203_encrypt_prep_a_hat_entry.cpp
     ${PREP_RE_INC}/f203_encrypt_prep_re_entry.cpp
-    ${PREP_ALG7_INC}/f203_alg7_rej_scalar.c
     ${NTT_R_INC}/f203_encrypt_ntt_r_entry.cpp
     ${PREP_DECODE_INC}/f203_encrypt_decode_t_hat_entry.cpp
     ${AT_R5_INC}/f203_encrypt_at_r5_kernel.cpp
@@ -75,6 +74,7 @@ set(ENCRYPT_KERNEL_FILES
     ${PACK_INC}/f203_encrypt_pack_entry.cpp
     ${KEM_DIR}/f203_kem_dec_pack_entry.cpp
 )
+set(ALG7_SCALAR_C ${PREP_ALG7_INC}/f203_alg7_rej_scalar.c)
 
 # 单设备库：decrypt + encrypt + kem 全部核入口合并进 ascendc_kernels_${RUN_MODE}。
 # 背景（2026-07-02 家里 agent）：原双库（decrypt/encrypt 分库）在 CAModel 单 ACL session 内
@@ -87,6 +87,12 @@ set(ENCRYPT_KERNEL_FILES
 set(ALL_KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
 
 set(CUSTOM_ASCEND310P_LIST "Ascend310P1" "Ascend310P3")
+
+# f203_alg7_rej_scalar.c 是自研 C 参考语义文件，不参与设备热路径。
+# CPU twin 可编入共享库；SIM/NPU 的 ascendc_library 会把源文件拆进
+# AIC/AIV object 合并流程，纯 C host object 会在 aicore lld 阶段报
+# "unknown file type"，因此设备侧库只保留 .cpp kernel 入口与 .hpp 内联逻辑。
+set_source_files_properties(${ALG7_SCALAR_C} PROPERTIES LANGUAGE CXX)
 
 set(_DECRYPT_INCLUDES ${DEC_VENDOR} ${DEC_ROOT} ${KEM_DIR} ${KECCAK_INC}
     ${G4_FULL_INC} ${UNPACK_INC} ${PREP_DECODE_DK_INC} ${NTT_U_INC} ${INTT_W_INC}
@@ -107,9 +113,7 @@ if("${RUN_MODE}" STREQUAL "cpu")
     endif()
     find_package(tikicpulib REQUIRED)
 
-    add_library(ascendc_kernels_${RUN_MODE} SHARED ${ALL_KERNEL_FILES})
-
-    set_source_files_properties(${PREP_ALG7_INC}/f203_alg7_rej_scalar.c PROPERTIES LANGUAGE CXX)
+    add_library(ascendc_kernels_${RUN_MODE} SHARED ${ALL_KERNEL_FILES} ${ALG7_SCALAR_C})
 
     target_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE
         $<$<BOOL:$<IN_LIST:${SOC_VERSION},${CUSTOM_ASCEND310P_LIST}>>:CUSTOM_ASCEND310P>

@@ -84,10 +84,11 @@ constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 constexpr size_t kUTrBytes = F203_U_HAT_BYTES + F203_TR_HAT_BYTES;
 
 #ifdef ASCENDC_CPU_DEBUG
-int run_g5_cpu_session(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_ntt_even, const uint8_t *lut_ntt_odd,
-                       const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd, uint8_t *a_hat, uint8_t *re_flat,
-                       uint8_t *r_hat, uint8_t *t_hat, uint8_t *u_hat, uint8_t *tr_hat, uint8_t *u_time,
-                       uint8_t *tr_time, uint8_t *v_poly, uint8_t *c_out, uint8_t *K_out)
+int run_g5_cpu_session(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *lut_ntt_even,
+                       const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
+                       uint8_t *a_hat, uint8_t *re_flat, uint8_t *r_hat, uint8_t *t_hat, uint8_t *u_hat,
+                       uint8_t *tr_hat, uint8_t *u_time, uint8_t *tr_time, uint8_t *v_poly, uint8_t *c_out,
+                       uint8_t *K_out)
 {
     using namespace tiling;
     ShakeGeneralTilingData shakeTiling{};
@@ -104,7 +105,7 @@ int run_g5_cpu_session(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_nt
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     uint8_t *ekGm = (uint8_t *)AscendC::GmAlloc(F203_EK_PKE_BYTES);
-    uint8_t *seedDGm = (uint8_t *)AscendC::GmAlloc(F203KemEnc::kSeedDBytes);
+    uint8_t *seedDGm = (uint8_t *)AscendC::GmAlloc(F203KemEnc::kSeedGmBytes);
     uint8_t *KGm = (uint8_t *)AscendC::GmAlloc(F203KemEnc::kSharedSecretBytes);
     uint8_t *mGm = (uint8_t *)AscendC::GmAlloc(F203_MSG_BYTES);
     uint8_t *coinsGm = (uint8_t *)AscendC::GmAlloc(F203_ENC_COINS_BYTES);
@@ -114,7 +115,7 @@ int run_g5_cpu_session(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_nt
     uint8_t *shakeTilingGm = (uint8_t *)AscendC::GmAlloc(kShakeTilingBytes);
     uint8_t *rhoGm = ekGm + F203_EK_RHO_OFFSET;
     std::memcpy(ekGm, ek, F203_EK_PKE_BYTES);
-    *reinterpret_cast<uint32_t *>(seedDGm) = seed_d;
+    std::memcpy(seedDGm, seed_host, F203KemEnc::kSeedGmBytes);
     std::memcpy(shakeTilingGm, &shakeTiling, kShakeTilingBytes);
     ICPU_RUN_KF(f203_encrypt_prep_a_hat, kAhatBlockDim, rhoGm, aHatGm);
     ICPU_RUN_KF(f203_kem_enc_prep_re, kReBlockDim, ekGm, seedDGm, KGm, mGm, coinsGm, prfGm, reGm, shakeTilingGm);
@@ -225,8 +226,9 @@ int run_g5_cpu_session(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_nt
  * G3：at_r5 合并核 + host 拼 matM（§2.3 病根 2 同步点）。
  * G4：INTT×2 + g4_noise + pack 全 device（decode/pack 为 MIX 占位释 AIV func_key）。
  */
-int run_g5_sim_full(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_ntt_even, const uint8_t *lut_ntt_odd,
-                    const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd, uint8_t *c_out, uint8_t *K_out)
+int run_g5_sim_full(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *lut_ntt_even,
+                    const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
+                    uint8_t *c_out, uint8_t *K_out)
 {
     using namespace tiling;
     constexpr uint32_t kAhatBlockDim = 2U;
@@ -281,7 +283,7 @@ int run_g5_sim_full(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_ntt_e
     uint8_t *cDev = nullptr;
 
     CHECK_ACL(aclrtMalloc((void **)&ekDev, F203_EK_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
-    CHECK_ACL(aclrtMalloc((void **)&seedDDev, F203KemEnc::kSeedDBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc((void **)&seedDDev, F203KemEnc::kSeedGmBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&KDev, F203KemEnc::kSharedSecretBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&coinsDev, F203_ENC_COINS_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&aHatDev, F203_AHAT_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -306,7 +308,8 @@ int run_g5_sim_full(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_ntt_e
 
     *nttTilingHost = nttTiling;
     *inttTilingHost = inttTiling;
-    CHECK_ACL(aclrtMemcpy(seedDDev, F203KemEnc::kSeedDBytes, &seed_d, F203KemEnc::kSeedDBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemcpy(seedDDev, F203KemEnc::kSeedGmBytes, seed_host, F203KemEnc::kSeedGmBytes,
+                          ACL_MEMCPY_HOST_TO_DEVICE));
     {
         std::vector<uint8_t> inttWsHost(wssize, 0);
         std::memcpy(inttWsHost.data() + LUT_EVEN_STACKED, lut_intt_even, lutEvenOddFileBytes);
@@ -469,7 +472,7 @@ int run_g5_sim_full(const uint8_t *ek, uint32_t seed_d, const uint8_t *lut_ntt_e
 #endif
 
 #ifdef ASCENDC_CPU_DEBUG
-int run_kem_enc_g5_cpu_full(const std::string &case_dir, const uint8_t *ek, uint32_t seed_d,
+int run_kem_enc_g5_cpu_full(const std::string &case_dir, const uint8_t *ek, const uint8_t *seed_host,
                             const uint8_t *lut_ntt_even, const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even,
                             const uint8_t *lut_intt_odd, uint8_t *c_out, uint8_t *K_out)
 {
@@ -485,7 +488,7 @@ int run_kem_enc_g5_cpu_full(const std::string &case_dir, const uint8_t *ek, uint
 
     std::printf("[main_kem_enc] Alg.20 Encaps single-session (device m+G + Encrypt G5)\n");
 
-    const int rc = run_g5_cpu_session(ek, seed_d, lut_ntt_even, lut_ntt_odd, lut_intt_even, lut_intt_odd,
+    const int rc = run_g5_cpu_session(ek, seed_host, lut_ntt_even, lut_ntt_odd, lut_intt_even, lut_intt_odd,
                                       a_hat.data(), re_flat.data(), r_hat.data(), t_hat.data(), u_hat.data(),
                                       tr_hat.data(), u_time.data(), tr_time.data(), v_poly.data(), c_out, K_out);
     if (rc != 0) {

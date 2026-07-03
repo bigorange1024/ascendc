@@ -127,6 +127,19 @@ ek_kem = ek_PKE                                                    → 1568B
 
 > **与旧 §4.2 方案 A/B 的关系**：不再二选一「Host 域分离 vs kem_seed 后半」；**唯一路径**为 device UB 双采样 + Alg.16 internal。
 
+#### 4.2.1 `KEM_KG_EXT_SEED` 旁路 A（**test-only 例外 · 用户确认 2026-07-03**）
+
+正确性交叉验证需让 liboqs `keypair_derand` 与本探针吃**逐字节相同的随机字节**（`os.urandom` 生成的 64B `kem_seed = d‖z`），以在任意随机性（非 SHA3(域分离串‖SEED_D) 像）上验证 KeyGen 核实现，语义近似 NIST KAT。
+
+| 项 | 说明 |
+|----|------|
+| **编译宏** | `KEM_KG_EXT_SEED`（CMake cache，**默认 0**）；=1 时 CMake 用 probe-local prep 入口 [`kem/f203_keygen_prep_entry_extseed.cpp`](kem/f203_keygen_prep_entry_extseed.cpp) 替代 vendored 入口 |
+| **数据面** | 宏开时 `seed_d_gm` 缓冲扩为 **64B**，承载 host `kem_seed`；prep 取 `[0:32]` 作 `d`（[`kem/f203_keygen_prep_extseed.hpp`](kem/f203_keygen_prep_extseed.hpp) `BuildKeygenPrepSinglePipeExtD`，ρ‖σ=G(d‖k)），finish 取 `[32:64]` 作 `z` |
+| **生产隔离** | 宏默认关，生产/默认 `run.sh` 与 stable/vendor 源**零改动**（vendored prep 入口不动）；宏开仅由 `scripts/liboqs_kem_keygen_batch.sh` 置位并配 `KEM_KEYGEN_VERIFY=0` |
+| **与 §4.2「禁止 host 预填 kem_seed」的关系** | §4.2 约束**生产路径**；本旁路为 **test-only 例外**，不改变生产 device UB 双采样契约，仅供交叉验证复现相同随机字节 |
+| **验收** | `bash scripts/liboqs_kem_keygen_batch.sh` → CPU×10 + SIM×1，device `ek_kem`/`dk_kem` 与 liboqs `keypair_derand` 逐字节 max=0（2026-07-03 **11/11 PASS**） |
+| **CMake 关键** | SIM/NPU 的宏须用 `ascendc_compile_definitions`（非 `target_compile_definitions`）才进设备编译，否则 kernel 退回 `seed_d` 生产分支致 SIM 全错 |
+
 ### 4.3 首版 launch 草图
 
 ```text

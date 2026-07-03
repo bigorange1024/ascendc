@@ -17,8 +17,8 @@ extern "C" __global__ __aicore__ void f203_kem_enc_prep_re(GM_ADDR ek_gm, GM_ADD
         return;
     }
 
-    const uint32_t seed_d = *reinterpret_cast<__gm__ uint32_t *>(seed_d_gm);
-    F203KemEnc::KemEncInitHead(reinterpret_cast<__gm__ uint8_t *>(ek_gm), seed_d,
+    F203KemEnc::KemEncInitHead(reinterpret_cast<__gm__ uint8_t *>(ek_gm),
+                               reinterpret_cast<__gm__ uint8_t *>(seed_d_gm),
                                reinterpret_cast<__gm__ uint8_t *>(K_gm),
                                reinterpret_cast<__gm__ uint8_t *>(m_gm),
                                reinterpret_cast<__gm__ uint8_t *>(coins_gm));

@@ -43,8 +43,15 @@ def main() -> None:
     if not ek_src.is_file():
         print(f"[gen_data] missing ek_kem source: {ek_src} (run alg19 KeyGen first)", file=sys.stderr)
         sys.exit(2)
-    shutil.copy2(ek_src, inp / "ek_kem.bin")
-    (inp / "seed_d.bin").write_bytes(struct.pack("<I", seed_d))
+    ek_dst = inp / "ek_kem.bin"
+    if ek_src.resolve() != ek_dst.resolve():
+        shutil.copy2(ek_src, ek_dst)
+    if os.environ.get("KEM_ENC_EXT_SEED", "0") == "1":
+        if not (inp / "encaps_seed.bin").is_file():
+            print("[gen_data] KEM_ENC_EXT_SEED=1 requires input/encaps_seed.bin (32B)", file=sys.stderr)
+            sys.exit(2)
+    else:
+        (inp / "seed_d.bin").write_bytes(struct.pack("<I", seed_d))
 
     subprocess.run([sys.executable, str(HOST_GOLDEN / "ntt_lut_bins.py"), str(inp)], check=True)
 

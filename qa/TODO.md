@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-02（**T7c** Alg.21 Decaps **G4 CPU+SIM PASS** · SIM workaround · 单 session 待修）
+**最近刷新**：2026-07-03（**KEM 三分项 kat 全绿**：KeyGen/Encaps/Decaps 均 **CPU+SIM PASS**；Decaps SIM 默认 **2-session** 可靠，liboqs 造密文分项 kat `CPU×10+SIM×1 PASS`）
 
 ---
 
@@ -10,17 +10,17 @@
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
-| **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万） |
-| **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + FO | **G4 CPU+SIM PASS**（SIM **两段 session**；单 session / 拒绝路径 / func_key **待修**） |
+| **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_encaps_batch.sh`，`KEM_ENC_EXT_SEED` 旁路 `m`） |
+| **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_decaps_batch.sh`）；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
 | **P0** | **T7b** | alg14 **`run.sh` 资源友好化**（对齐 alg20：`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | **待开工**（G5 代码已仅输出 `c.bin`） |
-| **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick） |
+| **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_keygen_batch.sh`，`KEM_KG_EXT_SEED` 同 64B 种子） |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**，接入 V3 预采样 + 设备 `a_hat` | **待开工**（上游 T13a-v / T13g 均已 PASS） |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | **P3** | **T14a** | **Encrypt** 探针 G5 → `examples/stable/stable-mlkem-f203-pke-encrypt-k4`（名待定）晋级 | G5 探针 CPU+SIM ✅；**stable 未建** |
 | **P4** | **T15a** | **Decrypt** 探针 G4 → `examples/stable/stable-mlkem-f203-pke-decrypt-k4`（名待定）晋级 | G4 探针 CPU+SIM ✅；**stable 未建** |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
 | — | **T2b / T5** | `docs/specs/fips203-baseline-registry.md` 初稿 + liboqs/ntt_study API 登记 | 待开工（stable 交付 golden 依赖） |
-| — | **T2** | KEM **后继**：Alg.21 Decaps **单 session SIM**、**NPU 实机** | Alg.19 **PASS** · Alg.20 **PASS** · Alg.21 → **T7c 有条件 PASS** |
+| — | **T2** | KEM **后继**：Alg.21 Decaps **单 session SIM 真修**、**NPU 实机** | Alg.19/20/21 三分项 **CPU+SIM kat PASS**；单 session SIM 与 NPU 未做 |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
 | — | **T4** | 换机后可选重编 liboqs（OpenSSL） | 可选 |

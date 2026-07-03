@@ -1,9 +1,14 @@
 /**
- * liboqs ML-KEM-1024 KEM KeyGen 黑盒（Alg.16/19）。
+ * liboqs ML-KEM-1024 KEM 黑盒（Alg.16/17/18/19/20/21）。
  *
  *   keygen <ek_kem.bin> <dk_kem.bin> <hex128_kem_seed>
+ *   encaps <ek_kem.bin> <c.bin> <K.bin> <hex64_encaps_seed>
+ *   decaps <dk_kem.bin> <c.bin> <K.bin>
  *
- * kem_seed = d(32B) || z(32B)，走 OQS_KEM_ml_kem_1024_keypair_derand。
+ * - keygen：kem_seed = d(32B) || z(32B)，走 OQS_KEM_ml_kem_1024_keypair_derand。
+ * - encaps：encaps_seed = m(32B)，走 OQS_KEM_ml_kem_1024_encaps_derand → 输出密文 c 与共享秘密 K。
+ * - decaps：无随机，直接 OQS_KEM_ml_kem_1024_decaps(dk, c) → K'；对合法 c 得 K==encaps K，
+ *           对被篡改的 c 触发 FIPS 203 隐式拒绝，返回 J(z‖c)=SHAKE256(z‖c,32)。
  */
 #include <oqs/oqs.h>
 
@@ -102,6 +107,53 @@ static int cmd_encaps(int argc, char **argv)
     return 0;
 }
 
+/* decaps：读入 dk 与密文 c，调用 liboqs ML-KEM-1024 Decaps 得共享秘密 K'。
+ * decaps 本身不吃随机，故子命令只有三个文件参数、无 hex seed。 */
+static int cmd_decaps(int argc, char **argv)
+{
+    uint8_t sk[DK_BYTES];
+    uint8_t ct[CT_BYTES];
+    uint8_t ss[SS_BYTES];
+
+    if (argc != 5) {
+        fprintf(stderr, "usage: %s decaps <dk.bin> <c.bin> <K.bin>\n", argv[0]);
+        return 1;
+    }
+    /* 读 dk（3168B）。 */
+    FILE *fdk = fopen(argv[2], "rb");
+    if (fdk == NULL) {
+        perror(argv[2]);
+        return 1;
+    }
+    if (fread(sk, 1, DK_BYTES, fdk) != DK_BYTES) {
+        fclose(fdk);
+        fprintf(stderr, "short read dk\n");
+        return 1;
+    }
+    fclose(fdk);
+    /* 读密文 c（1568B）；可能是合法密文或被篡改的密文。 */
+    FILE *fct = fopen(argv[3], "rb");
+    if (fct == NULL) {
+        perror(argv[3]);
+        return 1;
+    }
+    if (fread(ct, 1, CT_BYTES, fct) != CT_BYTES) {
+        fclose(fct);
+        fprintf(stderr, "short read c\n");
+        return 1;
+    }
+    fclose(fct);
+    /* Decaps：合法 c → K==encaps K；篡改 c → 隐式拒绝返回 J(z‖c)。 */
+    if (OQS_KEM_ml_kem_1024_decaps(ss, ct, sk) != OQS_SUCCESS) {
+        fprintf(stderr, "OQS_KEM_ml_kem_1024_decaps failed\n");
+        return 1;
+    }
+    if (write_file(argv[4], ss, SS_BYTES) != 0) {
+        return 1;
+    }
+    return 0;
+}
+
 static int cmd_keygen(int argc, char **argv)
 {
     uint8_t kem_seed[KEM_SEED_BYTES];
@@ -130,7 +182,7 @@ int main(int argc, char **argv)
 {
     OQS_init();
     if (argc < 2) {
-        fprintf(stderr, "usage: %s keygen|encaps ...\n", argv[0]);
+        fprintf(stderr, "usage: %s keygen|encaps|decaps ...\n", argv[0]);
         OQS_destroy();
         return 1;
     }
@@ -139,6 +191,8 @@ int main(int argc, char **argv)
         rc = cmd_keygen(argc, argv);
     } else if (strcmp(argv[1], "encaps") == 0) {
         rc = cmd_encaps(argc, argv);
+    } else if (strcmp(argv[1], "decaps") == 0) {
+        rc = cmd_decaps(argc, argv);
     } else {
         fprintf(stderr, "unknown subcommand: %s\n", argv[1]);
     }
