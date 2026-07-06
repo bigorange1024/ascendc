@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-03（KEM 三探针 **build profile 隔离**；KeyGen/Encaps/Decaps 分项 kat 与 round-trip CPU 回归通过；KeyGen CPU 首跑偶发半对 flaky 已立项，禁止自动重试掩盖）
+**最近刷新**：2026-07-06（**Alg.14 Encrypt compute 行 18–19**：3 launch CPU+SIM PASS；`F203_FEAS_FUSED=1` 单 launch SIM PASS；û **UB 驻留** + MIX GATE 4/8；待 kP=5 / v / decode / prep 拼接）
 
 ---
 
@@ -10,6 +10,7 @@
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
+| **P0** | **T17** | **Alg.14 Encrypt compute** 扩展：[`fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../ascendc-tests/fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) — kP=5 `tr̂`、行 21 `v`、行 2 decode、prep+compute 2 launch | **行 18–19 û/u 已完成**（3 launch + 单 launch SIM）；§INTEGRATION_PLAN §8.4 |
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_encaps_batch.sh`，`KEM_ENC_EXT_SEED` 旁路 `m`） |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_decaps_batch.sh`）；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
 | **P0** | **T6f** | ML-KEM **Alg.19 KeyGen CPU flaky**：build 隔离改造中一次 `verify FAIL`/复跑 PASS；差异首字节 `ek_kem[768]`=`t_hat` 后半（PKE KeyGen `mmad_custom` 产出，非 KEM 尾段） | **隔离后 8 次未再现**（4×重建首跑 + 4×同二进制复跑全 PASS）；高度疑为**共享 build 双 entry `.o` 混链残留**，未排除 `mmad_custom` MIX 低频竞态；不加脚本重试；再现则先 FORCE_REBUILD 排污染再采样定位 |

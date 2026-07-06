@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-06 — [Alg.14 Encrypt compute 行 18–19 单 launch 与 UB 驻留](2026-07/2026-07-06-Encrypt-compute单launch与UB驻留.md)
+
+**3 launch CPU+SIM PASS** · **`F203_FEAS_FUSED=1` 单 launch SIM PASS**（~130s）· **û 驻留 UB** · `ProcessFromLocal` · **SIM 标量写 GM / MTE 读不可见** · FSM **GATE 4/8** · 单 launch **CPU 不支持** · 待 **kP=5 / v / decode / prep 拼接**
+
 ### 2026-07-03 — [Alg.21 Decaps SIM 单 session 根因定位 + 设备 FO + liboqs KEM 测试脚本](2026-07/2026-07-03-Alg21-Decaps-SIM单session根因.md)
 
 **PhaseE-only PASS** · **完整单 session 首错 at_r5** · **Phase-D 触发 CAModel session 状态残留** · SIM 默认 2-session · **设备 FO/拒绝路径** · **KEM run.sh 默认全量** · **`liboqs_kem_vs_ascendc` 四阶段 + `roundtrip_kem` 闭环 CPU 全绿** · **kem.keygen 旁路 A（`KEM_KG_EXT_SEED`）相同随机字节批测 11/11** · **Encaps/Decaps 分项 kat（固定 stash；liboqs 造 c 测 decaps）CPU+SIM PASS** · **KEM 三探针 build profile 隔离** · **keygen flaky 不加重试，单独定位**

@@ -47,7 +47,8 @@ backup/
 **/ascendc_kem_encaps_bbit
 **/ascendc_kem_decaps_bbit
 **/liboqs_pke_keygen_ref
-!**/liboqs_pke_keygen_ref.c
+!ascendc-tests/fix-f203-alg14-lines3-15-encrypt-prep-k4/fixtures/
+!ascendc-tests/fix-f203-alg14-lines3-15-encrypt-prep-k4/fixtures/**
 scripts/liboqs_pke_ref
 scripts/liboqs_kem_ref
 **/.liboqs_vs_built_mode
