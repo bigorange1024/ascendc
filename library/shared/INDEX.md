@@ -2,6 +2,8 @@
 
 | 路径 | 内容 |
 |------|------|
+| [`ascendc_build_mode.hpp`](ascendc_build_mode.hpp) | **全仓** `ASCENDC_BUILD_CPU`/`ASCENDC_BUILD_SIM` + `ASCENDC_SIM_HOST_MODE` 辅助 |
+| [`f203_mod_q/`](f203_mod_q/) | Kyber q=3329 向量 Barrett mod 与模加（`mod_q_vec.hpp`、`mod_q_add.hpp`） |
 | [`shake_xof_kernel/`](shake_xof_kernel/) | SHAKE128/256 XOF：`KernelShakeGeneral`（**LocalTensor I/O only**） |
 | [`keccak_f1600_kernel/`](keccak_f1600_kernel/) | Keccak-f[1600] 置换（device header-only）+ **`fips203_device_sha3.hpp`**（AI Core 标量 SHA3-256/512、SHAKE256；语义对齐 tiny_sha3） |
 | [`fips203_se_sample/`](fips203_se_sample/) | FIPS 203 采样参考 C + **`golden_se_sampling.py`**（`SEED_D`→`src` Host golden） |

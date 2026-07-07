@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-07 — [Encrypt prep/compute 晋级 pass- 与 CPU/SIM 分叉](2026-07/2026-07-07-CPU-SIM-launch分叉约定.md)
+
+**全仓宏 `ASCENDC_BUILD_*` + `ASCENDC_SIM_HOST_MODE`** · 废弃 per-probe `F203_FEAS_*` · decaps 迁 `decaps_2session`
+
 ### 2026-07-06 — [Alg.14 Encrypt compute 行 18–19 单 launch 与 UB 驻留](2026-07/2026-07-06-Encrypt-compute单launch与UB驻留.md)
 
 **3 launch CPU+SIM PASS** · **`F203_FEAS_FUSED=1` 单 launch SIM PASS**（~130s）· **û 驻留 UB** · `ProcessFromLocal` · **SIM 标量写 GM / MTE 读不可见** · FSM **GATE 4/8** · 单 launch **CPU 不支持** · 待 **kP=5 / v / decode / prep 拼接**

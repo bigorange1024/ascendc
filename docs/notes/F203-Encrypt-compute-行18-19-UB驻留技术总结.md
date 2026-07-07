@@ -2,9 +2,9 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 Encrypt 线性段 **内积产出 û 如何无 GM 往返地喂给 INTT Stage1**，以及 SIM 上标量写/MTE 读的可见性陷阱  
-**案例锚点**：`ascendc-tests/fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`（§6 附录）  
-**讨论**：[`qa/2026-07/2026-07-06-Encrypt-compute单launch与UB驻留.md`](../../qa/2026-07/2026-07-06-Encrypt-compute单launch与UB驻留.md)  
-**实现方案**：探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) §8  
+**案例锚点**：`ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`（2026-07-07 晋级 `pass-`；§6 附录）  
+**讨论**：[`qa/2026-07/2026-07-06`](../../qa/2026-07/2026-07-06-Encrypt-compute单launch与UB驻留.md) · [`qa/2026-07/2026-07-07`](../../qa/2026-07/2026-07-07-CPU-SIM-launch分叉约定.md)  
+**实现方案**：探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) §8  
 **上游原理**：[`F203-2s1e-NTT内积UB融合技术总结.md`](F203-2s1e-NTT内积UB融合技术总结.md)
 
 ---
@@ -26,11 +26,12 @@
 
 ### 1.1 本段输入输出
 
-- **输入**：`ŷ = NTT(y)`（k=4 polyvec，NTT 域 int32）；`Â`（`a_hat` GM）；`e₁`（时域）。
-- **行 19 前半**：`û[p] = mod_q( Σ_j MultiplyNTTs(A[j,p], ŷ[j]) )`，p∈{0..3}。
-- **行 19 后半**：`u = INTT(û) + e₁`（时域 mod q）。
+- **输入**：`ŷ = NTT(y)`（k=4）；`Â`（`a_hat` GM）；行 2 `t̂`（decode 驻 UB）；`e₁`/`e₂`。
+- **行 18**：`uTr[0..3]=û`；`uTr[4]=tr̂`（kP=5，pad→INTT k=8）。
+- **行 19**：`u[p] = INTT(uTr[p]) + e₁[p]`，p∈{0..3}。
+- **行 21**：`v = INTT(uTr[4]) + e₂`（探针期无 μ）。
 
-本 feasibility 探针 **暂不计算** `tr̂`（第 5 列）与 `v`。
+**验收（2026-07-07）**：上述全量在 **SIM 单 launch** 对拍；CPU 三 launch 仅 û/u 子集（tikicpu 不得融合，见分叉指南）。
 
 ### 1.2 与 2s1e 的关系
 
@@ -117,7 +118,7 @@ tikicpu 对 MIX **串行**调度：AIC 先执行 `CrossCoreWaitFlag` 会永久�
 | **P-UB-Producer** | 任意 AIV 标量/向量段产出 → 下一段 AIV 消费：写 `LocalTensor`，`PipeBarrier<PIPE_ALL>()` |
 | **P-MIX-GATE** | AIV 并行段结束 → `SET(done)`；AIC `WAIT(done)` → `SET(gate)`；AIV `WAIT(gate)` 再进 MIX 下一段 |
 | **P-GM-Dump-Only** | `DataCopy(UB→GM)` 仅验收；Consumer 不得读该 GM |
-| **P-Launch-Boundary** | CPU 要快路径 / SIM 要融合：拆 launch 是最简正确性保底 |
+| **P-Launch-Boundary** | CPU 要快路径 / SIM 要融合：拆 launch 是最简正确性保底；**host 分叉**见 [AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) |
 
 ---
 
@@ -125,8 +126,8 @@ tikicpu 对 MIX **串行**调度：AIC 先执行 `CrossCoreWaitFlag` 会永久�
 
 | 项 | 值 |
 |----|-----|
-| 探针 | `fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4` |
-| 3 launch | CPU+SIM max=0 |
-| 单 launch SIM | `F203_FEAS_FUSED=1`，~130s，max=0 |
+| 探针 | `pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4` |
+| 3 launch | CPU 固定 + SIM `ASCENDC_SIM_HOST_MODE=phased_launch` max=0 |
+| 单 launch SIM | 默认 `RunSimFusedSingleLaunch`，max=0 |
 | 关键 API | `innerproduct_halfrows_to_ub`、`ProcessFromLocal`、`dump_u_ntt_halfrows_ub` |
 | 待扩展 | kP=5（`tr̂`）、行 2 decode、NoiseTail e₂ → v |

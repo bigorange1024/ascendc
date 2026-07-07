@@ -1,8 +1,8 @@
 # 2026-07-06 — Alg.14 Encrypt compute 行 18–19 单 launch 与 UB 驻留
 
-**探针**：[`fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/)  
+**探针**：[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/)  
 **定稿**：[`docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md`](../../docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md)  
-**实现方案**：探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) §8
+**实现方案**：探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) §8
 
 ---
 
@@ -10,7 +10,7 @@
 
 - **目标**：在 feasibility 探针上验证 Alg.14 **行 18（NTT(y)）+ 行 19（Âᵀ∘ŷ → INTT + e₁）** 的设备路径；默认 **3 launch** 已 PASS，推进 **`F203_FEAS_FUSED=1` 单 launch MIX**。
 - **范围**：本日仅 **û / u**（4 poly）；**不含** tr̂ / v、行 2 decode、行 21。
-- **前置**：prep 探针 [`fix-f203-alg14-lines3-15-encrypt-prep-k4`](../../ascendc-tests/fix-f203-alg14-lines3-15-encrypt-prep-k4/) 已 CPU+SIM PASS。
+- **前置**：prep 探针 [`pass-fix-f203-alg14-lines3-15-encrypt-prep-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) 已 CPU+SIM PASS。
 
 ---
 
@@ -95,7 +95,7 @@
 ## 7. 验收命令
 
 ```bash
-cd ascendc-tests/fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4
+cd ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 F203_FEAS_FUSED=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
