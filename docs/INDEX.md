@@ -21,7 +21,7 @@
 
 | 场景 | 阅读 |
 |------|------|
-| 新 Agent / 新机器 | [engineering/环境复现与开发指南.md](engineering/环境复现与开发指南.md) §12–§14 |
+| 新 Agent / 新机器 | [engineering/环境复现与开发指南.md](engineering/环境复现与开发指南.md) §12–§14；探针超时见 [engineering/内核计算超时与性能定标.md](engineering/内核计算超时与性能定标.md) |
 | **写技术总结** | [notes/技术总结写作模板.md](notes/技术总结写作模板.md)、[docs-archiving.mdc](../.cursor/rules/docs-archiving.mdc) |
 | **frozen 治理** | [notes/研究路线与frozen治理.md](notes/研究路线与frozen治理.md) |
 | **ML-KEM NTT** | [notes/MLKEM-NTT-实现总结.md](notes/MLKEM-NTT-实现总结.md) + [向量与标量指南](notes/MLKEM-NTT-向量与标量实现指南.md) |

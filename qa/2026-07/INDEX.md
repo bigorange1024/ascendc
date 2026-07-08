@@ -8,6 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
+| 2026-07-08 | [2026-07-08-Alg14-tail-pack探针.md](2026-07-08-Alg14-tail-pack探针.md) | **compress/decompress/byteencode/bytedecode 更名 *-d-vec-k4** · **d=5/11** · **tail pack 56259 tick** · **分组 ByteEncode** · **内核超时口径**（15s 仅 NTT 定标） |
 | 2026-07-07 | [2026-07-07-CPU-SIM-launch分叉约定.md](2026-07-07-CPU-SIM-launch分叉约定.md) | **prep/compute 晋级 pass-** · **compute 分平台 pass** · kP=5/v/decode SIM 完成 · CPU/SIM 分叉定案 · AGENT_HANDOFF 刷新 |
 | 2026-07-06 | [2026-07-06-Encrypt-compute单launch与UB驻留.md](2026-07-06-Encrypt-compute单launch与UB驻留.md) | **3 launch PASS** · **单 launch SIM PASS** · **û UB 驻留** · SIM 标量/MTE 可见性 · FSM GATE 4/8 · CPU 单 launch 不支持 · 待 kP=5/v/decode |
 | 2026-07-03 | [2026-07-03-Alg21-Decaps-SIM单session根因.md](2026-07-03-Alg21-Decaps-SIM单session根因.md) | **PhaseE-only PASS** · **首错 at_r5** · Phase-D 触发 CAModel session 残留 · SIM 默认 2-session · **设备 FO/拒绝** · **KEM run.sh 默认全量** · **liboqs_kem 四阶段 + roundtrip_kem 闭环 CPU 全绿** · **kem.keygen 旁路 A 11/11** · **Encaps/Decaps 分项 kat CPU+SIM PASS** · **KEM 三探针 build profile 隔离** · **keygen flaky 定位：错在 PKE `t_hat` 后半、疑共享 build 双 entry 混链、隔离后 8 次未再现、不加重试** |

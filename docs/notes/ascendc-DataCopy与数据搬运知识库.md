@@ -121,9 +121,10 @@ Cube 进 L0 前常需 **ND→NZ**；`DataCopy(..., Nd2NzParams)` 随路转换。
 | MTE/Vector 并行 | 无 | 有 |
 | 缺失 barrier | 可能仍「对」 | 脏读 |
 
-### 5.5 性能启发式
+### 5.5 性能启发式（仅 ML-KEM Tag5T NTT / matmul+S123 类探针）
 
-同类探针 SIM **~15s 内**常见。稳定 **>~15s** 优先查：标量 GM 循环、多余 workspace 往返、CrossCore 死等。
+同类 **NTT 全流程**探针 SIM kernel 计算 **~15s 内**常见。稳定 **>~15s** 优先查：标量 GM 循环、多余 workspace 往返、CrossCore 死等。  
+**不**适用于 KeyGen、Encrypt 全链、Compress/ByteEncode 等（见 `docs/engineering/内核计算超时与性能定标.md`）。
 
 ---
 

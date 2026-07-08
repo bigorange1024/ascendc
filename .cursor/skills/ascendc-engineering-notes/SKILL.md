@@ -176,7 +176,8 @@ python3 scripts/verify_result.py
 
 - **Agent 强制双模式**：声称通过前须 **CPU + SIM_DIRECT sim 都跑**；细则见 `.cursor/rules/ascendc-development.mdc`「Agent 跑用例验收」。  
 - **SIM dump 路径**：kernel **前** `source scripts/camodel_sim_log.sh "${CURRENT_DIR}"`；kernel **后** `camodel_sim_collect_stray "${CURRENT_DIR}"`；产物**只允许**在 `OPPROF_<ts>_<pid>/dump/`，**禁止**落在用例根目录。  
-- 长仿真：`KERNEL_COMPUTE_BUDGET_SEC` + `scripts/kernel-run-timeout.sh`。
+- **防挂死**：各用例 `run.sh` 设 `KERNEL_COMPUTE_BUDGET_SEC` + `scripts/kernel-run-timeout.sh`（**非**全仓 15s；见 [内核计算超时与性能定标.md](../../docs/engineering/内核计算超时与性能定标.md)）。  
+- **NTT 全流程 SIM ~15s**：仅 Tag5T NTT 集成类探针的性能定标，不适用于 KeyGen/Encrypt 全链等。
 
 **验收顺序**：CPU 可快速查逻辑；**SIM 是同步与搬运问题的试金石**；NPU 最后。
 

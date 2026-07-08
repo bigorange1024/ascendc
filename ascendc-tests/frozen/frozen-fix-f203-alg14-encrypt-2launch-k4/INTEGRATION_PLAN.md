@@ -112,7 +112,7 @@ bash run.sh -r cpu -v Ascend910B4              # 全链 CPU，c.bin max=0
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4 # 全链 SIM，c.bin max=0；dump 仅 OPPROF_*/dump/
 ```
 
-kernel 计算 ≤15s（`KERNEL_COMPUTE_BUDGET_SEC`）；SIM 须 `camodel_sim_log` 接入、无用例根 stray dump。
+kernel 防挂死预算见 `run.sh`（`KERNEL_COMPUTE_BUDGET_SEC`）；NTT 全流程 SIM ~15s 性能定标不适用本 2-launch 全链。SIM 须 `camodel_sim_log` 接入、无用例根 stray dump。
 
 ---
 

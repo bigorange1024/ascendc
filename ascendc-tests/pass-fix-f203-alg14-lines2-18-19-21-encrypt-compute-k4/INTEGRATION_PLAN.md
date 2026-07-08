@@ -20,7 +20,7 @@
 |----------------------|------|
 | [`stable-mlkem-f203-pke-keygen-k4`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) `compute/`（MIX S1–S3、CrossCore） | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) **源码照抄** |
 | [`pass-fix-f203-alg11-12-innerproduct-k4`](../pass-fix-f203-alg11-12-innerproduct-k4/)、[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../pass-fix-f203-stage123-ntt-intt-polyvec8-vec/) | `ascendc-tests/frozen/` 带出 |
-| [`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../pass-f203-alg6-bytedecode-d4-d10-vec-k4/)（**d=12** 路径） | 运行时 `sys.path` 到其它用例 |
+| [`pass-f203-alg6-bytedecode-d-vec-k4`](../pass-f203-alg6-bytedecode-d-vec-k4/)（**d=12** 路径） | 运行时 `sys.path` 到其它用例 |
 
 ---
 
@@ -47,7 +47,7 @@
 ### 1.3 验收口径
 
 - Golden **仅验 I/O**（`u.bin`、`v.bin` 或合并 `uv.bin`）；不要求与 correctness 全链 tick 对比。
-- CPU + `SIM_DIRECT=1` 双模式；kernel ≤15s。
+- CPU + `SIM_DIRECT=1` 双模式；kernel 防挂死预算见 `run.sh`（默认 600s，非 15s 全局门禁）。
 
 ---
 
@@ -98,7 +98,7 @@ ek_PKE[0:1536] = ByteEncode₁₂(t̂)   # 4 × 384B
 t̂[j] ← ByteDecode₁₂( ek[ j*384 : (j+1)*384 ] )   # → int32[256]
 ```
 
-- **合法来源**：[`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../pass-f203-alg6-bytedecode-d4-d10-vec-k4/) **d=12** 向量路径（与 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/) round-trip）。
+- **合法来源**：[`pass-f203-alg6-bytedecode-d-vec-k4`](../pass-f203-alg6-bytedecode-d-vec-k4/) **d=12** 向量路径（与 [`pass-fix-f203-2s1e-byteencode12-vec-k4`](../pass-fix-f203-2s1e-byteencode12-vec-k4/) round-trip）。
 - **Golden**：host `ByteDecode₁₂`（与 KeyGen `ek` 前半互逆）；输入 `fixtures/ek_pke.bin` 与 prep 探针同源（`SEED_D=20260619`）。
 
 ---

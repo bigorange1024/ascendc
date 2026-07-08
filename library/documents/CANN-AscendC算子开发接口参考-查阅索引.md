@@ -49,6 +49,8 @@
 
 按时间倒序追加（最新在上）。
 
+| 2026-07-08 | **Compress_d d=4/5/10/11** | Cast/Div；Barrett int32 | `pass-f203-compress-d-vec-k4`：d=4/5 Barrett；d=10/11 cast_div；探针目录更名 |
+
 ### 2026-06-23 — Alg.7 SampleNTT rej 向量 compact / 比较掩码链（pass-fix-f203-alg7-sample-ntt-k4）
 
 | 查阅主题 | PDF / 在线位置 | 概括 |
@@ -108,10 +110,10 @@
 
 | 查阅主题 | PDF / 在线位置 | 概括 |
 |----------|----------------|------|
-| **F203 Compress_d** | [`pass-f203-compress-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-compress-d4-d10-vec-k4/) | **d=4/10 PASS**；d=4：`Muls`+`Adds`+`ShiftRight`+`mask_low_bits`；d=10 标量 u64 Barrett。ml_kem_1024 **d=5/11** 见 Encrypt pack。 |
-| **F203 Decompress_d** | [`pass-f203-decompress-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-decompress-d4-d10-vec-k4/) | **d=4/10 PASS**；`Muls(Q)`+`Adds(bias)`+`ShiftRight(d)`。 |
-| **F203 ByteEncode_d** | [`pass-f203-byteencode-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-byteencode-d4-d10-vec-k4/) | **d=4/10 PASS**；256-wide `mask_low_bits_i32`；分组标量 pack。 |
-| **F203 ByteDecode_d** | [`pass-f203-alg6-bytedecode-d4-d10-vec-k4`](../../ascendc-tests/pass-f203-alg6-bytedecode-d4-d10-vec-k4/) | **d=4/10 PASS**；d=4 向量 nibble；d=10 5B 组 unpack。 |
+| **F203 Compress_d** | [`pass-f203-compress-d-vec-k4`](../../ascendc-tests/pass-f203-compress-d-vec-k4/) | **d=4/10 PASS**；d=4：`Muls`+`Adds`+`ShiftRight`+`mask_low_bits`；d=10 标量 u64 Barrett。ml_kem_1024 **d=5/11** 见 Encrypt pack。 |
+| **F203 Decompress_d** | [`pass-f203-decompress-d-vec-k4`](../../ascendc-tests/pass-f203-decompress-d-vec-k4/) | **d=4/10 PASS**；`Muls(Q)`+`Adds(bias)`+`ShiftRight(d)`。 |
+| **F203 ByteEncode_d** | [`pass-f203-byteencode-d-vec-k4`](../../ascendc-tests/pass-f203-byteencode-d-vec-k4/) | **d=4/5/10/11 PASS**；256-wide `mask_low_bits_i32`；分组标量 pack（8 coeff/组 for d=5/11）。 |
+| **F203 ByteDecode_d** | [`pass-f203-alg6-bytedecode-d-vec-k4`](../../ascendc-tests/pass-f203-alg6-bytedecode-d-vec-k4/) | **d=4/5/10/11 PASS**；d=4 向量 nibble；d=5/10/11 分组 unpack。 |
 | **mask_low_bits 模板** | 见 Stage1、`byte_encode12_vec.hpp` | `v mod 2^bits`：`ShiftRight(v,bits)` → `Muls(·,2^bits)` → `Sub(v,v,·)`；A2 支持 int32。 |
 | **GetValue / SetValue** | [07\_0006](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0006.html) | ByteEncode_d pack 阶段：nibble / 10-bit 交织写 `uint8` 输出（32/64 组循环）。 |
 

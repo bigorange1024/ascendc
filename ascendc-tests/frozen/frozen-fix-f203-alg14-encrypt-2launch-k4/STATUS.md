@@ -24,7 +24,7 @@ ENCRYPT_KERNEL_BUDGET_SEC=1000 ENCRYPT_VERIFY=1 SIM_DIRECT=1 bash run.sh -r sim 
 #   → 用例根无 stray dump（无 *.dump/core*/profile_*_log*.toml）
 ```
 
-> SIM 全链计算较慢（G4/G5 tail），默认 `ENCRYPT_KERNEL_BUDGET_SEC` 15s 不够，验收用 1000s。
+> SIM 全链计算较慢（G4/G5 tail），须用 `ENCRYPT_KERNEL_BUDGET_SEC`（如 1000s）；与 NTT 全流程 ~15s 性能定标无关。
 
 ## Stage Gate 进度
 

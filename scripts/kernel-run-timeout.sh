@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # 带墙钟预算启动 AscendC host 可执行（CPU 孪生 / SIM CAModel）。
+#
+# KERNEL_COMPUTE_BUDGET_SEC：防挂死超时，由各用例 run.sh 设定默认值（非全仓 15s）。
+# 本脚本未 export 时 fallback 120s，仅防漏设；性能定标见 docs/engineering/内核计算超时与性能定标.md
+#
 # 启动前按当前工作目录绑定 ASCEND_WORK_PATH，避免 shell 残留旧路径（重命名用例后写幽灵目录）。
 set -euo pipefail
 if [ "$#" -lt 1 ]; then

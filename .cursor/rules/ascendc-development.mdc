@@ -244,20 +244,34 @@ alwaysApply: true
 
 ## 用例计算超时（强制）
 
-本仓库 **`ascendc-tests/`、`examples/`** 下任意用例，**kernel / 可执行计算阶段**（通常为 `./ascendc_kernels_bbit` 或等价二进制）的**最长计算时间默认为 15 秒**。
+**两类概念勿混用**（详 [内核计算超时与性能定标.md](../../docs/engineering/内核计算超时与性能定标.md)）：
+
+### A. 防挂死超时（各用例 `run.sh` 自定）
 
 | 规则 | 说明 |
 |------|------|
-| **时限** | `KERNEL_COMPUTE_BUDGET_SEC` 默认 **15**；仅统计**计算任务**本身，不含编译、`gen_data`、CMake install |
-| **死锁判定** | 超过 15 秒仍未正常结束 → **视为死锁**，**强制退出**（`timeout` exit **124**） |
-| **实现** | `run.sh` 必须用 `timeout` 包裹 kernel 启动；推荐调用 `bash scripts/kernel-run-timeout.sh ./ascendc_kernels_bbit` |
-| **Agent 跑用例** | 执行 `run.sh` 或单独跑 kernel 时同样遵守；不得无限等待；超时须报 **阻塞/死锁** 并停下排错 |
-| **例外** | 仅当用户**当次任务明确**放宽秒数时可改 `KERNEL_COMPUTE_BUDGET_SEC`；不得静默加长 |
+| **机制** | `KERNEL_COMPUTE_BUDGET_SEC` + `scripts/kernel-run-timeout.sh`；仅统计 **kernel 计算段**墙钟，不含编译 / `gen_data` / install |
+| **默认值** | **各用例**在 `run.sh` 用 `${VAR:-秒数}` 设定（60s–1800s 均常见）；**禁止**全仓统一默认 15 |
+| **超时含义** | `timeout` exit **124** → **疑似死锁/挂死**，须排错；**不等于**性能不达标 |
+| **Agent** | 遵守**当前用例** `run.sh` 默认预算；不得无限等待 |
 
 ```bash
-# run.sh 推荐写法（计算段）
-KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-15}"
+# run.sh 推荐写法（预算须写进该用例头注释）
+export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-600}"  # 示例：长链 SIM
 bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit
+```
+
+### B. ML-KEM NTT 全流程 SIM 性能定标（~15s，非超时 env）
+
+| 规则 | 说明 |
+|------|------|
+| **范围** | **仅** Tag5T NTT 全流程类探针（如 `pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`、同类 matmul+S123） |
+| **定标** | 正常实现 SIM kernel 计算 **约 ≤15s**（理想 ≤10s）；稳定远超 → 查搬运/同步/标量 GM 路径 |
+| **禁止** | 把此定标套到 KeyGen、Encrypt 全链、Compress/ByteEncode、tail pack 等其它任务 |
+
+```bash
+# ❌ 禁止作为全仓默认或验收门禁
+KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-15}"
 ```
 
 ## 默认编译与运行选项（强制）
@@ -311,7 +325,7 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ## 验证阶梯（交付；声称完成前至少满足任务声明级别）
 
 1. `bash ~/ascendc/scripts/verify-cann.sh`
-2. `cd examples/<op> && ./run.sh cpu 910B4` → `[SUCCESS] output matches golden`（kernel 计算 ≤15s，超时即失败）
+2. `cd examples/<op> && ./run.sh cpu 910B4` → `[SUCCESS] output matches golden`（遵守该用例 `run.sh` 防挂死预算；NTT 全流程另见性能定标 ~15s）
 3. `./run.sh sim-build 910B4` → `ldd ./*_npu | grep runtime_camodel`
 4. `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` → golden 一致；dump 仅在 `OPPROF_*/dump/`，用例根无 stray dump
 5. `bash run.sh -r sim -v Ascend910B4` → msprof + `OPPROF_*`（可选，全量 profiling）
@@ -422,6 +436,6 @@ MLKEM 活跃探针：pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2（见 docs/note
 已锁定实现参数不得擅自修改；有歧义须停下与用户确认后再编码。
 写 AscendC 前必查 library/documents/CANN-AscendC算子开发接口参考-查阅索引.md；索引无记录则查 CANN 9.0 API PDF，查完同一轮刷新索引。
 注释与实现同轮：自研 Python/C/AscendC 须与实现同步写详细中文注释（文件头 + 函数头 + 函数体内该注尽注）；后续可继续补注释，但同轮不得以裸实现充当完成。
-用例 kernel 计算默认最长 15s（KERNEL_COMPUTE_BUDGET_SEC）；超时视为死锁，强制退出。
+用例 kernel 防挂死超时见各 `run.sh` 的 `KERNEL_COMPUTE_BUDGET_SEC`；ML-KEM NTT 全流程 SIM ~15s 仅为性能定标（见 docs/engineering/内核计算超时与性能定标.md）。
 默认编译/运行 = 全量计算 + 全量优化（ascendc-tests/examples/src）；文档与 run.sh 不得要求手动 export 默认 env；仅调试分段须显式覆盖并标非默认。
 ```

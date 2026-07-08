@@ -94,7 +94,8 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 ### 观察
 
-同类 **matmul + split** 探针（如 `fix-merged-kyber-…-block-s123`、`frozen-int8-matmul-cube-16x256x512`）在 CPU / `SIM_DIRECT` 下通常在 **~15s 内**跑完（含编译与 camodel 开销）。若整用例 **稳定超过 ~15s**，多半不是「SIM 本来就慢」，而是实现路径有问题。
+同类 **matmul + split / Tag5T NTT 全流程**探针在 CPU / `SIM_DIRECT` 下 kernel 计算通常在 **~15s 内**（理想 ≤10s）。若该类探针 **稳定超过 ~15s**，多半不是「SIM 本来就慢」，而是实现路径有问题。  
+（2026-07-08 澄清：**非**全仓库 `KERNEL_COMPUTE_BUDGET_SEC` 默认；长链任务预算见各 `run.sh` 与 `docs/engineering/内核计算超时与性能定标.md`。）
 
 ### 案例：`InterleaveMatC` 标量 GM 拼列
 

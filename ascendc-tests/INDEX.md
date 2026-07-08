@@ -34,13 +34,14 @@
 | [**pass-fix-f203-stage123-ntt-intt-polyvec8-vec/**](pass-fix-f203-stage123-ntt-intt-polyvec8-vec/) | **8-poly 三段式 NTT/INTT**（紧凑 `[HI₈,LO₈]`；LUT 切换；1 launch；NTT SIM **30347** / INTT **30340**） | ✓ | ✓ |
 | [**pass-shake128-ops-math-toy/**](pass-shake128-ops-math-toy/) | 共享核 **SHAKE128**（`*_toy_ub.hpp` 全 UB 参考） | ✓ | **12285** |
 | [**pass-shake256-ascendc-toy/**](pass-shake256-ascendc-toy/) | 共享 `shake_xof_kernel` + **SHAKE256**（全 UB toy） | ✓ | **12285** |
-| [**pass-f203-alg6-bytedecode-d4-d10-vec-k4/**](pass-f203-alg6-bytedecode-d4-d10-vec-k4/) | **Alg.6 ByteDecode_d**（**d=4/10** PASS；d=4 SIM **9186**） | ✓ | ✓ |
-| [**pass-f203-byteencode-d4-d10-vec-k4/**](pass-f203-byteencode-d4-d10-vec-k4/) | **Alg.5 ByteEncode_d**（**d=4/10** PASS；d=4 SIM **5435**） | ✓ | ✓ |
-| [**pass-f203-compress-d4-d10-vec-k4/**](pass-f203-compress-d4-d10-vec-k4/) | **§4.2.1 Compress_d**（**d=4/10** PASS；d=4 SIM **3247**） | ✓ | ✓ |
-| [**pass-f203-decompress-d4-d10-vec-k4/**](pass-f203-decompress-d4-d10-vec-k4/) | **§4.2.1 Decompress_d**（**d=4/10** PASS；d=4 SIM **3177**） | ✓ | ✓ |
+| [**pass-f203-alg6-bytedecode-d-vec-k4/**](pass-f203-alg6-bytedecode-d-vec-k4/) | **Alg.6 ByteDecode_d**（**d=4/5/10/11** PASS；d=4 SIM **9186**，d=5 **5696**，d=11 **6641**） | ✓ | ✓ |
+| [**pass-f203-byteencode-d-vec-k4/**](pass-f203-byteencode-d-vec-k4/) | **Alg.5 ByteEncode_d**（**d=4/5/10/11** PASS；d=4 SIM **5435**，d=5 **5537**，d=11 **6568**） | ✓ | ✓ |
+| [**pass-f203-compress-d-vec-k4/**](pass-f203-compress-d-vec-k4/) | **§4.2.1 Compress_d**（**d=4/5/10/11** 向量；指南见 `docs/notes/F203-Compress-Decompress-向量实现指南.md`） | ✓ | ✓ |
+| [**pass-f203-decompress-d-vec-k4/**](pass-f203-decompress-d-vec-k4/) | **§4.2.1 Decompress_d**（**d=4/5/10/11** 向量） | ✓ | ✓ |
 | [**pass-toy-mix-s123-byteencode-k2/**](pass-toy-mix-s123-byteencode-k2/) | **MIX 玩具**：双 AIV S1 → Cube 64³ → UB Adds+func1（无跨 AIV） | ✓ | ✓ |
 | [**pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/**](pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) | **Alg.14 prep**：`ek` 尾 ρ→`a_hat` + `coins`→`y/e₁/e₂`（单 launch，stable vendored）；**不含** `t̂` decode | ✓ | ✓ **470502** |
 | [**pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/**](pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) | **Alg.14 compute**：行 2/18/19/21（不含 μ）；SIM 单 launch **完成**；CPU 三 launch **部分**（û/u） | 部分 | ✓ **~125k** |
+| [**fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/**](fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/) | **Alg.14 tail**：行 20 μ_embed + 行 22–24 pack→`c`（分组 ByteEncode；SIM **56259** tick） | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 
