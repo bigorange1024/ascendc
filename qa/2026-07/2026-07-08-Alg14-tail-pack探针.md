@@ -63,7 +63,7 @@ SIM tick（910B4）：encode d=4 **5435** · d=5 **5537** · d=10 **6455** · d=
 
 ## 3. Alg.14 tail pack 探针
 
-目录：`fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`
+目录：`pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`
 
 | 行 | 内容 | 状态 |
 |----|------|------|
@@ -95,8 +95,8 @@ SIM tick（910B4）：encode d=4 **5435** · d=5 **5537** · d=10 **6455** · d=
 
 | 项 | 说明 |
 |----|------|
-| **T17** | **PASS** compute+tail：SIM **1 launch** **154781** tick；c/u/v max=0 — [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) · 定稿 [`docs/notes/F203-Alg14-Encrypt-compute-tail-PASS技术总结.md`](../docs/notes/F203-Alg14-Encrypt-compute-tail-PASS技术总结.md) |
-| **T17-next** | **全链 Encrypt**：prep（行 3–15）并入本基线 → pk+m+coins → c |
+| **T17** | **PASS** compute+tail — [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | 已关闭 → 见已关闭表 |
+| **T17-next** | 全链 Encrypt — [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · **2 launch SIM** | 方案定稿 |
 
 ## 6. 证据
 
@@ -105,7 +105,7 @@ SIM tick（910B4）：encode d=4 **5435** · d=5 **5537** · d=10 **6455** · d=
 F203_BYTE_ENCODE_D=5 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # PASS totalTick=5537
 
 # tail pack
-cd ascendc-tests/fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
+cd ascendc-tests/pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # PASS totalTick=56259
 ```
@@ -170,3 +170,24 @@ SIGFPE = _Mod_range_hashing::operator()          # unordered_map 桶数=0 → ha
 **决策**：`fix-f203-alg14-lines2-24-encrypt-compute-tail-k4` → **`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`**；作为 **Alg.14 compute+tail PASS 基线**，下一步在此上接 prep 做全链 Encrypt。
 
 **文档**：`docs/notes/F203-Alg14-Encrypt-compute-tail-PASS技术总结.md`；`STATUS.md` / `INTEGRATION_PLAN.md` / `ascendc-tests/INDEX.md` 已刷新；T17 在 `qa/TODO.md` 标 **PASS**。
+
+## 11. tail-pack 晋级 pass- + 全链方案（2026-07-08）
+
+- `fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4` → **`pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`**
+- 新建 [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)：prep + compute+tail **2 launch SIM** 集成方案（`INTEGRATION_PLAN.md`）
+
+## 12. 全链设备 Encrypt 实现 + CPU/SIM PASS（2026-07-08）
+
+**探针**：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + compute+tail 集成，单 device session GM handoff）。
+
+| 模式 | launch | 结果 |
+|------|--------|------|
+| CPU | prep + ntt_y/at_jp/intt_e1 + pack（5） | `c` max=0 |
+| SIM | prep → l18_l19（含 e₂+=μ + 内联 pack）（2） | `c` max=0、`v` max=0；Total tick **626121**；根目录 0 stray dump |
+
+**关键结论**：
+- **a_hat/re handoff 零拷贝、无需转置**。三方索引一致：prep 存 `flat(p*K+j)=SampleNTT(ρ,j,p)` == correctness `build_a_hat` == compute `a_hat_offset_jp(j,p)=(j*K+p)` 读法；`re[0:4]=r(≡y)`、`[4:8]=e₁`、`[8]=e₂` 按字节偏移切片直喂 compute。
+- **golden 复用**：`gen_data.py` 复制 correctness `input/{ek_pke,m,coins}` + `output/golden_c.bin`（`SEED_D=20260619`），本地派生 LUT 与 `golden_v`，并**三源一致性自检**（本地重算 c == correctness golden_c）。
+- **CPU 的 v**：CPU 三 launch 无 k=8 INTT 不产 v，注入 `golden_v`（含 μ+e₂），不参与判定；c 仍为设备全链产出。
+- SIM tick 626121 ≈ 方案估计（prep 470502 + compute 154781）。
+- 已晋级 **`pass-fix-f203-alg14-pke-encrypt-device-k4`**；I/O 对齐 Alg.14（输入 ek+m+coins，**输出仅密文 c**，u/v 不落盘）。

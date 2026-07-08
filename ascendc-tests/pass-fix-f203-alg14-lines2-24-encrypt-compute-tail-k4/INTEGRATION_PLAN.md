@@ -336,7 +336,7 @@ prep 与 compute **同 Launch 1**（KeyGen 已验证 prep+compute 可单 session
 | 文档 | 内容 |
 |------|------|
 | [compute INTEGRATION_PLAN](../pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) | kP=5、UB 驻留、单 launch FSM |
-| [tail INTEGRATION_PLAN](../fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/INTEGRATION_PLAN.md) | GM 契约、分组 ByteEncode |
+| [tail INTEGRATION_PLAN](../pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/INTEGRATION_PLAN.md) | GM 契约、分组 ByteEncode |
 | [F203-Encrypt-compute-行18-19-UB驻留技术总结.md](../../docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md) | SIM 红线 |
 | [AscendC-CPU与SIM实现分叉开发指南.md](../../docs/notes/AscendC-CPU与SIM实现分叉开发指南.md) | CPU 三 launch |
 | [内核计算超时与性能定标.md](../../docs/engineering/内核计算超时与性能定标.md) | 防挂死 vs 15s 定标 |

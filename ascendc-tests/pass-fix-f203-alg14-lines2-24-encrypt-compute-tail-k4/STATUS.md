@@ -15,7 +15,7 @@
 | 20–21 | `e₂+=μ`；`v ← INTT(tr̂)+e₂'` | ✓ |
 | 22–24 | `c₁‖c₂ ← Compress+ByteEncode(u,v)` | ✓ |
 
-**不含**：行 3–15（ρ→Â、CBD→y/e₁/e₂）→ 见 [`pass-fix-f203-alg14-lines3-15-encrypt-prep-k4`](../pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/)（待并入）。
+**不含**：行 3–15（ρ→Â、CBD→y/e₁/e₂）→ 全链见 [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../pass-fix-f203-alg14-pke-encrypt-device-k4/)（方案已定）。
 
 ## Launch 模式
 
@@ -56,5 +56,5 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 | 探针 | 关系 |
 |------|------|
 | `pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4` | compute 段 vendoring 来源 |
-| `fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4` | tail pack 抄码来源（已内联 SIM） |
-| prep + 本探针 | **下一步**：全链 Encrypt |
+| `pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4` | tail pack 抄码来源（已内联 SIM） |
+| prep + 本探针 | 全链：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../pass-fix-f203-alg14-pke-encrypt-device-k4/) |

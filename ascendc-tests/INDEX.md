@@ -41,8 +41,9 @@
 | [**pass-toy-mix-s123-byteencode-k2/**](pass-toy-mix-s123-byteencode-k2/) | **MIX 玩具**：双 AIV S1 → Cube 64³ → UB Adds+func1（无跨 AIV） | ✓ | ✓ |
 | [**pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/**](pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) | **Alg.14 prep**：`ek` 尾 ρ→`a_hat` + `coins`→`y/e₁/e₂`（单 launch，stable vendored）；**不含** `t̂` decode | ✓ | ✓ **470502** |
 | [**pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/**](pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) | **Alg.14 compute**：行 2/18/19/21（不含 μ）；SIM 单 launch **完成**；CPU 三 launch **部分**（û/u） | 部分 | ✓ **~125k** |
-| [**fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/**](fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/) | **Alg.14 tail**：行 20 μ_embed + 行 22–24 pack→`c`（分组 ByteEncode；SIM **56259** tick） | ✓ | ✓ |
+| [**pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/**](pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/) | **Alg.14 tail**：行 20 μ_embed + 行 22–24 pack→`c`（分组 ByteEncode；SIM **56259** tick） | ✓ | ✓ |
 | [**pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/**](pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | **Alg.14 行 2/16–24**（prep 外素材→c=c₁‖c₂）；SIM **1 launch** **154781** tick；CPU 4 launch | ✓ | ✓ |
+| [**pass-fix-f203-alg14-pke-encrypt-device-k4/**](pass-fix-f203-alg14-pke-encrypt-device-k4/) | **Alg.14 完整 K-PKE.Encrypt**（prep + compute+tail 集成；行 1–22 全设备；**in ek+m+coins → out 仅密文 c**；u/v 不落盘；SEED_D=20260619）；SIM **2 launch 626139** tick | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 

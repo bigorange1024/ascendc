@@ -57,7 +57,7 @@ pass-f203-byteencode-d-vec-k4/
 
 - 上游：[`pass-f203-compress-d-vec-k4`](../pass-f203-compress-d-vec-k4/)
 - 下游 decode：[`pass-f203-alg6-bytedecode-d-vec-k4`](../pass-f203-alg6-bytedecode-d-vec-k4/)
-- tail pack 抄码：[`fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`](../fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/)
+- tail pack 抄码：[`pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`](../pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/)
 
 ---
 

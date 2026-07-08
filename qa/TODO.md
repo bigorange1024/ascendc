@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-08（**pass-fix-f203-alg14-lines2-24** compute+tail **PASS** · **Alg.14 全链 Encrypt 下一步**）
+**最近刷新**：2026-07-08（**Alg.14 全链设备 Encrypt PASS + 晋级 pass-**：`pass-fix-f203-alg14-pke-encrypt-device-k4` · I/O 对齐 Alg.14 仅出 c · CPU+SIM `c` max=0 · SIM 2 launch **626139** tick）
 
 ---
 
@@ -10,7 +10,6 @@
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
-| **P0** | **T17** | **Alg.14 Encrypt compute+tail**：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | **PASS**（CPU+SIM c/u/v max=0；SIM **1 launch** **154781** tick）；**下一步**：并入 prep → 全链 Encrypt |
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_encaps_batch.sh`，`KEM_ENC_EXT_SEED` 旁路 `m`） |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_decaps_batch.sh`）；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
 | **P0** | **T6f** | ML-KEM **Alg.19 KeyGen CPU flaky**：build 隔离改造中一次 `verify FAIL`/复跑 PASS；差异首字节 `ek_kem[768]`=`t_hat` 后半（PKE KeyGen `mmad_custom` 产出，非 KEM 尾段） | **隔离后 8 次未再现**（4×重建首跑 + 4×同二进制复跑全 PASS）；高度疑为**共享 build 双 entry `.o` 混链残留**，未排除 `mmad_custom` MIX 低频竞态；不加脚本重试；再现则先 FORCE_REBUILD 排污染再采样定位 |
@@ -54,6 +53,8 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T17-next** | Alg.14 **全链设备 Encrypt** PASS + 晋级：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · I/O 对齐 Alg.14（in ek+m+coins，**out 仅 c**）· CPU+SIM `c` max=0 · SIM **2 launch 626139** tick · `SEED_D=20260619` · handoff 零拷贝无转置 | 2026-07-08 |
+| **T17** | Alg.14 compute+tail PASS：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) · SIM 1 launch **154781** tick | 2026-07-08 |
 | **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh)；`SEED_D=20260619` CPU+SIM max=0；根因 **`Compress_5` `(1<<26)`**；见 [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md) | 2026-07-01 |
 | **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen 密钥 → Encrypt `c.bin` → Decrypt `m.bin`；CPU+SIM **max=0**（32B）；见 qa §16 | 2026-06-30 |
 | **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**（prep \| ntt+intt）；SIM **~427k** tick | 2026-06-30 |

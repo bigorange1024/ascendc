@@ -68,7 +68,7 @@ INTT 输入须来自内积 **当次 UB**（`ProcessFromLocal`）；见 [`F203-En
 
 ## 5. 后继：全链 Encrypt
 
-1. 并入 prep（`pass-fix-f203-alg14-lines3-15-encrypt-prep-k4`）→ 单 session 从 pk+m+coins 到 c  
+1. 全链设备 Encrypt：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + 本探针，SIM **2 launch**）
 2. 可选晋级 `examples/stable/stable-mlkem-f203-pke-encrypt-k4`
 
 ---

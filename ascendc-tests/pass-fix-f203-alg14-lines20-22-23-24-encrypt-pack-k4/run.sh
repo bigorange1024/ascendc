@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4 — Alg.14 tail：μ_embed + pack → c
+# pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4 — Alg.14 tail：μ_embed + pack → c（PASS）
 #
 # Usage（默认）：
 #   bash run.sh -r cpu -v Ascend910B4
@@ -103,4 +103,4 @@ if [ "${RUN_MODE}" = "sim" ]; then
 fi
 
 python3 "${CURRENT_DIR}/scripts/verify_result.py"
-echo "[SUCCESS] fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4 (${RUN_MODE})"
+echo "[SUCCESS] pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4 (${RUN_MODE})"
