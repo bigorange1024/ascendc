@@ -5,6 +5,7 @@
 #define F203_BYTE_ENCODE_D 4
 #endif
 
+// 0=纯标量 | 1=默认验收（mask+标量 pack）| 2=真·Gather pack（保留、默认不激活；见 docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md）
 #ifndef BYTE_ENCODE_D_VEC
 #define BYTE_ENCODE_D_VEC 1
 #endif

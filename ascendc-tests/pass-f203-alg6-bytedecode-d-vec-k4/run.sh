@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # pass-f203-alg6-bytedecode-d-vec-k4 — FIPS 203 ByteDecode_d（验收 d=4/5/10/11）
 #
+# 宏选型：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
+#   d=5/11 标量 unpack（VEC=0/1 同体）；Decompress 默认向量
+#
 # Usage:
 #   bash run.sh -r cpu -v Ascend910B4
 #   F203_BYTE_DECODE_D=10 bash run.sh -r sim -v Ascend910B4

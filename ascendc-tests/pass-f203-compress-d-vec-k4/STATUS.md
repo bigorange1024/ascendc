@@ -2,7 +2,8 @@
 
 **前缀 `pass-`**：FIPS 203 **Compress_d** 单 poly 向量探针；**d∈{4,5,10,11}** CPU+SIM 验收。
 
-**指南**：[`docs/notes/F203-Compress-Decompress-向量实现指南.md`](../../docs/notes/F203-Compress-Decompress-向量实现指南.md)
+**指南**：[`docs/notes/F203-Compress-Decompress-向量实现指南.md`](../../docs/notes/F203-Compress-Decompress-向量实现指南.md)  
+**ByteEncode/Decode 宏分层**：[`docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md`](../../docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md)
 
 ## 向量路径
 
@@ -18,7 +19,9 @@
 | 变量 | 默认 | 含义 |
 |------|------|------|
 | `F203_COMPRESS_D` | `4` | **4 / 5 / 10 / 11** |
-| `COMPRESS_D_VEC` | `1` | 0=标量 fallback |
+| `COMPRESS_D_VEC` | `1` | 0=标量 fallback / **1=向量（默认，验收基线；tail 抄此路径）** |
+
+**说明**：Compress 为纯 per-lane 运算（Barrett / cast_div + mask），**默认激活向量**；标量路径仅作对照 fallback。
 
 ## 衔接
 

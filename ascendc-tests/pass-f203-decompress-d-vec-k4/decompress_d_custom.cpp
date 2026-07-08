@@ -1,7 +1,7 @@
 /**
  * @file decompress_d_custom.cpp
- * @brief Decompress_d 单 launch 入口；d 由 CMake F203_DECOMPRESS_D 选定。
- * @see docs/notes/F203-Compress-Decompress-向量实现指南.md
+ * @brief Decompress_d 单 launch；默认 DECOMPRESS_D_VEC=1 向量 per-lane。
+ * 见 docs/notes/F203-Compress-Decompress-向量实现指南.md
  */
 #include "decompress_d_vec.hpp"
 #include "kernel_operator.h"

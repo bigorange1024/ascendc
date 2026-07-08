@@ -94,8 +94,13 @@ for d in 4 5 10 11; do F203_DECOMPRESS_D=$d bash run.sh -r cpu -v Ascend910B4; d
 
 ---
 
-## 5. 与 tail pack 的关系
+## 5. 与 tail pack / ByteEncode 的关系
 
-[`fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`](../../ascendc-tests/fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/) 已 vendored **d=5 Barrett + d=11 cast_div** 至 `compute/f203_tail_compress_byteencode.hpp`（禁止跨探针 `#include`）。**Decompress 不在 encrypt tail 范围**；Decrypt 侧用 `pass-f203-decompress-d-vec-k4` 同理抄码。
+[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/)（及前身 tail-only 探针）已 vendored **d=5 Barrett + d=11 cast_div** 至 `compute/f203_tail_compress_byteencode.hpp`（**Compress 向量、`COMPRESS_D_VEC=1` 路径**；禁止跨探针 `#include`）。
 
-**未向量化**：ByteEncode Alg.5 比特流（tail 与 correctness pack 仍标量）；SIM 瓶颈在此，非 Compress。
+**ByteEncode / ByteDecode 选型**（bit 重组 vs per-lane）见定稿：[`F203-ByteEncode-ByteDecode-d-向量与标量选型.md`](F203-ByteEncode-ByteDecode-d-向量与标量选型.md)。
+
+- **Encrypt tail**：ByteEncode **标量逐组 pack**（`BYTE_ENCODE_D_VEC=1`）；**不激活** `VEC=2` 真·Gather pack（实验更慢 +7%/+12% tick）。
+- **Decrypt**：ByteDecode d=5/11 **标量逐组 unpack**；Decompress **向量**（本指南 §2 P-DEC）。
+
+**Decompress 不在 encrypt tail 范围**；Decrypt 侧用 `pass-f203-decompress-d-vec-k4` 同理抄码。

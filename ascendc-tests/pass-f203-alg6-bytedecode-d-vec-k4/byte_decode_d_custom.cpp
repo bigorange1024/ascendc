@@ -1,3 +1,8 @@
+/**
+ * @file byte_decode_d_custom.cpp
+ * @brief ByteDecode_d 单 launch；d=5/11 标量 unpack（BYTE_DECODE_D_VEC 默认 1，与 0 同体）。
+ * 选型：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
+ */
 #include "byte_decode_d_vec.hpp"
 #include "kernel_operator.h"
 

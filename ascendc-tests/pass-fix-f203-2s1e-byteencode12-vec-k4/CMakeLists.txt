@@ -30,7 +30,10 @@ else()
     message(FATAL_ERROR "invalid RUN_MODE: ${RUN_MODE}")
 endif()
 
-add_executable(ascendc_kernels_bbit ${TEST_ROOT}/main.cpp)
+add_executable(ascendc_kernels_bbit
+    ${TEST_ROOT}/main.cpp
+    ${TEST_ROOT}/byte_encode12_tiling.cpp
+)
 
 target_include_directories(ascendc_kernels_bbit PRIVATE ${TEST_ROOT} ${MERGED_KYBER_ROOT}
     ${CMAKE_CURRENT_LIST_DIR}/../../library/shared)

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # pass-f203-decompress-d-vec-k4 — FIPS 203 Decompress_d（验收 d=4/5/10/11）
 #
+# 默认 DECOMPRESS_D_VEC=1（per-lane 向量）；Decrypt 链；见 docs/notes/F203-Compress-Decompress-向量实现指南.md
+#
 # Usage:
 #   bash run.sh -r cpu -v Ascend910B4
 #   F203_DECOMPRESS_D=11 bash run.sh -r sim -v Ascend910B4

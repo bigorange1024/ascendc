@@ -5,6 +5,7 @@
 #define F203_DECOMPRESS_D 4
 #endif
 
+// 0=标量 fallback | 1=默认向量 per-lane（Decrypt 链）；见 docs/notes/F203-Compress-Decompress-向量实现指南.md
 #ifndef DECOMPRESS_D_VEC
 #define DECOMPRESS_D_VEC 1
 #endif

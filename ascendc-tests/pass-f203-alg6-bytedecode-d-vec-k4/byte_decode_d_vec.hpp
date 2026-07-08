@@ -1,6 +1,16 @@
 #ifndef BYTE_DECODE_D_VEC_HPP
 #define BYTE_DECODE_D_VEC_HPP
 
+/**
+ * @file byte_decode_d_vec.hpp
+ * @brief FIPS 203 Alg.6 ByteDecode_d（d=4/5/10/11）；输出 d-bit 系数，**不含** Decompress。
+ *
+ * 宏分层（详见 docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md）：
+ *   BYTE_DECODE_D_VEC=0/1 — d=5/10/11：**同体**，均为标量 unpack_*_group 逐组（O(N/8)）
+ *   BYTE_DECODE_D_VEC=1 — d=4 额外：向量 nibble mask + 标量 scatter（默认）
+ *   无 VEC=2（对称 encode VEC=2 未做；预期 Gather 开销 > 标量逐组）
+ * 下游 Decompress 默认向量：pass-f203-decompress-d-vec-k4（DECOMPRESS_D_VEC=1）。
+ */
 #include "byte_decode_d_config.hpp"
 #include "f203_mlkem_params.h"
 #include "kernel_operator.h"

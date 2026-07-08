@@ -14,7 +14,6 @@ Golden 链与 pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/scripts/gen_data.py �
 """
 import importlib.util
 import os
-import struct
 import sys
 
 import numpy as np
@@ -65,9 +64,7 @@ def main() -> None:
     ek_ref = v2.golden_byte_encode_polyvec(t_hat_ref)
     sk_ref = v2.golden_byte_encode_polyvec(s_hat)
 
-    tiling = struct.pack("<i", N)
-    with open(os.path.join(_CASE_DIR, "input", "tiling.bin"), "wb") as f:
-        f.write(tiling.ljust(64, b"\x00"))
+    # tiling 不再由 Python 落盘：运行时改由 byte_encode12_tiling.cpp 的 GenerateTiling 生成。
 
     dst_ref.astype(np.int32).tofile(os.path.join(_CASE_DIR, "input", "dst.bin"))
     t_hat_ref.astype(np.int32).tofile(os.path.join(_CASE_DIR, "input", "t_hat.bin"))

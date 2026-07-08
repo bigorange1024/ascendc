@@ -5,6 +5,7 @@
 #define F203_BYTE_DECODE_D 4
 #endif
 
+// 0=标量 | 1=默认（d=4 向量 nibble；d=5/10/11 标量 unpack，与 0 同体）；见 docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
 #ifndef BYTE_DECODE_D_VEC
 #define BYTE_DECODE_D_VEC 1
 #endif

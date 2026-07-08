@@ -16,7 +16,18 @@ export CAMODEL_LOG_PATH="${_camodel_case_dir}/sim_log"
 mkdir -p "${CAMODEL_LOG_PATH}"
 
 export ASCEND_PROCESS_LOG_PATH="${CAMODEL_LOG_PATH}"
-export ASCEND_WORK_PATH="${CAMODEL_LOG_PATH}"
+
+# ASCEND_WORK_PATH 是 ADX DFX dump 的工作根。设置它会让 libascend_dump.so 的 DumpManager
+# 在**静态初始化期**就 EnableDfxDumper → 提前 boot CAModel runtime；个别探针二进制会在此路径命中
+# CANN 侧 bug（cce::runtime::Config::InitHardwareInfo950() 对空 unordered_map 取模除零 → SIGFPE，
+# 崩在 main 之前，与 kernel 数值无关，见 qa 纪要）。SIM_DIRECT 金标跑本身不需要 ADX dump（日志已由
+# CAMODEL_LOG_PATH / ASCEND_PROCESS_LOG_PATH 落到 sim_log），故提供默认关闭的 opt-out：
+# 受影响用例在 run.sh 里 `export CAMODEL_SKIP_ADX_WORK_PATH=1` 即可跳过（默认仍导出，行为不变）。
+if [[ "${CAMODEL_SKIP_ADX_WORK_PATH:-0}" == "1" ]]; then
+  unset ASCEND_WORK_PATH
+else
+  export ASCEND_WORK_PATH="${CAMODEL_LOG_PATH}"
+fi
 
 camodel_sim_collect_stray() {
   local root="${1:-.}"

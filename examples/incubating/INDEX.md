@@ -14,7 +14,7 @@
 
 | 目录 | 方案简述 | 状态 |
 |------|----------|------|
-| [exp-sepolyvec8-ntt-k8/](exp-sepolyvec8-ntt-k8/) | **纯 $k{=}8$ 批 NTT**（8 条互异随机 poly；交错 S0；**非** KeyGen 集成）；[PDF](exp-sepolyvec8-ntt-k8/exp-sepolyvec8-ntt-k8-实现方案.pdf) | **CPU ✓ / SIM ✓**；NTT 内核回归对照；[STATUS](exp-sepolyvec8-ntt-k8/STATUS.md) |
+| [exp-sepolyvec8-ntt-k8/](exp-sepolyvec8-ntt-k8/) | **纯 $k{=}8$ 批 NTT**（8 条互异随机 poly；交错 S0；**非** KeyGen 集成）；[PDF](exp-sepolyvec8-ntt-k8/exp-sepolyvec8-ntt-k8-实现方案.pdf) | **CPU ✓ / SIM ✓**（SIM 需 `CAMODEL_SKIP_ADX_WORK_PATH` 规避 CAModel FPE，已内置 run.sh，见 [qa 2026-07-08 §8](../../qa/2026-07/2026-07-08-Alg14-tail-pack探针.md)）；NTT 内核回归对照；[SELF_CONTAINED](exp-sepolyvec8-ntt-k8/SELF_CONTAINED.md) |
 | [exp-mlkem-f203-stage1-encode-vec/](exp-mlkem-f203-stage1-encode-vec/) | F203 Stage1 纯向量 encode；[customspec](exp-mlkem-f203-stage1-encode-vec/exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.pdf) | `aiv=1/2/8` 对拍 |
 | [exp-mlkem-f203-stage3-routea-mod-vec/](exp-mlkem-f203-stage3-routea-mod-vec/) | F203 Stage3 RouteA+mod 向量预研；[customspec](exp-mlkem-f203-stage3-routea-mod-vec/exp-mlkem-f203-stage3-routea-mod-vec-实现方案-customspec.pdf) | `aiv=1/2/8` 对拍 |
 | [exp-mlkem-f203-pke-keygen-k4/](exp-mlkem-f203-pke-keygen-k4/) | FIPS 203 **Alg.13 PKE KeyGen** k=4（**已晋级** [`stable-mlkem-f203-pke-keygen-k4`](../stable/stable-mlkem-f203-pke-keygen-k4/)）；[customspec](exp-mlkem-f203-pke-keygen-k4/exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.pdf) | 副本保留；交付以 **stable** 为准 · [STATUS](exp-mlkem-f203-pke-keygen-k4/STATUS.md) |

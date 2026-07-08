@@ -5,6 +5,7 @@
 #define F203_COMPRESS_D 4
 #endif
 
+// 0=标量 fallback | 1=默认向量 per-lane（tail 抄此）；见 docs/notes/F203-Compress-Decompress-向量实现指南.md
 #ifndef COMPRESS_D_VEC
 #define COMPRESS_D_VEC 1
 #endif

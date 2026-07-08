@@ -21,6 +21,9 @@
 #include <chrono>
 #include <thread>
 
+// 运行时 tiling 生成（见 f203_encrypt_tiling.cpp）；替代旧 Python input/tiling.bin。
+extern void GenerateTiling(TilingData &data);
+
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
 #include "aclrtlaunch_f203_encrypt_at_jp.h"
@@ -294,18 +297,9 @@ int32_t main(int32_t argc, char *argv[])
     const size_t wsSize = tiling::wssize;
     const size_t lutBytes = tiling::lutEvenOddBytes;
 
+    // 运行时生成 tiling（模板风格；数值集中于 f203_encrypt_tiling.cpp）
     TilingData tilingHost{};
-    tilingHost.tileLength = static_cast<int32_t>(tiling::n);
-    tilingHost.kPolys = static_cast<int32_t>(tiling::kK);
-    tilingHost.mixPass = 3;
-
-    uint8_t tilingBuf[tilingSize] = {};
-    size_t tilingRead = tilingSize;
-    if (!ReadFile("./input/tiling.bin", tilingRead, tilingBuf, sizeof(tilingBuf)) ||
-        tilingRead < sizeof(TilingData)) {
-        return 1;
-    }
-    std::memcpy(&tilingHost, tilingBuf, sizeof(TilingData));
+    GenerateTiling(tilingHost);
 
 #ifdef ASCENDC_CPU_DEBUG
     AscendC::SetKernelMode(KernelMode::MIX_MODE);

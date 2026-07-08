@@ -1,6 +1,11 @@
 /**
  * @file decompress_d_vec.hpp
- * @brief FIPS 203 Decompress_d 设备向量实现（d=4/5/10/11）。
+ * @brief FIPS 203 Decompress_d 设备实现（d=4/5/10/11）。
+ *
+ * DECOMPRESS_D_VEC=1（默认）：Muls(q)+Adds(2^{d-1})+ShiftRight(d) 全 poly 向量；Decrypt 链推荐。
+ * DECOMPRESS_D_VEC=0：标量 fallback。
+ * 纯 per-lane，与 ByteDecode 标量 unpack 配对。见 docs/notes/F203-Compress-Decompress-向量实现指南.md、
+ * docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md §4。
  */
 #ifndef DECOMPRESS_D_VEC_HPP
 #define DECOMPRESS_D_VEC_HPP

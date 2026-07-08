@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import os
 import re
-import struct
 import sys
 
 import numpy as np
@@ -280,9 +279,8 @@ def main() -> None:
     u_tr.tofile(os.path.join(_CASE_DIR, "output", "golden_u_tr.bin"))
     tr_hat_ntt.tofile(os.path.join(_CASE_DIR, "output", "golden_tr_hat_ntt.bin"))
 
-    tiling = struct.pack("<iii", N, K, 3)
-    with open(os.path.join(_CASE_DIR, "input", "tiling.bin"), "wb") as f:
-        f.write(tiling.ljust(64, b"\x00"))
+    # tiling 不再由 Python 落盘：运行时改由 f203_encrypt_tiling.cpp 的 GenerateTiling 生成
+    # （模板风格，见该文件）；此处仅生成算法输入与 golden。
 
     print(f"[gen_data] k={K} kP={K_P} y_hat+u_ntt+u_tr+v+u golden (seed={SEED})")
 

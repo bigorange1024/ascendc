@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # pass-f203-compress-d-vec-k4 — FIPS 203 Compress_d（验收 d=4/5/10/11）
 #
+# 默认 COMPRESS_D_VEC=1（per-lane 向量）；见 docs/notes/F203-Compress-Decompress-向量实现指南.md
+#
 # Usage:
 #   bash run.sh -r cpu -v Ascend910B4
 #   F203_COMPRESS_D=11 bash run.sh -r sim -v Ascend910B4

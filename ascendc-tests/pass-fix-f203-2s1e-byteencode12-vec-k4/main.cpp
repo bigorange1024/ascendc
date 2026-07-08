@@ -14,12 +14,14 @@
 extern "C" void byte_encode12_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out, GM_ADDR sk_out, TilingData tiling);
 #endif
 
+// 运行时 tiling 生成（见 byte_encode12_tiling.cpp）；替代旧 Python input/tiling.bin。
+extern void GenerateTiling(TilingData &data);
+
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
-    size_t tilingSize = 64;
     static_assert(sizeof(TilingData) <= 64, "");
     size_t dstFileSize = tiling::dstFileBytes;
     size_t tHatFileSize = tiling::tHatFileBytes;
@@ -30,12 +32,9 @@ int32_t main(int32_t argc, char *argv[])
 
 #ifdef ASCENDC_CPU_DEBUG
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    uint8_t *tiling_data = (uint8_t *)AscendC::GmAlloc(tilingSize);
-    ReadFile("./input/tiling.bin", tilingSize, tiling_data, tilingSize);
-    if (tilingSize < sizeof(TilingData)) {
-        return 1;
-    }
-    TilingData *tiling = (TilingData *)tiling_data;
+    // 运行时生成 tiling（模板风格；数值集中于 byte_encode12_tiling.cpp）
+    TilingData tilingHost{};
+    GenerateTiling(tilingHost);
 
     uint8_t *dst = (uint8_t *)AscendC::GmAlloc(dstFileSize > 1024 ? dstFileSize : 1024);
     uint8_t *t_hat = (uint8_t *)AscendC::GmAlloc(tHatFileSize > 1024 ? tHatFileSize : 1024);
@@ -51,7 +50,7 @@ int32_t main(int32_t argc, char *argv[])
         return 18;
     }
 
-    ICPU_RUN_KF(byte_encode12_custom, blockDim, dst, t_hat, ek_out, sk_out, *tiling);
+    ICPU_RUN_KF(byte_encode12_custom, blockDim, dst, t_hat, ek_out, sk_out, tilingHost);
 
     ok = WriteFile("./output/ek_polyvec.bin", ek_out, ekFileSize);
     if (!ok) {
@@ -66,7 +65,6 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)t_hat);
     AscendC::GmFree((void *)ek_out);
     AscendC::GmFree((void *)sk_out);
-    AscendC::GmFree((void *)tiling_data);
 #else
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
@@ -77,9 +75,10 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *dstHost, *tHatHost, *ekHost, *skHost;
     uint8_t *dstDevice, *tHatDevice, *ekDevice, *skDevice;
 
+    size_t tilingSize = 64;
     TilingData *tiling;
     CHECK_ACL(aclrtMallocHost((void **)(&tiling), tilingSize));
-    ReadFile("./input/tiling.bin", tilingSize, tiling, tilingSize);
+    GenerateTiling(*tiling);
 
     CHECK_ACL(aclrtMallocHost((void **)(&dstHost), dstFileSize));
     CHECK_ACL(aclrtMalloc((void **)&dstDevice, dstFileSize, ACL_MEM_MALLOC_HUGE_FIRST));

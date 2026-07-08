@@ -1,6 +1,6 @@
 /**
  * @file compress_d_custom.cpp
- * @brief Compress_d 单 launch 入口；d 由 CMake F203_COMPRESS_D 选定。
+ * @brief Compress_d 单 launch；默认 COMPRESS_D_VEC=1 向量 per-lane（Encrypt tail 抄此路径）。
  * @see docs/notes/F203-Compress-Decompress-向量实现指南.md
  */
 #include "compress_d_config.hpp"

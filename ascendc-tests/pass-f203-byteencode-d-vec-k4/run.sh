@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # pass-f203-byteencode-d-vec-k4 — FIPS 203 ByteEncode_d（验收 d=4/5/10/11）
 #
+# 宏选型定稿：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
+#   BYTE_ENCODE_D_VEC=1 默认（标量 pack d=5/11）；=2 真·Gather pack 保留不激活
+#
 # Usage:
 #   bash run.sh -r cpu -v Ascend910B4
 #   F203_BYTE_ENCODE_D=10 bash run.sh -r sim -v Ascend910B4
 #
 # 环境变量：
 #   F203_BYTE_ENCODE_D — 4（默认）/ 5 / 10 / 11
-#   BYTE_ENCODE_D_VEC  — 0 标量 / 1 向量 mask（默认）
+#   BYTE_ENCODE_D_VEC  — 0 标量 / 1 向量 mask+标量拼字（默认）/ 2 真·向量 pack（仅 d=5/d=11）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"

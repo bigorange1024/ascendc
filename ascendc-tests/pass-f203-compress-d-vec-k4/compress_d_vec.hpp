@@ -1,8 +1,10 @@
 /**
  * @file compress_d_vec.hpp
- * @brief FIPS 203 Compress_d 设备向量实现（d=4/5/10/11）。
+ * @brief FIPS 203 Compress_d 设备实现（d=4/5/10/11）。
  *
- * 经验总结见 docs/notes/F203-Compress-Decompress-向量实现指南.md。
+ * COMPRESS_D_VEC=1（默认）：per-lane 向量（Barrett d=4/5 或 cast_div 商 d=10/11）；Encrypt tail 抄此路径。
+ * COMPRESS_D_VEC=0：标量 fallback，仅对照。
+ * 与 ByteEncode 不同：无 bit shuffle → 默认**激活**向量。见 docs/notes/F203-Compress-Decompress-向量实现指南.md。
  */
 #ifndef COMPRESS_D_VEC_HPP
 #define COMPRESS_D_VEC_HPP

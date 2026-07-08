@@ -26,6 +26,8 @@
 | [F203-KeyGen-exp交付示例技术总结.md](F203-KeyGen-exp交付示例技术总结.md) | **exp-mlkem-f203-pke-keygen-k4** 自包含交付、唯一路径、KAT/SIM 验收 |
 | [F203-Alg15-Decrypt-2launch编排技术总结.md](F203-Alg15-Decrypt-2launch编排技术总结.md) | **Alg.15 Decrypt** 2-launch 切分；prep/NTT 分离、NTT/INTT 分 kernel；[`fix-f203-alg15-pke-decrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) |
 | [F203-Compress-Decompress-向量实现指南.md](F203-Compress-Decompress-向量实现指南.md) | **Compress/Decompress_d** 向量路径（Barrett d=4/5、cast_div d=10/11、Decompress 统一 int32）；探针 `pass-f203-*-d-vec-k4` |
+| [F203-Alg14-Encrypt-compute-tail-PASS技术总结.md](F203-Alg14-Encrypt-compute-tail-PASS技术总结.md) | **Alg.14 行 2/16–24** compute+pack **PASS** 探针；c=c₁‖c₂；SIM 1 launch；全链 Encrypt 基线 |
+| [F203-ByteEncode-ByteDecode-d-向量与标量选型.md](F203-ByteEncode-ByteDecode-d-向量与标量选型.md) | **ByteEncode/ByteDecode_d** 宏分层（VEC=0/1/2）、tail **Compress 向量 + Encode 标量 pack**、VEC=2 实验不采纳、Decrypt 链 |
 | [F203-PKE-liboqs交叉验证与Compress定点技术总结.md](F203-PKE-liboqs交叉验证与Compress定点技术总结.md) | **PKE L2 liboqs** oracle、`Compress_d` 定点 bias（d=5 `(1<<26)`） |
 | [F203-KEM-Alg19-KeyGen设备全链技术总结.md](F203-KEM-Alg19-KeyGen设备全链技术总结.md) | **Alg.19 KEM KeyGen** 随机性契约、KeyGen_internal 增量、3168B dk 契约、vendor PKE + 设备 SHA3；[`fix-f203-alg19-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
 | [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps** 设备全链、FO、SIM **`ASCENDC_SIM_HOST_MODE=decaps_2session`**；[`fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |

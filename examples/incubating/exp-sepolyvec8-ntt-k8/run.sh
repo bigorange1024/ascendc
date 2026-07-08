@@ -58,6 +58,10 @@ fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
     export LD_LIBRARY_PATH=${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:$LD_LIBRARY_PATH
+    # 规避 CAModel 静态初始化 FPE：本探针二进制在 ASCEND_WORK_PATH 触发的 ADX DFX dumper 提前 boot
+    # 路径下命中 CANN 的 InitHardwareInfo950 空 map 取模除零；SIM_DIRECT 金标跑不需要 ADX dump，
+    # 故跳过 ASCEND_WORK_PATH（日志仍由 CAMODEL_LOG_PATH/ASCEND_PROCESS_LOG_PATH 落到 sim_log）。
+    export CAMODEL_SKIP_ADX_WORK_PATH=1
     # shellcheck source=/dev/null
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
@@ -88,6 +92,12 @@ if [ "${RUN_MODE}" = "sim" ] && [ "${SIM_DIRECT}" = "1" ]; then
     echo "[run.sh] SIM_DIRECT=1 → CAModel golden (logs under OPPROF_latest/dump/)"
 fi
 bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit
+
+# 收拢 CAModel stray dump 到 sim_log（本探针 SIM 跳过 ASCEND_WORK_PATH 规避 FPE，
+# 故 core*.dump / profile_*.toml / cceprint / npuchk 会落在 cwd，须扫入 sim_log 保持根目录干净）。
+if [ "${RUN_MODE}" = "sim" ]; then
+    camodel_sim_collect_stray "${CURRENT_DIR}"
+fi
 
 md5sum output/output.bin output/golden.bin
 python3 "${CURRENT_DIR}/scripts/verify_result.py" output/output.bin output/golden.bin

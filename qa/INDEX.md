@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-08 — [Compress/ByteEncode 扩档、tail pack、内核超时口径](2026-07/2026-07-08-Alg14-tail-pack探针.md)
+### 2026-07-08 — [Compress/ByteEncode 扩档、tail pack PASS 晋级、内核超时口径](2026-07/2026-07-08-Alg14-tail-pack探针.md)
 
-**compress/decompress/byteencode/bytedecode *-d-vec-k4** · d=5/11 分组 pack · **tail pack SIM 56259** · **15s 仅 NTT 定标**
+**compress/decompress/byteencode/bytedecode *-d-vec-k4** · 四算子宏分层定稿 · **compute-tail SIM 1 launch 154781**（Phase C 内联 pack）· 笔记 ByteEncode 选型 · tail pack · tiling · sepolyvec8 CAModel FPE
 
 ### 2026-07-07 — [全仓 ASCENDC_SIM_HOST_MODE 强制 + decaps 接线](2026-07/2026-07-07-CPU-SIM-launch分叉约定.md)
 

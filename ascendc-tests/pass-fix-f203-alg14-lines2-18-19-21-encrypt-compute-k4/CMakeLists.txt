@@ -41,7 +41,10 @@ else()
     message(FATAL_ERROR "invalid RUN_MODE: ${RUN_MODE}")
 endif()
 
-add_executable(ascendc_kernels_bbit ${TEST_ROOT}/main.cpp)
+add_executable(ascendc_kernels_bbit
+    ${TEST_ROOT}/main.cpp
+    ${TEST_ROOT}/f203_encrypt_tiling.cpp
+)
 
 target_include_directories(ascendc_kernels_bbit PRIVATE ${COMPUTE_DIR} ${MERGED_KYBER_ROOT}
     ${ALG11_PROBE_DIR}
