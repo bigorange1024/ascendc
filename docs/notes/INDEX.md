@@ -27,7 +27,7 @@
 | [F203-Alg15-Decrypt-2launch编排技术总结.md](F203-Alg15-Decrypt-2launch编排技术总结.md) | **Alg.15 Decrypt** 2-launch 切分；prep/NTT 分离、NTT/INTT 分 kernel；[`fix-f203-alg15-pke-decrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) |
 | [F203-PKE-liboqs交叉验证与Compress定点技术总结.md](F203-PKE-liboqs交叉验证与Compress定点技术总结.md) | **PKE L2 liboqs 三阶段** oracle、`Compress_d` 定点 bias 契约（d=5 `(1<<26)`）；[`liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) |
 | [F203-KEM-Alg19-KeyGen设备全链技术总结.md](F203-KEM-Alg19-KeyGen设备全链技术总结.md) | **Alg.19 KEM KeyGen** 随机性契约、KeyGen_internal 增量、3168B dk 契约、vendor PKE + 设备 SHA3；[`fix-f203-alg19-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
-| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps** 设备全链契约、FO 合法/拒绝路径、单库合并 R3、SIM 默认 **2-session** + 单 session `at_r5` session 残留诊断；[`fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
+| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps** 设备全链、FO、SIM **`ASCENDC_SIM_HOST_MODE=decaps_2session`**；[`fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
 | [F203-Encrypt-compute-行18-19-UB驻留技术总结.md](F203-Encrypt-compute-行18-19-UB驻留技术总结.md) | **Alg.14 compute** 内积→INTT **UB 驻留**、MIX GATE 握手、SIM 标量/MTE 可见性；[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) |
 
 ## AscendC 平台
@@ -37,7 +37,7 @@
 | [ascendc-DataCopy与数据搬运知识库.md](ascendc-DataCopy与数据搬运知识库.md) | MTE、API 谱系、搬运方法论 |
 | [ascendc-TQue与Pipe框架知识库.md](ascendc-TQue与Pipe框架知识库.md) | TPipe/TQue/TBuf、event≤8 |
 | [AscendC-CAModel-SIM-funckey与单session约束知识库.md](AscendC-CAModel-SIM-funckey与单session约束知识库.md) | **SIM `aclrtLaunchKernel` 507000 病根**（R1 AIV-only `func_key ≤ 4` / R2 单 ACL session + `aclrtSynchronizeStream`）；P1–P6 可复用模式；案例 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) `at_r5` 落地 |
-| [AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) | **ASCENDC_BUILD_CPU/SIM** + **ASCENDC_SIM_HOST_MODE** 全仓登记 |
+| [AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) | **强制** `ASCENDC_BUILD_CPU/SIM` + `ASCENDC_SIM_HOST_MODE` 全仓登记；§4.1 新代码写法；附录 A/B 案例 |
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
 
 ## 治理与模板

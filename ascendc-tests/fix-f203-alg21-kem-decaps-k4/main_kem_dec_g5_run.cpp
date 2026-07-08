@@ -1,7 +1,13 @@
 /**
  * @file main_kem_dec_g5_run.cpp
- * @brief Alg.21 KEM Decaps：单 session Phase-D（Decrypt+G）+ Phase-E（Re-Encrypt+FO）。
+ * @brief Alg.21 KEM Decaps：Phase-D（Decrypt+G）+ Phase-E（Re-Encrypt+FO）。
+ *
+ * SIM host 拓扑（见 ascendc_build_mode.hpp · 分叉指南 §3.3）：
+ *   默认 decaps_2session — Phase-D 后 aclFinalize，fresh session + 设备 FO
+ *   decaps_1session — 单 session 排障（CAModel c′ 污染）
+ * CPU：单 session，不读 ASCENDC_SIM_HOST_MODE。
  */
+#include "ascendc_build_mode.hpp"
 #include "main_kem_dec_g5_run.hpp"
 #include "f203_encrypt_layout.h"
 #include "f203_kem_dec_layout.h"
@@ -797,9 +803,8 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         CHECK_ACL(aclrtMemcpy(coinsDev, F203_ENC_COINS_BYTES, coinsHost.data(), F203_ENC_COINS_BYTES,
                               ACL_MEMCPY_HOST_TO_DEVICE));
 
-        // KEM_DECAPS_SIM_2SESSION=1：Phase-D 后 aclFinalize，fresh session 跑 Phase-E + 设备 FO（无 host memcmp）。
-        const char *w2s = std::getenv("KEM_DECAPS_SIM_2SESSION");
-        if (w2s != nullptr && w2s[0] == '1') {
+        // ASCENDC_SIM_HOST_MODE=decaps_2session（默认）：Phase-D 后 aclFinalize，fresh session + 设备 FO。
+        if (ascendc::SimHostDecapsUse2Session()) {
         CHECK_ACL(aclrtFree(cDev));
         CHECK_ACL(aclrtFree(hDev));
         CHECK_ACL(aclrtFree(zDev));

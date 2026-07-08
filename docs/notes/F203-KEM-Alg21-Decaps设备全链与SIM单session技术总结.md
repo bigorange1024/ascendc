@@ -6,6 +6,11 @@
 
 > **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
 >
+> **2026-07-08 更新（SIM host 选项统一）**：
+> - SIM 生产默认改为 **`ASCENDC_SIM_HOST_MODE=decaps_2session`**（`run.sh` export；unset 等价）；排障 **`decaps_1session`**。
+> - Host 判断：`ascendc::SimHostDecapsUse2Session()`（`ascendc_build_mode.hpp`）；**废弃**在新代码使用 `KEM_DECAPS_SIM_2SESSION`（头文件内临时兼容旧脚本）。
+> - 全仓强制写法：[AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) §4.1。
+>
 > **2026-07-03 更新（SIM 定论，纠正“死锁”误判）**：
 > 1. **非死锁**：早期把 Phase-E 慢跑（Alg.7 rej 环活跃自旋 ~7min 无输出）误判为 hang，实为慢跑。
 > 2. **SIM 默认 2-session 可靠**（`KEM_DECAPS_SIM_2SESSION=1`）：Phase-D `aclFinalize` 后 fresh session 跑 Phase-E + **设备 FO**（无 host memcmp）→ `K max=0`；`liboqs_kem_decaps_batch.sh` 逐轮换 `c` 对拍 `CPU×10+SIM×1 PASS`。

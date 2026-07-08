@@ -71,7 +71,7 @@ inline bool SimHostEncryptFeasPhasedLaunch()
 
 /**
  * decaps：默认 decaps_2session（生产 SIM）；decaps_1session 为排障。
- * 兼容旧 env KEM_DECAPS_SIM_2SESSION=0/1（deprecated，run.sh 应写 ASCENDC_SIM_HOST_MODE）。
+ * 兼容旧 env KEM_DECAPS_SIM_2SESSION=0/1（deprecated；2026-07-08 起 run.sh 应写 ASCENDC_SIM_HOST_MODE）。
  */
 inline bool SimHostDecapsUse2Session()
 {

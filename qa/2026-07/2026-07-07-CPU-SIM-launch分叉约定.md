@@ -61,6 +61,14 @@ compute: SIM_DIRECT        y_hat/u_ntt/u_tr/u/v max=0；tick ~125k
 
 ## 下一任务（P0）
 
-1. prep + compute **GM 级拼接** → 目标 Encrypt 核心 2 launch
+1. prep + compute **GM 级拼接**（见 T17）
 2. Alg.21 Decaps 单 session SIM 真修
 3. correctness `run.sh` 资源友好化
+
+## 定案（2026-07-08）— decaps 迁 `ASCENDC_SIM_HOST_MODE`
+
+| 旧 | 新（生产默认） | 排障 |
+|----|----------------|------|
+| `KEM_DECAPS_SIM_2SESSION=1` | `ASCENDC_SIM_HOST_MODE=decaps_2session` 或 unset | `decaps_1session` |
+
+**全仓强制写法**：见 [AscendC-CPU与SIM实现分叉开发指南.md](../../docs/notes/AscendC-CPU与SIM实现分叉开发指南.md) §4.1 · [library/shared/INDEX.md](../../library/shared/INDEX.md)

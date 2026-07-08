@@ -1,10 +1,19 @@
 # STATUS — fix-f203-alg21-kem-decaps-k4
 
+## 2026-07-08 — SIM host 选项对齐全仓规范
+
+| 项 | 内容 |
+|----|------|
+| **变更** | `KEM_DECAPS_SIM_2SESSION` → `ASCENDC_SIM_HOST_MODE=decaps_2session`（默认）/ `decaps_1session`（排障） |
+| **代码** | `main_kem_dec_g5_run.cpp` 用 `ascendc::SimHostDecapsUse2Session()`；`cmake/decaps` 增加 `library/shared` include |
+| **行为** | **不变** — SIM 生产仍 2-session + 设备 FO |
+| **规范** | [AscendC-CPU与SIM实现分叉开发指南.md](../../docs/notes/AscendC-CPU与SIM实现分叉开发指南.md) §4.1 · [library/shared/INDEX.md](../../library/shared/INDEX.md) |
+
 FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 
 | 项 | 值 |
 |---|---|
-| **阶段** | **单设备库 + SIM 默认 2-session**（2026-07-03）：CPU 单 session `K max=0` **PASS**；SIM 默认 `KEM_DECAPS_SIM_2SESSION=1` → `K max=0` **PASS** |
+| **阶段** | **单设备库 + SIM 默认 2-session**（2026-07-03）：CPU 单 session `K max=0` **PASS**；SIM 默认 `ASCENDC_SIM_HOST_MODE=decaps_2session`（或 unset）→ `K max=0` **PASS** |
 | **I/O** | `dk_kem` **3168B** · `c` **1568B** · `K` **32B** |
 | **输入来源** | alg19 `dk_kem.bin` + alg20 `c.bin`（`SEED_D=20260619`） |
 
@@ -154,10 +163,13 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 cd ../fix-f203-alg19-kem-keygen-k4 && bash run.sh -r cpu -v Ascend910B4
 cd ../fix-f203-alg20-kem-encaps-k4 && KEM_ENCAPS_SKIP_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
 
-# Decaps
+# Decaps（默认 SIM = decaps_2session，run.sh 自动 export）
 cd ../fix-f203-alg21-kem-decaps-k4
 KEM_DECAPS_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
 KEM_DECAPS_SKIP_REBUILD=1 KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4
+
+# 调试：SIM 单 session 排障（非默认）
+# ASCENDC_SIM_HOST_MODE=decaps_1session KEM_DECAPS_VERIFY=1 bash run.sh -r sim -v Ascend910B4
 ```
 
 方案见 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) · 约束见 [`SELF_CONTAINED.md`](SELF_CONTAINED.md)。

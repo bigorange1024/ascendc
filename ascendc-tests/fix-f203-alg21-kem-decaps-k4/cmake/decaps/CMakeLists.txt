@@ -31,6 +31,7 @@ set(AT_R5_INC "${ENC_VENDOR}/compute/at_r5")
 set(COMPUTE_FROZEN_INC "${ENC_VENDOR}/compute/frozen")
 set(SHAKE_XOF_INC "${REPO_ROOT}/library/shared/shake_xof_kernel")
 set(KECCAK_INC "${REPO_ROOT}/library/shared/keccak_f1600_kernel")
+set(SHARED_LIB_INC "${REPO_ROOT}/library/shared")
 
 set(RUN_MODE "npu" CACHE STRING "cpu/sim/npu")
 set(SOC_VERSION "Ascend910B4" CACHE STRING "system on chip type")
@@ -184,7 +185,7 @@ if(NOT "${RUN_MODE}" STREQUAL "cpu")
 endif()
 add_executable(ascendc_kem_decaps_bbit ${_DECAPS_HOST_SOURCES})
 
-set(_HOST_INCLUDES ${DEC_ROOT} ${DEC_VENDOR} ${ENC_VENDOR} ${KEM_DIR} ${KECCAK_INC}
+set(_HOST_INCLUDES ${DEC_ROOT} ${DEC_VENDOR} ${ENC_VENDOR} ${KEM_DIR} ${KECCAK_INC} ${SHARED_LIB_INC}
     ${G4_FULL_INC} ${PREP_DECODE_DK_INC} ${NTT_U_INC}
     ${PREP_AHAT_INC} ${PREP_RE_INC} ${NTT_R_INC} ${INTT_INC} ${G4_INC} ${PACK_INC} ${AT_R5_INC}
     ${SHAKE_XOF_INC} ${CMAKE_INSTALL_PREFIX}/include)

@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-08 — [全仓 ASCENDC_SIM_HOST_MODE 强制 + decaps 接线](2026-07/2026-07-07-CPU-SIM-launch分叉约定.md)
+
+**分叉指南 §4.1** · decaps `decaps_2session` · 废弃 `KEM_DECAPS_SIM_2SESSION` · `library/shared/INDEX` 选项表
+
 ### 2026-07-07 — [Encrypt prep/compute 晋级 pass- 与 CPU/SIM 分叉](2026-07/2026-07-07-CPU-SIM-launch分叉约定.md)
 
 **全仓宏 `ASCENDC_BUILD_*` + `ASCENDC_SIM_HOST_MODE`** · 废弃 per-probe `F203_FEAS_*` · decaps 迁 `decaps_2session`

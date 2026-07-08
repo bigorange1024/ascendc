@@ -100,15 +100,54 @@ static int32_t RunSimAlt(...)    { /* 仅 SimHostModeIs("xxx") 时 */ }
 ## 4. Agent 学习顺序
 
 1. 本指南 §3 + [`ascendc_build_mode.hpp`](../../library/shared/ascendc_build_mode.hpp)  
-2. 案例 encrypt-compute `main.cpp`  
+2. 案例 encrypt-compute `main.cpp`、kem-decaps `main_kem_dec_g5_run.cpp`  
 3. MIX FSM / UB 驻留 / SIM session 知识库（§2 链接）  
 4. **不要**为 CPU 加 env 试单 launch；**不要**每探针发明新 env 名
+
+---
+
+## 4.1 强制写法（2026-07-08 起，新代码与改 host 编排均须遵守）
+
+凡涉及 **CPU/SIM 平台分叉** 或 **SIM host 备选 launch 拓扑**，按下列三档书写；**禁止**新增第三档之外的 per-probe 运行时 env。
+
+| 档位 | 机制 | 谁读 | 新探针怎么写 |
+|------|------|------|--------------|
+| **A. 平台** | `#if ASCENDC_BUILD_CPU` / `#elif ASCENDC_BUILD_SIM` | main / host | 编译期互斥两段；CPU 与 SIM 能同拓扑则只分 API（`ICPU_RUN_KF` vs `ACLRT_LAUNCH_KERNEL`） |
+| **B. SIM host 拓扑** | `ASCENDC_SIM_HOST_MODE=<登记取值>` + `ascendc::SimHostModeIs(...)` 或专用 helper | **仅** `#if ASCENDC_BUILD_SIM` 的 main | 在 §3.3 **追加一行**；`run.sh` 默认 export 生产取值（或 unset=生产默认） |
+| **C. 算法变体** | CMake `CACHE STRING` / `target_compile_definitions` | kernel + host **同值** | 如 `ALG11_IMPL`；**不得**用 env 在 CPU/SIM 间切不同 launch |
+
+**`run.sh` 头注释模板**（强制两段）：
+
+```bash
+# Usage（默认）:
+#   bash run.sh -r cpu -v Ascend910B4
+#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+# 调试（非默认）:
+#   ASCENDC_SIM_HOST_MODE=<mode> SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+```
+
+**已废弃、勿在新 `run.sh`/main 使用**（旧脚本可映射到新 env）：`F203_FEAS_*`、`KEM_DECAPS_SIM_2SESSION` 等 per-probe SIM 开关。
+
+**kernel 内禁止** `getenv` 切换 launch 拓扑；所有 session/launch 决策在 **host main** 完成。
 
 ---
 
 ## 5. 何时写新分叉
 
 满足 **全部** 才新增 `#if ASCENDC_BUILD_CPU` 块，并在 §3.3 **登记表追加一行**（若需 SIM host 备选拓扑）。
+
+---
+
+## 附录 B — kem-decaps SIM 2-session
+
+| 构建 | `ASCENDC_SIM_HOST_MODE` | 行为 |
+|------|-------------------------|------|
+| **SIM 默认**（unset 或 `decaps_2session`） | 生产 | Phase-D 后 `aclFinalize` + fresh session + 设备 FO |
+| **SIM `decaps_1session`** | 调试 | 单 session（CAModel `c′` 污染，排障） |
+| **CPU** | （不读） | 单 session，`K max=0` |
+
+Host 判断：`ascendc::SimHostDecapsUse2Session()`（`main_kem_dec_g5_run.cpp`）。  
+**已废弃**：`KEM_DECAPS_SIM_2SESSION`（`ascendc_build_mode.hpp` 临时兼容旧脚本）。
 
 ---
 

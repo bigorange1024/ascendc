@@ -2,11 +2,23 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-07（**Alg.14 Encrypt prep+compute 晋级 `pass-`** · compute kP=5/v/decode 完成 · 分平台 pass 表述定案）
+> **最后刷新**：2026-07-08（**全仓 `ASCENDC_SIM_HOST_MODE` 强制** · decaps 迁 `decaps_2session` · 分叉指南 §4.1）
 
 ---
 
-## ★ 当前真相（Encrypt prep + compute，2026-07-07）
+## ★ 强制写法（2026-07-08，新代码均须遵守）
+
+| 类型 | 写法 | 禁止 |
+|------|------|------|
+| CPU vs SIM | `ASCENDC_BUILD_CPU` / `ASCENDC_BUILD_SIM` | per-probe 编译宏分叉 host |
+| SIM host 拓扑 | `ASCENDC_SIM_HOST_MODE` + §3.3 登记表 | `F203_FEAS_*`、`KEM_DECAPS_SIM_2SESSION` 等 |
+| 算法变体 | CMake 宏（CPU/SIM 同值） | env 切 launch |
+
+详文：[`AscendC-CPU与SIM实现分叉开发指南.md`](docs/notes/AscendC-CPU与SIM实现分叉开发指南.md) §4.1 · [`library/shared/INDEX.md`](library/shared/INDEX.md)
+
+---
+
+## ★ 当前真相（Encrypt + KEM，2026-07-08）
 
 ### Alg.14 Encrypt prep — **完成（CPU+SIM）**
 
@@ -33,9 +45,15 @@
 
 **未做**：prep + compute **GM 级拼接**（目标 2 launch Encrypt 核心）；μ / Compress `c`。
 
-### KEM 三分项（维持 07-03）
+### KEM Decaps — SIM 选项已统一（2026-07-08）
 
-KeyGen / Encaps / Decaps 分项 kat **CPU×10+SIM×1 PASS**；Decaps SIM 默认 **2-session**。
+探针：[`fix-f203-alg21-kem-decaps-k4`](ascendc-tests/fix-f203-alg21-kem-decaps-k4/)
+
+| SIM 默认 | `ASCENDC_SIM_HOST_MODE=decaps_2session`（或 unset） |
+| 排障 | `decaps_1session` |
+| Host | `ascendc::SimHostDecapsUse2Session()` |
+
+KeyGen / Encaps / Decaps 分项 kat **CPU×10+SIM×1 PASS**（行为不变）。
 
 ---
 

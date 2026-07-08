@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-06（**Alg.14 Encrypt compute 行 18–19**：3 launch CPU+SIM PASS；`F203_FEAS_FUSED=1` 单 launch SIM PASS；û **UB 驻留** + MIX GATE 4/8；待 kP=5 / v / decode / prep 拼接）
+**最近刷新**：2026-07-08（**全仓 SIM host 选项**：`ASCENDC_SIM_HOST_MODE` 强制登记；decaps 迁 `decaps_2session`；废弃 per-probe `KEM_DECAPS_SIM_2SESSION` / `F203_FEAS_*`）
 
 ---
 

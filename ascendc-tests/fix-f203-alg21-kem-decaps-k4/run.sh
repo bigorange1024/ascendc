@@ -12,7 +12,7 @@
 # 默认行为（2026-07-03）：
 #   KEM_DECAPS_VERIFY=1         — 对拍 golden_K（alg20 K.bin）
 #   KEM_DECAPS_SKIP_REBUILD=1   — 二进制与 RUN_MODE stamp 在则跳过 cmake
-#   SIM 模式 KEM_DECAPS_SIM_2SESSION=1 — 2-session + 设备 FO（CAModel 可靠路径）
+#   SIM 默认 ASCENDC_SIM_HOST_MODE=decaps_2session（2-session + 设备 FO）
 #
 # 环境（可选）：
 #   KEM_DECAPS_FORCE_REBUILD=1  — 强制 rm -rf build out 后全量重编
@@ -21,8 +21,9 @@
 #
 # 调试（非默认）：
 #   KEM_DECAPS_VERIFY=0 bash run.sh -r cpu -v Ascend910B4
-#   KEM_DECAPS_SIM_2SESSION=0  — 强制 SIM 单 session（CAModel 下 c' 污染，仅排障用）
+#   ASCENDC_SIM_HOST_MODE=decaps_1session bash run.sh -r sim  — 单 session 排障
 #   KEM_DECAPS_TAMPER_C=1 bash run.sh -r sim  — 设备 FO 拒绝路径 J(z‖c)
+#   （deprecated）KEM_DECAPS_SIM_2SESSION=0/1 仍映射到 ASCENDC_SIM_HOST_MODE
 #
 # Build profile 隔离（2026-07-03）：
 #   默认生产/round-trip 用 profile=prod；liboqs kat quiet 路径用 profile=kat。
@@ -81,9 +82,16 @@ if [ -z "${INSTALL_PREFIX}" ]; then
     INSTALL_PREFIX="${CURRENT_DIR}/out_${BUILD_PROFILE}_${RUN_MODE}"
 fi
 
-# SIM：默认两段 session（Phase-D aclFinalize 后 fresh Phase-E）；单 session 见头注释。
+# SIM：默认 decaps_2session（见 library/shared/ascendc_build_mode.hpp）
 if [ "${RUN_MODE}" = "sim" ]; then
-    export KEM_DECAPS_SIM_2SESSION="${KEM_DECAPS_SIM_2SESSION:-1}"
+    if [ -z "${ASCENDC_SIM_HOST_MODE:-}" ] && [ -n "${KEM_DECAPS_SIM_2SESSION:-}" ]; then
+        if [ "${KEM_DECAPS_SIM_2SESSION}" = "0" ]; then
+            export ASCENDC_SIM_HOST_MODE=decaps_1session
+        else
+            export ASCENDC_SIM_HOST_MODE=decaps_2session
+        fi
+    fi
+    export ASCENDC_SIM_HOST_MODE="${ASCENDC_SIM_HOST_MODE:-decaps_2session}"
 fi
 
 if [ ! -f "${DK_KEM_SRC}" ]; then
