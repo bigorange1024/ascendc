@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""verify_kem.py — output/ek_kem.bin + dk_kem.bin vs golden 字节对拍。"""
+"""
+verify_kem.py — Alg.19 KeyGen 端到端 I/O 对拍。
+
+比较 output/ek_kem.bin、dk_kem.bin 与 gen_data.py 产出的 golden_*；
+仅验字节等价（max=0），不解释设备实现。由 run.sh 在 KEM_KEYGEN_VERIFY=1 时调用。
+"""
 from __future__ import annotations
 
 import sys
@@ -12,6 +17,7 @@ OUT = ROOT / "output"
 
 
 def _cmp(name: str, got_p: Path, gold_p: Path) -> None:
+    """逐字节比较 got 与 golden；形状或 max_abs 非 0 则 SystemExit。"""
     if not got_p.is_file():
         raise SystemExit(f"missing output/{name}")
     if not gold_p.is_file():
@@ -28,6 +34,7 @@ def _cmp(name: str, got_p: Path, gold_p: Path) -> None:
 
 
 def main() -> int:
+    """对拍 ek_kem 与 dk_kem 两份产物。"""
     _cmp("ek_kem.bin", OUT / "ek_kem.bin", OUT / "golden_ek_kem.bin")
     _cmp("dk_kem.bin", OUT / "dk_kem.bin", OUT / "golden_dk_kem.bin")
     print("[verify] KEM KeyGen overall PASS")

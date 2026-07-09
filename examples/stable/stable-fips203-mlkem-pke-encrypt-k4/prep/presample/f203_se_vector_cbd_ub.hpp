@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_vector_cbd_ub.hpp
+ * @brief CBD 向量 UB 路径封装。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt prep 行 8–15。
+ * 与 golden：re 行与 host CBD 一致。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_cbd_ub.hpp
 // @layer prep
@@ -8,11 +16,6 @@
 // @depends #include: f203_cbd_eta2.hpp, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_vector_cbd_ub.hpp
- * @brief V2.5 实验 Phase C：一次 bulk GM→UB DataCopy；CBD 无逐行 prf GM 读（更慢，不接入集成）。
- */
 #pragma once
 
 #include "f203_cbd_eta2.hpp"

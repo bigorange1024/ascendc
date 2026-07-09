@@ -1,9 +1,10 @@
 /**
  * @file f203_encrypt_l19_kernel.cpp
- * @brief 行 19 单段：û←Âᵀ∘ŷ；u←INTT(û)+e₁。
+ * @brief Alg.14 行 18–19 对照核：û←Âᵀ∘ŷ；u←INTT(û)+e₁（不含 NTT(y)）。
  *
- * 双 AIV halfrows 内积（读 GM 全量 ŷ）→ SET IP_DONE → AIC INTT MMAD → AIV S3 → +e₁。
- * 本段不含 NTT(y)；输入 y_hat 须已由行 18 写满 GM。
+ * 流水线位置：历史分段 / 对照 launch；生产 SIM 已并入 `f203_encrypt_l18_l19`。
+ * FIPS 203 / ML-KEM-1024：双 AIV halfrows 内积（读全量 ŷ）→ IP_DONE → INTT MIX → +e₁。
+ * 前置：y_hat GM 已由 NTT(y) 写满。与 golden：中间态不落盘。
  */
 #include "aic_func.hpp"
 #include "aiv_func.hpp"
@@ -35,6 +36,11 @@ __aicore__ inline void FsmSet(FsmState st)
     KYBER_PIPE_ALL();
 }
 
+/**
+ * 设备核：内积 + INTT(û)+e₁。
+ * @param uOut 时域 u[4,256]；@param yHat ŷ；@param uNtt û 中间；
+ * @param aHat Â；@param e1 噪声；@param ws INTT workspace+LUT
+ */
 extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHat, GM_ADDR uNtt, GM_ADDR aHat,
                                                        GM_ADDR e1, GM_ADDR ws, TilingData tiling)
 {
@@ -47,6 +53,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHa
     FsmState st;
 
     if (aic) {
+        // 等 AIV 内积写完 û，再等 Stage1 编码，然后四路 INTT MMAD
         st = ST_IP_AIV_DONE;
         FsmWait(st);
         st = ST_INTT_AIV_SPLIT;
@@ -64,6 +71,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHa
         st = ST_INTT_AIV_PACK;
         FsmSet(st);
     } else {
+        // AIV：各算 2 行 û；仅 subBlock0 发 IP_DONE（避免双核重复置位）
         const int32_t pBegin = subBlockID * 2;
         const int32_t pEnd = pBegin + 2;
         encrypt_at_jp::innerproduct_halfrows_to_gm(aHat, yHat, uNtt, pBegin, pEnd);

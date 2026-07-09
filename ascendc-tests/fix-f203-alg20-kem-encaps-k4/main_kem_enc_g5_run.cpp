@@ -1,6 +1,15 @@
 /**
  * @file main_kem_enc_g5_run.cpp
- * @brief Alg.20 KEM Encaps：单 session vendor Encrypt G5 + KEM 头（prep_re 融合）。
+ * @brief FIPS 203 Alg.20 KEM Encaps host 编排实现。
+ *
+ * 单 ACL/CPU session：
+ *   f203_encrypt_prep_a_hat（vendor，ρ→Â）
+ *   f203_kem_enc_prep_re（本仓：m/H/G + vendor coins→r/e）
+ *   随后 vendor Encrypt G5：NTT(r) → decode t̂ → at_r5 → INTT×2 → g4_noise → pack
+ * 输出 c、K；中间 GM 默认不落盘。
+ *
+ * 与 vendor 关系：Encrypt 核在 vendor/pke_encrypt；本文件是 KEM 探针自有 launch 壳，
+ * 相对纯 Encrypt main 的差异是 prep_re 换成融合 KEM 头的 f203_kem_enc_prep_re，并多 D2H K。
  */
 #include "main_kem_enc_g5_run.hpp"
 #include "f203_kem_enc_layout.h"
@@ -84,6 +93,10 @@ constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 constexpr size_t kUTrBytes = F203_U_HAT_BYTES + F203_TR_HAT_BYTES;
 
 #ifdef ASCENDC_CPU_DEBUG
+/**
+ * CPU 单 session：从 ek/seed 跑完 Encaps，中间态可选拷回调用方缓冲（调试用）。
+ * 顺序与 SIM run_g5_sim_full 对齐；K 在 prep_re 后即可读出。
+ */
 int run_g5_cpu_session(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *lut_ntt_even,
                        const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
                        uint8_t *a_hat, uint8_t *re_flat, uint8_t *r_hat, uint8_t *t_hat, uint8_t *u_hat,

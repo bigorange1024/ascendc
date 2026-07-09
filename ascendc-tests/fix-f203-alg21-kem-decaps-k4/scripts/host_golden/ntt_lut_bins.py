@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""生成 G2 NTT + G4 INTT even/odd stacked LUT bin（写入 input/）。"""
+"""
+ntt_lut_bins.py — 从 LUT 头生成 input lut_even/odd_stacked.bin。
+"""
 from __future__ import annotations
 
 import re
@@ -14,6 +16,9 @@ LUT_HDR = CASE / "compute/ntt_r/thirdparty/ntt_study/include/mlkem/stable/transp
 
 
 def load_lut_t_i8(mode: str) -> np.ndarray:
+    """
+    load_lut_t_i8：生成/写出 NTT even-odd stacked LUT bin。
+    """
     symbol = "kMlkemLimb6Ntt_T_i8" if mode == "ntt" else "kMlkemLimb6Intt_T_i8"
     txt = LUT_HDR.read_text(encoding="utf-8")
     i0 = txt.index(symbol)
@@ -24,6 +29,9 @@ def load_lut_t_i8(mode: str) -> np.ndarray:
 
 
 def lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
+    """
+    lut_planar_stacked：生成/写出 NTT even-odd stacked LUT bin。
+    """
     if even:
         top = lut[:, 0:N:2]
         bottom = lut[:, N:512:2]
@@ -34,6 +42,9 @@ def lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
 
 
 def write_bins(out_dir: Path) -> None:
+    """
+    write_bins：生成/写出 NTT even-odd stacked LUT bin。
+    """
     lut_ntt = load_lut_t_i8("ntt")
     lut_intt = load_lut_t_i8("intt")
     lut_even = lut_planar_stacked(lut_ntt, True)
@@ -51,6 +62,9 @@ def write_bins(out_dir: Path) -> None:
 
 
 def main() -> None:
+    """
+    main：生成/写出 NTT even-odd stacked LUT bin。
+    """
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else CASE / "input"
     write_bins(out)
 

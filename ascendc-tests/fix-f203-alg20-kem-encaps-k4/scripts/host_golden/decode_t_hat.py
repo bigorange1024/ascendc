@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Host 辅助：自 ek_pke 前 1536B ByteDecode₁₂ 得 t_hat[4,256]，供 G3 device 读 input/t_hat.bin。"""
+"""
+decode_t_hat.py — 从 ek_pke.bin 解出平面 t̂ 供 host gate 对照。
+
+## 流水线位置
+Encrypt/Encaps 分阶段验收：设备写出的中间 t̂（或 ek 内嵌 t̂）与本脚本
+ByteDecode₁₂ 结果逐系数 max=0。
+
+## I/O
+输入 ek_pke（≥1536B）；输出 t_hat.bin 为 [K*N] int32 小端平面布局。
+非设备规格，仅 oracle。
+"""
 from __future__ import annotations
 
 import sys
@@ -14,6 +24,7 @@ EK_T_BYTES = 1536
 
 
 def poly_byte_decode12(buf: bytes) -> np.ndarray:
+    """单 poly ByteDecode₁₂：384B → [256] int32（12-bit 零扩展）。"""
     out = np.empty(N, dtype=np.int32)
     pairs = N // 2
     for i in range(pairs):
@@ -26,6 +37,8 @@ def poly_byte_decode12(buf: bytes) -> np.ndarray:
 
 
 def decode_t_hat_polyvec(ek: bytes) -> np.ndarray:
+    """解 k 个 poly 的 t̂，拼成长度 K*N 的平面向量。"""
+    # 按 poly 下标 j=0..k-1：每段 384B → N 个系数写入平面缓冲
     t_flat = np.empty(K * N, dtype=np.int32)
     for j in range(K):
         off = j * POLY_D12_BYTES
@@ -34,6 +47,7 @@ def decode_t_hat_polyvec(ek: bytes) -> np.ndarray:
 
 
 def main() -> None:
+    """CLI：ek_pke.bin → t_hat.bin（int32 LE）。"""
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <ek_pke.bin> <t_hat.out>", file=sys.stderr)
         sys.exit(1)

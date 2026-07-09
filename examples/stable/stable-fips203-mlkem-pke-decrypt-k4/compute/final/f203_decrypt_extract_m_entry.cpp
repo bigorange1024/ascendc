@@ -1,6 +1,10 @@
 /**
  * @file f203_decrypt_extract_m_entry.cpp
- * @brief G4：v − w_time → Compress₁ → m.bin（32B）。
+ * @brief Decrypt 流水线尾段独立入口：v − w_time → Compress₁ → m.bin（32B）。
+ *
+ * 对齐 FIPS 203 Alg.15 行 6–7（标量实现）。生产 1-kernel fused 走
+ * decrypt_device::extract_m_compress1_byteencode1；本文件供分段对拍 / 调试 launch。
+ * golden I/O：输出与 output/golden_m.bin 字节一致。
  */
 #include "f203_decrypt_layout.h"
 #include "kernel_operator.h"
@@ -12,6 +16,7 @@ namespace {
 constexpr int32_t kN = static_cast<int32_t>(F203_DECRYPT_N);
 constexpr int32_t kQ = static_cast<int32_t>(F203_DECRYPT_Q);
 
+/** (a−b) mod q，结果 ∈ [0,q)。 */
 __aicore__ inline int32_t mod_q_sub(int32_t a, int32_t b)
 {
     int32_t x = a - b;
@@ -33,6 +38,11 @@ __aicore__ inline uint32_t compress_1_u32(int32_t x)
 
 } // namespace
 
+/**
+ * 独立 kernel：m ← Encode₁(Compress₁(v−w))。
+ * @param vGm v'；@param wTimeGm 时域 w；@param mGm m[32]
+ * 前置：仅 blockIdx==0；AIC 空返回。
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_extract_m(GM_ADDR vGm, GM_ADDR wTimeGm, GM_ADDR mGm)
 {
 #if defined(ASCENDC_CPU_DEBUG)
@@ -58,6 +68,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_extract_m(GM_ADDR vGm, GM_ADD
         wLocal[i] = wIn[i];
     }
 
+    /* LSB-first：bit i → msg[i/8] 的第 (i%8) 位 */
     uint8_t msg[F203_MSG_BYTES];
     for (uint32_t i = 0; i < F203_MSG_BYTES; ++i) {
         msg[i] = 0U;
@@ -77,6 +88,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_extract_m(GM_ADDR vGm, GM_ADD
 }
 
 #ifndef __CCE_KT_TEST__
+/** Host 侧 launch 包装。 */
 void f203_decrypt_extract_m_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *vGm, uint8_t *wTimeGm,
                                uint8_t *mGm)
 {

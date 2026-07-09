@@ -1,3 +1,9 @@
+/**
+ * @file innerproduct_tiling.h
+ * @brief 内积 / su_dot 相关尺寸常量（自 KeyGen 行 18 探针；Decrypt 用 N/q/ROM 子集）。
+ *
+ * Decrypt ⟨ŝ,û⟩ 实际 k=4、单输出 poly；P_OUT/S_VEC 保留供对照宏覆写。
+ */
 #pragma once
 
 #include <cstdint>
@@ -25,6 +31,7 @@ constexpr int32_t kAHatBytes = kPOut * kSVec * kN * static_cast<int32_t>(sizeof(
 constexpr int32_t kSHatBytes = kSVec * kN * static_cast<int32_t>(sizeof(int32_t));
 constexpr int32_t kTHatBytes = kPOut * kN * static_cast<int32_t>(sizeof(int32_t));
 
+/** scratch 分区偏移（int32）：acc / row / modT2 / outLine… */
 constexpr int32_t kOffAcc = 0;
 constexpr int32_t kOffRow = kN;
 constexpr int32_t kOffModT2 = 2 * kN;

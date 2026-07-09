@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """
-gen_data.py — KEM_KEYGEN_VERIFY=1 时生成 host golden（黑盒 oracle，非设备规格）。
+gen_data.py — Alg.19 KEM KeyGen 的 host golden 生成器（黑盒 oracle，非设备规格）。
 
-使用与 device 一致的 d/z 域分离 + liboqs keypair_derand 产出期望 ek_kem/dk_kem。
+用途（仅 KEM_KEYGEN_VERIFY=1 / 对拍路径）：
+  用与 device 一致的 d/z 域分离消息，拼 64B kem_seed=d‖z，
+  再调仓库 scripts/liboqs_kem_ref keypair_derand，写出
+  output/golden_ek_kem.bin、golden_dk_kem.bin。
+
+禁止：把本脚本逻辑当作 AscendC 必须复刻的实现；生产默认 run.sh
+  不依赖 liboqs（见 SELF_CONTAINED.md）。
 """
 from __future__ import annotations
 
@@ -28,11 +34,13 @@ REF_BIN = REPO / "scripts/liboqs_kem_ref"
 
 
 def derand_z_from_seed(seed_d: int) -> bytes:
+    """与设备 DerandZFromSeedD 同式：SHA3-256("exp-mlkem-f203-kem-k4:SEED_Z="‖十进制)。"""
     msg = f"exp-mlkem-f203-kem-k4:SEED_Z={seed_d}".encode()
     return hashlib.sha3_256(msg).digest()
 
 
 def _ensure_ref() -> Path:
+    """确保 liboqs_kem_ref 可执行存在；缺失则跑仓库构建脚本。"""
     if REF_BIN.is_file():
         return REF_BIN
     subprocess.check_call(["bash", str(BUILD_REF)])
@@ -40,8 +48,11 @@ def _ensure_ref() -> Path:
 
 
 def main() -> None:
+    """写 seed_d.bin，并生成 golden ek/dk（liboqs derand）。"""
     seed_d = int(os.environ.get("SEED_D", str(SEED_D_DEFAULT)))
+    # d：与 vendor prep DerandFromSeedD 对齐（library/shared golden_se_sampling）
     d = derand_bytes_from_seed(seed_d)
+    # z：与本仓 kem/f203_kem_kg_derand_ub.hpp 对齐
     z = derand_z_from_seed(seed_d)
     kem_seed = d + z
 

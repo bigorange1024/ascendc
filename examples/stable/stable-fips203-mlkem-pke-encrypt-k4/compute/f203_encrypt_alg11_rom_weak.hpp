@@ -1,11 +1,14 @@
-#pragma once
-
 /**
  * @file f203_encrypt_alg11_rom_weak.hpp
- * @brief Alg11 GM ROM 弱符号：多 kernel 同库各自 include，per-kernel 链接自洽，最终 device 合并去重。
+ * @brief Alg.11 GM ROM 弱符号：多 kernel 同库各自 include，per-kernel 链接自洽，最终 device 合并去重。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 行 18 内积（Encrypt at_jp 向量路径）。
+ * 与 golden：无独立 I/O。
  *
  * 背景：AscendC 对每个 kernel .cpp 单独 ld 合并；须每 TU 带 ROM 定义，但最终 device.o 不能重复强符号。
  */
+#pragma once
+
 #if !defined(ASCENDC_CPU_DEBUG) && ALG11_MEM_OPS == 1
 
 #include "alg11_gammas.h"

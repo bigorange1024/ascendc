@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""gate_g2.py — golden s_hat, u_hat。"""
+"""
+gate_g2.py — Decrypt 分段门禁 G2：golden ŝ、û。
+
+ŝ ← ByteDecode₁₂(dk)；û ← NTT(u')（Host stage123）。
+用法：gate_g2.py <case_dir> <out_dir> → golden_s_hat.bin / golden_u_hat.bin
+"""
 from __future__ import annotations
 
 import sys

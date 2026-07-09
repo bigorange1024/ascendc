@@ -1,13 +1,13 @@
 /**
  * @file f203_keygen_prep_entry_extseed.cpp
- * @brief 旁路 A（KEM_KG_EXT_SEED，test-only）prep 设备 kernel 统一 entry（注册 f203_keygen_prep）。
+ * @brief Alg.19 旁路 A（KEM_KG_EXT_SEED，test-only）prep 设备 kernel 统一 entry。
  *
- * 背景：仅当 CMake `KEM_KG_EXT_SEED=1` 时编入本 TU 替代 vendor/pke_keygen 的同名 entry，
- *   使 device 吃 host 提供的 kem_seed（d‖z）而非 SHA3(域分离串‖SEED_D) 派生，便于与
- *   liboqs keypair_derand 对拍相同随机字节。注册符号 `f203_keygen_prep` 与签名完全一致，
- *   故 main / launch 调用无需改动；差异仅在核内 d 的来源。
+ * 注册符号仍为 f203_keygen_prep（与 vendor 同名同签名），仅当 CMake KEM_KG_EXT_SEED=1
+ * 时编入本 TU 替代 vendor/pke_keygen entry：device 吃 host kem_seed（d‖z），便于与
+ * liboqs keypair_derand 对拍相同随机字节。宏关（默认/生产）本 TU 不参与编译，
+ * prep 走 vendored entry（seed_d → device 派生 d）。
  *
- *   宏关（默认/生产）时本 TU 不参与编译，prep 走 vendored entry（seed_d → device 派生 d）。
+ * 与 vendor 关系：不改 vendor 源码；只在测试构建替换链接对象。
  */
 #include "f203_a_hat16_config.h"
 #include "f203_keygen_prep_ub.hpp"

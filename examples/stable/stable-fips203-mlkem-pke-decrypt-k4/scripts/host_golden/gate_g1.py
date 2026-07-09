@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""gate_g1.py — 由 c 生成 golden u,v。"""
+"""
+gate_g1.py — Decrypt 分段门禁 G1：由 c 生成 golden u'、v'。
+
+对齐 FIPS 203 Alg.15 行 3–4（ByteDecode + Decompress）；仅 Host oracle，非设备规格。
+用法：gate_g1.py <case_dir> <out_dir> → golden_u.bin / golden_v.bin
+"""
 from __future__ import annotations
 
 import sys

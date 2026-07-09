@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
-# @probe stable-fips203-mlkem-pke-keygen-k4
-# @file scripts/prepare_production_input.py
-# @layer script
-# @role 从 seed 生成生产 input/（seed_d + stacked LUT）。 / Production input prep.
-# @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
-# @launch N/A（host / 脚本 / CMake 不参与 device launch）
-# @ai_core N/A（非 AI Core 内核源）
-# @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
-# @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
-
 # coding=utf-8
-"""生产 I/O：仅准备 input/seed_d.bin；LUT 缺失时从本目录 compute golden 生成。
+"""
+prepare_production_input.py — Alg.19 KeyGen 生产 input 准备（本探针自有入口）。
 
-契约（与 exp customspec 一致）：
-- input/：SEED_D + 静态 NTT LUT（lut_even/odd_stacked.bin）
-- 禁止向 input/ 写入 a_hat、src、rho、tiling 等中间态
+作用：
+  - 写 input/seed_d.bin（uint32 LE，默认 SEED_D=20260619）
+  - LUT 缺失时调用 scripts/compute/gen_data 生成 lut_even/odd_stacked.bin
+  - 清掉 a_hat/src/rho 等中间态；生产路径（KEM_KG_EXT_SEED≠1）再清 kem_seed.bin
+
+契约：input/ 仅 seed + 静态 NTT LUT；禁止预填 PKE 中间 GM。
+注意：scripts/compute 为 PKE 辅助脚本树，本文件只做胶水，不改其算法。
 """
 from __future__ import annotations
 
@@ -43,6 +38,7 @@ _STRAY_INPUT_PRODUCTION_ONLY = ("kem_seed.bin",)
 
 
 def write_lut_if_missing(inp: Path) -> None:
+    """若 even/odd stacked LUT 不齐，从 compute_gen 加载并写盘。"""
     lut_even = inp / "lut_even_stacked.bin"
     lut_odd = inp / "lut_odd_stacked.bin"
     if lut_even.is_file() and lut_odd.is_file():
@@ -54,6 +50,7 @@ def write_lut_if_missing(inp: Path) -> None:
 
 
 def scrub_stray_input(inp: Path) -> None:
+    """删除不应出现在生产 input/ 的中间态文件。"""
     extseed = os.environ.get("KEM_KG_EXT_SEED", "0") == "1"
     names = list(_STRAY_INPUT)
     if not extseed:
@@ -66,6 +63,7 @@ def scrub_stray_input(inp: Path) -> None:
 
 
 def main() -> None:
+    """准备 seed_d + LUT，并 scrub 杂散 input。"""
     seed_d = int(os.environ.get("SEED_D", "20260619"))
     inp = ROOT / "input"
     inp.mkdir(exist_ok=True)

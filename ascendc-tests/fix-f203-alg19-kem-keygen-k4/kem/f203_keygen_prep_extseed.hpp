@@ -1,6 +1,6 @@
 /**
  * @file f203_keygen_prep_extseed.hpp
- * @brief 旁路 A（KEM_KG_EXT_SEED，test-only）：prep 单 TPipe 的“外部 d 注入”变体。
+ * @brief Alg.19 旁路 A（KEM_KG_EXT_SEED，test-only）：prep 单 TPipe 的“外部 d 注入”变体。
  *
  * 背景：正确性交叉验证需让 liboqs `keypair_derand` 与本用例吃**相同随机字节**。
  *   生产路径由 device UB 内 `DerandFromSeedD(seed_d)` 派生 d（INTEGRATION_PLAN 锁定，
@@ -56,6 +56,7 @@ __aicore__ inline void BuildKeygenPrepSinglePipeExtD(const uint8_t d_ext[32], ui
         StoreRhoToGm(rho_gm, rho);
     }
 
+    // 以下 UB/Que 布局与 vendor BuildKeygenPrepSinglePipe 同尺寸（Alg.19→Alg.13 prep）
     AscendC::TPipe pipe;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeXBuf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeLenBuf;
@@ -75,13 +76,13 @@ __aicore__ inline void BuildKeygenPrepSinglePipeExtD(const uint8_t d_ext[32], ui
     pipe.InitBuffer(aHatQue, 1, kPrepPrfYUbBytes);
     pipe.InitBuffer(scratchBuf, F203Alg7::kScratchInt32ElemsActive * sizeof(int32_t));
 
-    // 双 AIV：blockIdx 0→poly 0–7、1→8–15 并行写 GM（同生产路径）
+    // 双 AIV：blockIdx 0→poly 0–7、1→8–15 并行写 Â（同生产路径）
     F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, blockIdx, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf,
                                       d1Que, d2Que, aHatQue, scratchBuf);
 
     F203_PREP_PIPE_ALL();
 
-    // block0 独占 PRF+CBD；block1 不得在 block0 完成前 return
+    // block0 独占 PRF+CBD 采 ŝ；block1 须等 PIPE_ALL，不得提前 return
     if (AscendC::GetBlockIdx() == 0U) {
         ShakeGeneralTilingData tilingLocal{};
         F203SeVector::LoadTilingFromGm(tiling_gm, tilingLocal);

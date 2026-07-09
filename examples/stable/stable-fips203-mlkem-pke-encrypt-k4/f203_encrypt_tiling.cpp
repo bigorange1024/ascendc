@@ -10,6 +10,9 @@
  * 说明：本探针 device 侧的**编译期几何**（workspace 偏移 / LUT 布局 / 分核 / INTT k=8 几何）
  * 仍是 compute/f203_l18_l19_tiling.h 的 `namespace tiling` constexpr（kernel 直接取值）。
  * 本文件只负责 **运行时 TilingData 三标量**，与旧 Python `struct.pack("<iii", N, K, 3)` 逐值等价。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
 #include "f203_l18_l19_tiling.h"
 

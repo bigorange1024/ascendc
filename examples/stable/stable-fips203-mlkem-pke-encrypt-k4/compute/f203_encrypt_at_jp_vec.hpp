@@ -1,20 +1,20 @@
-#pragma once
-
 /**
  * @file f203_encrypt_at_jp_vec.hpp
  * @brief Alg.14 行 18 NTT 域内积：Âᵀ∘ŷ（4 列 û）+ 可选 tr̂（kP=5 第 5 行）。
- *
  * 流水线：单 launch 内由 `f203_encrypt_l18_l19` 在 NTT(y) 后调用；输出驻留 UB 供 INTT k=8。
  * 对齐：pass-fix-f203-alg11-12-innerproduct-k4-halfrows 的 ProcessHalfRows；
  *       GM 索引用 encrypt_at_jp_layout（flat(j,p)，Encrypt 读 Âᵀ 索引）。
- *
  * kP=5 pad→8 UB 布局（`ProcessToUbMaybeTrHat(..., unifiedUTrPad8=true)`）：
  *   AIV0 dstUb[4,N]: [uTr0, uTr1, uTr4(tr̂), 0]
  *   AIV1 dstUb[4,N]: [uTr2, uTr3, 0, 0]
  * INTT 后 scatter：行 0–3→u+e₁；行 4 时域→v+e₂。
- *
  * 约束：û/tr̂ 主路径 DataCopy 写 UB；禁止 SetValue 写 GM 再 MTE 读回（SIM 不可见）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
+#pragma once
+
 #include "f203_encrypt_at_jp_layout.hpp"
 #include "f203_encrypt_at_jp_mod.hpp"
 #include "f203_encrypt_at_jp_tiling.h"

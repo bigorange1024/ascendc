@@ -1,8 +1,10 @@
 /**
  * @file f203_decrypt_g4_chain_intt_entry.cpp
- * @brief device-k4 Launch-3：INTT(ŵ) → Compress₁(向量)+ByteEncode₁(标量) → m。
+ * @brief Decrypt 多 launch 调试路径 Launch-3：INTT(ŵ) → Compress₁/ByteEncode₁ → m。
  *
- * 相对 G4 correctness：尾段改用 decrypt_device::extract_m_compress1_byteencode1。
+ * 尾段用 decrypt_device::extract_m_compress1_byteencode1（向量 Compress + 标量 Encode）。
+ * 生产路径为 1-kernel fused；本入口供分段对拍。
+ * golden I/O：写出 m[32]，与 golden_m.bin 对拍。
  */
 #include "f203_decrypt_intt_w_impl.hpp"
 #include "f203_decrypt_layout.h"
@@ -14,6 +16,9 @@
 volatile int g_f203_decrypt_g4_chain_intt_mix_pass = 3;
 #endif
 
+/**
+ * @param vGm v'；@param wPaddedGm 已 pad 的 ŵ；@param wTimeGm INTT 输出；@param mGm m[32]
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_g4_chain_intt(GM_ADDR vGm, GM_ADDR wPaddedGm, GM_ADDR wTimeGm,
                                                                    GM_ADDR mGm, GM_ADDR inttWsGm, TilingData tiling)
 {

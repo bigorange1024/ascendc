@@ -1,6 +1,10 @@
 /**
  * @file f203_encrypt_re_prf.hpp
- * @brief Alg.14 PRF：coins → 9× SHAKE256；8+1 两段（对齐 stable batch=8 + 单 nonce）。
+ * @brief Alg.14 行 8–15 PRF：coins → 9× SHAKE256 输出 [9,128]。
+ *
+ * 流水线位置：Encrypt prep 内、CBD 之前；仅 AIV block0 执行。
+ * 实现：先复用 stable KeyGen 的 batch=8（nonce 0–7），再补单 nonce=8（e₂），
+ * 避免为 batch=9 另开一套 SHAKE tiling。与 golden：PRF 中间态不落盘，仅供 CBD。
  */
 #pragma once
 
@@ -19,7 +23,14 @@ constexpr uint32_t PRF_TOTAL_BATCH = 9U;
 
 #define F203_ENCRYPT_PRF_PIPE_ALL() ShakeXofUb::PipeAll()
 
-/** 单 nonce PRF：coins‖byte(nonce) → prf_out[128]。 */
+/**
+ * 单 nonce PRF：coins‖byte(nonce) → 一行 prf_out[128]。
+ * @param coins       本地 32B
+ * @param nonce       0..8
+ * @param prf_row_gm  该行 GM 起点
+ * @param tilingLocal 会临时 batch=1；其余字段沿用 host 填的 SHAKE256 参数
+ * @param xBuf/lenBuf/stagingBuf/yQue  与 batch8 共用的 UB 缓冲
+ */
 __aicore__ inline void RunShakePrfOneNonceUbWithUb(const uint8_t coins[32], uint32_t nonce,
                                                    __gm__ uint8_t *prf_row_gm,
                                                    ShakeGeneralTilingData tilingLocal,

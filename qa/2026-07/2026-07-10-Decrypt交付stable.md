@@ -92,3 +92,24 @@
 | **T19e** | 去掉 frozen 作 KEM sync 源；刷新 FROZEN/notes |
 
 总表：[`qa/TODO.md`](../TODO.md) **T19**。在此之前 **禁止** 再把 `vendor_sync` SRC 静默改回 stable。
+
+### 活跃用例中文注释补课（**T20**，同日）
+
+| 决策 | 内容 |
+|------|------|
+| **1A** | 跳过 `vendor/`（sync 会覆盖；注释改在 sync 源 / T19 后 stable） |
+| **2①** | Wave1：`examples/stable` 三段 PKE + `fix-f203-alg19/20/21` 自有代码 |
+| 排除 | `frozen/`、`add_custom/`、`thirdparty/`、构建产物 |
+| 标准 | 文件头 + 函数头（I/O/形状）+ 函数体分段中文；只加注释不改逻辑 |
+
+后续波次：W2 `pass-fix` PKE device → W3 NTT/积木 → W4 小探针 → W5 incubating。总表 **T20**。
+
+#### Wave1 完成（同日）
+
+| 目录 | 说明 |
+|------|------|
+| stable keygen / encrypt / decrypt | 自研源文件补文件头+函数头+分段中文；LUT 巨表仅文件头/用途 |
+| fix-alg19/20/21 | **仅自有** `kem/`、main、scripts；**未改** `vendor/` |
+| 验收 | 密度抽查 thin≈0；`git diff` 无 `vendor/`；仅注释不改逻辑 |
+
+下一会话开 **T20-W2**。

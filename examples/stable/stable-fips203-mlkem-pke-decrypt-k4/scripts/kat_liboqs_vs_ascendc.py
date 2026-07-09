@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""liboqs PKE Decrypt ↔ stable-fips203-mlkem-pke-decrypt-k4 AscendC 对拍。
+"""
+kat_liboqs_vs_ascendc.py — liboqs PKE Decrypt ↔ 本 stable Decrypt（1-kernel fused）KAT。
 
-流程（每轮）：
-  1. liboqs_pke_decrypt_fixture(SEED_D) → liboqs keygen + host golden_c → dk/c/m
-  2. prepare_kat_input（写 input + golden_m，与 fixture m 自检）
-  3. DECRYPT_KAT=1 bash run.sh（跳过 gen_data / verify_result）
-  4. output/m.bin 与 fixture m.bin 逐字节比
+## 目的
+对齐 FIPS 203 Alg.15：fixture 的 dk+c → 设备 m，与 liboqs m 逐字节对拍。
 
-用法：
-  bash kat_liboqs_vs_ascendc.sh
-  KAT_CPU_COUNT=10 KAT_SIM_COUNT=1 bash kat_liboqs_vs_ascendc.sh
-  KAT_SEEDS="20260619,1,2,..." bash kat_liboqs_vs_ascendc.sh
-  KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
+## 每轮流程
+1. liboqs fixture(SEED_D) → dk/c/m
+2. prepare_kat_input
+3. DECRYPT_KAT=1 bash run.sh
+4. 比较 output/m.bin 与 fixture m.bin
+
+用法：bash kat_liboqs_vs_ascendc.sh；KAT_CPU_COUNT / KAT_SIM_COUNT / KAT_SEEDS。
 """
 from __future__ import annotations
 
@@ -41,14 +41,23 @@ FIXTURE_ROOT = Path(
 
 
 def _fail(label: str, round_no: int, total: int, seed_d: int, msg: str) -> None:
+    """
+    打印 KAT 失败信息并 SystemExit。
+    """
     raise SystemExit(f"[KAT FAIL] {label} round {round_no}/{total} seed_d={seed_d}: {msg}")
 
 
 def random_seed_d() -> int:
+    """
+    均匀随机 32-bit SEED_D。
+    """
     return secrets.randbelow(2**32)
 
 
 def prepare_from_fixture(fix: Path) -> None:
+    """
+    fixture 的 dk/c/m → 用例 input/ + golden_m。
+    """
     subprocess.check_call(
         [
             sys.executable,
@@ -68,6 +77,9 @@ def prepare_from_fixture(fix: Path) -> None:
 
 
 def run_ascendc_decrypt(seed_d: int, run_mode: str) -> np.ndarray:
+    """
+    DECRYPT_KAT 模式下跑 run.sh，读回 output/m.bin。
+    """
     env = os.environ.copy()
     env["SEED_D"] = str(seed_d)
     env["DECRYPT_KAT"] = "0" if VERBOSE else "1"
@@ -92,6 +104,9 @@ def run_ascendc_decrypt(seed_d: int, run_mode: str) -> np.ndarray:
 
 
 def one_round(seed_d: int, run_mode: str, label: str, round_no: int, total: int) -> None:
+    """
+    单轮：生成 fixture → 准备 input → 跑设备 → 与 fixture m 比较。
+    """
     fix = FIXTURE_ROOT / str(seed_d)
     if fix.exists():
         shutil.rmtree(fix)
@@ -111,6 +126,9 @@ def one_round(seed_d: int, run_mode: str, label: str, round_no: int, total: int)
 
 
 def parse_seed_list() -> tuple[list[int], list[int]]:
+    """
+    解析 KAT_SEEDS 或随机生成 CPU/SIM 种子列表。
+    """
     cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
     sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))
     if cpu_count < 1 or sim_count < 0:
@@ -128,6 +146,9 @@ def parse_seed_list() -> tuple[list[int], list[int]]:
 
 
 def main() -> int:
+    """
+    按 KAT_CPU_COUNT / KAT_SIM_COUNT 跑多轮对拍；成功返回 0。
+    """
     cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
     sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))
     if not VERBOSE:

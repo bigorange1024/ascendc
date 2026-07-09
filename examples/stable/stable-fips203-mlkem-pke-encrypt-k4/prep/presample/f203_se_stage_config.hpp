@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_stage_config.hpp
+ * @brief SE 向量采样阶段编译配置（PRF/CBD/SHAKE）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt prep。
+ * 默认生产全量路径。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_stage_config.hpp
 // @layer prep
@@ -8,18 +16,6 @@
 // @depends prep 子模块头文件 + CANN AscendC；entry 由 f203_keygen_prep_entry 聚合。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_stage_config.hpp
- * @brief 行 8–15 设备预采样阶段开关（由 CMake / run.sh 注入，勿手改本文件）。
- *
- * | 宏 | 语义 | 默认 |
- * |----|------|------|
- * | F203_SE_VECTOR_V3 | G 标量 + shake batch PRF + **标量 CBD**（P1b-single） | **ON（生产 / 集成）** |
- * | F203_SE_VECTOR_V25 | bulk UB CBD（一次 1024B GM→UB） | OFF（实验对照，SIM 更慢，**禁止接入**） |
- *
- * 历史名 F203_SE_VECTOR_V4 已废除，仅作编译期别名 → V25（见下）。
- */
 #pragma once
 
 #if defined(F203_SE_VECTOR_V4) && !defined(F203_SE_VECTOR_V25)

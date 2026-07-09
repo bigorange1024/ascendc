@@ -1,3 +1,15 @@
+/**
+ * @file alg11_vec_pipe.hpp
+ * @brief Alg.11 向量路径的 PIPE / MTE2→V 同步宏（tikicpu 与设备行为差异封装）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 用途：DataCopy 写 UB 后、Gather/向量读 UB 前插入正确屏障；避免 SIM 上 MTE2 与 V 流水线竞态。
+ * 调用方：multiply_ntts_vec.hpp、hat_alg11_basemul.hpp、alg11_ub_load 调用链。
+ * 不变量：ASCENDC_CPU_DEBUG 用 HardEvent::MTE2_V + WaitFlag；设备用 PipeBarrier<PIPE_MTE2/ALL>。
+ * Golden：无；同步错误表现为 SIM golden 不一致或挂死（KERNEL_COMPUTE_BUDGET_SEC 超时）。
+ * CMake：RUN_MODE=cpu 时 ASCENDC_CPU_DEBUG 由 cpu_lib.cmake 定义。
+ */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/alg11_vec_pipe.hpp
 // @layer compute
@@ -8,21 +20,6 @@
 // @depends #include: kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file alg11_vec_pipe.hpp
- * @brief Alg.11 向量路径的 PIPE / MTE2→V 同步宏（tikicpu 与设备行为差异封装）。
- *
- * 用途：DataCopy 写 UB 后、Gather/向量读 UB 前插入正确屏障；避免 SIM 上 MTE2 与 V 流水线竞态。
- *
- * 调用方：multiply_ntts_vec.hpp、hat_alg11_basemul.hpp、alg11_ub_load 调用链。
- *
- * 不变量：ASCENDC_CPU_DEBUG 用 HardEvent::MTE2_V + WaitFlag；设备用 PipeBarrier<PIPE_MTE2/ALL>。
- *
- * Golden：无；同步错误表现为 SIM golden 不一致或挂死（KERNEL_COMPUTE_BUDGET_SEC 超时）。
- *
- * CMake：RUN_MODE=cpu 时 ASCENDC_CPU_DEBUG 由 cpu_lib.cmake 定义。
- */
 #pragma once
 
 #include "kernel_operator.h"

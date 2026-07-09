@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 Stage1/3 编译期配置开关。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/stage1_config.hpp
+ */
+/**
  * @file stage1_config.hpp
  * @brief F203 Stage1：int32 系数分裂为 hi/lo 各 6-bit limb（int8）的向量化档位。
  *

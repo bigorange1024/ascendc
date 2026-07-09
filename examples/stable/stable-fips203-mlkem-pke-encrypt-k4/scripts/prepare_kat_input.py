@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-prepare_kat_input.py — 为 liboqs KAT / round-trip 准备 exp-encrypt 的 input/ + golden/。
+prepare_kat_input.py — 把 liboqs KAT fixture 写成本用例 input/golden。
 
-作用：把外部 ek/m/coins（及可选 liboqs c 参考）写成设备可读布局，并派生：
-  - lut_*_stacked.bin（静态表，与 gen_data 同规则）
-  - golden_v.bin（仅 CPU 分段 pack 注入；SIM 全设备不用）
-  - golden/c.bin（host golden_encrypt 或外部 c 参考，供 run.sh cmp / 自检）
-
-不调用 gen_data.py，避免覆盖外部 fixture。
+流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt 的 KAT 批测胶水。
+写出 ek/m/coins、LUT、golden_v、golden/c，供 ENCRYPT_KAT=1 跑 run.sh。
+与 golden：c 来自 liboqs，用于交叉验证设备 output/c.bin。
 """
 from __future__ import annotations
 

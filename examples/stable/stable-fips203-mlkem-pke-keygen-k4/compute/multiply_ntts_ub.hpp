@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 NTT 后乘积 / 配置辅助。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/multiply_ntts_ub.hpp
+ */
+/**
  * @file multiply_ntts_ub.hpp
  * @brief Alg.11 MultiplyNTTs 的 UB 门面：标量回退 + 向量分发（compute_on_ub / init_rom_luts_ub）。
  *
@@ -54,6 +60,10 @@ __aicore__ inline int32_t barrett_red_coeff(int32_t x)
     return x;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `base_case_multiply`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void base_case_multiply(int32_t *c0, int32_t *c1, int32_t a0, int32_t a1, int32_t b0, int32_t b1,
                                           int32_t gamma)
 {
@@ -77,6 +87,10 @@ __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const 
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `compute_on_ub_scalar`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void compute_on_ub_scalar(AscendC::LocalTensor<int32_t> &hLocal,
                                             const AscendC::LocalTensor<int32_t> &fLocal,
                                             const AscendC::LocalTensor<int32_t> &gLocal)

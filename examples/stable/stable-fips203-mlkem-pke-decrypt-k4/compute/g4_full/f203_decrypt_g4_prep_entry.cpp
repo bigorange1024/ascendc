@@ -1,12 +1,21 @@
 /**
  * @file f203_decrypt_g4_prep_entry.cpp
- * @brief Launch-1：unpack（Decode 标量 + Decompress 向量）+ decode dk→ŝ；中间态留 GM。
+ * @brief Decrypt 多 launch 调试路径 Launch-1：unpack c + decode dk→ŝ。
+ *
+ * 对齐 FIPS 203 Alg.15 行 3–5 prep；中间态留设备 GM。
+ * 生产路径为 1-kernel fused（f203_decrypt_device_fused），不单独 launch 本入口。
+ * golden I/O：本段不写 m；仅准备 u'/v'/ŝ 供后续 NTT/su_dot。
  */
 #include "f203_decrypt_decode_impl.hpp"
 #include "f203_decrypt_layout.h"
 #include "f203_decrypt_unpack_impl.hpp"
 #include "kernel_operator.h"
 
+/**
+ * prep kernel：c→u'/v'，dk→ŝ。
+ * @param dkGm/cGm 生产输入；@param uGm/vGm/sHatGm 中间输出
+ * 前置：仅 AIV0（blockIdx==0）；AIC 空返回。
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_g4_prep(GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm,
                                                              GM_ADDR sHatGm)
 {
@@ -25,6 +34,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_g4_prep(GM_ADDR dkGm, GM_ADDR
     }
 #endif
 
+    /* 行 3–4：unpack；行 5：decode ŝ */
     decrypt_g4::unpack_c_impl(cGm, uGm, vGm);
     AscendC::PipeBarrier<PIPE_ALL>();
     decrypt_g4::decode_s_hat_impl(dkGm, sHatGm);

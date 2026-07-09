@@ -1,3 +1,5 @@
+
+/** 将 ByteEncode₁₂ ROM 从 GM 装入 UB Que；仅 Init 调用一次。 */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file compute/byte_encode12_ub_load.hpp
 // @layer compute
@@ -9,6 +11,12 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 19–20 ByteEncode₁₂：将 t̂/ŝ 编成 ek/dk polyvec。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/byte_encode12_ub_load.hpp
+ */
 #pragma once
 
 #include "byte_encode12_rom_tables.h"

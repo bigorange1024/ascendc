@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """
-gen_data.py — Alg.21 Decaps 生产 input。
+gen_data.py — FIPS 203 Alg.21 Decaps 生产 input / 可选 golden。
 
-- dk_kem.bin：从 alg19 output 复制（DK_KEM_SRC）
-- c.bin：从 alg20 output 复制（C_SRC）
-- LUT：host_golden/ntt_lut_bins.py
-- golden K：KEM_DECAPS_VERIFY=1 时复制 alg20 Encaps 的 K.bin
+生产（默认 run.sh）：
+  - 从 Alg.19 复制 dk_kem.bin（DK_KEM_SRC）
+  - 从 Alg.20 复制 c.bin（C_SRC）
+  - 调 host_golden/ntt_lut_bins.py 写 LUT
+
+VERIFY（KEM_DECAPS_VERIFY=1）：
+  - golden_K ← Alg.20 Encaps 的 K.bin（合法路径）
+  - golden_K_reject ← J(z‖c)=SHAKE256（拒绝路径对拍）
+禁止 Host 跑 indcpa_dec/enc 冒充设备 FO。
 """
 from __future__ import annotations
 
@@ -26,6 +31,7 @@ HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 
 
 def main() -> None:
+    """复制 dk/c、写 LUT；可选写 golden_K / golden_K_reject。"""
     dk_src = Path(os.environ.get("DK_KEM_SRC", str(DK_KEM_DEFAULT)))
     c_src = Path(os.environ.get("C_SRC", str(C_DEFAULT)))
     inp = ROOT / "input"

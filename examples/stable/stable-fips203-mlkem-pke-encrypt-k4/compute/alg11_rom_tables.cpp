@@ -1,3 +1,17 @@
+/**
+ * @file alg11_rom_tables.cpp
+ * @brief Alg.11 设备 GM 常量 ROM 定义（γ、Gather 字节索引、interleave 重排表）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 链接：MIX 核 AIC/AIV 各编一份；CPU 调试仅 AIV + host 链接一次（见 mmad_custom.cpp 条件 include）。
+ * Init 阶段由 alg11_vec::init_rom_luts_ub DataCopy 进 UB；Compute 热路径禁止 SetValue 重填。
+ * 表内容：
+ *   - gAlg11GammasGm           — FIPS kMlkemGammas[128]，与 alg11_gammas.h 宏表一致
+ *   - gAlg11GatherEven/OddByte — 偶/奇系数 Gather 字节偏移（n=256 固定公式）
+ *   - gAlg11InterleaveReorder  — basemul 后 c0||c1 → 交错 h[256] 的索引
+ * 同步：hat_inner_product_ref.c / hat_gammas.hpp 中 γ 须逐元一致。
+ */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/alg11_rom_tables.cpp
 // @layer compute
@@ -8,21 +22,6 @@
 // @depends #include: alg11_rom_tables.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file alg11_rom_tables.cpp
- * @brief Alg.11 设备 GM 常量 ROM 定义（γ、Gather 字节索引、interleave 重排表）。
- *
- * 链接：MIX 核 AIC/AIV 各编一份；CPU 调试仅 AIV + host 链接一次（见 mmad_custom.cpp 条件 include）。
- * Init 阶段由 alg11_vec::init_rom_luts_ub DataCopy 进 UB；Compute 热路径禁止 SetValue 重填。
- *
- * 表内容：
- *   - gAlg11GammasGm           — FIPS kMlkemGammas[128]，与 alg11_gammas.h 宏表一致
- *   - gAlg11GatherEven/OddByte — 偶/奇系数 Gather 字节偏移（n=256 固定公式）
- *   - gAlg11InterleaveReorder  — basemul 后 c0||c1 → 交错 h[256] 的索引
- *
- * 同步：hat_inner_product_ref.c / hat_gammas.hpp 中 γ 须逐元一致。
- */
 #include "alg11_rom_tables.h"
 #include "kernel_operator.h"
 

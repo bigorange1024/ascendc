@@ -1,6 +1,10 @@
 /**
  * @file f203_kem_dec_pack_entry.cpp
- * @brief Decaps 专用：pack 写 c' 后嵌入 K2 FO（比对 + J + 写 K）。
+ * @brief Alg.21 Decaps Phase-E 尾：Compress/ByteEncode 写 c'，同核嵌入设备 FO。
+ *
+ * 相对 vendor Encrypt pack：多传入 c_in / z / K' / Kout，在 pack 完成后调用 KemDecFo。
+ * 保证 CPU 与 SIM 生产路径 FO 均在设备完成（无 host memcmp）。
+ * Compress d=11(u) / d=5(v) 标量路径与 Encrypt pack 语义对齐。
  */
 #include "f203_encrypt_layout.h"
 #include "f203_encrypt_pack_config.hpp"
@@ -14,12 +18,14 @@ namespace {
 constexpr int32_t kN = F203_ENCRYPT_N;
 constexpr int32_t kK = F203_ENCRYPT_K;
 
+/** Compress₅：系数 → 5 bit（v 多项式）。 */
 __aicore__ inline uint32_t compress_d5_u32(uint32_t u)
 {
     uint32_t d0 = u * 1290176u;
     return ((d0 + (1u << 26)) >> 27) & 0x1fu;
 }
 
+/** Compress₁₁：系数 → 11 bit（u 多项式）。 */
 __aicore__ inline uint32_t compress_d11_u32(uint32_t u)
 {
     uint64_t d0 = static_cast<uint64_t>(u) * 5284526080ull;
@@ -27,6 +33,7 @@ __aicore__ inline uint32_t compress_d11_u32(uint32_t u)
     return static_cast<uint32_t>(d0 & 0x7ffu);
 }
 
+/** 将 N 个 dBits 宽系数按小端比特序打包到 GM。 */
 __aicore__ inline void byte_encode_bits_scalar(__gm__ uint8_t *out, const int32_t *comp, uint32_t dBits)
 {
     uint32_t bitPos = 0U;
@@ -51,6 +58,7 @@ __aicore__ inline void byte_encode_bits_scalar(__gm__ uint8_t *out, const int32_
     }
 }
 
+/** 单 poly：饱和到 q 后 Compress₁₁ + ByteEncode → c1 片段。 */
 __aicore__ inline void pack_one_poly_u11(__gm__ uint8_t *out, const __gm__ int32_t *polyIn)
 {
     int32_t comp[kN];
@@ -64,6 +72,7 @@ __aicore__ inline void pack_one_poly_u11(__gm__ uint8_t *out, const __gm__ int32
     byte_encode_bits_scalar(out, comp, 11U);
 }
 
+/** 单 poly：饱和到 q 后 Compress₅ + ByteEncode → c2 片段。 */
 __aicore__ inline void pack_one_poly_v5(__gm__ uint8_t *out, const __gm__ int32_t *polyIn)
 {
     int32_t comp[kN];
@@ -79,6 +88,10 @@ __aicore__ inline void pack_one_poly_v5(__gm__ uint8_t *out, const __gm__ int32_
 
 }  // namespace
 
+/**
+ * 设备核：pack u/v → c'，再 KemDecFo(c,c',z,K')→Kout。
+ * CPU：AIV_ONLY；SIM：MIX 占位，仅 AIV block0 执行。
+ */
 extern "C" __global__ __aicore__ void f203_kem_dec_pack(GM_ADDR uGm, GM_ADDR vGm, GM_ADDR cPrimeGm, GM_ADDR cInGm,
                                                         GM_ADDR zGm, GM_ADDR KprimeGm, GM_ADDR KoutGm)
 {
@@ -96,6 +109,7 @@ extern "C" __global__ __aicore__ void f203_kem_dec_pack(GM_ADDR uGm, GM_ADDR vGm
         return;
     }
 #endif
+    // ① Compress/ByteEncode：c' = ByteEncode₁₁(u)‖ByteEncode₅(v)
     const auto *uIn = reinterpret_cast<const __gm__ int32_t *>(uGm);
     const auto *vIn = reinterpret_cast<const __gm__ int32_t *>(vGm);
     auto *cOut = reinterpret_cast<__gm__ uint8_t *>(cPrimeGm);
@@ -105,6 +119,7 @@ extern "C" __global__ __aicore__ void f203_kem_dec_pack(GM_ADDR uGm, GM_ADDR vGm
     }
     pack_one_poly_v5(cOut + F203_C1_BYTES, vIn);
 
+    // ② 设备 FO：c vs c' → K 或 J(z‖c)
     F203KemDec::KemDecFo(reinterpret_cast<__gm__ uint8_t *>(cInGm), cOut, reinterpret_cast<__gm__ uint8_t *>(zGm),
                          reinterpret_cast<__gm__ uint8_t *>(KprimeGm), reinterpret_cast<__gm__ uint8_t *>(KoutGm));
 }

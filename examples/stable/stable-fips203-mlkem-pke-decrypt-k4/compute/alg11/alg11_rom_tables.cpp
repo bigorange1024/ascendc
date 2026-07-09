@@ -1,5 +1,9 @@
 /**
- * FIPS γ + 固定 n=256 Gather / interleave 字节索引 ROM（与 alg11_fixed_n256 公式一致）。
+ * @file alg11_rom_tables.cpp
+ * @brief Alg.11 ROM 表定义：FIPS γ + n=256 Gather/interleave 字节索引。
+ *
+ * Decrypt su_dot 在 Init 阶段 DataCopy 进 UB；公式与 alg11_fixed_n256 一致。
+ * 可通过宏改名（如 gSuDotGammasGm）避免多 TU 链接重复符号。
  */
 #include "alg11_rom_tables.h"
 #include "kernel_operator.h"

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""verify_kem_decaps.py — 对拍 output/K.bin vs golden（合法路径或拒绝路径）。"""
+"""
+verify_kem_decaps.py — Alg.21 Decaps 端到端 I/O 对拍。
+
+合法路径：output/K.bin vs golden_K.bin（来自 Alg.20 Encaps）。
+拒绝路径（KEM_DECAPS_TAMPER_C=1）：K vs J(z‖c)，且不得仍等于 encaps K。
+仅验字节等价；FO 本身在设备 kem_dec_pack 完成。
+"""
 from __future__ import annotations
 
 import hashlib
@@ -9,6 +15,7 @@ from pathlib import Path
 
 
 def max_diff(a: bytes, b: bytes) -> int:
+    """逐字节最大绝对差；长度不等时至少返回 256。"""
     n = min(len(a), len(b))
     m = 0
     for i in range(n):
@@ -19,6 +26,7 @@ def max_diff(a: bytes, b: bytes) -> int:
 
 
 def main() -> None:
+    """按是否篡改密文选择合法/拒绝 golden。"""
     root = Path(__file__).resolve().parent.parent
     out = root / "output"
     inp = root / "input"

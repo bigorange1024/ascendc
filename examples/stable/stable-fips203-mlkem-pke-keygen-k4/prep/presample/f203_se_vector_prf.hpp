@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 行 8–15 PRF+CBD presample 链。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/presample/f203_se_vector_prf.hpp
+ */
+/**
  * @file f203_se_vector_prf.hpp
  * @brief Phase P：σ → 8× SHAKE256 PRF（单 TPipe UB shake，链末 DataCopy 对拍 prf_out GM）。
  */
@@ -107,6 +113,10 @@ __aicore__ inline void RunShakePrfBatchUb(const uint8_t sigma[32], __gm__ uint8_
     RunShakePrfBatchUbWithUb(sigma, prf_out_gm, tilingLocal, xBuf, lenBuf, stagingBuf, yQue);
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `BuildPrfOutFromSeedD`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void BuildPrfOutFromSeedD(uint32_t seed_d, GM_ADDR prf_out_gm, GM_ADDR tiling_gm)
 {
     uint8_t sigma[32];

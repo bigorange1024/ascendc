@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
-gen_data.py — Alg.20 Encaps 生产 input。
+gen_data.py — FIPS 203 Alg.20 Encaps 生产 input / 可选 golden。
 
-- ek_kem.bin：从 alg19 KeyGen output 复制（EK_KEM_SRC）
-- seed_d.bin：SEED_D
-- LUT：host_golden/ntt_lut_bins.py
-- golden c/K：仅 KEM_ENCAPS_VERIFY=1（liboqs encaps_derand）
+生产（默认 run.sh）：
+  - 从 Alg.19 复制 ek_kem.bin（EK_KEM_SRC，禁止本探针内嵌 KeyGen）
+  - 写 seed_d.bin；KEM_ENC_EXT_SEED=1 时要求已有 encaps_seed.bin
+  - 调 host_golden/ntt_lut_bins.py 写 NTT/INTT stacked LUT
+
+VERIFY（KEM_ENCAPS_VERIFY=1）：
+  - 用与设备同式的 DerandMFromSeedD 得 m，调 liboqs encaps_derand 写 golden_c/K
+  - golden 仅作黑盒对拍，非设备规格
 """
 from __future__ import annotations
 
@@ -28,11 +32,13 @@ EK_KEM_DEFAULT = ROOT.parent / "fix-f203-alg19-kem-keygen-k4" / "output" / "ek_k
 
 
 def derand_m_from_seed(seed_d: int) -> bytes:
+    """与设备 DerandMFromSeedD 同式。"""
     msg = f"exp-mlkem-f203-kem-encaps-k4:SEED_M={seed_d}".encode()
     return hashlib.sha3_256(msg).digest()
 
 
 def main() -> None:
+    """准备 Encaps input；可选生成 liboqs golden。"""
     seed_d = int(os.environ.get("SEED_D", str(SEED_D_DEFAULT)))
     ek_src = Path(os.environ.get("EK_KEM_SRC", str(EK_KEM_DEFAULT)))
     inp = ROOT / "input"

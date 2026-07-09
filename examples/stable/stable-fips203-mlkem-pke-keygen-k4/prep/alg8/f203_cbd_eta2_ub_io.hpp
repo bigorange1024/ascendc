@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 Alg.8 CBD_η=2：ŝ/ê 采样。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/alg8/f203_cbd_eta2_ub_io.hpp
+ */
+/**
  * @file f203_cbd_eta2_ub_io.hpp
  * @brief P1b/P2：GM↔UB MTE DataCopy + PipeBarrier。
  *
@@ -86,6 +92,10 @@ __aicore__ inline void SamplePolyCbd2Batch8WithUb(uint32_t blockIdx, __gm__ cons
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `SamplePolyCbd2Batch8DataCopy`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void SamplePolyCbd2Batch8DataCopy(uint32_t blockIdx, __gm__ const uint8_t *prf_gm,
                                                     __gm__ int32_t *src_gm)
 {

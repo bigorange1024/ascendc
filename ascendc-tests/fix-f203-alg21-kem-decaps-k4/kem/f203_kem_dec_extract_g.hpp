@@ -1,6 +1,10 @@
 /**
  * @file f203_kem_dec_extract_g.hpp
- * @brief Decaps K1 辅助：extract m' 到 UB 后直接 G(m'‖h)，避免 SIM 下 mGm 写后标量读回不同步。
+ * @brief Alg.21 Decaps K1 辅助：从 v−w_time 抽出 m' 到 UB，并可写 mGm。
+ *
+ * 背景：SIM 上 extract 写 GM 后同核标量读 mGm 算 G 可能读到脏数据（CPU 孪生无此问题）；
+ * 故推荐 ExtractMLocal 把 msg 留在 UB，再直接 KemDecGFromUb。
+ * Compress₁ 语义与 vendor Decrypt extract 一致（q=3329，N=256）。
  */
 #pragma once
 
@@ -13,6 +17,7 @@ namespace F203KemDec {
 constexpr int32_t kExtractN = static_cast<int32_t>(F203_DECRYPT_N);
 constexpr int32_t kExtractQ = static_cast<int32_t>(F203_DECRYPT_Q);
 
+/** (a−b) mod q，结果 ∈ [0,q)。 */
 __aicore__ inline int32_t mod_q_sub(int32_t a, int32_t b)
 {
     int32_t x = a - b;
@@ -23,6 +28,7 @@ __aicore__ inline int32_t mod_q_sub(int32_t a, int32_t b)
     return x;
 }
 
+/** Compress₁：系数 → 1 bit（与 FIPS 203 / vendor extract 同式）。 */
 __aicore__ inline uint32_t compress_1_u32(int32_t x)
 {
     x = mod_q_sub(x, 0);
@@ -33,7 +39,11 @@ __aicore__ inline uint32_t compress_1_u32(int32_t x)
 
 /**
  * v − w_time → m'：msg 留在 UB；同时写 mGm 供后续 Re-Encrypt g4_noise 使用。
- * 背景：SIM 上 extract 写 GM 后同核标量读 mGm 算 G 可能读到脏数据（CPU 孪生无此问题）。
+ *
+ * @param vGm     Decrypt 解码的 v 多项式 [256] int32
+ * @param wTimeGm INTT(ŵ) 时域 [256] int32
+ * @param mGm     输出 32B 明文（供 Phase-E）
+ * @param msg     输出 UB 副本（供同核 G）
  */
 __aicore__ inline void ExtractMLocal(GM_ADDR vGm, GM_ADDR wTimeGm, GM_ADDR mGm, uint8_t msg[kHashBytes])
 {

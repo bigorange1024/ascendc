@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""gate_g3.py — golden w_hat。"""
+"""
+gate_g3.py — Decrypt 分段门禁 G3：golden ŵ = ⟨ŝ, û⟩（Alg.11 累加）。
+
+用法：gate_g3.py <case_dir> <out_dir> → golden_w_hat.bin
+"""
 from __future__ import annotations
 
 import sys

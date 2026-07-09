@@ -1,8 +1,9 @@
-#pragma once
-
 /**
  * @file byte_decode12_config.hpp
  * @brief 行 2 ByteDecode₁₂ 实现选型（CMake：`F203_BYTE_DECODE12_IMPL`）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt；解 ek 中 t̂。
+ * 与 golden：解码结果与 host decode_t_hat I/O 等价。默认生产全量路径 IMPL=0。
  *
  * ## 两条路径（均已验证 I/O；默认走 tick 更低者）
  *
@@ -27,6 +28,8 @@
  *
  *   F203_BYTE_DECODE12_IMPL=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
  */
+#pragma once
+
 #ifndef F203_BYTE_DECODE12_IMPL
 #define F203_BYTE_DECODE12_IMPL 0
 #endif

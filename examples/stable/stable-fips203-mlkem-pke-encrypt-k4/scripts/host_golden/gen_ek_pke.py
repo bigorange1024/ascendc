@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
+# coding=utf-8
 """
-gen_ek_pke.py — vendored KeyGen golden 生成 ek_pke（1568B，自包含，禁止 liboqs）。
+gen_ek_pke.py — KeyGen golden 生成 ek_pke（1568B，自包含，禁止 liboqs）。
 
-逻辑抄写 pass-fix-f203-alg13-device-keygen-k4/scripts/keygen_golden.py 语义，
-仅保留 ek 生产所需：ρ→Â、σ→s/e→NTT→t̂→ByteEncode₁₂‖ρ。
+流水线位置：Encrypt 用例的 **输入公钥** 生成器（非 Encrypt 设备路径本身）。
+FIPS 203 Alg.13 语义：SEED_D → (ρ,σ) → Â / s / e → NTT → t̂ → ByteEncode₁₂(t̂)‖ρ。
+供 `scripts/gen_data.py` 在本地缺失 fixture 时写出 `input/ek_pke.bin`；
+与设备 Encrypt 对拍的 golden 仍由 `golden_c.py` 对同一 ek/m/coins 计算。
+
+逻辑对齐 KeyGen 探针 golden 语义，仅保留 ek 生产所需步骤。
 """
 from __future__ import annotations
 
@@ -27,24 +32,28 @@ from f203_ref_common import (
 )
 
 EK_BYTES = 1568
-POLY_D12_BYTES = 384
+POLY_D12_BYTES = 384  # 一 poly 的 ByteEncode₁₂ 长度
 
 
 def derand_bytes_from_seed(seed_d: int) -> bytes:
+    """确定性 d：SHA3-256(标签‖SEED_D)，与仓库锁种约定一致。"""
     msg = f"exp-mlkem-f203-2s1e-k4:SEED_D={seed_d}".encode()
     return hashlib.sha3_256(msg).digest()
 
 
 def hash_g_rho_sigma(d: bytes) -> tuple[bytes, bytes]:
+    """G：SHA3-512(d‖k) → (ρ,σ) 各 32B。"""
     buf = hashlib.sha3_512(d + bytes([K & 0xFF])).digest()
     return buf[:32], buf[32:64]
 
 
 def shake128_squeeze(msg: bytes, outlen: int) -> bytes:
+    """SHAKE128 挤出（SampleNTT XOF）。"""
     return hashlib.shake_128(msg).digest(outlen)
 
 
 def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """XOF → d1/d2 12-bit 候选对。"""
     d1 = np.empty(CAND_PAIRS, dtype=np.int32)
     d2 = np.empty(CAND_PAIRS, dtype=np.int32)
     pos = 0
@@ -57,6 +66,7 @@ def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
 
 
 def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
+    """拒绝采样凑满 N 系数。"""
     out: list[int] = []
     for i in range(d1.shape[0]):
         v1 = int(d1[i])
@@ -71,6 +81,7 @@ def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
 
 
 def build_a_hat(rho: bytes) -> np.ndarray:
+    """ρ → Â 平坦 [K*K*N]（偏移用 a_hat_offset(p,j)）。"""
     polys = K * K
     a_hat = np.empty(polys * N, dtype=np.int32)
     for p in range(K):
@@ -85,14 +96,17 @@ def build_a_hat(rho: bytes) -> np.ndarray:
 
 
 def prf_shake256(sigma: bytes, nonce: int) -> bytes:
+    """KeyGen PRF：SHAKE256(σ‖nonce) → 128B。"""
     return hashlib.shake_256(sigma + bytes([nonce & 0xFF])).digest(128)
 
 
 def _load32_le(buf: bytes, off: int) -> int:
+    """小端 u32。"""
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
 def sample_poly_cbd2(buf: bytes) -> np.ndarray:
+    """CBD η=2 → 一 poly。"""
     coeffs = np.zeros(N, dtype=np.int32)
     for i in range(N // 8):
         t = _load32_le(buf, 4 * i)
@@ -108,6 +122,7 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
 
 
 def build_src(sigma: bytes) -> np.ndarray:
+    """σ → s‖e 共 2K 行（nonce 递增）。"""
     rows = []
     nonce = 0
     for _ in range(K):
@@ -120,6 +135,7 @@ def build_src(sigma: bytes) -> np.ndarray:
 
 
 def golden_t_hat(a_hat_flat: np.ndarray, s_hat: np.ndarray, e_hat: np.ndarray) -> np.ndarray:
+    """t̂_p = Σ_j Â_{p,j} ⊙ ŝ_j + ê_p（NTT 域）。"""
     t = np.zeros((K, N), dtype=np.int32)
     for p in range(K):
         acc = np.zeros(N, dtype=np.int64)
@@ -134,6 +150,10 @@ def golden_t_hat(a_hat_flat: np.ndarray, s_hat: np.ndarray, e_hat: np.ndarray) -
 
 
 def build_ek_pke(seed_d: int) -> np.ndarray:
+    """
+    由 SEED_D 生成 ek_pke[1568] = ByteEncode₁₂(t̂) ‖ ρ。
+    @return uint8 数组，长度 EK_BYTES
+    """
     d = derand_bytes_from_seed(seed_d)
     rho, sigma = hash_g_rho_sigma(d)
     a_hat = build_a_hat(rho)
@@ -153,6 +173,7 @@ def build_ek_pke(seed_d: int) -> np.ndarray:
 
 
 def main() -> None:
+    """CLI：<SEED_D> <ek_pke.out>。"""
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <SEED_D> <ek_pke.out>", file=sys.stderr)
         sys.exit(1)

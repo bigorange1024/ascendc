@@ -1,9 +1,6 @@
-#pragma once
-
 /**
  * @file f203_tail_compress_byteencode.hpp
  * @brief Alg.14 行 22–24：Compress₁₁/₅ + ByteEncode（ml_kem_1024）。
- *
  * 选型定稿（2026-07-08，勿擅自改路径）：
  *   - Compress：向量 per-lane（`COMPRESS_D_VEC=1`），vendored 自 pass-f203-compress-d-vec-k4
  *   - ByteEncode：标量逐组 pack（`BYTE_ENCODE_D_VEC=1`），vendored 自 pass-f203-byteencode-d-vec-k4
@@ -11,11 +8,15 @@
  * 原理与宏表：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
  * Compress 细节：docs/notes/F203-Compress-Decompress-向量实现指南.md
  * 禁止跨探针 #include，仅抄码。
- *
  * d=5：int32 Barrett（Muls 1290176 + bias 1<<26 + >>27）
  * d=11：cast_div 商（Muls(2^11) + Adds(q/2) + Cast→Div→CAST_TRUNC）
  * ByteEncode：8 系数/组 标量 pack（O(N/8)；与 Alg.5 比特流 0-diff）
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
+#pragma once
+
 #include "f203_encrypt_tail_layout.h"
 #include "kernel_operator.h"
 

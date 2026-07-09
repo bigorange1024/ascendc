@@ -1,3 +1,11 @@
+/**
+ * @file alg11_tiling.h
+ * @brief Alg.11 向量 basemul 的 tiling / workspace 尺寸常量。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt 内积（Â·ŷ / t̂·ŷ）。
+ * 与 golden：仅设备布局，不改变密文 c 语义。
+ */
+
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/alg11_tiling.h
 // @layer compute
@@ -8,21 +16,6 @@
 // @depends #include: cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file alg11_tiling.h
- * @brief Alg.11 向量 basemul 的静态尺寸：N、pairCount、VecWs 槽位数。
- *
- * 用途：为 multiply_ntts_vec / hat_alg11 提供编译期常量；ALG11_MEM_OPS 决定 ws 是否含内嵌索引 LUT。
- *
- * 调用方：multiply_ntts_ub.hpp、multiply_ntts_vec.hpp、hat_dot_ub_tiling.hpp（kVecWsInts 与之对齐）。
- *
- * 不变量：kN=256、kPairCount=128；kBlockDim=1（本探针单核 MIX）；MEM_OPS=1 时 kVecWsInts=8*128。
- *
- * Golden：无直接对拍；经行 18 t_hat 间接验收。
- *
- * CMake：ALG11_MEM_OPS（multiply_ntts_config.hpp）。
- */
 #pragma once
 
 #include <cstdint>

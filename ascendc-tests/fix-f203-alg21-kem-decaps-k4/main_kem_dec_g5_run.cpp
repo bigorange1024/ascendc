@@ -1,11 +1,23 @@
 /**
  * @file main_kem_dec_g5_run.cpp
- * @brief Alg.21 KEM Decaps：Phase-D（Decrypt+G）+ Phase-E（Re-Encrypt+FO）。
+ * @brief FIPS 203 Alg.21 KEM Decaps host 编排实现。
  *
- * SIM host 拓扑（见 ascendc_build_mode.hpp · 分叉指南 §3.3）：
- *   默认 decaps_2session — Phase-D 后 aclFinalize，fresh session + 设备 FO
- *   decaps_1session — 单 session 排障（CAModel c′ 污染）
- * CPU：单 session，不读 ASCENDC_SIM_HOST_MODE。
+ * ## 两阶段
+ * - Phase-D：vendor Decrypt G4（prep/chain_ntt）+ 本仓 chain_intt / kem_dec_g → m'/K'/coins
+ * - Phase-E：vendor Encrypt G5（prep_a_hat…g4_noise）+ 本仓 kem_dec_pack（c'+设备 FO）→ K
+ *
+ * ## SIM host 拓扑（ascendc_build_mode.hpp · 分叉指南 §3.3）
+ * - 默认 `decaps_2session`：Phase-D 后 aclFinalize，fresh session + 设备 FO
+ * - `decaps_1session`：单 session 排障（CAModel c′ 污染）
+ * - CPU：单 session，不读 ASCENDC_SIM_HOST_MODE
+ *
+ * ## 与 vendor
+ * Decrypt/Encrypt 核在 vendor/；本文件为 KEM 探针自有 launch 壳与 FO 接线（禁止改 vendor）。
+ *
+ * ## 主要入口
+ * - `run_decaps_session`：核心编排
+ * - `run_kem_decaps_cpu_full` / `run_kem_decaps_sim_full`：对外包装
+ * - `LaunchPhaseEReencryptAndFo` / `run_phase_e_fresh_session`：Phase-E
  */
 #include "ascendc_build_mode.hpp"
 #include "main_kem_dec_g5_run.hpp"
@@ -128,6 +140,7 @@ constexpr uint32_t kPrfOutLen = F203_ENCRYPT_PRF_BYTES_PER_POLY;
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 constexpr size_t kUTrBytes = F203_U_HAT_BYTES + F203_TR_HAT_BYTES;
 
+/** 将 even/odd stacked LUT 填入 NTT/INTT workspace（与 Encrypt host 同布局）。 */
 static void fill_ntt_ws(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, const uint8_t *lut_odd)
 {
     std::memset(ws, 0, wsBytes);
@@ -135,6 +148,7 @@ static void fill_ntt_ws(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, co
     std::memcpy(ws + tiling::LUT_ODD_STACKED, lut_odd, tiling::lutEvenOddFileBytes);
 }
 
+/** Host 拼 at_r5 输入 matM：p<k 取 Â 行，p==k 取 t̂（与 Encaps G3 同式）。 */
 static void build_at_r5_mat(const uint8_t *a_hat, const uint8_t *t_hat, uint8_t *mat_out)
 {
     constexpr int32_t kK_g3 = at_r5_tiling::kK;
@@ -153,6 +167,7 @@ static void build_at_r5_mat(const uint8_t *a_hat, const uint8_t *t_hat, uint8_t 
     }
 }
 
+/** 拒绝路径测试开关：KEM_DECAPS_TAMPER_C=1 时篡改 coins 迫使 c'≠c。 */
 static bool KemDecapsTamperCEnabled()
 {
     const char *flag = std::getenv("KEM_DECAPS_TAMPER_C");
@@ -206,6 +221,12 @@ struct PhaseEDevBuf {
     uint8_t *cPrimeDev = nullptr;
 };
 
+/**
+ * Phase-E：在已有 ACL session 上 launch Encrypt G5 + kem_dec_pack(FO)，D2H 写出 K。
+ * @param stream 当前 session stream
+ * @param dev    已 H2D 的 ek/c/z/m/K'/coins 与中间 GM
+ * @param K_out  host 32B
+ */
 static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uint8_t *K_out)
 {
     using namespace tiling;
@@ -230,6 +251,8 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     } while (0)
 
     uint32_t ret = 0;
+    // 顺序：Â ← ρ →（可选篡改 coins）→ r/e ← coins → NTT(r) → decode t̂ →
+    //       at_r5 → INTT(u)/INTT(tr) → noise → pack+FO
     uint8_t *rhoDev = dev.ekDev + F203_EK_RHO_OFFSET;
     DECAPS_TRACE_SUBMIT("prep_a_hat");
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_prep_a_hat)(kAhatBlockDim, stream, rhoDev, dev.aHatDev);
@@ -329,6 +352,10 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     return 0;
 }
 
+/**
+ * SIM 默认路径：新建 ACL session，仅跑 Phase-E（Re-Encrypt+FO）。
+ * 输入 m/K'/coins 来自上一 session Phase-D 的 D2H（规避同 session 污染）。
+ */
 static int run_phase_e_fresh_session(const uint8_t *ek, const uint8_t *c_in, const uint8_t *z, const uint8_t *m,
                                      const uint8_t *Kprime, const uint8_t *coins, const uint8_t *lut_ntt_even,
                                      const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even,
@@ -346,6 +373,7 @@ static int run_phase_e_fresh_session(const uint8_t *ek, const uint8_t *c_in, con
     FillShakeTiling(&shakeTiling, kPrfBatch, kPrfMaxMsgLen, kPrfOutLen, SHAKE256_RATE_BYTES);
     shakeTiling.blockDim = kReBlockDim;
 
+    // --- 新建 ACL session，分配 Phase-E 全部设备缓冲 ---
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));
@@ -384,6 +412,7 @@ static int run_phase_e_fresh_session(const uint8_t *ek, const uint8_t *c_in, con
     *dev.nttTilingHost = nttTiling;
     *dev.inttTilingHost = inttTiling;
 
+    // --- H2D：c/z/m/K'/coins/ek + 填 NTT/INTT workspace LUT ---
     CHECK_ACL(aclrtMemcpy(dev.cDev, F203_CT_PKE_BYTES, c_in, F203_CT_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(dev.zDev, F203KemDec::kHashBytes, z, F203KemDec::kHashBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(dev.mDev, F203_MSG_BYTES, m, F203_MSG_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
@@ -401,6 +430,7 @@ static int run_phase_e_fresh_session(const uint8_t *ek, const uint8_t *c_in, con
         CHECK_ACL(aclrtMemcpy(dev.inttEncWsDev, wssize, wsHost.data(), wssize, ACL_MEMCPY_HOST_TO_DEVICE));
     }
 
+    // --- 跑 Re-Encrypt + FO，再释放本 session ---
     const int peRc = LaunchPhaseEReencryptAndFo(stream, dev, K_out);
 
     CHECK_ACL(aclrtFree(dev.cDev));
@@ -435,16 +465,22 @@ static int run_phase_e_fresh_session(const uint8_t *ek, const uint8_t *c_in, con
 }
 #endif
 
+/**
+ * Decaps 核心 session 编排（CPU 全链 / SIM Phase-D 段入口）。
+ * 从 dk_kem 切片 dk_pke/ek/h/z，跑 Decrypt→G，再按模式接 Phase-E。
+ */
 int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t *lut_ntt_even,
                        const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
                        uint8_t *K_out)
 {
+    // 从 dk_kem 切片：dk_pke | ek | h | z（F203KemDec 布局）
     const uint8_t *dk_pke = dk_kem + F203KemDec::kDkPkeOffset;
     const uint8_t *ek = dk_kem + F203KemDec::kEkOffset;
     const uint8_t *h = dk_kem + F203KemDec::kHOffset;
     const uint8_t *z = dk_kem + F203KemDec::kZOffset;
 
     using namespace tiling;
+    // tiling：Decrypt G4 / Encaps NTT·INTT 全量 mixPass=3
     TilingData g4Tiling{};
     g4Tiling.tileLength = static_cast<int32_t>(n);
     g4Tiling.kPolys = static_cast<int32_t>(kK);
@@ -459,11 +495,13 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     shakeTiling.blockDim = kReBlockDim;
 
 #ifdef ASCENDC_CPU_DEBUG
+    // ========== CPU 路径：tikicpu GmAlloc + ICPU_RUN_KF 单 session 全链 ==========
     g_f203_decrypt_g4_chain_ntt_mix_pass = static_cast<int>(kG4MixPass);
     g_f203_decrypt_g4_chain_intt_mix_pass = static_cast<int>(kG4MixPass);
     g_f203_ntt_r_mix_pass = static_cast<int>(kNttMixPass);
     g_f203_intt_mix_pass = static_cast<int>(kInttMixPass);
 
+    // Phase-D 缓冲
     uint8_t *dkGm = (uint8_t *)AscendC::GmAlloc(kDkPkeBytes);
     uint8_t *cGm = (uint8_t *)AscendC::GmAlloc(F203_CT_PKE_BYTES);
     uint8_t *hGm = (uint8_t *)AscendC::GmAlloc(F203KemDec::kHashBytes);
@@ -489,6 +527,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     fill_ntt_ws(nttWsGm, wssize, lut_ntt_even, lut_ntt_odd);
     fill_ntt_ws(inttWsGm, wssize, lut_intt_even, lut_intt_odd);
 
+    // --- Phase-D：Decrypt prep → NTT 链 → INTT 链 → G(m,h)→K'/coins ---
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(f203_decrypt_g4_prep, kG4BlockDim, dkGm, cGm, uGm, vGm, sHatGm);
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
@@ -497,6 +536,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(f203_kem_dec_g, kKemGBlockDim, mGm, hGm, KprimeGm, coinsGm);
 
+    // Phase-E 缓冲（同 session 继续）
     uint8_t *ekGm = (uint8_t *)AscendC::GmAlloc(F203_EK_PKE_BYTES);
     uint8_t *aHatGm = (uint8_t *)AscendC::GmAlloc(F203_AHAT_BYTES);
     uint8_t *prfGm = (uint8_t *)AscendC::GmAlloc(F203_ENCRYPT_PRF_TOTAL_BYTES);
@@ -521,11 +561,12 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     fill_ntt_ws(inttEncWsGm, wssize, lut_intt_even, lut_intt_odd);
     std::memset(aCol0Gm, 0, F203_AHAT_BYTES);
 
+    // --- Phase-E：Re-Encrypt（Â/r̂/at/INTT/noise）+ kem_dec_pack FO ---
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     uint8_t *rhoGm = ekGm + F203_EK_RHO_OFFSET;
     ICPU_RUN_KF(f203_encrypt_prep_a_hat, kAhatBlockDim, rhoGm, aHatGm);
     if (KemDecapsTamperCEnabled()) {
-        TamperRejectPathGm(coinsGm);
+        TamperRejectPathGm(coinsGm);  // 调试：迫使 c'≠c
     }
     ICPU_RUN_KF(f203_encrypt_prep_re, kReBlockDim, coinsGm, prfGm, reGm, shakeTilingGm);
 
@@ -536,6 +577,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(f203_encrypt_decode_t_hat, kDecodeBlockDim, ekGm, tHatGm, aCol0Gm);
 
+    // Host 拼 at_r5 左矩阵（Â 行 + t̂）
     std::vector<uint8_t> aHatHost(F203_AHAT_BYTES);
     std::vector<uint8_t> tHatHost(F203_T_HAT_BYTES);
     std::memcpy(aHatHost.data(), aHatGm, F203_AHAT_BYTES);
@@ -545,6 +587,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(f203_encrypt_at_r5, kG3BlockDim, matGm, rHatGm, uTrGm);
 
+    // û 与 tr̂ 分两次 INTT（tr 需 pad 到 k=4 几何）
     std::memset(trPaddedGm, 0, dstFileBytes);
     std::memcpy(trPaddedGm, uTrGm + F203_U_HAT_BYTES, F203_TR_HAT_BYTES);
     ICPU_RUN_KF(f203_encrypt_intt, kInttBlockDim, uTimeGm, uTrGm, inttEncWsGm, inttTiling);
@@ -554,6 +597,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     uint8_t *e2Gm = reGm + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES;
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     ICPU_RUN_KF(f203_encrypt_g4_noise, kG4NoiseBlockDim, uTimeGm, e1Gm, trTimeGm, e2Gm, mGm, vPolyGm);
+    // FO：比较 c' 与 c，选 K' 或 J(z‖c)
     ICPU_RUN_KF(f203_kem_dec_pack, kPackBlockDim, uTimeGm, vPolyGm, cPrimeGm, cGm, zGm, KprimeGm, KoutGm);
 
     std::memcpy(K_out, KoutGm, F203KemDec::kSharedSecretBytes);
@@ -594,6 +638,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     AscendC::GmFree(cPrimeGm);
     return 0;
 #else
+    // ========== SIM/NPU 路径：ACL session + ACLRT_LAUNCH_KERNEL ==========
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));
@@ -722,6 +767,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
                               ACL_MEMCPY_HOST_TO_DEVICE));
         std::printf("[kem_decaps] diagnostic PhaseE-only: skipped Phase-D, reloaded m'/K'/coins\n");
     } else {
+        // --- Phase-D launch：prep → chain_ntt → chain_intt → kem_dec_g ---
         ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_prep)(kG4BlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev);
         if (ret != 0) {
             return 30;
@@ -849,6 +895,7 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
     }
 #endif
 
+    // --- 单 session：组装 PhaseEDevBuf，同 stream 继续 Re-Encrypt+FO ---
     PhaseEDevBuf phaseE{};
     phaseE.cDev = cDev;
     phaseE.zDev = zDev;
@@ -1003,6 +1050,10 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
 }  // namespace
 
 #ifdef ASCENDC_CPU_DEBUG
+/**
+ * CPU 对外入口：跑完整 Decaps，写出 case_dir/output/K.bin。
+ * @return 0 成功；非 0 为内部错误码
+ */
 int run_kem_decaps_cpu_full(const std::string &case_dir, const uint8_t *dk_kem, const uint8_t *c_in,
                             const uint8_t *lut_ntt_even, const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even,
                             const uint8_t *lut_intt_odd, uint8_t *K_out)
@@ -1022,6 +1073,10 @@ int run_kem_decaps_cpu_full(const std::string &case_dir, const uint8_t *dk_kem, 
 #endif
 
 #ifndef ASCENDC_CPU_DEBUG
+/**
+ * SIM 对外入口：委托 run_decaps_session（含 2-session / 1-session 分支）。
+ * K_out 由调用方提供 32B 缓冲；落盘由上层 main 负责。
+ */
 int run_kem_decaps_sim_full(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t *lut_ntt_even,
                             const uint8_t *lut_ntt_odd, const uint8_t *lut_intt_even, const uint8_t *lut_intt_odd,
                             uint8_t *K_out)

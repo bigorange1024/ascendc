@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 行 8–15 PRF+CBD presample 链。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/presample/f203_se_vector_cbd_scalar.hpp
+ */
+/**
  * @file f203_se_vector_cbd_scalar.hpp
  * @brief V3 Phase C：标量 SamplePolyCBD_η=2（与 se-device-scalar 同式，生产默认）。
  */
@@ -31,6 +37,10 @@ __aicore__ inline uint32_t Load32Le(const uint8_t *buf)
            (static_cast<uint32_t>(buf[2]) << 16) | (static_cast<uint32_t>(buf[3]) << 24);
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `SamplePolyCbd2Row`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void SamplePolyCbd2Row(int32_t *dst_row, const uint8_t *buf)
 {
     for (uint32_t i = 0; i < N / 8U; ++i) {
@@ -49,6 +59,10 @@ __aicore__ inline void SamplePolyCbd2Row(int32_t *dst_row, const uint8_t *buf)
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `BuildSrcFromPrfGm`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void BuildSrcFromPrfGm(const __gm__ uint8_t *prf_out_gm, __gm__ int32_t *src_gm)
 {
     uint8_t prf_buf[128];

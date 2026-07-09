@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 Stage1 limb6 拆分原语。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/kyber_limb6.hpp
+ */
+/**
  * @file kyber_limb6.hpp
  * @brief Kyber/ML-KEM limb6 编码常量与 PIPE 屏障宏（Stage1 分裂 / Stage3 Horner 移位）。
  *

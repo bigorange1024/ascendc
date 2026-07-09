@@ -1,3 +1,17 @@
+/**
+ * @file data_utils.h
+ * @brief Host 侧 bin 读写、ACL 检查宏与调试打印；Alg.20 KEM Encaps 探针 main 使用。
+ *
+ * ## 流水线位置
+ * FIPS 203 Alg.20 / ML-KEM-1024 Encaps 的 host 编排层（非设备核）。
+ * 读写 `input/`、`output/` 下的 ek/m/c/K 等 bin。
+ *
+ * ## 与 golden
+ * 仅 I/O 胶水；对拍由 run.sh + cmp 完成。本文件为探针根目录自有实体（非 vendor）。
+ *
+ * ## 提供
+ * ReadFile / WriteFile / CHECK_ACL / PrintData。
+ */
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
@@ -47,13 +61,13 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 读取整个常规文件到 host 缓冲。
+ * @param filePath 输入路径；@param fileSize [out] 实际字节数
+ * @param buffer 预分配缓冲；@param bufferSize 容量（文件更大则失败）
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
+    // 确认常规文件
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
@@ -72,6 +86,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 测长并整文件读入
     std::filebuf *buf = file.rdbuf();
     size_t size = buf->pubseekoff(0, std::ios::end, std::ios::in);
     if (size == 0) {
@@ -92,11 +107,8 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
 }
 
 /**
- * @brief Write data to file
- * @param [in] filePath: file path
- * @param [in] buffer: data to write to file
- * @param [in] size: size to write
- * @return write result
+ * 覆盖写入 host 缓冲到路径。
+ * @param filePath 输出路径；@param buffer 数据；@param size 字节数
  */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
@@ -105,6 +117,7 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
         return false;
     }
 
+    // O_TRUNC 避免残留旧输出尾部
     int fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWRITE);
     if (fd < 0) {
         ERROR_LOG("Open file failed. path = %s", filePath.c_str());
@@ -121,6 +134,7 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
     return true;
 }
 
+/** 按行打印数组（调试）。 */
 template<typename T>
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
@@ -133,6 +147,7 @@ void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
     }
 }
 
+/** 打印 aclFloat16（先转 float）。 */
 void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -144,6 +159,10 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 按 printDataType 分派调试打印。
+ * @param data 无类型缓冲；@param count 元素个数；@param dataType 解释类型
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

@@ -11,6 +11,12 @@
 
 # coding=utf-8
 """
+本文件在 KeyGen 流水线中的位置：Host：compute 段 golden / 对拍脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/compute/gen_data.py
+"""
+"""
 gen_data.py — pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2 的 golden 生成器。
 
 ## 数据契约（与设备 mmad_custom / aiv_func 必须一致）
@@ -93,6 +99,7 @@ PLANAR_SLOT_E1 = 10
 K_DST = 12
 
 
+# 本函数为 KeyGen 流水线组件 `load_lut_t_i8`（详见 STATUS/customspec）。
 def load_lut_t_i8() -> np.ndarray:
     with open(_NTT_LUT_HDR, encoding="utf-8") as f:
         txt = f.read()
@@ -108,6 +115,7 @@ def load_lut_t_i8() -> np.ndarray:
     return np.array(nums, dtype=np.int8).reshape(N, 512)
 
 
+# 本函数为 KeyGen 流水线组件 `lut_planar_stacked`（详见 STATUS/customspec）。
 def lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
     if even:
         top = lut[:, 0:N:2]
@@ -155,6 +163,7 @@ def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray) -> tuple[np.ndarray, np.nd
     return c_lo_even, c_lo_odd, c_hi_even, c_hi_odd
 
 
+# 本函数为 KeyGen 流水线组件 `pack_bank_planar`（详见 STATUS/customspec）。
 def pack_bank_planar(
     c_lo_even: np.ndarray,
     c_lo_odd: np.ndarray,
@@ -179,6 +188,7 @@ def pack_bank_planar(
         out[planar_row(slot, 3, 1), :] = c_hi_odd[lo_r, :]
 
 
+# 本函数为 KeyGen 流水线组件 `pack_mat_c_planar`（详见 STATUS/customspec）。
 def pack_mat_c_planar(
     c_lo_even: np.ndarray,
     c_lo_odd: np.ndarray,
@@ -193,6 +203,7 @@ def pack_mat_c_planar(
     return out
 
 
+# 本函数为 KeyGen 流水线组件 `merge_planar_poly`（详见 STATUS/customspec）。
 def merge_planar_poly(mat_planar: np.ndarray, slot: int) -> np.ndarray:
     """Stage3 golden：平面 8 行 → raw_lo/raw_hi → stage31_mod。与 ntt_vec.hpp 同公式。"""
     hh = mat_planar[planar_row(slot, 0, 0)].astype(np.int64)
@@ -211,6 +222,7 @@ def merge_planar_poly(mat_planar: np.ndarray, slot: int) -> np.ndarray:
     return out
 
 
+# 本函数为 KeyGen 流水线组件 `golden_dst_from_planar`（详见 STATUS/customspec）。
 def golden_dst_from_planar(mat_planar: np.ndarray) -> np.ndarray:
     dst = np.zeros((K_DST, N), dtype=np.int32)
     for slot in range(K_PLANAR_SLOTS):
@@ -234,6 +246,7 @@ def _load_hat_ref_lib() -> ctypes.CDLL:
     return ctypes.CDLL(so_path)
 
 
+# 本函数为 KeyGen 流水线组件 `_load_byte_encode_ref_lib`（详见 STATUS/customspec）。
 def _load_byte_encode_ref_lib() -> ctypes.CDLL:
     build_dir = os.path.join(_CASE_DIR, "build_ref")
     os.makedirs(build_dir, exist_ok=True)
@@ -263,6 +276,7 @@ def golden_byte_encode_polyvec(polys: np.ndarray) -> np.ndarray:
     return out
 
 
+# 本函数为 KeyGen 流水线组件 `golden_t_hat_dot_c`（详见 STATUS/customspec）。
 def golden_t_hat_dot_c(a_hat: np.ndarray, s_hat: np.ndarray) -> np.ndarray:
     lib = _load_hat_ref_lib()
     lib.hat_inner_product_dot.argtypes = [
@@ -282,6 +296,7 @@ def golden_t_hat_dot_c(a_hat: np.ndarray, s_hat: np.ndarray) -> np.ndarray:
     return out
 
 
+# 本函数为 KeyGen 流水线组件 `golden_t_hat_c`（详见 STATUS/customspec）。
 def golden_t_hat_c(a_hat: np.ndarray, s_hat: np.ndarray, e_hat: np.ndarray) -> np.ndarray:
     lib = _load_hat_ref_lib()
     lib.hat_inner_product_add.argtypes = [
@@ -303,6 +318,7 @@ def golden_t_hat_c(a_hat: np.ndarray, s_hat: np.ndarray, e_hat: np.ndarray) -> n
     return out
 
 
+# 本函数为 KeyGen 流水线组件 `build_src_se`（详见 STATUS/customspec）。
 def build_src_se() -> np.ndarray:
     """
     构造 host src [8,256]。

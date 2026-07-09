@@ -39,6 +39,7 @@ constexpr int32_t kSuDotScratchInts = 4 * kSuDotN;
 #if defined(ASCENDC_CPU_DEBUG)
 #include "alg11_gammas.h"
 
+/** CPU 标量 Barrett：与向量 reduce_zq 同参数族。 */
 __aicore__ inline int32_t su_dot_barrett_red(int32_t x)
 {
     const int32_t q = kSuDotQ;
@@ -51,6 +52,7 @@ __aicore__ inline int32_t su_dot_barrett_red(int32_t x)
     return x;
 }
 
+/** CPU：单对 poly 的 Alg.11（AoS 偶奇交错）。 */
 __aicore__ inline void su_dot_multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g)
 {
     for (int32_t i = 0; i < kSuDotN / 2; ++i) {
@@ -65,6 +67,10 @@ __aicore__ inline void su_dot_multiply_ntts_scalar(int32_t *h, const int32_t *f,
     }
 }
 
+/**
+ * CPU：ŵ = Σ_j MultiplyNTTs(ŝ_j, û_j) mod q，写回 wHatGm。
+ * 先累加再统一 %q（与设备向量路径语义一致）。
+ */
 __aicore__ inline void su_dot_scalar_impl(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
 {
     const auto *sGm = reinterpret_cast<const __gm__ int32_t *>(sHatGm);
@@ -75,12 +81,14 @@ __aicore__ inline void su_dot_scalar_impl(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADD
     for (int32_t c = 0; c < kSuDotN; ++c) {
         acc[c] = 0;
     }
+    // 对 k 个 poly 对做 Alg.11 并累加
     for (int32_t j = 0; j < kSuDotK; ++j) {
         su_dot_multiply_ntts_scalar(prod, sGm + j * kSuDotN, uGm + j * kSuDotN);
         for (int32_t c = 0; c < kSuDotN; ++c) {
             acc[c] += prod[c];
         }
     }
+    // 最终约化到 [0,q)
     for (int32_t c = 0; c < kSuDotN; ++c) {
         int32_t x = acc[c];
         x %= kSuDotQ;
@@ -92,16 +100,24 @@ __aicore__ inline void su_dot_scalar_impl(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADD
 }
 #endif
 
+/**
+ * 设备侧 su_dot 核：Init 驻留 ROM LUT，Process 做 k 次向量 MultiplyNTTs 累加。
+ */
 class KernelSuDot {
 public:
     __aicore__ inline KernelSuDot() {}
 
+    /** scratch_ 内按 int32 偏移切片。 */
     __aicore__ inline LocalTensor<int32_t> bufI32(int32_t offInts, int32_t len)
     {
         return scratch_.GetWithOffset<int32_t>(static_cast<uint32_t>(len),
                                                static_cast<uint32_t>(offInts) * sizeof(int32_t));
     }
 
+    /**
+     * 绑定 ŝ/û/ŵ GM；设备路径分配 UB 并物化 Alg.11 ROM。
+     * @param sHatGm ŝ[k×N]；@param uHatGm û[k×N]；@param wHatGm ŵ[N]
+     */
     __aicore__ inline void Init(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
     {
         sAddr_ = sHatGm;

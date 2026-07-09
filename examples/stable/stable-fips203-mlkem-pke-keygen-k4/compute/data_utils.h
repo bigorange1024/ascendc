@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Host 读盘写盘工具（compute 副本）。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/data_utils.h
+ */
+/**
  * @file data_utils.h
  * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
  *
@@ -76,6 +82,10 @@ typedef enum {
  * @param [out] fileSize: file size
  * @return read result
  */
+/**
+ * 本函数为 KeyGen 流水线组件 `ReadFile`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
     struct stat sBuf;
@@ -122,6 +132,10 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
  * @param [in] size: size to write
  * @return write result
  */
+/**
+ * 本函数为 KeyGen 流水线组件 `WriteFile`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
     if (buffer == nullptr) {
@@ -146,6 +160,10 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 }
 
 template<typename T>
+/**
+ * 本函数为 KeyGen 流水线组件 `DoPrintData`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -168,6 +186,10 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `PrintData`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

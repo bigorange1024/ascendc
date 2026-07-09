@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""liboqs PKE Encrypt ↔ exp-fips203-mlkem-pke-encrypt-k4 AscendC 对拍。
+"""
+kat_liboqs_vs_ascendc.py — liboqs PKE Encrypt ↔ AscendC 密文对拍驱动。
+
+流水线位置：stable-fips203-mlkem-pke-encrypt-k4 的 **外部 KAT 批测**（非设备核本身）。
+FIPS 203 / ML-KEM-1024：用 liboqs fixture 写 input/golden，再跑本用例 `run.sh`，
+比较 `output/c.bin` 与 liboqs c（1568B）。与 golden 关系：此处 golden 来自 liboqs，
+用于交叉验证设备 I/O，不替代 `scripts/gen_data.py` 的自包含 oracle。
 
 流程（每轮）：
   1. liboqs_pke_fixture(SEED_D) → ek/m/coins/c
@@ -11,8 +17,6 @@
 用法：
   bash kat_liboqs_vs_ascendc.sh
   KAT_CPU_COUNT=10 KAT_SIM_COUNT=1 bash kat_liboqs_vs_ascendc.sh
-  KAT_SEEDS="20260619,1,2,..." bash kat_liboqs_vs_ascendc.sh
-  KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
 """
 from __future__ import annotations
 

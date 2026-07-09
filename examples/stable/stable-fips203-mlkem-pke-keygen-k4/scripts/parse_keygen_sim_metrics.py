@@ -11,6 +11,12 @@
 
 # @exp stable-fips203-mlkem-pke-keygen-k4
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：KeyGen 输入、golden、KAT、验收脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/parse_keygen_sim_metrics.py
+"""
 """解析 KeyGen SIM 两次 launch 的 tick 与墙钟用时，并打印加总摘要。
 
 数据来源（优先级）：
@@ -49,6 +55,7 @@ def _parse_ts_ms(line: str) -> float | None:
     return dt.timestamp() * 1000.0 + float(f"0.{frac}")
 
 
+# 本函数为 KeyGen 流水线组件 `_find_profile_task`（详见 STATUS/customspec）。
 def _find_profile_task(case_dir: Path) -> Path | None:
     for base in (case_dir / "sim_log", case_dir):
         p = base / "profile_task_log0.toml"
@@ -70,6 +77,7 @@ def _parse_profile_ticks(profile_path: Path) -> list[int]:
     return ticks
 
 
+# 本函数为 KeyGen 流水线组件 `_parse_wall_ms_per_launch`（详见 STATUS/customspec）。
 def _parse_wall_ms_per_launch(log_text: str) -> list[float]:
     lines = log_text.splitlines()
     starts: list[float | None] = [None, None]
@@ -95,6 +103,7 @@ def _parse_wall_ms_per_launch(log_text: str) -> list[float]:
     return out
 
 
+# 本函数为 KeyGen 流水线组件 `_parse_total_tick`（详见 STATUS/customspec）。
 def _parse_total_tick(log_text: str) -> int | None:
     hits = [int(x) for x in re.findall(r"Total tick:\s*(\d+)", log_text)]
     return hits[-1] if hits else None
@@ -141,6 +150,7 @@ def build_summary(case_dir: Path, kernel_log: Path | None = None) -> dict:
     }
 
 
+# 本函数为 KeyGen 流水线组件 `format_summary_lines`（详见 STATUS/customspec）。
 def format_summary_lines(summary: dict) -> list[str]:
     lines: list[str] = []
     for i in range(2):
@@ -159,6 +169,7 @@ def format_summary_lines(summary: dict) -> list[str]:
     return lines
 
 
+# 本函数为 KeyGen 流水线组件 `print_summary`（详见 STATUS/customspec）。
 def print_summary(case_dir: Path, kernel_log: Path | None = None) -> dict:
     summary = build_summary(case_dir, kernel_log)
     for line in format_summary_lines(summary):

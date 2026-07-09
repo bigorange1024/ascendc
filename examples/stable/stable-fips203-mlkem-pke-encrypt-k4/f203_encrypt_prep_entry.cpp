@@ -2,13 +2,14 @@
  * @file f203_encrypt_prep_entry.cpp
  * @brief Alg.14 行 3–15 设备入口：单 launch `f203_encrypt_prep`（ek+coins → a_hat + re）。
  *
+ * 流水线位置：FIPS 203 / ML-KEM-1024 Encrypt 的 **prep 核**（SIM/CPU 共用第一 launch）。
  * 数学：
  *   行 3–7：ρ = ek_pke[1536:1568] → SampleNTT → a_hat[16,256]
  *   行 8–15：coins → PRF+CBD(η=2) batch9 → re[9,256]（nonce 0–3=r, 4–7=e₁, 8=e₂）
  *
  * 编排：双 AIV 并行 Â 分片（block0→poly 0–7，block1→8–15）；PRF/CBD 仅 block0。
  * CPU tikicpu：blockDim=2 时单 block 串行跑两次分片（见 ASCENDC_CPU_DEBUG 分支）。
- * 代码来源：stable KeyGen prep vendoring；禁止抄 correctness 全链。
+ * 与 golden：中间 Â/re 不落盘；最终对拍 `c.bin`。
  */
 #include "f203_a_hat16_config.h"
 #include "f203_encrypt_prep_ub.hpp"

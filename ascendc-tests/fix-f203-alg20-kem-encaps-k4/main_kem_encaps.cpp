@@ -1,9 +1,14 @@
 /**
  * @file main_kem_encaps.cpp
- * @brief Alg.20 ML-KEM.Encaps(ek) host 入口：读 ek_kem + seed，写 c/K。
+ * @brief FIPS 203 Alg.20 ML-KEM.Encaps(ek) host 入口。
  *
- * 生产：input/seed_d.bin（4B）→ device DerandMFromSeedD。
- * 旁路 A（KEM_ENC_EXT_SEED=1，test-only）：input/encaps_seed.bin（32B m）直接喂 device。
+ * 读 input/ek_kem.bin（Alg.19 产物）+ seed + NTT/INTT LUT，调用
+ * run_kem_enc_g5_cpu_full / run_g5_sim_full（本仓 main_kem_enc_g5_run.*），
+ * 写 output/c.bin、K.bin。
+ *
+ * 生产：seed_d.bin(4B) → device DerandMFromSeedD。
+ * 旁路 A（KEM_ENC_EXT_SEED=1）：encaps_seed.bin(32B m) 直接喂 device。
+ * 密码学全在 device；本文件只做 I/O 与路径分发。
  */
 #include "data_utils.h"
 #include "f203_encrypt_layout.h"

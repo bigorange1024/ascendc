@@ -1,18 +1,19 @@
-#ifndef F203_ENCRYPT_L18_L19_TILING_H
-#define F203_ENCRYPT_L18_L19_TILING_H
-
 /**
  * @file f203_l18_l19_tiling.h
  * @brief Alg.14 compute 探针 GM/workspace 尺寸与 INTT k=8 几何。
- *
  * 关键常量：
  *   kK=4           — NTT(y) 与 Â 列数
  *   kP=5           — 内积输出 uTr（û[0..3] + tr̂[4]）
  *   kInttBatch=8   — INTT pad（行 5–7 填零，复用 stage123 polyvec8）
  *   kInttPolysPerAiv=4 — 每 AIV INTT S1 行数
- *
  * workspace：单 launch 内 NTT(k=4) 与 INTT(k=8) 串行复用；INTT 阶段 S0 需 16 行。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
+#ifndef F203_ENCRYPT_L18_L19_TILING_H
+#define F203_ENCRYPT_L18_L19_TILING_H
+
 #include <cstddef>
 #include <cstdint>
 

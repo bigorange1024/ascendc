@@ -1,6 +1,10 @@
 /**
  * @file main_kem_decaps.cpp
- * @brief Alg.21 ML-KEM.Decaps(dk, c) host 入口：读 dk_kem + c，写 K。
+ * @brief FIPS 203 Alg.21 ML-KEM.Decaps(dk, c) host 入口。
+ *
+ * 读 input/dk_kem.bin（Alg.19）+ c.bin（Alg.20）+ LUT，调用
+ * run_kem_decaps_cpu_full / run_kem_decaps_sim_full，写 output/K.bin。
+ * 密码学全在 device（Decrypt G4 + G + Re-Encrypt G5 + 设备 FO）；本文件只做 I/O。
  */
 #include "data_utils.h"
 #include "f203_kem_dec_layout.h"

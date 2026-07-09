@@ -1,9 +1,13 @@
 /**
  * @file f203_kem_kg_derand_ub.hpp
- * @brief Alg.19 随机性 z：device UB 内 SHA3-256 域分离派生（与 d 的 DerandFromSeedD 对称）。
+ * @brief FIPS 203 Alg.19 随机性 z：在 device UB 内用 SHA3-256 做域分离派生。
  *
- * 背景：用户锁定 d/z 均在 device AscendC 生成，禁止 D2H/落盘本体；可复现验收 Host 仅给 seed_d。
- * d 由 vendor prep 内 DerandFromSeedD 消费；本文件仅负责 z。
+ * 与 PKE vendor 段关系：
+ *   - d（KeyGen 主随机性）由 vendor/pke_keygen prep 内 DerandFromSeedD 消费；
+ *   - 本文件只派生 z，供 Launch-3 KemKgFinish 写入 dk_kem 尾 32B。
+ *
+ * 背景（已锁定）：d/z 均在 AscendC 生成，禁止 D2H/落盘随机性本体；
+ * Host 可复现验收只给 seed_d.bin（4B）。旁路 A（KEM_KG_EXT_SEED）不走本函数。
  */
 #pragma once
 
@@ -11,14 +15,21 @@
 
 namespace F203KemKg {
 
-/** 无除法 uint32 → 十进制 ASCII（与 vendor alg7 DerandFromSeedD 同型）。 */
+/**
+ * 将 uint32 写成十进制 ASCII（无堆分配；与 vendor alg7 DerandFromSeedD 同型）。
+ * @param v   待转换无符号整数（SEED_D）
+ * @param out 输出缓冲，调用方保证 ≥10 字节
+ * @return 写入的字符数（不含 '\\0'）
+ */
 __aicore__ inline int U32ToDec(uint32_t v, char *out)
 {
     char tmp[10];
     int n = 0;
+    // 特殊：0 直接写 '0'，避免 while 不进入
     if (v == 0U) {
         tmp[n++] = '0';
     } else {
+        // 低位先入 tmp，再反转到 out
         while (v > 0U) {
             tmp[n++] = static_cast<char>('0' + (v % 10U));
             v /= 10U;
@@ -31,13 +42,19 @@ __aicore__ inline int U32ToDec(uint32_t v, char *out)
 }
 
 /**
- * SEED_D → 域分离消息 → SHA3-256 → z[32]。
- * 消息前缀固定为 exp-mlkem-f203-kem-k4:SEED_Z=（与 host golden / liboqs fixture 对齐）。
+ * 由 SEED_D 派生 Alg.19 的 z[32]。
+ *
+ * 消息 = 固定前缀 "exp-mlkem-f203-kem-k4:SEED_Z=" ‖ 十进制(seed_d)，
+ * 再 SHA3-256 → 32B。前缀与 host golden / liboqs fixture 对齐（见 scripts/gen_data.py）。
+ *
+ * @param seed_d Host 输入的可复现种子（uint32）
+ * @param z      输出 32B，留在 UB，由 finish 写入 dk_kem 尾
  */
 __aicore__ inline void DerandZFromSeedD(uint32_t seed_d, uint8_t z[32])
 {
     char msg[48];
     int pos = 0;
+    // 逐字节写死前缀，避免设备侧字符串字面量/库依赖
     msg[pos++] = 'e';
     msg[pos++] = 'x';
     msg[pos++] = 'p';

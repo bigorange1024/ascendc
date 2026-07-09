@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 Alg.8 CBD_η=2：ŝ/ê 采样。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/alg8/cbd2_ab_lut.h
+ */
+/**
  * @file cbd2_ab_lut.h
  * @brief P1a：Alg.8 η=2 系数 LUT — (a,b) ↦ (a−b) mod 3329。
  *

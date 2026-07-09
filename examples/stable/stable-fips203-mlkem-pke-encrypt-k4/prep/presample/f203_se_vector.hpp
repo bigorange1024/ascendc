@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_vector.hpp
+ * @brief SE 向量采样公共常量与 tiling 装载。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt prep（PRF batch）。
+ * 与 golden：中间 PRF 不落盘。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector.hpp
 // @layer prep
@@ -8,14 +16,6 @@
 // @depends #include: f203_se_stage_config.hpp, f203_se_vector_prf.hpp, f203_se_vector_cbd_ub.hpp, f203_cbd_eta2.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_vector.hpp
- * @brief 阶段编排：G → P → C。
- *
- * V3（F203_SE_VECTOR_V3，默认）：shake UB batch PRF + alg8 P1b-single（SamplePolyCbd2Batch8）。
- * V2.5（F203_SE_VECTOR_V25，实验）：shake UB PRF + bulk UB CBD；SIM 更慢，禁止集成。
- */
 #pragma once
 
 #include "f203_se_stage_config.hpp"

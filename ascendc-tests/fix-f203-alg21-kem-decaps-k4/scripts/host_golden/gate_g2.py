@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-gate_g2.py — G2 golden：r polyvec [4,256] → r̂ NTT（Tag5T Stage1–3，与 stage123 gen_data 同构）。
-
-自包含：解析 vendored transpose_mlkem_luts_i8.h；禁止 liboqs。
+gate_g2.py — Encaps/Decaps 分阶段 gate（host 期望 vs 中间态）。
 """
 from __future__ import annotations
 
@@ -25,6 +23,9 @@ LUT_HDR = CASE / "compute/ntt_r/thirdparty/ntt_study/include/mlkem/stable/transp
 
 
 def load_lut_t_i8() -> np.ndarray:
+    """
+    load_lut_t_i8：gate_g2 分阶段 golden/对照。
+    """
     txt = LUT_HDR.read_text(encoding="utf-8")
     i0 = txt.index("kMlkemLimb6Ntt_T_i8")
     i1 = txt.index("{", i0)
@@ -37,11 +38,16 @@ def load_lut_t_i8() -> np.ndarray:
 
 
 def planar_row(slot: int, limb: int, half: int) -> int:
+    """
+    planar_row：gate_g2 分阶段 golden/对照。
+    """
     return half * (K * LIMBS) + slot * LIMBS + limb
 
 
 def encode_compact(polys: np.ndarray) -> np.ndarray:
-    """[K,N] int32 → S0 [2K,N] int8 hi/lo。"""
+    """
+    encode_compact：gate_g2 分阶段 golden/对照。
+    """
     s0 = np.zeros((2 * K, N), dtype=np.int8)
     for lp in range(K):
         for r in range(N):
@@ -52,6 +58,9 @@ def encode_compact(polys: np.ndarray) -> np.ndarray:
 
 
 def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray) -> tuple[np.ndarray, ...]:
+    """
+    mat_c_tmp_golden：gate_g2 分阶段 golden/对照。
+    """
     le = lut[:, 0:N:2]
     lo = lut[:, 1:N:2]
     he = lut[:, N:512:2]
@@ -64,6 +73,9 @@ def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray) -> tuple[np.ndarray, ...]:
 
 
 def pack_bank(c_le, c_lo, c_he, c_ho, poly_base: int, k_polys: int, out: np.ndarray) -> None:
+    """
+    pack_bank：gate_g2 分阶段 golden/对照。
+    """
     for lp in range(k_polys):
         hi_r = poly_base + lp
         lo_r = K + poly_base + lp
@@ -79,6 +91,9 @@ def pack_bank(c_le, c_lo, c_he, c_ho, poly_base: int, k_polys: int, out: np.ndar
 
 
 def pack_mat_c_planar(c_le, c_lo, c_he, c_ho) -> np.ndarray:
+    """
+    pack_mat_c_planar：gate_g2 分阶段 golden/对照。
+    """
     out = np.zeros((MAT_C_PLANAR_ROWS, HALF_N), dtype=np.int32)
     pack_bank(c_le, c_lo, c_he, c_ho, 0, K // 2, out)
     pack_bank(c_le, c_lo, c_he, c_ho, K // 2, K // 2, out)
@@ -86,6 +101,9 @@ def pack_mat_c_planar(c_le, c_lo, c_he, c_ho) -> np.ndarray:
 
 
 def stage31_mod(raw: np.ndarray) -> np.ndarray:
+    """
+    stage31_mod：gate_g2 分阶段 golden/对照。
+    """
     raw64 = raw.astype(np.int64)
     q = np.int64(Q)
     t = np.where(raw64 >= 0, raw64 // q, -((-raw64) // q))
@@ -96,6 +114,9 @@ def stage31_mod(raw: np.ndarray) -> np.ndarray:
 
 
 def merge_planar_poly(mat_planar: np.ndarray, slot: int) -> np.ndarray:
+    """
+    merge_planar_poly：gate_g2 分阶段 golden/对照。
+    """
     hh = mat_planar[planar_row(slot, 0, 0)].astype(np.int64)
     lh = mat_planar[planar_row(slot, 1, 0)].astype(np.int64)
     hl = mat_planar[planar_row(slot, 2, 0)].astype(np.int64)
@@ -113,6 +134,9 @@ def merge_planar_poly(mat_planar: np.ndarray, slot: int) -> np.ndarray:
 
 
 def ntt_r_hat_golden(r: np.ndarray) -> np.ndarray:
+    """
+    ntt_r_hat_golden：gate_g2 分阶段 golden/对照。
+    """
     if r.shape != (K, N):
         raise SystemExit(f"[gate_g2] r shape {r.shape} != ({K},{N})")
     lut = load_lut_t_i8()
@@ -126,6 +150,9 @@ def ntt_r_hat_golden(r: np.ndarray) -> np.ndarray:
 
 
 def main() -> None:
+    """
+    main：gate_g2 分阶段 golden/对照。
+    """
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <case_dir> <out_dir>", file=sys.stderr)
         sys.exit(1)

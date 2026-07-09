@@ -9,6 +9,12 @@
 # @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+"""
+本文件在 KeyGen 流水线中的位置：Host：compute 段 golden / 对拍脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/compute/mlkem_ref.py
+"""
 # F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
 import re
 from pathlib import Path
@@ -39,6 +45,7 @@ def load_zetas() -> list:
     return _parse_i16_array(text, "kMlkemZetas", 128)
 
 
+# 本函数为 KeyGen 流水线组件 `gen_fixed_se_polyvec`（详见 STATUS/customspec）。
 def gen_fixed_se_polyvec() -> "np.ndarray":
     import numpy as np
 
@@ -61,6 +68,7 @@ def load_f203_se_and_lut_fp16():
     return se, lut
 
 
+# 本函数为 KeyGen 流水线组件 `fp16_lut_to_i8`（详见 STATUS/customspec）。
 def fp16_lut_to_i8(lut_fp16: "np.ndarray") -> "np.ndarray":
     import numpy as np
 
@@ -128,6 +136,7 @@ def f203_stage3_route_a(mat_c: "np.ndarray") -> "np.ndarray":
     return raw.astype(np.int32)
 
 
+# 本函数为 KeyGen 流水线组件 `stage31_mod`（详见 STATUS/customspec）。
 def stage31_mod(raw: "np.ndarray") -> "np.ndarray":
     """mod q；保留 ONNX/ntt_study 双校正写法（CANN 9.0.0 下对合法输入为恒等）。"""
     import numpy as np
@@ -165,6 +174,7 @@ def mlkem_reduce_to_zq(x: int) -> int:
     return x
 
 
+# 本函数为 KeyGen 流水线组件 `mlkem_ntt`（详见 STATUS/customspec）。
 def mlkem_ntt(coeffs: list) -> list:
     zetas = load_zetas()
     f = [mlkem_reduce_to_zq(c) for c in coeffs]
@@ -180,6 +190,7 @@ def mlkem_ntt(coeffs: list) -> list:
     return f
 
 
+# 本函数为 KeyGen 流水线组件 `golden_mlkem_ntt_batch`（详见 STATUS/customspec）。
 def golden_mlkem_ntt_batch(se: "np.ndarray") -> "np.ndarray":
     import numpy as np
 

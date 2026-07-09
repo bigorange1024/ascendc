@@ -2,7 +2,11 @@
 
 /**
  * @file f203_encrypt_at_jp_scalar.hpp
- * @brief CPU 孪生：Alg.14 行 19 NTT 域内积标量参考（仅 ASCENDC_CPU_DEBUG）。
+ * @brief CPU 孪生：Alg.14 行 18 NTT 域内积标量参考（仅 ASCENDC_CPU_DEBUG）。
+ *
+ * 流水线位置：Encrypt CPU 五 launch 中 `f203_encrypt_at_jp` 的标量路径；
+ * SIM/向量路径用 `f203_encrypt_at_jp_vec.hpp`，本文件不参与生产 SIM。
+ * 与 golden：仅辅助孪生正确性；最终密文仍对拍 `c.bin`。
  */
 #if defined(ASCENDC_CPU_DEBUG)
 
@@ -13,6 +17,7 @@
 
 namespace encrypt_at_jp {
 
+/** 将 int64 累加结果归约到 [0,q)。 */
 __aicore__ inline int32_t mod_q_i64(int64_t x)
 {
     constexpr int32_t kQ = encrypt_at_jp_tiling::kHatQ;
@@ -24,6 +29,11 @@ __aicore__ inline int32_t mod_q_i64(int64_t x)
     return static_cast<int32_t>(rem);
 }
 
+/**
+ * Barrett 风格二次约减（与设备 basemul 标量参考一致）。
+ * @param x 乘积或中间 int32
+ * @return x mod q，落在 [0,q)
+ */
 __aicore__ inline int32_t barrett_red(int32_t x)
 {
     constexpr int32_t kQ = encrypt_at_jp_tiling::kHatQ;
@@ -37,6 +47,10 @@ __aicore__ inline int32_t barrett_red(int32_t x)
     return x;
 }
 
+/**
+ * Alg.11 MultiplyNTTs 标量：h ← f ⊙ g（按对，用 γ[i]）。
+ * @param h/f/g 长度 n 的 int32 缓冲；n 须为偶数（通常 256）
+ */
 __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g, int32_t n)
 {
     constexpr int32_t kN = encrypt_at_jp_tiling::kN;
@@ -55,6 +69,10 @@ __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const 
     }
 }
 
+/**
+ * 半行内积写 GM：对 p∈[pBegin,pEnd) 计算 û_p = Σ_j Â_{j,p} ⊙ ŷ_j。
+ * @param aHat/yHat/uNtt  GM 基址；布局见 encrypt_at_jp_layout
+ */
 __aicore__ inline void innerproduct_halfrows_scalar(GM_ADDR aHat, GM_ADDR yHat, GM_ADDR uNtt, int32_t pBegin,
                                                     int32_t pEnd)
 {
@@ -85,7 +103,10 @@ __aicore__ inline void innerproduct_halfrows_scalar(GM_ADDR aHat, GM_ADDR yHat, 
     }
 }
 
-/** CPU：û 写 UB（标量 SetValue，仅 tikicpu）。 */
+/**
+ * CPU：û 写 UB（标量 SetValue，仅 tikicpu）；localBase 相对 pBegin。
+ * 用于融合路径把内积结果驻留 UB，避免再经 uNtt GM。
+ */
 __aicore__ inline void innerproduct_halfrows_scalar_to_ub(GM_ADDR aHat, GM_ADDR yHat,
                                                           AscendC::LocalTensor<int32_t> &uUb, int32_t pBegin,
                                                           int32_t pEnd)

@@ -1,6 +1,10 @@
 /**
  * @file f203_decrypt_intt_w_impl.hpp
- * @brief INTT(w_hat) 三段式 MIX 段（g4_full 内联）。
+ * @brief Decrypt 流水线：w ← INTT(ŵ_padded) 三段式 MIX（与 NTT 同几何，逆 LUT）。
+ *
+ * 对齐 FIPS 203 Alg.15 中 INTT(ŵ)；输入为 pad 成 k=4 polyvec 前缀的 ŵ。
+ * CrossCore：INTT 路径不用 ST_MMAD 中间态（对齐 Encrypt）；flag 1/3。
+ * golden I/O：中间态 w 不落盘；全链以 m.bin 对拍。
  */
 #ifndef F203_DECRYPT_INTT_W_IMPL_HPP
 #define F203_DECRYPT_INTT_W_IMPL_HPP
@@ -14,6 +18,7 @@
 
 namespace decrypt_g4 {
 
+/** CrossCore 状态（与 NTT 同编号语义；INTT AIC 不等待独立 MMAD 态）。 */
 enum InttMachineState : uint16_t {
     INTT_IDLE = 0,
     INTT_AIV_SPLIT,
@@ -39,6 +44,10 @@ __aicore__ inline void intt_set(InttMachineState state, const bool aic, const in
     KYBER_PIPE_ALL();
 }
 
+/**
+ * INTT：src ŵ_padded → dst 时域 w。
+ * @param dst/src/ws 输出 / 输入 / INTT workspace；AIC/AIV 均须进入。
+ */
 __aicore__ inline void intt_w_impl(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tilingParam)
 {
     const bool AIC = AscendC::GetSubBlockNum() == 1;

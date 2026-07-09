@@ -1,9 +1,14 @@
-#pragma once
-
 /**
  * @file f203_encrypt_at_jp.hpp
- * @brief 行 19 NTT 域内积统一入口：CPU 标量 / SIM·NPU 向量（DataCopy 搬运，û 可驻留 UB）。
+ * @brief Alg.14 行 18：û ← Âᵀ∘ŷ 内积统一入口（CPU 标量 / SIM·NPU 向量；û 可驻留 UB）。
+ *
+ * 流水线位置：FIPS 203 / ML-KEM-1024 Encrypt compute；CPU 独立核或 SIM 融合段。
+ * 与 golden：中间 û 不落盘。
+ *
+ * 分派：ASCENDC_CPU_DEBUG → scalar；否则 → vec（DataCopy 搬运）。
  */
+#pragma once
+
 #include "f203_encrypt_at_jp_tiling.h"
 #include "alg11_gammas.h"
 #include "kernel_operator.h"

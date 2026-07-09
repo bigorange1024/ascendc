@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-diag_phase_e.py — Phase-E 逐级污染定位（单 session SIM 排障，2026-07-03）。
+diag_phase_e.py — Alg.21 Decaps Phase-E 逐级污染定位（单 session SIM 排障，2026-07-03）。
 
 背景：单库合并后，SIM 单 session 下 Phase-D 输出 m'/K'/coins max=0，但 Phase-E 末尾
       c' vs c max=244（FO 误拒 → K max=216）。2-session（aclFinalize 后 fresh encrypt）

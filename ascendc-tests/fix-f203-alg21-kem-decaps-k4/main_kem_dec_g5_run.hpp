@@ -1,6 +1,9 @@
 /**
  * @file main_kem_dec_g5_run.hpp
- * @brief Alg.21 KEM Decaps：单 session Decrypt G4 + Encrypt G5 + FO。
+ * @brief Alg.21 KEM Decaps host 编排声明。
+ *
+ * CPU：单 session Decrypt G4 + G + Encrypt G5 + 设备 FO。
+ * SIM：默认 2-session（Phase-D 后 aclFinalize，fresh session Phase-E+FO），规避 CAModel 单 session c' 污染。
  */
 #pragma once
 

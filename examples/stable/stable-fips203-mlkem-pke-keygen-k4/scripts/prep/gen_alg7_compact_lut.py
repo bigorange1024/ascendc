@@ -10,6 +10,12 @@
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：prep 段 golden / ROM 生成脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/prep/gen_alg7_compact_lut.py
+"""
 """生成 8-lane accept mask → Gather 字节偏移 LUT → f203_alg7_compact_lut.h。
 
 Alg.7 向量 rej compact 路径将 448 个 stream lane 按 8×int32 分块处理：

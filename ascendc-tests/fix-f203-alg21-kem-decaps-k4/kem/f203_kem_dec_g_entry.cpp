@@ -1,6 +1,9 @@
 /**
  * @file f203_kem_dec_g_entry.cpp
- * @brief Decaps K1 独立 AIV launch：G(m'‖h) → K' + coins（跨 launch 读 mGm，stream sync 后可见）。
+ * @brief Alg.21 Decaps K1 独立 AIV launch：G(m'‖h) → K' + coins。
+ *
+ * 跨 launch 读 mGm（stream sync 后可见）。SIM 用 MIX 占位释 AIV-only func_key
+ *（合库后 AIV-only 触 R1 507000；见文件内 2026-07-02 注释）。
  */
 #include "f203_kem_dec_g.hpp"
 #include "kernel_operator.h"

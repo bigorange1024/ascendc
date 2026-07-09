@@ -1,3 +1,16 @@
+/**
+ * @file data_utils.h
+ * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 本探针用途：
+ *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
+ *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
+ *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
+ * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
+ * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/data_utils.h
 // @layer prep
@@ -8,20 +21,6 @@
 // @depends #include: iostream, fstream, cstdio, string, vector, iomanip, cassert, fcntl.h, unistd.h, sys/stat.h, acl/acl.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file data_utils.h
- * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
- *
- * 本探针用途：
- *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
- *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
- *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
- *
- * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
- *
- * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
- */
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */

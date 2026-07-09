@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-gate_g1.py — G1 分阶段 golden：a_hat（ρ→SampleNTT×16）与 r/e1/e2（coins→PRF+CBD×9）。
-
-自包含：抄写 FIPS 203 语义，禁止 liboqs；与 vendored 设备路径 I/O 一致。
+gate_g1.py — Encaps/Decaps 分阶段 gate（host 期望 vs 中间态）。
 """
 from __future__ import annotations
 
@@ -23,14 +21,23 @@ PRF_BATCH = 9
 
 
 def a_hat_offset(p: int, j: int) -> int:
+    """
+    a_hat_offset：gate_g1 分阶段 golden/对照。
+    """
     return (p * K + j) * N
 
 
 def shake128_squeeze(msg: bytes, outlen: int) -> bytes:
+    """
+    shake128_squeeze：gate_g1 分阶段 golden/对照。
+    """
     return hashlib.shake_128(msg).digest(outlen)
 
 
 def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """
+    unpack_d12_from_xof：gate_g1 分阶段 golden/对照。
+    """
     d1 = np.empty(CAND_PAIRS, dtype=np.int32)
     d2 = np.empty(CAND_PAIRS, dtype=np.int32)
     pos = 0
@@ -43,6 +50,9 @@ def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
 
 
 def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
+    """
+    rej_scalar_from_d12：gate_g1 分阶段 golden/对照。
+    """
     out: list[int] = []
     for i in range(d1.shape[0]):
         v1 = int(d1[i])
@@ -57,6 +67,9 @@ def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
 
 
 def sample_ntt_one_poly(rho: bytes, p: int, j: int) -> np.ndarray:
+    """
+    sample_ntt_one_poly：gate_g1 分阶段 golden/对照。
+    """
     seed = rho + bytes([j & 0xFF, p & 0xFF])
     xof = shake128_squeeze(seed, XOF_BYTES)
     d1, d2 = unpack_d12_from_xof(xof)
@@ -64,6 +77,9 @@ def sample_ntt_one_poly(rho: bytes, p: int, j: int) -> np.ndarray:
 
 
 def build_a_hat(rho: bytes) -> np.ndarray:
+    """
+    build_a_hat：gate_g1 分阶段 golden/对照。
+    """
     polys = K * K
     a_hat = np.empty(polys * N, dtype=np.int32)
     for p in range(K):
@@ -75,14 +91,23 @@ def build_a_hat(rho: bytes) -> np.ndarray:
 
 
 def prf_shake256(coins: bytes, nonce: int) -> bytes:
+    """
+    prf_shake256：gate_g1 分阶段 golden/对照。
+    """
     return hashlib.shake_256(coins + bytes([nonce & 0xFF])).digest(PRF_BYTES)
 
 
 def _load32_le(buf: bytes, off: int) -> int:
+    """
+    _load32_le：gate_g1 分阶段 golden/对照。
+    """
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
 def sample_poly_cbd2(buf: bytes) -> np.ndarray:
+    """
+    sample_poly_cbd2：gate_g1 分阶段 golden/对照。
+    """
     coeffs = np.zeros(N, dtype=np.int32)
     for i in range(N // 8):
         t = _load32_le(buf, 4 * i)
@@ -98,6 +123,9 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
 
 
 def build_re(coins: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    build_re：gate_g1 分阶段 golden/对照。
+    """
     rows = [sample_poly_cbd2(prf_shake256(coins, nonce)) for nonce in range(PRF_BATCH)]
     stacked = np.stack(rows)
     r = stacked[0:K]
@@ -107,6 +135,9 @@ def build_re(coins: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 def main() -> None:
+    """
+    main：gate_g1 分阶段 golden/对照。
+    """
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <case_dir> <out_dir>", file=sys.stderr)
         sys.exit(1)

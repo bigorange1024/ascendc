@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-golden_c.py — Alg.14 全链 host golden：ek,m,coins → c.bin（1568B）。
+golden_c.py — Decrypt 夹具：Alg.14 Host golden（ek,m,coins → c.bin 1568B）。
 
-自包含 Python 参考，禁止 liboqs；与设备 G1–G4 语义对齐。
+## 流水线位置
+为 Alg.15 Decrypt 造密文输入；上游依赖 gen_ek_pke 等。禁止 liboqs。
+仅 I/O oracle，禁止当作 AscendC 实现规格。
+
+## 输出
+c.bin：Compress+ByteEncode 后的 1568B 密文。
 """
 from __future__ import annotations
 
@@ -32,6 +37,11 @@ EK_T_BYTES = 1536
 
 
 def poly_byte_decode12(buf: bytes) -> np.ndarray:
+    """
+    ByteDecode₁₂：384B → 256 个 12-bit 系数（int32）。
+
+    输入：buf≥384B；输出：shape (256,) int32。
+    """
     out = np.empty(N, dtype=np.int32)
     for i in range(N // 2):
         b0, b1, b2 = buf[3 * i], buf[3 * i + 1], buf[3 * i + 2]
@@ -43,6 +53,9 @@ def poly_byte_decode12(buf: bytes) -> np.ndarray:
 
 
 def decode_t_hat(ek: bytes) -> np.ndarray:
+    """
+    从 ek_pke 前 1536B 解出 t̂[K,N]。
+    """
     t = np.empty((K, N), dtype=np.int32)
     for j in range(K):
         t[j] = poly_byte_decode12(ek[j * 384 : (j + 1) * 384])
@@ -50,10 +63,16 @@ def decode_t_hat(ek: bytes) -> np.ndarray:
 
 
 def shake128_squeeze(msg: bytes, outlen: int) -> bytes:
+    """
+    SHAKE128(msg) 挤出 outlen 字节。
+    """
     return hashlib.shake_128(msg).digest(outlen)
 
 
 def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """
+    XOF 672B → d1/d2 各 224 个 12-bit 候选。
+    """
     d1 = np.empty(CAND_PAIRS, dtype=np.int32)
     d2 = np.empty(CAND_PAIRS, dtype=np.int32)
     pos = 0
@@ -66,6 +85,9 @@ def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
 
 
 def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
+    """
+    标量拒绝采样：交错消费 d1/d2，保留 <q 直至凑满 N。
+    """
     out: list[int] = []
     for i in range(d1.shape[0]):
         v1 = int(d1[i])
@@ -80,6 +102,9 @@ def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
 
 
 def build_a_hat(rho: bytes) -> np.ndarray:
+    """
+    ρ → Â 平坦数组：对每个 (p,j) 做 XOF+rej（Alg.7）。
+    """
     a_hat = np.empty(K * K * N, dtype=np.int32)
     for p in range(K):
         for j in range(K):
@@ -93,14 +118,23 @@ def build_a_hat(rho: bytes) -> np.ndarray:
 
 
 def prf_shake256(coins: bytes, nonce: int) -> bytes:
+    """
+    PRF：SHAKE256(coins‖nonce) → 128B。
+    """
     return hashlib.shake_256(coins + bytes([nonce & 0xFF])).digest(PRF_BYTES)
 
 
 def _load32_le(buf: bytes, off: int) -> int:
+    """
+    小端 uint32。
+    """
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
 def sample_poly_cbd2(buf: bytes) -> np.ndarray:
+    """
+    η=2 CBD：128B → 256 系数。
+    """
     coeffs = np.zeros(N, dtype=np.int32)
     for i in range(N // 8):
         t = _load32_le(buf, 4 * i)
@@ -116,6 +150,9 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
 
 
 def build_re(coins: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    coins → (r, e1, e2)。
+    """
     rows = [sample_poly_cbd2(prf_shake256(coins, nonce)) for nonce in range(PRF_BATCH)]
     stacked = np.stack(rows)
     r = stacked[0:K]
@@ -125,6 +162,9 @@ def build_re(coins: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 def golden_u_hat(a_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
+    """
+    û ← Âᵀ·r̂（NTT 域）。
+    """
     u = np.zeros((K, N), dtype=np.int32)
     for p in range(K):
         acc = np.zeros(N, dtype=np.int64)
@@ -137,6 +177,9 @@ def golden_u_hat(a_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
 
 
 def golden_tr_hat(t_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
+    """
+    t̂ᵀ·r̂ → 标量 poly（NTT 域）。
+    """
     acc = np.zeros(N, dtype=np.int64)
     for j in range(K):
         prod = multiply_ntts(t_hat[j], r_hat[j])
@@ -145,6 +188,9 @@ def golden_tr_hat(t_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
 
 
 def golden_encrypt(ek: bytes, m: bytes, coins: bytes) -> bytes:
+    """
+    Alg.14 全链：ek,m,coins → 密文 bytes（Compress+ByteEncode）。
+    """
     rho = ek[1536:1568]
     t_hat = decode_t_hat(ek[:EK_T_BYTES])
     a_hat = build_a_hat(rho)
@@ -165,6 +211,9 @@ def golden_encrypt(ek: bytes, m: bytes, coins: bytes) -> bytes:
 
 
 def main() -> None:
+    """
+    CLI：<ek_pke> <m.bin> <coins.bin> <golden_c.out>。
+    """
     if len(sys.argv) != 5:
         print(f"usage: {sys.argv[0]} <ek_pke> <m.bin> <coins.bin> <golden_c.out>", file=sys.stderr)
         sys.exit(1)

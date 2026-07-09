@@ -1,17 +1,16 @@
-// @probe stable-fips203-mlkem-pke-keygen-k4
-// @file main_keygen.cpp
-// @layer host
-// @role 全链 keygen host：串联 prep launch 与 compute launch，管理 GM 与生产 I/O。 / Full-chain keygen host driver.
-// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
-// @launch N/A（host / 脚本 / CMake 不参与 device launch）
-// @ai_core N/A（非 AI Core 内核源）
-// @depends #include: data_utils.h, f203_keygen_layout.h, f203_keygen_prep_layout.h, shake_general_tiling_data.h, tiling.h, tiling_host.hpp, cstdint, cstring, cstdlib, sys/stat.h, iostream, acl/acl.h, … (+2)
-// @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
-
-
 /**
  * @file main_kem_keygen.cpp
- * @brief Alg.19/16 KEM KeyGen：vendor PKE（2 launch）+ KEM 尾段（1 launch）→ ek_kem/dk_kem。
+ * @brief FIPS 203 Alg.19 ML-KEM.KeyGen host 驱动（本探针自有；非 vendor PKE main）。
+ *
+ * 设备全链（3 launch，密码学均在 device）：
+ *   L1 f203_keygen_prep     — vendor PKE prep（Â / ŝ 采样；d 在 device 派生，或旁路 A 注入）
+ *   L2 mmad_custom          — vendor PKE compute（NTT/矩阵/ByteEncode → ek_pke/dk_pke）
+ *   L3 f203_kem_kg_finish   — 本仓 kem/ 尾段（H(ek)+UB 内 z+拼接 dk_kem）
+ *
+ * 生产 I/O：input/seed_d.bin(4B)+LUT → output/ek_kem.bin(1568)+dk_kem.bin(3168)。
+ * 中间 GM（a_hat/src/rho/ek_pke 等）默认不落盘；KEYGEN_DEBUG_DUMP=1 可写 output/debug/。
+ *
+ * 与 vendor 关系：prep/mmad 实现在 vendor/pke_keygen；本文件只编排 launch 与 KEM 输出契约。
  */
 #include "data_utils.h"
 #include "f203_keygen_layout.h"
@@ -51,12 +50,14 @@ extern volatile int g_2s1e_mix_pass;
 namespace {
 using namespace F203KeygenPrep;
 
+/** 是否落盘 prep 中间 GM（调试；非默认生产路径）。 */
 bool KeygenDebugDump()
 {
     const char *v = std::getenv("KEYGEN_DEBUG_DUMP");
     return v != nullptr && v[0] == '1';
 }
 
+/** CPU 孪生路径：直接把 host 缓冲写成相对路径文件。 */
 void DebugWrite(const char *relPath, const void *data, size_t nbytes)
 {
     if (!KeygenDebugDump() || data == nullptr || nbytes == 0U) {
@@ -68,6 +69,7 @@ void DebugWrite(const char *relPath, const void *data, size_t nbytes)
 }
 
 #ifndef __CCE_KT_TEST__
+/** SIM/NPU：先 D2H 到 hostScratch，再 DebugWrite。 */
 void DebugWriteDev(aclrtStream stream, const char *relPath, uint8_t *dev, size_t nbytes, uint8_t *hostScratch)
 {
     if (!KeygenDebugDump() || dev == nullptr || nbytes == 0U) {
@@ -81,8 +83,10 @@ void DebugWriteDev(aclrtStream stream, const char *relPath, uint8_t *dev, size_t
 
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 constexpr size_t kVecTilingBytes = 64U;
+/** mmad_custom 单核 blockDim（与 vendor keygen compute 一致）。 */
 constexpr uint32_t kMmadBlockDim = 1U;
 
+/** 填充 compute 侧向量 tiling：tileLength=256，mixPass=0（keygen 路径）。 */
 void FillVecTiling(TilingData *t)
 {
     std::memset(t, 0, sizeof(TilingData));
@@ -92,6 +96,10 @@ void FillVecTiling(TilingData *t)
 
 }  // namespace
 
+/**
+ * Host main：读 input → 三 launch → 写 ek_kem/dk_kem。
+ * CPU（__CCE_KT_TEST__）与 SIM/NPU（ACL）两套 GM 分配，语义相同。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;

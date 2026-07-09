@@ -1,9 +1,19 @@
 /**
  * @file f203_decrypt_su_dot_kernel.cpp
- * @brief G3：w_hat ← Σ_j MultiplyNTTs(ŝ[j], û[j])（单 poly 输出）。
+ * @brief Decrypt 流水线（1-kernel fused）G3 独立入口：ŵ ← Σ_j MultiplyNTTs(ŝ[j], û[j])。
+ *
+ * 对齐 FIPS 203 Alg.15 行 6 的 NTT 域内积（单 poly 输出 ŵ[N]）：
+ *   对 j=0..k-1 做 Alg.11/12 MultiplyNTTs(ŝ_j, û_j)，累加后 mod q。
+ *
+ * 本文件为**分段探针**独立 AIV kernel；生产融合路径走 `decrypt_g4::su_dot_impl`
+ *（见 f203_decrypt_su_dot_impl.hpp），逻辑同构。
+ *
+ * golden I/O：输入中间态 ŝ/û（由 decode + NTT 产生）；输出 ŵ[N] int32（生产不落盘）。
+ * CPU：标量 Barrett + MultiplyNTTs；SIM/NPU：向量 alg11_ub::compute_on_ub + hat_ip::mod_q_final_vec。
  */
 #include "kernel_operator.h"
 
+/* ROM 符号改名，避免与其它 TU 链接时 gAlg11* 重复定义 */
 #define gAlg11GammasGm                gSuDotGammasGm
 #define gAlg11GatherEvenByteGm        gSuDotGatherEvenByteGm
 #define gAlg11GatherOddByteGm         gSuDotGatherOddByteGm
@@ -21,13 +31,20 @@ namespace {
 constexpr int32_t kN = static_cast<int32_t>(F203_DECRYPT_N);
 constexpr int32_t kK = static_cast<int32_t>(F203_DECRYPT_K);
 constexpr int32_t kHatQ = static_cast<int32_t>(F203_DECRYPT_Q);
+/** Alg.11 系数对个数：N/2 = 128。 */
 constexpr int32_t kRomPairs = kN / 2;
+/** 向量工作区 int32 个数：8 条 lane × pairCount（与 alg11_tiling::kVecWsInts 一致）。 */
 constexpr int32_t kVecWsInts = 8 * kRomPairs;
+/** scratch：row / modT2 / accLine / fLoc 各 N，共 4N。 */
 constexpr int32_t kScratchInts = 4 * kN;
 
 #if defined(ASCENDC_CPU_DEBUG)
 #include "alg11_gammas.h"
 
+/**
+ * Barrett 约化到 [0,q)：与 alg11_ub::barrett_red_coeff / 参考实现同构。
+ * 两步乘加移位后做一次条件减 q。
+ */
 __aicore__ inline int32_t barrett_red(int32_t x)
 {
     const int32_t q = kHatQ;
@@ -40,6 +57,10 @@ __aicore__ inline int32_t barrett_red(int32_t x)
     return x;
 }
 
+/**
+ * 标量 Alg.11 MultiplyNTTs：h ← f ⊙ g（NTT 域，按 γ 对做 basemul）。
+ * @param h/f/g 各 [N]；每对 (f[2i],f[2i+1]) × (g[2i],g[2i+1]) 用 kAlg11Gammas[i]
+ */
 __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g)
 {
     for (int32_t i = 0; i < kN / 2; ++i) {
@@ -54,6 +75,9 @@ __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const 
     }
 }
 
+/**
+ * CPU 孪生：ŵ = Σ_j MultiplyNTTs(ŝ_j, û_j) mod q，标量写 GM。
+ */
 __aicore__ inline void su_dot_scalar(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
 {
     const auto *sGm = reinterpret_cast<const __gm__ int32_t *>(sHatGm);
@@ -70,6 +94,7 @@ __aicore__ inline void su_dot_scalar(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHa
             acc[c] += prod[c];
         }
     }
+    /* 累加和可能 ≥ q；最终约化到 [0,q) */
     for (int32_t c = 0; c < kN; ++c) {
         int32_t x = acc[c];
         x %= kHatQ;
@@ -81,16 +106,24 @@ __aicore__ inline void su_dot_scalar(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHa
 }
 #endif
 
+/**
+ * AIV 上 ŵ ← ⟨ŝ, û⟩ 的算子类。
+ * Init：绑 GM、分配 UB（scratch / 输入队 / ROM LUT）；Process：k 次向量 MultiplyNTTs 累加 + final mod。
+ */
 class KernelSuDot {
 public:
     __aicore__ inline KernelSuDot() {}
 
+    /** scratch_ 上按 int32 偏移切 LocalTensor。 */
     __aicore__ inline LocalTensor<int32_t> bufI32(int32_t offInts, int32_t len)
     {
         return scratch_.GetWithOffset<int32_t>(static_cast<uint32_t>(len),
                                                static_cast<uint32_t>(offInts) * sizeof(int32_t));
     }
 
+    /**
+     * 绑定 ŝ/û/ŵ GM；设备路径预取 Alg.11 ROM（γ、Gather 偶/奇字节索引、interleave 重排）到 UB。
+     */
     __aicore__ inline void Init(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
     {
         sAddr_ = sHatGm;
@@ -108,6 +141,7 @@ public:
         pipe_.InitBuffer(gatherEvenQue_, 1, kRomPairs * sizeof(int32_t));
         pipe_.InitBuffer(gatherOddQue_, 1, kRomPairs * sizeof(int32_t));
         pipe_.InitBuffer(interleaveReorderQue_, 1, kN * sizeof(int32_t));
+        /* Init 阶段一次性把 ROM 拷进 UB，禁止 Compute 热路径 SetValue 填表 */
         LocalTensor<int32_t> gammaLocal = gammaLutQue_.AllocTensor<int32_t>();
         romUb_.gammaV = gammaLocal;
         LocalTensor<int32_t> gatherEvenLocal = gatherEvenQue_.AllocTensor<int32_t>();
@@ -124,11 +158,16 @@ public:
 #endif
     }
 
+    /**
+     * 计算 ŵ 并写回 wGm_。
+     * CPU：su_dot_scalar；设备：对每个 j DataCopy ŝ_j/û_j → compute_on_ub → 累加 → mod_q_final_vec。
+     */
     __aicore__ inline void Process()
     {
 #if defined(ASCENDC_CPU_DEBUG)
         su_dot_scalar(sAddr_, uAddr_, wAddr_);
 #else
+        /* scratch 分区：0:row  N:modT2  2N:accLine  3N:fLoc（mod 辅助） */
         LocalTensor<int32_t> row = bufI32(0, kN);
         LocalTensor<int32_t> modT2 = bufI32(kN, kN);
         LocalTensor<int32_t> accLine = bufI32(2 * kN, kN);
@@ -154,6 +193,7 @@ public:
             inQueueG_.EnQue(gPoly);
             fPoly = inQueueF_.DeQue<int32_t>();
             gPoly = inQueueG_.DeQue<int32_t>();
+            /* row ← MultiplyNTTs(ŝ_j, û_j)（向量 Alg.11） */
             alg11_ub::compute_on_ub(row, fPoly, gPoly, wsLocal, rom);
             inQueueF_.FreeTensor(fPoly);
             inQueueG_.FreeTensor(gPoly);
@@ -163,6 +203,7 @@ public:
                 Add(accLine, accLine, row, kN);
             }
         }
+        /* 累加和 → [0,q)；写 ŵ */
         hat_ip::mod_q_final_vec(accLine, kHatQ, fLoc, modT2, kN);
         DataCopy(wGm_[0], accLine, kN);
         gammaLutQue_.EnQue(gammaLocal);
@@ -194,6 +235,11 @@ private:
 
 } // namespace
 
+/**
+ * 独立 AIV kernel：ŝ + û → ŵ。
+ * @param sHatGm ŝ [k×N]；@param uHatGm û [k×N]；@param wHatGm ŵ [N]
+ * 前置：仅 blockIdx==0。
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_su_dot(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
@@ -206,6 +252,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_su_dot(GM_ADDR sHatGm, GM_ADD
 }
 
 #ifndef __CCE_KT_TEST__
+/** Host 侧 launch 包装。 */
 void f203_decrypt_su_dot_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *sHatGm, uint8_t *uHatGm,
                             uint8_t *wHatGm)
 {

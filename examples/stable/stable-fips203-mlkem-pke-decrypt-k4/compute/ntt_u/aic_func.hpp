@@ -1,3 +1,10 @@
+/**
+ * @file aic_func.hpp
+ * @brief Decrypt NTT/INTT Stage2：AIC 上 MatMul（AicMmad）实现。
+ *
+ * 流水线位置：AIV Stage1 写出 mat_c_tmp 后，AIC 对 lo/hi × even/odd 四块各乘对应 LUT。
+ * 对齐 FIPS 203 三段式 NTT 的矩阵乘语义；无独立 golden（全链 m 对拍）。
+ */
 #ifndef F203_AIC_FUNC_HPP
 #define F203_AIC_FUNC_HPP
 
@@ -12,6 +19,7 @@ __aicore__ inline static constexpr T max(T a, U b)
     return (a > (T)b) ? a : (T)b;
 }
 
+/** Cube 块元素数：16×32（与 LoadData 对齐约定）。 */
 static constexpr uint32_t CUBE_BLOCK_SIZE = 16 * 32;
 
 static constexpr __aicore__ inline uint16_t ceil_div(uint16_t a, uint16_t mod)
@@ -19,7 +27,10 @@ static constexpr __aicore__ inline uint16_t ceil_div(uint16_t a, uint16_t mod)
     return (a + mod - 1) / mod;
 }
 
-/** Stage2 AicMmad（官方 LoadDataWithTranspose）+ F203 mat_c [16,512] 列拼接写回 */
+/**
+ * Stage2 AicMmad：官方 LoadDataWithTranspose + F203 mat_c 列拼接写回。
+ * @param m/k/n 逻辑矩阵维（Decrypt k=4 时 mRowsLogic×coeffN×halfN）
+ */
 class AicMmad {
 public:
     __aicore__ inline AicMmad(uint16_t m, uint16_t k, uint16_t n) : m(m), k(k), n(n)
@@ -31,6 +42,7 @@ public:
         cSize = mPadded * n;
     }
 
+    /** 分配 A1/A2/B1/B2/CO1 队列（尺寸按 m/k/n 16 对齐后的 aSize/bSize/cSize）。 */
     __aicore__ inline void Init()
     {
         pipe.InitBuffer(inQueueA1, 1, aSize * sizeof(int8_t));
@@ -58,6 +70,7 @@ public:
     }
 
 private:
+    /** GM ND → A1/B1 NZ：左矩阵 A(m×k)、右矩阵 B(k×n) 均为 int8。 */
     template <int debug_val = 0>
     __aicore__ inline void CopyIn()
     {
@@ -90,6 +103,7 @@ private:
         inQueueB1.EnQue(b1Local);
     }
 
+    /** A1 → A2：按 16 行块 LoadData（不转置）。 */
     template <int debug_val = 0>
     __aicore__ inline void SplitA()
     {
@@ -111,6 +125,7 @@ private:
         inQueueA2.EnQue<int8_t>(a2Local);
     }
 
+    /** B1 → B2：LoadDataWithTranspose（LUT 侧转置进 Cube）。 */
     template <int debug_val = 0>
     __aicore__ inline void SplitB()
     {
@@ -133,6 +148,7 @@ private:
         inQueueB2.EnQue<int8_t>(b2Local);
     }
 
+    /** Cube MMAD：int8×int8→int32，cmatrixInitVal=true。 */
     template <int debug_val = 0>
     __aicore__ inline void Compute()
     {
@@ -150,6 +166,7 @@ private:
         inQueueB2.FreeTensor(b2Local);
     }
 
+    /** Fixpipe 写回 GM：支持 dstColOffset_/dstRowStride_ 列拼接。 */
     template <int debug_val = 0>
     __aicore__ inline void CopyOut()
     {

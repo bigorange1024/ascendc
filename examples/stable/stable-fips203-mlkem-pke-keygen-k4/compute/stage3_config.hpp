@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 Stage1/3 编译期配置开关。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/stage3_config.hpp
+ */
+/**
  * @file stage3_config.hpp
  * @brief F203 Stage3.1：RouteA 平面四行 Horner 合并后的 mod q 方案选型。
  *

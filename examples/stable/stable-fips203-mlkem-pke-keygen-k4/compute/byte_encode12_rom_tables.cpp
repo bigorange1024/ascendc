@@ -1,3 +1,5 @@
+
+/** ROM 表定义：gByteEncode12GatherEven/OddByteGm，供 prefetch 路径 Init 装入 UB。 */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file compute/byte_encode12_rom_tables.cpp
 // @layer compute
@@ -9,6 +11,12 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 19–20 ByteEncode₁₂：将 t̂/ŝ 编成 ek/dk polyvec。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/byte_encode12_rom_tables.cpp
+ */
 /**
  * ByteEncode₁₂ 固定 n=256 Gather 字节索引（与 Alg.11 even/odd 公式一致：8i / 8i+4）。
  */

@@ -2,7 +2,10 @@
 
 /**
  * @file f203_encrypt_at_jp_mod.hpp
- * @brief 行 19 内积 final mod：复用 library/shared/f203_mod_q。
+ * @brief Alg.14 行 18/19 内积最终 mod q：转发 library/shared/f203_mod_q 向量实现。
+ *
+ * 流水线位置：Encrypt compute 内积段（Â·ŷ / t̂·ŷ）累加后归约到 [0,q)。
+ * 本头无独立算法，仅把 Barrett 常量与 `mod_q_*_vec` 导入 `encrypt_at_jp` 命名空间。
  */
 #include "f203_encrypt_at_jp_tiling.h"
 #include "f203_mod_q/mod_q_vec.hpp"

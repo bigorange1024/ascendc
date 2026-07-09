@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-gate_g3.py — G3 golden：Âᵀ·r̂ → u_hat 与 t̂·r̂ → tr_hat（NTT 域，INTT/噪声前）。
-
-自包含：纯 Python Alg.11 basemul + mod q；t̂ 自 ek ByteDecode₁₂；禁止 liboqs。
+gate_g3.py — Encaps/Decaps 分阶段 gate（host 期望 vs 中间态）。
 """
 from __future__ import annotations
 
@@ -33,6 +31,9 @@ GAMMAS = np.array(
 
 
 def barrett_red(x: int) -> int:
+    """
+    barrett_red：gate_g3 分阶段 golden/对照。
+    """
     q = Q
     t = x + (q & (x >> 31))
     t1 = (t * 78) >> 18
@@ -44,6 +45,9 @@ def barrett_red(x: int) -> int:
 
 
 def mod_q_i64(x: int) -> int:
+    """
+    mod_q_i64：gate_g3 分阶段 golden/对照。
+    """
     rem = x % Q
     if rem < 0:
         rem += Q
@@ -51,6 +55,9 @@ def mod_q_i64(x: int) -> int:
 
 
 def multiply_ntts(f: np.ndarray, g: np.ndarray) -> np.ndarray:
+    """
+    multiply_ntts：gate_g3 分阶段 golden/对照。
+    """
     h = np.zeros(N, dtype=np.int32)
     for i in range(N // 2):
         gamma = int(GAMMAS[i])
@@ -63,10 +70,16 @@ def multiply_ntts(f: np.ndarray, g: np.ndarray) -> np.ndarray:
 
 
 def a_hat_offset_at(p: int, j: int) -> int:
+    """
+    a_hat_offset_at：gate_g3 分阶段 golden/对照。
+    """
     return (j * K + p) * N
 
 
 def poly_byte_decode12(buf: bytes) -> np.ndarray:
+    """
+    poly_byte_decode12：gate_g3 分阶段 golden/对照。
+    """
     out = np.empty(N, dtype=np.int32)
     pairs = N // 2
     for i in range(pairs):
@@ -79,6 +92,9 @@ def poly_byte_decode12(buf: bytes) -> np.ndarray:
 
 
 def decode_t_hat_from_ek(ek: bytes) -> np.ndarray:
+    """
+    decode_t_hat_from_ek：gate_g3 分阶段 golden/对照。
+    """
     t_flat = np.empty(K * N, dtype=np.int32)
     for j in range(K):
         off = j * POLY_D12_BYTES
@@ -87,6 +103,9 @@ def decode_t_hat_from_ek(ek: bytes) -> np.ndarray:
 
 
 def golden_u_hat(a_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
+    """
+    golden_u_hat：gate_g3 分阶段 golden/对照。
+    """
     u = np.zeros((K, N), dtype=np.int32)
     for p in range(K):
         acc = np.zeros(N, dtype=np.int64)
@@ -100,6 +119,9 @@ def golden_u_hat(a_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
 
 
 def golden_tr_hat(t_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
+    """
+    golden_tr_hat：gate_g3 分阶段 golden/对照。
+    """
     acc = np.zeros(N, dtype=np.int64)
     for j in range(K):
         t_poly = t_hat[j * N : (j + 1) * N]
@@ -110,6 +132,9 @@ def golden_tr_hat(t_hat: np.ndarray, r_hat: np.ndarray) -> np.ndarray:
 
 
 def main() -> None:
+    """
+    main：gate_g3 分阶段 golden/对照。
+    """
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <case_dir> <out_dir>", file=sys.stderr)
         sys.exit(1)

@@ -1,3 +1,10 @@
+/**
+ * @file chain_ntt17_layout.h
+ * @brief KeyGen/Encrypt 共用的 NTT 链布局常量（vendored）。
+ *
+ * 流水线位置：FIPS 203 / ML-KEM-1024；Encrypt prep 间接依赖。
+ * 与 golden：布局说明，无独立产物。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/chain_ntt17_layout.h
 // @layer prep
