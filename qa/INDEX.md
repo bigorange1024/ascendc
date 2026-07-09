@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 全链 I/O](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
+
+**Encrypt PASS 探针 `run.sh` 默认自动 `SIM_DIRECT=1`** · 验收命令勿再手动 export · 全链仅出密文 c
+
 ### 2026-07-08 — [Compress/ByteEncode 扩档、tail pack PASS 晋级、内核超时口径](2026-07/2026-07-08-Alg14-tail-pack探针.md)
 
 **compress/decompress/byteencode/bytedecode *-d-vec-k4** · 四算子宏分层定稿 · **compute-tail SIM 1 launch 154781**（Phase C 内联 pack）· 笔记 ByteEncode 选型 · tail pack · tiling · sepolyvec8 CAModel FPE

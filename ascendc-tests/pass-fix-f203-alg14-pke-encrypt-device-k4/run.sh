@@ -6,9 +6,12 @@
 #   CPU：5 launch（prep + ntt_y/at_jp/intt_e1 + pack；v=golden_v）
 # golden：复用 correctness 探针 input/golden_c（SEED_D=20260619，见 scripts/gen_data.py）
 #
-# Usage（默认，全量计算 + 全量优化）:
+# Usage（默认 = 全量生产路径；无需手动 export SIM_DIRECT / HAT_*）:
 #   bash run.sh -r cpu -v Ascend910B4
-#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
+#
+# 调试（须显式指定，非默认）:
+#   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4   # 走 msprof + OPPROF_*（慢；本探针默认不做）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
@@ -60,6 +63,8 @@ elif [ -f "${_ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
 fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
+    # 默认 = CAModel 金标路径（与 keygen/encaps 一致）；勿要求用户手动 SIM_DIRECT=1
+    export SIM_DIRECT="${SIM_DIRECT:-1}"
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"

@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-08（**Alg.14 完整 K-PKE.Encrypt 全链设备 PASS** `pass-fix-f203-alg14-pke-encrypt-device-k4` · in ek+m+coins → out 仅密文 c · CPU+SIM c max=0 · SIM 2 launch ~626k tick）
+> **最后刷新**：2026-07-09（**Encrypt PASS 探针 `run.sh` 默认自动 `SIM_DIRECT=1`** · 验收命令勿再要求手动 export · 全链 `pass-fix-f203-alg14-pke-encrypt-device-k4`）
 
 ---
 
@@ -112,22 +112,22 @@ KeyGen / Encaps / Decaps 分项 kat **CPU×10+SIM×1 PASS**（行为不变）。
 # ★ 完整 K-PKE.Encrypt 全链设备（in ek+m+coins → out 仅 c；双模式全 pass）
 cd ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4
 bash run.sh -r cpu -v Ascend910B4               # c max=0
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # c max=0，tick ~626k，0 stray dump
+bash run.sh -r sim -v Ascend910B4               # 默认 CAModel 金标；c max=0，tick ~626k，0 stray dump
 
 # Encrypt prep（双模式全 pass）
 cd ../pass-fix-f203-alg14-lines3-15-encrypt-prep-k4
 bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
 
 # Encrypt compute（SIM 全量；CPU 部分）
 cd ../pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4
 bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
 
 # Encrypt tail pack
-cd ascendc-tests/pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
+cd ../pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
 bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
 
 # KEM 分项 kat（回归）
 bash scripts/liboqs_kem_keygen_batch.sh
@@ -136,7 +136,7 @@ bash scripts/liboqs_kem_encaps_batch.sh
 bash scripts/liboqs_kem_decaps_batch.sh
 ```
 
-**WSL 约束**：`CMAKE_BUILD_JOBS=2`；compute 单 launch 默认 `KERNEL_COMPUTE_BUDGET_SEC=600`；勿并行多 SIM。
+**WSL 约束**：`CMAKE_BUILD_JOBS=2`；compute 单 launch 默认 `KERNEL_COMPUTE_BUDGET_SEC=600`；勿并行多 SIM。默认 `bash run.sh -r sim` 已自动 `SIM_DIRECT=1`，**勿**再要求用户手动 export。
 
 ---
 
@@ -154,7 +154,7 @@ bash scripts/liboqs_kem_decaps_batch.sh
 ### 接手步骤（完整 Encrypt 续测）
 
 1. 读全链 [`STATUS.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/STATUS.md) + [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/INTEGRATION_PLAN.md)（GM handoff 契约 `f203_encrypt_full_layout.h`）。
-2. 跑上方 ★ smoke（CPU + SIM_DIRECT），确认 `output/c.bin` max=0、`output/` 仅 c、根目录 0 stray dump。
+2. 跑上方 ★ smoke（CPU + `bash run.sh -r sim`），确认 `output/c.bin` max=0、`output/` 仅 c、根目录 0 stray dump。
 3. compute **不得**在 CPU 上试单融合 launch（tikicpu 死锁）；SIM 为生产验收面。golden 复用 correctness 输入，勿改 `SEED_D=20260619`。
 
 ---

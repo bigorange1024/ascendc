@@ -11,7 +11,7 @@
 | 模式 | 命令 | 结果 |
 |------|------|------|
 | CPU | `bash run.sh -r cpu -v Ascend910B4` | `[cmp] c max=0` → `[SUCCESS] full encrypt: c matches golden` |
-| SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | `[cmp] c max=0`；Total tick **626139**；2 launch；根目录 **0 stray dump** |
+| SIM | `bash run.sh -r sim -v Ascend910B4` | `[cmp] c max=0`；Total tick **626139**；2 launch；根目录 **0 stray dump** |
 
 **I/O 对齐 FIPS 203 Alg.14**：输入 `ek_pke`+`m`+`coins(r)`，输出 **仅密文 `c`（`output/c.bin`，1568B）**；u/v 为设备内部中间量，不 D2H、不落盘。
 **覆盖**：FIPS 行 1–22 全在设备完成——行 1 `N←0`（无运算，隐含于 PRF nonce）、行 2 `t̂←ByteDecode₁₂(ek)`（在 `f203_encrypt_l18_l19` 核内 AIV0 解码，host 不传 t̂）、行 3–22（prep + compute+tail）。
@@ -49,10 +49,10 @@
 ```bash
 cd ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4
 bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4   # 默认即 CAModel 金标；无需手动 SIM_DIRECT
 ```
 
-- 对拍：`output/c.bin` vs `golden/c.bin`（**CPU ∧ SIM** max=0）；SIM 另比 `output/v.bin` vs `output/golden_v.bin`
+- 对拍：`output/c.bin` vs `golden/c.bin`（**CPU ∧ SIM** max=0）；`output/` 仅密文 c（u/v 不落盘）
 - 依赖 correctness 探针现成 `input/{ek_pke,m,coins}` + `output/golden_c.bin`（gen_data 复制；缺失则先在 correctness 目录跑一次）
 
 ## 禁止

@@ -210,7 +210,7 @@ pass-fix-f203-alg14-pke-encrypt-device-k4/
 | Gate | 内容 | 验收（**CPU ∧ SIM 同时满足**） | 状态 |
 |------|------|-------------------------------|------|
 | **S0** | 本方案 + 目录 + vendoring 脚本 | 用户确认方案 | ✓ |
-| **S1** | host arena + 2 launch（SIM）/ 5 launch（CPU）接线 | `bash run.sh -r cpu` **且** `SIM_DIRECT=1 bash run.sh -r sim` → `c.bin` max=0 | ✓ **CPU max=0 / SIM max=0 (tick 626139)**；输出仅 c |
+| **S1** | host arena + 2 launch（SIM）/ 5 launch（CPU）接线 | `bash run.sh -r cpu` **且** `bash run.sh -r sim` → `c.bin` max=0 | ✓ **CPU max=0 / SIM max=0 (tick 626139)**；输出仅 c |
 | **PASS** | 已重命名 `pass-fix-f203-alg14-pke-encrypt-device-k4` | 同上双模式绿灯 + SIM 根目录 0 stray dump | ✓ 已晋级（2026-07-08）；输出仅 c |
 
 **可选加验**（非阻塞，不单列 gate）：中间量 `a_hat`/`u`/`v` debug 对拍；liboqs L2 交叉（§8.3）。
@@ -304,7 +304,7 @@ cd ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4
 bash scripts/vendor_sync_from_stable_keygen.sh   # prep 树
 # vendor compute 脚本（待建）
 bash run.sh -r cpu -v Ascend910B4                 # 复制 SEED_D=20260619 input+golden
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4                 # 默认即 CAModel 金标；无需手动 SIM_DIRECT
 ```
 
 **成功判据（两条都要绿）**：CPU 与 SIM 均 `[SUCCESS] …` 且 `c.bin` vs `golden/c.bin` **max_abs_diff=0**；SIM 根目录 **0 stray dump**。任一模式失败即整体未通过（不接受「先记 CPU 通过、SIM 待办」的拆分）。

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4 — 行 18–19 可行性（单 MIX launch）
 #
-# Usage（默认）:
+# Usage（默认 = 全量生产路径；无需手动 export SIM_DIRECT）:
 #   bash run.sh -r cpu -v Ascend910B4
-#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-# 调试（非默认）:
-#   ASCENDC_SIM_HOST_MODE=phased_launch SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-#   F203_BYTE_DECODE12_IMPL=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # 行2：零 Gather 向量备用（非 Gather）
+#   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
+# 调试（须显式指定，非默认）:
+#   ASCENDC_SIM_HOST_MODE=phased_launch bash run.sh -r sim -v Ascend910B4
+#   F203_BYTE_DECODE12_IMPL=1 bash run.sh -r sim -v Ascend910B4  # 行2：零 Gather 向量备用（非 Gather）
 #
 # 全仓宏：library/shared/ascendc_build_mode.hpp · docs/notes/AscendC-CPU与SIM实现分叉开发指南.md
 
@@ -60,6 +60,8 @@ elif [ -f "${_ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
 fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
+    # 默认 = CAModel 金标路径；勿要求用户手动 SIM_DIRECT=1
+    export SIM_DIRECT="${SIM_DIRECT:-1}"
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"

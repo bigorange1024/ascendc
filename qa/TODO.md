@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-08（**Alg.14 全链设备 Encrypt PASS + 晋级 pass-**：`pass-fix-f203-alg14-pke-encrypt-device-k4` · I/O 对齐 Alg.14 仅出 c · CPU+SIM `c` max=0 · SIM 2 launch **626139** tick）
+**最近刷新**：2026-07-09（**Encrypt PASS 探针默认自动 `SIM_DIRECT=1`**：验收 `bash run.sh -r sim` 即可；全链 `pass-fix-f203-alg14-pke-encrypt-device-k4`）
 
 ---
 

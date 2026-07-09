@@ -6,9 +6,9 @@
 # tail：Compress 向量 + ByteEncode 标量 pack（不启用 BYTE_ENCODE_D_VEC=2）
 # 定稿：docs/notes/F203-Alg14-Encrypt-compute-tail-PASS技术总结.md
 #
-# Usage（默认）:
+# Usage（默认 = 全量生产路径；无需手动 export SIM_DIRECT）:
 #   bash run.sh -r cpu -v Ascend910B4
-#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
@@ -60,6 +60,8 @@ elif [ -f "${_ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
 fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
+    # 默认 = CAModel 金标路径；勿要求用户手动 SIM_DIRECT=1
+    export SIM_DIRECT="${SIM_DIRECT:-1}"
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
