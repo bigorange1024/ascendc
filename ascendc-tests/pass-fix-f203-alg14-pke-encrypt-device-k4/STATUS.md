@@ -2,7 +2,7 @@
 
 **前缀 `pass-`**：**CPU + SIM PASS**（2026-07-08 晋级）；`c.bin` max=0（两模式），SIM tick **626139**（≈方案估计 625k）。
 
-**种子（已锁定）**：全链唯一种子 **`SEED_D=20260619`**；输入与 golden 复制自 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/)。单段探针各自种子（prep `20260706`、compute+tail `20260708`）**不**用于本全链。
+**种子（已锁定）**：全链唯一种子 **`SEED_D=20260619`**；输入与 golden 复制自 [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)。单段探针各自种子（prep `20260706`、compute+tail `20260708`）**不**用于本全链。
 
 **目标**：FIPS 203 Alg.14 **完整 K-PKE.Encrypt（行 1–22）** — `ek_pke` + `m` + `coins` → **仅** `c`（1568B，ML-KEM-1024）。
 
@@ -37,7 +37,7 @@
 ## 验收原则（强制）
 
 - **CPU+SIM 视为一件事**：两模式同一套输入都对拍 `c.bin` max=0 才算通过；不拆成独立里程碑。
-- **锁死种子** `SEED_D=20260619`，输入与 golden **直接复用** [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/)（该套已 device 验证 max=0）。
+- **锁死种子** `SEED_D=20260619`，输入与 golden **直接复用** [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（该套已 device 验证 max=0）。
 - golden 三源可互证：correctness `golden_c.bin` / 其 python `golden_c.py` / liboqs（`scripts/liboqs_pke_vs_ascendc.sh`）；对齐任一即 I/O 等价。仅用其 **I/O**，不抄实现。
 
 ## 文档
@@ -58,5 +58,5 @@ bash run.sh -r sim -v Ascend910B4   # 默认即 CAModel 金标；无需手动 SI
 
 ## 禁止
 
-- 从 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) 抄码（旧 G5 拼装路线）
+- 从 [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) 抄码（旧 G5 拼装路线）
 - 从 `ascendc-tests/frozen/` 带出实现

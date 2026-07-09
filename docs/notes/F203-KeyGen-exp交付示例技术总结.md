@@ -1,7 +1,7 @@
 # F203 KeyGen 交付示例（exp-fips203-mlkem-pke-keygen-k4）— 技术总结
 
 **读者**：需要从探针晋级为 **自包含交付示例**、或 fork 为 Encrypt 等下一用例的实现者  
-**定型交付（2026-06-29）**：[`examples/stable/stable-fips203-mlkem-pke-keygen-k4/`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) — 验收以 stable 为准。
+**定型交付（2026-06-29）**：[`../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) — 验收以 stable 为准。
 
 **案例锚点（incubating 副本）**：[`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/)  
 **探针对照**：[`pass-fix-f203-alg13-device-keygen-k4`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/)（同生产 I/O）  
@@ -26,7 +26,7 @@ FIPS 203 **Alg.13 PKE KeyGen**（ML-KEM-768，\(K=4\)）：
 
 | 允许 | 禁止 |
 |------|------|
-| 本目录 `prep/`、`compute/`、`cmake/keygen/`、`scripts/prep/`、`scripts/compute/` | `ascendc-tests/` include/import |
+| 本目录 `prep/`、`compute/`、`cmake/keygen/`、`scripts/prep/`、`scripts/compute/` | `../../ascendc-tests/` include/import |
 | `library/shared/`（SHAKE、Keccak） | 运行时依赖 `thirdparty/liboqs`（KAT 脚本除外） |
 | vendored `thirdparty/ntt_study/`（**Host LUT golden 表**） | 把 ntt_study **docs/specs** 当作本仓 CPU/设备切分规范 |
 
@@ -72,7 +72,7 @@ bash kat_liboqs_vs_ascendc.sh                     # 10 CPU + 1 SIM vs liboqs
 
 ## 5. fork 下一用例（PKE Encrypt）
 
-**正确性验证**（已建）：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) — **AscendC 多 launch 拼装**探针（G0 壳）；**禁 liboqs 生产路径**。
+**正确性验证**（已建）：[`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) — **AscendC 多 launch 拼装**探针（G0 壳）；**禁 liboqs 生产路径**。
 
 **定型交付**（验证通过后另建）最小步骤：
 

@@ -12,8 +12,8 @@ FIPS 203 Alg.14（ML-KEM-1024 PKE.Encrypt，k=4）**单 ACL session 重建探针
 | # | 原因 | 说明 |
 |---|------|------|
 | 1 | **办公室未复验** | 家里 agent 在本地环境声称全链 PASS；**办公室未跑完**对该探针的 CPU+SIM 独立验收（含 stray dump 检查等；长链须用 `ENCRYPT_KERNEL_BUDGET_SEC`，非 15s 全局门禁） |
-| 2 | **探针分叉** | 与既定活跃探针 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../../fix-f203-alg14-pke-encrypt-correctness-k4/) 并行维护整树副本，违反「在原探针迭代、G5 测通即冻结过渡 Gate」策略 |
-| 3 | **继任已落地** | 办公室在原探针**原地**完成 at_r5 + MIX decode/pack + `run_g5_sim_full`；**G5 双模式 PASS**（c.bin max=0，SIM 无 507000，tick **922441**）— 见 [`../../fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md`](../../fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) |
+| 2 | **探针分叉** | 与既定活跃探针 [`stable-fips203-mlkem-pke-encrypt-k4`](../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) 并行维护整树副本，违反「在原探针迭代、G5 测通即冻结过渡 Gate」策略 |
+| 3 | **继任已落地** | 办公室在原探针**原地**完成 at_r5 + MIX decode/pack + `run_g5_sim_full`；**G5 双模式 PASS**（c.bin max=0，SIM 无 507000，tick **922441**）— 见 [`../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md`](../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) |
 | 4 | **病根已沉淀** | R1（func_key≥5→507000）、R2（D2H 前缺 sync）结论已写入 [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md)；不必保留第二份整树实现 |
 | 5 | **验收口径不一致** | 本树 STATUS 要求 `ENCRYPT_KERNEL_BUDGET_SEC=1000` 等；仓库曾误将 15s 当作全仓默认（已废止，见 `docs/engineering/内核计算超时与性能定标.md`） |
 
@@ -21,9 +21,9 @@ FIPS 203 Alg.14（ML-KEM-1024 PKE.Encrypt，k=4）**单 ACL session 重建探针
 
 | 能力 | 路径 |
 |------|------|
-| **活跃 Encrypt 探针（G5）** | [`../../fix-f203-alg14-pke-encrypt-correctness-k4/`](../../fix-f203-alg14-pke-encrypt-correctness-k4/) |
-| Gate 过渡冻结 | [`../../fix-f203-alg14-pke-encrypt-correctness-k4/frozen-gates/`](../../fix-f203-alg14-pke-encrypt-correctness-k4/frozen-gates/) |
-| 旧 G3 四核 | [`../../fix-f203-alg14-pke-encrypt-correctness-k4/compute/frozen/`](../../fix-f203-alg14-pke-encrypt-correctness-k4/compute/frozen/) |
+| **活跃 Encrypt 探针（G5）** | [`../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
+| Gate 过渡冻结 | [`ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/frozen-gates/`](../frozen-fix-f203-alg14-pke-encrypt-correctness-k4/frozen-gates/) |
+| 旧 G3 四核 | [`ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/compute/frozen/`](../frozen-fix-f203-alg14-pke-encrypt-correctness-k4/compute/frozen/) |
 | funckey 原理 | [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md) |
 
 ## 讨论与证据

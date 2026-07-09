@@ -56,3 +56,14 @@
 - `frozen-pass-fix-…-halfbatch` → 实际目录 `frozen-fix-…-halfbatch`
 - 缺失 `qa/2026-06-19-ByteEncode12-only…` → 补桩文件指向定稿 notes
 - `docs-archiving.mdc` / `offline-web` / `compare_stage2_logs.py` 等 INDEX 死链改指向现存路径或删除行
+
+---
+
+## 冻结 alg14/15 correctness 探针（同日续）
+
+| 原活跃目录 | 冻结路径 | 继任 |
+|------------|----------|------|
+| `fix-f203-alg14-pke-encrypt-correctness-k4` | `frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/` | `stable-fips203-mlkem-pke-encrypt-k4` |
+| `fix-f203-alg15-pke-decrypt-correctness-k4` | `frozen/frozen-fix-f203-alg15-pke-decrypt-correctness-k4/` | `stable-fips203-mlkem-pke-decrypt-k4` |
+
+原因：**正确性验证任务已完成**。全仓调用/`ENCRYPT_DIR`/`DECRYPT_DIR`/vendor_sync/文档链接改指向 stable；历史深链（如 `G3_SIM_AUDIT.md`）改指向 frozen 归档。

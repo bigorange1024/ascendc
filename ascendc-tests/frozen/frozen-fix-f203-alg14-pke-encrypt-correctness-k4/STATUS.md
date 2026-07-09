@@ -28,7 +28,7 @@
 |----|------|
 | 日期 / 时间 | 2026-06-30 13:58（UTC+8，**全 device G4** 复验） |
 | 命令 | `bash run.sh -r sim -v Ascend910B4`（默认含 c.bin 对拍） |
-| 工作目录 | 本目录（`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`）|
+| 工作目录 | 本目录（`examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`）|
 | `bash` 退出码 | **0** |
 | `ascendc_kernels_bbit` 内 `aclrtLaunchKernel` 返回 `507000` 次数 | **0** |
 | `[verify_gate]` G1 / G2 / G3 | 全 PASS（max=0；`a_hat 4096` / `r 1024` / `e1 1024` / `e2 256` / `r_hat 1024` / `u_hat 1024` / `tr_hat 256` 系数） |

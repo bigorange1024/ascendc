@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fix-f203-alg14-pke-encrypt-correctness-k4 — FIPS 203 Alg.14 PKE Encrypt（设备拼装探针）
+# stable-fips203-mlkem-pke-encrypt-k4 — FIPS 203 Alg.14 PKE Encrypt（设备拼装探针）
 #
 # 生产 I/O：
 #   input/  — ek_pke.bin (1568B) + m.bin (32B) + coins.bin (32B)
@@ -120,7 +120,7 @@ fi
 if [ "${ENCRYPT_TAIL_ONLY}" != "0" ]; then
     # tail-only：只做分阶段对拍（不依赖设备 a_hat/r_hat，故不跑 verify_gate）
     python3 "${CURRENT_DIR}/scripts/verify_g4_tail.py"
-    echo "[SUCCESS] fix-f203-alg14-pke-encrypt-correctness-k4 TAIL-ONLY (${RUN_MODE})"
+    echo "[SUCCESS] stable-fips203-mlkem-pke-encrypt-k4 TAIL-ONLY (${RUN_MODE})"
     exit 0
 fi
 
@@ -131,4 +131,4 @@ fi
 if [ "${ENCRYPT_VERIFY}" = "1" ]; then
     python3 "${CURRENT_DIR}/scripts/verify_result.py"
 fi
-echo "[SUCCESS] fix-f203-alg14-pke-encrypt-correctness-k4 gate=G${ENCRYPT_GATE} (${RUN_MODE}) ENCRYPT_VERIFY=${ENCRYPT_VERIFY}"
+echo "[SUCCESS] stable-fips203-mlkem-pke-encrypt-k4 gate=G${ENCRYPT_GATE} (${RUN_MODE}) ENCRYPT_VERIFY=${ENCRYPT_VERIFY}"

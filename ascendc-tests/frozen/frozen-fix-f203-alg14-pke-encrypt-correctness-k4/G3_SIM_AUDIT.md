@@ -1,6 +1,6 @@
 # G3 SIM 审计记录（Alg.14 Encrypt 探针）
 
-**探针**：`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`  
+**探针**：`examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`  
 **关联**：[`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) · [`STATUS.md`](STATUS.md)  
 **讨论**：`qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md` §Alg.14 G3、[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)
 

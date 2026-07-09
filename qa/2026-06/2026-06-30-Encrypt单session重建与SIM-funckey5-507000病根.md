@@ -1,13 +1,13 @@
 # 2026-06-30 Encrypt 单 session 重建 · SIM func_key≥5 → 507000 病根
 
-> **⚠ 探针已冻结（2026-06-30 晚）**：`fix-f203-alg14-encrypt-2launch-k4` 已迁入 [`ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)。  
-> 本文保留**家里 agent 原始讨论**；办公室未复验该树 PASS。活跃 Encrypt → [`fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) G5。
+> **⚠ 探针已冻结（2026-06-30 晚）**：`fix-f203-alg14-encrypt-2launch-k4` 已迁入 [`../../ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)。  
+> 本文保留**家里 agent 原始讨论**；办公室未复验该树 PASS。活跃 Encrypt → [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) G5。
 
 关键词：Encrypt Alg.14、单 ACL session、新探针 `fix-f203-alg14-encrypt-2launch-k4`、G3 合并核 `at_r5`、SIM 507000、AIV binary func_key、CAModel、受控实验。
 
 ## 1. 背景
 
-按用户要求**新建目录** `ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/`，参考 KeyGen 单 session 模板重搭 Encrypt 全链（不再多 session）。CPU 全链 ✅（G1/G2/G3 verify_gate max=0、c.bin max=0）。SIM 卡在 G3。
+按用户要求**新建目录** `../../ascendc-tests/fix-f203-alg14-encrypt-2launch-k4/`，参考 KeyGen 单 session 模板重搭 Encrypt 全链（不再多 session）。CPU 全链 ✅（G1/G2/G3 verify_gate max=0、c.bin max=0）。SIM 卡在 G3。
 
 ## 2. 核心结论：CAModel 单 binary 内 AIV kernel **func_key ≥ 5 一律 507000；≤4 正常**
 

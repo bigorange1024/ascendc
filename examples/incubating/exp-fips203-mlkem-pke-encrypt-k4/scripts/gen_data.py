@@ -43,9 +43,17 @@ from f203_ref_common import (  # noqa: E402
 import golden_c as gc  # noqa: E402
 
 SEED_D = 20260619
-# 可选：复用 ascendc-tests correctness fixtures（非编译依赖；缺失则本地生成）
+# 可选对照目录（历史 correctness 已冻结；默认缺失则本地生成）
 _CORR = os.path.normpath(
-    os.path.join(_CASE_DIR, "..", "..", "..", "ascendc-tests", "fix-f203-alg14-pke-encrypt-correctness-k4")
+    os.path.join(
+        _CASE_DIR,
+        "..",
+        "..",
+        "..",
+        "ascendc-tests",
+        "frozen",
+        "frozen-fix-f203-alg14-pke-encrypt-correctness-k4",
+    )
 )
 _LOCKED_INPUTS = ("ek_pke.bin", "m.bin", "coins.bin")
 _EK_BYTES = 1568

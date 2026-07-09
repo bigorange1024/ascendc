@@ -62,7 +62,7 @@
 
 1. **Alg.21 Decaps** 单 session SIM 真修（`at_r5` 首错 / func_key `nm` 审计）
 2. **NPU 实机**（全链）
-3. **T7b** `fix-f203-alg14-pke-encrypt-correctness-k4` `run.sh` 资源友好化对齐
+3. KEM Alg.19/20 **`#交付#`**（视产品节奏）
 
 **禁止**：从 `frozen/` 抄码；擅自改已锁定 I/O/tiling。
 

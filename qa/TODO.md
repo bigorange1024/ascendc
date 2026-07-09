@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-10（**PKE 三段 stable 齐备** — KeyGen / Encrypt / Decrypt；T15a 入已关闭；主线切 **KEM**）
+**最近刷新**：2026-07-10（冻结 alg14/15 **correctness** 探针；引用改 stable；T7b/T15c 关闭；主线 **KEM**）
 
 ---
 
@@ -28,7 +28,6 @@
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**；待 `#交付#` / stable（视产品节奏） |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs；SIM **742558**）；**分项 kat PASS**；待 `#交付#` / stable（视产品节奏） |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
-| **P1** | **T7b** | alg14 correctness **`run.sh` 资源友好化**（`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | 全链探针 + Encrypt exp/stable **已合入**；[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) 仍待对齐 |
 | **P1** | **T2** | KEM **后继**：Alg.21 **单 session SIM 真修**、**NPU 实机**（PKE/KEM） | 三分项 CPU+SIM kat PASS；单 session / NPU 未做 |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
@@ -65,6 +64,8 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T7b** | alg14 correctness `run.sh` 资源友好化 | 2026-07-10（correctness 探针已冻结；stable Encrypt 已有 SKIP_REBUILD） |
+| **T15c** | 冻结 [`fix-f203-alg14/15-*-correctness-k4`](../ascendc-tests/frozen/) → 引用改 stable Encrypt/Decrypt | 2026-07-10 |
 | **T15a** | Alg.15 Decrypt **`#交付#`**：[`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) · KAT×10+1 · roundtrip×10+1 · `DECRYPT_DIR` 默认 stable · **PKE 三段齐备** | 2026-07-10 |
 | **T15b** | Alg.15 Decrypt 优化探针 PASS：[`pass-fix-f203-alg15-pke-decrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) · 单 kernel + 尾融合 · SIM ~**283k** · 自 `fix-…` 改名 | 2026-07-09 |
 | **T14a** | Alg.14 Encrypt **`#交付#`**：[`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) · liboqs KAT CPU×10+SIM×1 · roundtrip CPU×10+SIM×1 · baseline-registry · 自 exp 复制晋级 | 2026-07-09 |
@@ -73,8 +74,8 @@
 | **T17** | Alg.14 compute+tail PASS：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) · SIM 1 launch **154781** tick | 2026-07-08 |
 | **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh)；`SEED_D=20260619` CPU+SIM max=0；根因 **`Compress_5` `(1<<26)`** | 2026-07-01 |
 | **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen→Encrypt→Decrypt；CPU+SIM **max=0** | 2026-06-30 |
-| **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**；SIM **~427k** | 2026-06-30 |
-| **T14** | Encrypt G5：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) CPU+SIM c.bin max=0；家里 `2launch-k4` → frozen | 2026-06-30 |
+| **T15** | Decrypt G4：[`frozen-fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg15-pke-decrypt-correctness-k4/)（2026-07-10 冻结；继任 [`stable-…-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/)） | 2026-06-30 |
+| **T14** | Encrypt G5：[`frozen-fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/)（2026-07-10 冻结；继任 [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)） | 2026-06-30 |
 | **T13h** | KeyGen prep **双 AIV 并行 Â**：[`pass-fix-f203-alg13-device-keygen-k4`](../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) SIM **542339** + KAT；晋级 [`stable-fips203-mlkem-pke-keygen-k4`](../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | 2026-06-29 |
 | **T13g** | Alg.13 行 3–7（16×`Â`）：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) CPU+SIM ✅ | 2026-06-28 |
 | **T13c** | Alg.7 单 poly SampleNTT：[`pass-fix-f203-alg7-sample-ntt-k4`](../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/) 功能完成 | 2026-06-24 |

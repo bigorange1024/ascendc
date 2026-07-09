@@ -33,7 +33,7 @@
 探针 [`fix-f203-alg13-device-keygen-k4-dual-aiv`](../../ascendc-tests/fix-f203-alg13-device-keygen-k4-dual-aiv/)：
 
 ```bash
-cd ascendc-tests/fix-f203-alg13-device-keygen-k4-dual-aiv
+cd ../../ascendc-tests/fix-f203-alg13-device-keygen-k4-dual-aiv
 bash kat_liboqs_vs_ascendc.sh   # KAT_CPU_COUNT=10 KAT_SIM_COUNT=1 默认
 ```
 
@@ -69,19 +69,19 @@ liboqs：`thirdparty/liboqs` tag **0.15.0**（静态 `liboqs.a`）；`scripts/bu
 
 | 项 | 路径 |
 |----|------|
-| 活跃探针 | [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) |
+| 活跃探针 | [`../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
 | 路线 | **AscendC 积木拼装**（INTEGRATION_PLAN Launch 表）；**已删 liboqs** |
 | G0 | marker launch 壳；`ENCRYPT_VERIFY=0` 默认 |
 | 定型交付 | 另建 `exp-fips203-mlkem-pke-encrypt-k4` / `stable-*`（须 customspec） |
 
-已更新：`ascendc-tests/INDEX.md`、`INTEGRATION_PLAN.md`、`STATUS.md`、`docs/notes/F203-KeyGen-exp交付示例技术总结.md` §5。  
+已更新：`../../ascendc-tests/INDEX.md`、`INTEGRATION_PLAN.md`、`STATUS.md`、`docs/notes/F203-KeyGen-exp交付示例技术总结.md` §5。  
 待手动：`examples/incubating/INDEX.md` 删除 exp-encrypt-correctness 行（工具权限受限）。
 
 ## Alg.14 Encrypt G1–G4 设备拼装验收
 
 **路线**：vendored 活跃探针多 launch 拼全链；**禁 liboqs**；golden 仅 `scripts/host_golden/`。
 
-**G3 错误与修正（详 [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9）**：
+**G3 错误与修正（详 [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9）**：
 
 | 问题 | 原因 | 修正 |
 |------|------|------|
@@ -129,11 +129,11 @@ SIM 日志仍有 507000 + 末尾 `free(): invalid pointer`（G4 tail 待修，�
 **明日 demo 保底（CPU）**：
 
 ```bash
-cd ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4
+cd ../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4
 ENCRYPT_VERIFY=1 ENCRYPT_GATE=5 bash run.sh -r cpu -v Ascend910B4
 ```
 
-**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.11。
+**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.11。
 
 ### G5 SIM 全链 PASS（2026-06-29 深夜）
 

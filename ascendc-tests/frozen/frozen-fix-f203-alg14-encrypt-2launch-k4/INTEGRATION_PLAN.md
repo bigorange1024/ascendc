@@ -2,7 +2,7 @@
 
 **定位**：FIPS 203 **Algorithm 14（ML-KEM-1024 PKE.Encrypt，k=4）** 的 AscendC **设备全链**正确性探针，
 **从零按 keygen 蓝本重建**——核心目标是 **单 ACL session + 少量 MIX launch** 的设备编排，
-彻底规避旧探针 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/)
+彻底规避旧探针 [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)
 的 SIM 顽疾（多段 `aclInit/aclFinalize` + NTT 后再 launch AIV-only 核 → `507000` + `free(): invalid pointer`）。
 
 > **正确性优先，性能其次**；禁止 liboqs / 外部 KEM 黑盒；golden 仅作 I/O oracle，不作设备实现规格。

@@ -59,7 +59,7 @@ bash run.sh -r sim -v Ascend910B4
 | [`scripts/roundtrip_pke_batch.sh`](../../scripts/roundtrip_pke_batch.sh) | 默认 CPU×10 + SIM×1 |
 | [`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) | Decrypt 段默认本目录 vs liboqs |
 
-回退 2-launch：`DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4`。
+回退 2-launch：`DECRYPT_DIR=.../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4`。
 
 ## 下一步
 

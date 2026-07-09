@@ -15,11 +15,18 @@
 
 
 
+## 2026-07-10 — PKE Encrypt/Decrypt 正确性探针归档（任务完成）
+
+| 目录 | 原角色 | 关闭原因（摘要） | 继任 |
+|------|--------|------------------|------|
+| [frozen-fix-f203-alg14-pke-encrypt-correctness-k4/](frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) | Alg.14 Encrypt G5 正确性拼装 | **正确性任务完成**；交付已晋级 stable | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
+| [frozen-fix-f203-alg15-pke-decrypt-correctness-k4/](frozen-fix-f203-alg15-pke-decrypt-correctness-k4/) | Alg.15 Decrypt G4（2 launch）正确性 | **正确性任务完成**；交付已晋级 stable（1-kernel） | [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) |
+
 ## 2026-06-30 — Encrypt 家里分叉探针关闭（办公室未复验）
 
 | 目录 | 原角色 | 关闭原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg14-encrypt-2launch-k4/](frozen-fix-f203-alg14-encrypt-2launch-k4/) | 家里 agent 单 session 重建 Encrypt 整树（commit `27cc93b`） | **办公室未复验** PASS；与原探针分叉；R1/R2 结论已在原探针 G5 落地 | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) G5 |
+| [frozen-fix-f203-alg14-encrypt-2launch-k4/](frozen-fix-f203-alg14-encrypt-2launch-k4/) | 家里 agent 单 session 重建 Encrypt 整树（commit `27cc93b`） | **办公室未复验** PASS；与原探针分叉；R1/R2 结论已在原探针 G5 落地 | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（原 G5 正确性探针已同步冻结） |
 
 ## 2026-06-29 — KeyGen 串行 Â pass 归档（dual-aiv 晋级）
 

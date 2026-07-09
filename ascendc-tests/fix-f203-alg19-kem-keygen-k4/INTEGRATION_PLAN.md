@@ -10,7 +10,7 @@
 |----|------|
 | **密码学位置** | KEM 增量步骤（`H(ek)`、采 `z`、拼 `dk_kem`）**全在 AI Core**；禁止 Host 胶水冒充生产输出 |
 | **PKE 来源** | Alg.13 → **stable** [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/)；本探针 **vendor 复制** launch/kernel，**不** `#include` stable 路径 |
-| **Enc/Dec** | 本探针**不含**；后续 Alg.17/18 用 [`fix-f203-alg14`](../fix-f203-alg14-pke-encrypt-correctness-k4/) / [`fix-f203-alg15`](../fix-f203-alg15-pke-decrypt-correctness-k4/) |
+| **Enc/Dec** | 本探针**不含**；后续 Alg.17/18 用 [`fix-f203-alg14`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) / [`fix-f203-alg15`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) |
 | **参数集表述** | 全文 **ml_kem_1024（k=4）**；勿与历史笔误「768」混用 |
 | **SHA3** | 设备路径经 `library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`（语义对齐 tiny_sha3）；Host tiny_sha3 **仅** golden / `VERIFY=1` |
 | **Alg.19 随机性 `d`/`z`** | **均在 device AscendC 上生成**（首版 **UB 驻留**）；**禁止**导出/落盘/GM 持久化 `d`/`z` 本体；仅允许消费派生量（如 `ρ`/`σ`→PKE 链、`H(ek)`、`dk_kem` 最终输出） |

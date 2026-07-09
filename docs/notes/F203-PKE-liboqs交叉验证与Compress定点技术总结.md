@@ -4,7 +4,7 @@
 **目的**：说明 PKE 三层验收分工、如何用 liboqs 做分阶段字节 oracle，以及 **`Compress_d` 定点舍入偏置** 的可复用契约  
 **案例锚点**：[`pass-f203-compress-d-vec-k4`](../../ascendc-tests/pass-f203-compress-d-vec-k4/)（**d=4/5/10/11**）；向量指南 [`F203-Compress-Decompress-向量实现指南.md`](F203-Compress-Decompress-向量实现指南.md)  
 **讨论**：[`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)  
-**实现方案**：Encrypt [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/INTEGRATION_PLAN.md) §10
+**实现方案**：Encrypt [`INTEGRATION_PLAN.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/INTEGRATION_PLAN.md) §10
 
 ---
 
@@ -90,7 +90,7 @@ return ((u * 1290176 + (1 << 26)) >> 27) & 0x1F
 | **L2** liboqs 三阶段 | `liboqs_pke_vs_ascendc.sh` | KeyGen / Encrypt / Decrypt 各 vs **liboqs 字节** | 跨算子 device 串联 |
 | **L3** round-trip | `roundtrip_pke_encrypt_decrypt.sh` | device **c → m** 闭环 | 外部 oracle |
 
-三层 **互补**；探针 [`SELF_CONTAINED.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/SELF_CONTAINED.md) 禁止 liboqs 渗入默认 `run.sh`，L2 放在 **仓库根 scripts/**。
+三层 **互补**；探针 [`SELF_CONTAINED.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/SELF_CONTAINED.md) 禁止 liboqs 渗入默认 `run.sh`，L2 放在 **仓库根 scripts/**。
 
 **L2 输入约定**（固定种子可复现）：
 

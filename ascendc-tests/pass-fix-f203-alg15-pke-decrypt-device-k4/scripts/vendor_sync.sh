@@ -4,7 +4,7 @@ set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TESTS="${CASE_DIR}/.."
-ENC="${TESTS}/fix-f203-alg14-pke-encrypt-correctness-k4"
+ENC="${TESTS}/stable-fips203-mlkem-pke-encrypt-k4"
 NTT_SRC="${TESTS}/pass-fix-f203-stage123-ntt-intt-polyvec8-vec"
 ALG11_SRC="${TESTS}/pass-fix-f203-alg11-12-multiplyntts-k4"
 IP_SRC="${TESTS}/pass-fix-f203-alg11-12-innerproduct-k4"

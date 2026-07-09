@@ -11,7 +11,7 @@ FIPS 203 **Alg.15 PKE Decrypt**（ml_kem_1024 / k=4）；Host 仅 I/O + LUT 搬�
 **跨探针闭环 / liboqs L2**：仓库脚本 **默认 Decrypt 已切到** [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../pass-fix-f203-alg15-pke-decrypt-device-k4/)（2026-07-09）。本目录仍可用：
 
 ```bash
-DECRYPT_DIR="$(pwd)/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4" \
+DECRYPT_DIR="$(pwd)/examples/stable/stable-fips203-mlkem-pke-decrypt-k4" \
   bash scripts/roundtrip_pke_encrypt_decrypt.sh -r cpu -v Ascend910B4
 ```
 

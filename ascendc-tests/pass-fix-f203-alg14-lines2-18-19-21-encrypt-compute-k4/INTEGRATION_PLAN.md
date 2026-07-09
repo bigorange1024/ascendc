@@ -18,7 +18,7 @@
 
 | 允许 vendoring / 参照 | 禁止 |
 |----------------------|------|
-| [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) `compute/`（MIX S1–S3、CrossCore） | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) **源码照抄** |
+| [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) `compute/`（MIX S1–S3、CrossCore） | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) **源码照抄** |
 | [`pass-fix-f203-alg11-12-innerproduct-k4`](../pass-fix-f203-alg11-12-innerproduct-k4/)、[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../pass-fix-f203-stage123-ntt-intt-polyvec8-vec/) | `ascendc-tests/frozen/` 带出 |
 | [`pass-f203-alg6-bytedecode-d-vec-k4`](../pass-f203-alg6-bytedecode-d-vec-k4/)（**d=12** 路径） | 运行时 `sys.path` 到其它用例 |
 

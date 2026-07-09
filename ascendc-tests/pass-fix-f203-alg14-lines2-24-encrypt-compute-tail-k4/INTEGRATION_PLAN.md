@@ -35,7 +35,7 @@
 | 允许 | 禁止 |
 |------|------|
 | **抄码** vendoring 自两上游探针 `compute/` | 运行时 `#include` 其它探针路径 |
-| `f203_encrypt_compute_tail_layout.h` 本目录 GM 契约 | 从 `fix-f203-alg14-pke-encrypt-correctness-k4` 整树 fork |
+| `f203_encrypt_compute_tail_layout.h` 本目录 GM 契约 | 从 `stable-fips203-mlkem-pke-encrypt-k4` 整树 fork |
 | `library/shared/`、`scripts/` CANN 壳 | `ascendc-tests/frozen/` 带出 |
 
 ---

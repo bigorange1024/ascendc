@@ -1,7 +1,7 @@
 # STATUS — fix-f203-alg14-encrypt-2launch-k4
 
 > **⚠ 已冻结（2026-06-30）**：本目录已迁入 [`ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](../../frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)。  
-> **办公室未复验**家里 agent 声称的 CPU+SIM PASS；活跃 Encrypt 探针见 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../../fix-f203-alg14-pke-encrypt-correctness-k4/) G5。  
+> **办公室未复验**家里 agent 声称的 CPU+SIM PASS；活跃 Encrypt 探针见 [`stable-fips203-mlkem-pke-encrypt-k4`](../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) G5。  
 > 关闭原因：[`FROZEN.md`](FROZEN.md)
 
 ---

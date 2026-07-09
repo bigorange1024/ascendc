@@ -31,7 +31,7 @@ c₂ ← ByteEncode₅(Compress₅(v))
 c ← c₁ ‖ c₂
 ```
 
-**与旧 G5 探针差异**：本路线 **不复刻** `fix-f203-alg14-pke-encrypt-correctness-k4` 的多段 AIV/MIX 拼装；仅 **vendoring** 两上游 pass 探针已验收内核。
+**与旧 G5 探针差异**：本路线 **不复刻** `stable-fips203-mlkem-pke-encrypt-k4` 的多段 AIV/MIX 拼装；仅 **vendoring** 两上游 pass 探针已验收内核。
 
 ---
 
@@ -78,7 +78,7 @@ prep vendoring 仍走 `scripts/vendor_sync_from_stable_keygen.sh`（来源 stabl
 
 ### 4.1 Host 输入（**锁死种子 + 复用现成 fixtures**）
 
-**唯一种子** `SEED_D=20260619`，整套输入 **直接复制自** [`fix-f203-alg14-pke-encrypt-correctness-k4/input/`](../fix-f203-alg14-pke-encrypt-correctness-k4/input/)（该套已经过 device 全链验证 max=0）：
+**唯一种子** `SEED_D=20260619`，整套输入 **直接复制自** [`stable-fips203-mlkem-pke-encrypt-k4/input/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/input/)（该套已经过 device 全链验证 max=0）：
 
 | 路径 | 尺寸 | 来源（复制，非重生成） |
 |------|------|------------------------|
@@ -223,7 +223,7 @@ pass-fix-f203-alg14-pke-encrypt-device-k4/
 
 ### 8.1 首选：直接复用 correctness 的 `golden_c.bin`
 
-[`fix-f203-alg14-pke-encrypt-correctness-k4/output/golden_c.bin`](../fix-f203-alg14-pke-encrypt-correctness-k4/output/golden_c.bin)（1568B）由该探针自包含 python `scripts/host_golden/golden_c.py(ek,m,coins)` 生成，且其 device 输出 `fixtures/c.bin` 已与之逐字节一致（max=0）。
+[`stable-fips203-mlkem-pke-encrypt-k4/output/golden_c.bin`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/output/golden_c.bin)（1568B）由该探针自包含 python `scripts/host_golden/golden_c.py(ek,m,coins)` 生成，且其 device 输出 `fixtures/c.bin` 已与之逐字节一致（max=0）。
 
 ```text
 gen_data.py（本探针，自包含）:
@@ -282,7 +282,7 @@ gen_data.py（本探针，自包含）:
 
 | 路径 | 关系 |
 |------|------|
-| [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) | **golden oracle**：复用其 `input/`（ek/m/coins/lut）+ `output/golden_c.bin`（黑盒 I/O，SEED_D=20260619）；**禁止**抄其 kernel/prep/pack 实现源码 |
+| [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **golden oracle**：复用其 `input/`（ek/m/coins/lut）+ `output/golden_c.bin`（黑盒 I/O，SEED_D=20260619）；**禁止**抄其 kernel/prep/pack 实现源码 |
 | [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | compute+tail **唯一**抄码来源 |
 | [`pass-fix-f203-alg14-lines3-15-encrypt-prep-k4`](../pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) | prep **唯一**抄码来源 |
 | `examples/stable/stable-fips203-mlkem-pke-encrypt-k4` | **未建**；本探针 PASS 后可复制晋级 |

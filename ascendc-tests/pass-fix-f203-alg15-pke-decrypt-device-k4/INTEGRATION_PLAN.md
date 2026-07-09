@@ -1,7 +1,7 @@
 # INTEGRATION_PLAN — pass-fix-f203-alg15-pke-decrypt-device-k4
 
 **定位**：FIPS 203 **Algorithm 15 K-PKE.Decrypt**（ml_kem_1024 / k=4）的 **单 AI Core 优化实现探针**。  
-相对正确性探针 [`fix-f203-alg15-pke-decrypt-correctness-k4`](../fix-f203-alg15-pke-decrypt-correctness-k4/)：本目录追求 **更少 launch / 更少 GM 往返 / 向量化 Compress₁**，最终目标 **SIM 单 kernel launch**；**不**要求第一版即单 kernel。
+相对正确性探针 [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/)：本目录追求 **更少 launch / 更少 GM 往返 / 向量化 Compress₁**，最终目标 **SIM 单 kernel launch**；**不**要求第一版即单 kernel。
 
 **标准锚点**：`library/documents/NIST.FIPS.203.pdf` §5.3 Algorithm 15（p.31）；§4.2.1 Compress/Decompress（Eq 4.7–4.8）；Algorithm 5 ByteEncode_d。
 
@@ -52,7 +52,7 @@ c      ∈ 𝔹^{32(d_u k + d_v)} = 1568B   # d_u=11, d_v=5；c = c₁ ‖ c₂
 
 | 角色 | 目录 | 本探针用法 |
 |------|------|------------|
-| 正确性基线（G4） | [`fix-f203-alg15-pke-decrypt-correctness-k4`](../fix-f203-alg15-pke-decrypt-correctness-k4/) | **语义 / golden / round-trip 对照**；2 launch + NTT/INTT 分核已证 SIM 正确；**禁止**把其标量尾当最终优化规格 |
+| 正确性基线（G4） | [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | **语义 / golden / round-trip 对照**；2 launch + NTT/INTT 分核已证 SIM 正确；**禁止**把其标量尾当最终优化规格 |
 | Encrypt device 样板 | [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../pass-fix-f203-alg14-pke-encrypt-device-k4/) | 编排、自包含、CPU/SIM 分叉、验收权重（SIM 主参考） |
 | Compress 向量（d≠1） | [`pass-f203-compress-d-vec-k4`](../pass-f203-compress-d-vec-k4/) | **模式参考**（Barrett / cast_div）；**d=1 未覆盖**，须本目录新写 |
 | Decompress / ByteDecode | [`pass-f203-decompress-d-vec-k4`](../pass-f203-decompress-d-vec-k4/) · [`pass-f203-alg6-bytedecode-d-vec-k4`](../pass-f203-alg6-bytedecode-d-vec-k4/) | prep：Decode **标量** + Decompress **向量**（选型笔记已定） |
@@ -191,7 +191,7 @@ aclInit / CreateStream
 
 Golden 计算块须落在 baseline-registry / 已验证 API（NTT、MultiplyNTTs、Compress₁、ByteEncode₁）；缺项先停。
 
-仓库级对照（**默认 Decrypt = 本目录**）：`scripts/roundtrip_pke_encrypt_decrypt.sh`、`scripts/liboqs_pke_vs_ascendc.sh`。回退 2-launch：`DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4`。
+仓库级对照（**默认 Decrypt = 本目录**）：`scripts/roundtrip_pke_encrypt_decrypt.sh`、`scripts/liboqs_pke_vs_ascendc.sh`。回退 2-launch：`DECRYPT_DIR=.../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4`。
 
 ---
 

@@ -1,4 +1,4 @@
-# fix-f203-alg14-pke-encrypt-correctness-k4 — Alg.14 Encrypt 设备拼装（G1–G4）
+# stable-fips203-mlkem-pke-encrypt-k4 — Alg.14 Encrypt 设备拼装（G1–G4）
 cmake_minimum_required(VERSION 3.16)
 project(Ascend_c)
 

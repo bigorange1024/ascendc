@@ -42,7 +42,10 @@ from f203_ref_common import (  # noqa: E402
 import golden_c as gc  # noqa: E402
 
 SEED_D = 20260619
-_CORR = os.path.normpath(os.path.join(_CASE_DIR, "..", "fix-f203-alg14-pke-encrypt-correctness-k4"))
+# 可选：复用 stable Encrypt 已生成的 input/golden（缺失则本地生成）
+_CORR = os.path.normpath(
+    os.path.join(_CASE_DIR, "..", "..", "examples", "stable", "stable-fips203-mlkem-pke-encrypt-k4")
+)
 _LOCKED_INPUTS = ("ek_pke.bin", "m.bin", "coins.bin")
 _EK_BYTES = 1568
 _MSG_BYTES = 32

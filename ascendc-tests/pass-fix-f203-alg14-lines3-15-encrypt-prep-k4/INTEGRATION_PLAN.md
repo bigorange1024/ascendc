@@ -6,7 +6,7 @@
 
 | 允许 | 禁止 |
 |------|------|
-| [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/)（**优先**） | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) **任何源码** |
+| [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/)（**优先**） | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) **任何源码** |
 | `examples/incubating/exp-*`、`ascendc-tests/pass-*` 活跃探针 | `ascendc-tests/frozen/`、`fix-f203-alg*`（除本目录）照抄 |
 | `library/shared/` | |
 

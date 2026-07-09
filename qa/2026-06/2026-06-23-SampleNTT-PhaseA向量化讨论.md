@@ -169,7 +169,7 @@ AscendC 已验证：**XOF batch**（Phase P）、**CBD 向量**（Phase C）。*
 ## 9. 探针门控与复现
 
 ```bash
-cd ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4
+cd ../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4
 
 # 默认：shake_vec + scalar rej
 bash run.sh -r cpu -v Ascend910B4
@@ -210,7 +210,7 @@ SIM 全段约 **7–10 min**（`KERNEL_COMPUTE_BUDGET_SEC` 默认 600–900）�
 
 ## 12. d1/d2 POC 探针 SIM 阻塞解除（同日追加）
 
-**探针**：`ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4`（Alg.7 单 poly，rej 前 d1/d2 向量段）
+**探针**：`../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4`（Alg.7 单 poly，rej 前 d1/d2 向量段）
 
 **现象**：CPU 全 PASS；SIM 上 xof 对、d1/d2 全 0（或 max_abs_diff≈max(golden)）。
 
@@ -224,7 +224,7 @@ SIM 全段约 **7–10 min**（`KERNEL_COMPUTE_BUDGET_SEC` 默认 600–900）�
 **验收（2026-06-23）**：
 
 ```bash
-cd ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4
+cd ../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 # xof + d1 + d2 golden PASS；SIM ~60002 tick
@@ -419,7 +419,7 @@ compact 后再统一 Sub(q) 还原 â∈[0,q)
 ### 15.5 examples 边界澄清（2026-06-24）
 
 - **`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4`**：**不**做 AscendC 实时生成 $\mathbf{s}$/$\mathbf{e}$；设备只读 Host/Python `input/src.bin`（行 16–20 MIX 核）
-- 设备预采样 + `shake_ub_helpers` 归属 **`ascendc-tests/`**（[`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/) / chain_ntt17），与 exp 解耦
+- 设备预采样 + `shake_ub_helpers` 归属 **`../../ascendc-tests/`**（[`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/) / chain_ntt17），与 exp 解耦
 - 已撤回误加的 customspec §Phase2 双 launch 与 `f203_device_presample_ub.hpp`
 
 ---
@@ -486,11 +486,11 @@ compact 后再统一 Sub(q) 还原 â∈[0,q)
 
 ---
 
-## Alg.14 Encrypt G3 修正（fix-f203-alg14-pke-encrypt-correctness-k4）
+## Alg.14 Encrypt G3 修正（stable-fips203-mlkem-pke-encrypt-k4）
 
 **用户意见（2026-06-23）**：事实须**原封不动**记录；**在推进 G4/G5 之前先修正 G3**；SIM 耗时长，改前想清楚、少做无效实验。
 
-### 已记录事实（全文见探针 [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md)）
+### 已记录事实（全文见探针 [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md)）
 
 1. CPU 始终 1× `f203_encrypt_g3_linear`；修正前 SIM 为 2× `at_r` + Host **fake-Â**（`t_hat` 填矩阵列 0，row0 当 `tr_hat`）。
 2. 独立 `t_dot_r` SIM 向量路径曾全零；同 session 双 launch 写回异常 → 多 ACL session + fake-Â workaround。

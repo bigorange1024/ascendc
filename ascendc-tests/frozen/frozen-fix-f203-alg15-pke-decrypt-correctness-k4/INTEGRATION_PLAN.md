@@ -1,6 +1,6 @@
 # INTEGRATION_PLAN — fix-f203-alg15-pke-decrypt-correctness-k4
 
-**定位**：`ascendc-tests/` **Alg.15 PKE Decrypt 设备全链拼装探针**（ml_kem_1024 / k=4）；对齐 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) 治理模式。
+**定位**：`ascendc-tests/` **Alg.15 PKE Decrypt 设备全链拼装探针**（ml_kem_1024 / k=4）；对齐 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) 治理模式。
 
 **参照 Encrypt 终态**：单 ACL session、Host 仅 I/O + LUT 搬运、密码学全在 AI Core。
 

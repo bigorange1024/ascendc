@@ -4,7 +4,7 @@ set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$(cd "${CASE_DIR}/../.." && pwd)"
-SRC="${REPO}/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4"
+SRC="${REPO}/examples/stable/stable-fips203-mlkem-pke-decrypt-k4"
 DST="${CASE_DIR}/vendor/pke_decrypt"
 
 if [ ! -d "${SRC}" ]; then

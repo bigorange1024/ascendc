@@ -6,7 +6,7 @@
 
 **语义**：FIPS 203 **Alg.14 行 3–15 设备采样** — `ek_pke` 尾 `ρ` → `a_hat[16,256]`；`coins` → `r‖e₁‖e₂`（9 poly）；**不含** `t̂` ByteDecode、NTT、行 18+。
 
-**代码来源**：vendoring **仅** [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) `prep/`；**禁止**抄 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/)。
+**代码来源**：vendoring **仅** [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) `prep/`；**禁止**抄 [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)。
 
 | 阶段 | CPU | SIM | 说明 |
 |------|-----|-----|------|

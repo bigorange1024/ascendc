@@ -7,7 +7,6 @@
 #   回退探针：DECRYPT_DIR=.../pass-fix-f203-alg15-pke-decrypt-device-k4
 #   incubating exp：DECRYPT_DIR=.../exp-fips203-mlkem-pke-decrypt-k4
 #   回退 KeyGen 探针：KEYGEN_DIR=.../pass-fix-f203-alg13-device-keygen-k4
-#   回退 Decrypt 2-launch：DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4
 #
 # 前提：KeyGen 已产出 output/ek_pke.bin + dk_pke.bin（本脚本不重复跑 KeyGen，除非
 #       ROUNDTRIP_BOOTSTRAP_KEYGEN=1 且文件缺失时一次性 bootstrap）。

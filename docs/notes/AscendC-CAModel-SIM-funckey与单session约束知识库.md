@@ -3,7 +3,7 @@
 **读者**：未参与本仓库开发的 AscendC + CAModel SIM 使用者 / Agent  
 **目的**：把「SIM 上的算子 `aclrtLaunchKernel` 返回 `507000` 但 NPU/CPU 都没事」从「玄学」拆成两个确定性的平台不变量，以便将来设计 SIM 工程时**第一时间**避免重蹈覆辙。  
 **讨论**：[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)（§1–§9 含错误尝试与受控实验）  
-**案例锚点**：[`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/)（Alg.14 Encrypt at_r5 合并核重构，§6 附录）  
+**案例锚点**：[`../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（Alg.14 Encrypt at_r5 合并核重构，§6 附录）  
 **也适用于**：任何 SIM 上 `aclrtLaunchKernel` 返回 `507000 ACL_ERROR_RT_INTERNAL_ERROR` 而 CPU 标量孪生 PASS 的探针
 
 ---
@@ -239,7 +239,7 @@ aclrtResetDevice(0); aclFinalize();
 
 ### 6.1 起点（错误路径）
 
-`fix-f203-alg14-pke-encrypt-correctness-k4` 的 G3（线性层）一度长成这样：
+`stable-fips203-mlkem-pke-encrypt-k4` 的 G3（线性层）一度长成这样：
 
 | kernel | 算什么 | KERNEL_TASK_TYPE | SIM 表现 |
 |--------|--------|------------------|----------|
@@ -248,7 +248,7 @@ aclrtResetDevice(0); aclFinalize();
 | `f203_encrypt_at_r` | `Âᵀ·r̂ → û` | AIV_ONLY | ✅（独立 session 才行）|
 | `f203_encrypt_t_dot_r` | `t̂·r̂ → tr̂` | AIV_ONLY | **507000** |
 
-当时（2026-06-23）的判读（详 [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §3.1、§9.2、§10）：
+当时（2026-06-23）的判读（详 [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §3.1、§9.2、§10）：
 - 错误归因 A：「`f203_encrypt_t_dot_r` 入口在 SIM 上无法完成 launch 注册/调度」 → 用 `at_r(t̂_col0)` 等价绕开，作为「t_dot_r 入口 bug」。
 - 错误归因 B：把「`g3_linear` 五参 launch 失败」归到「单 TPipe / 五参 ABI 不兼容」。
 - 工程权宜：用两次 `at_r`（`run_g3_at_r_device_once` + `run_g3_tr_via_at_r_device_once`），**每次独立 `aclInit/aclFinalize`**，绕过 `t_dot_r` 与 `g3_linear`。这恰好同时踩中 R1（`func_key=8` 的 `at_r` 在多 binary 重载后偶尔 launch 成功，但只是侥幸）与 R2（多 session）两条病根。
@@ -279,7 +279,7 @@ aclrtResetDevice(0); aclFinalize();
 
 ### 6.4 实现效果（双模式）
 
-**SIM 测试通过声明**（2026-06-30 12:58 UTC+8）：探针 `ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`、命令 `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4`、退出码 0、`[SUCCESS] ... gate=G5 (sim) ENCRYPT_VERIFY=1`、`Total tick=43479`、`aclrtLaunchKernel` 返回 `507000` 次数 = 0。详 [`STATUS.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/STATUS.md) §SIM 测试通过声明。
+**SIM 测试通过声明**（2026-06-30 12:58 UTC+8）：探针 `../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`、命令 `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4`、退出码 0、`[SUCCESS] ... gate=G5 (sim) ENCRYPT_VERIFY=1`、`Total tick=43479`、`aclrtLaunchKernel` 返回 `507000` 次数 = 0。详 [`STATUS.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) §SIM 测试通过声明。
 
 | 项 | CPU | SIM | 来源 |
 |---|---|---|---|
@@ -316,13 +316,13 @@ aclrtResetDevice(0); aclFinalize();
 
 | 角色 | 路径 |
 |------|------|
-| 新 G3 合并核 | [`ascendc-tests/.../compute/at_r5/f203_encrypt_at_r5_kernel.cpp`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/compute/at_r5/f203_encrypt_at_r5_kernel.cpp) |
+| 新 G3 合并核 | [`../../ascendc-tests/.../compute/at_r5/f203_encrypt_at_r5_kernel.cpp`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/compute/at_r5/f203_encrypt_at_r5_kernel.cpp) |
 | `at_r5` tiling / layout / CPU scalar | 同目录 `f203_encrypt_at_r5_{tiling,layout}.h` / `_ub_scalar.hpp` |
-| 单 session host 编排（SIM） | [`main_encrypt_g5_run.cpp` `run_g5_sim_phase1`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/main_encrypt_g5_run.cpp) |
+| 单 session host 编排（SIM） | [`main_encrypt_g5_run.cpp` `run_g5_sim_phase1`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/main_encrypt_g5_run.cpp) |
 | 单 session host 编排（CPU 孪生） | 同文件 `run_encrypt_g5_cpu_full` |
-| CMake funckey 守卫 | [`CMakeLists.txt`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/CMakeLists.txt) 关键字 `F203_FUNCKEY_EXPERIMENT` |
-| 旧错误路径（保留作历史证据，不参编） | [`compute/g3_linear/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/compute/g3_linear/)、[`compute/at_r/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/compute/at_r/)、[`compute/t_dot_r/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/compute/t_dot_r/) |
-| 历史 SIM 审计（误诊原文 + 修正注） | [`G3_SIM_AUDIT.md`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §12（修正） |
+| CMake funckey 守卫 | [`CMakeLists.txt`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/CMakeLists.txt) 关键字 `F203_FUNCKEY_EXPERIMENT` |
+| 旧错误路径（保留作历史证据，不参编） | [`compute/g3_linear/`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/compute/g3_linear/)、[`compute/at_r/`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/compute/at_r/)、[`compute/t_dot_r/`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/compute/t_dot_r/) |
+| 历史 SIM 审计（误诊原文 + 修正注） | [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §12（修正） |
 | 受控实验纪要 | [`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md) |
 
 ---
@@ -333,7 +333,7 @@ aclrtResetDevice(0); aclFinalize();
 - [`docs/notes/ascendc-TQue与Pipe框架知识库.md`](ascendc-TQue与Pipe框架知识库.md)（TPipe/event）
 - [`docs/engineering/用例自包含与设备全链约束.md`](../engineering/用例自包含与设备全链约束.md)
 - [`.cursor/rules/ascendc-development.mdc`](../../.cursor/rules/ascendc-development.mdc)「Agent 跑用例验收」段：CPU + SIM 双模式契约
-- 案例 [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/)：`STATUS.md` / `INTEGRATION_PLAN.md` §2.3、§4
+- 案例 [`../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)：`STATUS.md` / `INTEGRATION_PLAN.md` §2.3、§4
 
 ---
 

@@ -10,7 +10,7 @@
 
 | 项 | 结论 |
 |----|------|
-| **探针** | [`ascendc-tests/fix-f203-alg19-kem-keygen-k4/`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
+| **探针** | [`../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
 | **标准定位** | 对外 **FIPS 203 Alg.19** `ML-KEM.KeyGen()`；内部经 **Alg.16 `KeyGen_internal(d,z)`** 拼装 |
 | **架构** | 3 launch：`prep`（vendor PKE + `d`）\| `mmad`（Alg.13 计算 + `ek_pke`）\| `kem_finish`（`H(ek)` + UB `z` + `dk_kem` 拼接） |
 | **I/O** | `ek_kem` 1568B · `dk_kem` 3168B（liboqs：`dk_pke‖ek‖H(ek)‖z`）· `SEED_D=20260619` |
@@ -132,8 +132,8 @@ Alg.17 Encaps_internal(ek, m)
 
 | 项 | 建议 |
 |----|------|
-| **目录** | `ascendc-tests/fix-f203-alg20-kem-encaps-k4/` |
-| **vendor 源** | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) G5 全链（`vendor_sync.sh` 复制，禁止 `#include` 跨探针） |
+| **目录** | `../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/` |
+| **vendor 源** | [`stable-fips203-mlkem-pke-encrypt-k4`](../stable-fips203-mlkem-pke-encrypt-k4/) G5 全链（`vendor_sync.sh` 复制，禁止 `#include` 跨探针） |
 | **自研 KEM 头** | `kem/f203_kem_enc_init.hpp`：`DerandMFromSeed*`（可复现）+ `H(ek)` + `G(m‖h)` 拆 `K`/`r` |
 | **编排** | 单 ACL session；**优先**将 `m`/`G`/`coins` 写入 GM 后接 vendor Encrypt launch 序列（避免额外 func_key） |
 | **生产 I/O** | `input/ek_kem.bin` 1568B；Host **不**提供 `m`/`coins`；`output/c.bin` + `output/K.bin` |
@@ -158,7 +158,7 @@ Alg.17 Encaps_internal(ek, m)
 
 ### 4.5 与 Alg.21 Decaps 的衔接
 
-Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重加密比对 + implicit rejection `J(z‖c)`。可 vendor [`fix-f203-alg15`](../fix-f203-alg15-pke-decrypt-correctness-k4/) + 更厚的 KEM 尾段；**Encaps 探针应预留 `dk_kem` 3168B 布局解析**（`dk_pke‖ek‖H(ek)‖z`）供后续 Decaps 探针复用。
+Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重加密比对 + implicit rejection `J(z‖c)`。可 vendor [`fix-f203-alg15`](../stable-fips203-mlkem-pke-decrypt-k4/) + 更厚的 KEM 尾段；**Encaps 探针应预留 `dk_kem` 3168B 布局解析**（`dk_pke‖ek‖H(ek)‖z`）供后续 Decaps 探针复用。
 
 **TODO**：新开 **T7a** — Alg.20 探针 **规划**；写码前须用户确认目录 + customspec 不适用（`ascendc-tests` 探针）。
 
@@ -168,7 +168,7 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 
 | 项 | 结论 |
 |----|------|
-| **目录** | [`ascendc-tests/fix-f203-alg20-kem-encaps-k4/`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) |
+| **目录** | [`../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) |
 | **流程** | **先方案后代码**；当前文档主线为 `INTEGRATION_PLAN` / `qa` / `docs/notes` |
 | **公钥 `pk`** | **读 alg19 产出** `output/ek_kem.bin` → 本探针 `input/`（`gen_data` + `EK_KEM_SRC` 默认相对路径） |
 | **随机性 `m`** | device UB（`DerandMFromSeedD`）；Host 仅 `seed_d` |
@@ -228,7 +228,7 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 
 | 项 | 结论 |
 |----|------|
-| **探针** | [`ascendc-tests/fix-f203-alg21-kem-decaps-k4/`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
+| **探针** | [`../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
 | **架构** | vendor alg15 Decrypt G4 + alg14 Encrypt G5 + `kem/` K1 `G` + K2 FO |
 | **I/O** | `dk_kem` 3168B + `c` 1568B → `K` 32B；输入复制 alg19/20（`SEED_D=20260619`） |
 | **G4 CPU** | **PASS** `K max=0`（单 session 设备 FO） |

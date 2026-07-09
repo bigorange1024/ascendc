@@ -103,13 +103,13 @@ correctness 探针的 T7b 对齐仍待。
 | `exp-mlkem-f203-stage{1,3}-*` | `exp-fips203-mlkem-pke-stage{1,3}-*` |
 | `stable-mlkem-f203-pke-{keygen,encrypt}-k4` | `stable-fips203-mlkem-pke-{keygen,encrypt}-k4` |
 
-**未改**：derand 域分隔符 `exp-mlkem-f203-2s1e-k4:SEED_D=`（密码学契约）；`ascendc-tests/` 探针名；`exp-sepolyvec8-ntt-k8`；`examples/frozen/` 历史目录名（判决书「原路径」字段保留）。
+**未改**：derand 域分隔符 `exp-mlkem-f203-2s1e-k4:SEED_D=`（密码学契约）；`../../ascendc-tests/` 探针名；`exp-sepolyvec8-ntt-k8`；`examples/frozen/` 历史目录名（判决书「原路径」字段保留）。
 
 **引用同步（同日续）**：`.cursor/skills/{INDEX,ascendc-impl-spec}` Stage1/3 → `exp-fips203-…`；Stage12 customspec / API 查阅索引 / `docs/notes/F203-Stage12*` 中 incubating 死链 → `examples/frozen/frozen-exp-…`。
 
 ## 10. Alg.15 Decrypt 优化探针开工（同日）
 
-新建 [`ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/)（**P0 仅方案**）。
+新建 [`../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/)（**P0 仅方案**）。
 
 | 锁定 | 说明 |
 |------|------|
@@ -176,7 +176,7 @@ TODO：**T15b**；晋级仍 **T15a**。
 |------|------|
 | `roundtrip_pke_encrypt_decrypt.sh` / `roundtrip_pke_batch.sh` | 默认 `DECRYPT_DIR` → `pass-fix-f203-alg15-pke-decrypt-device-k4`；`DECRYPT_GATE=0`；**KeyGen 默认 → `stable-fips203-mlkem-pke-keygen-k4`**（Encrypt 已是 stable） |
 | `liboqs_pke_vs_ascendc.sh` | Decrypt 默认 device-k4（KeyGen 仍探针：cmake 路径不同） |
-| 回退 | `KEYGEN_DIR=.../pass-fix-f203-alg13-device-keygen-k4`；`DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4` |
+| 回退 | `KEYGEN_DIR=.../pass-fix-f203-alg13-device-keygen-k4`；`DECRYPT_DIR=.../stable-fips203-mlkem-pke-decrypt-k4` |
 | 验收 | CPU+SIM roundtrip `m` max=0（`SEED_D=20260619`；SIM Decrypt tick **283248**） |
 
 ### 10.7 探针改名 `pass-fix-…-device-k4`（同日）
