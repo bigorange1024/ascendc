@@ -24,7 +24,7 @@
 | [F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md](F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md) | KeyGen prep **双 AIV**、SHAKE **ProcessInline**；§4.1 **CPU SUCCESS / 2AIC+4AIV 误读** |
 | [F203-KeyGen-prep-Pipe细同步技术总结.md](F203-KeyGen-prep-Pipe细同步技术总结.md) | prep **PipeBarrier** 窄化（Opt-5 CBD 合入） |
 | [F203-KeyGen-exp交付示例技术总结.md](F203-KeyGen-exp交付示例技术总结.md) | **exp-fips203-mlkem-pke-keygen-k4** 自包含交付、唯一路径、KAT/SIM 验收 |
-| [F203-Alg15-Decrypt-2launch编排技术总结.md](F203-Alg15-Decrypt-2launch编排技术总结.md) | **Alg.15 Decrypt** 2-launch 切分；prep/NTT 分离、NTT/INTT 分 kernel；[`fix-f203-alg15-pke-decrypt-correctness-k4`](../../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) |
+| [F203-Alg15-Decrypt-2launch编排技术总结.md](F203-Alg15-Decrypt-2launch编排技术总结.md) | **Alg.15 Decrypt** 2-launch 正确性切分原理；**生产已是 1-kernel**（[`pass-fix-…-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) / [`exp-…-decrypt-k4`](../../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/)）；文首 2026-07-09 注 |
 | [F203-Compress-Decompress-向量实现指南.md](F203-Compress-Decompress-向量实现指南.md) | **Compress/Decompress_d** 向量路径（Barrett d=4/5、cast_div d=10/11、Decompress 统一 int32）；探针 `pass-f203-*-d-vec-k4` |
 | [F203-Alg14-Encrypt-compute-tail-PASS技术总结.md](F203-Alg14-Encrypt-compute-tail-PASS技术总结.md) | **Alg.14 行 2/16–24** compute+pack **PASS** 探针；c=c₁‖c₂；SIM 1 launch；全链 Encrypt 基线 |
 | [F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md](F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) | **Encrypt 交付权重**：无 NPU 时 **SIM 主参考**、CPU 仅辅助；stable 门禁与 `golden_v` 边界 |

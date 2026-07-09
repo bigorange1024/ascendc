@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # roundtrip_pke_encrypt_decrypt.sh — device KeyGen 密钥 → Encrypt(c) → Decrypt(m) 闭环
 #
-# Encrypt 默认：examples/incubating/exp-fips203-mlkem-pke-encrypt-k4（自包含 run.sh）
-# Decrypt 默认：ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4
+# KeyGen 默认：examples/stable/stable-fips203-mlkem-pke-keygen-k4
+# Encrypt 默认：examples/stable/stable-fips203-mlkem-pke-encrypt-k4
+# Decrypt 默认：ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4（优化单 kernel）
+#   回退 KeyGen 探针：KEYGEN_DIR=.../pass-fix-f203-alg13-device-keygen-k4
+#   回退 Decrypt 2-launch：DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4
 #
-# 前提：KeyGen 探针已产出 output/ek_pke.bin + dk_pke.bin（本脚本不重复跑 KeyGen，除非
+# 前提：KeyGen 已产出 output/ek_pke.bin + dk_pke.bin（本脚本不重复跑 KeyGen，除非
 #       ROUNDTRIP_BOOTSTRAP_KEYGEN=1 且文件缺失时一次性 bootstrap）。
 #
 # Usage（单次）:
@@ -23,15 +26,16 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg13-device-keygen-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-keygen-k4}"
 ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4}"
-DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4}"
+DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
 export SEED_D="${SEED_D:-20260619}"
 export ENCRYPT_GATE=5
-export DECRYPT_GATE=4
+# device-k4 生产无 mid D2H；闭环只验 m（DECRYPT_VERIFY=0，由 roundtrip_pke_verify 对拍）
+export DECRYPT_GATE="${DECRYPT_GATE:-0}"
 export ENCRYPT_VERIFY=0
 export DECRYPT_VERIFY=0
 export KERNEL_COMPUTE_BUDGET_SEC="${ROUNDTRIP_KERNEL_BUDGET_SEC:-900}"
@@ -84,7 +88,7 @@ if [ ! -f "${EK_FILE}" ] || [ ! -f "${DK_FILE}" ]; then
         echo "[roundtrip] ERROR: 缺少 device 密钥对：" >&2
         echo "  ${EK_FILE}" >&2
         echo "  ${DK_FILE}" >&2
-        echo "请先在 KeyGen 探针跑通一次，或设 ROUNDTRIP_BOOTSTRAP_KEYGEN=1" >&2
+        echo "请先在 KeyGen stable 跑通一次，或设 ROUNDTRIP_BOOTSTRAP_KEYGEN=1" >&2
         exit 2
     fi
 fi

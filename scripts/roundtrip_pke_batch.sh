@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # roundtrip_pke_batch.sh — Encrypt→Decrypt 闭环批跑（默认 CPU×10 + SIM×1）
 #
-# Encrypt 默认 exp-fips203-mlkem-pke-encrypt-k4；Decrypt 默认 alg15 correctness。
+# KeyGen/Encrypt 默认 stable；Decrypt 默认 alg15 device-k4（优化）。
 # 每轮随机 SEED_D；KeyGen 密钥须已存在，或 ROUNDTRIP_BOOTSTRAP_KEYGEN=1。
 #
 #   bash scripts/roundtrip_pke_batch.sh
@@ -66,7 +66,7 @@ echo "[roundtrip_batch] sim seeds: ${SIM_SEEDS[*]}" | tee -a "${LOG}"
 # KeyGen 密钥可固定（ROUNDTRIP_KEYGEN_SEED_D），与 m 种子解耦。
 export ROUNDTRIP_BOOTSTRAP_KEYGEN="${ROUNDTRIP_BOOTSTRAP_KEYGEN:-1}"
 KEYGEN_SEED="${ROUNDTRIP_KEYGEN_SEED_D:-20260619}"
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg13-device-keygen-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-keygen-k4}"
 if [ ! -f "${KEYGEN_DIR}/output/ek_pke.bin" ] || [ ! -f "${KEYGEN_DIR}/output/dk_pke.bin" ]; then
     echo "[roundtrip_batch] bootstrap KeyGen SEED_D=${KEYGEN_SEED} (cpu) …" | tee -a "${LOG}"
     (cd "${KEYGEN_DIR}" && SEED_D="${KEYGEN_SEED}" bash run.sh -r cpu -v "${SOC_VERSION}") >>"${LOG}" 2>&1

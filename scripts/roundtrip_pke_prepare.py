@@ -91,7 +91,7 @@ def prepare_decrypt(keygen_out: Path, decrypt_dir: Path, c_src: Path, seed_d: in
 def main() -> None:
     ap = argparse.ArgumentParser(description="PKE Encrypt↔Decrypt round-trip input 准备")
     ap.add_argument("--mode", choices=("encrypt", "decrypt"), required=True)
-    ap.add_argument("--keygen-out", type=Path, required=True, help="KeyGen 探针 output/（含 ek_pke.bin dk_pke.bin）")
+    ap.add_argument("--keygen-out", type=Path, required=True, help="KeyGen output/（含 ek_pke.bin dk_pke.bin；默认 stable）")
     ap.add_argument("--encrypt-dir", type=Path, help="Encrypt 探针根目录")
     ap.add_argument("--decrypt-dir", type=Path, help="Decrypt 探针根目录")
     ap.add_argument("--c-src", type=Path, help="decrypt 模式：device Encrypt 产出的 c.bin")

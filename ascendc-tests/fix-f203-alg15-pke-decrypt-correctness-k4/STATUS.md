@@ -8,9 +8,14 @@ FIPS 203 **Alg.15 PKE Decrypt**（ml_kem_1024 / k=4）；Host 仅 I/O + LUT 搬�
 | **I/O** | dk 1536B · c 1568B · m 32B |
 | **SEED_D** | 20260619（与 Encrypt round-trip） |
 
-**跨探针闭环**：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../../scripts/roundtrip_pke_encrypt_decrypt.sh) — device c→m；CPU+SIM max=0（2026-06-30）。
+**跨探针闭环 / liboqs L2**：仓库脚本 **默认 Decrypt 已切到** [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../pass-fix-f203-alg15-pke-decrypt-device-k4/)（2026-07-09）。本目录仍可用：
 
-**liboqs L2**：[`scripts/liboqs_pke_vs_ascendc.sh`](../../scripts/liboqs_pke_vs_ascendc.sh) — Decrypt **m** vs liboqs **CPU+SIM max=0**（2026-07-01；上游 Encrypt `Compress_5` 修复后）。详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md)。
+```bash
+DECRYPT_DIR="$(pwd)/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4" \
+  bash scripts/roundtrip_pke_encrypt_decrypt.sh -r cpu -v Ascend910B4
+```
+
+历史：roundtrip CPU+SIM max=0（2026-06-30）；liboqs Decrypt m max=0（2026-07-01）。详 [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md)。
 
 ## 验收
 

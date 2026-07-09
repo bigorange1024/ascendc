@@ -44,6 +44,7 @@
 | [**pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/**](pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/) | **Alg.14 tail**：行 20 μ_embed + 行 22–24 pack→`c`（分组 ByteEncode；SIM **56259** tick） | ✓ | ✓ |
 | [**pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/**](pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | **Alg.14 行 2/16–24**（prep 外素材→c=c₁‖c₂）；SIM **1 launch** **154781** tick；CPU 4 launch | ✓ | ✓ |
 | [**pass-fix-f203-alg14-pke-encrypt-device-k4/**](pass-fix-f203-alg14-pke-encrypt-device-k4/) | **Alg.14 完整 K-PKE.Encrypt**（prep + compute+tail 集成；行 1–22 全设备；**in ek+m+coins → out 仅密文 c**；u/v 不落盘；SEED_D=20260619）；SIM **2 launch 626139** tick | ✓ | ✓ |
+| [**pass-fix-f203-alg15-pke-decrypt-device-k4/**](pass-fix-f203-alg15-pke-decrypt-device-k4/) | **Alg.15 完整 K-PKE.Decrypt**（单 kernel；尾融合；生产 input **仅 dk+c+lut** → out **仅 m**；SIM **~283k**）；**`roundtrip_pke_*` / liboqs 默认 Decrypt**；注释+I/O 收紧 2026-07-09 | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 
@@ -57,7 +58,7 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 |------|------|
 | **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
 | [**fix-f203-alg14-pke-encrypt-correctness-k4/**](fix-f203-alg14-pke-encrypt-correctness-k4/) | **Alg.14 Encrypt G5 ✅**（唯一活跃全链；G0–G4 → `frozen-gates/`）；CPU+SIM c.bin max=0；SIM tick **922441**；round-trip 见 [`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) |
-| [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（dk+c→m 全 device；**2 launch** prep \| ntt+intt）；CPU+SIM m.bin max=0；SIM tick **~427k**；同上 round-trip |
+| [**fix-f203-alg15-pke-decrypt-correctness-k4/**](fix-f203-alg15-pke-decrypt-correctness-k4/) | **Alg.15 Decrypt G4 ✅**（**2 launch**；SIM **~427k**）；round-trip / liboqs 可用 `DECRYPT_DIR=` 回退本目录 |
 | [**fix-f203-alg19-kem-keygen-k4/**](fix-f203-alg19-kem-keygen-k4/) | **Alg.19 KEM KeyGen ✅**（d/z UB + vendor PKE + KeyGen_internal 尾段）；CPU+SIM+liboqs max=0；SIM **742558** tick |
 | [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（`ek`←alg19 · vendor Encrypt G5 · KEM 头并入 prep_re）；**CPU+SIM PASS** | ✓ | ✓ |
 | [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（dk+c→K；vendor D+E + **设备 FO**）；单设备库 · CPU 单 session `K max=0` PASS · **SIM 默认 2-session `K max=0` PASS** · 拒绝路径 `K=J(z‖c)` CPU PASS | ✓ | ✓（2-session） |

@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-09（**Encrypt `#交付#` → `stable-fips203-mlkem-pke-encrypt-k4`**；**验收权重：CPU 辅助 / SIM 主参考**；KAT×10+1 + roundtrip×10+1；目录改名 `*-fips203-mlkem-pke-*`；T14a 关闭）
+> **最后刷新**：2026-07-09（**Decrypt 注释 + Alg.15 生产 I/O 收紧**；incubating exp PASS；家里续 **KAT + roundtrip + `#交付#` stable**；Encrypt stable 仍有效）
 
 ---
 
@@ -16,151 +16,80 @@
 
 详文：[`AscendC-CPU与SIM实现分叉开发指南.md`](docs/notes/AscendC-CPU与SIM实现分叉开发指南.md) §4.1 · [`library/shared/INDEX.md`](library/shared/INDEX.md)
 
-**无 NPU 时验收权重**：Encrypt（及同类全链）— **SIM = 主参考**；**CPU = 辅助正确性**（可不同构 launch / `golden_v`）。见 [`F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md`](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)。
+**无 NPU 时验收权重**：Encrypt / Decrypt（及同类全链）— **SIM = 主参考**；**CPU = 辅助正确性**。见 [`F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md`](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)。
 
 ---
 
-## ★ 当前真相（Encrypt + KEM，2026-07-09）
+## ★ 当前真相（Decrypt 头条 + Encrypt 已交付，2026-07-09）
 
-### Alg.14 Encrypt — **stable 交付** ★头条
+### Alg.15 Decrypt — **incubating 预研 PASS** ★本轮头条
+
+| 路径 | 角色 |
+|------|------|
+| [`examples/incubating/exp-fips203-mlkem-pke-decrypt-k4`](examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) | **预研算子**（待 `#交付#`） |
+| [`ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4`](ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) | **PASS 探针**（roundtrip/liboqs 默认 Decrypt） |
+| customspec | [`…-实现方案-customspec.pdf`](examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.pdf) |
+
+| 项 | 内容 |
+|----|------|
+| I/O（Alg.15） | **生产** `input/`：**仅** `dk_pke`+`c`+`lut_*` → **out 仅 `m` 32B**；造 c 夹具在 `output/_gen_fixture/`（**不进** input） |
+| Launch | **1×** `f203_decrypt_device_fused`（MIX `aicore=1`；GATE 4/8 + softSync） |
+| SIM（主参考） | `m` max=0；tick **~283k**（exp **283290** / 探针 **283252**） |
+| CPU（辅助） | `m` max=0 |
+| 本轮已做 | 主路径**详细中文注释**（exp↔pass-fix 同步）；`gen_data` scrub 非生产 input |
+| **家里必做** | ① Decrypt **KAT**（仿 Encrypt `kat_liboqs_vs_ascendc.sh`）② **roundtrip**（`DECRYPT_DIR`→exp）③ **`#交付#`** → `stable-fips203-mlkem-pke-decrypt-k4`（T15a） |
+
+纪要：[`qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md`](qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md) §10.8–§10.10
+
+### Alg.14 Encrypt — **stable 交付**（已完成，勿重做）
 
 算子：[`examples/stable/stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)  
-预研副本：[`examples/incubating/exp-fips203-mlkem-pke-encrypt-k4`](examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/)（保留）  
-规格：[`…-实现方案-customspec.pdf`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/stable-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.pdf)
+I/O：`ek_pke`+`m`+`coins` → **仅 `c`**；SIM tick ~627k；KAT×10+1 + roundtrip×10+1 PASS。
 
-| 项 | 内容 |
+### 仓库闭环脚本默认
+
+| 段 | 默认 |
 |----|------|
-| I/O | in `ek_pke`+`m`+`coins` → **out 仅 `c`**；Â/y/u/v **不落盘** |
-| **SIM（主参考）** | `c` max=0；stable 复验 tick **627590**；0 stray dump |
-| CPU（辅助） | `c` max=0；5 launch + `golden_v`（非与 SIM 同构） |
-| 门禁 | liboqs KAT **CPU×10+SIM×1** · roundtrip **CPU×10+SIM×1** PASS |
-| registry | [`fips203-mlkem1024-pke-encrypt-baseline-registry.md`](docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) |
-
-### Alg.14 完整 K-PKE.Encrypt（全链设备探针）— **完成（SIM 主 / CPU 辅）**
-
-探针：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + compute+tail **GM handoff 零拷贝**串联）
-
-| 项 | 内容 |
-|----|------|
-| I/O | **对齐 FIPS 203 Alg.14**：in `ek_pke`+`m`+`coins(r)` → **out 仅密文 `c`（`output/c.bin` 1568B）**；u/v 为设备内部中间量**不落盘** |
-| 覆盖 | FIPS 行 1–22 全设备：行 1 `N←0`（无运算）、行 2 `t̂←ByteDecode₁₂(ek)`（`f203_encrypt_l18_l19` 核内 AIV0 解码，host 传 `tHat=nullptr`）、行 3–22（prep+compute+tail） |
-| Launch | **SIM 2 launch**（生产主路径）；**CPU 5 launch**（辅助；v=`golden_v`） |
-| 种子 | 全链唯一 `SEED_D=20260619`；输入/golden_c **复用** `fix-f203-alg14-pke-encrypt-correctness-k4` |
-| 验收 | **SIM 主**：`c` max=0，Total tick **~626k**；CPU 辅：`c` max=0；默认 `SIM_DIRECT=1` + T7b |
-| handoff | prep→compute a_hat/re **零拷贝无转置**；`re[9,256]` 切片 y=r(0)/e₁(4096B)/e₂(8192B) |
-| 关闭 | 路线 11 LUT ROM（qa 2026-07-09） |
-
-### Alg.14 Encrypt prep — **完成（CPU+SIM）**
-
-探针：[`pass-fix-f203-alg14-lines3-15-encrypt-prep-k4`](ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/)
-
-| 项 | 内容 |
-|----|------|
-| 范围 | 行 3–7 `a_hat` + 行 8–15 `re`（r/e₁/e₂） |
-| Launch | 单 launch `f203_encrypt_prep` |
-| 验收 | `a_hat` / `re` max=0；CPU + SIM |
-| SIM tick | ~470502 |
-
-### Alg.14 Encrypt compute — **SIM 完成 / CPU 部分**
-
-探针：[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/)
-
-| 模式 | Launch | 对拍 | 判定 |
-|------|--------|------|------|
-| **SIM 默认** | 单 launch `f203_encrypt_l18_l19` | y_hat, u_ntt, u_tr, u, v | **完成**（行 2/18/19/21） |
-| **CPU** | 3 launch（ntt_y→at_jp→intt_e1） | y_hat, u_ntt, u | **部分对照**（tikicpu 不得融合） |
-| SIM 调试 | `ASCENDC_SIM_HOST_MODE=phased_launch` | 同 CPU | 分段调试 |
-
-**定案**：û/uTr **驻留 UB** → INTT `ProcessFromLocal`；kP=5 pad→8；MIX GATE **4→8**；INTT flag **1/3**。
-
-**已完成**：prep + compute + **tail** **GM 级拼接** → 见 §头条 `pass-fix-f203-alg14-pke-encrypt-device-k4`（SIM 2 launch）。compute+tail 单探针 `pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`。
-
-### Alg.14 tail pack — **完成（CPU+SIM）**（2026-07-08）
-
-探针：[`pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`](ascendc-tests/pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/)
-
-| 项 | 内容 |
-|----|------|
-| 范围 | 行 20 μ_embed + 行 22–24 Compress/ByteEncode → `c` |
-| ByteEncode | 分组 pack（抄 `pass-f203-byteencode-d-vec-k4`）；SIM **56259** tick（原比特流 ~227k） |
-| 验收 | CPU+SIM；`mu_embed.bin` + `c.bin` max=0 |
-
-### Compress / ByteEncode 单功能探针 — **d 全档 PASS**（2026-07-08）
-
-| 探针 | 目录 | d |
-|------|------|---|
-| Compress | `pass-f203-compress-d-vec-k4` | 4/5/10/11 |
-| Decompress | `pass-f203-decompress-d-vec-k4` | 4/5/10/11 |
-| ByteEncode | `pass-f203-byteencode-d-vec-k4` | 4/5/10/11 |
-| ByteDecode | `pass-f203-alg6-bytedecode-d-vec-k4` | 4/5/10/11 |
-
-指南：`docs/notes/F203-Compress-Decompress-向量实现指南.md`
-
-### 内核超时口径（2026-07-08）
-
-- `KERNEL_COMPUTE_BUDGET_SEC`：**各用例 run.sh 防挂死**，非全仓 15s
-- **~15s**：仅 ML-KEM **NTT 全流程** SIM 性能定标
-- 定稿：[`docs/engineering/内核计算超时与性能定标.md`](docs/engineering/内核计算超时与性能定标.md)
-
-### KEM Decaps — SIM 选项已统一（2026-07-08）
-
-探针：[`fix-f203-alg21-kem-decaps-k4`](ascendc-tests/fix-f203-alg21-kem-decaps-k4/)
-
-| SIM 默认 | `ASCENDC_SIM_HOST_MODE=decaps_2session`（或 unset） |
-| 排障 | `decaps_1session` |
-| Host | `ascendc::SimHostDecapsUse2Session()` |
-
-KeyGen / Encaps / Decaps 分项 kat **CPU×10+SIM×1 PASS**（行为不变）。
+| KeyGen | `examples/stable/stable-fips203-mlkem-pke-keygen-k4` |
+| Encrypt | `examples/stable/stable-fips203-mlkem-pke-encrypt-k4` |
+| Decrypt | `ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4`（晋级后改 stable） |
 
 ---
 
-## ★ 下一任务（P0）
+## ★ 下一任务（P0）— 家里 Agent
 
-1. **Alg.21 Decaps 单 session SIM 真修**（2-session 已是保底）。
-2. **NPU 实机**：KEM + PKE 均未测（含 Encrypt stable）；上机前 SIM 仍为无实机时的主参考。
-3. **T7b alg14 correctness `run.sh` 资源友好化**（`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`，对齐 alg20；非功能项）。
-4. **Decrypt `#交付#`**（T15a）：G4 探针已 PASS → exp/stable 路径待开。
+1. **Decrypt KAT**：在 `exp-fips203-mlkem-pke-decrypt-k4` 补 `kat_liboqs_vs_ascendc.sh`（或等价），CPU×10 + SIM×1 vs liboqs。
+2. **round-trip 批测**：`DECRYPT_DIR=…/exp-fips203-mlkem-pke-decrypt-k4 bash scripts/roundtrip_pke_batch.sh`（确认 m max=0）。
+3. **`#交付#`**：复制晋级 → `examples/stable/stable-fips203-mlkem-pke-decrypt-k4`；刷新 INDEX / registry / roundtrip 默认 `DECRYPT_DIR`。
+4. （次优）Alg.21 Decaps 单 session SIM；NPU 实机；T7b correctness `run.sh`。
+
+**禁止**：从 `frozen/` 抄码；擅自改已锁定 I/O/tiling；把夹具 ek/m/coins 再写回生产 `input/`。
 
 ---
 
 ## 验收命令（smoke）
 
 ```bash
-# ★ Encrypt stable（主参考 = SIM；CPU 辅助）
+# ★ Decrypt incubating（本轮主线）
+cd examples/incubating/exp-fips203-mlkem-pke-decrypt-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4   # m max=0；tick ~283k；input/ 仅 dk+c+lut_*
+
+# PASS 探针（对照 / 当前 roundtrip 默认）
+cd ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
+
+# 闭环（Decrypt 仍默认 pass-fix；测 exp 时覆盖 DECRYPT_DIR）
+bash scripts/roundtrip_pke_batch.sh
+# DECRYPT_DIR=$PWD/examples/incubating/exp-fips203-mlkem-pke-decrypt-k4 bash scripts/roundtrip_pke_batch.sh
+
+# Encrypt stable（回归）
 cd examples/stable/stable-fips203-mlkem-pke-encrypt-k4
-bash run.sh -r sim -v Ascend910B4               # 主参考；c max=0，tick ~627k
-bash run.sh -r cpu -v Ascend910B4               # 辅助
-bash kat_liboqs_vs_ascendc.sh                   # CPU×10 + SIM×1
-# 仓库根：bash scripts/roundtrip_pke_batch.sh
-
-# 全链设备探针（对照）
-cd ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4
 bash run.sh -r sim -v Ascend910B4
-bash run.sh -r cpu -v Ascend910B4
-
-# Encrypt prep（双模式全 pass）
-cd ../pass-fix-f203-alg14-lines3-15-encrypt-prep-k4
-bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
-
-# Encrypt compute（SIM 全量；CPU 部分）
-cd ../pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4
-bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
-
-# Encrypt tail pack
-cd ../pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
-bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
-
-# KEM 分项 kat（回归）
-bash scripts/liboqs_kem_keygen_batch.sh
-bash scripts/kem_keypair_stash_bootstrap.sh
-bash scripts/liboqs_kem_encaps_batch.sh
-bash scripts/liboqs_kem_decaps_batch.sh
 ```
 
-**WSL 约束**：`CMAKE_BUILD_JOBS=2`；compute 单 launch 默认 `KERNEL_COMPUTE_BUDGET_SEC=600`；勿并行多 SIM。默认 `bash run.sh -r sim` 已自动 `SIM_DIRECT=1`，**勿**再要求用户手动 export。
+**WSL**：`CMAKE_BUILD_JOBS=2`；勿并行多 SIM；默认 sim 已 `SIM_DIRECT=1`。
 
 ---
 
@@ -170,17 +99,16 @@ bash scripts/liboqs_kem_decaps_batch.sh
 |--------|--------|
 | 1 | `git pull` |
 | 2 | 读本文件 **§当前真相 / §下一任务** |
-| 3 | 当日纪要 [`qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md`](qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md) |
-| 4 | Encrypt 交付口径 [`docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md`](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) · UB 驻留 [`docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md`](docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md) |
-| 5 | [`qa/TODO.md`](qa/TODO.md) · [`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc) |
-| 6 | **禁止**从 `frozen/` 抄码 · **中间态驻 UB**，GM 仅 dump 对拍 |
+| 3 | 当日纪要 [`qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md`](qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md) §10 |
+| 4 | exp [`STATUS.md`](examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/STATUS.md) + customspec PDF |
+| 5 | [`qa/TODO.md`](qa/TODO.md) · Rule `ascendc-development.mdc` |
+| 6 | **禁止** frozen 抄码 · 生产 input **仅** dk+c+lut |
 
-### 接手步骤（Encrypt stable / 探针）
+### 接手步骤（Decrypt `#交付#`）
 
-1. 读 stable [`STATUS.md`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) + 探针 [`STATUS.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/STATUS.md)（GM handoff：`f203_encrypt_full_layout.h`）。
-2. 跑上方 ★ smoke：**先 SIM（主参考）**再 CPU（辅助）；确认 `output/c.bin` max=0、`output/` 仅 c、根目录 0 stray dump。
-3. compute **不得**在 CPU 上试单融合 launch（tikicpu 死锁）；**SIM 为无 NPU 时的交付主参考**。golden 复用 correctness 输入，勿改日常 `SEED_D=20260619`。
-4. 交付口径：[`docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md`](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)。
+1. 确认 `input/` 无 ek/m/coins/meta；`gen_data` 夹具在 `_gen_fixture/`。
+2. 跑上方 Decrypt smoke（CPU+SIM）；再 KAT + roundtrip。
+3. 用户确认 `#交付#` 后：从 **活跃 exp** 复制晋级 stable（**非** frozen）；改 roundtrip 默认 `DECRYPT_DIR`。
 
 ---
 
@@ -188,13 +116,10 @@ bash scripts/liboqs_kem_decaps_batch.sh
 
 | 主题 | 路径 |
 |------|------|
-| **Encrypt stable 交付** | [`examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) · [交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) · [registry](docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) |
-| **完整 Encrypt 探针** | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/INTEGRATION_PLAN.md) · [`STATUS.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/STATUS.md) · handoff `f203_encrypt_full_layout.h` |
-| prep 方案 | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/INTEGRATION_PLAN.md) |
-| compute 方案 | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) |
-| CPU/SIM 分叉 | [`docs/notes/AscendC-CPU与SIM实现分叉开发指南.md`](docs/notes/AscendC-CPU与SIM实现分叉开发指南.md) |
-| UB 驻留原理 | [`docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md`](docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md) |
+| **Decrypt incubating** | [`examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/`](examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) |
+| **Decrypt PASS 探针** | [`ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/`](ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) |
+| **Encrypt stable** | [`examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
+| 2-launch Decrypt 编排笔记 | [`docs/notes/F203-Alg15-Decrypt-2launch编排技术总结.md`](docs/notes/F203-Alg15-Decrypt-2launch编排技术总结.md)（历史；生产已是 1-kernel） |
+| 闭环脚本 | [`scripts/roundtrip_pke_batch.sh`](scripts/roundtrip_pke_batch.sh) |
 | 探针索引 | [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) |
-| tail pack | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/INTEGRATION_PLAN.md) |
-| Compress 指南 | [`docs/notes/F203-Compress-Decompress-向量实现指南.md`](docs/notes/F203-Compress-Decompress-向量实现指南.md) |
 | 内核超时 | [`docs/engineering/内核计算超时与性能定标.md`](docs/engineering/内核计算超时与性能定标.md) |

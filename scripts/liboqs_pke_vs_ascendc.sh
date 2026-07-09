@@ -21,14 +21,16 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg13-device-keygen-k4}"
 ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4}"
-DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4}"
+# Decrypt 默认优化探针；回退：DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4
+DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
 export SEED_D="${SEED_D:-20260619}"
 FIXTURE_DIR="${LIBOQS_FIXTURE_DIR:-${REPO_ROOT}/output/liboqs_pke_fixture/${SEED_D}}"
 export ENCRYPT_GATE=5
-export DECRYPT_GATE=4
+# device-k4 生产无 mid D2H；L2 只验 m vs liboqs
+export DECRYPT_GATE="${DECRYPT_GATE:-0}"
 export ENCRYPT_VERIFY=0
 export DECRYPT_VERIFY=0
 export KEYGEN_VERIFY=0
