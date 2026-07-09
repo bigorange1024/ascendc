@@ -65,3 +65,30 @@ correctness 探针的 T7b 对齐仍待。
 - **Launch**：SIM 2 / CPU 5；基线探针 `pass-fix-f203-alg14-pke-encrypt-device-k4`
 - **状态**：`$写规格$` 已闭环；**【预研】写码**已落地 — CPU+SIM `c max=0`（SIM tick **627614**）；`output/` 仅 `c.bin`
 
+## 7. `#交付#`：liboqs KAT + roundtrip → stable（同日）
+
+用户门槛：两项门禁都过再晋级。
+
+| 门禁 | 脚本 | 结果（2026-07-09） |
+|------|------|-------------------|
+| liboqs ↔ AscendC Encrypt | `examples/.../exp-mlkem-f203-pke-encrypt-k4/kat_liboqs_vs_ascendc.sh` | **CPU×10 + SIM×1 PASS** |
+| device Encrypt→Decrypt 闭环 | `scripts/roundtrip_pke_batch.sh`（Encrypt 默认本算子） | **CPU×10 + SIM×1 PASS** |
+
+落地：
+
+- `scripts/prepare_kat_input.py`：外部 ek/m/coins → input + `golden_v` + golden/c
+- `run.sh`：`ENCRYPT_KAT` / `ENCRYPT_SKIP_GEN_DATA`（KAT/roundtrip 不覆盖 fixture）
+- `scripts/roundtrip_pke_encrypt_decrypt.sh`：默认 Encrypt → **stable**（晋级后）
+- **复制晋级** [`stable-mlkem-f203-pke-encrypt-k4`](../../examples/stable/stable-mlkem-f203-pke-encrypt-k4/)
+- baseline-registry：[`docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md`](../../docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md)
+
+**说明**：无 NPU 实机前，**SIM 为交付主参考**；CPU 依赖 `golden_v` 注入，仅作辅助正确性孪生（非与 SIM 同构）。见 [交付口径笔记](../../docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)。
+
+## 8. 验收权重定稿（同日晚间）
+
+用户确认：
+
+- **CPU**：辅助正确性测试（快回归 / 多轮种子扫）。
+- **SIM**：当前无 NPU 时的**主要参考点**（同构全链、tick、交付结论）。
+- 已刷新：`docs/notes/F203-Alg14-Encrypt-交付口径-…`、stable/exp `STATUS`/`SELF_CONTAINED`、分叉指南 §1、baseline-registry、`AGENT_HANDOFF`、索引与 TODO。
+

@@ -1,6 +1,8 @@
 # 自包含与设备全链约束 — exp-mlkem-f203-pke-encrypt-k4
 
-**customspec**：[`exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex`](exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex)
+**customspec**：[`exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex`](exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex)  
+**交付副本**：[`stable-mlkem-f203-pke-encrypt-k4`](../../stable/stable-mlkem-f203-pke-encrypt-k4/)  
+**验收权重**：[CPU 辅助 / SIM 主参考](../../../docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)
 
 ## 1. 自包含（除 `library/shared`）
 
@@ -14,7 +16,7 @@
 
 ## 2. 设备全链（Alg.14 I/O；无中间态落盘）
 
-**生产路径**（默认 `bash run.sh`）：
+**生产主路径 = SIM**（默认 `bash run.sh -r sim`）：
 
 ```
 input/  ek_pke.bin + m.bin + coins.bin + lut_*_stacked.bin（静态 LUT）
@@ -26,13 +28,15 @@ output/ c.bin（1568B）仅密文
 | 允许（Host） | 禁止（生产路径） |
 |--------------|------------------|
 | 写 `ek_pke`/`m`/`coins`、生成**静态** NTT/INTT LUT | 向 `input/`/`output/` 写 Â、y、u、v、t̂ 等中间态 bin |
-| `golden_v.bin`：**仅** CPU 分段 pack 注入（非产物） | Host D2H 中间态再 H2D 冒充全链 |
+| `golden_v.bin`：**仅** CPU **辅助**路径 pack 注入（非产物；SIM 禁止依赖） | Host D2H 中间态再 H2D 冒充全链 |
 | Host oracle 对拍 `golden/c.bin` | Host 算 c 写回 `output/c.bin` 代替设备 |
+
+**CPU**：辅助正确性孪生；无 NPU 前交付主参考为 **SIM**。
 
 ## 3. 审查
 
 ```bash
-ls input/    # ek_pke m coins lut_* [golden_v]
+ls input/    # ek_pke m coins lut_* [golden_v 仅 CPU]
 ls output/   # 仅 c.bin
 rg '#include.*ascendc-tests/(pass|fix)-' prep compute *.cpp || true
 ```

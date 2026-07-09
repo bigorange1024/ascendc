@@ -20,8 +20,18 @@
 #   ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4   # 强制 rm build/out 全量重编
 #   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4              # 走 msprof + OPPROF_*（慢）
 #   改 F203_* / ALG11_* 编译开关后须 FORCE_REBUILD=1（stamp 含主要宏）
+#
+# KAT / 外部 fixture（须显式；由 kat_liboqs_vs_ascendc.sh / roundtrip 设置）:
+#   ENCRYPT_KAT=1              — 静默日志；跳过 gen_data；跳过 golden cmp（由 KAT 脚本对拍 liboqs）
+#   ENCRYPT_SKIP_GEN_DATA=1    — 仅跳过 gen_data（input/golden 已由 prepare 写好；仍做 golden cmp）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+if [ "${ENCRYPT_KAT:-0}" = "1" ]; then
+    mkdir -p "${CURRENT_DIR}/output"
+    export CI=1
+    exec >>"${CURRENT_DIR}/output/kat_liboqs_vs_ascendc.log" 2>&1
+fi
 _REPO_CAND="$(cd "${CURRENT_DIR}/../.." && pwd)"
 if [ -d "${_REPO_CAND}/library/shared" ]; then
     REPO_ROOT="${_REPO_CAND}"
@@ -156,8 +166,12 @@ fi
 rm -f "${CURRENT_DIR}/ascendc_kernels_bbit"
 cp -f "${INSTALL_PREFIX}/bin/ascendc_kernels_bbit" "${CURRENT_DIR}/"
 mkdir -p "${CURRENT_DIR}/input" "${CURRENT_DIR}/output" "${CURRENT_DIR}/golden"
-# 每次刷新 golden（确定性、秒级）；不删已有 input 中非本脚本产物
-python3 "${CURRENT_DIR}/scripts/gen_data.py"
+# 默认每次刷新 golden；KAT/roundtrip 已写好 input 时跳过（ENCRYPT_KAT 或 ENCRYPT_SKIP_GEN_DATA）
+if [ "${ENCRYPT_KAT:-0}" = "1" ] || [ "${ENCRYPT_SKIP_GEN_DATA:-0}" = "1" ]; then
+    echo "[run.sh] skip gen_data (external input)"
+else
+    python3 "${CURRENT_DIR}/scripts/gen_data.py"
+fi
 
 export LD_LIBRARY_PATH="${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 
@@ -179,7 +193,14 @@ if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"
 fi
 
-python3 - <<'PY'
+if [ "${ENCRYPT_KAT:-0}" = "1" ]; then
+    # KAT：仅检查产出尺寸；字节对拍由 kat_liboqs_vs_ascendc.py 对 liboqs c 完成
+    if [ ! -f "${CURRENT_DIR}/output/c.bin" ] || [ "$(wc -c <"${CURRENT_DIR}/output/c.bin")" -ne 1568 ]; then
+        echo "[ERROR] ENCRYPT_KAT: missing or bad-size output/c.bin"
+        exit 1
+    fi
+else
+    python3 - <<'PY'
 import sys
 
 import numpy as np
@@ -200,5 +221,5 @@ if dc:
     sys.exit(1)
 print("[SUCCESS] full encrypt: c matches golden")
 PY
-
-echo "[SUCCESS] exp-mlkem-f203-pke-encrypt-k4 (${RUN_MODE})"
+    echo "[SUCCESS] exp-mlkem-f203-pke-encrypt-k4 (${RUN_MODE})"
+fi

@@ -1,24 +1,30 @@
 #!/usr/bin/env bash
 # roundtrip_pke_encrypt_decrypt.sh — device KeyGen 密钥 → Encrypt(c) → Decrypt(m) 闭环
 #
+# Encrypt 默认：examples/incubating/exp-mlkem-f203-pke-encrypt-k4（自包含 run.sh）
+# Decrypt 默认：ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4
+#
 # 前提：KeyGen 探针已产出 output/ek_pke.bin + dk_pke.bin（本脚本不重复跑 KeyGen，除非
 #       ROUNDTRIP_BOOTSTRAP_KEYGEN=1 且文件缺失时一次性 bootstrap）。
 #
-# Usage:
+# Usage（单次）:
 #   bash scripts/roundtrip_pke_encrypt_decrypt.sh -r cpu -v Ascend910B4
 #   bash scripts/roundtrip_pke_encrypt_decrypt.sh -r sim -v Ascend910B4
 #
+# 批跑（默认 CPU×10 + SIM×1，随机 SEED_D；见 roundtrip_pke_batch.sh）:
+#   bash scripts/roundtrip_pke_batch.sh
+#
 # 环境（可选）：
-#   KEYGEN_DIR          默认 ascendc-tests/pass-fix-f203-alg13-device-keygen-k4
+#   KEYGEN_DIR / ENCRYPT_DIR / DECRYPT_DIR
 #   SEED_D              默认 20260619（须与 m/coins 派生一致）
-#   ROUNDTRIP_SKIP_BUILD=1   跳过 cmake（要求各探针已有 ascendc_*_bbit）
-#   ROUNDTRIP_BOOTSTRAP_KEYGEN=1  缺密钥时自动跑 KeyGen CPU 一次
+#   ROUNDTRIP_SKIP_BUILD=1   跳过 decrypt cmake（要求已有二进制）；encrypt 走 run.sh SKIP
+#   ROUNDTRIP_BOOTSTRAP_KEYGEN=1  缺密钥时自动跑 KeyGen
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg13-device-keygen-k4}"
-ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4}"
+ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-mlkem-f203-pke-encrypt-k4}"
 DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4}"
 
 RUN_MODE="cpu"
@@ -83,7 +89,11 @@ if [ ! -f "${EK_FILE}" ] || [ ! -f "${DK_FILE}" ]; then
     fi
 fi
 
-_build_case() {
+_is_exp_encrypt() {
+    [ -f "${ENCRYPT_DIR}/scripts/prepare_kat_input.py" ] && [ -f "${ENCRYPT_DIR}/run.sh" ]
+}
+
+_build_decrypt() {
     local case_dir="$1"
     local bin_name="$2"
     local stamp="${case_dir}/.roundtrip_built_mode"
@@ -122,7 +132,7 @@ _build_case() {
     fi
 }
 
-_run_kernel() {
+_run_decrypt_kernel() {
     local case_dir="$1"
     local bin_name="$2"
     cd "${case_dir}"
@@ -148,16 +158,46 @@ echo "[roundtrip] Decrypt:    ${DECRYPT_DIR}"
 echo "[roundtrip] RUN_MODE=${RUN_MODE} SEED_D=${SEED_D}"
 
 # --- Encrypt ---
-_build_case "${ENCRYPT_DIR}" "ascendc_kernels_bbit"
-python3 "${REPO_ROOT}/scripts/roundtrip_pke_prepare.py" \
-    --mode encrypt \
-    --keygen-out "${KEYGEN_OUT}" \
-    --encrypt-dir "${ENCRYPT_DIR}" \
-    --seed-d "${SEED_D}"
-M_REF="${ENCRYPT_DIR}/input/m.bin"
+# m/coins 与 KeyGen 同 SEED_D 派生；ek 来自 device KeyGen
+python3 - <<PY
+import numpy as np
+from pathlib import Path
+seed_d = int("${SEED_D}")
+rng = np.random.default_rng(seed_d + 991)
+tmp = Path("${ENCRYPT_DIR}/output/_roundtrip_m_coins")
+tmp.mkdir(parents=True, exist_ok=True)
+rng.integers(0, 256, size=32, dtype=np.uint8).tofile(tmp / "m.bin")
+rng.integers(0, 256, size=32, dtype=np.uint8).tofile(tmp / "coins.bin")
+print(f"[roundtrip] m/coins SEED_D={seed_d}")
+PY
 
-echo "[roundtrip] === device Encrypt ==="
-_run_kernel "${ENCRYPT_DIR}" "ascendc_kernels_bbit"
+M_COINS_DIR="${ENCRYPT_DIR}/output/_roundtrip_m_coins"
+M_REF="${M_COINS_DIR}/m.bin"
+
+if _is_exp_encrypt; then
+    echo "[roundtrip] === device Encrypt (exp prepare_kat_input + run.sh) ==="
+    python3 "${ENCRYPT_DIR}/scripts/prepare_kat_input.py" \
+        --ek "${EK_FILE}" \
+        --m "${M_REF}" \
+        --coins "${M_COINS_DIR}/coins.bin" \
+        --case-dir "${ENCRYPT_DIR}"
+    # 跳过 gen_data；仍与 host golden/c 对拍（prepare 已写）
+    (
+        cd "${ENCRYPT_DIR}"
+        ENCRYPT_SKIP_GEN_DATA=1 SEED_D="${SEED_D}" \
+            bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}"
+    )
+else
+    echo "[roundtrip] === device Encrypt (legacy probe path) ==="
+    python3 "${REPO_ROOT}/scripts/roundtrip_pke_prepare.py" \
+        --mode encrypt \
+        --keygen-out "${KEYGEN_OUT}" \
+        --encrypt-dir "${ENCRYPT_DIR}" \
+        --seed-d "${SEED_D}"
+    M_REF="${ENCRYPT_DIR}/input/m.bin"
+    _build_decrypt "${ENCRYPT_DIR}" "ascendc_kernels_bbit"
+    _run_decrypt_kernel "${ENCRYPT_DIR}" "ascendc_kernels_bbit"
+fi
 
 C_DEVICE="${ENCRYPT_DIR}/output/c.bin"
 if [ ! -f "${C_DEVICE}" ] || [ "$(wc -c <"${C_DEVICE}")" -ne 1568 ]; then
@@ -167,7 +207,7 @@ fi
 echo "[roundtrip] device c.bin OK ($(wc -c <"${C_DEVICE}") bytes)"
 
 # --- Decrypt ---
-_build_case "${DECRYPT_DIR}" "ascendc_kernels_bbit"
+_build_decrypt "${DECRYPT_DIR}" "ascendc_kernels_bbit"
 python3 "${REPO_ROOT}/scripts/roundtrip_pke_prepare.py" \
     --mode decrypt \
     --keygen-out "${KEYGEN_OUT}" \
@@ -176,7 +216,7 @@ python3 "${REPO_ROOT}/scripts/roundtrip_pke_prepare.py" \
     --seed-d "${SEED_D}"
 
 echo "[roundtrip] === device Decrypt (c from Encrypt) ==="
-_run_kernel "${DECRYPT_DIR}" "ascendc_kernels_bbit"
+_run_decrypt_kernel "${DECRYPT_DIR}" "ascendc_kernels_bbit"
 
 M_DEVICE="${DECRYPT_DIR}/output/m.bin"
 if [ ! -f "${M_DEVICE}" ] || [ "$(wc -c <"${M_DEVICE}")" -ne 32 ]; then

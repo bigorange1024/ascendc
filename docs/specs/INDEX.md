@@ -5,7 +5,7 @@
 | 子目录 / 文件 | 何时阅读 |
 |---------------|----------|
 | [ascendc/INDEX.md](ascendc/INDEX.md) | AscendC 多核 tiling、融合算子 Host 配参规范 |
-| （尚无） | 交付前须有 `<主题>-baseline-registry.md` |
+| [fips203-mlkem1024-pke-encrypt-baseline-registry.md](fips203-mlkem1024-pke-encrypt-baseline-registry.md) | Alg.14 Encrypt 交付 golden / KAT 计算块登记 |
 
 ---
 

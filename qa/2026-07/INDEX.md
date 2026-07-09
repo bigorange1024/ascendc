@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-09 | [2026-07-09-Encrypt默认SIM_DIRECT.md](2026-07-09-Encrypt默认SIM_DIRECT.md) | **默认 `SIM_DIRECT=1`** · **T7b** · **路线 11 关闭** · **`exp-mlkem-f203-pke-encrypt-k4` 规格+预研 CPU/SIM PASS** |
+| 2026-07-09 | [2026-07-09-Encrypt默认SIM_DIRECT.md](2026-07-09-Encrypt默认SIM_DIRECT.md) | **默认 `SIM_DIRECT=1`** · **T7b** · **路线 11 关闭** · **Encrypt `#交付#`** · **CPU 辅助 / SIM 主参考** · KAT×10+1 + roundtrip×10+1 · **`stable-mlkem-f203-pke-encrypt-k4`** |
 | 2026-07-08 | [2026-07-08-Alg14-tail-pack探针.md](2026-07-08-Alg14-tail-pack探针.md) | **四算子宏分层** · **compute-tail SIM 1 launch 154781**（Phase C 内联 pack）· ByteEncode 选型笔记 · tiling · sepolyvec8 CAModel FPE |
 | 2026-07-07 | [2026-07-07-CPU-SIM-launch分叉约定.md](2026-07-07-CPU-SIM-launch分叉约定.md) | **prep/compute 晋级 pass-** · **compute 分平台 pass** · kP=5/v/decode SIM 完成 · CPU/SIM 分叉定案 · AGENT_HANDOFF 刷新 |
 | 2026-07-06 | [2026-07-06-Encrypt-compute单launch与UB驻留.md](2026-07-06-Encrypt-compute单launch与UB驻留.md) | **3 launch PASS** · **单 launch SIM PASS** · **û UB 驻留** · SIM 标量/MTE 可见性 · FSM GATE 4/8 · CPU 单 launch 不支持 · 待 kP=5/v/decode |

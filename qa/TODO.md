@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-09（**`exp-mlkem-f203-pke-encrypt-k4`【预研】CPU+SIM PASS** tick **627614**；探针 T7b 保留；路线 11 关闭；T14a 改为从 exp 晋级 stable）
+**最近刷新**：2026-07-09（Encrypt **`#交付#`** → [`stable-mlkem-f203-pke-encrypt-k4`](../examples/stable/stable-mlkem-f203-pke-encrypt-k4/)；**验收权重：CPU 辅助 / SIM 主参考**；T14a 关闭）
 
 ---
 
@@ -17,10 +17,9 @@
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick）；**分项 kat `CPU×10+SIM×1 PASS`**；`prod/extseed` build profile 已隔离 |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**，接入 V3 预采样 + 设备 `a_hat` | **待开工**（上游 T13a-v / T13g 均已 PASS） |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
-| **P3** | **T14a** | **Encrypt** → `examples/stable/stable-mlkem-f203-pke-encrypt-k4`（名待定）晋级 | **exp 已 PASS**：[`exp-mlkem-f203-pke-encrypt-k4`](../examples/incubating/exp-mlkem-f203-pke-encrypt-k4/)（CPU+SIM `c` max=0，tick **627614**）；**stable / `#交付#` 未做** |
 | **P4** | **T15a** | **Decrypt** 探针 G4 → `examples/stable/stable-mlkem-f203-pke-decrypt-k4`（名待定）晋级 | G4 探针 CPU+SIM ✅；**stable 未建** |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
-| — | **T2b / T5** | `docs/specs/fips203-baseline-registry.md` 初稿 + liboqs/ntt_study API 登记 | 待开工（stable 交付 golden 依赖） |
+| — | **T2b / T5** | KeyGen 等通用 `fips203-baseline-registry`；Encrypt 已有 [`fips203-mlkem1024-pke-encrypt-baseline-registry.md`](../docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) | Encrypt 登记已补；KeyGen 通用表仍待 |
 | — | **T2** | KEM **后继**：Alg.21 Decaps **单 session SIM 真修**、**NPU 实机** | Alg.19/20/21 三分项 **CPU+SIM kat PASS**；单 session SIM 与 NPU 未做 |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
@@ -53,6 +52,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T14a** | Alg.14 Encrypt **`#交付#`**：[`stable-mlkem-f203-pke-encrypt-k4`](../examples/stable/stable-mlkem-f203-pke-encrypt-k4/) · liboqs KAT CPU×10+SIM×1 · roundtrip CPU×10+SIM×1 · baseline-registry · 自 exp 复制晋级 | 2026-07-09 |
 | **T14a-exp** | Alg.14 Encrypt **examples 预研**：[`exp-mlkem-f203-pke-encrypt-k4`](../examples/incubating/exp-mlkem-f203-pke-encrypt-k4/) · customspec + vendor 自包含 · I/O 仅 ek+m+coins→c · CPU+SIM `c` max=0 · SIM tick **627614** · 路线 11 LUT ROM **关闭**（探针侧保留 T7b 1–3） | 2026-07-09 |
 | **T17-next** | Alg.14 **全链设备 Encrypt** PASS + 晋级：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · I/O 对齐 Alg.14（in ek+m+coins，**out 仅 c**）· CPU+SIM `c` max=0 · SIM **2 launch 626139** tick · `SEED_D=20260619` · handoff 零拷贝无转置 | 2026-07-08 |
 | **T17** | Alg.14 compute+tail PASS：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) · SIM 1 launch **154781** tick | 2026-07-08 |

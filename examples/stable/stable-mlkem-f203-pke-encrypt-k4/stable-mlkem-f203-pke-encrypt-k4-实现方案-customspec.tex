@@ -1,0 +1,355 @@
+% stable-mlkem-f203-pke-encrypt-k4 — FIPS 203 Alg.14 ML-KEM-1024 PKE Encrypt (k=4)
+% 编译：bash ../../../scripts/xelatex-clean.sh stable-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{stable-mlkem-f203-pke-encrypt-k4\\FIPS 203 Alg.14 ML-KEM-1024 PKE Encrypt 实现方案（k=4）}
+\author{ascendc 工程（定型交付）}
+\date{2026-07-09}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \textbf{定型交付算子} \dirname{examples/stable/stable-mlkem-f203-pke-encrypt-k4/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 14}（ML-KEM-1024，$K=4$）\textbf{K-PKE.Encrypt} 全链。
+
+\textbf{生产 I/O（强制对齐 Alg.14）}：
+\begin{itemize}
+  \item \textbf{输入}：\texttt{ek\_PKE}（1568\,B）+ 消息 $m$（32\,B）+ 随机性 \texttt{coins}/$r$（32\,B）；另加与 seed 无关的\textbf{静态} NTT/INTT LUT（非本算法中间态）。
+  \item \textbf{输出}：\textbf{仅}密文 $c=c_1\Vert c_2$（1568\,B）。
+  \item \textbf{禁止}将 $\hat{A}$、$y$（$\equiv r$）、$e_1$、$e_2$、$\hat{t}$、$\hat{y}$、$\hat{u}$、$\mathrm{tr}$、$u$、$v$、$\mu$ 等中间量以 \texttt{.bin} 落盘到 \texttt{input/}/\texttt{output/}，或经 Host D2H/H2D 中转冒充全链。
+\end{itemize}
+
+\textbf{自包含原则}：AscendC 与 Host golden 源码 \textbf{全部 vendored 于本目录}（\dirname{prep/}、\dirname{compute/}、\dirname{scripts/}）。
+\textbf{唯一允许的外部代码依赖}：仓库 \dirname{library/shared/}。
+\textbf{禁止}：运行时 \texttt{\#include}/import \dirname{ascendc-tests/}、其它 \dirname{examples/}、\dirname{frozen/}、liboqs（KAT 脚本除外）。
+
+\textbf{设备 Launch}（与 PASS 探针 \dirname{pass-fix-f203-alg14-pke-encrypt-device-k4} 同构）：
+SIM \textbf{2} 次（prep $\to$ compute+内联 pack）；CPU tikicpu \textbf{5} 次（\texttt{ASCENDC\_SIM\_HOST\_MODE} 分叉）。
+中间 GM \textbf{仅设备内 handoff}，不落盘。
+SIM 910B4 参考 Total tick $\approx$ \textbf{626k}（prep $\approx$470k + compute+tail $\approx$155k）。
+
+技术基线：\dirname{docs/notes/F203-Alg14-Encrypt-compute-tail-PASS技术总结.md}、
+\dirname{docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md}、
+\dirname{docs/engineering/用例自包含与设备全链约束.md}。
+写法对齐 \dirname{exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.tex}。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程约束（自包含）}
+
+\subsection{允许的外部依赖}
+
+\begin{longtable}{@{}L{4.5cm}L{8.5cm}@{}}
+\toprule
+路径 & 用途 \\
+\midrule
+\dirname{library/shared/shake\_xof\_kernel/} & AscendC SHAKE XOF 内嵌（prep SampleNTT / PRF） \\
+\dirname{library/shared/keccak\_f1600\_kernel/} & Keccak-f[1600]（若 Host/设备派生需要） \\
+\dirname{library/shared/} & 公共头（\texttt{shake\_general.h} 等） \\
+CANN / tikicpulib & 工具链与仿真（非业务源码） \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止的外部依赖与不安全 I/O}
+
+\begin{itemize}
+  \item \textbf{ascendc-tests} 任意探针目录的编译期 include / Python import（允许\textbf{一次性 vendor 抄入}本目录后切断外链）。
+  \item \textbf{frozen/}、G5 correctness 拼装路线、liboqs 作为生产运行时依赖。
+  \item 将 $\hat{A}$、$y/r$、$e_1$、$e_2$、$u$、$v$、$\hat{t}$ 等写成 \texttt{input/*.bin} 或 \texttt{output/*.bin} 作为全链契约。
+  \item Host 对拍以外的密码学计算冒充设备输出（如 Host 算 $c$ 写回 \texttt{output/c.bin}）。
+  \item prep$\leftrightarrow$compute 之间 \textbf{D2H 再 H2D} 中转中间态。
+\end{itemize}
+
+\subsection{唯一交付路径}
+
+本用例 \textbf{仅} 下列生产路径；\texttt{run.sh} 默认即全量，\textbf{禁止}要求用户手动 \texttt{export SIM\_DIRECT=1} 或一长串与 default 相同的宏：
+
+\begin{longtable}{@{}L{4.2cm}L{8.8cm}@{}}
+\toprule
+组件 & 锁定配置 \\
+\midrule
+Prep Â / CBD & 与 prep 探针一致：\texttt{F203\_AHAT16\_BLOCK\_DIM=2}，双 AIV 分片 SampleNTT；PRF+CBD$_{\eta=2}$ 产 $r\Vert e_1\Vert e_2$ \\
+Compute NTT/INTT & poly-batch；平面 mat\_c；S1--S3 \textbf{禁止 Gather}；行 18--20 UB 融合（见 MLKEM-NTT 定稿） \\
+Tail pack & SIM 内联于 \texttt{f203\_encrypt\_l18\_l19}；Compress$_{11/5}$ + ByteEncode$_{11/5}$ \\
+Host & \texttt{main.cpp}：SIM 2 launch / CPU 5 launch；\texttt{ek}+m+\texttt{coins}+LUT $\to$ \textbf{仅} $c$ \\
+资源友好 & 默认 \texttt{ENCRYPT\_SKIP\_REBUILD=1}、\texttt{CMAKE\_BUILD\_JOBS=2}（对齐全链探针） \\
+\bottomrule
+\end{longtable}
+
+\subsection{目录布局（计划；写码阶段落地）}
+
+\begin{verbatim}
+stable-mlkem-f203-pke-encrypt-k4/
+  stable-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex/.pdf  # 本规格
+  main.cpp                         # 生产 Host：2/5 launch
+  f203_encrypt_full_layout.h       # prep↔compute GM handoff
+  f203_encrypt_prep_entry.cpp      # Launch 1
+  prep/                            # vendored 行 3–15
+  compute/                         # vendored 行 2/16–22（含内联 pack）
+  cmake/ 或 CMakeLists.txt
+  scripts/gen_data.py              # 自包含：ek/m/coins/lut + golden/c
+  scripts/host_golden/             # golden_encrypt / gen_ek_pke
+  run.sh                           # 默认 SIM_DIRECT=1 + SKIP_REBUILD
+  SELF_CONTAINED.md                # 写码时补
+  STATUS.md                        # 写码验收后补
+\end{verbatim}
+
+\textbf{参考实现过程（只读，写码时 vendor，禁止运行时外链）}：
+\dirname{ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/}。
+
+\section{数学语义（Alg.14，$K=4$，$N=256$，$q=3329$）}
+\label{sec:math}
+
+\subsection{参数与符号}
+
+\begin{itemize}
+  \item 参数集：\textbf{ML-KEM-1024}（FIPS 203；$k=4$；$d_u=11$；$d_v=5$；$\eta=2$）。
+  \item $c_1$ 长度：$k\cdot 352=1408$\,B；$c_2$ 长度：$160$\,B；$|c|=1568$\,B。
+  \item $\rho$：取自 \texttt{ek\_PKE} 尾 32\,B（偏移 $[1536:1568)$）。
+\end{itemize}
+
+\subsection{输入输出（生产契约）}
+
+\begin{longtable}{@{}L{3.5cm}L{2.2cm}L{7.5cm}@{}}
+\toprule
+路径 & 尺寸 & 说明 \\
+\midrule
+\texttt{input/ek\_pke.bin} & 1568\,B & 公钥；含 $\rho$ \\
+\texttt{input/m.bin} & 32\,B & 消息 \\
+\texttt{input/coins.bin} & 32\,B & 加密随机性（Alg.14 的 $r$ 种子） \\
+\texttt{input/lut\_*.bin} & $4\times 64$\,KB & \textbf{静态} NTT/INTT even/odd planar-stacked；与 seed 无关 \\
+\texttt{output/c.bin} & \textbf{1568\,B} & \textbf{唯一产物} $c=c_1\Vert c_2$ \\
+\bottomrule
+\end{longtable}
+
+可选（\textbf{非产物}，仅 CPU 分段路径注入）：\texttt{input/golden\_v.bin}（1024\,B）——tikicpu 无 k=8 INTT 时注入 $v$ 供 pack；SIM 全设备\textbf{禁止}依赖。
+调试 dump（须显式 env，非默认）可 D2H 中间量，\textbf{不得}写入标准验收契约。
+
+\subsection{流水线（FIPS 行 1--22）}
+
+\begin{enumerate}
+  \item 行 1：$N\leftarrow 0$（无运算；PRF nonce 从 0 起）。
+  \item 行 2：$\hat{t}\leftarrow\mathrm{ByteDecode}_{12}(\texttt{ek\_PKE})$（\textbf{设备} compute 核内；Host \textbf{不}预解码落盘）。
+  \item 行 3--7：$\rho\leftarrow\texttt{ek\_PKE}[1536:1568]$；$\forall(p,j)$：$\hat{A}[p,j]\leftarrow\mathrm{SampleNTT}(\rho\Vert j\Vert p)$。
+  \item 行 8--15：$\mathrm{PRF}(\texttt{coins},n)+\mathrm{SamplePolyCBD}_{\eta=2}\to r\Vert e_1\Vert e_2$（扁平 \texttt{re[9,256]}）。
+  \item 行 16--18：$\hat{y}\leftarrow\mathrm{NTT}(y)$，$y\equiv r$；内积 $(\hat{u},\mathrm{tr})\leftarrow(\hat{A}^\top\mid\hat{t}^\top)\circ\hat{y}$。
+  \item 行 19--21：$u\leftarrow\mathrm{INTT}(\hat{u})+e_1$；$e_2'\leftarrow e_2+\mu(m)\bmod q$；$v\leftarrow\mathrm{INTT}(\mathrm{tr})+e_2'$。
+  \item 行 22：$c_1\leftarrow\mathrm{ByteEncode}_{11}(\mathrm{Compress}_{11}(u))$；$c_2\leftarrow\mathrm{ByteEncode}_{5}(\mathrm{Compress}_{5}(v))$；$c\leftarrow c_1\Vert c_2$。
+\end{enumerate}
+
+\textbf{本阶段不做}：KEM Encaps（Alg.20）、Decaps、KeyGen；prep+compute \textbf{单 kernel} 融合（远期）；去掉静态 LUT 文件的 ROM 路线（已关闭，见 qa 2026-07-09）。
+
+\subsection{Golden（I/O 等价）}
+
+\begin{itemize}
+  \item 锁死种子 \texttt{SEED\_D=20260619}（与全链 PASS 探针一致）。
+  \item Host：\texttt{scripts/host\_golden/golden\_c.py}（自包含）$\to$\texttt{golden/c.bin}。
+  \item 验收：\texttt{output/c.bin} vs \texttt{golden/c.bin} \textbf{max\_abs\_diff=0}（CPU $\land$ SIM）。
+  \item \textbf{禁止}以「与探针源码同构」为验收；仅 I/O 等价。
+\end{itemize}
+
+\section{编排与 Launch}
+\label{sec:launch}
+
+\subsection{SIM（生产路径，\texttt{ASCENDC\_SIM\_HOST\_MODE}）}
+
+\begin{verbatim}
+Session 1 aclrtStream
+  Launch 1  f203_encrypt_prep      blockDim=2  AIV_ONLY
+            in:  ek_pke, coins
+            out: a_hat, re          # 仅 GM，不落盘
+
+  Launch 2  f203_encrypt_l18_l19   blockDim=1  MIX_AIC_1_2
+            in:  ek_pke, m, a_hat, y/e1/e2(=re 切片), ws+LUT
+            out: c（内联 tail pack）；u/v 可写 GM 但不 D2H
+\end{verbatim}
+
+合计 \textbf{2 launch}；参考 tick $\approx$ \textbf{626k}。
+
+\subsection{CPU（tikicpu）}
+
+\begin{longtable}{@{}L{0.8cm}L{4.5cm}L{7.5cm}@{}}
+\toprule
+\# & kernel & 说明 \\
+\midrule
+1 & \texttt{f203\_encrypt\_prep} & 产 \texttt{a\_hat},\texttt{re}（GM） \\
+2 & \texttt{f203\_encrypt\_ntt\_y} & MIX 段：NTT($y$) \\
+3 & \texttt{f203\_encrypt\_at\_jp} & 内积 \\
+4 & \texttt{f203\_encrypt\_intt\_e1} & INTT+$e_1\to u$ \\
+5 & \texttt{f203\_encrypt\_alg14\_pack} & $v$=golden\_v 注入；pack$\to c$ \\
+\bottomrule
+\end{longtable}
+
+CPU 路径\textbf{不是}与 SIM 同构的完整设备 Encrypt（无融合 k=8 INTT）；验收仍以 $c$ max=0 为准。写码须用 \texttt{ASCENDC\_BUILD\_CPU}/\texttt{ASCENDC\_BUILD\_SIM} + \texttt{ASCENDC\_SIM\_HOST\_MODE}，禁止 per-probe 宏分叉。
+
+\subsection{GM handoff（单 arena）}
+
+\begin{verbatim}
+INPUTS (H2D 一次): ek_pke[1568]  m[32]  coins[32]  + LUT→ws
+Launch1 WRITES / Launch2 READS: a_hat[16,256] i32; re[9,256] i32
+  re: poly0..3=r≡y; 4..7=e1; 8=e2
+Launch2: 设备内 u,v；唯一 D2H = c[1568]
+SCRATCH: ws_compute ≈ 331776 B（含 LUT 段）
+\end{verbatim}
+
+\textbf{禁止} Host 将 \texttt{re} D2H 再拆成三个 buffer H2D。
+
+\section{AI Core 规模}
+\label{sec:aicore}
+
+\begin{longtable}{@{}L{3.2cm}L{10cm}@{}}
+\toprule
+段 & 核类型 / blockDim / 角色 \\
+\midrule
+Prep & \texttt{KERNEL\_TYPE\_AIV\_ONLY}；\texttt{blockDim=2}；\textbf{双 AIV} 分片 SampleNTT（各 8 poly）；PRF+CBD 编排同 prep 探针 \\
+Compute+pack & \texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}；\texttt{blockDim=1}；\textbf{1 AIC + 2 AIV}；NTT/INTT Stage2 在 AIC；AIV 做 split/pack/内积向量段与内联 pack \\
+\bottomrule
+\end{longtable}
+
+\textbf{内部命名}：prep \texttt{aiv=2}；compute \texttt{aicore=1}（MIX 1:2）。
+\textbf{选型理由}：与已 PASS 全链探针同构，避免重开 FSM/分核实验；数据并行维为 16 SampleNTT poly（prep）与 poly-batch NTT（compute）。
+\textbf{禁止}实现擅自改 \texttt{blockDim} 却不回写本规格。
+
+串行占用：prep 2 Vector AI Core；compute 1 颗 AI Core（Cube+2 Vector）。CPU \texttt{[SUCCESS][AIC\_*]} 为 tikicpu artifact；以 SIM \texttt{profile\_*.toml} / Total tick 为准。
+
+\section{数据与组件同步规划}
+\label{sec:sync}
+
+\begin{itemize}
+  \item prep 核内：UB/GM + SHAKE 内嵌同步（对齐 KeyGen prep 笔记）。
+  \item prep$\to$compute：\textbf{仅} Host 顺序 launch + 同 session GM 指针；\textbf{无文件交接}。
+  \item compute 内：MIX CrossCore / FSM（NTT$\to$内积$\to$INTT）；$e_2{+}\mu$ 前缀折叠；pack 在 AIV 分支按 subBlock 分片写 $c$。
+  \item 原理：\dirname{docs/notes/F203-Encrypt-compute-行18-19-UB驻留技术总结.md}（INTT 输入须来自内积当次 UB）。
+\end{itemize}
+
+\subsection{实现映射（写码时）}
+
+\begin{verbatim}
+main.cpp
+  -> Launch1: f203_encrypt_prep_entry / prep/*
+  -> Launch2: compute/f203_encrypt_l18_l19_kernel.cpp (+ pack ops)
+  -> D2H: c only
+
+f203_encrypt_full_layout.h
+  -> static_assert prep a_hat/re 尺寸 == compute 期望
+\end{verbatim}
+
+\section{全量 API 清单（查阅 CANN 9.0.0）}
+\label{sec:api-table}
+
+说明：分类按 PDF 第 2 章；在线页为社区 \texttt{atlasascendc\_api\_07\_*}。
+本表列\textbf{本用例拟用主路径 API}；细粒度算子实现已在上游 PASS 探针验证，写码以 vendor 后本目录源码为准，并遵守 Rule「写 AscendC 前查索引」。
+
+\begin{longtable}{@{}L{2.8cm}L{1.6cm}L{2.2cm}L{0.7cm}L{3.2cm}L{3.2cm}@{}}
+\toprule
+API & 分类 & 在线文档 ID & A2 & 输入/输出 dtype & 备注 \\
+\midrule
+\endhead
+\apiname{GlobalTensor} & 2.2 & 07\_0007 & $\checkmark$ & GM 描述 & \texttt{SetGlobalBuffer} \\
+\apiname{LocalTensor} & 2.2 & 07\_0006 & $\checkmark$ & UB 描述 & Alloc/Get \\
+\apiname{GetBlockIdx}/\apiname{GetSubBlockIdx} & 2.3 系统 & 07\_0185 邻域 & $\checkmark$ & 核/子核索引 & prep 分片；MIX 角色 \\
+\apiname{KERNEL\_TASK\_TYPE\_DEFAULT} & Utils & 编程指南 & $\checkmark$ & AIV\_ONLY / MIX\_AIC\_1\_2 & 两核类型 \\
+\apiname{TPipe}/\apiname{TQue}/\apiname{TBuf} & 2.3 资源 & 07\_0108/0137 & $\checkmark$ & UB 管道 & 向量段 \\
+\apiname{DataCopy} & 2.3.1 & 07\_0101 & $\checkmark$ & int8/int16/int32 GM$\leftrightarrow$UB & 对齐约束 \\
+\apiname{DataCopyPad} & 2.3.1 & 查阅索引 & $\checkmark$ & 非整块 & 按需 \\
+\apiname{PipeBarrier} & 2.3 同步 & 查阅索引 & $\checkmark$ & — & UB 可见性 \\
+\apiname{CrossCoreSetFlag}/\apiname{CrossCoreWaitFlag} & 跨核 & API 列表 & $\checkmark$ & MIX AIC$\leftrightarrow$AIV & NTT/INTT FSM \\
+\apiname{Add}/\apiname{Sub}/\apiname{Muls}/\apiname{Mul} & 2.3.3 & 07\_0035--0055 & $\checkmark$ & int16/int32 & CBD/NTT/内积辅助 \\
+\apiname{ShiftRight}/\apiname{ShiftLeft} & 2.3.3 & 07\_0059 & $\checkmark$ & int32 & limb/编码 \\
+\apiname{Cast} & 2.3.3 & 07\_0073 & $\checkmark$ & 见 Cast 链 & A2 无直连 int32$\to$int8 \\
+\apiname{Mins} & 2.3.3 & 07\_0057 & $\checkmark$ & int16 & Alg.7 rej \\
+\apiname{GatherMask} & 2.3.3.4 & 07\_0071 & $\checkmark$ & 掩码收集 & rej compact（非 NTT S1--S3） \\
+\apiname{Gather} & 2.3.3 & 07\_0071 邻域 & $\checkmark$ & — & \textbf{仅}允许 NTT 后 basemul/编码等；\textbf{禁止} Tag5T S1--S3 平面 mat\_c Gather \\
+\apiname{Compare}/\apiname{Compares} & 2.3.3.4 & 07\_0066/0068 & $\checkmark$ & 见索引 & int32 仅 EQ；bit 打包勿当逐 lane 布尔 \\
+\apiname{GetCmpMask} & 2.3.3.4 & 07\_0223 & $\checkmark$ & uint8 掩码 & 与 Compare 寄存器版配合 \\
+Cube MMAD / \apiname{AicMmad} 路径 & 2.3.2 矩阵 & 教程+工程封装 & $\checkmark$ & int8$\times$int8$\to$int32 & Stage2；B 矩阵为 ws 内 LUT \\
+\bottomrule
+\end{longtable}
+
+\subsection{评估过但未采用 / 已关闭}
+
+\begin{longtable}{@{}L{4.5cm}L{8.5cm}@{}}
+\toprule
+项 & 原因 \\
+\midrule
+AIC 直读 \texttt{\_\_gm\_\_ const} LUT 作 MMAD B & SIM 挂死（路线 11，qa 2026-07-09）；仍用 ws+LUT H2D \\
+ByteEncode$_{5/11}$ 真·向量 pack（Gather 拼字） & 比标量更慢；采用 Compress 向量 + Encode 标量 pack \\
+NTT S1--S3 内 \apiname{Gather} & MLKEM Tag5T 禁令；平面 mat\_c + UB 融合 \\
+correctness G5 多段拼装 & 已由 prep+compute-tail 两上游取代；禁止抄 G5 \\
+中间态 bin staging（$\hat{A}$/$u$/$v$） & 违反 Alg.14 I/O 与安全落盘约束 \\
+\bottomrule
+\end{longtable}
+
+\section{数学步骤 $\to$ API 覆盖率}
+\label{sec:coverage}
+
+\begin{longtable}{@{}L{4.2cm}L{4.0cm}L{1.5cm}L{3.5cm}@{}}
+\toprule
+数学步骤 & 主路径 & 覆盖 & 缺口/备注 \\
+\midrule
+SampleNTT / rej & SHAKE 内嵌 + Mins/GatherMask & 高 & 对齐 KeyGen/prep 探针 \\
+PRF + CBD$_{\eta=2}$ & 向量 MTE/V（prep） & 高 & 同 prep 探针 \\
+ByteDecode$_{12}$(ek) & 设备 AIV0 & 高 & 核内；不落盘 $\hat{t}$ \\
+NTT($y$) S1--S3 & 向量 split + AIC MMAD + pack & 高 & 无 Gather；poly-batch \\
+内积 $kP{=}5$ & 向量/UB & 高 & UB 驻留喂 INTT \\
+INTT + $e_1$/$e_2'$ & MIX + Add & 高 & $e_2{+}\mu$ 前缀折叠 \\
+Compress$_{11/5}$ & 向量 Barrett/Cast & 高 & 见 compress 探针选型 \\
+ByteEncode$_{11/5}$ & \textbf{标量} pack & 部分 & 有意标量；非缺口隐瞒 \\
+$c_1\Vert c_2$ 写出 & DataCopy GM & 100\% & 唯一 D2H \\
+\bottomrule
+\end{longtable}
+
+主路径：\textbf{非}宣称全链 100\% 向量（Encode$_{5/11}$ 标量 pack 已定型）；NTT/内积/Compress 等关键段与 PASS 探针一致。
+
+\section{验证}
+\label{sec:verify}
+
+\subsection{生产验收（默认；写码完成后）}
+
+\begin{verbatim}
+cd examples/stable/stable-mlkem-f203-pke-encrypt-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
+# 期望：两模式 [cmp] c max=0；output/ 仅 c.bin；SIM 根目录 0 stray dump
+# 参考 tick ≈ 626k
+\end{verbatim}
+
+\textbf{禁止}标准文档要求手动 \texttt{SIM\_DIRECT=1} 或与 default 重复的 \texttt{HAT\_*} export。
+
+\subsection{自包含 golden}
+
+\texttt{scripts/gen\_data.py}：优先可复用已知正确 fixtures；缺失时本目录用 \texttt{SEED\_D=20260619} 自生成 \texttt{ek}/$m$/\texttt{coins}/\texttt{golden/c} + 静态 LUT。
+
+\subsection{可选 liboqs KAT}
+
+交付前可选脚本对照（非 \texttt{run.sh} 默认）；不得把 liboqs 链进生产二进制。
+
+\section{性能（SIM 910B4 参考）}
+
+上游全链探针（2026-07-08/09）：Total tick $\approx$ \textbf{626139--626227}（2 launch）。
+本 exp 写码验收目标：与上述同量级；\textbf{远超}（例如数分钟无日志）视为回归，不得靠拉长防挂死预算掩盖。
+
+\section{写码衔接（本规格闭环后）}
+
+\begin{enumerate}
+  \item 用户确认本 customspec 路径后，执行 \textbf{【预研】}：按本规格 vendor 探针实现到本目录并自包含化。
+  \item 活跃 customspec：\dirname{examples/stable/stable-mlkem-f203-pke-encrypt-k4/stable-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex}（及同名 PDF）。
+  \item 晋级 \dirname{examples/stable/stable-mlkem-f203-pke-encrypt-k4} 须另走 \texttt{\#交付\#}，且须 baseline-registry 齐备。
+\end{enumerate}
+
+\end{document}
