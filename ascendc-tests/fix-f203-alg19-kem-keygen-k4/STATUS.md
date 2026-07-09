@@ -16,7 +16,7 @@ FIPS 203 **Algorithm 19 `ML-KEM.KeyGen()`**（**ml_kem_1024 / k=4**）；经 **A
 
 | 段 | 来源 | 状态 |
 |----|------|------|
-| Alg.13 PKE KeyGen | [`examples/stable/stable-mlkem-f203-pke-keygen-k4`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) | stable + liboqs ek/dk_pke max=0 |
+| Alg.13 PKE KeyGen | [`examples/stable/stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | stable + liboqs ek/dk_pke max=0 |
 | 设备 SHA3-256 | [`library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`](../../library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp) | KeyGen/Alg.7 已用 |
 | 探针对照 | [`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) | 调试 / vendor 源 |
 

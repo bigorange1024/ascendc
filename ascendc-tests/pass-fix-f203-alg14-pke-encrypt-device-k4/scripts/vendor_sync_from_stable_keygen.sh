@@ -4,7 +4,7 @@ set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$(cd "${CASE_DIR}/../.." && pwd)"
-STABLE="${REPO}/examples/stable/stable-mlkem-f203-pke-keygen-k4"
+STABLE="${REPO}/examples/stable/stable-fips203-mlkem-pke-keygen-k4"
 DST="${CASE_DIR}/prep"
 
 if [ ! -d "${STABLE}/prep" ]; then
@@ -20,4 +20,4 @@ rsync -a --delete \
 mkdir -p "${CASE_DIR}/scripts/prep"
 rsync -a --delete "${STABLE}/scripts/prep/" "${CASE_DIR}/scripts/prep/"
 
-echo "[vendor_sync] OK prep/ + scripts/prep/ from stable-mlkem-f203-pke-keygen-k4"
+echo "[vendor_sync] OK prep/ + scripts/prep/ from stable-fips203-mlkem-pke-keygen-k4"

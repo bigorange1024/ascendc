@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # roundtrip_pke_encrypt_decrypt.sh — device KeyGen 密钥 → Encrypt(c) → Decrypt(m) 闭环
 #
-# Encrypt 默认：examples/incubating/exp-mlkem-f203-pke-encrypt-k4（自包含 run.sh）
+# Encrypt 默认：examples/incubating/exp-fips203-mlkem-pke-encrypt-k4（自包含 run.sh）
 # Decrypt 默认：ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4
 #
 # 前提：KeyGen 探针已产出 output/ek_pke.bin + dk_pke.bin（本脚本不重复跑 KeyGen，除非
@@ -24,7 +24,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg13-device-keygen-k4}"
-ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-mlkem-f203-pke-encrypt-k4}"
+ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4}"
 DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4}"
 
 RUN_MODE="cpu"

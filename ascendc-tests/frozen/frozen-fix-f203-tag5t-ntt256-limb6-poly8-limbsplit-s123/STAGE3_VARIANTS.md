@@ -58,7 +58,7 @@ barrett_reduce_limb6_vec(dst, q, t1, t2, count);
 
 ## 方案 1：Horner raw + 标量 Stage31ModI64
 
-**思路**：向量 Horner 出 `raw`，再按 `exp-mlkem-f203-stage3-routea-mod-vec` 的 `Stage31ModI64` 逐元素 floor mod。
+**思路**：向量 Horner 出 `raw`，再按 `exp-fips203-mlkem-pke-stage3-routea-mod-vec` 的 `Stage31ModI64` 逐元素 floor mod。
 
 **代码**：`combine_limb6_routea_mod_scalar_i64` / `stage31_mod_i64_scalar`
 
@@ -160,6 +160,6 @@ CPU debug 下宏为空；真机 SIM 上 Cast/Div 链建议保留 barrier。注�
 ## 参考
 
 - golden：`examples/incubating/exp-sepolyvec8-ntt-k8/scripts/mlkem_ref.py`（`stage31_mod`）
-- 标量参考：`examples/incubating/exp-mlkem-f203-stage3-routea-mod-vec/f203_stage3_routea_mod_custom.cpp`
+- 标量参考：`examples/incubating/exp-fips203-mlkem-pke-stage3-routea-mod-vec/f203_stage3_routea_mod_custom.cpp`
 - Barrett 表：`thirdparty/ntt_study/include/mlkem/stable/mlkem_ntt_tables.h`（μ=314, K=20）
 - ntt_study Div 讨论：`thirdparty/ntt_study/qa/2026-05/讨论记录_2026-05-11__问题定位__Div-RealDiv-取模链与代码调查.md`

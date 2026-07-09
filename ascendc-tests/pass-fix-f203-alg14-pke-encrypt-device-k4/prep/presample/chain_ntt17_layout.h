@@ -1,4 +1,4 @@
-// @probe stable-mlkem-f203-pke-keygen-k4
+// @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/chain_ntt17_layout.h
 // @layer prep
 // @role prep/presample：SHAKE/PRF/CBD 预采样与 NTT17 链入口；从 seed 派生设备侧中间量供 alg7/alg8/ahat。 / Presample + Keccak/PRF device vector entry. 本文件 `chain_ntt17_layout.h` 为该子模块组件。 / Component: chain_ntt17_layout.h.

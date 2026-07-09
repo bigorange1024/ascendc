@@ -59,7 +59,7 @@ Golden 由 \texttt{mlkem\_ref.encode\_mat\_a} + \texttt{matmul\_int8\_i32} 生�
     \toprule
     用例 & CPU 耗时 & 说明 \\
     \midrule
-    \dirname{exp-mlkem-f203-stage1-encode-vec} & 数秒 & 纯 AIV encode \\
+    \dirname{exp-fips203-mlkem-pke-stage1-encode-vec} & 数秒 & 纯 AIV encode \\
     \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} & 计算 $<$10\,s & 纯 Cube Matmul，CPU 已通过 \\
     \dirname{exp-sepolyvec8-ntt-k8} & 超时 & Stage1+2+3 全融合，CPU \textbf{未通过}（MIX 单趟挂死） \\
     \bottomrule

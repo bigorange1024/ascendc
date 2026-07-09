@@ -1,4 +1,4 @@
-// @probe stable-mlkem-f203-pke-keygen-k4
+// @probe stable-fips203-mlkem-pke-keygen-k4
 // @file data_utils.h
 // @layer host
 // @role 头文件/内联：`data_utils.h` 声明或配置 AscendC/host 接口与常量。 / Header `data_utils.h`.

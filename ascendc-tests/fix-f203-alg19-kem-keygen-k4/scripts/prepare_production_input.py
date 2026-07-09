@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# @probe stable-mlkem-f203-pke-keygen-k4
+# @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/prepare_production_input.py
 # @layer script
 # @role 从 seed 生成生产 input/（seed_d + stacked LUT）。 / Production input prep.

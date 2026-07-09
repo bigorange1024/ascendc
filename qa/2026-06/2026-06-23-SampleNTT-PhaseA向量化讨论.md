@@ -418,7 +418,7 @@ compact 后再统一 Sub(q) 还原 â∈[0,q)
 - **alg7 解交织**：生产默认 Phase2 标量；`F203_ALG7_D12_GATHER=1` 仅实验
 ### 15.5 examples 边界澄清（2026-06-24）
 
-- **`exp-mlkem-f203-alg13-16171820-2s1e-k4`**：**不**做 AscendC 实时生成 $\mathbf{s}$/$\mathbf{e}$；设备只读 Host/Python `input/src.bin`（行 16–20 MIX 核）
+- **`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4`**：**不**做 AscendC 实时生成 $\mathbf{s}$/$\mathbf{e}$；设备只读 Host/Python `input/src.bin`（行 16–20 MIX 核）
 - 设备预采样 + `shake_ub_helpers` 归属 **`ascendc-tests/`**（[`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/) / chain_ntt17），与 exp 解耦
 - 已撤回误加的 customspec §Phase2 双 launch 与 `f203_device_presample_ub.hpp`
 

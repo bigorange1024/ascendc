@@ -4,7 +4,7 @@
 
 `fix-f203-alg13-device-keygen-k4` 已完成：
 
-1. **生产 I/O** 对齐 `exp-mlkem-f203-pke-keygen-k4`（`input/` 仅 seed+LUT；`output/` 仅 ek/dk；单入口 `ascendc_keygen_bbit`）。
+1. **生产 I/O** 对齐 `exp-fips203-mlkem-pke-keygen-k4`（`input/` 仅 seed+LUT；`output/` 仅 ek/dk；单入口 `ascendc_keygen_bbit`）。
 2. **CPU + SIM + liboqs KAT** 验收通过（SIM Total tick **886801**）。
 3. 用户要求：**全源码详细注释**、目录改 **`pass-` 前缀**、文档/实现方案与当前探针一致。
 
@@ -78,11 +78,11 @@ python3 scripts/inject_probe_code_comments.py  # files_updated=0
 
 - [`STATUS.md`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/STATUS.md)
 - [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/INTEGRATION_PLAN.md)
-- [`exp-mlkem-f203-pke-keygen-k4`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/)（交付 I/O 对照）
+- [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/)（交付 I/O 对照）
 
 ---
 
-## 6. 交付示例 `exp-mlkem-f203-pke-keygen-k4` 自包含化与唯一路径
+## 6. 交付示例 `exp-fips203-mlkem-pke-keygen-k4` 自包含化与唯一路径
 
 **背景**：探针验证通过后，将 KeyGen **交付示例**从「多门禁 + 外链探针」收敛为 **自包含、唯一向量化全链**，便于复制为 Encrypt 等后续用例模板。
 
@@ -95,12 +95,12 @@ python3 scripts/inject_probe_code_comments.py  # files_updated=0
 | 已删除旁路 | G0–G4 门禁、`main_keygen_prep`、`f203_keygen_ek_append`、分段 `cmake/cpu_lib*`、`compute_io/` staging、`kat_liboqs_staged.sh` 等 |
 | SIM 指标 | `scripts/parse_keygen_sim_metrics.py`：两次 launch tick + wall_ms 加总打印 |
 | KAT | `kat_liboqs_vs_ascendc.sh`：默认 **10×CPU + 1×SIM**，同 `SEED_D` 对拍 liboqs `ml_kem_1024`；`KEYGEN_KAT=1` 静默日志 |
-| 文档 | `STATUS.md`、`exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.tex`（§唯一交付路径 + 锁定 CMake 表） |
+| 文档 | `STATUS.md`、`exp-fips203-mlkem-pke-keygen-k4-实现方案-customspec.tex`（§唯一交付路径 + 锁定 CMake 表） |
 
 ### 6.2 验收（示例目录）
 
 ```bash
-cd examples/incubating/exp-mlkem-f203-pke-keygen-k4
+cd examples/incubating/exp-fips203-mlkem-pke-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4          # SIM summary 示例：total_tick≈884532
 bash kat_liboqs_vs_ascendc.sh              # 可选

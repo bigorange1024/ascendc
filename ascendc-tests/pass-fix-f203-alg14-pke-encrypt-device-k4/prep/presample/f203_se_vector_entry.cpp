@@ -1,4 +1,4 @@
-// @probe stable-mlkem-f203-pke-keygen-k4
+// @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_entry.cpp
 // @layer prep
 // @role prep/presample：SHAKE/PRF/CBD 预采样与 NTT17 链入口；从 seed 派生设备侧中间量供 alg7/alg8/ahat。 / Presample + Keccak/PRF device vector entry. 本文件 `f203_se_vector_entry.cpp` 为该子模块组件。 / Component: f203_se_vector_entry.cpp.

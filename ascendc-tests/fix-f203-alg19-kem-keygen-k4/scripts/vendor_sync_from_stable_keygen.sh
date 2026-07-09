@@ -4,7 +4,7 @@ set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="$(cd "${CASE_DIR}/../.." && pwd)"
-STABLE="${REPO}/examples/stable/stable-mlkem-f203-pke-keygen-k4"
+STABLE="${REPO}/examples/stable/stable-fips203-mlkem-pke-keygen-k4"
 DST="${CASE_DIR}/vendor/pke_keygen"
 
 if [ ! -d "${STABLE}" ]; then

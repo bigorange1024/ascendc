@@ -34,9 +34,9 @@
 ## 当月遗留（快照）
 
 - **8-poly 批 NTT/INTT（AscendC 向量）**：[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/) NTT SIM **30347** / INTT **30340**；1 AI Core · 1 launch — [note](../../docs/notes/F203-polyvec8-stage123-NTT-INTT技术总结.md)
-- **KeyGen 交付**：探针 [`pass-fix-f203-alg13-device-keygen-k4`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) SIM **~886801**；示例 [`exp-mlkem-f203-pke-keygen-k4`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/) **自包含唯一路径** SIM **~884532** + liboqs KAT — [note](../../docs/notes/F203-KeyGen-exp交付示例技术总结.md)
+- **KeyGen 交付**：探针 [`pass-fix-f203-alg13-device-keygen-k4`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) SIM **~886801**；示例 [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/) **自包含唯一路径** SIM **~884532** + liboqs KAT — [note](../../docs/notes/F203-KeyGen-exp交付示例技术总结.md)
 - **ByteEncode prefetch**：已合入 v2；全链路 **77958 tick**；单用例表→[SIM_BENCHMARK.md](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/SIM_BENCHMARK.md)
-- **Alg.13 行 16–20（2s1e UB）**：探针 [`vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) **77958** + 预研 [`exp-k4`](../../examples/incubating/exp-mlkem-f203-alg13-16171820-2s1e-k4/) **77996**（FIPS CBD，prefetch 已同步）；NPU / stable 晋级待做
+- **Alg.13 行 16–20（2s1e UB）**：探针 [`vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) **77958** + 预研 [`exp-k4`](../../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) **77996**（FIPS CBD，prefetch 已同步）；NPU / stable 晋级待做
 - **平台基线**：CANN 9.0.0、Atlas A2（910B4）、`blockDim=1` MIX AIC_1_2
 - **Alg.7 SampleNTT**：[`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/) **R0–R4 ✅**
 - **Alg.13 行 3–7（Â）**：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) CPU+SIM ✅

@@ -4,7 +4,7 @@
 
 **自包含约束**：[`SELF_CONTAINED.md`](SELF_CONTAINED.md)（对齐 KeyGen pass 探针教训：外部 oracle 不得渗入默认 `run.sh`）。
 
-**参照 KeyGen 终态**：[`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) · [`stable-mlkem-f203-pke-keygen-k4`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/)
+**参照 KeyGen 终态**：[`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) · [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/)
 
 ---
 
@@ -288,7 +288,7 @@ rg '#include.*ascendc-tests/(pass|fix)-' prep compute pack *.cpp
 | **Âᵀ·r̂** | vendored innerproduct，偏移 `(j,p)` 对调（§2.1） |
 | **d=11/5** | vendored compress/byteencode + 编译常数（§2.3） |
 | **ek → t̂** | vendored ByteDecode₁₂ d=12（§2.2） |
-| **定型交付** | 另建 `examples/incubating/exp-mlkem-f203-pke-encrypt-k4`（须 customspec） |
+| **定型交付** | 另建 `examples/incubating/exp-fips203-mlkem-pke-encrypt-k4`（须 customspec） |
 
 **当前工程顺序**：G1 prep vendored → G2 NTT → G3 线性层（含 Âᵀ 索引）→ G4 pack → G5 合并 launch。
 

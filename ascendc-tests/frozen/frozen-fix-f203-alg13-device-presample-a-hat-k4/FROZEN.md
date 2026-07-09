@@ -18,7 +18,7 @@
 | Alg.7 单 poly 模块 | [`pass-fix-f203-alg7-sample-ntt-k4`](../../pass-fix-f203-alg7-sample-ntt-k4/) |
 | Alg.13 行 3–7 `Â` | [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../pass-fix-f203-alg13-lines3-7-a-hat-k4/) |
 | Alg.13 行 8–15 `s`/`e` | [`pass-fix-f203-alg13-lines8-15-se-k4`](../../pass-fix-f203-alg13-lines8-15-se-k4/) |
-| 全链 KeyGen | [`pass-fix-f203-alg13-device-keygen-k4`](../../pass-fix-f203-alg13-device-keygen-k4/) / [`exp-mlkem-f203-pke-keygen-k4`](../../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/) |
+| 全链 KeyGen | [`pass-fix-f203-alg13-device-keygen-k4`](../../pass-fix-f203-alg13-device-keygen-k4/) / [`exp-fips203-mlkem-pke-keygen-k4`](../../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/) |
 
 **只读**：Phase A 历史 tick、A-v4 反模式结论 → [`docs/notes/F203-Alg7-PhaseA-向量化技术总结.md`](../../../docs/notes/F203-Alg7-PhaseA-向量化技术总结.md)。  
 **勿 fork、勿抄码、勿跑 CI。**

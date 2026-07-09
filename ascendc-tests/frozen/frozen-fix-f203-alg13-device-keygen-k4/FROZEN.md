@@ -15,7 +15,7 @@ FIPS 203 Alg.13 ML-KEM-768（k=4）**PKE KeyGen** 全链探针：2 launch（prep
 | 路径 | 说明 |
 |------|------|
 | [`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) | 原 `fix-f203-alg13-device-keygen-k4-dual-aiv` 晋级；SIM **≈542339** |
-| [`exp-mlkem-f203-pke-keygen-k4`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/) | 自包含交付示例，与 pass 终态对齐 |
+| [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/) | 自包含交付示例，与 pass 终态对齐 |
 
 ## 讨论
 

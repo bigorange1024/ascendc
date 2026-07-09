@@ -1,7 +1,7 @@
 # FIPS 203 ML-KEM-1024 PKE Encrypt — baseline-registry
 
 **主题**：Alg.14 K-PKE.Encrypt（k=4）交付侧 golden / KAT 计算块登记  
-**适用**：`examples/incubating/exp-mlkem-f203-pke-encrypt-k4`、晋级后 `examples/stable/stable-mlkem-f203-pke-encrypt-k4`  
+**适用**：`examples/incubating/exp-fips203-mlkem-pke-encrypt-k4`、晋级后 `examples/stable/stable-fips203-mlkem-pke-encrypt-k4`  
 **规则**：生成 `input/` / `golden/` 的计算内核**仅**可调用下表已验证来源；缺项须停下补登记（见 Rule「Golden、基准与 baseline-registry」）。
 
 ---

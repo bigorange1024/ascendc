@@ -49,7 +49,7 @@
 
 按时间倒序追加（最新在上）。
 
-| 2026-07-09 | **Alg.14 PKE Encrypt customspec（exp-mlkem-f203-pke-encrypt-k4）** | DataCopy/CrossCore/MMAD/向量算术/GatherMask/Cast；NTT S1–S3 **禁 Gather** | [`exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-pke-encrypt-k4/exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex)：I/O 仅 ek+m+coins→c；SIM 2 / CPU 5 launch；中间态禁落盘；API 表复用 KeyGen/Encrypt 探针已查记录 |
+| 2026-07-09 | **Alg.14 PKE Encrypt customspec（exp-fips203-mlkem-pke-encrypt-k4）** | DataCopy/CrossCore/MMAD/向量算术/GatherMask/Cast；NTT S1–S3 **禁 Gather** | [`exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex)：I/O 仅 ek+m+coins→c；SIM 2 / CPU 5 launch；中间态禁落盘；API 表复用 KeyGen/Encrypt 探针已查记录 |
 | 2026-07-08 | **ByteEncode_d d=5/d=11 真·向量 pack 实验** | `Gather`/`CreateVecIndex`/`Muls`/`ShiftRight`/`Add`（[07_0059](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0059.html) ShiftRight；Gather 见 07_0071 邻域）| `pass-f203-byteencode-d-vec-k4` `BYTE_ENCODE_D_VEC=2`：`Gather(dst,src,offsetU32(字节偏移),0,count)` 按 gg*32+k*4 去交错取每组 8 个 position-lane；`CreateVecIndex(idx,0,n)`+`Muls` 造字节偏移。**结论**：d=5/d=11 拼字非字节对齐、拼字仍需标量 GetValue，真·向量 pack 比标量逐组 **更慢**（d=5 5839 vs 5464；d=11 7404 vs 6604 tick），不采纳；d=12 可向量因 2×12=24bit=3B 对齐 |
 | 2026-07-08 | **Compress_d d=4/5/10/11** | Cast/Div；Barrett int32 | `pass-f203-compress-d-vec-k4`：d=4/5 Barrett；d=10/11 cast_div；探针目录更名 |
 
@@ -73,7 +73,7 @@
 
 | 查阅主题 | PDF / 在线位置 | 概括 |
 |----------|----------------|------|
-| **2s1e Alg13 customspec** | — | [`exp-mlkem-f203-alg13-16171820-2s1e-k4-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-alg13-16171820-2s1e-k4/exp-mlkem-f203-alg13-16171820-2s1e-k4-实现方案-customspec.tex)：行 16–20；MIX `blockDim=1`；平面 mat\_c；UB 融合；**Host FIPS SamplePolyCBD s/e**（禁止 FIXED\_POLY）。 |
+| **2s1e Alg13 customspec** | — | [`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4-实现方案-customspec.tex)：行 16–20；MIX `blockDim=1`；平面 mat\_c；UB 融合；**Host FIPS SamplePolyCBD s/e**（禁止 FIXED\_POLY）。 |
 | **CrossCore / DataCopy / Add** | 见 Stage12、Stage1 查阅记录 | 与 vec-k4-v2 同构；NTT S1–S3 无 Gather。 |
 | **Alg.11 Gather** | 2.3.3 | 仅行 18 basemul；非 NTT 平面读。 |
 
@@ -90,8 +90,8 @@
 
 | 查阅主题 | PDF / 在线位置 | 概括 |
 |----------|----------------|------|
-| **Stage1 customspec** | — | [`exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-stage1-encode-vec/exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.tex)：数学 → 分块 → 全量 API 表 → 逐步覆盖率（主路径 **100% 向量**）。 |
-| **Stage3 customspec** | — | [`exp-mlkem-f203-stage3-routea-mod-vec-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-stage3-routea-mod-vec/exp-mlkem-f203-stage3-routea-mod-vec-实现方案-customspec.tex)：RouteA+mod；**int64 合并与 mod 标量缺口**（Div 无 int32、int64 无矢量算术）。 |
+| **Stage1 customspec** | — | [`exp-fips203-mlkem-pke-stage1-encode-vec-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-stage1-encode-vec/exp-fips203-mlkem-pke-stage1-encode-vec-实现方案-customspec.tex)：数学 → 分块 → 全量 API 表 → 逐步覆盖率（主路径 **100% 向量**）。 |
+| **Stage3 customspec** | — | [`exp-fips203-mlkem-pke-stage3-routea-mod-vec-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-stage3-routea-mod-vec/exp-fips203-mlkem-pke-stage3-routea-mod-vec-实现方案-customspec.tex)：RouteA+mod；**int64 合并与 mod 标量缺口**（Div 无 int32、int64 无矢量算术）。 |
 | **Cast** | 2.3.3；[07\_0073](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0073.html) | A2 **表 6**：无 `int32→int8` / `int16→int8`。910B 实测链：`int32→int16→half→int8`（`CAST_NONE`）。dav\_c220 `CheckCastDatatype` 与表一致。 |
 | **ShiftRight** | 2.3.3；[07\_0059](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0059.html) | `int32_t` 算术右移；A2 scalar∈[0,32]。Stage1：`hi=v>>6`。 |
 | **Muls** | 2.3.3；[07\_0055](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0055.html) | A2：`half/float/int16_t/int32_t`。Stage1：`hi*64`；Stage3 预研：`×4096/×64`（int32 有溢出风险）。 |

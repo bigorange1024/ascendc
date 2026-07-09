@@ -47,7 +47,7 @@
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 
-**MLKEM NTT + 向量集成**：向量全链路 **[vec-k4-v2](pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)**；**8-poly 批 NTT/INTT** **[pass-fix-f203-stage123-ntt-intt-polyvec8-vec](pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)**；标量对照组 [`frozen-fix-f203-2s1e-alg13-16171820-k4`](frozen/frozen-fix-f203-2s1e-alg13-16171820-k4/)（2026-06-19 归档，任务完成）。预研 [`exp-k4`](../examples/incubating/exp-mlkem-f203-alg13-16171820-2s1e-k4/)。见 [MLKEM-NTT-向量与标量实现指南.md](../docs/notes/MLKEM-NTT-向量与标量实现指南.md)。
+**MLKEM NTT + 向量集成**：向量全链路 **[vec-k4-v2](pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)**；**8-poly 批 NTT/INTT** **[pass-fix-f203-stage123-ntt-intt-polyvec8-vec](pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)**；标量对照组 [`frozen-fix-f203-2s1e-alg13-16171820-k4`](frozen/frozen-fix-f203-2s1e-alg13-16171820-k4/)（2026-06-19 归档，任务完成）。预研 [`exp-k4`](../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/)。见 [MLKEM-NTT-向量与标量实现指南.md](../docs/notes/MLKEM-NTT-向量与标量实现指南.md)。
 
 ---
 

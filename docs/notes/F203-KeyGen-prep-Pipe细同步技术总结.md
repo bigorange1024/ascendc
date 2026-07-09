@@ -4,7 +4,7 @@
 **目的**：说明 **哪些 barrier 可窄化/删减**、**哪些必须保留 `PIPE_ALL`**，以及 **为何 SIM golden 是裁判**  
 **案例锚点**：`ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/PIPE_SYNC_EVAL.md`（Opt-5 Phase 1→5）  
 **讨论**：`qa/2026-06/2026-06-25-KeyGen-prep优化路线图.md` §Opt-5  
-**实现方案**：`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`（经 `ALG8_INC` 链入 CBD 窄化）
+**实现方案**：`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`（经 `ALG8_INC` 链入 CBD 窄化）
 
 ---
 
@@ -106,7 +106,7 @@ MTE↔Vector **行流水线**（PRF 行、CBD 行、小 batch CopyIn/Out）：
 | 评估清单 | `ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/PIPE_SYNC_EVAL.md` |
 | 合入文件 | `pass-fix-f203-alg8-cbd-eta2-k4/f203_cbd_eta2_ub_io.hpp`（canonical）；KeyGen vendored 于 `prep/alg8/` |
 | 未改 | PRF、Â、Alg7、`f203_keygen_prep_ub.hpp` P-02/P-03/P-04 |
-| exp 路径 | `examples/incubating/exp-mlkem-f203-pke-keygen-k4/` |
+| exp 路径 | `examples/incubating/exp-fips203-mlkem-pke-keygen-k4/` |
 
 **验收命令**：
 

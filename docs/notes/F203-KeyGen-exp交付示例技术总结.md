@@ -1,12 +1,12 @@
-# F203 KeyGen 交付示例（exp-mlkem-f203-pke-keygen-k4）— 技术总结
+# F203 KeyGen 交付示例（exp-fips203-mlkem-pke-keygen-k4）— 技术总结
 
 **读者**：需要从探针晋级为 **自包含交付示例**、或 fork 为 Encrypt 等下一用例的实现者  
-**定型交付（2026-06-29）**：[`examples/stable/stable-mlkem-f203-pke-keygen-k4/`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) — 验收以 stable 为准。
+**定型交付（2026-06-29）**：[`examples/stable/stable-fips203-mlkem-pke-keygen-k4/`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) — 验收以 stable 为准。
 
-**案例锚点（incubating 副本）**：[`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/)  
+**案例锚点（incubating 副本）**：[`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/)  
 **探针对照**：[`pass-fix-f203-alg13-device-keygen-k4`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/)（同生产 I/O）  
 **讨论**：[`qa/2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md`](../../qa/2026-06/2026-06-28-KeyGen探针pass前缀与生产IO.md) §6  
-**实现方案**：[`exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/exp-mlkem-f203-pke-keygen-k4-实现方案-customspec.tex)
+**实现方案**：[`exp-fips203-mlkem-pke-keygen-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/exp-fips203-mlkem-pke-keygen-k4-实现方案-customspec.tex)
 
 ---
 
@@ -37,7 +37,7 @@ FIPS 203 **Alg.13 PKE KeyGen**（ML-KEM-768，\(K=4\)）：
 ## 3. 验收阶梯
 
 ```bash
-cd examples/incubating/exp-mlkem-f203-pke-keygen-k4
+cd examples/incubating/exp-fips203-mlkem-pke-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4   # Host golden
@@ -50,7 +50,7 @@ bash kat_liboqs_vs_ascendc.sh                     # 10 CPU + 1 SIM vs liboqs
 - Launch2 compute tick / wall_ms  
 - `SIM summary: total_tick=… total_wall_ms=…`
 
-解析逻辑：[`scripts/parse_keygen_sim_metrics.py`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/scripts/parse_keygen_sim_metrics.py)（优先 `profile_task_log0.toml`）。
+解析逻辑：[`scripts/parse_keygen_sim_metrics.py`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/scripts/parse_keygen_sim_metrics.py)（优先 `profile_task_log0.toml`）。
 
 **典型 tick**（Ascend910B4）：prep ≈462k + compute ≈80k → total ≈**542393**。
 
@@ -76,7 +76,7 @@ bash kat_liboqs_vs_ascendc.sh                     # 10 CPU + 1 SIM vs liboqs
 
 **定型交付**（验证通过后另建）最小步骤：
 
-1. **rsync** KeyGen stable → `exp-mlkem-f203-pke-encrypt-k4`（或晋级 `stable-mlkem-f203-pke-encrypt-k4`）。  
+1. **rsync** KeyGen stable → `exp-fips203-mlkem-pke-encrypt-k4`（或晋级 `stable-fips203-mlkem-pke-encrypt-k4`）。  
 2. **先写 customspec**：I/O、Launch、CPU/设备表；**勿**继承 ntt_study 目标 4 的算子切分。  
 3. 改 Host golden / `prepare_production_input.py`；保留 `run.sh` 编排模式。  
 4. compute 增量（Encrypt 需 INTT、Compress 等）在 vendored `compute/` 内 fork，仍保持 **唯一路径**。  

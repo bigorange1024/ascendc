@@ -172,9 +172,9 @@ G4 全链 Step4：`f203_keygen_prep`（行 3–15）+ vec-k4-v2（行 16–20）
 ## 夜间移交 — exp KeyGen + 技术总结（2026-06-25）
 
 - 定稿：`docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md`
-- 新建：`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`（customspec PDF + 全链 run.sh + prep 内核）
+- 新建：`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`（customspec PDF + 全链 run.sh + prep 内核）
 - Opt-5：**暂缓**（用户确认）
-- 待明早验收：`cd examples/incubating/exp-mlkem-f203-pke-keygen-k4 && bash run.sh -r cpu|sim -v Ascend910B4`
+- 待明早验收：`cd examples/incubating/exp-fips203-mlkem-pke-keygen-k4 && bash run.sh -r cpu|sim -v Ascend910B4`
 
 ---
 
@@ -197,4 +197,4 @@ G4 全链 Step4：`f203_keygen_prep`（行 3–15）+ vec-k4-v2（行 16–20）
 | G4 CPU+SIM | **PASS** | PASS |
 
 **合入代码**：`f203_cbd_eta2_ub_io.hpp`（CopyIn→MTE2、Vector 前→V；CopyOut 后无 barrier）；P-02/P-04 仍为 `PIPE_ALL`；PRF/Â/Alg7 保持 `PIPE_ALL`。
-**exp 交付**：`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`（经 `ALG8_INC` 自动继承 CBD 窄化）。
+**exp 交付**：`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`（经 `ALG8_INC` 自动继承 CBD 窄化）。

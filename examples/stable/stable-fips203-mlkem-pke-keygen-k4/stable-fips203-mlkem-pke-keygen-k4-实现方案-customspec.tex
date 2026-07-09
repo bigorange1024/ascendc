@@ -1,0 +1,214 @@
+% stable-fips203-mlkem-pke-keygen-k4 — FIPS 203 Alg.13 ML-KEM-768 KeyGen (k=4)
+% 编译：bash ../../../scripts/xelatex-clean.sh stable-fips203-mlkem-pke-keygen-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{stable-fips203-mlkem-pke-keygen-k4\\FIPS 203 Alg.13 ML-KEM-768 PKE KeyGen 实现方案（k=4）}
+\author{ascendc 工程（交付示例）}
+\date{2026-06-29}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \textbf{交付示例} \dirname{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 13}（ML-KEM-768，$K=4$）\textbf{PKE KeyGen}。
+
+\textbf{自包含原则}：AscendC 与 Host golden 源码 \textbf{全部 vendored 于本目录}（\dirname{prep/}、\dirname{compute/}、\dirname{scripts/prep/}、\dirname{scripts/compute/}）。
+\textbf{唯一允许的外部代码依赖}：仓库 \dirname{library/shared/}（SHAKE XOF、Keccak 标量核等 AscendC 共享库）。
+\textbf{禁止}：从 \dirname{ascendc-tests/}、\dirname{thirdparty/}、\dirname{frozen/}、liboqs 等 \textbf{非 shared 库} 引入编译期 include 或 Host 运行时接口。
+
+\textbf{生产 I/O}：\texttt{input/} 仅 \texttt{SEED\_D} + NTT LUT；\texttt{output/} 仅 \texttt{ek\_PKE}(1568B)/\texttt{dk\_PKE}(1536B)。
+\textbf{设备 Launch}：\textbf{2 次} —— Launch\,1 行 3--15（\texttt{f203\_keygen\_prep}）；Launch\,2 行 16--21（\texttt{mmad\_custom} + 行 21 $\Vert\rho$ 设备融合）。
+中间 GM \textbf{不落盘}。
+Prep \textbf{双 AIV 并行} \texttt{BuildAHat16ShardWithUb}（\texttt{blockIdx} 0/1 各 8 poly）；\textbf{禁止} pass 探针 block0 串行两片 \^A workaround。
+SIM 910B4 参考 Total tick $\approx$ \textbf{542339}（prep $\approx$462k + mmad $\approx$80k）。
+\textbf{唯一交付路径}：全链向量化 AscendC + 生产 I/O；\textbf{不存在} G0--G4 分段门禁、标量回退、磁盘 staging 或多 Host 入口。
+技术总结：\dirname{docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md}、\dirname{docs/notes/F203-KeyGen-prep-Pipe细同步技术总结.md}。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程约束（自包含）}
+
+\subsection{允许的外部依赖}
+
+\begin{longtable}{@{}L{4.5cm}L{8.5cm}@{}}
+\toprule
+路径 & 用途 \\
+\midrule
+\dirname{library/shared/shake\_xof\_kernel/} & AscendC SHAKE XOF 内嵌（\texttt{ProcessInline}） \\
+\dirname{library/shared/keccak\_f1600\_kernel/} & Keccak-f[1600] 标量（G 派生，第三方 SHA3 到位前） \\
+\dirname{library/shared/} & 公共头（如 \texttt{shake\_general.h}） \\
+CANN / tikicpulib & 工具链与仿真（非业务源码） \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止的外部依赖}
+
+\begin{itemize}
+  \item \textbf{ascendc-tests} 任意探针目录的 \texttt{*.hpp}/\texttt{*.cpp} include 或 Python import。
+  \item \textbf{thirdparty/merged\_kyber}、polybatch 探针、vec-k4-v2 外链。
+  \item \textbf{liboqs} 作为 \textbf{编译期/运行时依赖}（仅 \texttt{kat\_liboqs\_vs\_ascendc.sh} 可选 KAT 对照，非 \texttt{run.sh} 契约）。
+  \item 分段 Host/设备入口、\texttt{KEYGEN\_GATE}、中间 bin staging、Host 拼接 \texttt{ek$\Vert$ρ}（行 21 已在 compute 内核融合）。
+\end{itemize}
+
+\subsection{唯一交付路径（向量化全链）}
+
+本示例 \textbf{仅} 下列一条路径；\texttt{run.sh} 内 CMake 选项 \textbf{硬编码}，不提供标量/分段/legacy 开关：
+
+\begin{longtable}{@{}L{4.2cm}L{8.8cm}@{}}
+\toprule
+组件 & 锁定配置（与 \texttt{run.sh} 一致） \\
+\midrule
+Prep Â & \texttt{F203\_AHAT16\_BLOCK\_DIM=2}，\textbf{双 AIV 并行} \texttt{BuildAHat16ShardWithUb}（\texttt{blockIdx} 分片），内嵌 SHAKE \texttt{ProcessInline} \\
+Prep Alg7 & \texttt{F203\_ALG7\_REJ\_IMPL=1}，\texttt{F203\_ALG7\_D12\_GATHER=0} \\
+Prep CBD & \texttt{prep/alg8/f203\_cbd\_eta2\_ub\_io.hpp} 向量 MTE2/V \\
+Compute 2s1e & \texttt{F203\_STAGE1\_SPLIT=1}，\texttt{mixPass=0} \\
+Compute NTT/Alg11 & \texttt{HAT\_ALG11\_VEC=1}，\texttt{ALG11\_IMPL=1}，\texttt{ALG11\_VEC\_VARIANT=2}，\texttt{ALG11\_MEM\_OPS=1} \\
+行 18--20 & \texttt{HAT\_LINE18\_DOT\_ONLY=0}，\texttt{HAT\_BYTE\_ENCODE=1} \\
+ByteEncode & \texttt{BYTE\_ENCODE12\_VEC=1}，scatter+prefetch \\
+行 21 & \texttt{F203\_KEYGEN\_EK\_PKE=1}（设备 \texttt{ek$\Vert$ρ}，无单独 launch） \\
+Host & \texttt{main\_keygen.cpp} + \texttt{ascendc\_keygen\_bbit}，2 launch，seed+LUT$\to$ek/dk \\
+\bottomrule
+\end{longtable}
+
+\textbf{禁止}：G0--G4 门禁脚本、\texttt{main\_keygen\_prep}/\texttt{f203\_keygen\_ek\_append} 分段入口、\texttt{compute\_io/} 磁盘 staging、\texttt{mixPass}$\neq$0 调试路径作为交付验收。
+
+\subsection{目录布局（源码归属）}
+
+\begin{verbatim}
+stable-fips203-mlkem-pke-keygen-k4/
+  main_keygen.cpp              # 生产 Host：2 launch
+  f203_keygen_prep_entry.cpp   # Launch 1 入口
+  f203_keygen_prep_ub.hpp      # prep 编排（P-02/03/04）
+  prep/                        # vendored 行 3–15（ahat/alg7/presample/alg8）
+  compute/                     # vendored 行 16–21（mmad_custom + ek||rho 融合）
+  cmake/keygen/CMakeLists.txt  # 生产构建（仅 2-launch 生产路径）
+  scripts/prep/                # Alg7 ROM + golden 准备段
+  scripts/compute/             # compute golden + LUT 生成
+  scripts/keygen_golden.py     # Host 全链 golden（自包含 import）
+  scripts/prepare_production_input.py
+  scripts/verify_production.py
+  scripts/kat_liboqs_vs_ascendc.py
+  thirdparty/ntt_study/        # Host golden LUT 表（vendored，非 AscendC 编译依赖）
+  run.sh
+  kat_liboqs_vs_ascendc.sh     # 可选 liboqs PKE KeyGen KAT（CPU×10 + SIM×1）
+  SELF_CONTAINED.md
+\end{verbatim}
+
+\section{数学语义（Alg.13，$K=4$，$N=256$，$q=3329$）}
+
+\subsection{输入输出}
+
+\begin{itemize}
+  \item \textbf{输入} \texttt{input/seed\_d.bin}：4 B \texttt{uint32} LE；Host 写入 GM；约定 \texttt{DerandFromSeedD}。
+  \item \textbf{输入} \texttt{input/lut\_even\_stacked.bin}、\texttt{lut\_odd\_stacked.bin}：NTT LUT（静态；缺失时 \texttt{scripts/compute/gen\_data.py} 生成一次）。
+  \item \textbf{输出} \texttt{output/ek\_pke.bin}：1568 B = \texttt{ByteEncode$_{12}$}(t) $\Vert$ $\rho$。
+  \item \textbf{输出} \texttt{output/dk\_pke.bin}：1536 B = \texttt{ByteEncode$_{12}$}(s)。
+  \item \textbf{禁止}：向 \texttt{input/} 写入 \texttt{a\_hat}、\texttt{src}、\texttt{rho}、\texttt{tiling} 等；向 \texttt{output/} 写入除 ek/dk 外的交付文件（\texttt{KEYGEN\_DEBUG\_DUMP=1} 除外）。
+\end{itemize}
+
+\subsection{流水线}
+
+\begin{enumerate}
+  \item $G(d\Vert k)\to(\rho,\sigma)$。
+  \item 行 3--7：16$\times$ \texttt{SampleNTT}$(\rho)\to\hat{A}$。
+  \item 行 8--15：\texttt{PRF}+ \texttt{CBD}$_{\eta_2}\to\hat{s}$。
+  \item 行 16--20：\texttt{compute/mmad\_custom}（NTT、内积、\texttt{ByteEncode$_{12}$}）。
+  \item 行 21（设备 AIV）：\texttt{ek\_PKE = ek\_polyvec $\Vert$ $\rho$}，\texttt{F203\_KEYGEN\_EK\_PKE=1}，与行 16--20 同次 Launch\,2。
+\end{enumerate}
+
+\section{编排与 Launch}
+\label{sec:launch}
+
+\begin{itemize}
+  \item \textbf{用户入口}：\texttt{bash run.sh -r cpu|sim -v Ascend910B4}。
+  \item \textbf{Launch 1}：\texttt{f203\_keygen\_prep}（\texttt{KERNEL\_TYPE\_AIV\_ONLY}，\texttt{blockDim=2}），GM 输出 $\hat{A}$、$\hat{s}$、$\rho$（及 PRF 中间态，默认不落盘）。
+  \item \textbf{Launch 2}：\texttt{compute/mmad\_custom}（\texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}，\texttt{blockDim=1}），读 prep GM + LUT；写 \texttt{ek\_PKE}/\texttt{dk\_PKE}。
+  \item \textbf{Host}：\texttt{prepare\_production\_input} $\to$ build $\to$ 单次 \texttt{ascendc\_keygen\_bbit} $\to$ scrub \texttt{output/}。
+  \item \textbf{SIM}：build 后 \texttt{sim\_env\_export}（WSL stub）$\to$ \texttt{camodel\_sim\_log} $\to$ kernel（顺序与探针一致）。
+\end{itemize}
+
+\section{AI Core 规模}
+\label{sec:aicore}
+
+\begin{longtable}{@{}L{3.2cm}L{10cm}@{}}
+\toprule
+段 & 核类型 / blockDim / SIM 实际 \\
+\midrule
+Prep & AIV\_ONLY；\texttt{blockDim=2}；\textbf{双 AIV 并行} \^A（各 8 poly）；block0 独占 PRF+CBD \\
+Compute & MIX\_AIC\_1\_2；\texttt{blockDim=1}；1 AIC + 2 AIV \\
+\bottomrule
+\end{longtable}
+
+串行占用 \textbf{1 颗 AI Core}。CPU \texttt{[SUCCESS][AIC\_*]} 为 tikicpu 拓扑 artifact；以 \texttt{sim\_log/profile\_*.toml} 为准。
+
+\section{数据与组件同步规划}
+\label{sec:sync}
+
+prep 单内核内 UB/GM 同步；prep 与 compute 之间仅 Host 顺序 launch + GM 指针传递（\textbf{无文件交接}）。
+原理与 Pipe 细同步见 \dirname{docs/notes/F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md}、\dirname{docs/notes/F203-KeyGen-prep-Pipe细同步技术总结.md}。
+
+\subsection{实现映射与 include 链（本目录 vendored）}
+
+\begin{verbatim}
+f203_keygen_prep_entry.cpp
+  -> f203_keygen_prep_ub.hpp          (P-02/P-03/P-04)
+  -> prep/ahat/f203_a_hat16_ub.hpp     (A-*)
+  -> prep/presample/f203_se_vector_prf.hpp (R-*)
+  -> prep/alg8/f203_cbd_eta2_ub_io.hpp (C-02/C-03/C-04)
+  -> library/shared/shake_xof_kernel   (S-01, ProcessInline)
+
+main_keygen.cpp
+  -> Launch 1: f203_keygen_prep
+  -> Launch 2: compute/mmad_custom.cpp (F203_KEYGEN_EK_PKE=1)
+\end{verbatim}
+
+\textbf{CMake}（\dirname{cmake/keygen/CMakeLists.txt}）仅设置 \texttt{COMPUTE\_ROOT}、\texttt{PREP\_*} 为本目录子路径 + \texttt{library/shared}；\textbf{不得}再出现 \texttt{VEC\_V2}、\texttt{AHAT\_INC} 等外链变量。
+
+\section{验证}
+
+\subsection{生产验收（默认）}
+
+\begin{verbatim}
+cd examples/stable/stable-fips203-mlkem-pke-keygen-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4   # 默认即全量；run.sh 内自动 SIM_DIRECT=1
+bash kat_liboqs_vs_ascendc.sh
+# 检查 output/ek_pke.bin (1568B) + dk_pke.bin (1536B)
+\end{verbatim}
+\textbf{禁止}将 \texttt{SIM\_DIRECT=1}、\texttt{HAT\_*=0/1} 等写入标准验收命令（与 \texttt{run.sh} 默认重复）。
+
+\subsection{可选 Host golden 对拍}
+
+\texttt{KEYGEN\_VERIFY=1 bash run.sh -r cpu}：\texttt{KEYGEN\_GOLDEN\_ONLY=1} 仅写 \texttt{golden\_ek/dk}，不污染 \texttt{input/}。
+
+\subsection{liboqs PKE KeyGen KAT（交付前必跑，非 run.sh 默认）}
+
+\begin{verbatim}
+bash kat_liboqs_vs_ascendc.sh
+# 期望：CPU 10/10 OK；SIM 1/1 OK（stdout 仅计数，失败时 log 含 seed_d）
+\end{verbatim}
+
+与 \dirname{ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/} 同脚本契约；liboqs 0.15.0 PKE ref 静态链。
+
+\section{性能（SIM 910B4 参考，2026-06-29）}
+
+Total tick $\approx$ \textbf{542339}（prep $\approx$462161 + mmad $\approx$80475；单进程 2 launch；\texttt{profile\_subtask\_log*.toml} 求和）。
+相对 pass 探针 block0 串行 \^A（$\approx$886801 tick），prep 双 AIV 并行 fork 为主要增益。
+CPU \texttt{[SUCCESS][AIC\_*]} 为 tikicpu artifact；\textbf{以 SIM toml 为准}。
+
+\end{document}

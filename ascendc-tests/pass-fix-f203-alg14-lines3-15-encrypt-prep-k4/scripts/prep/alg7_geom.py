@@ -1,4 +1,4 @@
-# @probe stable-mlkem-f203-pke-keygen-k4
+# @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/prep/alg7_geom.py
 # @layer script
 # @role 探针脚本：支持 golden、LUT 生成、验证或 SIM 编排。 / Helper script `alg7_geom.py`.

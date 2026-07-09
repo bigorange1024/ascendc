@@ -12,7 +12,7 @@
 
 ### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt `#交付#`](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 
-**默认 `SIM_DIRECT=1`** · **T7b** · **路线 11 关闭** · **Encrypt `#交付#` → stable** · **验收权重：CPU 辅助 / SIM 主参考** · KAT×10+1 + roundtrip×10+1
+**默认 `SIM_DIRECT=1`** · **T7b** · **路线 11 关闭** · **Encrypt `#交付#` → stable** · **验收权重：CPU 辅助 / SIM 主参考** · **目录改名 `*-fips203-mlkem-pke-*`**
 
 ### 2026-07-08 — [Compress/ByteEncode 扩档、tail pack PASS 晋级、内核超时口径](2026-07/2026-07-08-Alg14-tail-pack探针.md)
 

@@ -285,7 +285,7 @@ gen_data.py（本探针，自包含）:
 | [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/) | **golden oracle**：复用其 `input/`（ek/m/coins/lut）+ `output/golden_c.bin`（黑盒 I/O，SEED_D=20260619）；**禁止**抄其 kernel/prep/pack 实现源码 |
 | [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | compute+tail **唯一**抄码来源 |
 | [`pass-fix-f203-alg14-lines3-15-encrypt-prep-k4`](../pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) | prep **唯一**抄码来源 |
-| `examples/stable/stable-mlkem-f203-pke-encrypt-k4` | **未建**；本探针 PASS 后可复制晋级 |
+| `examples/stable/stable-fips203-mlkem-pke-encrypt-k4` | **未建**；本探针 PASS 后可复制晋级 |
 
 ---
 

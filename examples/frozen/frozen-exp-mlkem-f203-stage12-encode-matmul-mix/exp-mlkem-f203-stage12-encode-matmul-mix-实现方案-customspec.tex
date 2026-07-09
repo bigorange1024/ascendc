@@ -74,7 +74,7 @@ NTT 段 & merged\_kyber（D$'$） & 本用例（F203 Stage1+2） \\
 \midrule
 \dirname{ascendc-tests/frozen/frozen-merged-kyber-ntt256-limb6/} &
   \textbf{MIX 壳 + Stage2 矩阵乘唯一参考}：\texttt{mmad\_custom.cpp}、\texttt{thirdparty/merged\_kyber/aic\_func.hpp}（\texttt{AicMmad}）；CPU+sim 已通过 \\
-\dirname{exp-mlkem-f203-stage1-encode-vec} &
+\dirname{exp-fips203-mlkem-pke-stage1-encode-vec} &
   Stage1 向量算术（\texttt{ShiftRight}/\texttt{Sub}/\texttt{Cast}）；$hi{=}v\gg 6$，$lo{=}v-hi\cdot 64$ \\
 \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} &
   \textbf{仅 golden 对照}（\texttt{np.matmul}）；\textbf{非} MIX Stage2 实现路径 \\

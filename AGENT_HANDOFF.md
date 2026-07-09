@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-09（**Encrypt `#交付#` → `stable-mlkem-f203-pke-encrypt-k4`**；**验收权重：CPU 辅助 / SIM 主参考**；KAT×10+1 + roundtrip×10+1；T14a 关闭）
+> **最后刷新**：2026-07-09（**Encrypt `#交付#` → `stable-fips203-mlkem-pke-encrypt-k4`**；**验收权重：CPU 辅助 / SIM 主参考**；KAT×10+1 + roundtrip×10+1；目录改名 `*-fips203-mlkem-pke-*`；T14a 关闭）
 
 ---
 
@@ -24,9 +24,9 @@
 
 ### Alg.14 Encrypt — **stable 交付** ★头条
 
-算子：[`examples/stable/stable-mlkem-f203-pke-encrypt-k4`](examples/stable/stable-mlkem-f203-pke-encrypt-k4/)  
-预研副本：[`examples/incubating/exp-mlkem-f203-pke-encrypt-k4`](examples/incubating/exp-mlkem-f203-pke-encrypt-k4/)（保留）  
-规格：[`…-实现方案-customspec.pdf`](examples/stable/stable-mlkem-f203-pke-encrypt-k4/stable-mlkem-f203-pke-encrypt-k4-实现方案-customspec.pdf)
+算子：[`examples/stable/stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)  
+预研副本：[`examples/incubating/exp-fips203-mlkem-pke-encrypt-k4`](examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/)（保留）  
+规格：[`…-实现方案-customspec.pdf`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/stable-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.pdf)
 
 | 项 | 内容 |
 |----|------|
@@ -127,7 +127,7 @@ KeyGen / Encaps / Decaps 分项 kat **CPU×10+SIM×1 PASS**（行为不变）。
 
 ```bash
 # ★ Encrypt stable（主参考 = SIM；CPU 辅助）
-cd examples/stable/stable-mlkem-f203-pke-encrypt-k4
+cd examples/stable/stable-fips203-mlkem-pke-encrypt-k4
 bash run.sh -r sim -v Ascend910B4               # 主参考；c max=0，tick ~627k
 bash run.sh -r cpu -v Ascend910B4               # 辅助
 bash kat_liboqs_vs_ascendc.sh                   # CPU×10 + SIM×1
@@ -177,7 +177,7 @@ bash scripts/liboqs_kem_decaps_batch.sh
 
 ### 接手步骤（Encrypt stable / 探针）
 
-1. 读 stable [`STATUS.md`](examples/stable/stable-mlkem-f203-pke-encrypt-k4/STATUS.md) + 探针 [`STATUS.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/STATUS.md)（GM handoff：`f203_encrypt_full_layout.h`）。
+1. 读 stable [`STATUS.md`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) + 探针 [`STATUS.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/STATUS.md)（GM handoff：`f203_encrypt_full_layout.h`）。
 2. 跑上方 ★ smoke：**先 SIM（主参考）**再 CPU（辅助）；确认 `output/c.bin` max=0、`output/` 仅 c、根目录 0 stray dump。
 3. compute **不得**在 CPU 上试单融合 launch（tikicpu 死锁）；**SIM 为无 NPU 时的交付主参考**。golden 复用 correctness 输入，勿改日常 `SEED_D=20260619`。
 4. 交付口径：[`docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md`](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)。
@@ -188,7 +188,7 @@ bash scripts/liboqs_kem_decaps_batch.sh
 
 | 主题 | 路径 |
 |------|------|
-| **Encrypt stable 交付** | [`examples/stable/stable-mlkem-f203-pke-encrypt-k4/`](examples/stable/stable-mlkem-f203-pke-encrypt-k4/) · [交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) · [registry](docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) |
+| **Encrypt stable 交付** | [`examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) · [交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) · [registry](docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) |
 | **完整 Encrypt 探针** | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/INTEGRATION_PLAN.md) · [`STATUS.md`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/STATUS.md) · handoff `f203_encrypt_full_layout.h` |
 | prep 方案 | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/INTEGRATION_PLAN.md) |
 | compute 方案 | [`INTEGRATION_PLAN.md`](ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) |

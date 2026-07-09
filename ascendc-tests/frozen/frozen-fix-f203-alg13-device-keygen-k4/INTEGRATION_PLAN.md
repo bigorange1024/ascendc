@@ -31,7 +31,7 @@ SEED_D → G(d‖k) → (ρ, σ)
 
 **验收**：生产 I/O 下 `ek_pke`/`dk_pke` 字节一致（`KEYGEN_VERIFY=1` 或 liboqs KAT）；分段 golden 仍可用 `scripts/gen_data.py`（**禁止**作为默认 `input/` 契约）。
 
-**生产 I/O 契约**（与 `exp-mlkem-f203-pke-keygen-k4` customspec 一致）：
+**生产 I/O 契约**（与 `exp-fips203-mlkem-pke-keygen-k4` customspec 一致）：
 
 ```text
 input/  — seed_d.bin + lut_even/odd_stacked.bin

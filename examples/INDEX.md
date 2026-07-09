@@ -26,8 +26,8 @@
 
 | 目录 | 算什么 | 规模 / dtype | 角色 |
 |------|--------|--------------|------|
-| [stable-mlkem-f203-pke-keygen-k4/](stable/stable-mlkem-f203-pke-keygen-k4/) | FIPS 203 **Alg.13 ML-KEM-768 PKE KeyGen**（k=4）：`SEED_D`→`ek_PKE`/`dk_PKE` | 2 launch；SIM **542393** tick（CPU/SIM/KAT ✓） | **定型交付算子** |
-| [stable-mlkem-f203-pke-encrypt-k4/](stable/stable-mlkem-f203-pke-encrypt-k4/) | FIPS 203 **Alg.14 ML-KEM-1024 PKE Encrypt**（k=4）：`ek`+`m`+`coins`→**仅** `c` | SIM 2 launch；**SIM 主参考** tick **627590**（CPU 辅助；KAT×10+1/roundtrip×10+1 ✓） | **定型交付算子** |
+| [stable-fips203-mlkem-pke-keygen-k4/](stable/stable-fips203-mlkem-pke-keygen-k4/) | FIPS 203 **Alg.13 ML-KEM-768 PKE KeyGen**（k=4）：`SEED_D`→`ek_PKE`/`dk_PKE` | 2 launch；SIM **542393** tick（CPU/SIM/KAT ✓） | **定型交付算子** |
+| [stable-fips203-mlkem-pke-encrypt-k4/](stable/stable-fips203-mlkem-pke-encrypt-k4/) | FIPS 203 **Alg.14 ML-KEM-1024 PKE Encrypt**（k=4）：`ek`+`m`+`coins`→**仅** `c` | SIM 2 launch；**SIM 主参考** tick **627590**（CPU 辅助；KAT×10+1/roundtrip×10+1 ✓） | **定型交付算子** |
 
 
 

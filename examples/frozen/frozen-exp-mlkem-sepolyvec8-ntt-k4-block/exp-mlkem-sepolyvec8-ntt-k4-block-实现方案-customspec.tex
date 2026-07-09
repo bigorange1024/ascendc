@@ -81,7 +81,7 @@
 \end{itemize}
 
 \subsection{Stage1 编码与 Alg.13 左矩阵布局}
-Alg.13 行 16–17 之前的编码（及 \texttt{exp-mlkem-f203-stage1-encode-vec}）规定左矩阵 \texttt{mat\_a [16,256] int8} 行序为：
+Alg.13 行 16–17 之前的编码（及 \texttt{exp-fips203-mlkem-pke-stage1-encode-vec}）规定左矩阵 \texttt{mat\_a [16,256] int8} 行序为：
 \[
   \text{行 }0..7 = HI(s_0),\ldots,HI(s_{k-1}),\quad
   \text{行 }8..15 = LO(s_0),\ldots,LO(s_{k-1})
@@ -215,7 +215,7 @@ exp-mlkem-sepolyvec8-ntt-k4-block/
 
 \begin{itemize}
   \item 用户对比 \texttt{poly8-block-s123} 与 \texttt{poly8-s123} 的 SIM：\textbf{模拟性能无显著差异}。
-  \item 选用块紧凑布局的理由：与 Alg.13 行 16–17 前编码（\texttt{mat\_a [HI(8),LO(8)]}）、\texttt{exp-mlkem-f203-stage1-encode-vec}、\texttt{ntt\_study} F203 交付语义一致；避免 KeyGen 流水线中 Stage1 encode 与 Stage2/NTT 混用两种行序。
+  \item 选用块紧凑布局的理由：与 Alg.13 行 16–17 前编码（\texttt{mat\_a [HI(8),LO(8)]}）、\texttt{exp-fips203-mlkem-pke-stage1-encode-vec}、\texttt{ntt\_study} F203 交付语义一致；避免 KeyGen 流水线中 Stage1 encode 与 Stage2/NTT 混用两种行序。
   \item \texttt{exp-sepolyvec8-ntt-k8}（交错版）\textbf{保留}为对照与回归；本 exp 为 KeyGen 路径的\textbf{推荐批 NTT 实现}。
 \end{itemize}
 
@@ -231,7 +231,7 @@ exp-mlkem-sepolyvec8-ntt-k4-block/
 \begin{itemize}
   \item 探针：\texttt{ascendc-tests/frozen/frozen-fix-merged-kyber-ntt256-limb6-poly8-block-s123/STATUS.md}
   \item 姊妹 exp：\texttt{examples/incubating/exp-sepolyvec8-ntt-k8/}
-  \item Stage1 encode：\texttt{exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.pdf}
+  \item Stage1 encode：\texttt{exp-fips203-mlkem-pke-stage1-encode-vec-实现方案-customspec.pdf}
   \item 策略：\texttt{docs/notes/F203-merged-kyber-MIX路线技术总结.md}
 \end{itemize}
 

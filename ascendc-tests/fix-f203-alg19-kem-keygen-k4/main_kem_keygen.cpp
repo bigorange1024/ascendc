@@ -1,4 +1,4 @@
-// @probe stable-mlkem-f203-pke-keygen-k4
+// @probe stable-fips203-mlkem-pke-keygen-k4
 // @file main_keygen.cpp
 // @layer host
 // @role 全链 keygen host：串联 prep launch 与 compute launch，管理 GM 与生产 I/O。 / Full-chain keygen host driver.

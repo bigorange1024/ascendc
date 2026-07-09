@@ -235,7 +235,7 @@ G4 prep 走 **`BuildAHat16ShardWithUb`**（`F203_AHAT16_BATCH_SHAKE=0`）。下�
 ## 13. 交叉引用
 
 - 集成计划 Opt-5 行：[`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §1.1  
-- exp 交付：[`examples/incubating/exp-mlkem-f203-pke-keygen-k4/`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/)  
+- exp 交付：[`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/)  
 - qa 路线图：[`qa/2026-06/2026-06-25-KeyGen-prep优化路线图.md`](../../qa/2026-06/2026-06-25-KeyGen-prep优化路线图.md) §Opt-5  
 - 平台通则：`.cursor/skills/ascendc-engineering-notes/SKILL.md` §6–§7  
 

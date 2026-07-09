@@ -24,7 +24,7 @@
 
 与 pass 同级：`bash run.sh` CPU+SIM；`KEYGEN_VERIFY=1`；可选 `kat_liboqs_vs_ascendc.sh`。
 
-**晋级**：本探针 CPU+SIM+KAT 全过后，再同步 `exp-mlkem-f203-pke-keygen-k4`；pass 探针保持不动直至用户确认继任。
+**晋级**：本探针 CPU+SIM+KAT 全过后，再同步 `exp-fips203-mlkem-pke-keygen-k4`；pass 探针保持不动直至用户确认继任。
 
 ## 4. 自包含与设备全链
 

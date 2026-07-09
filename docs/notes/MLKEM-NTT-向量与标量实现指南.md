@@ -2,7 +2,7 @@
 
 **读者**：在 AscendC 上实现 2s1e 集成线的开发者  
 **数学契约**：[MLKEM-NTT-实现总结.md](MLKEM-NTT-实现总结.md)  
-**活跃探针**：`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`、`exp-mlkem-f203-alg13-16171820-2s1e-k4`（预研）  
+**活跃探针**：`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`、`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4`（预研）  
 **frozen 治理**：[研究路线与frozen治理.md](研究路线与frozen治理.md)
 
 ---

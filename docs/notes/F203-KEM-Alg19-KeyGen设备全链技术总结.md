@@ -79,7 +79,7 @@ Alg.19 KeyGen **不重写** NTT、内积、ByteEncode₁₂ 等 PKE 设备核（
 
 | 角色 | 路径 | 用法 |
 |------|------|------|
-| **权威实现** | `examples/stable/stable-mlkem-f203-pke-keygen-k4` | vendor 源；liboqs ek/dk_pke 已验 |
+| **权威实现** | `examples/stable/stable-fips203-mlkem-pke-keygen-k4` | vendor 源；liboqs ek/dk_pke 已验 |
 | **调试对照** | `ascendc-tests/pass-fix-f203-alg13-device-keygen-k4` | 非生产 `#include` 源 |
 
 **vendor 治理**：`vendor/pke_keygen/` 由 stable 同步复制；G1 Gate 要求同 `SEED_D` 下 `ek_pke`/`dk_pke` 与 stable 输出 max=0。

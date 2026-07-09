@@ -1,4 +1,4 @@
-// @probe stable-mlkem-f203-pke-keygen-k4
+// @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/alg8/f203_cbd_eta2.hpp
 // @layer prep
 // @role prep/alg8：η=2 centered binomial（secret/noise）设备采样与 LUT；与 presample/alg7 链接成 prep 链。 / Alg.8 η=2 CBD prep helpers. 本文件 `f203_cbd_eta2.hpp` 为该子模块组件。 / Component: f203_cbd_eta2.hpp.

@@ -20,7 +20,7 @@
 
 - `examples/incubating/exp-sepolyvec8-ntt-k8/` — **纯 $k{=}8$** 批 NTT 回归对照（交错 S0；**非** KeyGen 集成）
 - `ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/` — Alg.13 行 16–20 向量全链路
-- `examples/incubating/exp-mlkem-f203-alg13-16171820-2s1e-k4/` — 同上【预研】
+- `examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/` — 同上【预研】
 
 ---
 

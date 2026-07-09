@@ -72,7 +72,7 @@ liboqs：`thirdparty/liboqs` tag **0.15.0**（静态 `liboqs.a`）；`scripts/bu
 | 活跃探针 | [`ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/`](../../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) |
 | 路线 | **AscendC 积木拼装**（INTEGRATION_PLAN Launch 表）；**已删 liboqs** |
 | G0 | marker launch 壳；`ENCRYPT_VERIFY=0` 默认 |
-| 定型交付 | 另建 `exp-mlkem-f203-pke-encrypt-k4` / `stable-*`（须 customspec） |
+| 定型交付 | 另建 `exp-fips203-mlkem-pke-encrypt-k4` / `stable-*`（须 customspec） |
 
 已更新：`ascendc-tests/INDEX.md`、`INTEGRATION_PLAN.md`、`STATUS.md`、`docs/notes/F203-KeyGen-exp交付示例技术总结.md` §5。  
 待手动：`examples/incubating/INDEX.md` 删除 exp-encrypt-correctness 行（工具权限受限）。

@@ -27,7 +27,7 @@
 \textbf{生产 I/O}：\texttt{input/} 仅 \texttt{SEED\_D} + NTT LUT；\texttt{output/} 仅 \texttt{ek\_PKE}(1568B)/\texttt{dk\_PKE}(1536B)。
 \textbf{Host 入口}：单进程 \texttt{ascendc\_keygen\_bbit}（\texttt{cmake/keygen}）；\textbf{2 次 device launch}（prep $\vert$ compute+行21融合）。
 源码 \textbf{vendored} 于本目录 \texttt{prep/}、\texttt{compute/}；仅共享 \texttt{library/shared} 的 SHAKE/Keccak。
-交付示例对照：\dirname{examples/incubating/exp-mlkem-f203-pke-keygen-k4/}（用户 I/O 契约相同，本探针为验证基线）。
+交付示例对照：\dirname{examples/incubating/exp-fips203-mlkem-pke-keygen-k4/}（用户 I/O 契约相同，本探针为验证基线）。
 全目录源文件含 \texttt{@probe} 注释块（见 \dirname{scripts/inject\_probe\_code\_comments.py}）。
 \end{abstract}
 

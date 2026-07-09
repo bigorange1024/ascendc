@@ -9,7 +9,7 @@
 | 项 | 约定 |
 |----|------|
 | **密码学位置** | KEM 增量步骤（`H(ek)`、采 `z`、拼 `dk_kem`）**全在 AI Core**；禁止 Host 胶水冒充生产输出 |
-| **PKE 来源** | Alg.13 → **stable** [`stable-mlkem-f203-pke-keygen-k4`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/)；本探针 **vendor 复制** launch/kernel，**不** `#include` stable 路径 |
+| **PKE 来源** | Alg.13 → **stable** [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/)；本探针 **vendor 复制** launch/kernel，**不** `#include` stable 路径 |
 | **Enc/Dec** | 本探针**不含**；后续 Alg.17/18 用 [`fix-f203-alg14`](../fix-f203-alg14-pke-encrypt-correctness-k4/) / [`fix-f203-alg15`](../fix-f203-alg15-pke-decrypt-correctness-k4/) |
 | **参数集表述** | 全文 **ml_kem_1024（k=4）**；勿与历史笔误「768」混用 |
 | **SHA3** | 设备路径经 `library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`（语义对齐 tiny_sha3）；Host tiny_sha3 **仅** golden / `VERIFY=1` |
@@ -67,7 +67,7 @@ ek_kem = ek_PKE                                                    → 1568B
 
 | **KeyGen_internal 段** | FIPS | 上游 | 本目录策略 |
 |-----------|------|------|------------|
-| **L0** PKE KeyGen 全链 | Alg.13 | [`stable-mlkem-f203-pke-keygen-k4`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) | **vendor** `prep/` + `compute/` + `main_keygen` 编排到 `vendor/pke_keygen/`（**复制**，非 `#include`） |
+| **L0** PKE KeyGen 全链 | Alg.13 | [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | **vendor** `prep/` + `compute/` + `main_keygen` 编排到 `vendor/pke_keygen/`（**复制**，非 `#include`） |
 | **L1** `H(ek)` | Hash | `fips203_device_sha3.hpp` → `Sha3OneShot(h, 32, ek, 1568)` | 新核 `f203_kem_kg_hash_ek` 或并入 L2 标量段 |
 | **L2** 采 `z` | Alg.19 行 2 + Alg.16 行 3 | **device UB**：与 `d` 同 session 内生成；**禁止** D2H / `output/z.bin` / GM 持久化 |
 | **L3** 拼 `dk_kem` | Alg.16 行 4 | GM `memcpy` 式拼接（AIV 标量） | `dk_pke‖ek‖h‖z` → `dk_kem.bin` |
@@ -247,7 +247,7 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 | 文档 | 链接 |
 |------|------|
 | PKE liboqs 交叉验证 | [`docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](../../docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md) |
-| stable KeyGen | [`examples/stable/stable-mlkem-f203-pke-keygen-k4/`](../../examples/stable/stable-mlkem-f203-pke-keygen-k4/) |
+| stable KeyGen | [`examples/stable/stable-fips203-mlkem-pke-keygen-k4/`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) |
 | 设备 SHA3 | [`library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`](../../library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp) |
 | SIM 约束 | [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md) |
 | 讨论纪要 | [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md) |

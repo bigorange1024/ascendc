@@ -63,4 +63,4 @@ BYTE_ENCODE12_PREFETCH=0 bash run.sh -r sim -v Ascend910B4
 
 ---
 
-*与 [STATUS.md](STATUS.md)、[qa/2026-06-19 纪要](../../qa/2026-06/2026-06-19-ByteEncode12-only探针与prefetch实验.md) §8–§9、[exp-k4 STATUS](../../examples/incubating/exp-mlkem-f203-alg13-16171820-2s1e-k4/STATUS.md) 同步。*
+*与 [STATUS.md](STATUS.md)、[qa/2026-06-19 纪要](../../qa/2026-06/2026-06-19-ByteEncode12-only探针与prefetch实验.md) §8–§9、[exp-k4 STATUS](../../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/STATUS.md) 同步。*

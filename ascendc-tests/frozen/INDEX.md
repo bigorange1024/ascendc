@@ -11,7 +11,7 @@
 
 细则见 [.cursor/rules/ascendc-development.mdc](../../.cursor/rules/ascendc-development.mdc) §`**/frozen/`**；研究型仓库说明见 [研究路线与frozen治理.md](../../docs/notes/研究路线与frozen治理.md)。examples 侧 frozen 见 [examples/frozen/INDEX.md](../../examples/frozen/INDEX.md)。
 
-**活跃 MLKEM 探针**：向量全链路 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)；预研 [`exp-k4`](../../examples/incubating/exp-mlkem-f203-alg13-16171820-2s1e-k4/) — 见 [MLKEM-NTT-向量与标量实现指南.md](../../docs/notes/MLKEM-NTT-向量与标量实现指南.md)。标量对照组已归档：[`frozen-fix-f203-2s1e-alg13-16171820-k4`](frozen-fix-f203-2s1e-alg13-16171820-k4/)。
+**活跃 MLKEM 探针**：向量全链路 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)；预研 [`exp-k4`](../../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) — 见 [MLKEM-NTT-向量与标量实现指南.md](../../docs/notes/MLKEM-NTT-向量与标量实现指南.md)。标量对照组已归档：[`frozen-fix-f203-2s1e-alg13-16171820-k4`](frozen-fix-f203-2s1e-alg13-16171820-k4/)。
 
 
 
@@ -25,7 +25,7 @@
 
 | 目录 | 原角色 | 归档原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg13-device-keygen-k4/](frozen-fix-f203-alg13-device-keygen-k4/) | Alg.13 全链 KeyGen（block0 串行 Â workaround） | SIM **≈886801**；非终态最优 | [`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) · [`exp-mlkem-f203-pke-keygen-k4`](../../examples/incubating/exp-mlkem-f203-pke-keygen-k4/) |
+| [frozen-fix-f203-alg13-device-keygen-k4/](frozen-fix-f203-alg13-device-keygen-k4/) | Alg.13 全链 KeyGen（block0 串行 Â workaround） | SIM **≈886801**；非终态最优 | [`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) · [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/) |
 
 ## 2026-06-28 — Phase A 全链 benchmark 归档（任务完成）
 

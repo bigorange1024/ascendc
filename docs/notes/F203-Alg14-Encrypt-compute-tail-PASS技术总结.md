@@ -69,7 +69,7 @@ INTT 输入须来自内积 **当次 UB**（`ProcessFromLocal`）；见 [`F203-En
 ## 5. 后继：全链 Encrypt（已交付）
 
 1. 全链设备探针：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + 本探针，SIM **2 launch**）
-2. **stable 交付**：[`stable-mlkem-f203-pke-encrypt-k4`](../../examples/stable/stable-mlkem-f203-pke-encrypt-k4/)（2026-07-09）
+2. **stable 交付**：[`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（2026-07-09）
 3. **验收权重**：无 NPU 时以 **SIM 为主参考**、CPU 为辅助 — 见 [`F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md`](F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)
 
 ---

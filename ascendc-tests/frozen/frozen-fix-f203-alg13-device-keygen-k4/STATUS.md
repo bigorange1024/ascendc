@@ -4,7 +4,7 @@
 
 **实现方案 PDF**：[`pass-fix-f203-alg13-device-keygen-k4-实现方案-customspec.tex`](pass-fix-f203-alg13-device-keygen-k4-实现方案-customspec.tex)（`bash ../../scripts/xelatex-clean.sh …`）
 
-## 生产 I/O（与 `exp-mlkem-f203-pke-keygen-k4` 一致）
+## 生产 I/O（与 `exp-fips203-mlkem-pke-keygen-k4` 一致）
 
 | 目录 | 内容 |
 |------|------|

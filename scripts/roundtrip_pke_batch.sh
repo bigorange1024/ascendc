@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # roundtrip_pke_batch.sh — Encrypt→Decrypt 闭环批跑（默认 CPU×10 + SIM×1）
 #
-# Encrypt 默认 exp-mlkem-f203-pke-encrypt-k4；Decrypt 默认 alg15 correctness。
+# Encrypt 默认 exp-fips203-mlkem-pke-encrypt-k4；Decrypt 默认 alg15 correctness。
 # 每轮随机 SEED_D；KeyGen 密钥须已存在，或 ROUNDTRIP_BOOTSTRAP_KEYGEN=1。
 #
 #   bash scripts/roundtrip_pke_batch.sh

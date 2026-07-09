@@ -1,4 +1,4 @@
-// @probe stable-mlkem-f203-pke-keygen-k4
+// @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/f203_a_hat16_ub.hpp
 // @layer prep
 // @role prep/ahat：设备侧生成矩阵 A_hat（FIPS203 Alg.6/布局 f203_a_hat16）；AIV-only UB 流水，为 compute MMAD 提供 a_hat GM。 / Device A_hat generation for keygen prep. 本文件 `f203_a_hat16_ub.hpp` 为该子模块组件。 / Component: f203_a_hat16_ub.hpp.
