@@ -103,4 +103,6 @@ correctness 探针的 T7b 对齐仍待。
 | `exp-mlkem-f203-stage{1,3}-*` | `exp-fips203-mlkem-pke-stage{1,3}-*` |
 | `stable-mlkem-f203-pke-{keygen,encrypt}-k4` | `stable-fips203-mlkem-pke-{keygen,encrypt}-k4` |
 
-**未改**：derand 域分隔符 `exp-mlkem-f203-2s1e-k4:SEED_D=`（密码学契约）；`ascendc-tests/` 探针名；`exp-sepolyvec8-ntt-k8`；`examples/frozen/` 历史名。
+**未改**：derand 域分隔符 `exp-mlkem-f203-2s1e-k4:SEED_D=`（密码学契约）；`ascendc-tests/` 探针名；`exp-sepolyvec8-ntt-k8`；`examples/frozen/` 历史目录名（判决书「原路径」字段保留）。
+
+**引用同步（同日续）**：`.cursor/skills/{INDEX,ascendc-impl-spec}` Stage1/3 → `exp-fips203-…`；Stage12 customspec / API 查阅索引 / `docs/notes/F203-Stage12*` 中 incubating 死链 → `examples/frozen/frozen-exp-…`。

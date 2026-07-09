@@ -77,7 +77,7 @@ AIV Stage1 写 workspace ──CrossCore──► AIC Stage2 读 workspace 写 m
 
 | 项 | 内容 |
 |----|------|
-| 用例 | `exp-mlkem-f203-stage12-encode-matmul-mix`（frozen） |
+| 用例 | `examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix`（原 incubating 已关闭） |
 | 现象 | CPU 在 `[TmSim]` 后长时间无输出 |
 | 对比 | Stage2 隔离 <10s 成功 |
 | 判决 | NTT 内 `Matmul<>` 融合路线废弃；见 [NTT-Matmul路线废弃说明.md](NTT-Matmul路线废弃说明.md) |

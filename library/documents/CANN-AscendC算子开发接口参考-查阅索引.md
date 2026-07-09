@@ -81,7 +81,7 @@
 
 | 查阅主题 | PDF / 在线位置 | 概括 |
 |----------|----------------|------|
-| **Stage12 customspec** | — | [`exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex)：Stage1 encode + Stage2 Matmul；`KERNEL_TYPE_MIX_AIC_1_2`；`blockDim=1`；`CrossCore*` S1→S2。 |
+| **Stage12 customspec** | — | [`exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex`](../../examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix/exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex)（**已 frozen**，原 incubating 路径已关闭）：Stage1 encode + Stage2 Matmul；`KERNEL_TYPE_MIX_AIC_1_2`；`blockDim=1`；`CrossCore*` S1→S2。 |
 | **CrossCoreSetFlag / CrossCoreWaitFlag** | API 列表 $\approx$p.15–16 | S1 AIV→AIC、S2 AIC→AIV pack；参考 [`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/mmad_custom.cpp)。 |
 | **Matmul / REGIST_MATMUL_OBJ** | Matmul 教程；Stage2 隔离用例 | `int8×int8→int32`；`aicore=1` tiling 闭合。 |
 | **Stage1 向量 API** | 见 Stage1 customspec 查阅记录 | encode 主路径 100\% 向量。 |

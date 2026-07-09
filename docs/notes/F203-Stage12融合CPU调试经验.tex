@@ -24,10 +24,11 @@
 \maketitle
 
 \begin{abstract}
-本文档记录 \dirname{examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/}
-在 CANN 9.0.0、Ascend910B4 CPU 孪生路径上，从\textbf{长时间挂死}到\textbf{对拍通过}
+本文档记录 \dirname{examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix/}
+（原 incubating 路径已关闭）在 CANN 9.0.0、Ascend910B4 CPU 孪生路径上，从\textbf{长时间挂死}到\textbf{对拍通过}
 的完整调试过程。涵盖现象、根因、分步排查、最终方案，以及可复用的失败/成功经验。
 真机单趟 MIX 融合待 NPU 实测；CPU 路径采用两趟 launch（encode $\rightarrow$ 隔离 Cube Matmul）。
+\textbf{说明}：该路线已判决关闭，本文仅作历史调试实录；勿从 frozen 抄码。
 
 \textbf{勘误}：\dirname{exp-sepolyvec8-ntt-k8} 全链 CPU \textbf{未跑通}（与 Stage12 同类的 MIX+CrossCore 挂死，10\,s 计算预算内无结果）。
 本文此前误写为「已通过」，以本文修订为准。
@@ -60,7 +61,7 @@ Golden 由 \texttt{mlkem\_ref.encode\_mat\_a} + \texttt{matmul\_int8\_i32} 生�
     用例 & CPU 耗时 & 说明 \\
     \midrule
     \dirname{exp-fips203-mlkem-pke-stage1-encode-vec} & 数秒 & 纯 AIV encode \\
-    \dirname{exp-mlkem-f203-stage2-int8-matmul-cube} & 计算 $<$10\,s & 纯 Cube Matmul，CPU 已通过 \\
+    \dirname{examples/frozen/frozen-exp-mlkem-f203-stage2-int8-matmul-cube} & 计算 $<$10\,s & 纯 Cube Matmul，CPU 已通过 \\
     \dirname{exp-sepolyvec8-ntt-k8} & 超时 & Stage1+2+3 全融合，CPU \textbf{未通过}（MIX 单趟挂死） \\
     \bottomrule
   \end{tabular}
@@ -259,12 +260,13 @@ AIV encode $\rightarrow$ \apiname{CrossCoreSetFlag} $\rightarrow$ AIC \apiname{C
   \end{tabular}
 \end{table}
 
-验证命令：
+验证命令（历史；路线已 frozen，勿作活跃验收）：
 \begin{verbatim}
-cd examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix
+cd examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix
 bash run.sh -r cpu -v Ascend910B4 --aicore 1
 \end{verbatim}
 
-相关路径：\dirname{examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/STATUS.md}。
+相关路径：\dirname{examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix/STATUS.md}、
+\dirname{examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix/FROZEN.md}。
 
 \end{document}

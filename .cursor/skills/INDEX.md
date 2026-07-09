@@ -41,8 +41,8 @@
 
 | 用例 | 路径 |
 |------|------|
-| F203 Stage1 纯向量 | `examples/incubating/exp-mlkem-f203-stage1-encode-vec/exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.tex` |
-| F203 Stage3 预研 | `examples/incubating/exp-mlkem-f203-stage3-routea-mod-vec/exp-mlkem-f203-stage3-routea-mod-vec-实现方案-customspec.tex` |
+| F203 Stage1 纯向量 | `examples/incubating/exp-fips203-mlkem-pke-stage1-encode-vec/exp-fips203-mlkem-pke-stage1-encode-vec-实现方案-customspec.tex` |
+| F203 Stage3 预研 | `examples/incubating/exp-fips203-mlkem-pke-stage3-routea-mod-vec/exp-fips203-mlkem-pke-stage3-routea-mod-vec-实现方案-customspec.tex` |
 | F203 批 NTT k=8 | `examples/incubating/exp-sepolyvec8-ntt-k8/exp-sepolyvec8-ntt-k8-实现方案.tex`（规格书；实现已对齐 poly8 探针） |
 
 ## 冲突

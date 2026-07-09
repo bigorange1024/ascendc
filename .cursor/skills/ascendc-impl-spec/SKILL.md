@@ -37,9 +37,9 @@
 
 | 用例 | customspec 路径 |
 |------|-----------------|
-| Stage1 纯向量（100% 向量覆盖） | `examples/incubating/exp-mlkem-f203-stage1-encode-vec/exp-mlkem-f203-stage1-encode-vec-实现方案-customspec.tex` |
-| Stage3 预研（标量缺口标明） | `examples/incubating/exp-mlkem-f203-stage3-routea-mod-vec/exp-mlkem-f203-stage3-routea-mod-vec-实现方案-customspec.tex` |
-| Stage1+2 融合（MIX，aicore=1） | `examples/incubating/exp-mlkem-f203-stage12-encode-matmul-mix/exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex` |
+| Stage1 纯向量（100% 向量覆盖） | `examples/incubating/exp-fips203-mlkem-pke-stage1-encode-vec/exp-fips203-mlkem-pke-stage1-encode-vec-实现方案-customspec.tex` |
+| Stage3 预研（标量缺口标明） | `examples/incubating/exp-fips203-mlkem-pke-stage3-routea-mod-vec/exp-fips203-mlkem-pke-stage3-routea-mod-vec-实现方案-customspec.tex` |
+| Stage1+2 融合（MIX，aicore=1；**已 frozen**） | `examples/frozen/frozen-exp-mlkem-f203-stage12-encode-matmul-mix/exp-mlkem-f203-stage12-encode-matmul-mix-实现方案-customspec.tex` |
 
 推荐命名：`<exp 目录名>-实现方案-customspec.<ext>`，与用例同目录。
 
@@ -113,7 +113,7 @@
   bash scripts/xelatex-clean.sh <path>-customspec.tex
   ```
   保留 `.tex` + `.pdf`，删除中间文件（见 Rule「LaTeX / PDF」）
-- **`.tex` 长表排版（强制）**：凡含 API 名/长标识符的 `longtable`，**必须**与 `exp-mlkem-f203-stage1-encode-vec-*-customspec.tex` 一致：
+- **`.tex` 长表排版（强制）**：凡含 API 名/长标识符的 `longtable`，**必须**与 `exp-fips203-mlkem-pke-stage1-encode-vec-*-customspec.tex` 一致：
   - `\usepackage{array}` + `\usepackage{seqsplit}`
   - `\newcolumntype{L}[1]{...}` 列宽 + `\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}`；目录名用 `\dirname{exp-...}` 同样断行
   - **禁止**裸 `p{...}` 塞长 `\texttt{API1/API2/...}` 或长 `exp-*` 路径；每个 API **单独一行**
