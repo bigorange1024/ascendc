@@ -17,7 +17,7 @@ FIPS 203 **Algorithm 20 `ML-KEM.Encaps(ek)`**（**ml_kem_1024 / k=4**）；经 *
 | 段 | 来源 | 状态 |
 |----|------|------|
 | Alg.19 KeyGen | [`fix-f203-alg19-kem-keygen-k4`](../fix-f203-alg19-kem-keygen-k4/) | **PASS**（供给 `ek_kem`） |
-| Alg.14 Encrypt G5 | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | CPU+SIM **PASS** |
+| Alg.14 Encrypt G5（vendor） | [`frozen-fix-f203-alg14-pke-encrypt-correctness-k4`](../frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) → `vendor/pke_encrypt/` | 冻结快照；stable **布局不兼容**；重构见 **T19a**（`qa/TODO.md`） |
 | 设备 SHA3 | [`library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`](../../library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp) | KeyGen/Encrypt 已用 |
 
 ## 验收

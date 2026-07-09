@@ -8,7 +8,7 @@
 |------|------|
 | 本目录 `vendor/`、`kem/`、`cmake/`、`scripts/` | `#include` / import **其它探针或 example** 源码路径 |
 | `library/shared/`（SHA3/SHAKE） | 运行时 `liboqs` 进默认 `run.sh` |
-| `vendor_sync_from_alg14_encrypt.sh` + `vendor_sync_from_alg15_decrypt.sh` | 子进程调 alg14/15/19/20 的 `run.sh` 作生产全链 |
+| `vendor_sync` ← **frozen** alg14 G5 + alg15 G4（非 stable 1-kernel） | 子进程调 frozen/stable/alg19/20 `run.sh` 作生产全链 |
 | 仓库 `scripts/sim_env.sh`、`kernel-run-timeout.sh` | Host `tiny_sha3` / liboqs 写 `K.bin` |
 | vendored `main_encrypt_g5_run.cpp`（**仅 SIM host 编排**，非跨探针 `#include`） | — |
 

@@ -32,7 +32,7 @@
 | [F203-ByteEncode-ByteDecode-d-向量与标量选型.md](F203-ByteEncode-ByteDecode-d-向量与标量选型.md) | **ByteEncode/ByteDecode_d** 宏分层（VEC=0/1/2）、tail **Compress 向量 + Encode 标量 pack**、VEC=2 实验不采纳、Decrypt 链 |
 | [F203-PKE-liboqs交叉验证与Compress定点技术总结.md](F203-PKE-liboqs交叉验证与Compress定点技术总结.md) | **PKE L2 liboqs** oracle、`Compress_d` 定点 bias（d=5 `(1<<26)`） |
 | [F203-KEM-Alg19-KeyGen设备全链技术总结.md](F203-KEM-Alg19-KeyGen设备全链技术总结.md) | **Alg.19 KEM KeyGen** 随机性契约、KeyGen_internal 增量、3168B dk 契约、vendor PKE + 设备 SHA3；[`fix-f203-alg19-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
-| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps** 设备全链、FO、SIM **`ASCENDC_SIM_HOST_MODE=decaps_2session`**；[`fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
+| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps** 设备全链、FO、SIM **`decaps_2session`**；vendor **暂** frozen G4+G5（**T19** 对齐 stable）；[`fix-f203-alg21-kem-decaps-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
 | [F203-Encrypt-compute-行18-19-UB驻留技术总结.md](F203-Encrypt-compute-行18-19-UB驻留技术总结.md) | **Alg.14 compute** 内积→INTT **UB 驻留**、MIX GATE 握手、SIM 标量/MTE 可见性；[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) |
 
 ## AscendC 平台

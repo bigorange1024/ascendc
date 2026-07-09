@@ -66,4 +66,29 @@
 | `fix-f203-alg14-pke-encrypt-correctness-k4` | `frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/` | `stable-fips203-mlkem-pke-encrypt-k4` |
 | `fix-f203-alg15-pke-decrypt-correctness-k4` | `frozen/frozen-fix-f203-alg15-pke-decrypt-correctness-k4/` | `stable-fips203-mlkem-pke-decrypt-k4` |
 
-原因：**正确性验证任务已完成**。全仓调用/`ENCRYPT_DIR`/`DECRYPT_DIR`/vendor_sync/文档链接改指向 stable；历史深链（如 `G3_SIM_AUDIT.md`）改指向 frozen 归档。
+原因：**正确性验证任务已完成**。全仓调用/`ENCRYPT_DIR`/`DECRYPT_DIR`/文档链接改指向 stable；历史深链（如 `G3_SIM_AUDIT.md`）改指向 frozen 归档。
+
+### 更正：KEM alg20/21 的 vendor_sync **不能**改指向 stable
+
+冻结时曾把 `fix-f203-alg20/21` 的 `vendor_sync` SRC 改成 stable，**布局不兼容**：
+
+| 探针需要 | stable | frozen correctness |
+|----------|--------|--------------------|
+| Encrypt `pack/` + G5 host | **无** | **有** |
+| Decrypt **2-launch G4** | 1-kernel fused | **有** |
+
+**已改回**：alg20/21 `vendor_sync` → `frozen-fix-f203-alg14/15-*-correctness-k4`（仅拼装快照；`ENCRYPT_DIR`/`DECRYPT_DIR` 仍用 stable）。`FROZEN.md` / `frozen/INDEX.md` 记明该例外。
+
+### 待办：KEM 算子重构对齐 stable（**T19**）
+
+后续须重构 KEM 探针接线，使 vendor **吃 stable PKE**，不再依赖 frozen G5/G4：
+
+| ID | 内容 |
+|----|------|
+| **T19a** | Alg.20 Encaps ← stable Encrypt 布局 |
+| **T19b** | Alg.21 Phase-E ← 同上 |
+| **T19c** | Alg.21 Phase-D ← stable Decrypt fused（或改 host） |
+| **T19d** | Alg.19 复核（已 vendor stable KeyGen） |
+| **T19e** | 去掉 frozen 作 KEM sync 源；刷新 FROZEN/notes |
+
+总表：[`qa/TODO.md`](../TODO.md) **T19**。在此之前 **禁止** 再把 `vendor_sync` SRC 静默改回 stable。

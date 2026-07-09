@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-10 — [Decrypt `#交付#` → stable · 冻结 correctness](2026-07/2026-07-10-Decrypt交付stable.md)
+### 2026-07-10 — [Decrypt `#交付#` → stable · 冻结 correctness · KEM T19](2026-07/2026-07-10-Decrypt交付stable.md)
 
-**stable Decrypt** · **冻结 alg14/15 correctness**（继任 stable Encrypt/Decrypt）· PKE 三段齐备 · T15a/T15c/T7b 关闭
+**stable Decrypt** · **冻结 alg14/15 correctness** · KEM vendor **改回 frozen G5/G4**（stable 布局不兼容）· **T19** KEM↔stable 重构待办 · T15a/T15c/T7b 关闭
 
 ### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt `#交付#`](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 

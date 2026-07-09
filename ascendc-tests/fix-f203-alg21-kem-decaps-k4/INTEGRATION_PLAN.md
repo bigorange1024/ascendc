@@ -35,7 +35,7 @@ K   ← K'                         if c = c'
 |--------|------|
 | **设备全链** | 默认 `run.sh`：`dk_kem`+`c` → device 全链 → **仅** `output/K.bin` |
 | **输入来源** | `gen_data` **复制** alg19 `dk_kem.bin` + alg20 `c.bin`（`DK_KEM_SRC`/`C_SRC`）；**不**内嵌 KeyGen/Encaps launch |
-| **拼装** | vendor **alg15 G4** + **alg14 G5** + `kem/` FO 钩子；禁止跨探针 `#include` |
+| **拼装** | vendor **alg15 G4** + **alg14 G5**（源见下）+ `kem/` FO 钩子；禁止跨探针 `#include` |
 | **单 session** | **目标**：一次 `aclInit` / 一个 `stream`（对齐 alg15/20）。**首版 SIM 例外**：见 §11（两段 session workaround） |
 | **func_key** | 合并 binary 后 **AIV-only 仍须 ≤5**（§4.3 核心设计约束） |
 | **中间态** | `m'`/`c'`/`K'` **仅 GM/UB**；**禁止**生产路径落盘（`KEM_DECAPS_VERIFY=1` gate 脚本可读 GM dump env，非默认） |
@@ -63,12 +63,19 @@ K   ← K'                         if c = c'
 
 | Decaps 段 | FIPS | vendor 源 | 本目录 |
 |-----------|------|-----------|--------|
-| **D0** unpack + decode ŝ | Alg.15 | alg15 `g4_prep` | `vendor/pke_decrypt/` |
-| **D1** NTT(u)+su_dot+INTT→m' | Alg.15 | alg15 `chain_ntt`/`chain_intt` | 同上 |
+| **D0** unpack + decode ŝ | Alg.15 | frozen alg15 G4 `g4_prep` | `vendor/pke_decrypt/` |
+| **D1** NTT(u)+su_dot+INTT→m' | Alg.15 | frozen alg15 `chain_ntt`/`chain_intt` | 同上 |
 | **K0** 解析 dk 切片 | Alg.18 | **新** `kem/f203_kem_dec_layout.hpp` | 标量/GMM 偏移常量 |
 | **K1** `G(m'‖h)` | Alg.18 | `fips203_device_sha3.hpp` | **嵌入** §4.3 |
-| **E0** Encrypt G5 全链 | Alg.14 | alg14 G5（含 `Compress_5 (1<<26)`） | `vendor/pke_encrypt/` |
+| **E0** Encrypt G5 全链 | Alg.14 | frozen alg14 G5（含 `Compress_5 (1<<26)`） | `vendor/pke_encrypt/` |
 | **K2** `c` vs `c'` + `J(z‖c)` + 选 K | Alg.18 | **新** `kem/f203_kem_dec_fo.hpp` | **嵌入** §4.3 |
+
+**vendor 同步源（锁定）**：
+
+| 树 | `vendor_sync` 源 | 为何不是 stable |
+|----|------------------|-----------------|
+| Encrypt G5 | [`frozen-fix-f203-alg14-pke-encrypt-correctness-k4`](../frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) | stable Encrypt **无** `pack/` / `main_encrypt_g5_run` |
+| Decrypt G4 | [`frozen-fix-f203-alg15-pke-decrypt-correctness-k4`](../frozen/frozen-fix-f203-alg15-pke-decrypt-correctness-k4/) | stable Decrypt 为 **1-kernel fused**；本探针 Phase-D 仍 **2-launch** |
 
 **禁止**：从 alg20 复制 `kem_enc_prep_re`（Encaps 采 `m`）；Decaps 的 `m'` 来自 Decrypt，`coins` 来自 `G(m'‖h)` 后半。
 

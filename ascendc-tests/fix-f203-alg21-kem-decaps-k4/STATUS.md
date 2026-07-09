@@ -16,6 +16,8 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`**（**ml_kem_1024 / k=4**）。
 | **阶段** | **单设备库 + SIM 默认 2-session**（2026-07-03）：CPU 单 session `K max=0` **PASS**；SIM 默认 `ASCENDC_SIM_HOST_MODE=decaps_2session`（或 unset）→ `K max=0` **PASS** |
 | **I/O** | `dk_kem` **3168B** · `c` **1568B** · `K` **32B** |
 | **输入来源** | alg19 `dk_kem.bin` + alg20 `c.bin`（`SEED_D=20260619`） |
+| **vendor Encrypt** | frozen alg14 G5 → `vendor/pke_encrypt/`（**T19b** → stable Encrypt） |
+| **vendor Decrypt** | frozen alg15 G4 → `vendor/pke_decrypt/`（**T19c** → stable Decrypt fused） |
 
 ## 2026-07-02 单库合并（家里 agent · SIM 单 session 修复）
 

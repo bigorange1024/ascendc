@@ -58,8 +58,8 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 |------|------|
 | **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
 | [**fix-f203-alg19-kem-keygen-k4/**](fix-f203-alg19-kem-keygen-k4/) | **Alg.19 KEM KeyGen ✅**（d/z UB + vendor PKE + KeyGen_internal 尾段）；CPU+SIM+liboqs max=0；SIM **742558** tick |
-| [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（`ek`←alg19 · vendor Encrypt G5 · KEM 头并入 prep_re）；**CPU+SIM PASS** | ✓ | ✓ |
-| [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（dk+c→K；vendor D+E + **设备 FO**）；单设备库 · CPU 单 session `K max=0` PASS · **SIM 默认 2-session `K max=0` PASS** · 拒绝路径 `K=J(z‖c)` CPU PASS | ✓ | ✓（2-session） |
+| [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（vendor Encrypt **G5←frozen**；**T19a**→stable）；**CPU+SIM PASS** | ✓ | ✓ |
+| [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（vendor D←frozen G4 + E←frozen G5；**T19b/c**→stable；设备 FO）；SIM 默认 **2-session** PASS | ✓ | ✓（2-session） |
 
 **KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 2-session ~11min/段。
 

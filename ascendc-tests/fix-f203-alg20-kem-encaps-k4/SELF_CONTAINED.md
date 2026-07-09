@@ -9,7 +9,7 @@
 | 本目录 `vendor/`、`cmake/`、`scripts/` | `#include` / import **其它探针或 example** 源码路径 |
 | `#include` **`library/shared/`** | 运行时 `LD_LIBRARY_PATH` → `thirdparty/liboqs` |
 | 仓库级 `scripts/sim_env.sh`、`kernel-run-timeout.sh` | **`oqs.h` 出现在默认验收路径** |
-| 从 **alg14 vendor 复制** Encrypt G5 到 `vendor/pke_encrypt/` | 子进程 `bash ../fix-f203-alg14/.../run.sh` 作默认全链 |
+| 从 **frozen alg14 G5** `vendor_sync` 到 `vendor/pke_encrypt/`（非 stable Encrypt） | 子进程调 frozen/stable `run.sh` 作默认全链 |
 | **`gen_data` 只读复制** alg19 的 `output/ek_kem.bin` 到 `input/` | 本探针内嵌 Alg.19 KeyGen launch |
 
 **公钥**：`input/ek_kem.bin` 是 **KEM KeyGen 产物文件**，不是 Host 重算或 liboqs 生成。

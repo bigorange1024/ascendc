@@ -84,6 +84,8 @@ Alg.19 KeyGen **不重写** NTT、内积、ByteEncode₁₂ 等 PKE 设备核（
 
 **vendor 治理**：`vendor/pke_keygen/` 由 stable 同步复制；G1 Gate 要求同 `SEED_D` 下 `ek_pke`/`dk_pke` 与 stable 输出 max=0。
 
+> **对照 Encaps/Decaps（2026-07-10）**：Alg.19 已对齐 stable KeyGen；Alg.20/21 仍 vendor frozen Encrypt/Decrypt G5/G4（布局债）。统一收口见 [qa/TODO.md](../../qa/TODO.md) **T19**（本探针复核为 **T19d**）。
+
 ---
 
 ## 4. SHA3 设备分层（可替换后端）

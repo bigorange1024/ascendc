@@ -6,6 +6,13 @@
 
 > **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
 >
+> **2026-07-10 更新（vendor 源与重构债）**：
+> - PKE 交付已是 **stable** Encrypt/Decrypt；本探针 Phase-D/E 的 `vendor_sync` **仍**指向  
+>   [`frozen-fix-f203-alg15-pke-decrypt-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg15-pke-decrypt-correctness-k4/)（**2-launch G4**）与  
+>   [`frozen-fix-f203-alg14-pke-encrypt-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/)（**G5** `pack/`）。  
+> - **原因**：stable Encrypt 无 G5 `pack/`+`main_encrypt_g5_run`；stable Decrypt 为 **1-kernel fused**，与本探针 host 编排不兼容。  
+> - **待办**：[qa/TODO.md](../../qa/TODO.md) **T19**（T19a–e）重构接线后，vendor 改吃 stable，并撤销 frozen 作 KEM sync 源的例外。
+>
 > **2026-07-08 更新（SIM host 选项统一）**：
 > - SIM 生产默认改为 **`ASCENDC_SIM_HOST_MODE=decaps_2session`**（`run.sh` export；unset 等价）；排障 **`decaps_1session`**。
 > - Host 判断：`ascendc::SimHostDecapsUse2Session()`（`ascendc_build_mode.hpp`）；**废弃**在新代码使用 `KEM_DECAPS_SIM_2SESSION`（头文件内临时兼容旧脚本）。
@@ -97,9 +104,9 @@ Decaps 的算力主体不是 KEM 尾段，而是：
 
 | 阶段 | 来源 | 作用 |
 |------|------|------|
-| Phase-D | Alg.15 Decrypt vendor | `dk_pke + c → m'` |
+| Phase-D | Alg.15 Decrypt vendor（**现状** frozen G4；**T19c** → stable fused） | `dk_pke + c → m'` |
 | K1 | 新增 KEM 设备逻辑 | `G(m'||h) → K', r'` |
-| Phase-E | Alg.14 Encrypt G5 vendor | `ek + m' + r' → c'` |
+| Phase-E | Alg.14 Encrypt vendor（**现状** frozen G5；**T19b** → stable Encrypt） | `ek + m' + r' → c'` |
 | K2 | 新增 KEM FO 逻辑 | `c` vs `c'`，选择 `K'` 或 `J(z||c)` |
 
 因此调试要先把 PKE 两端当作已验收黑盒，只在接口张量上定位问题：`m'`、`K'`、`coins`、`c'`、`K`。

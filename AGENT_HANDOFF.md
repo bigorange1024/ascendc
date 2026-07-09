@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-10（**PKE 三段 stable 齐备**；`qa/TODO.md` 主线切 **KEM Alg.19–21**）
+> **最后刷新**：2026-07-10（PKE 三段 stable；KEM vendor **暂** frozen G5/G4；**T19** 待重构对齐 stable）
 
 ---
 
@@ -60,11 +60,13 @@
 
 ## ★ 下一任务（P0）
 
-1. **Alg.21 Decaps** 单 session SIM 真修（`at_r5` 首错 / func_key `nm` 审计）
-2. **NPU 实机**（全链）
-3. KEM Alg.19/20 **`#交付#`**（视产品节奏）
+1. **T19 — KEM 探针重构对齐 stable PKE**（见 `qa/TODO.md` T19a–e）  
+   - 现状：alg20/21 `vendor_sync` ← frozen correctness（G5 / 2-launch G4）；stable Encrypt/Decrypt **布局不兼容** drop-in  
+   - 目标：Encaps/Decaps vendor 吃 [`stable-…-encrypt/decrypt-k4`](examples/stable/)；完成后去掉 frozen 作 sync 源  
+2. **Alg.21** 单 session SIM 真修（宜在 T19 后；`at_r5` / func_key）
+3. **NPU 实机**；KEM Alg.19/20 **`#交付#`**（视产品节奏）
 
-**禁止**：从 `frozen/` 抄码；擅自改已锁定 I/O/tiling。
+**禁止**：未改接线就把 `vendor_sync` SRC 指回 stable；从 frozen **抄码改写**冒充新实现（当前 rsync 拼装快照除外，直至 T19e）。
 
 ---
 

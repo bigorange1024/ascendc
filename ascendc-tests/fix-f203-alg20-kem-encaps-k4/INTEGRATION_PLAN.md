@@ -10,7 +10,7 @@
 |----|------|
 | **密码学位置** | KEM 增量（`m` 采样、`H(ek)`、`G(m‖H(ek))`、输出 `K`）与 **Alg.14 Encrypt 全链**均在 **AI Core**；禁止 Host 胶水冒充 `c`/`K` |
 | **封装公钥 `ek`** | **读 KEM KeyGen 产出**：[`fix-f203-alg19-kem-keygen-k4`](../fix-f203-alg19-kem-keygen-k4/) 的 `output/ek_kem.bin`（1568B，与 `ek_PKE` 同布局）；**非**单独再跑 PKE KeyGen、**非** Host 调 liboqs 写 `ek` |
-| **PKE Encrypt 来源** | Alg.14 G5 → [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)；本探针 **vendor 复制** launch/kernel，**不** `#include` alg14 路径 |
+| **PKE Encrypt 来源** | Alg.14 **G5 拼装树** → vendor 自 [`frozen-fix-f203-alg14-pke-encrypt-correctness-k4`](../frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/)（`vendor_sync`）；**非** drop-in [`stable-…-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（stable 无 `pack/` / `main_encrypt_g5_run`） |
 | **KeyGen 关系** | 与 alg19 **解耦目录**；验收时 **同 `SEED_D`** 先 KeyGen 再 Encaps，Encaps 仅消费 `ek_kem.bin` |
 | **参数集表述** | 全文 **ml_kem_1024（k=4）** |
 | **SHA3** | 设备路径经 `library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp`；`H` = SHA3-256，`G` = SHA3-512 |
@@ -87,7 +87,7 @@ bash run.sh -r cpu -v Ascend910B4
 | **L3** PKE Encrypt | Alg.14 | alg14 G5 vendor | `ek`+`m`+`r` → `c`；SIM 参考 tick **~922441** |
 | **L4** 写输出 | Alg.20 | GM | `c.bin`、`K.bin` |
 
-**vendor 同步源**：[`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（须含 **Compress_5 `(1<<26)`** 修复版 pack）。
+**vendor 同步源**：[`frozen-fix-f203-alg14-pke-encrypt-correctness-k4`](../frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/)（G5：`prep`/`compute`/`pack`；含 **Compress_5 `(1<<26)`**）。交付 [`stable-…-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) 布局不同，**不可**直接作本探针 vendor 源。
 
 ---
 
@@ -243,7 +243,8 @@ bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4   # 实现后含 enc
 | 文档 | 链接 |
 |------|------|
 | Alg.19 KeyGen 探针 | [`fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md`](../fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md) |
-| Alg.14 Encrypt G5 | [`stable-fips203-mlkem-pke-encrypt-k4/INTEGRATION_PLAN.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/INTEGRATION_PLAN.md) |
+| Alg.14 Encrypt G5（vendor 快照） | [`frozen-fix-f203-alg14-pke-encrypt-correctness-k4/`](../frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) |
+| 交付 Encrypt（I/O 继任，非本探针 vendor） | [`stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
 | KEM KeyGen 原理 | [`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md) |
 | func_key / SIM | [`docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md`](../../docs/notes/AscendC-CAModel-SIM-funckey与单session约束知识库.md) |
 | 讨论 | [`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §4 |
