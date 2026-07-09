@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @brief pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt host 编排（Alg.14 行 3–24）。
+ * @brief pass-fix-f203-alg14-pke-encrypt-device-k4 — 完整 Encrypt host 编排（Alg.14 行 1–22）。
  *
  * 输入 ek_pke + m + coins（锁定 SEED_D=20260619）→ 设备产 c = c₁‖c₂（1568B）。
  * 两上游 PASS 探针在**单 device session、GM handoff（零拷贝）**下串联：

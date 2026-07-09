@@ -4,7 +4,7 @@
 
 **种子（已锁定）**：全链唯一种子 **`SEED_D=20260619`**；输入与 golden 复制自 [`fix-f203-alg14-pke-encrypt-correctness-k4`](../fix-f203-alg14-pke-encrypt-correctness-k4/)。单段探针各自种子（prep `20260706`、compute+tail `20260708`）**不**用于本全链。
 
-**目标**：FIPS 203 Alg.14 **行 3–24 全设备 Encrypt** — `ek_pke` + `m` + `coins` → `c`（1568B，ML-KEM-1024）。
+**目标**：FIPS 203 Alg.14 **完整 K-PKE.Encrypt（行 1–22）** — `ek_pke` + `m` + `coins` → **仅** `c`（1568B，ML-KEM-1024）。
 
 ## 验收证据（2026-07-08）
 
@@ -53,7 +53,8 @@ bash run.sh -r sim -v Ascend910B4   # 默认即 CAModel 金标；无需手动 SI
 ```
 
 - 对拍：`output/c.bin` vs `golden/c.bin`（**CPU ∧ SIM** max=0）；`output/` 仅密文 c（u/v 不落盘）
-- 依赖 correctness 探针现成 `input/{ek_pke,m,coins}` + `output/golden_c.bin`（gen_data 复制；缺失则先在 correctness 目录跑一次）
+- `gen_data.py` **自包含**：优先复用 correctness 产物；缺失时本目录用 `SEED_D=20260619` 自生成 ek/m/coins/golden_c
+- 默认 `ENCRYPT_SKIP_REBUILD=1`、`CMAKE_BUILD_JOBS=2`；强制重编：`ENCRYPT_FORCE_REBUILD=1`
 
 ## 禁止
 

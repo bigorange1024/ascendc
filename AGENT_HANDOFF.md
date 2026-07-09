@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-09（**Encrypt PASS 探针 `run.sh` 默认自动 `SIM_DIRECT=1`** · 验收命令勿再要求手动 export · 全链 `pass-fix-f203-alg14-pke-encrypt-device-k4`）
+> **最后刷新**：2026-07-09（**`exp-mlkem-f203-pke-encrypt-k4`【预研】CPU+SIM PASS** tick≈627k；探针 T7b；路线 11 关闭）
 
 ---
 
@@ -18,9 +18,20 @@
 
 ---
 
-## ★ 当前真相（Encrypt + KEM，2026-07-08）
+## ★ 当前真相（Encrypt + KEM，2026-07-09）
 
-### Alg.14 完整 K-PKE.Encrypt（全链设备）— **完成（CPU+SIM）** ★头条
+### Alg.14 Encrypt — **examples 预研 PASS** ★头条
+
+用例：[`examples/incubating/exp-mlkem-f203-pke-encrypt-k4`](examples/incubating/exp-mlkem-f203-pke-encrypt-k4/)  
+规格：[`…-实现方案-customspec.tex`](examples/incubating/exp-mlkem-f203-pke-encrypt-k4/exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex)
+
+| 项 | 内容 |
+|----|------|
+| I/O | in `ek_pke`+`m`+`coins` → **out 仅 `c`**；Â/y/u/v **不落盘** |
+| 验收 | CPU+SIM `c` max=0；SIM tick **627614**；0 stray dump |
+| 下一跳 | `#交付#` → `stable-mlkem-f203-pke-encrypt-k4`（**T14a**） |
+
+### Alg.14 完整 K-PKE.Encrypt（全链设备探针）— **完成（CPU+SIM）**
 
 探针：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + compute+tail **GM handoff 零拷贝**串联）
 
@@ -30,8 +41,9 @@
 | 覆盖 | FIPS 行 1–22 全设备：行 1 `N←0`（无运算）、行 2 `t̂←ByteDecode₁₂(ek)`（`f203_encrypt_l18_l19` 核内 AIV0 解码，host 传 `tHat=nullptr`）、行 3–22（prep+compute+tail） |
 | Launch | **SIM 2 launch**（prep → l18_l19 含 e₂+=μ 与内联 tail pack）；**CPU 5 launch**（prep + ntt_y/at_jp/intt_e1 + pack，v 由 `input/golden_v.bin` 注入） |
 | 种子 | 全链唯一 `SEED_D=20260619`；输入/golden_c **复用** `fix-f203-alg14-pke-encrypt-correctness-k4` |
-| 验收 | CPU `c` max=0；SIM `c` max=0，Total tick **~626128**，0 stray dump |
-| handoff | prep→compute a_hat/re **零拷贝无转置**（`a_hat_offset_jp(j,p)=(j*K+p)` 与 prep 存储 / correctness 三方一致）；`re[9,256]` 切片 y=r(0)/e₁(4096B)/e₂(8192B) |
+| 验收 | CPU `c` max=0；SIM `c` max=0，Total tick **~626k**，0 stray dump；默认 `SIM_DIRECT=1` + T7b `SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2` |
+| handoff | prep→compute a_hat/re **零拷贝无转置**；`re[9,256]` 切片 y=r(0)/e₁(4096B)/e₂(8192B) |
+| 关闭 | 路线 11 LUT ROM（qa 2026-07-09） |
 
 ### Alg.14 Encrypt prep — **完成（CPU+SIM）**
 

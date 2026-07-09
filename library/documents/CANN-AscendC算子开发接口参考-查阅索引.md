@@ -49,6 +49,7 @@
 
 按时间倒序追加（最新在上）。
 
+| 2026-07-09 | **Alg.14 PKE Encrypt customspec（exp-mlkem-f203-pke-encrypt-k4）** | DataCopy/CrossCore/MMAD/向量算术/GatherMask/Cast；NTT S1–S3 **禁 Gather** | [`exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex`](../../examples/incubating/exp-mlkem-f203-pke-encrypt-k4/exp-mlkem-f203-pke-encrypt-k4-实现方案-customspec.tex)：I/O 仅 ek+m+coins→c；SIM 2 / CPU 5 launch；中间态禁落盘；API 表复用 KeyGen/Encrypt 探针已查记录 |
 | 2026-07-08 | **ByteEncode_d d=5/d=11 真·向量 pack 实验** | `Gather`/`CreateVecIndex`/`Muls`/`ShiftRight`/`Add`（[07_0059](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0059.html) ShiftRight；Gather 见 07_0071 邻域）| `pass-f203-byteencode-d-vec-k4` `BYTE_ENCODE_D_VEC=2`：`Gather(dst,src,offsetU32(字节偏移),0,count)` 按 gg*32+k*4 去交错取每组 8 个 position-lane；`CreateVecIndex(idx,0,n)`+`Muls` 造字节偏移。**结论**：d=5/d=11 拼字非字节对齐、拼字仍需标量 GetValue，真·向量 pack 比标量逐组 **更慢**（d=5 5839 vs 5464；d=11 7404 vs 6604 tick），不采纳；d=12 可向量因 2×12=24bit=3B 对齐 |
 | 2026-07-08 | **Compress_d d=4/5/10/11** | Cast/Div；Barrett int32 | `pass-f203-compress-d-vec-k4`：d=4/5 Barrett；d=10/11 cast_div；探针目录更名 |
 

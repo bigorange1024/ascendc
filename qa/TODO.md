@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-09（**Encrypt PASS 探针默认自动 `SIM_DIRECT=1`**：验收 `bash run.sh -r sim` 即可；全链 `pass-fix-f203-alg14-pke-encrypt-device-k4`）
+**最近刷新**：2026-07-09（**`exp-mlkem-f203-pke-encrypt-k4`【预研】CPU+SIM PASS** tick **627614**；探针 T7b 保留；路线 11 关闭；T14a 改为从 exp 晋级 stable）
 
 ---
 
@@ -13,11 +13,11 @@
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_encaps_batch.sh`，`KEM_ENC_EXT_SEED` 旁路 `m`） |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_decaps_batch.sh`）；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
 | **P0** | **T6f** | ML-KEM **Alg.19 KeyGen CPU flaky**：build 隔离改造中一次 `verify FAIL`/复跑 PASS；差异首字节 `ek_kem[768]`=`t_hat` 后半（PKE KeyGen `mmad_custom` 产出，非 KEM 尾段） | **隔离后 8 次未再现**（4×重建首跑 + 4×同二进制复跑全 PASS）；高度疑为**共享 build 双 entry `.o` 混链残留**，未排除 `mmad_custom` MIX 低频竞态；不加脚本重试；再现则先 FORCE_REBUILD 排污染再采样定位 |
-| **P0** | **T7b** | alg14 **`run.sh` 资源友好化**（对齐 alg20：`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | **待开工**（G5 代码已仅输出 `c.bin`） |
+| **P0** | **T7b** | alg14 **`run.sh` 资源友好化**（对齐 alg20：`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | **已合入**全链探针 + **`exp-mlkem-f203-pke-encrypt-k4`**；[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) 仍待对齐 |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick）；**分项 kat `CPU×10+SIM×1 PASS`**；`prod/extseed` build profile 已隔离 |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**，接入 V3 预采样 + 设备 `a_hat` | **待开工**（上游 T13a-v / T13g 均已 PASS） |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
-| **P3** | **T14a** | **Encrypt** 探针 G5 → `examples/stable/stable-mlkem-f203-pke-encrypt-k4`（名待定）晋级 | G5 探针 CPU+SIM ✅；**stable 未建** |
+| **P3** | **T14a** | **Encrypt** → `examples/stable/stable-mlkem-f203-pke-encrypt-k4`（名待定）晋级 | **exp 已 PASS**：[`exp-mlkem-f203-pke-encrypt-k4`](../examples/incubating/exp-mlkem-f203-pke-encrypt-k4/)（CPU+SIM `c` max=0，tick **627614**）；**stable / `#交付#` 未做** |
 | **P4** | **T15a** | **Decrypt** 探针 G4 → `examples/stable/stable-mlkem-f203-pke-decrypt-k4`（名待定）晋级 | G4 探针 CPU+SIM ✅；**stable 未建** |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
 | — | **T2b / T5** | `docs/specs/fips203-baseline-registry.md` 初稿 + liboqs/ntt_study API 登记 | 待开工（stable 交付 golden 依赖） |
@@ -53,6 +53,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T14a-exp** | Alg.14 Encrypt **examples 预研**：[`exp-mlkem-f203-pke-encrypt-k4`](../examples/incubating/exp-mlkem-f203-pke-encrypt-k4/) · customspec + vendor 自包含 · I/O 仅 ek+m+coins→c · CPU+SIM `c` max=0 · SIM tick **627614** · 路线 11 LUT ROM **关闭**（探针侧保留 T7b 1–3） | 2026-07-09 |
 | **T17-next** | Alg.14 **全链设备 Encrypt** PASS + 晋级：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · I/O 对齐 Alg.14（in ek+m+coins，**out 仅 c**）· CPU+SIM `c` max=0 · SIM **2 launch 626139** tick · `SEED_D=20260619` · handoff 零拷贝无转置 | 2026-07-08 |
 | **T17** | Alg.14 compute+tail PASS：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) · SIM 1 launch **154781** tick | 2026-07-08 |
 | **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh)；`SEED_D=20260619` CPU+SIM max=0；根因 **`Compress_5` `(1<<26)`**；见 [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md) | 2026-07-01 |

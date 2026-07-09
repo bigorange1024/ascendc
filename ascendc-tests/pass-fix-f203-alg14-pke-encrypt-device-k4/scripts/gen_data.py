@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt golden 生成。
+pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt golden 生成（自包含）。
 
 设计（见 INTEGRATION_PLAN §4.1、§8）：
   * 锁死 SEED_D=20260619，全链唯一种子。
-  * **复用** correctness 探针 fix-f203-alg14-pke-encrypt-correctness-k4 的现成产物：
-      - input/ek_pke.bin、m.bin、coins.bin  ← 锁定输入（复制）
-      - output/golden_c.bin                 ← 期望密文（复制到本探针 golden/c.bin）
+  * 输入 / golden_c：
+      - **优先**复用 correctness 探针现成产物（若存在）
+      - **缺失时**本目录自生成：gen_ek_pke(SEED_D) + rng(SEED_D+991)→m/coins + golden_encrypt→c
   * 本地派生（确定性，非随机）：
       - LUT：lut_ntt_even/odd、lut_intt_even/odd（供 compute kernel NTT/INTT）
       - input/golden_v.bin：v = INTT(t̂·r̂) + e₂ + μ(m)。**仅 CPU 分段实现的注入数据**
         （CPU 三 launch 无 k=8 INTT 不产 v），非 Alg.14 输出；SIM 全设备不需要它。
-  * 三源一致性自检：本地用 correctness host_golden 参考重算 c，须与复制的 golden_c 逐字节相等。
+  * 若从 correctness 复制了 golden_c，则用本地 golden_encrypt 做一致性自检。
 
 Alg.14 输出只有密文 c（golden/c.bin）；u/v 为内部中间量，不作为产物。
 输出：input/{ek_pke,m,coins,lut_*,golden_v}.bin、golden/c.bin
@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import sys
 
 import numpy as np
@@ -30,7 +31,6 @@ _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 _HOST_GOLDEN = os.path.join(_SCRIPT_DIR, "host_golden")
 sys.path.insert(0, _HOST_GOLDEN)
 
-# host_golden 参考（自 correctness 探针复制；LUT 路径已改指仓库级 ntt_study）
 from f203_ref_common import (  # noqa: E402
     K,
     N,
@@ -44,6 +44,9 @@ import golden_c as gc  # noqa: E402
 SEED_D = 20260619
 _CORR = os.path.normpath(os.path.join(_CASE_DIR, "..", "fix-f203-alg14-pke-encrypt-correctness-k4"))
 _LOCKED_INPUTS = ("ek_pke.bin", "m.bin", "coins.bin")
+_EK_BYTES = 1568
+_MSG_BYTES = 32
+_COINS_BYTES = 32
 
 
 def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
@@ -66,26 +69,61 @@ def _gen_lut_bins(inp: str) -> None:
     _lut_planar_stacked(lut_intt, False).tofile(os.path.join(inp, "lut_intt_odd_stacked.bin"))
 
 
+def _corr_inputs_ready() -> bool:
+    corr_in = os.path.join(_CORR, "input")
+    return all(os.path.isfile(os.path.join(corr_in, name)) for name in _LOCKED_INPUTS)
+
+
+def _corr_golden_ready() -> bool:
+    return os.path.isfile(os.path.join(_CORR, "output", "golden_c.bin"))
+
+
 def _copy_locked_inputs(inp: str) -> None:
     corr_in = os.path.join(_CORR, "input")
     for name in _LOCKED_INPUTS:
-        src = os.path.join(corr_in, name)
-        if not os.path.isfile(src):
-            raise SystemExit(
-                f"[gen_data] 缺少 correctness 锁定输入 {src}；"
-                f"请先在 {_CORR} 跑一次 gen_data（默认 SEED_D={SEED_D}）"
-            )
-        shutil.copyfile(src, os.path.join(inp, name))
+        shutil.copyfile(os.path.join(corr_in, name), os.path.join(inp, name))
 
 
-def _copy_golden_c(gold: str) -> bytes:
-    src = os.path.join(_CORR, "output", "golden_c.bin")
-    if not os.path.isfile(src):
-        raise SystemExit(f"[gen_data] 缺少 correctness golden {src}（需 ENCRYPT_VERIFY=1 生成）")
+def _gen_locked_inputs_local(inp: str) -> None:
+    """本目录自生成 ek/m/coins（与 correctness gen_data 同 SEED_D 语义）。"""
+    ek_path = os.path.join(inp, "ek_pke.bin")
+    subprocess.check_call(
+        [sys.executable, os.path.join(_HOST_GOLDEN, "gen_ek_pke.py"), str(SEED_D), ek_path],
+        cwd=_CASE_DIR,
+    )
+    rng = np.random.default_rng(SEED_D + 991)
+    m = rng.integers(0, 256, size=_MSG_BYTES, dtype=np.uint8)
+    coins = rng.integers(0, 256, size=_COINS_BYTES, dtype=np.uint8)
+    m.tofile(os.path.join(inp, "m.bin"))
+    coins.tofile(os.path.join(inp, "coins.bin"))
+
+
+def _ensure_locked_inputs(inp: str) -> str:
+    """返回来源标签：'correctness' | 'local'。"""
+    if _corr_inputs_ready():
+        _copy_locked_inputs(inp)
+        return "correctness"
+    print(f"[gen_data] correctness 输入缺失，本地生成 SEED_D={SEED_D}（ek/m/coins）")
+    _gen_locked_inputs_local(inp)
+    return "local"
+
+
+def _write_golden_c(gold: str, ek: bytes, m: bytes, coins: bytes, prefer_corr: bool) -> tuple[bytes, str]:
+    """写 golden/c.bin；返回 (bytes, 来源标签)。"""
     dst = os.path.join(gold, "c.bin")
-    shutil.copyfile(src, dst)
-    with open(dst, "rb") as f:
-        return f.read()
+    if prefer_corr and _corr_golden_ready():
+        src = os.path.join(_CORR, "output", "golden_c.bin")
+        shutil.copyfile(src, dst)
+        with open(dst, "rb") as f:
+            golden_c_bytes = f.read()
+        c_ref = bytes(gc.golden_encrypt(ek, m, coins))
+        if c_ref != golden_c_bytes:
+            raise SystemExit("[gen_data] 一致性失败：本地重算 c != correctness golden_c.bin")
+        return golden_c_bytes, "correctness"
+    c_ref = bytes(gc.golden_encrypt(ek, m, coins))
+    with open(dst, "wb") as f:
+        f.write(c_ref)
+    return c_ref, "local"
 
 
 def _compute_golden_v(ek: bytes, m: bytes, coins: bytes) -> np.ndarray:
@@ -109,27 +147,24 @@ def main() -> None:
     for d in (inp, out, gold):
         os.makedirs(d, exist_ok=True)
 
-    # 1. 复制锁定输入 + 期望密文
-    _copy_locked_inputs(inp)
-    golden_c_bytes = _copy_golden_c(gold)
-
-    # 2. 本地 LUT（确定性）
+    src_in = _ensure_locked_inputs(inp)
     _gen_lut_bins(inp)
 
     ek = open(os.path.join(inp, "ek_pke.bin"), "rb").read()
     m = open(os.path.join(inp, "m.bin"), "rb").read()
     coins = open(os.path.join(inp, "coins.bin"), "rb").read()
+    if len(ek) != _EK_BYTES or len(m) != _MSG_BYTES or len(coins) != _COINS_BYTES:
+        raise SystemExit(f"[gen_data] bad sizes ek={len(ek)} m={len(m)} coins={len(coins)}")
 
-    # 3. 三源一致性自检：本地参考重算 c 须与复制的 golden_c 相等
-    c_ref = gc.golden_encrypt(ek, m, coins)
-    if bytes(c_ref) != golden_c_bytes:
-        raise SystemExit("[gen_data] 一致性失败：本地重算 c != correctness golden_c.bin")
+    _c_bytes, src_c = _write_golden_c(gold, ek, m, coins, prefer_corr=(src_in == "correctness"))
 
-    # 4. CPU 分段注入用 golden_v（放 input/，非 Alg.14 产物）
     v = _compute_golden_v(ek, m, coins)
     v.tofile(os.path.join(inp, "golden_v.bin"))
 
-    print(f"[gen_data] SEED_D={SEED_D} 复用 correctness 输入/golden_c；c 一致；golden_v(CPU 注入) OK")
+    print(
+        f"[gen_data] SEED_D={SEED_D} input={src_in} golden_c={src_c}；"
+        f"c={len(_c_bytes)}B；golden_v(CPU 注入) OK"
+    )
 
 
 if __name__ == "__main__":

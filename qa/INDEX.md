@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 全链 I/O](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
+### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt customspec](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 
-**Encrypt PASS 探针 `run.sh` 默认自动 `SIM_DIRECT=1`** · 验收命令勿再手动 export · 全链仅出密文 c
+**默认 `SIM_DIRECT=1`** · **T7b** · **路线 11 关闭** · **`exp-mlkem-f203-pke-encrypt-k4` customspec+【预研】CPU/SIM PASS**（tick≈627k；仅 c）
 
 ### 2026-07-08 — [Compress/ByteEncode 扩档、tail pack PASS 晋级、内核超时口径](2026-07/2026-07-08-Alg14-tail-pack探针.md)
 

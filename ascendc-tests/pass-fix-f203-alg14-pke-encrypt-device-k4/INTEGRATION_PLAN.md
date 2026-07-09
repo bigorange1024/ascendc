@@ -1,6 +1,6 @@
 # INTEGRATION_PLAN — pass-fix-f203-alg14-pke-encrypt-device-k4
 
-**定位**：Alg.14 **全设备 Encrypt**（行 3–24）— 将两上游 **PASS** 探针在 **单 device session、GM handoff** 下串联；输入 `ek_pke ‖ m ‖ coins`，输出 `c = c₁ ‖ c₂`（1568B）。
+**定位**：Alg.14 **完整 K-PKE.Encrypt（FIPS 行 1–22）** — 将两上游 **PASS** 探针在 **单 device session、GM handoff** 下串联；输入 `ek_pke ‖ m ‖ coins`，输出 **仅** `c = c₁ ‖ c₂`（1568B）。行 1 `N←0` 无运算；行 2 `t̂←ByteDecode₁₂(ek)` 在 compute 核内完成。
 
 **符号**：FIPS 203 Algorithm 14（ml_kem_1024 / k=4）。
 
@@ -44,8 +44,8 @@ c ← c₁ ‖ c₂
 | 统一 GM arena + host `main.cpp` 编排 | 两 launch（SIM）/ 五 launch（CPU） |
 | vendoring | prep 树 + compute+tail 树 → 本目录 `prep/`、`compute/` |
 | `f203_encrypt_full_layout.h` | 全链 GM 偏移契约 |
-| `scripts/gen_data.py` | 链式 golden：`prep oracle` + `compute+tail oracle` → `golden/c.bin` |
-| Gate S1–S3 | 见 §7 |
+| `scripts/gen_data.py` | 自包含 golden：优先复用 correctness；缺失则 `SEED_D` 本地生成 → `golden/c.bin` |
+| Gate S1–PASS | 见 §7 |
 
 ### 2.2 本阶段不做
 
@@ -89,7 +89,7 @@ prep vendoring 仍走 `scripts/vendor_sync_from_stable_keygen.sh`（来源 stabl
 
 **关键**：全链只有一套种子；prep（ρ→a_hat、coins→r/e₁/e₂）与 compute+tail（ek→t̂、m→μ）**共用**上表。**不再**沿用 prep 探针的 `COINS_SEED=20260706` 或 compute+tail 探针的 `20260708`——那两套仅用于各自单段回归，全链一律 `SEED_D=20260619`。
 
-`scripts/gen_data.py` 默认从 correctness 目录**复制** input（缺失时回退到 correctness `gen_data.py` 同参重生成，结果等价）。
+`scripts/gen_data.py`：**优先**从 correctness 目录复制 input/golden_c；**缺失时本目录自生成**（`gen_ek_pke(SEED_D)` + `rng(SEED_D+991)`→m/coins + `golden_encrypt`→c），探针可独立跑通。
 
 ### 4.2 Host 输出（对齐 FIPS 203 Alg.14：唯一输出密文 c）
 
@@ -182,23 +182,23 @@ Launch 2 前 host 仅：
 
 ---
 
-## 6. 文件结构（计划）
+## 6. 文件结构
 
 ```text
 pass-fix-f203-alg14-pke-encrypt-device-k4/
-├── INTEGRATION_PLAN.md          # 本文件
+├── INTEGRATION_PLAN.md
 ├── STATUS.md
-├── f203_encrypt_full_layout.h   # 全链 GM 契约（新建）
-├── main.cpp                     # 2/5 launch 编排
-├── f203_encrypt_tiling.cpp      # GenerateTiling()（compute 侧）
+├── f203_encrypt_full_layout.h   # prep↔compute GM handoff 契约
+├── main.cpp                     # SIM 2 / CPU 5 launch 编排
+├── f203_encrypt_tiling.cpp
 ├── CMakeLists.txt
-├── run.sh
-├── prep/                        # vendor 自 prep 探针
-├── compute/                     # vendor 自 compute+tail 探针
+├── run.sh                       # 默认 SKIP_REBUILD + SIM_DIRECT=1 + CMAKE_BUILD_JOBS=2
+├── prep/                        # vendored（scripts/vendor_sync_from_stable_keygen.sh）
+├── compute/                     # vendored 自 compute+tail 探针
 └── scripts/
-    ├── gen_data.py              # 复制 correctness input + golden_c（锁 SEED_D=20260619）
-    ├── vendor_sync_prep.sh      # 可选：薄包装 prep 探针脚本
-    └── vendor_sync_compute.sh
+    ├── gen_data.py              # 自包含：优先 correctness，缺失则本地 SEED_D 生成
+    ├── host_golden/             # gen_ek_pke / golden_c / f203_ref_common
+    └── vendor_sync_from_stable_keygen.sh
 ```
 
 ---
@@ -226,10 +226,12 @@ pass-fix-f203-alg14-pke-encrypt-device-k4/
 [`fix-f203-alg14-pke-encrypt-correctness-k4/output/golden_c.bin`](../fix-f203-alg14-pke-encrypt-correctness-k4/output/golden_c.bin)（1568B）由该探针自包含 python `scripts/host_golden/golden_c.py(ek,m,coins)` 生成，且其 device 输出 `fixtures/c.bin` 已与之逐字节一致（max=0）。
 
 ```text
-gen_data.py（本探针）:
-  1. 从 correctness/input/ 复制 ek_pke/m/coins/lut_*  → 本 input/
-  2. 从 correctness/output/golden_c.bin 复制          → 本 golden/c.bin
-  3.（回退）若上游缺失，用 SEED_D=20260619 调 correctness gen_data 同参重生成
+gen_data.py（本探针，自包含）:
+  1. 若 correctness/input/{ek_pke,m,coins} 齐全 → 复制；否则本地 gen_ek_pke + rng
+  2. 本地生成 lut_ntt/intt_*_stacked.bin
+  3. 若 correctness/output/golden_c.bin 存在且输入来自复制 → 复制并与本地 golden_encrypt 对拍；
+     否则本地 golden_encrypt → golden/c.bin
+  4. 写 input/golden_v.bin（CPU 注入，非产物）
 ```
 
 ### 8.2 备选：本地 python 重算
@@ -301,10 +303,10 @@ gen_data.py（本探针）:
 
 ```bash
 cd ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4
-bash scripts/vendor_sync_from_stable_keygen.sh   # prep 树
-# vendor compute 脚本（待建）
-bash run.sh -r cpu -v Ascend910B4                 # 复制 SEED_D=20260619 input+golden
-bash run.sh -r sim -v Ascend910B4                 # 默认即 CAModel 金标；无需手动 SIM_DIRECT
+# prep 树已 vendored；可选刷新：bash scripts/vendor_sync_from_stable_keygen.sh
+bash run.sh -r cpu -v Ascend910B4                 # 默认 SKIP_REBUILD；SEED_D=20260619 自包含 golden
+bash run.sh -r sim -v Ascend910B4                 # 默认 CAModel 金标；无需手动 SIM_DIRECT
+# 强制重编：ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
 ```
 
 **成功判据（两条都要绿）**：CPU 与 SIM 均 `[SUCCESS] …` 且 `c.bin` vs `golden/c.bin` **max_abs_diff=0**；SIM 根目录 **0 stray dump**。任一模式失败即整体未通过（不接受「先记 CPU 通过、SIM 待办」的拆分）。

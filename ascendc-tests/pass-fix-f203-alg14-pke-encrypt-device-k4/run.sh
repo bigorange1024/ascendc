@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
-# pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt（Alg.14 行 3–24）
+# pass-fix-f203-alg14-pke-encrypt-device-k4 — 完整 K-PKE.Encrypt（FIPS 203 Alg.14 行 1–22）
 #
 # prep（ek+coins→a_hat+re）+ compute+tail（→c）单 device session GM handoff：
 #   SIM：2 launch（prep → l18_l19 含 e₂+=μ 与内联 tail pack）
 #   CPU：5 launch（prep + ntt_y/at_jp/intt_e1 + pack；v=golden_v）
-# golden：复用 correctness 探针 input/golden_c（SEED_D=20260619，见 scripts/gen_data.py）
+# golden：SEED_D=20260619；优先复用 correctness 产物，缺失时本目录自生成（见 scripts/gen_data.py）
 #
 # Usage（默认 = 全量生产路径；无需手动 export SIM_DIRECT / HAT_*）:
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
 #
+# 默认行为（对齐 alg20）:
+#   ENCRYPT_SKIP_REBUILD=1   — 二进制与 RUN_MODE stamp 在则跳过 cmake
+#   CMAKE_BUILD_JOBS=2       — 限并行，WSL 友好
+#
 # 调试（须显式指定，非默认）:
-#   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4   # 走 msprof + OPPROF_*（慢；本探针默认不做）
+#   ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4   # 强制 rm build/out 全量重编
+#   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4              # 走 msprof + OPPROF_*（慢）
+#   改 F203_* / ALG11_* 编译开关后须 FORCE_REBUILD=1（stamp 含主要宏）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
@@ -20,6 +26,10 @@ BUILD_TYPE="Debug"
 INSTALL_PREFIX="${CURRENT_DIR}/out"
 SOC_VERSION="Ascend910B4"
 RUN_MODE="cpu"
+
+export ENCRYPT_SKIP_REBUILD="${ENCRYPT_SKIP_REBUILD:-1}"
+export ENCRYPT_FORCE_REBUILD="${ENCRYPT_FORCE_REBUILD:-0}"
+export CMAKE_BUILD_JOBS="${CMAKE_BUILD_JOBS:-2}"
 
 SHORT=r:,v:,i:,b:,p:
 LONG=run-mode:,soc-version:,install-path:,build-type:,install-prefix:
@@ -85,42 +95,68 @@ export F203_AHAT16_BATCH_SHAKE="${F203_AHAT16_BATCH_SHAKE:-0}"
 export F203_ALG7_XOF_504="${F203_ALG7_XOF_504:-0}"
 export F203_CBD_BLOCK_DIM="${F203_CBD_BLOCK_DIM:-1}"
 
-set -e
-rm -rf build out
-mkdir -p build
-cmake -B build \
-    -DRUN_MODE="${RUN_MODE}" \
-    -DSOC_VERSION="${SOC_VERSION}" \
-    -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
-    -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}" \
-    -DASCEND_CANN_PACKAGE_PATH="${_ASCEND_INSTALL_PATH}" \
-    -DF203_STAGE1_SPLIT="${F203_STAGE1_SPLIT}" \
-    -DF203_STAGE3_MOD="${F203_STAGE3_MOD}" \
-    -DALG11_IMPL="${ALG11_IMPL}" \
-    -DALG11_VEC_VARIANT="${ALG11_VEC_VARIANT}" \
-    -DALG11_VEC_OPTS="${ALG11_VEC_OPTS}" \
-    -DALG11_MEM_OPS="${ALG11_MEM_OPS}" \
-    -DF203_BYTE_DECODE12_IMPL="${F203_BYTE_DECODE12_IMPL}" \
-    -DF203_ALG7_REJ_IMPL="${F203_ALG7_REJ_IMPL}" \
-    -DF203_ALG7_D12_GATHER="${F203_ALG7_D12_GATHER}" \
-    -DF203_AHAT16_BLOCK_DIM="${F203_AHAT16_BLOCK_DIM}" \
-    -DF203_AHAT16_BATCH_SHAKE="${F203_AHAT16_BATCH_SHAKE}" \
-    -DF203_ALG7_XOF_504="${F203_ALG7_XOF_504}" \
-    -DF203_CBD_BLOCK_DIM="${F203_CBD_BLOCK_DIM}"
-cmake --build build -j
-cmake --install build
+BUILD_DIR="${CURRENT_DIR}/build"
+_build_stamp="${BUILD_DIR}/.encrypt_full_run_mode"
+_build_tag="${RUN_MODE}:s1=${F203_STAGE1_SPLIT}:s3=${F203_STAGE3_MOD}:a11=${ALG11_IMPL}:v=${ALG11_VEC_VARIANT}:bd12=${F203_BYTE_DECODE12_IMPL}:ahat=${F203_AHAT16_BLOCK_DIM}:cbd=${F203_CBD_BLOCK_DIM}"
 
-rm -f ascendc_kernels_bbit
-cp ./out/bin/ascendc_kernels_bbit ./
-rm -rf input output golden
-mkdir -p input output golden
+_need_build=1
+if [ "${ENCRYPT_FORCE_REBUILD}" = "1" ]; then
+    _need_build=1
+elif [ "${ENCRYPT_SKIP_REBUILD}" = "1" ] && [ -x "${INSTALL_PREFIX}/bin/ascendc_kernels_bbit" ] && \
+     [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_${RUN_MODE}.so" ] && \
+     [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" = "${_build_tag}" ]; then
+    _need_build=0
+fi
+
+_encrypt_build() {
+    if [ "${ENCRYPT_FORCE_REBUILD}" = "1" ] || \
+       { [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" != "${_build_tag}" ]; }; then
+        rm -rf "${BUILD_DIR}" "${INSTALL_PREFIX}"
+    fi
+    mkdir -p "${BUILD_DIR}"
+    cmake -S "${CURRENT_DIR}" -B "${BUILD_DIR}" \
+        -DRUN_MODE="${RUN_MODE}" \
+        -DSOC_VERSION="${SOC_VERSION}" \
+        -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
+        -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}" \
+        -DASCEND_CANN_PACKAGE_PATH="${_ASCEND_INSTALL_PATH}" \
+        -DF203_STAGE1_SPLIT="${F203_STAGE1_SPLIT}" \
+        -DF203_STAGE3_MOD="${F203_STAGE3_MOD}" \
+        -DALG11_IMPL="${ALG11_IMPL}" \
+        -DALG11_VEC_VARIANT="${ALG11_VEC_VARIANT}" \
+        -DALG11_VEC_OPTS="${ALG11_VEC_OPTS}" \
+        -DALG11_MEM_OPS="${ALG11_MEM_OPS}" \
+        -DF203_BYTE_DECODE12_IMPL="${F203_BYTE_DECODE12_IMPL}" \
+        -DF203_ALG7_REJ_IMPL="${F203_ALG7_REJ_IMPL}" \
+        -DF203_ALG7_D12_GATHER="${F203_ALG7_D12_GATHER}" \
+        -DF203_AHAT16_BLOCK_DIM="${F203_AHAT16_BLOCK_DIM}" \
+        -DF203_AHAT16_BATCH_SHAKE="${F203_AHAT16_BATCH_SHAKE}" \
+        -DF203_ALG7_XOF_504="${F203_ALG7_XOF_504}" \
+        -DF203_CBD_BLOCK_DIM="${F203_CBD_BLOCK_DIM}"
+    cmake --build "${BUILD_DIR}" -j"${CMAKE_BUILD_JOBS}"
+    cmake --install "${BUILD_DIR}"
+    echo "${_build_tag}" >"${_build_stamp}"
+}
+
+set -e
+if [ "${_need_build}" = "1" ]; then
+    echo "[run.sh] build RUN_MODE=${RUN_MODE} jobs=${CMAKE_BUILD_JOBS}"
+    _encrypt_build
+else
+    echo "[run.sh] skip rebuild (RUN_MODE=${RUN_MODE}, stamp OK)"
+fi
+
+rm -f "${CURRENT_DIR}/ascendc_kernels_bbit"
+cp -f "${INSTALL_PREFIX}/bin/ascendc_kernels_bbit" "${CURRENT_DIR}/"
+mkdir -p "${CURRENT_DIR}/input" "${CURRENT_DIR}/output" "${CURRENT_DIR}/golden"
+# 每次刷新 golden（确定性、秒级）；不删已有 input 中非本脚本产物
 python3 "${CURRENT_DIR}/scripts/gen_data.py"
 
-export LD_LIBRARY_PATH="$(pwd)/out/lib:$(pwd)/out/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 
 if [ "${RUN_MODE}" = "sim" ]; then
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-900}"
-    echo "[run.sh] SIM 2 launch（prep + l18_l19）；预算 ${KERNEL_COMPUTE_BUDGET_SEC}s"
+    echo "[run.sh] SIM 2 launch（prep + l18_l19）；预算 ${KERNEL_COMPUTE_BUDGET_SEC}s SIM_DIRECT=${SIM_DIRECT}"
     # shellcheck source=/dev/null
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
     # shellcheck source=/dev/null
@@ -131,8 +167,6 @@ else
 fi
 
 bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit
-
-export ASCENDC_RUN_MODE_CMP="${RUN_MODE}"
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"
