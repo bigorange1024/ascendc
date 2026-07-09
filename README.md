@@ -73,6 +73,7 @@
 | 验证 | `verify-cann.sh` 已通过 |
 | KeyGen 交付 | [`stable-fips203-mlkem-pke-keygen-k4`](examples/stable/stable-fips203-mlkem-pke-keygen-k4/) **CPU/SIM/KAT ✓**（SIM **542393**）；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) |
 | Encrypt 交付 | [`stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) **SIM 主参考** tick **627590** · CPU 辅助 · KAT×10+1 / roundtrip×10+1 ✓；[交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) |
+| Decrypt 交付 | [`stable-fips203-mlkem-pke-decrypt-k4`](examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) **CPU/SIM/KAT ✓**（SIM **283290** tick）；KAT×10+1 / roundtrip×10+1 ✓ |
 | KEM 三分项 | **Alg.19 KeyGen / Alg.20 Encaps / Alg.21 Decaps** 探针均 **CPU+SIM PASS**；liboqs 分项 kat `CPU×10+SIM×1 PASS`（`scripts/liboqs_kem_{keygen,encaps,decaps}_batch.sh`）；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) |
 | 官方样例 | `samples/` ← [gitee.com/ascend/samples](https://gitee.com/ascend/samples) `master`（`6511a5f`，2026-06 拉取）；AscendC Cube+Vector 融合参考：`samples/operator/ascendc/tutorials/MatmulLeakyReluCustomSample/` |
 

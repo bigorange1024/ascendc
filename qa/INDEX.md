@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-10 — [Decrypt `#交付#` → stable · PKE 三段齐备](2026-07/2026-07-10-Decrypt交付stable.md)
+
+**stable-fips203-mlkem-pke-decrypt-k4** · KAT×10+1 + roundtrip×10+1 · **PKE KeyGen/Encrypt/Decrypt 均 stable** · TODO 主线切 KEM · T15a 关闭
+
 ### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt `#交付#`](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 
 **默认 `SIM_DIRECT=1`** · **Encrypt `#交付#` → stable** · **Decrypt exp 注释+Alg.15 I/O 收紧**（tick **283290**）· 家里续 KAT/roundtrip/`#交付#`

@@ -3,7 +3,9 @@
 #
 # KeyGen 默认：examples/stable/stable-fips203-mlkem-pke-keygen-k4
 # Encrypt 默认：examples/stable/stable-fips203-mlkem-pke-encrypt-k4
-# Decrypt 默认：ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4（优化单 kernel）
+# Decrypt 默认：examples/stable/stable-fips203-mlkem-pke-decrypt-k4（定型交付）
+#   回退探针：DECRYPT_DIR=.../pass-fix-f203-alg15-pke-decrypt-device-k4
+#   incubating exp：DECRYPT_DIR=.../exp-fips203-mlkem-pke-decrypt-k4
 #   回退 KeyGen 探针：KEYGEN_DIR=.../pass-fix-f203-alg13-device-keygen-k4
 #   回退 Decrypt 2-launch：DECRYPT_DIR=.../fix-f203-alg15-pke-decrypt-correctness-k4
 #
@@ -28,7 +30,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-keygen-k4}"
 ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4}"
-DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4}"
+DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-decrypt-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
@@ -95,6 +97,10 @@ fi
 
 _is_exp_encrypt() {
     [ -f "${ENCRYPT_DIR}/scripts/prepare_kat_input.py" ] && [ -f "${ENCRYPT_DIR}/run.sh" ]
+}
+
+_is_exp_decrypt() {
+    [ -f "${DECRYPT_DIR}/scripts/prepare_kat_input.py" ] && [ -f "${DECRYPT_DIR}/run.sh" ]
 }
 
 _build_decrypt() {
@@ -211,16 +217,30 @@ fi
 echo "[roundtrip] device c.bin OK ($(wc -c <"${C_DEVICE}") bytes)"
 
 # --- Decrypt ---
-_build_decrypt "${DECRYPT_DIR}" "ascendc_kernels_bbit"
-python3 "${REPO_ROOT}/scripts/roundtrip_pke_prepare.py" \
-    --mode decrypt \
-    --keygen-out "${KEYGEN_OUT}" \
-    --decrypt-dir "${DECRYPT_DIR}" \
-    --c-src "${C_DEVICE}" \
-    --seed-d "${SEED_D}"
+if _is_exp_decrypt; then
+    echo "[roundtrip] === device Decrypt (exp prepare_kat_input + run.sh) ==="
+    python3 "${DECRYPT_DIR}/scripts/prepare_kat_input.py" \
+        --dk "${DK_FILE}" \
+        --c "${C_DEVICE}" \
+        --no-golden \
+        --case-dir "${DECRYPT_DIR}"
+    (
+        cd "${DECRYPT_DIR}"
+        DECRYPT_SKIP_GEN_DATA=1 DECRYPT_VERIFY=0 SEED_D="${SEED_D}" \
+            bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}"
+    )
+else
+    _build_decrypt "${DECRYPT_DIR}" "ascendc_kernels_bbit"
+    python3 "${REPO_ROOT}/scripts/roundtrip_pke_prepare.py" \
+        --mode decrypt \
+        --keygen-out "${KEYGEN_OUT}" \
+        --decrypt-dir "${DECRYPT_DIR}" \
+        --c-src "${C_DEVICE}" \
+        --seed-d "${SEED_D}"
 
-echo "[roundtrip] === device Decrypt (c from Encrypt) ==="
-_run_decrypt_kernel "${DECRYPT_DIR}" "ascendc_kernels_bbit"
+    echo "[roundtrip] === device Decrypt (c from Encrypt) ==="
+    _run_decrypt_kernel "${DECRYPT_DIR}" "ascendc_kernels_bbit"
+fi
 
 M_DEVICE="${DECRYPT_DIR}/output/m.bin"
 if [ ! -f "${M_DEVICE}" ] || [ "$(wc -c <"${M_DEVICE}")" -ne 32 ]; then

@@ -1,7 +1,8 @@
 # docs/notes — 定稿技术总结
 
 **本目录唯一职责**：原理层技术总结与平台知识库（数学/不变量/可复用模式 + 可选案例附录）。  
-**写法**：[技术总结写作模板.md](技术总结写作模板.md)；[docs-archiving.mdc](../../.cursor/rules/docs-archiving.mdc)  
+**写法**：[技术总结写作模板.md](技术总结写作模板.md)；归档约定见 Rule [`ascendc-development.mdc`](../../.cursor/rules/ascendc-development.mdc)（`docs/notes` 写作质量）  
+
 **讨论过程** → `qa/`；**实现方案** → 用例目录 `INTEGRATION_PLAN.md`。
 
 ---
@@ -19,8 +20,8 @@
 | [F203-merged-kyber-MIX路线技术总结.md](F203-merged-kyber-MIX路线技术总结.md) | merged_kyber MIX（**frozen**，原理） |
 | [merged-kyber-poly-batch-NTT技术总结.md](merged-kyber-poly-batch-NTT技术总结.md) | poly-batch NTT、单 TPipe |
 | [NTT-Matmul路线废弃说明.md](NTT-Matmul路线废弃说明.md) | NTT 内 `Matmul<>` 判决 |
-| [F203-Alg7-SampleNTT-单poly技术总结.md](F203-Alg7-SampleNTT-单poly技术总结.md) | **Alg.7 SampleNTT**（[`pass-fix-f203-alg7-sample-ntt-k4`](../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/)）：单 poly `â[256]`、672B XOF、rej、~80k tick |
-| [F203-Alg7-PhaseA-向量化技术总结.md](F203-Alg7-PhaseA-向量化技术总结.md) | Phase A **全链 benchmark**（已冻结 [`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/)）：A-v4 反模式、tick 表 |
+| [F203-Alg7-SampleNTT-单poly技术总结.md](F203-Alg7-SampleNTT-单poly技术总结.md) | **Alg.7 SampleNTT**（[`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/)）：单 poly `â[256]`、672B XOF、rej、~80k tick |
+| [F203-Alg7-PhaseA-向量化技术总结.md](F203-Alg7-PhaseA-向量化技术总结.md) | Phase A **全链 benchmark**（已冻结 [`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/)）：A-v4 反模式、tick 表 |
 | [F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md](F203-KeyGen-prep双AIV与SHAKE内嵌技术总结.md) | KeyGen prep **双 AIV**、SHAKE **ProcessInline**；§4.1 **CPU SUCCESS / 2AIC+4AIV 误读** |
 | [F203-KeyGen-prep-Pipe细同步技术总结.md](F203-KeyGen-prep-Pipe细同步技术总结.md) | prep **PipeBarrier** 窄化（Opt-5 CBD 合入） |
 | [F203-KeyGen-exp交付示例技术总结.md](F203-KeyGen-exp交付示例技术总结.md) | **exp-fips203-mlkem-pke-keygen-k4** 自包含交付、唯一路径、KAT/SIM 验收 |

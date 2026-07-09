@@ -8,6 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
+| 2026-07-10 | [2026-07-10-Decrypt交付stable.md](2026-07-10-Decrypt交付stable.md) | **Decrypt `#交付#`** · **PKE 三段 stable 齐备** · TODO 主线切 KEM · T15a 关闭 |
 | 2026-07-09 | [2026-07-09-Encrypt默认SIM_DIRECT.md](2026-07-09-Encrypt默认SIM_DIRECT.md) | **Encrypt `#交付#`** · **Decrypt 注释+I/O 收紧** · 家里续 KAT/roundtrip/T15a |
 | 2026-07-08 | [2026-07-08-Alg14-tail-pack探针.md](2026-07-08-Alg14-tail-pack探针.md) | **四算子宏分层** · **compute-tail SIM 1 launch 154781**（Phase C 内联 pack）· ByteEncode 选型笔记 · tiling · sepolyvec8 CAModel FPE |
 | 2026-07-07 | [2026-07-07-CPU-SIM-launch分叉约定.md](2026-07-07-CPU-SIM-launch分叉约定.md) | **prep/compute 晋级 pass-** · **compute 分平台 pass** · kP=5/v/decode SIM 完成 · CPU/SIM 分叉定案 · AGENT_HANDOFF 刷新 |

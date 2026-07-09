@@ -10,7 +10,6 @@
 | [`fips203_se_sample/`](fips203_se_sample/) | FIPS 203 采样参考 C + **`golden_se_sampling.py`**（`SEED_D`→`src` Host golden） |
 | [`merged_kyber_fixed_poly.py`](merged_kyber_fixed_poly.py) | Kyber 固定 poly 脚本 |
 | [`stage2_debug_print.hpp`](stage2_debug_print.hpp) | Stage2 调试打印 |
-| [`compare_stage2_logs.py`](compare_stage2_logs.py) | Stage2 log 对比 |
 
 ## `ascendc_build_mode.hpp` — 全仓编译 / SIM host 选项（强制）
 

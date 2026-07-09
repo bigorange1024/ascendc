@@ -91,4 +91,4 @@ bash run.sh -r sim -v Ascend910B4
 
 ## 6. 二期 half
 
-已冻结：[`frozen/.../halfbatch`](../frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/)
+已冻结：[`frozen/.../halfbatch`](../frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/)

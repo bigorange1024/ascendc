@@ -37,4 +37,4 @@ INNERPRODUCT_P_OUT=2 INNERPRODUCT_S_VEC=2 bash run.sh -r sim -v Ascend910B4
 
 ## 二期 half
 
-已冻结：`frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/`
+已冻结：`frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/`

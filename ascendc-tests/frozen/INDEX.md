@@ -80,7 +80,7 @@ examples 侧同期否决：[`frozen-exp-mlkem-sepolyvec8-ntt-k4-block`](../../ex
 
 | 目录 | 原角色 | 冻结原因（摘要） |
 |------|--------|------------------|
-| [frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/](frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/) | 2×2×1 内积二期 `j→half→p` | **SIM 无收益**（~23.2k vs 一期打平）；复杂度高；4×4×1 未验证；由 [`pass-fix-f203-alg11-12-innerproduct-k4`](../pass-fix-f203-alg11-12-innerproduct-k4/) **一期全 poly** 取代 |
+| [frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/](frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/) | 2×2×1 内积二期 `j→half→p` | **SIM 无收益**（~23.2k vs 一期打平）；复杂度高；4×4×1 未验证；由 [`pass-fix-f203-alg11-12-innerproduct-k4`](../pass-fix-f203-alg11-12-innerproduct-k4/) **一期全 poly** 取代 |
 
 详见 `FROZEN.md`；纪要 [qa/2026-06/2026-06-17-innerproduct-k4一二期路线讨论.md](../../qa/2026-06/2026-06-17-innerproduct-k4一二期路线讨论.md)。
 

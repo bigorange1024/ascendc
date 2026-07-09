@@ -1,4 +1,4 @@
-# frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch
+# frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch
 
 **状态**：⛔ **已冻结**（2026-06-17）  
 **判决书**：[FROZEN.md](FROZEN.md)

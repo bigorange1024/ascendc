@@ -285,7 +285,7 @@ blockDim = 4  →  SetDim(8)    # 4 AIC × 2 AIV
 
 ### 7.6 int8-matmul 多核实验与规范（2026-06-11）
 
-- **探针**：`ascendc-tests/int8-matmul-cube-128x512x512/`
+- **探针**：`ascendc-tests/frozen/frozen-int8-matmul-cube-128x512x512/`
 - **实验纪要**：[2026-06-11-…#exp-int8-matmul](2026-06-11-ascendc-engineering-notes与数据搬运.md#exp-int8-matmul-多核-tiling-实验)（失败模式、`SetFixSplit(16,32,-1)`、`SetSingleShape` 三种闭合写法）。
 - **定稿公式**：$(M/\text{SingleCoreM})\times(N/\text{SingleCoreN})=\text{usedCoreNum}$；`SingleCoreK=K`；`baseM`/`baseN` 为 16/32 倍数。
 - **规范 PDF**：[融合算子多核tiling策略指南.pdf](../../docs/specs/ascendc/融合算子多核tiling策略指南.pdf)（`docs/specs/ascendc/`）。

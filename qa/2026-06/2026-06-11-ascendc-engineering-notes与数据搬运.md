@@ -195,7 +195,7 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 ## exp-int8-matmul 多核 tiling 实验
 
-**用例**：[`ascendc-tests/int8-matmul-cube-128x512x512/`](../../ascendc-tests/int8-matmul-cube-128x512x512/)（2026-05-19 自 `examples/incubating/` 迁入；**实验与定稿在 6/11**）  
+**用例**：[`ascendc-tests/frozen/frozen-int8-matmul-cube-128x512x512/`](../../ascendc-tests/frozen/frozen-int8-matmul-cube-128x512x512/)（2026-05-19 自 `examples/incubating/` 迁入；**实验与定稿在 6/11**）  
 **平台**：CANN 9.0.0 · Atlas A2（910B4）· KernelLaunch CPU 孪生  
 **验收**：`scripts/verify_result.py`，`max_abs_diff=0`  
 **规范指南**：[融合算子多核 tiling 策略指南.pdf](../../docs/specs/ascendc/融合算子多核tiling策略指南.pdf)

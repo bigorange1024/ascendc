@@ -324,7 +324,7 @@ tick 暴涨时按序查：
 |------|------|
 | NTT 向量/标量分工 | [MLKEM-NTT-向量与标量实现指南.md](MLKEM-NTT-向量与标量实现指南.md) |
 | TQue / UB | [ascendc-TQue与Pipe框架知识库.md](ascendc-TQue与Pipe框架知识库.md) |
-| 文档归档规范 | [.cursor/rules/docs-archiving.mdc](../../.cursor/rules/docs-archiving.mdc) |
+| 文档归档规范 | [技术总结写作模板.md](技术总结写作模板.md) |
 
 ---
 

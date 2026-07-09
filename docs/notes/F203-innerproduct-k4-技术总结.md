@@ -81,7 +81,7 @@ mod_q(acc[p])
 **冻结原因**（原理）：小形状下 **维护 half 外层 + scratch 地图** 的成本抵消 GM 节省；复杂度高、踩坑密度大。  
 **教训**：优化前先估 **算术强度 vs 管理开销**；见 [研究路线与frozen治理.md](研究路线与frozen治理.md)。
 
-**禁止** 从 `frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch` 抄码。
+**禁止** 从 `frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch` 抄码。
 
 ---
 
@@ -113,7 +113,7 @@ Gate-3: 融合 mixPass=0                → 见 2s1e 总结
 
 | 项 | 内容 |
 |----|------|
-| 目录 | `frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch` |
+| 目录 | `frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch` |
 | 继任 | `ProcessFullPoly` only |
 
 ### 6.2 性能（4×4×1，910B4 SIM，示意）

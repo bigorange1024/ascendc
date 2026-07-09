@@ -12,7 +12,6 @@
 |------|--------|----------|
 | [`shared/`](shared/INDEX.md) | 探针共用代码：SHAKE/Keccak AscendC、`fips203_se_sample`、golden 脚本 | [shared/INDEX.md](shared/INDEX.md) |
 | `documents/` | PDF、标准文本、厂商文档摘录等 | [documents/INDEX.md](documents/INDEX.md) |
-| `offline-web/` | 离线网页归档 | [offline-web/INDEX.md](offline-web/INDEX.md) |
 
 ---
 

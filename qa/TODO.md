@@ -2,30 +2,43 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-09（Encrypt `#交付#`；Decrypt exp **注释+I/O 收紧**；待家里 **KAT/roundtrip/`#交付#`** T15a）
+**最近刷新**：2026-07-10（**PKE 三段 stable 齐备** — KeyGen / Encrypt / Decrypt；T15a 入已关闭；主线切 **KEM**）
+
+---
+
+## 里程碑：PKE 三段交付（已完成）
+
+| 算法 | stable 算子 | 关闭项 |
+|------|-------------|--------|
+| Alg.13 KeyGen | [`stable-fips203-mlkem-pke-keygen-k4`](../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | T13h |
+| Alg.14 Encrypt | [`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | T14a |
+| Alg.15 Decrypt | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | T15a |
+
+闭环默认：`scripts/roundtrip_pke_batch.sh` → 上述三段 stable。预研副本仍在 `examples/incubating/exp-fips203-mlkem-pke-*`。
 
 ---
 
 ## 打开项（按优先级）
 
+主线已切 **ML-KEM（Alg.19–21）**；下列 PKE 相关项仅为工程债 / 文档补齐。
+
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
-| **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_encaps_batch.sh`，`KEM_ENC_EXT_SEED` 旁路 `m`） |
-| **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**（`liboqs_kem_decaps_batch.sh`）；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
-| **P0** | **T6f** | ML-KEM **Alg.19 KeyGen CPU flaky**：build 隔离改造中一次 `verify FAIL`/复跑 PASS；差异首字节 `ek_kem[768]`=`t_hat` 后半（PKE KeyGen `mmad_custom` 产出，非 KEM 尾段） | **隔离后 8 次未再现**（4×重建首跑 + 4×同二进制复跑全 PASS）；高度疑为**共享 build 双 entry `.o` 混链残留**，未排除 `mmad_custom` MIX 低频竞态；不加脚本重试；再现则先 FORCE_REBUILD 排污染再采样定位 |
-| **P0** | **T7b** | alg14 **`run.sh` 资源友好化**（对齐 alg20：`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | **已合入**全链探针 + **`exp-fips203-mlkem-pke-encrypt-k4`**；[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) 仍待对齐 |
-| **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs max=0；SIM **742558** tick）；**分项 kat `CPU×10+SIM×1 PASS`**；`prod/extseed` build profile 已隔离 |
-| **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**，接入 V3 预采样 + 设备 `a_hat` | **待开工**（上游 T13a-v / T13g 均已 PASS） |
+| **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（单库合并；SIM 默认 **2-session** `K max=0`）；**分项 kat `CPU×10+SIM×1 PASS`**；**单 session `at_r5` 首错 / func_key `nm` 审计待修** |
+| **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（tick ~103 万）；**分项 kat `CPU×10+SIM×1 PASS`**；待 `#交付#` / stable（视产品节奏） |
+| **P0** | **T6** | ML-KEM **Alg.19** KeyGen：[`fix-f203-alg19-kem-keygen-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) 设备全链 | **PASS**（CPU+SIM+liboqs；SIM **742558**）；**分项 kat PASS**；待 `#交付#` / stable（视产品节奏） |
+| **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
+| **P1** | **T7b** | alg14 correctness **`run.sh` 资源友好化**（`SKIP_REBUILD`/`CMAKE_BUILD_JOBS=2`） | 全链探针 + Encrypt exp/stable **已合入**；[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) 仍待对齐 |
+| **P1** | **T2** | KEM **后继**：Alg.21 **单 session SIM 真修**、**NPU 实机**（PKE/KEM） | 三分项 CPU+SIM kat PASS；单 session / NPU 未做 |
+| **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
-| **P0** | **T15a** | **Decrypt `#交付#`**：KAT + roundtrip → `stable-fips203-mlkem-pke-decrypt-k4` | incubating **CPU+SIM PASS** + 注释/I/O 已收紧；家里续 KAT（仿 Encrypt）+ `roundtrip_pke_batch`（`DECRYPT_DIR`→exp）再晋级 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
-| — | **T2b / T5** | KeyGen 等通用 `fips203-baseline-registry`；Encrypt 已有 [`fips203-mlkem1024-pke-encrypt-baseline-registry.md`](../docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) | Encrypt 登记已补；KeyGen 通用表仍待 |
-| — | **T2** | KEM **后继**：Alg.21 Decaps **单 session SIM 真修**、**NPU 实机** | Alg.19/20/21 三分项 **CPU+SIM kat PASS**；单 session SIM 与 NPU 未做 |
+| — | **T2b / T5** | KeyGen 等通用 `fips203-baseline-registry`；Encrypt 已有 [`fips203-mlkem1024-pke-encrypt-baseline-registry.md`](../docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md) | Encrypt 已补；KeyGen/Decrypt 通用表仍待 |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
 | — | **T4** | 换机后可选重编 liboqs（OpenSSL） | 可选 |
-| — | **T6** | ML-KEM **Alg.19** KeyGen | → **PASS**（见上表） |
 | — | **T7** | FIPS 204 / ML-DSA | 后阶段 |
+| — | **T18** | Encrypt KAT：`liboqs_pke_ref` encrypt/decrypt 链接（hidden 符号）；Decrypt 已用 `liboqs_pke_decrypt_fixture` 绕过 | 非阻塞；Encrypt KAT 若复现再修 |
 
 ---
 
@@ -52,14 +65,15 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
-| **T15b** | Alg.15 Decrypt 优化探针 PASS：[`pass-fix-f203-alg15-pke-decrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) · 单 kernel + 尾融合 · SIM ~**283k** · roundtrip 默认 Decrypt · 自 `fix-…` 改名 | 2026-07-09 |
+| **T15a** | Alg.15 Decrypt **`#交付#`**：[`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) · KAT×10+1 · roundtrip×10+1 · `DECRYPT_DIR` 默认 stable · **PKE 三段齐备** | 2026-07-10 |
+| **T15b** | Alg.15 Decrypt 优化探针 PASS：[`pass-fix-f203-alg15-pke-decrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) · 单 kernel + 尾融合 · SIM ~**283k** · 自 `fix-…` 改名 | 2026-07-09 |
 | **T14a** | Alg.14 Encrypt **`#交付#`**：[`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) · liboqs KAT CPU×10+SIM×1 · roundtrip CPU×10+SIM×1 · baseline-registry · 自 exp 复制晋级 | 2026-07-09 |
-| **T14a-exp** | Alg.14 Encrypt **examples 预研**：[`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/) · customspec + vendor 自包含 · I/O 仅 ek+m+coins→c · CPU+SIM `c` max=0 · SIM tick **627614** · 路线 11 LUT ROM **关闭**（探针侧保留 T7b 1–3） | 2026-07-09 |
-| **T17-next** | Alg.14 **全链设备 Encrypt** PASS + 晋级：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · I/O 对齐 Alg.14（in ek+m+coins，**out 仅 c**）· CPU+SIM `c` max=0 · SIM **2 launch 626139** tick · `SEED_D=20260619` · handoff 零拷贝无转置 | 2026-07-08 |
+| **T14a-exp** | Alg.14 Encrypt **examples 预研**：[`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/) · customspec + vendor 自包含 · I/O 仅 ek+m+coins→c · CPU+SIM `c` max=0 · SIM tick **627614** · 路线 11 LUT ROM **关闭** | 2026-07-09 |
+| **T17-next** | Alg.14 **全链设备 Encrypt** PASS + 晋级：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · I/O 对齐 Alg.14 · CPU+SIM `c` max=0 · SIM **2 launch 626139** | 2026-07-08 |
 | **T17** | Alg.14 compute+tail PASS：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) · SIM 1 launch **154781** tick | 2026-07-08 |
-| **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh)；`SEED_D=20260619` CPU+SIM max=0；根因 **`Compress_5` `(1<<26)`**；见 [`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md) | 2026-07-01 |
-| **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen 密钥 → Encrypt `c.bin` → Decrypt `m.bin`；CPU+SIM **max=0**（32B）；见 qa §16 | 2026-06-30 |
-| **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**（prep \| ntt+intt）；SIM **~427k** tick | 2026-06-30 |
+| **T14b** | liboqs PKE 三阶段交叉验证：[`scripts/liboqs_pke_vs_ascendc.sh`](../scripts/liboqs_pke_vs_ascendc.sh)；`SEED_D=20260619` CPU+SIM max=0；根因 **`Compress_5` `(1<<26)`** | 2026-07-01 |
+| **T16** | PKE device round-trip：[`scripts/roundtrip_pke_encrypt_decrypt.sh`](../scripts/roundtrip_pke_encrypt_decrypt.sh) KeyGen→Encrypt→Decrypt；CPU+SIM **max=0** | 2026-06-30 |
+| **T15** | Decrypt G4：[`fix-f203-alg15-pke-decrypt-correctness-k4`](../ascendc-tests/fix-f203-alg15-pke-decrypt-correctness-k4/) CPU+SIM m.bin max=0；**2 launch**；SIM **~427k** | 2026-06-30 |
 | **T14** | Encrypt G5：[`fix-f203-alg14-pke-encrypt-correctness-k4`](../ascendc-tests/fix-f203-alg14-pke-encrypt-correctness-k4/) CPU+SIM c.bin max=0；家里 `2launch-k4` → frozen | 2026-06-30 |
 | **T13h** | KeyGen prep **双 AIV 并行 Â**：[`pass-fix-f203-alg13-device-keygen-k4`](../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) SIM **542339** + KAT；晋级 [`stable-fips203-mlkem-pke-keygen-k4`](../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | 2026-06-29 |
 | **T13g** | Alg.13 行 3–7（16×`Â`）：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) CPU+SIM ✅ | 2026-06-28 |
@@ -72,7 +86,7 @@
 | **T11j** | `backup-project.sh` 恢复与扩展 | 2026-06-28 |
 | **T2d** | KeyGen D1 golden / liboqs KAT 布局 | 2026-06-28 |
 | **T2c** | exp-mlkem1024 目录 | 由 [`exp-fips203-mlkem-pke-keygen-k4`](../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/) 承担 |
-| **T2e** | KeyGen D2 cpu/sim/KAT | 2026-06-29（**NPU 未测** → 并入 T2 打开项） |
+| **T2e** | KeyGen D2 cpu/sim/KAT | 2026-06-29（**NPU 未测** → 并入 T2） |
 | **T8** | 2026-06-09 验收口径 / NTT launch / SHA3 拍板 | 2026-06-09 |
 | **T1** | Rule/Skill 与目录结构落地 | 2026-06-08 |
 | — | liboqs 0.15.0 clone + 编译 + ML-KEM/ML-DSA test | 2026-06-08 |
@@ -88,4 +102,4 @@
 
 ## 维护
 
-关闭项只追加、不删历史行。新增打开项分配简短 ID（T14 后继已用 T14a/T14b）。
+关闭项只追加、不删历史行。新增打开项分配简短 ID（T14 后继已用 T14a/T14b；Decrypt 交付为 T15a；liboqs_pke_ref 债为 T18）。

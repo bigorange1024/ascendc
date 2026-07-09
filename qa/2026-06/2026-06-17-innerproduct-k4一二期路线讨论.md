@@ -11,7 +11,7 @@
 ## 结论摘要
 
 1. **交付**：活跃探针 **仅一期全 poly**（`ProcessFullPoly`，`p→j`，4× `compute_on_ub`）。
-2. **二期冻结**（同日晚）：`ProcessHalfBatch` 迁入 [`frozen/.../halfbatch`](../../ascendc-tests/frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/) — [FROZEN.md](../../ascendc-tests/frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/FROZEN.md)；**禁止再参考或抄码**。
+2. **二期冻结**（同日晚）：`ProcessHalfBatch` 迁入 [`frozen/.../halfbatch`](../../ascendc-tests/frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/) — [FROZEN.md](../../ascendc-tests/frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/FROZEN.md)；**禁止再参考或抄码**。
 3. **SIM 打平**（`ALG11_VEC_OPTS=1`）：一期 **~23248** vs 二期 **~23220** tick（噪声内）；相对二期初版 ~26600 约 −13%。
 4. **冻结主因**：小形状 **无性能收益** + **复杂度高** + 4×4×1 **未验证**。
 5. **文档**：本 note、PLAN、STATUS、frozen `FROZEN.md`。
@@ -119,7 +119,7 @@ INNERPRODUCT_HALF_BATCH=1 bash run.sh -r sim -v Ascend910B4
 | 维度 | 选择 |
 |------|------|
 | 活跃交付 | **仅一期** `ProcessFullPoly` |
-| 二期 | **冻结** → `frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/` |
+| 二期 | **冻结** → `frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/` |
 | 性能 | 打平（~23.2k tick）→ **不值得维护双路线** |
 | 扩 4×4×1 | **新开 spike**；读 `FROZEN.md`，勿 fork 快照 |
 
@@ -160,7 +160,7 @@ INNERPRODUCT_HALF_BATCH=1 bash run.sh -r sim -v Ascend910B4
 
 ## 10. 关联链接
 
-- [FROZEN.md](../../ascendc-tests/frozen/frozen-pass-fix-f203-alg11-12-innerproduct-k4-halfbatch/FROZEN.md)
+- [FROZEN.md](../../ascendc-tests/frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/FROZEN.md)
 - [STATUS.md](../../ascendc-tests/pass-fix-f203-alg11-12-innerproduct-k4/STATUS.md)
 - [2026-06-16 Alg11/12 向量化纪要](2026-06-16-Alg11-12向量化与微优化A-B.md)
 - [2026-06-12 alg13 行18 TQue 纪要](2026-06-12-F203-alg13行18-TQue与模运算讨论.md)

@@ -2,7 +2,7 @@
 
 FIPS 203 **Alg.15 K-PKE.Decrypt**（ml_kem_1024 / k=4）**优化实现探针（终态 PASS）**。
 
-自 `fix-f203-alg15-pke-decrypt-device-k4` 改名（2026-07-09）：CPU+SIM + roundtrip 已验收；有意义优化收口；待 **T15a** 晋级 stable。
+自 `fix-f203-alg15-pke-decrypt-device-k4` 改名（2026-07-09）：CPU+SIM + roundtrip 已验收；**已晋级** [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/)（2026-07-10，T15a）。
 
 | 项 | 值 |
 |----|-----|
@@ -63,5 +63,5 @@ bash run.sh -r sim -v Ascend910B4
 
 ## 下一步
 
-- 晋级 `examples/stable/stable-fips203-mlkem-pke-decrypt-k4`（**T15a**）
+- 晋级 `examples/stable/stable-fips203-mlkem-pke-decrypt-k4`（**T15a 已完成**，2026-07-10）
 - Decode 向量化（低 ROI，非阻塞）
