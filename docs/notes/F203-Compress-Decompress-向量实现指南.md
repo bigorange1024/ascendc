@@ -3,7 +3,7 @@
 **读者**：后续 Encrypt/Decrypt pack、tail 探针抄码者  
 **探针**：[`pass-f203-compress-d-vec-k4`](../../ascendc-tests/pass-f203-compress-d-vec-k4/) · [`pass-f203-decompress-d-vec-k4`](../../ascendc-tests/pass-f203-decompress-d-vec-k4/)  
 **定点契约**：[`F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](F203-PKE-liboqs交叉验证与Compress定点技术总结.md)  
-**统一整数舍入（`2^37/q`、CT + 全 d 向量）**：[`F203-Compress-Decompress-统一整数舍入技术总结.md`](F203-Compress-Decompress-统一整数舍入技术总结.md)
+**统一整数舍入（`2^37/q`、CT + 全 d 向量）**：[`F203-Compress-Decompress-统一整数舍入技术总结.md`](F203-Compress-Decompress-统一整数舍入技术总结.md)（含 **§8 业界对比**）
 
 ---
 

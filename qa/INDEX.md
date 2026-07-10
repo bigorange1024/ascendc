@@ -12,7 +12,7 @@
 
 ### 2026-07-10 — [Decrypt `#交付#` → stable · 统一整数 Compress/Decompress · KEM KeyGen pass-fix](2026-07/2026-07-10-Decrypt交付stable.md)
 
-**Decrypt `#交付#`** · PKE roundtrip×10+1 · **统一整数向量 Compress/Decompress 验收** · **Alg.19 KeyGen → pass-fix** · **下一：T19a Encaps device**
+**Decrypt `#交付#`** · PKE roundtrip×10+1 · **统一整数向量 Compress/Decompress 验收** · **Compress §8 业界对比定稿** · **Alg.19 KeyGen → pass-fix** · **下一：T19a Encaps device**
 
 ### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt `#交付#`](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 

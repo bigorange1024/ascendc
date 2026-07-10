@@ -17,6 +17,8 @@
 | §4 | **常数时间**与 DJB 类关切 | 否 |
 | §5 | **AscendC 向量化**与对本仓路线的关系 | 少量 |
 | §6 | 常数表、验收、案例对照 | 是 |
+| §7 | 可复用模式目录 | 否 |
+| §8 | **相关工作与业界对比**（优缺点、选型） | 否 |
 
 ---
 
@@ -237,3 +239,98 @@ inline int32_t decompress_d(int32_t y, int d) {
 | **P-UDEC-1** | `round(c·q/2^d)` | `(q·c + 2^(d-1))>>d`，全 d 同形向量 |
 | **P-CT-1** | Compress CT 友好 | 禁 `/`、禁 secret 分支、禁 float 商 |
 | **P-VEC-1** | AscendC | `Muls/Adds/ShiftRight` 256-wide，无 float UB |
+
+---
+
+## 8. 相关工作与业界对比
+
+**读者**：选型、对外说明、评审「相对 mlkem-native / OpenSSL 有何不同」时阅读。  
+**结论先行**：本路线属于 ML-KEM **Compress 乘加移位定点**成熟技术族；**Decompress 与业界标准式相同，差异化几乎全在 Compress**。相对分档 magic / Barrett / float 等，本仓 **P-UCOMP（T=37）** 的取舍是：**用略宽的中间精度与更长的 per-d 移位，换全 d 同构、CT 叙述统一、AscendC 向量路径不分叉**。
+
+### 8.1 对比对象（Compress 侧）
+
+| 代号 | 代表实现 | 核心形态 |
+|------|----------|----------|
+| **A. 分档 magic** | [mlkem-native `compress.h`](https://github.com/pq-code-package/mlkem-native/blob/main/mlkem/compress.h)、本仓 P-COMP-1 | 每档 `d` 独立 `(M_d, bias, shift)`，如 d=5：`1290176`、`+2^26`、`>>27` |
+| **B. Barrett 商+余** | [OpenSSL / BoringSSL ML-KEM](https://github.com/openssl/openssl/blob/master/crypto/ml_kem/ml_kem.c) | `(u<<d)*μ>>s` 得商，余数 CT 调舍入 |
+| **C. 模板统一 m** | [Botan `kyber_helpers.h`](https://botan.randombit.net/doxygen/kyber__helpers_8h_source.html) | 统一 `m=2580335, p=33`，输入先 `(x<<d)+q/2` |
+| **D. 硬件统一 T=35** | [US 11,632,242](https://patents.justia.com/patent/11632242)（PQSecure, 2023） | `q′=⌊2^35/q⌋`，`>> (35-d)` + 看特定位舍入 |
+| **E. float 商** | 本仓旧 P-COMP-2 | d=10/11：`Cast→Div(3329)→截断` |
+| **F. 参考除法** | pq-crystals ref | `((u<<d)+q/2)/q`（[KyberSlash](https://eprint.iacr.org/2024/1049.pdf) 风险源） |
+
+**Decompress**：各路线普遍为 **`(q·c + 2^(d-1)) >> d`**（见 §3），与 A–F 无实质分歧。
+
+### 8.2 与近似原理路线的关系
+
+**同族（非从零发明）**：
+
+- **D**：「单一乘数 + 按 d 变移位」与 P-UCOMP 同构；差异在 **T 选取**（专利 T=35 vs 本仓 T=37）与 **舍入写法**（看 bit vs 显式 `bias=2^(k-1)`）。
+- **A / B / C / E**：均属「用乘法近似 `/q` 或 `/2^d`」，Hacker's Delight 式常数除法；[Filippo mlkem768](https://words.filippo.io/mlkem768/) 亦强调 Compress 宜 Barrett、忌原生 `/`。
+
+**本仓特有（公开文献未检到相同闭式）**：
+
+- **`C=41285357=⌊2^37/q⌋`** 作**全 d 共用**乘数，**`k=37-d`、`bias=2^(36-d)`** 派生；
+- 以 **`2^37 mod q = 19`** 与 **`u∈[0,q)` 穷举**（§6.2）作为选 T 门禁。
+
+**不宜对外表述**：「首个提出 Compress 整数实现 / 首个统一全 d 的 Compress」——硬件专利与后续 FPGA 论文已有「统一常数、按 d 变移位」类叙述。
+
+### 8.3 优点（相对业界分档 / float / 参考除法）
+
+| 维度 | 说明 |
+|------|------|
+| **全 d 同构** | 单一 `C`；AscendC 五档同一 `Muls→Adds→ShiftRight` 骨架，不必 d≤5 用 int32 Barrett、d≥10 另开 float（对比 [`向量实现指南`](F203-Compress-Decompress-向量实现指南.md) P-COMP-1/2 分裂） |
+| **CT 叙述** | 无 `/`、无 float `Div`、无按秘密 `u` 分支；较 B 指令更浅，较 F/E 可审计性更好 |
+| **维护 / 抄码** | 常数从「每 d 三元组」收成「一个 C + 派生 k/bias」；tail / stable / 探针共用 [`library/shared/f203_unified_round/`](../../library/shared/f203_unified_round/) |
+| **精度门禁清晰** | T 有闭式余数界 + 穷举；相对 D 的 T=35，T=37 余量更大 |
+| **Decompress 对称** | Compress 用 `2^T/q` 消分母；Decompress 用 `2^d` 消分母——文档可成对叙述 |
+
+### 8.4 缺点与代价
+
+| 维度 | 说明 |
+|------|------|
+| **非 per-d 最优** | A 为每 d 单独调 `(M_d,K)`，该档近似最紧；P-UCOMP 用全局 C 折中，**正确性依赖「T 够大」**（T=34 失败，§6.2） |
+| **移位可能更长** | d 小则 `k=T-d` 大（d=4 时 `>>33`）；A/C 常可缩短 K；**裸 CPU 周期未必最优** |
+| **中间乘积更宽** | `C·u` 需 64 位或 limb 宽乘；A 的 d=4/5 可全程 u32 lane |
+| **Decompress 无增量** | 与 mlkem-native 等相同，**不构成差异化** |
+| **参数变更** | 若 `q` 或 d 集合变，需**重找 T**；A 可逐档重算 magic |
+| **前置条件** | `u` 须 canonical `[0,q-1]`；`d` 须编译期公开 |
+
+### 8.5 分维度对照（Compress）
+
+| 维度 | P-UCOMP (T=37) | 分档 magic (A) | Barrett 商+余 (B) | Botan (C) | float (E) |
+|------|----------------|----------------|-------------------|-----------|-----------|
+| 全 d 代码同构 | ★★★★★ | ★★ | ★★★ | ★★★★ | ★★ |
+| CT 可论证性 | ★★★★★ | ★★★★★ | ★★★★ | ★★★★★ | ★★★ |
+| 每 d 精度余量 | ★★★★ | ★★★★★ | ★★★★★ | ★★★★ | ★★★★★ |
+| 中间位宽 | 64b / limb | d=4/5 可 u32 | 视实现 | 中等 | float 有效位 |
+| CPU 裸周期 | 可能略逊 A | 常较优 | 指令较多 | 较好 | d=10/11 或最快 |
+| AscendC/NPU 向量 | ★★★★★ | ★★★★ | ★★★ | ★★★★ | ★★ |
+| 维护成本 | ★★★★★ | ★★★ | ★★★ | ★★★★ | ★★ |
+
+### 8.6 选型建议（本仓语境）
+
+**优先 P-UCOMP**：
+
+- AscendC 向量：**一种 kernel 覆盖 d∈{1,4,5,10,11}**；
+- 交付要求全链路 CT、禁 float Div；
+- Encrypt tail / stable 与探针共用统一头文件。
+
+**仍可保留分档 magic / float 的场景**：
+
+- 极致 **CPU** 单档性能（尤其 d=10/11 旧 cast_div 在本仓曾有较低 SIM tick，见向量指南 §2 P-COMP-2）；
+- 16 位 / 无 64 位嵌入式；
+- 与 **liboqs / mlkem-native 字节级同源**，减少第三方审计差异。
+
+**推荐对外表述**：
+
+> 本方案属于 ML-KEM Compress 的常数时间整数定点实现；与 US 11,632,242 等同属「2^T/q 近似 + 统一乘数、按 d 变移位」族，选用 **T=37** 与显式舍入 bias，并在 `u∈[0,q)` 上穷举验证；Decompress 采用 FIPS 203 标准整数式。
+
+### 8.7 外部参考（附录）
+
+| 类型 | 链接 / 标识 |
+|------|-------------|
+| 标准 | [FIPS 203](https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.203.pdf) §4.2.1 |
+| 侧信道 | [KyberSlash (ePrint 2024/1049)](https://eprint.iacr.org/2024/1049.pdf) |
+| 软件 CT 实践 | [mlkem768 / Filippo](https://words.filippo.io/mlkem768/) · [mlkem-native compress.h](https://github.com/pq-code-package/mlkem-native/blob/main/mlkem/compress.h) |
+| 硬件统一常数 | [US 11,632,242](https://patents.justia.com/patent/11632242) · [PMC unified Kyber+Dilithium (2025)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12190417/)（移位-加法链形态，非同一 C） |
+| 本仓对照 | [`F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](F203-PKE-liboqs交叉验证与Compress定点技术总结.md) · [`F203-Compress-Decompress-向量实现指南.md`](F203-Compress-Decompress-向量实现指南.md) |

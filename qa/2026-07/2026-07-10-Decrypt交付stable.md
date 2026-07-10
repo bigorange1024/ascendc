@@ -220,3 +220,18 @@
 | 更名 | `fix-f203-alg19-kem-keygen-device-k4` → **`pass-fix-f203-alg19-kem-keygen-device-k4`** |
 | T19e | `scripts/` KeyGen 默认改 **pass-fix**（`roundtrip_kem_*`、`liboqs_kem_vs_ascendc`、`kat_liboqs_kem_keygen`） |
 | 下一 P0 | **T19a** [`fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)（KEM Encaps） |
+
+## §18 统一整数 Compress §8 业界对比定稿（2026-07-10 续）
+
+**背景**：统一整数舍入（§14–§16）定稿后，补充与 mlkem-native / OpenSSL Barrett / Botan / US 11,632,242（T=35）等路线的**优缺点与选型**说明，便于对外表述与评审。
+
+| 项 | 结论 |
+|----|------|
+| 位置 | [`docs/notes/F203-Compress-Decompress-统一整数舍入技术总结.md`](../../docs/notes/F203-Compress-Decompress-统一整数舍入技术总结.md) **§8** |
+| 定位 | 属「2^T/q 乘加移位」成熟技术族；**Decompress 与业界标准式相同**；差异化在 **Compress 全 d 同构（T=37, C=41285357）** |
+| 相对分档 magic | 换 per-d 最优移位/窄中间量 → **单一 C + 派生 k/bias**、AscendC 不分 float/int 叉、CT 叙述统一 |
+| 相对 US 11,632,242 | 同族「统一乘数 + 按 d 变移位」；本仓 **T=37**、显式 `bias=2^(36-d)`，非「首个统一 Compress」 |
+| 本仓优先场景 | AscendC 向量、stable/tail 共用 `library/shared/f203_unified_round/`、交付 CT 门禁 |
+| 仍可保留分档/float | 极致 CPU 单档、16 位 MCU、与 liboqs 字节级同源审计 |
+
+详表与外部链接：定稿 **§8.1–§8.7**；向量指南已链到 §8。
