@@ -1,19 +1,23 @@
 /**
- * @file alg11_gammas.h
- * @brief FIPS 203 kMlkemGammas[128]：ζ^(2·BitRev7(i)+1) mod q（q=3329）。
+ * 【文件头】FIPS 203 kMlkemGammas[128] 编译期常量表。
  *
- * 流水线位置：Alg.11 MultiplyNTTs / su_dot；与 Host GAMMAS、设备 ROM 同源。
- * 同步源：mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c。
- * 设备侧禁止在 Compute 热路径重填本表。
+ * 本文件在流水线中的位置：host 参考（alg11_12_ref）、设备 ROM、golden 脚本共用的 γ 源。
+ * 作用：提供 BaseCaseMultiply 每对 (f_{2i},f_{2i+1}) 所需的 γ_i = ζ^(2·BitRev7(i)+1) mod q。
+ * 与 golden 关系：gen_data.py 的 K_ALG11_GAMMAS 须与本表逐项一致，否则对拍无意义。
+ * 同步源：mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c
  */
 #ifndef ALG11_GAMMAS_H
 #define ALG11_GAMMAS_H
 
 #include <stdint.h>
 
+/** Alg.12 基域乘法对数（n/2） */
 #define ALG11_PAIR_COUNT 128
 
-/** 编译期 ROM：FIPS kMlkemGammas，设备侧禁止在 Compute 热路径重填。 */
+/**
+ * 编译期 ROM：FIPS kMlkemGammas，设备侧禁止在 Compute 热路径重填。
+ * 表项顺序：i=0..127，对应第 i 对系数的 γ。
+ */
 #define ALG11_GAMMAS_TABLE                                                          \
     17, 3312, 2761, 568, 583, 2746, 2649, 680, 1637, 1692, 723, 2606, 2288, 1041, \
         1100, 2229, 1409, 1920, 2662, 667, 3281, 48, 233, 3096, 756, 2573, 2156, 1173, \
@@ -25,6 +29,7 @@
         2237, 403, 2926, 1026, 2303, 1143, 2186, 2150, 1179, 2775, 554, 886, 2443, 1722, 1607, \
         1212, 2117, 1874, 1455, 1029, 2300, 2110, 1219, 2935, 394, 885, 2444, 2154, 1175
 
+/** host / 设备侧可读的 γ 数组（长度 ALG11_PAIR_COUNT） */
 static const int32_t kAlg11Gammas[ALG11_PAIR_COUNT] = {ALG11_GAMMAS_TABLE};
 
 #endif

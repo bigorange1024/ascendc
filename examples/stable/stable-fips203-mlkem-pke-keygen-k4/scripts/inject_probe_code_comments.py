@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 # @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/inject_probe_code_comments.py
 # @layer script
@@ -20,7 +21,6 @@
 一次性/可重复：为探针源码树 prepend @probe 注释块（已含 marker 的文件跳过）。
 从探针根目录运行: python3 scripts/inject_probe_code_comments.py
 """
-from __future__ import annotations
 
 import re
 import sys

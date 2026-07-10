@@ -1,3 +1,4 @@
+from __future__ import annotations
 
 # 生产输出对拍：比较 output/ek_pke.bin、dk_pke.bin 与 golden（I/O 等价）。
 #!/usr/bin/env python3
@@ -19,7 +20,6 @@
 文件：scripts/verify_production.py
 """
 """生产路径对拍：仅 ek_PKE / dk_PKE 与 golden 字节一致。"""
-from __future__ import annotations
 
 import sys
 from pathlib import Path

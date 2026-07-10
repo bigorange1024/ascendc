@@ -1,9 +1,9 @@
 /**
  * @file innerproduct_mod.hpp
- * @brief 内积 / Alg.11 累加后的向量 mod q（Barrett）与 CPU 孪生标量对照。
+ * @brief 行 18 lazy 累加后的 final mod q（向量 Barrett / CPU 标量）。
  *
- * 流水线位置：su_dot 写出 ŵ 前的 final mod；与 KeyGen 行 18 同族。
- * 设备/SIM：mod_q_barrett_vec；CPU debug：int64 对称除法（对齐 C ref）。
+ * 设备路径：μ=314、k=20 的 Barrett + wrap，对齐 2s1e F203_MOD_VARIANT==1。
+ * CPU 孪生：逐元素 int64 除法取模，对齐 C ref HAT_MOD_SCALAR_I64。
  */
 #pragma once
 
@@ -12,12 +12,18 @@
 
 namespace hat_ip {
 
+/** Barrett 乘法常数 μ ≈ 2^k / q（k=20, q=3329）。 */
 constexpr int32_t kBarrettMu = 314;
 constexpr int32_t kBarrettK = 20;
 
 /**
- * 把已约减到附近的 x 折回 [0,q)：x - (q & ~((x-q)>>31))。
- * 与 Alg11 barrett_red 末步一致。
+ * 向量 wrap：把可能 ≥q 的值压回 [0,q)。
+ * 实现：t1=src-q；符号掩码选 max(src-q, src&mask)，与 Alg11 barrett_red 末步一致。
+ * @param dst   输出
+ * @param src   输入（可与 dst 同缓冲）
+ * @param q     模数 3329
+ * @param t1,t2 临时 LocalTensor，长度 ≥ count
+ * @param count 元素个数
  */
 __aicore__ inline void wrap_mod_vec_runtime(AscendC::LocalTensor<int32_t> &dst, AscendC::LocalTensor<int32_t> &src,
                                             int32_t q, AscendC::LocalTensor<int32_t> &t1,
@@ -28,6 +34,7 @@ __aicore__ inline void wrap_mod_vec_runtime(AscendC::LocalTensor<int32_t> &dst, 
     using AscendC::Mul;
     using AscendC::ShiftRight;
 
+    // t1 = src - q；算术右移 31 得符号掩码（≥q 时为 0，否则为全 1）
     Adds(t1, src, -q, count);
     auto &t1_u32 = *reinterpret_cast<AscendC::LocalTensor<uint32_t> *>(&t1);
     auto &t2_u32 = *reinterpret_cast<AscendC::LocalTensor<uint32_t> *>(&t2);
@@ -37,13 +44,17 @@ __aicore__ inline void wrap_mod_vec_runtime(AscendC::LocalTensor<int32_t> &dst, 
 }
 
 /**
- * 行 18 / su_dot final mod：向量 Barrett（mu=314,k=20）。
- * @param dst 就地约减；t1/t2 临时 UB
+ * 行 18 final mod：向量 Barrett（对齐 2s1e F203_MOD_VARIANT==1 / MOD_Q_I32）。
+ * @param dst   就地约减的累加行
+ * @param q     模数
+ * @param t1,t2 临时缓冲
+ * @param count 系数个数（通常 N=256）
  */
 __aicore__ inline void mod_q_barrett_vec(AscendC::LocalTensor<int32_t> &dst, int32_t q,
                                          AscendC::LocalTensor<int32_t> &t1, AscendC::LocalTensor<int32_t> &t2,
                                          int32_t count)
 {
+    // q_hat = (dst * μ) >> k；dst -= q_hat * q；再 wrap
     AscendC::Muls(t1, dst, kBarrettMu, count);
     AscendC::ShiftRight(t1, t1, kBarrettK, count);
     AscendC::Muls(t2, t1, q, count);
@@ -52,7 +63,9 @@ __aicore__ inline void mod_q_barrett_vec(AscendC::LocalTensor<int32_t> &dst, int
 }
 
 #if defined(ASCENDC_CPU_DEBUG)
-/** 单元素 int64 对称 mod（CPU 孪生）。 */
+/**
+ * 单元素 int64 向零除法取模，结果规范到 [0,q)。
+ */
 __aicore__ inline int32_t mod_q_scalar_i64_one(int64_t x, int32_t q)
 {
     const int64_t q64 = static_cast<int64_t>(q);
@@ -67,7 +80,12 @@ __aicore__ inline int32_t mod_q_scalar_i64_one(int64_t x, int32_t q)
     return static_cast<int32_t>(rem);
 }
 
-/** CPU 孪生调试：标量 int64 mod（与 C ref HAT_MOD_SCALAR_I64 一致）。 */
+/**
+ * CPU 孪生调试：标量 int64 mod（与 C ref HAT_MOD_SCALAR_I64 一致）。
+ * @param dst   就地改写的 LocalTensor
+ * @param q     模数
+ * @param count 元素个数
+ */
 __aicore__ inline void mod_q_final_vec(AscendC::LocalTensor<int32_t> &dst, int32_t q, int32_t count)
 {
     for (int32_t i = 0; i < count; ++i) {
@@ -76,7 +94,9 @@ __aicore__ inline void mod_q_final_vec(AscendC::LocalTensor<int32_t> &dst, int32
     }
 }
 #else
-/** 设备 / SIM：向量 Barrett final mod。 */
+/**
+ * 设备 / SIM：向量 Barrett final mod（需额外 t1/t2 临时）。
+ */
 __aicore__ inline void mod_q_final_vec(AscendC::LocalTensor<int32_t> &dst, int32_t q,
                                        AscendC::LocalTensor<int32_t> &t1, AscendC::LocalTensor<int32_t> &t2,
                                        int32_t count)

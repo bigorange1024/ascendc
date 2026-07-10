@@ -11,7 +11,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STASH="${KEM_KEYPAIR_STASH:-${REPO_ROOT}/output/kem_keypair_stash}"
-KEYGEN_OUT="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg19-kem-keygen-k4}/output"
+KEYGEN_OUT="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4}/output"
 EK_SRC="${KEM_STASH_EK_SRC:-${KEYGEN_OUT}/ek_kem.bin}"
 DK_SRC="${KEM_STASH_DK_SRC:-${KEYGEN_OUT}/dk_kem.bin}"
 

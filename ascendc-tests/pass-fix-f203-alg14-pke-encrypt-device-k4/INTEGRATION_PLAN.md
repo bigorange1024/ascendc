@@ -54,7 +54,7 @@ c ← c₁ ‖ c₂
 | prep 与 compute **单 kernel 融合** | prep=AIV blockDim=2，compute=MIX blockDim=1；FSM 合并成本过高 |
 | SIM **1 launch** 全链 | 保留为远期优化；先 **2 launch** GM 验收 |
 | 晋级 `examples/stable/` | 本探针 PASS 后再议 |
-| KEM Encaps 并入 | 仍由 [`fix-f203-alg20-kem-encaps-k4`](../fix-f203-alg20-kem-encaps-k4/) 负责 |
+| KEM Encaps 并入 | 仍由 [`fix-f203-alg20-kem-encaps-correctness-k4`](../fix-f203-alg20-kem-encaps-correctness-k4/) 负责 |
 
 ---
 

@@ -1,19 +1,16 @@
 /**
  * @file f203_tail_compress_byteencode.hpp
  * @brief Alg.14 行 22–24：Compress₁₁/₅ + ByteEncode（ml_kem_1024）。
- * 选型定稿（2026-07-08，勿擅自改路径）：
- *   - Compress：向量 per-lane（`COMPRESS_D_VEC=1`），vendored 自 pass-f203-compress-d-vec-k4
- *   - ByteEncode：标量逐组 pack（`BYTE_ENCODE_D_VEC=1`），vendored 自 pass-f203-byteencode-d-vec-k4
- *   - **不**启用 byteencode 探针内 `BYTE_ENCODE_D_VEC=2`（真·Gather pack；实验 0-diff 但更慢 +7%/+12% tick）
- * 原理与宏表：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
- * Compress 细节：docs/notes/F203-Compress-Decompress-向量实现指南.md
- * 禁止跨探针 #include，仅抄码。
- * d=5：int32 Barrett（Muls 1290176 + bias 1<<26 + >>27）
- * d=11：cast_div 商（Muls(2^11) + Adds(q/2) + Cast→Div→CAST_TRUNC）
- * ByteEncode：8 系数/组 标量 pack（O(N/8)；与 Alg.5 比特流 0-diff）
  *
- * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
- * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
+ * 选型定稿（2026-07-10）：
+ *   - Compress：统一整数舍入 + 纯 int32 limb 宽乘向量（抄自 pass-f203-compress-unified-int-vec-k4）
+ *   - ByteEncode：标量逐组 pack（`BYTE_ENCODE_D_VEC=1`）
+ * 数学：C=⌊2^37/q⌋=41285357=629·2^16+63213；(C·u+2^(36-d))>>(37-d)。
+ * 原理：docs/notes/F203-Compress-Decompress-统一整数舍入技术总结.md
+ * 禁止跨探针 #include，仅抄码。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin。
  */
 #pragma once
 
@@ -23,8 +20,13 @@
 namespace f203_tail {
 
 constexpr uint32_t kPolyLen = F203_TAIL_N;
-constexpr int32_t kMlKemQ = F203_TAIL_Q;
 
+// 统一 Compress 乘数 limb 拆分（全 d 共用；C=41285357=629·65536+63213）
+constexpr int32_t kUnifiedCompressC0 = 63213;
+constexpr int32_t kUnifiedCompressC1 = 629;
+constexpr int32_t kUnifiedLimbShift = 16;
+
+/** v ← v mod 2^bits（移位+乘+减；lo 为正时等价于 lo & (2^bits-1)）。 */
 __aicore__ inline void mask_low_bits_i32(AscendC::LocalTensor<int32_t> &v, AscendC::LocalTensor<int32_t> &tmp,
                                          int32_t bits, uint32_t count)
 {
@@ -38,45 +40,58 @@ __aicore__ inline void mask_low_bits_i32(AscendC::LocalTensor<int32_t> &v, Ascen
     Sub(v, v, tmp, n);
 }
 
-/** d=5 Barrett 向量（抄自 pass-f203-compress-d-vec-k4::poly_compress_barrett_vec）。 */
-__aicore__ inline void poly_compress_d5_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
-                                            AscendC::LocalTensor<int32_t> &tmp)
+/**
+ * 统一整数 Compress limb 宽乘核心（d 无关；bias/accShift 由调用方按 d 填入）。
+ *
+ * carry = (lo>>16) + bias_hi + ((lo mod 2^16) + bias_lo) >> 16
+ * out   = (hi + carry) >> accShift
+ *
+ * @param lo/hi/carry/scratch 各长 kPolyLen 的独立 UB，勿与 out 别名。
+ */
+__aicore__ inline void poly_compress_unified_limb_vec(AscendC::LocalTensor<int32_t> &out,
+                                                      AscendC::LocalTensor<int32_t> &in,
+                                                      AscendC::LocalTensor<int32_t> &lo,
+                                                      AscendC::LocalTensor<int32_t> &hi,
+                                                      AscendC::LocalTensor<int32_t> &carry,
+                                                      AscendC::LocalTensor<int32_t> &scratch, int32_t biasLo,
+                                                      int32_t biasHi, int32_t accShift)
 {
+    using AscendC::Add;
     using AscendC::Adds;
     using AscendC::Muls;
     using AscendC::ShiftRight;
     const int32_t n = static_cast<int32_t>(kPolyLen);
-    Muls(out, in, static_cast<int32_t>(1290176), n);
-    Adds(out, out, static_cast<int32_t>(1 << 26), n);
-    ShiftRight(out, out, 27, n);
-    mask_low_bits_i32(out, tmp, 5, kPolyLen);
+
+    Muls(lo, in, kUnifiedCompressC0, n);
+    Muls(hi, in, kUnifiedCompressC1, n);
+
+    ShiftRight(carry, lo, kUnifiedLimbShift, n);
+    mask_low_bits_i32(lo, scratch, kUnifiedLimbShift, kPolyLen);
+    Adds(lo, lo, biasLo, n);
+    ShiftRight(scratch, lo, kUnifiedLimbShift, n);
+    Adds(carry, carry, biasHi, n);
+    Add(carry, carry, scratch, n);
+    Add(hi, hi, carry, n);
+    ShiftRight(out, hi, accShift, n);
 }
 
-/**
- * d=11 cast_div 商向量（抄自 pass-f203-compress-d-vec-k4::poly_compress_cast_div_vec）。
- * round(u·2^11/q) = floor((u·2048 + q/2)/q)
- */
-__aicore__ inline void poly_compress_d11_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
-                                             AscendC::LocalTensor<int32_t> &tmp_i, AscendC::LocalTensor<float> &fRaw,
-                                             AscendC::LocalTensor<float> &fTmp, AscendC::LocalTensor<float> &fQuot)
+/** d=5 统一整数 Compress 向量：bias_hi=2^15，acc_shift=16，末步 mask 5bit。 */
+__aicore__ inline void poly_compress_d5_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
+                                            AscendC::LocalTensor<int32_t> &lo, AscendC::LocalTensor<int32_t> &hi,
+                                            AscendC::LocalTensor<int32_t> &carry, AscendC::LocalTensor<int32_t> &scratch)
 {
-    using AscendC::Adds;
-    using AscendC::Cast;
-    using AscendC::Div;
-    using AscendC::Duplicate;
-    using AscendC::Muls;
-    const int32_t n = static_cast<int32_t>(kPolyLen);
-    constexpr int32_t kScale = 1 << 11;
-    constexpr int32_t kRoundBias = kMlKemQ / 2;
+    poly_compress_unified_limb_vec(out, in, lo, hi, carry, scratch, 0, 32768, 16);
+    mask_low_bits_i32(out, scratch, 5, kPolyLen);
+}
 
-    Muls(tmp_i, in, kScale, n);
-    Adds(tmp_i, tmp_i, kRoundBias, n);
-    Cast(fRaw, tmp_i, AscendC::RoundMode::CAST_NONE, static_cast<uint32_t>(n));
-    Duplicate(tmp_i, kMlKemQ, n);
-    Cast(fTmp, tmp_i, AscendC::RoundMode::CAST_NONE, static_cast<uint32_t>(n));
-    Div(fQuot, fRaw, fTmp, n);
-    Cast(out, fQuot, AscendC::RoundMode::CAST_TRUNC, static_cast<uint32_t>(n));
-    mask_low_bits_i32(out, tmp_i, 11, kPolyLen);
+/** d=11 统一整数 Compress 向量：bias_hi=2^9，acc_shift=10，末步 mask 11bit。 */
+__aicore__ inline void poly_compress_d11_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
+                                             AscendC::LocalTensor<int32_t> &lo, AscendC::LocalTensor<int32_t> &hi,
+                                             AscendC::LocalTensor<int32_t> &carry,
+                                             AscendC::LocalTensor<int32_t> &scratch)
+{
+    poly_compress_unified_limb_vec(out, in, lo, hi, carry, scratch, 0, 512, 10);
+    mask_low_bits_i32(out, scratch, 11, kPolyLen);
 }
 
 /** d=5：8 系数 × 5bit → 5B/组（抄自 pass-f203-byteencode-d-vec-k4::pack_d5_group）。 */

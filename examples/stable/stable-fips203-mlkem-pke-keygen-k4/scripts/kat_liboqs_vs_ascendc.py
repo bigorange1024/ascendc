@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 # @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/kat_liboqs_vs_ascendc.py
 # @layer script
@@ -29,7 +30,6 @@
   KAT_SEEDS="20260619,123,456,..." bash kat_liboqs_vs_ascendc.sh  # 11 个整数，前 10 CPU、后 1 SIM
   KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
 """
-from __future__ import annotations
 
 import os
 import secrets

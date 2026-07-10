@@ -37,7 +37,9 @@
 | [**pass-f203-alg6-bytedecode-d-vec-k4/**](pass-f203-alg6-bytedecode-d-vec-k4/) | **Alg.6 ByteDecode_d**（**d=4/5/10/11** PASS；d=5/11 **标量 unpack**；宏见 [`F203-ByteEncode-ByteDecode-d-向量与标量选型`](../docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md)） | ✓ | ✓ |
 | [**pass-f203-byteencode-d-vec-k4/**](pass-f203-byteencode-d-vec-k4/) | **Alg.5 ByteEncode_d**（**d=4/5/10/11** PASS；d=5/11 **标量 pack**；`VEC=2` 保留不激活；同上笔记） | ✓ | ✓ |
 | [**pass-f203-compress-d-vec-k4/**](pass-f203-compress-d-vec-k4/) | **§4.2.1 Compress_d**（**d=4/5/10/11**；**默认向量** `COMPRESS_D_VEC=1`；[`Compress-Decompress 指南`](../docs/notes/F203-Compress-Decompress-向量实现指南.md)） | ✓ | ✓ |
+| [**pass-f203-compress-unified-int-vec-k4/**](pass-f203-compress-unified-int-vec-k4/) | **已迁至** [`exp-fips203-compress-unified-int-vec-k4`](../examples/incubating/exp-fips203-compress-unified-int-vec-k4/)（canonical + customspec） | ✓ | 部分 |
 | [**pass-f203-decompress-d-vec-k4/**](pass-f203-decompress-d-vec-k4/) | **§4.2.1 Decompress_d**（**d=4/5/10/11**；**默认向量** `DECOMPRESS_D_VEC=1`；同上指南 + ByteEncode 选型笔记 §4） | ✓ | ✓ |
+| [**pass-f203-decompress-unified-int-vec-k4/**](pass-f203-decompress-unified-int-vec-k4/) | **已迁至** [`exp-fips203-decompress-unified-int-vec-k4`](../examples/incubating/exp-fips203-decompress-unified-int-vec-k4/)（canonical + customspec） | ✓ | 部分 |
 | [**pass-toy-mix-s123-byteencode-k2/**](pass-toy-mix-s123-byteencode-k2/) | **MIX 玩具**：双 AIV S1 → Cube 64³ → UB Adds+func1（无跨 AIV） | ✓ | ✓ |
 | [**pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/**](pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) | **Alg.14 prep**：`ek` 尾 ρ→`a_hat` + `coins`→`y/e₁/e₂`（单 launch，stable vendored）；**不含** `t̂` decode | ✓ | ✓ **470502** |
 | [**pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/**](pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) | **Alg.14 compute**：行 2/18/19/21（不含 μ）；SIM 单 launch **完成**；CPU 三 launch **部分**（û/u） | 部分 | ✓ **~125k** |
@@ -45,6 +47,7 @@
 | [**pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/**](pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | **Alg.14 行 2/16–24**（prep 外素材→c=c₁‖c₂）；SIM **1 launch** **154781** tick；CPU 4 launch | ✓ | ✓ |
 | [**pass-fix-f203-alg14-pke-encrypt-device-k4/**](pass-fix-f203-alg14-pke-encrypt-device-k4/) | **Alg.14 完整 K-PKE.Encrypt**（prep + compute+tail 集成；行 1–22 全设备；**in ek+m+coins → out 仅密文 c**；u/v 不落盘；SEED_D=20260619）；SIM **2 launch 626139** tick | ✓ | ✓ |
 | [**pass-fix-f203-alg15-pke-decrypt-device-k4/**](pass-fix-f203-alg15-pke-decrypt-device-k4/) | **Alg.15 完整 K-PKE.Decrypt**（单 kernel；尾融合；生产 input **仅 dk+c+lut** → out **仅 m**；SIM **~283k**）；**`roundtrip_pke_*` / liboqs 默认 Decrypt**；注释+I/O 收紧 2026-07-09 | ✓ | ✓ |
+| [**pass-fix-f203-alg19-kem-keygen-device-k4/**](pass-fix-f203-alg19-kem-keygen-device-k4/) | **Alg.19 KEM KeyGen（device）** — **2 launch**（Alg.16 尾内嵌 stable mmad）；无 vendor；SIM **~713k**；**`scripts/` KeyGen 默认** | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 
@@ -57,9 +60,13 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | 目录 | 说明 |
 |------|------|
 | **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
-| [**fix-f203-alg19-kem-keygen-k4/**](fix-f203-alg19-kem-keygen-k4/) | **Alg.19 KEM KeyGen ✅**（d/z UB + vendor PKE + KeyGen_internal 尾段）；CPU+SIM+liboqs max=0；SIM **742558** tick |
-| [**fix-f203-alg20-kem-encaps-k4/**](fix-f203-alg20-kem-encaps-k4/) | **Alg.20 KEM Encaps**（vendor Encrypt **G5←frozen**；**T19a**→stable）；**CPU+SIM PASS** | ✓ | ✓ |
-| [**fix-f203-alg21-kem-decaps-k4/**](fix-f203-alg21-kem-decaps-k4/) | **Alg.21 KEM Decaps**（vendor D←frozen G4 + E←frozen G5；**T19b/c**→stable；设备 FO）；SIM 默认 **2-session** PASS | ✓ | ✓（2-session） |
+| [**fix-f203-alg19-kem-keygen-correctness-k4/**](fix-f203-alg19-kem-keygen-correctness-k4/) | **Alg.19 KEM KeyGen（correctness）✅** — vendor PKE + KeyGen_internal；CPU+SIM+liboqs max=0；SIM **742558** tick |
+| [**fix-f203-alg20-kem-encaps-correctness-k4/**](fix-f203-alg20-kem-encaps-correctness-k4/) | **Alg.20 KEM Encaps（correctness）** — vendor Encrypt **G5←frozen**；**CPU+SIM PASS** |
+| [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；SIM 默认 **2-session** PASS |
+| [**fix-f203-alg20-kem-encaps-device-k4/**](fix-f203-alg20-kem-encaps-device-k4/) | **Alg.20 KEM Encaps（device）** — **T19a**；**待开工** |
+| [**fix-f203-alg21-kem-decaps-device-k4/**](fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — **T19b/c**；**待开工** |
+
+**命名（2026-07-10）**：`*-correctness-k4` = vendor oracle 对照（冻结不动）；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19 KeyGen device 已 PASS 并更名 `pass-fix-…`**。KEM `scripts/` KeyGen 默认 [`pass-fix-f203-alg19-kem-keygen-device-k4`](pass-fix-f203-alg19-kem-keygen-device-k4/)；Encaps/Decaps device（`fix-*-device-k4`）待 **T19a/b**。
 
 **KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 2-session ~11min/段。
 

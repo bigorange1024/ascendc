@@ -1,0 +1,74 @@
+/**
+ * @file f203_unified_round_params.hpp
+ * @brief FIPS 203 Compress/Decompress 统一整数舍入编译期常数（C=⌊2^37/q⌋，按 d 派生 shift/bias）。
+ *
+ * 本文件在流水线中的位置：被 f203_unified_compress_vec.hpp / f203_unified_decompress_vec.hpp
+ * include，不含运行期逻辑；数学推导见 docs/notes/F203-Compress-Decompress-统一整数舍入技术总结.md §2–3。
+ * 与 golden 的关系：Compress 的 C/shift/bias 与 decompress 的 bias/shift 须与各自 *_ref.c 同构。
+ *
+ * 前置：调用方须在 include 本文件前定义 F203_UNIFIED_ROUND_D（1/4/5/10/11）。
+ */
+#ifndef F203_UNIFIED_ROUND_PARAMS_HPP
+#define F203_UNIFIED_ROUND_PARAMS_HPP
+
+// 统一 Compress 乘数：C = ⌊2^37 / 3329⌋ = 41285357（余数 19，见技术总结 §2.3）。
+#define F203_UNIFIED_ROUND_C 41285357LL
+// C 在 16 位 limb 边界精确拆分：C = C1·2^16 + C0（629·65536 + 63213 = 41285357）。
+#define F203_UNIFIED_COMPRESS_C0 63213
+#define F203_UNIFIED_COMPRESS_C1 629
+#define F203_UNIFIED_COMPRESS_LIMB_SHIFT 16
+
+// ---------- Compress：round(u·2^d/q) = (C·u + 2^(36-d)) >> (37-d) ----------
+#if F203_UNIFIED_ROUND_D == 1
+#define F203_UNIFIED_ROUND_D_BITS 1
+#define F203_UNIFIED_COMPRESS_SHIFT 36
+#define F203_UNIFIED_COMPRESS_BIAS (1LL << 35)
+#define F203_UNIFIED_COMPRESS_BIAS_LO 0
+#define F203_UNIFIED_COMPRESS_BIAS_HI 524288
+#define F203_UNIFIED_COMPRESS_ACC_SHIFT 20
+#elif F203_UNIFIED_ROUND_D == 4
+#define F203_UNIFIED_ROUND_D_BITS 4
+#define F203_UNIFIED_COMPRESS_SHIFT 33
+#define F203_UNIFIED_COMPRESS_BIAS (1LL << 32)
+#define F203_UNIFIED_COMPRESS_BIAS_LO 0
+#define F203_UNIFIED_COMPRESS_BIAS_HI 65536
+#define F203_UNIFIED_COMPRESS_ACC_SHIFT 17
+#elif F203_UNIFIED_ROUND_D == 5
+#define F203_UNIFIED_ROUND_D_BITS 5
+#define F203_UNIFIED_COMPRESS_SHIFT 32
+#define F203_UNIFIED_COMPRESS_BIAS (1LL << 31)
+#define F203_UNIFIED_COMPRESS_BIAS_LO 0
+#define F203_UNIFIED_COMPRESS_BIAS_HI 32768
+#define F203_UNIFIED_COMPRESS_ACC_SHIFT 16
+#elif F203_UNIFIED_ROUND_D == 10
+#define F203_UNIFIED_ROUND_D_BITS 10
+#define F203_UNIFIED_COMPRESS_SHIFT 27
+#define F203_UNIFIED_COMPRESS_BIAS (1LL << 26)
+#define F203_UNIFIED_COMPRESS_BIAS_LO 0
+#define F203_UNIFIED_COMPRESS_BIAS_HI 1024
+#define F203_UNIFIED_COMPRESS_ACC_SHIFT 11
+#elif F203_UNIFIED_ROUND_D == 11
+#define F203_UNIFIED_ROUND_D_BITS 11
+#define F203_UNIFIED_COMPRESS_SHIFT 26
+#define F203_UNIFIED_COMPRESS_BIAS (1LL << 25)
+#define F203_UNIFIED_COMPRESS_BIAS_LO 0
+#define F203_UNIFIED_COMPRESS_BIAS_HI 512
+#define F203_UNIFIED_COMPRESS_ACC_SHIFT 10
+#else
+#error "F203_UNIFIED_ROUND_D must be 1, 4, 5, 10, or 11"
+#endif
+
+// ---------- Decompress：round(c·q/2^d) = (c·q + 2^(d-1)) >> d ----------
+#if F203_UNIFIED_ROUND_D == 1
+#define F203_UNIFIED_DECOMPRESS_BIAS 1
+#elif F203_UNIFIED_ROUND_D == 4
+#define F203_UNIFIED_DECOMPRESS_BIAS 8
+#elif F203_UNIFIED_ROUND_D == 5
+#define F203_UNIFIED_DECOMPRESS_BIAS 16
+#elif F203_UNIFIED_ROUND_D == 10
+#define F203_UNIFIED_DECOMPRESS_BIAS 512
+#elif F203_UNIFIED_ROUND_D == 11
+#define F203_UNIFIED_DECOMPRESS_BIAS 1024
+#endif
+
+#endif

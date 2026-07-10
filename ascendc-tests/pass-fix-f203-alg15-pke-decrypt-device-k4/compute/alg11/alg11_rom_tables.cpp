@@ -1,14 +1,15 @@
 /**
- * @file alg11_rom_tables.cpp
- * @brief Alg.11 ROM 常量表定义：γ + Gather even/odd + interleave 重排。
+ * 【文件头】FIPS γ + 固定 n=256 Gather / interleave 字节索引 ROM 定义。
  *
- * 流水线位置：链接进设备镜像；su_dot Init DataCopy 到 UB。
- * 数值与 alg11_fixed_n256 / ALG11_GAMMAS_TABLE 一致；仅数据，无运行逻辑。
- * interleave 注释：scratch=[c0‖c1] 各 128 int32，h[i]←scratch[reorder[i]]。
+ * 本文件在流水线中的位置：设备 GM 常量表实体；由 multiply_ntts_kernel.cpp 在
+ *   ALG11_IMPL=1 && MEM_OPS=1 && 非 CPU_DEBUG 时 #include 进编译单元。
+ * 作用：物化 gAlg11GammasGm 与 Gather/interleave 字节索引（与 alg11_fixed_n256 公式一致）。
+ * 与 golden 关系：γ 与 host/golden 同源；索引仅影响设备布局，不改变代数结果。
  */
 #include "alg11_rom_tables.h"
 #include "kernel_operator.h"
 
+/** 偶 lane Gather 字节索引：0,8,16,...（每对偶系数的字节偏移） */
 #define ALG11_GATHER_EVEN_BYTE_TABLE                                                                                  \
     0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, \
         200, 208, 216, 224, 232, 240, 248, 256, 264, 272, 280, 288, 296, 304, 312, 320, 328, 336, 344, 352, 360,    \
@@ -17,6 +18,7 @@
         704, 712, 720, 728, 736, 744, 752, 760, 768, 776, 784, 792, 800, 808, 816, 824, 832, 840, 848, 856, 864,  \
         872, 880, 888, 896, 904, 912, 920, 928, 936, 944, 952, 960, 968, 976, 984, 992, 1000, 1008, 1016
 
+/** 奇 lane Gather 字节索引：4,12,20,...（偶偏移 +4） */
 #define ALG11_GATHER_ODD_BYTE_TABLE                                                                                   \
     4, 12, 20, 28, 36, 44, 52, 60, 68, 76, 84, 92, 100, 108, 116, 124, 132, 140, 148, 156, 164, 172, 180, 188, 196,  \
         204, 212, 220, 228, 236, 244, 252, 260, 268, 276, 284, 292, 300, 308, 316, 324, 332, 340, 348, 356, 364,  \
@@ -25,7 +27,7 @@
         708, 716, 724, 732, 740, 748, 756, 764, 772, 780, 788, 796, 804, 812, 820, 828, 836, 844, 852, 860, 868,  \
         876, 884, 892, 900, 908, 916, 924, 932, 940, 948, 956, 964, 972, 980, 988, 996, 1004, 1012, 1020
 
-/* interleave: scratch=[c0||c1] 各 128 int32；输出 h[i] 取自 scratch[reorder[i]] */
+/* interleave：scratch=[c0||c1] 各 128 int32；输出 h[i] 取自 scratch[reorder[i]]（字节偏移） */
 #define ALG11_INTERLEAVE_REORDER_BYTE_TABLE                                                                           \
     0, 512, 4, 516, 8, 520, 12, 524, 16, 528, 20, 532, 24, 536, 28, 540, 32, 544, 36, 548, 40, 552, 44, 556, 48,    \
         560, 52, 564, 56, 568, 60, 572, 64, 576, 68, 580, 72, 584, 76, 588, 80, 592, 84, 596, 88, 600, 92, 604, 96,  \
@@ -40,7 +42,11 @@
         944, 436, 948, 440, 952, 444, 956, 448, 960, 452, 964, 456, 968, 460, 972, 464, 976, 468, 980, 472, 984,    \
         476, 988, 480, 992, 484, 996, 488, 1000, 492, 1004, 496, 1008, 500, 1012, 504, 1016, 508, 1020
 
+/** GM ROM：γ 表 */
 __gm__ const int32_t gAlg11GammasGm[ALG11_PAIR_COUNT] = {ALG11_GAMMAS_TABLE};
+/** GM ROM：偶 Gather 字节索引 */
 __gm__ const int32_t gAlg11GatherEvenByteGm[ALG11_PAIR_COUNT] = {ALG11_GATHER_EVEN_BYTE_TABLE};
+/** GM ROM：奇 Gather 字节索引 */
 __gm__ const int32_t gAlg11GatherOddByteGm[ALG11_PAIR_COUNT] = {ALG11_GATHER_ODD_BYTE_TABLE};
+/** GM ROM：interleave 重排字节索引（256 项） */
 __gm__ const int32_t gAlg11InterleaveReorderByteGm[ALG11_PAIR_COUNT * 2] = {ALG11_INTERLEAVE_REORDER_BYTE_TABLE};

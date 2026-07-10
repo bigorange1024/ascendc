@@ -1,0 +1,66 @@
+% exp-fips203-decompress-unified-int-vec-k4 统一整数 Decompress_d 实现方案
+% 编译：bash ../../../scripts/xelatex-clean.sh exp-fips203-decompress-unified-int-vec-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.2cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-decompress-unified-int-vec-k4\\FIPS 203 统一整数 Decompress\_d 向量实现方案}
+\author{ascendc 工程}
+\date{2026-07-10}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \texttt{examples/incubating/exp-fips203-decompress-unified-int-vec-k4/}：
+在 Ascend910B / AIV-only 单 launch 上实现 FIPS 203 §4.2.1 \textbf{Decompress\_d} 的\textbf{统一整数舍入}路径。
+公式：$\text{Decompress}_d(c)=(c\cdot q+2^{d-1})\gg d$；默认 \textbf{int32 全向量}三条指令（\texttt{Muls}/\texttt{Adds}/\texttt{ShiftRight}）。
+较旧 \texttt{pass-f203-decompress-d-vec-k4} 新增 \textbf{d=1} 档位并与 Compress 共用 \texttt{F203\_UNIFIED\_ROUND\_D}。
+\end{abstract}
+
+\section{数学语义}
+
+\subsection{输入输出}
+\begin{itemize}
+  \item 输入 \texttt{comp.bin}：$N=256$ 个 \texttt{int32}，各 $c\in[0,2^d-1]$。
+  \item 输出 \texttt{poly.bin}：$N$ 个 \texttt{int32}，解压后 $Z_q$ 代表元。
+  \item $d\in\{1,4,5,10,11\}$；bias $=2^{d-1}$（如 d=11 时 1024）。
+\end{itemize}
+
+\subsection{数值安全}
+$d\le 11$ 时 $c\cdot q < 2^{11}\cdot 3329 \approx 6.8\times 10^6$，int32 乘加无溢出。
+
+\section{设备实现}
+
+\subsection{核函数}
+\texttt{decompress\_unified\_int\_custom}（AIV-only，\texttt{blockDim=1}）调用共享头
+\texttt{poly\_decompress\_unified\_local}。
+
+\subsection{向量路径（默认）}
+\texttt{DECOMPRESS\_UNIFIED\_INT\_VEC=1}：
+\[
+  \texttt{tmp} \leftarrow c\cdot q;\quad \texttt{tmp} \leftarrow \texttt{tmp}+\text{bias};\quad \texttt{out} \leftarrow \texttt{tmp}\gg d
+\]
+仅需 1 路 scratch \texttt{tmp}（长度 $N$）。
+
+\subsection{标量对照}
+\texttt{DECOMPRESS\_UNIFIED\_INT\_VEC=0}：逐系数 \texttt{GetValue/SetValue}。
+
+\section{Golden 与验收}
+
+\begin{itemize}
+  \item Golden：\texttt{decompress\_unified\_int\_ref.c}。
+  \item 命令：\texttt{bash run.sh -r cpu -v Ascend910B4}；代表档 \texttt{F203\_UNIFIED\_ROUND\_D=11 SIM\_DIRECT=1 bash run.sh -r sim -v Ascend910B4}。
+  \item 验收：\texttt{output/poly.bin} 与 golden 一致。
+  \item 生产集成：stable Decrypt unpack（d=5/11）已内联同公式；本 exp 为\textbf{单算子隔离探针}。
+\end{itemize}
+
+\section{性能参考（SIM d=4/11）}
+
+tick $\approx 3215$（与 d 弱相关，固定 3 条向量指令 + 搬运）。
+
+\end{document}

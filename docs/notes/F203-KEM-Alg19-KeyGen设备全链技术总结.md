@@ -2,9 +2,13 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 FIPS 203 **Algorithm 19** `ML-KEM.KeyGen()` 在 **ml_kem_1024（k=4）** 上的**随机性契约**、经 **Alg.16 `KeyGen_internal`** 的拼装增量、**I/O 契约**与**设备全链不变量**  
-**案例锚点**：[`ascendc-tests/fix-f203-alg19-kem-keygen-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/)（**G3 CPU+SIM PASS**）  
+**案例锚点**：
+
+- **correctness（vendor oracle）**：[`ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/)（CPU+SIM+liboqs PASS）
+- **device 主线（2 launch，无 vendor）**：[`ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)（CPU+SIM PASS；SIM ~713k tick）
+
 **讨论**：[`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)  
-**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md)
+**实现方案**：correctness [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/INTEGRATION_PLAN.md) · device [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md)
 
 ---
 
@@ -119,12 +123,15 @@ Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_v
 
 ## 6. 案例对照（附录）
 
-| 项 | 值 |
-|----|-----|
-| 探针目录 | `ascendc-tests/fix-f203-alg19-kem-keygen-k4` |
-| 状态 | **规划**（INTEGRATION_PLAN 已写，代码待实现） |
-| 后继 | Alg.20 Encaps [`fix-f203-alg20-kem-encaps-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) · Alg.21 Decaps 独立探针 |
-| TODO | **T6** 进行中 |
+| 项 | correctness | device（主线） |
+|----|-------------|----------------|
+| 探针目录 | `ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4` | `ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4` |
+| Launch | 3（vendor PKE 拼装） | **2**（stable PKE + mmad 内嵌 Alg.16 尾） |
+| 状态 | **PASS**（oracle） | **PASS**（2026-07-10） |
+| SIM tick | ~742k | ~713k（P1 后均值） |
+| 脚本默认 | 对照 / Encaps 过渡 | **KeyGen**（`roundtrip_kem_*` 等） |
+
+后继：**T19a** Alg.20 Encaps device [`fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/) · Alg.21 Decaps device。
 
 ---
 

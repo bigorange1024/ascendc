@@ -1,11 +1,3 @@
-
-/** 反交错 ROM：与 interleave 互逆；SampleNTT 向量路径 Gather 索引表。 */
-/**
- * 本文件在 KeyGen 流水线中的位置：Launch 1 Alg.7 SampleNTT（Â）：XOF/拒绝采样/ROM。
- * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
- * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
- * 文件：prep/alg7/f203_alg7_deinterleave_rom.h
- */
 /**
  * @file f203_alg7_deinterleave_rom.h
  * @brief Alg.7 xof 672B → c0/c1/c2[224] Gather 字节索引（自动生成）。

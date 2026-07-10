@@ -111,6 +111,30 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
 #include "f203_keygen_ek_pke_fuse.hpp"
 #endif
 
+#ifndef F203_KEM_KEYGEN_TAIL
+#define F203_KEM_KEYGEN_TAIL 0
+#endif
+/*
+ * F203_KEM_KEYGEN_TAIL（KEM KeyGen 尾段钩子，2026-07-10 定案保留）
+ *
+ * 背景：pass-fix-f203-alg19-kem-keygen-device-k4 在 stable PKE Launch-2（mmad）末尾内嵌
+ *       FIPS 203 Alg.16 尾（z + H(ek) + dk_kem），实现 2 launch 全链。
+ *
+ * 为何放在 stable mmad 而非探针内 fork mmad_custom_kem.cpp：
+ *   1) stable 为 PKE 唯一实现源，fork 会在 NTT/Alg.11/行21 变更时产生手工 merge 债；
+ *   2) 默认 0 时本文件与纯 PKE KeyGen 行为完全一致（已回归 stable CPU）；
+ *   3) device 仅 CMake 置 1 并 include kem/f203_kem_kg_tail_fuse.hpp，尾段逻辑仍在探针 kem/。
+ *
+ * 性能：相对首期 fork 版 SIM tick 约 +1.8%（713k vs 700k），I/O 与 correctness 一致；
+ *       工程收益（无 fork、ROM 本地化）大于 tick 差，故保留宏方案。
+ *
+ * 实参（仅 F203_KEM_KEYGEN_TAIL>=1）：seed_d_gm（4B 或旁路 A 64B）、dk_kem_gm（3168B 出）。
+ * sk_out 在尾段内作 dk_pke 源（行 20 已写 ByteEncode₁₂(ŝ)）。
+ */
+#if F203_KEM_KEYGEN_TAIL >= 1
+#include "f203_kem_kg_tail_fuse.hpp"
+#endif
+
 /**
  * MIX 主核：Tag5T NTT + Alg.11 + ByteEncode（+ 可选行 21 融合）。
  * @param dst     输出/中间：NTT 后 ŝ/ê [8,256] int32
@@ -122,6 +146,7 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
  * @param ws      workspace：S0 / mat_c 临时 / 平面 mat_c / LUT
  * @param tiling  Host TilingData（tileLength、mixPass）
  * @param rho_gm / ek_pke_gm  仅 F203_KEYGEN_EK_PKE：ρ 与最终 ek_PKE
+ * @param seed_d_gm / dk_kem_gm  仅 F203_KEM_KEYGEN_TAIL：Alg.16 尾段 z+H(ek)+dk_kem
  * 前置：KERNEL_TYPE_MIX_AIC_1_2；生产 mixPass=0。
  */
 extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out, GM_ADDR sk_out,
@@ -129,6 +154,10 @@ extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM
 #if F203_KEYGEN_EK_PKE >= 1
                                                   ,
                                                   GM_ADDR rho_gm, GM_ADDR ek_pke_gm
+#endif
+#if F203_KEM_KEYGEN_TAIL >= 1
+                                                  ,
+                                                  GM_ADDR seed_d_gm, GM_ADDR dk_kem_gm
 #endif
                                                   )
 {
@@ -252,6 +281,19 @@ extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM
     /* KeyGen：行 21 ek_PKE = ek_polyvec ‖ ρ，与行 16–20 同次 Launch；仅 AIV0 */
     if (!AIC && subBlockID == 0 && runEncode) {
         F203KeygenEkPke::FuseEkPke(ek_out, rho_gm, ek_pke_gm);
+#if F203_KEM_KEYGEN_TAIL >= 1
+        /*
+         * Alg.16 KeyGen_internal 尾（仅 AIV0、runEncode 后）：
+         *   FuseEkPke 已写出 ek_pke_gm[1568] 与 sk_out=dk_pke[1536]；
+         *   KemKgTailFused 再派生 z、算 H(ek)=SHA3-256(ek)、拼 dk_kem_gm[3168]。
+         * ek_kem 与 ek_pke_gm 同址，零额外拷贝。
+         * SHA3 实现见 kem/f203_kem_kg_*.hpp（当前 F203SeDeviceKeccak::Sha3OneShot）。
+         */
+        F203KemKg::KemKgTailFused(reinterpret_cast<__gm__ uint8_t *>(seed_d_gm),
+                                  reinterpret_cast<__gm__ uint8_t *>(ek_pke_gm),
+                                  reinterpret_cast<__gm__ uint8_t *>(sk_out),
+                                  reinterpret_cast<__gm__ uint8_t *>(dk_kem_gm));
+#endif
         KYBER_PIPE_ALL();
     }
 #endif
@@ -261,10 +303,20 @@ extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM
 #if F203_KEYGEN_EK_PKE >= 1
 extern "C" void mmad_custom_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *dst, uint8_t *t_hat,
                                uint8_t *ek_out, uint8_t *sk_out, uint8_t *src, uint8_t *a_hat, uint8_t *ws,
-                               uint8_t *tiling, uint8_t *rho_gm, uint8_t *ek_pke_gm)
+                               uint8_t *tiling, uint8_t *rho_gm, uint8_t *ek_pke_gm
+#if F203_KEM_KEYGEN_TAIL >= 1
+                               ,
+                               uint8_t *seed_d_gm, uint8_t *dk_kem_gm
+#endif
+                               )
 {
     mmad_custom<<<blockDim, l2ctrl, stream>>>(dst, t_hat, ek_out, sk_out, src, a_hat, ws,
-                                              *reinterpret_cast<TilingData *>(tiling), rho_gm, ek_pke_gm);
+                                              *reinterpret_cast<TilingData *>(tiling), rho_gm, ek_pke_gm
+#if F203_KEM_KEYGEN_TAIL >= 1
+                                              ,
+                                              seed_d_gm, dk_kem_gm
+#endif
+                                              );
 }
 #endif
 #endif

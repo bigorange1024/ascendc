@@ -3,7 +3,7 @@
  * @brief Alg.14 行 20 + 22–24：μ_embed 输出 + Compress/ByteEncode → c（单 launch AIV）。
  *
  * 流水线位置：pack 探针设备核；输入 m/u/v 由 host 外部生成。
- * Compress d=5/d=11 向量路径抄自 pass-f203-compress-d-vec-k4；
+ * Compress d=5/d=11 统一整数 limb 向量（抄自 pass-f203-compress-unified-int-vec-k4）；
  * ByteEncode d=5/d=11 分组 pack 抄自 pass-f203-byteencode-d-vec-k4（见 f203_tail_compress_byteencode.hpp）。
  * 本核不把 μ 加给 v（行 21 由 compute 探针负责）。
  *
@@ -70,24 +70,21 @@ extern "C" __global__ __aicore__ void f203_encrypt_alg14_tail(GM_ADDR mGm, GM_AD
     gmMu.SetGlobalBuffer((__gm__ int32_t *)muEmbedGm, kN);
     gmC.SetGlobalBuffer((__gm__ uint8_t *)cGm, F203_TAIL_C_BYTES);
 
-    // --- UB：消息/多项式/压缩中间量/字节缓冲；d=11 另需 3×N float ---
+    // --- UB：消息/多项式/压缩中间量/字节缓冲；Compress 需 4×N int32 scratch（lo/hi/carry/tmp）---
     TPipe pipe;
     TQue<TPosition::VECIN, 1> queM;
     TQue<TPosition::VECIN, 1> quePoly;
     TQue<TPosition::VECOUT, 1> queMu;
     TQue<TPosition::VECOUT, 1> queBytes;
     TBuf<TPosition::VECCALC> bufComp;
-    TBuf<TPosition::VECCALC> bufTmp;
-    TBuf<TPosition::VECCALC> fBuf;
+    TBuf<TPosition::VECCALC> bufScratch;
 
     pipe.InitBuffer(queM, 1, 64U);
     pipe.InitBuffer(quePoly, 1, kN * sizeof(int32_t));
     pipe.InitBuffer(queMu, 1, kN * sizeof(int32_t));
     pipe.InitBuffer(queBytes, 1, F203_TAIL_C1_POLY_BYTES);
     pipe.InitBuffer(bufComp, kN * sizeof(int32_t));
-    pipe.InitBuffer(bufTmp, kN * sizeof(int32_t));
-    // d=11 cast_div 需 3×256 float（与 pass compress 探针同拓扑）
-    pipe.InitBuffer(fBuf, kN * sizeof(float) * 3U);
+    pipe.InitBuffer(bufScratch, kN * sizeof(int32_t) * 4U);
 
     // --- 行 20：m → μ_embed，写 GM 供对拍 ---
     LocalTensor<uint8_t> mLocal = queM.AllocTensor<uint8_t>();
@@ -100,21 +97,21 @@ extern "C" __global__ __aicore__ void f203_encrypt_alg14_tail(GM_ADDR mGm, GM_AD
     queM.FreeTensor(mLocal);
     queMu.FreeTensor(muLocal);
 
-    // 复用缓冲：poly/comp/tmp + d=11 三路 float
+    // 复用缓冲：poly/comp + 4 路 int32 scratch（统一整数 limb 宽乘）
     LocalTensor<int32_t> polyLocal = quePoly.AllocTensor<int32_t>();
     LocalTensor<int32_t> compLocal = bufComp.Get<int32_t>();
-    LocalTensor<int32_t> tmpLocal = bufTmp.Get<int32_t>();
     LocalTensor<uint8_t> bytesLocal = queBytes.AllocTensor<uint8_t>();
-    LocalTensor<float> fRaw = fBuf.GetWithOffset<float>(kN, 0U);
-    LocalTensor<float> fTmp = fBuf.GetWithOffset<float>(kN, kN * sizeof(float));
-    LocalTensor<float> fQuot = fBuf.GetWithOffset<float>(kN, kN * 2U * sizeof(float));
+    LocalTensor<int32_t> lo = bufScratch.GetWithOffset<int32_t>(kN, 0U);
+    LocalTensor<int32_t> hi = bufScratch.GetWithOffset<int32_t>(kN, kN * sizeof(int32_t));
+    LocalTensor<int32_t> carry = bufScratch.GetWithOffset<int32_t>(kN, kN * 2U * sizeof(int32_t));
+    LocalTensor<int32_t> scratch = bufScratch.GetWithOffset<int32_t>(kN, kN * 3U * sizeof(int32_t));
 
     // --- 行 22–23：u polyvec → c₁（Compress₁₁ + ByteEncode₁₁）---
     for (uint32_t p = 0; p < kK; ++p) {
         DataCopy(polyLocal, gmU[p * kN], kN);
         PipeBarrier<PIPE_ALL>();
         canonicalize_poly_q(polyLocal);
-        f203_tail::poly_compress_d11_vec(compLocal, polyLocal, tmpLocal, fRaw, fTmp, fQuot);
+        f203_tail::poly_compress_d11_vec(compLocal, polyLocal, lo, hi, carry, scratch);
         PipeBarrier<PIPE_ALL>();
         f203_tail::poly_byte_encode_d11_local(bytesLocal, compLocal);
         PipeBarrier<PIPE_ALL>();
@@ -126,7 +123,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_alg14_tail(GM_ADDR mGm, GM_AD
     DataCopy(polyLocal, gmV, kN);
     PipeBarrier<PIPE_ALL>();
     canonicalize_poly_q(polyLocal);
-    f203_tail::poly_compress_d5_vec(compLocal, polyLocal, tmpLocal);
+    f203_tail::poly_compress_d5_vec(compLocal, polyLocal, lo, hi, carry, scratch);
     PipeBarrier<PIPE_ALL>();
     f203_tail::poly_byte_encode_d5_local(bytesLocal, compLocal);
     PipeBarrier<PIPE_ALL>();

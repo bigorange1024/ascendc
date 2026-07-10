@@ -121,7 +121,7 @@ Git：`4d549c3`（代码 + 脚本）；本纪要 + note + 探针 INTEGRATION_PLA
 
 | 项 | 结论 |
 |----|------|
-| **落点** | `../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/`（**非** `examples/exp-*`） |
+| **落点** | `../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/`（**非** `examples/exp-*`） |
 | **密码学位置** | KEM 增量（`H(ek)`、采 `z`、拼 `dk_kem`）**全在 device**；拒绝 Host「胶水」 |
 | **PKE 上游** | Alg.13 → **stable** KeyGen；本探针 **vendor 复制**，不 `#include` stable 路径 |
 | **Enc/Dec** | 后续独立探针，调用 fix alg14/15 |
@@ -133,7 +133,7 @@ Git：`4d549c3`（代码 + 脚本）；本纪要 + note + 探针 INTEGRATION_PLA
 
 | 路径 | 内容 |
 |------|------|
-| [`../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) | `INTEGRATION_PLAN.md` · `STATUS.md` · `SELF_CONTAINED.md` |
+| [`../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | `INTEGRATION_PLAN.md` · `STATUS.md` · `SELF_CONTAINED.md` |
 | [`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md) | 定稿原理 |
 | [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) | 家里 Agent 实现入口 |
 
@@ -141,9 +141,9 @@ Git：`4d549c3`（代码 + 脚本）；本纪要 + note + 探针 INTEGRATION_PLA
 
 ### 7.3 家里 Agent 建议顺序
 
-见探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md) §8：vendor stable → G1 PKE → G2 H/z → G3 拼接 → liboqs KEM L2（脚本待建）。
+见探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/INTEGRATION_PLAN.md) §8：vendor stable → G1 PKE → G2 H/z → G3 拼接 → liboqs KEM L2（脚本待建）。
 
-**TODO**：**T6** **PASS**（G3 CPU+SIM+liboqs max=0；目录 **`fix-f203-alg19-kem-keygen-k4`**）。
+**TODO**：**T6** **PASS**（G3 CPU+SIM+liboqs max=0；目录 **`fix-f203-alg19-kem-keygen-correctness-k4`**）。
 
 ---
 
@@ -156,4 +156,4 @@ Git：`4d549c3`（代码 + 脚本）；本纪要 + note + 探针 INTEGRATION_PLA
 | **禁止** | D2H / `output/d.bin` / `output/z.bin` / Host 预填 64B `kem_seed`；`d`/`z` 计算过程不得导出保存 |
 | **验收种子** | Host 仅 `input/seed_d.bin`（4B）；`liboqs_kem_fixture` 用于 L2 对拍 **64B `d‖z` 期望值**，不进生产 `run.sh` |
 
-已写入 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md) §4.2 · [`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md) §1.3。
+已写入 [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/INTEGRATION_PLAN.md) §4.2 · [`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md) §1.3。

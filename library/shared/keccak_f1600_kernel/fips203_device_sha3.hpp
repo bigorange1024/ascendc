@@ -2,8 +2,13 @@
  * @file fips203_device_sha3.hpp
  * @brief AI Core 标量 SHA3/SHAKE（Keccak-f[1600] + PermuteChain；语义对齐 thirdparty/tiny_sha3/sha3.c）。
  *
- * 用途：FIPS203 G(d||k) SHA3-512、Derand SHA3-256 等须在设备 AIV 标量路径完成的原语。
+ * 用途：FIPS203 G(d||k) SHA3-512、Derand SHA3-256、KEM H(ek) 等须在设备 AIV 标量路径完成的原语。
  * 禁止用 Host Python/tiny_sha3 替代设备路径上的 ρ/σ 生成。
+ *
+ * KEM KeyGen device-k4 调用点（SHA3-256，mdlen=32）：
+ *   - kem/f203_kem_kg_derand_ub.hpp  — z 域分离派生
+ *   - kem/f203_kem_kg_tail_fuse.hpp  — H(ek) 摘要
+ * 替换第三方 AscendC 实现时保持 Sha3OneShot(md, mdlen, in, inlen) 语义或在上两处封装新 API。
  */
 #pragma once
 

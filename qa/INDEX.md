@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-10 — [Decrypt `#交付#` → stable · 冻结 correctness · KEM T19](2026-07/2026-07-10-Decrypt交付stable.md)
+### 2026-07-10 — [Decrypt `#交付#` → stable · 统一整数 Compress/Decompress · KEM KeyGen pass-fix](2026-07/2026-07-10-Decrypt交付stable.md)
 
-**stable Decrypt** · 冻结 correctness · KEM vendor←frozen · **T19** · **T20** Wave1–5 中文注释补课完成 · T15a/T15c/T7b 关闭
+**Decrypt `#交付#`** · PKE roundtrip×10+1 · **统一整数向量 Compress/Decompress 验收** · **Alg.19 KeyGen → pass-fix** · **下一：T19a Encaps device**
 
 ### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt `#交付#`](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 
@@ -44,7 +44,7 @@
 
 ### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.19 KeyGen](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)
 
-**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg19-kem-keygen-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
+**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg19-kem-keygen-correctness-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
 
 ### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 

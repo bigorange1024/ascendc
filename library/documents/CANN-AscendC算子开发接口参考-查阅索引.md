@@ -49,7 +49,7 @@
 
 按时间倒序追加（最新在上）。
 
-| 2026-07-09 | **Alg.15 PKE Decrypt customspec（exp-fips203-mlkem-pke-decrypt-k4）** | DataCopy/Duplicate/CrossCore GATE 4/8/MMAD/向量算术；NTT S1–S3 **禁 Gather**；Compress₁ Barrett；Encode₁ 标量 | [`exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.tex)：I/O 仅 dk+c→m；SIM/CPU **1** launch MIX `aicore=1`；API 表复用 Decrypt PASS 探针已查记录 |
+| 2026-07-10 | **统一整数 Compress limb 向量** | `Muls`/`Adds`/`Add`/`ShiftRight`；C=629·2^16+63213；carry 进位链 | [`f203_unified_compress_vec.hpp`](../../library/shared/f203_unified_round/f203_unified_compress_vec.hpp)：纯 int32 向量宽乘；`pass-f203-compress-unified-int-vec-k4` 全 d CPU+SIM PASS |
 | 2026-07-09 | **Decrypt 单 kernel pad/ŝ：禁标量写 GM** | `Duplicate`/`DataCopy`（既有）；Encrypt R2 | [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/)：`pad_w_hat_for_intt`、`decode_s_hat` 改 UB+DataCopy；softSyncGm 仅 AIV0/1 汇合；GATE 4/8。 |
 | 2026-07-09 | **Decrypt 单 kernel + v−w 向量 mod** | CrossCore flag 1/2/3 + GATE 4/8（Encrypt l18_l19 同构）；`Sub`/`Max`/`ShiftRight` wrap_mod | [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) `f203_decrypt_device_fused`：prep→NTT→dot→INTT→尾；除 Encode₁ 外向量。 |
 | 2026-07-09 | **Decrypt prep Decompress₁₁/₅ 向量** | `Muls`/`Adds`/`ShiftRight`（P-DEC，既有） | [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) unpack：ByteDecode 标量 + Decompress 向量；生产 **仅 D2H m**。 |

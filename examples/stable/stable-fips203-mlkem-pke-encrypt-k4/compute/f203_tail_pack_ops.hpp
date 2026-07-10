@@ -1,12 +1,12 @@
 /**
  * @file f203_tail_pack_ops.hpp
- * @brief Alg.14 行 22–24 tail pack 可复用设备例程（Compress 向量 + ByteEncode 标量 pack）。
+ * @brief Alg.14 行 22–24 tail pack 可复用设备例程（统一整数 Compress 向量 + ByteEncode 标量 pack）。
  * 供 f203_encrypt_alg14_pack（CPU 独立 launch）与 f203_encrypt_l18_l19（SIM 单 launch 内联 pack）共用。
  * 分片：subBlock0 → c₁[0..1]+c₂；subBlock1 → c₁[2..3]（与 INTT 双 AIV 各握 halfrows u 对齐）。
- * 选型：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
+ * Compress：统一整数 limb 宽乘（d=5/d=11 各 4×int32 scratch，无 float）。
  *
- * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
- * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；stable-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin。
  */
 #pragma once
 
@@ -18,6 +18,7 @@ namespace f203_tail {
 
 constexpr uint32_t kPackN = F203_TAIL_N;
 constexpr uint32_t kPackK = F203_TAIL_K;
+constexpr uint32_t kCompressScratchElems = kPackN * 4U;
 
 /** 将单 poly 系数 clamp 到 [0,q-1]（标量；INTT+噪声后偶发越界）。 */
 __aicore__ inline void canonicalize_poly_q(AscendC::LocalTensor<int32_t> &poly)
@@ -44,27 +45,27 @@ __aicore__ inline void pack_one_u_poly_d11(AscendC::GlobalTensor<int32_t> &gmU, 
     AscendC::TQue<AscendC::TPosition::VECIN, 1> quePoly;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> queBytes;
     AscendC::TBuf<AscendC::TPosition::VECCALC> bufComp;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> bufTmp;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> fBuf;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufScratch;
 
     pipe.InitBuffer(quePoly, 1, kPackN * sizeof(int32_t));
     pipe.InitBuffer(queBytes, 1, F203_TAIL_C1_POLY_BYTES);
     pipe.InitBuffer(bufComp, kPackN * sizeof(int32_t));
-    pipe.InitBuffer(bufTmp, kPackN * sizeof(int32_t));
-    pipe.InitBuffer(fBuf, kPackN * sizeof(float) * 3U);
+    pipe.InitBuffer(bufScratch, kCompressScratchElems * sizeof(int32_t));
 
     AscendC::LocalTensor<int32_t> polyLocal = quePoly.AllocTensor<int32_t>();
     AscendC::LocalTensor<int32_t> compLocal = bufComp.Get<int32_t>();
-    AscendC::LocalTensor<int32_t> tmpLocal = bufTmp.Get<int32_t>();
     AscendC::LocalTensor<uint8_t> bytesLocal = queBytes.AllocTensor<uint8_t>();
-    AscendC::LocalTensor<float> fRaw = fBuf.GetWithOffset<float>(kPackN, 0U);
-    AscendC::LocalTensor<float> fTmp = fBuf.GetWithOffset<float>(kPackN, kPackN * sizeof(float));
-    AscendC::LocalTensor<float> fQuot = fBuf.GetWithOffset<float>(kPackN, kPackN * 2U * sizeof(float));
+    AscendC::LocalTensor<int32_t> lo = bufScratch.GetWithOffset<int32_t>(kPackN, 0U);
+    AscendC::LocalTensor<int32_t> hi = bufScratch.GetWithOffset<int32_t>(kPackN, kPackN * sizeof(int32_t));
+    AscendC::LocalTensor<int32_t> carry =
+        bufScratch.GetWithOffset<int32_t>(kPackN, kPackN * 2U * sizeof(int32_t));
+    AscendC::LocalTensor<int32_t> scratch =
+        bufScratch.GetWithOffset<int32_t>(kPackN, kPackN * 3U * sizeof(int32_t));
 
     AscendC::DataCopy(polyLocal, gmU[polyIdx * kPackN], kPackN);
     AscendC::PipeBarrier<PIPE_ALL>();
     canonicalize_poly_q(polyLocal);
-    poly_compress_d11_vec(compLocal, polyLocal, tmpLocal, fRaw, fTmp, fQuot);
+    poly_compress_d11_vec(compLocal, polyLocal, lo, hi, carry, scratch);
     AscendC::PipeBarrier<PIPE_ALL>();
     poly_byte_encode_d11_local(bytesLocal, compLocal);
     AscendC::PipeBarrier<PIPE_ALL>();
@@ -81,22 +82,27 @@ __aicore__ inline void pack_v_poly_d5(AscendC::GlobalTensor<int32_t> &gmV, Ascen
     AscendC::TQue<AscendC::TPosition::VECIN, 1> quePoly;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> queBytes;
     AscendC::TBuf<AscendC::TPosition::VECCALC> bufComp;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> bufTmp;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufScratch;
 
     pipe.InitBuffer(quePoly, 1, kPackN * sizeof(int32_t));
     pipe.InitBuffer(queBytes, 1, F203_TAIL_C2_BYTES);
     pipe.InitBuffer(bufComp, kPackN * sizeof(int32_t));
-    pipe.InitBuffer(bufTmp, kPackN * sizeof(int32_t));
+    pipe.InitBuffer(bufScratch, kCompressScratchElems * sizeof(int32_t));
 
     AscendC::LocalTensor<int32_t> polyLocal = quePoly.AllocTensor<int32_t>();
     AscendC::LocalTensor<int32_t> compLocal = bufComp.Get<int32_t>();
-    AscendC::LocalTensor<int32_t> tmpLocal = bufTmp.Get<int32_t>();
     AscendC::LocalTensor<uint8_t> bytesLocal = queBytes.AllocTensor<uint8_t>();
+    AscendC::LocalTensor<int32_t> lo = bufScratch.GetWithOffset<int32_t>(kPackN, 0U);
+    AscendC::LocalTensor<int32_t> hi = bufScratch.GetWithOffset<int32_t>(kPackN, kPackN * sizeof(int32_t));
+    AscendC::LocalTensor<int32_t> carry =
+        bufScratch.GetWithOffset<int32_t>(kPackN, kPackN * 2U * sizeof(int32_t));
+    AscendC::LocalTensor<int32_t> scratch =
+        bufScratch.GetWithOffset<int32_t>(kPackN, kPackN * 3U * sizeof(int32_t));
 
     AscendC::DataCopy(polyLocal, gmV, kPackN);
     AscendC::PipeBarrier<PIPE_ALL>();
     canonicalize_poly_q(polyLocal);
-    poly_compress_d5_vec(compLocal, polyLocal, tmpLocal);
+    poly_compress_d5_vec(compLocal, polyLocal, lo, hi, carry, scratch);
     AscendC::PipeBarrier<PIPE_ALL>();
     poly_byte_encode_d5_local(bytesLocal, compLocal);
     AscendC::PipeBarrier<PIPE_ALL>();

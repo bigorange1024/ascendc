@@ -1,9 +1,10 @@
 /**
  * @file f203_decrypt_unpack_impl.hpp
- * @brief Alg.15 行 3–4：c → u'/v'。ByteDecode₁₁/₅ **标量** + Decompress₁₁/₅ **向量**。
+ * @brief Alg.15 行 3–4：c → u'/v'。ByteDecode₁₁/₅ **标量** + Decompress₁₁/₅ **统一整数向量**。
  *
- * 背景：G4 全标量；本探针 prep 向量化 Decompress（P-DEC）。
- * 结论：Decode 标量；Decompress 默认向量；中间态留 device GM，Host 不 D2H。
+ * 背景：G4 全标量；本路径 prep 向量化 Decompress。
+ * 结论：Decode 标量；Decompress 默认向量；公式 (c·q + 2^(d-1)) >> d（与 pass-f203-decompress-unified-int-vec-k4 同构）。
+ * 原理：docs/notes/F203-Compress-Decompress-统一整数舍入技术总结.md §3。
  */
 #ifndef F203_DECRYPT_UNPACK_IMPL_HPP
 #define F203_DECRYPT_UNPACK_IMPL_HPP
@@ -20,19 +21,27 @@ namespace decrypt_g4 {
 constexpr int32_t kUnpackN = static_cast<int32_t>(F203_DECRYPT_N);
 constexpr int32_t kUnpackK = static_cast<int32_t>(F203_DECRYPT_K);
 constexpr int32_t kUnpackQ = static_cast<int32_t>(F203_DECRYPT_Q);
-constexpr int32_t kDecompBias11 = 1024;
-constexpr int32_t kDecompBias5 = 16;
-constexpr int32_t kDecompShift11 = 11;
-constexpr int32_t kDecompShift5 = 5;
+
+// 统一整数 Decompress 偏置：2^(d-1)
+constexpr int32_t kUnifiedDecompressBias11 = 1024;
+constexpr int32_t kUnifiedDecompressBias5 = 16;
+constexpr int32_t kUnifiedDecompressShift11 = 11;
+constexpr int32_t kUnifiedDecompressShift5 = 5;
+
+__aicore__ inline uint32_t decompress_unified_scalar(uint32_t c, int32_t bias, int32_t shift)
+{
+    return (static_cast<uint32_t>((c * static_cast<uint32_t>(kUnpackQ)) + static_cast<uint32_t>(bias)) >>
+            static_cast<uint32_t>(shift));
+}
 
 __aicore__ inline uint32_t decompress_d11_u32(uint32_t u)
 {
-    return ((u * static_cast<uint32_t>(kUnpackQ)) + 1024u) >> 11;
+    return decompress_unified_scalar(u, kUnifiedDecompressBias11, kUnifiedDecompressShift11);
 }
 
 __aicore__ inline uint32_t decompress_d5_u32(uint32_t u)
 {
-    return ((u * static_cast<uint32_t>(kUnpackQ)) + 16u) >> 5;
+    return decompress_unified_scalar(u, kUnifiedDecompressBias5, kUnifiedDecompressShift5);
 }
 
 /**
@@ -60,8 +69,13 @@ __aicore__ inline void byte_decode_bits_scalar(int32_t *out, const uint8_t *in, 
     }
 }
 
-__aicore__ inline void decompress_d_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
-                                        AscendC::LocalTensor<int32_t> &tmp, int32_t bias, int32_t shift)
+/**
+ * 统一整数 Decompress 向量：out = (in * q + bias) >> shift。
+ * @param tmp scratch int32[N]，承载 Muls+Adds 中间结果。
+ */
+__aicore__ inline void poly_decompress_unified_vec(AscendC::LocalTensor<int32_t> &out,
+                                                   AscendC::LocalTensor<int32_t> &in,
+                                                   AscendC::LocalTensor<int32_t> &tmp, int32_t bias, int32_t shift)
 {
     using AscendC::Adds;
     using AscendC::Muls;
@@ -88,9 +102,9 @@ __aicore__ inline void unpack_one_poly_ub(const uint8_t *cPoly, __gm__ int32_t *
     AscendC::PipeBarrier<PIPE_ALL>();
 
 #if DECOMPRESS_D_VEC >= 1
-    const int32_t bias = (dBits == 11U) ? kDecompBias11 : kDecompBias5;
-    const int32_t shift = (dBits == 11U) ? kDecompShift11 : kDecompShift5;
-    decompress_d_vec(outLocal, inLocal, tmp, bias, shift);
+    const int32_t bias = (dBits == 11U) ? kUnifiedDecompressBias11 : kUnifiedDecompressBias5;
+    const int32_t shift = (dBits == 11U) ? kUnifiedDecompressShift11 : kUnifiedDecompressShift5;
+    poly_decompress_unified_vec(outLocal, inLocal, tmp, bias, shift);
 #else
     (void)tmp;
     for (int32_t i = 0; i < kUnpackN; ++i) {

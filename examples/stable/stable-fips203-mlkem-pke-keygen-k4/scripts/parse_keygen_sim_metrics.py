@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 # @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/parse_keygen_sim_metrics.py
 # @layer script
@@ -24,7 +25,6 @@
   2. kernel 日志 — LaunchKernel→TaskCompleted 墙钟 ms（用时）
   3. kernel 日志 — 末行 Total tick；若无 profile_task，按用时比例分摊 tick
 """
-from __future__ import annotations
 
 import re
 import sys

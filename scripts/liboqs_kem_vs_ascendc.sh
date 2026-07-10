@@ -25,9 +25,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg19-kem-keygen-k4}"
-ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg20-kem-encaps-k4}"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4}"
+ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

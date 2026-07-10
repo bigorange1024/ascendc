@@ -4,7 +4,7 @@
  *
  * ## 流水线位置
  * FIPS 203 Alg.14 / ML-KEM-1024 Encrypt 的 host 编排层（非设备核）。
- * 负责把 `input/*.bin` 装入 host 缓冲、把设备回写结果落到 `output/c.bin`。
+ * 负责把 input 目录下各 .bin 装入 host 缓冲、把设备回写结果落到 output/c.bin。
  *
  * ## 与 golden 关系
  * 仅 I/O 胶水：不参与密码学计算；对拍由 `run.sh` + `cmp` 完成。

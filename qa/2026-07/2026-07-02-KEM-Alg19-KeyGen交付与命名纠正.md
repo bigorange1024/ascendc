@@ -1,6 +1,6 @@
 # 2026-07-02 KEM Alg.19 KeyGen 交付收尾、目录命名纠正与「为何顺利」
 
-关键词：**Alg.19 KeyGen** · **fix-f203-alg19-kem-keygen-k4** · **T6 关闭** · **alg16→alg19 重命名** · **vendor PKE** · **顺利原因**
+关键词：**Alg.19 KeyGen** · **fix-f203-alg19-kem-keygen-correctness-k4** · **T6 关闭** · **alg16→alg19 重命名** · **vendor PKE** · **顺利原因**
 
 ---
 
@@ -10,7 +10,7 @@
 
 | 项 | 结论 |
 |----|------|
-| **探针** | [`../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/) |
+| **探针** | [`../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) |
 | **标准定位** | 对外 **FIPS 203 Alg.19** `ML-KEM.KeyGen()`；内部经 **Alg.16 `KeyGen_internal(d,z)`** 拼装 |
 | **架构** | 3 launch：`prep`（vendor PKE + `d`）\| `mmad`（Alg.13 计算 + `ek_pke`）\| `kem_finish`（`H(ek)` + UB `z` + `dk_kem` 拼接） |
 | **I/O** | `ek_kem` 1568B · `dk_kem` 3168B（liboqs：`dk_pke‖ek‖H(ek)‖z`）· `SEED_D=20260619` |
@@ -25,7 +25,7 @@
 
 | 变更 | 说明 |
 |------|------|
-| `fix-f203-alg16-kem-keygen-k4` → **`fix-f203-alg19-kem-keygen-k4`** | 探针目录 |
+| `fix-f203-alg16-kem-keygen-k4` → **`fix-f203-alg19-kem-keygen-correctness-k4`** | 探针目录 |
 | `F203-KEM-Alg16-KeyGen…` → **`F203-KEM-Alg19-KeyGen…`** | `docs/notes/` 技术总结 |
 | qa 纪要文件名 **Alg16** → **Alg19** | 7/1 纪要保留内容，7/2 本篇接续 |
 | `prep` 符号链接 | 重命名后曾指向旧 `alg16` 路径 → 已改为 `vendor/pke_keygen/prep` |
@@ -99,7 +99,7 @@
 | **T2** | Alg.17/18 Encaps/Decaps | **待建独立探针**（前置：PKE Enc/Dec + 本探针均已 PASS） |
 | **T14a/T15a** | PKE Enc/Dec → stable 晋级 | 探针 PASS，stable 未建 |
 
-索引：[`STATUS.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/STATUS.md) · [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-k4/INTEGRATION_PLAN.md) · [`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md) · 前日 [`2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)。
+索引：[`STATUS.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/STATUS.md) · [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/INTEGRATION_PLAN.md) · [`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md) · 前日 [`2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)。
 
 ---
 
@@ -128,11 +128,11 @@ Alg.17 Encaps_internal(ek, m)
 | **liboqs I/O** | `ek_kem` 1568 · `dk_kem` 3168 | `ek` 1568 · **`c` 1568** · **`K` 32** |
 | **验收脚本** | `liboqs_kem_vs_ascendc.sh` keygen 段 | 待扩 **encaps** 段（`encaps_derand` / 黑盒 `encaps`） |
 
-### 4.2 建议探针形态（镜像 `fix-f203-alg19-kem-keygen-k4`）
+### 4.2 建议探针形态（镜像 `fix-f203-alg19-kem-keygen-correctness-k4`）
 
 | 项 | 建议 |
 |----|------|
-| **目录** | `../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/` |
+| **目录** | `../../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/` |
 | **vendor 源** | [`stable-fips203-mlkem-pke-encrypt-k4`](../stable-fips203-mlkem-pke-encrypt-k4/) G5 全链（`vendor_sync.sh` 复制，禁止 `#include` 跨探针） |
 | **自研 KEM 头** | `kem/f203_kem_enc_init.hpp`：`DerandMFromSeed*`（可复现）+ `H(ek)` + `G(m‖h)` 拆 `K`/`r` |
 | **编排** | 单 ACL session；**优先**将 `m`/`G`/`coins` 写入 GM 后接 vendor Encrypt launch 序列（避免额外 func_key） |
@@ -168,7 +168,7 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 
 | 项 | 结论 |
 |----|------|
-| **目录** | [`../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/`](../../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) |
+| **目录** | [`../../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/`](../../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) |
 | **流程** | **先方案后代码**；当前文档主线为 `INTEGRATION_PLAN` / `qa` / `docs/notes` |
 | **公钥 `pk`** | **读 alg19 产出** `output/ek_kem.bin` → 本探针 `input/`（`gen_data` + `EK_KEM_SRC` 默认相对路径） |
 | **随机性 `m`** | device UB（`DerandMFromSeedD`）；Host 仅 `seed_d` |
@@ -222,13 +222,13 @@ Alg.21 为纯 **Alg.18 internal**（无新随机性）：`Decrypt` + `G` + 重�
 
 ## 7. Alg.21 Decaps 首版写码与 SIM 单 session 问题（同日追加）
 
-关键词：**Alg.21 Decaps** · **fix-f203-alg21-kem-decaps-k4** · **T7c** · **SIM CAModel 污染** · **两段 session workaround**
+关键词：**Alg.21 Decaps** · **fix-f203-alg21-kem-decaps-correctness-k4** · **T7c** · **SIM CAModel 污染** · **两段 session workaround**
 
 ### 7.1 交付状态
 
 | 项 | 结论 |
 |----|------|
-| **探针** | [`../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/`](../../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) |
+| **探针** | [`../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) |
 | **架构** | vendor alg15 Decrypt G4 + alg14 Encrypt G5 + `kem/` K1 `G` + K2 FO |
 | **I/O** | `dk_kem` 3168B + `c` 1568B → `K` 32B；输入复制 alg19/20（`SEED_D=20260619`） |
 | **G4 CPU** | **PASS** `K max=0`（单 session 设备 FO） |

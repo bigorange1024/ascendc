@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 # @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/prepare_production_input.py
 # @layer script
@@ -22,7 +23,6 @@
 - input/：SEED_D + 静态 NTT LUT（lut_even/odd_stacked.bin）
 - 禁止向 input/ 写入 a_hat、src、rho、tiling 等中间态
 """
-from __future__ import annotations
 
 import importlib.util
 import os

@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # vendor_sync.sh — 从活跃探针复制 vendored 源（自包含）
+# tiling：保留本目录 compute/ntt_u/f203_decrypt_ntt_u_tiling.h（k=4 几何已定型，勿从错误 encrypt 路径覆盖）。
 set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TESTS="${CASE_DIR}/.."
-ENC="${TESTS}/stable-fips203-mlkem-pke-encrypt-k4"
+REPO_ROOT="$(cd "${CASE_DIR}/../.." && pwd)"
+if [ ! -d "${REPO_ROOT}/library/shared" ]; then
+    REPO_ROOT="$(cd "${CASE_DIR}/../../.." && pwd)"
+fi
+TESTS="${REPO_ROOT}/ascendc-tests"
 NTT_SRC="${TESTS}/pass-fix-f203-stage123-ntt-intt-polyvec8-vec"
 ALG11_SRC="${TESTS}/pass-fix-f203-alg11-12-multiplyntts-k4"
 IP_SRC="${TESTS}/pass-fix-f203-alg11-12-innerproduct-k4"
@@ -31,12 +35,14 @@ done
 copy_file "${NTT_SRC}/thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h" \
     "${LUT_DST}/transpose_mlkem_luts_i8.h"
 
-# k=4 完整 workspace 常量（对齐 encrypt compute/ntt_r/f203_ntt_r_tiling.h）
-copy_file "${ENC}/compute/ntt_r/f203_ntt_r_tiling.h" "${NTT_DST}/f203_decrypt_ntt_u_tiling.h"
-sed -i \
-    -e 's/F203_ENCRYPT_NTT_R_TILING_H/F203_DECRYPT_NTT_U_TILING_H/g' \
-    -e 's/f203_ntt_r_tiling/f203_decrypt_ntt_u_tiling/g' \
-    "${NTT_DST}/f203_decrypt_ntt_u_tiling.h"
+# k=4 workspace 常量：本探针自包含 tiling（对齐 stable-fips203-mlkem-pke-decrypt-k4，非 encrypt ntt_r）
+TILING_IN_TREE="${NTT_DST}/f203_decrypt_ntt_u_tiling.h"
+if [ ! -f "${TILING_IN_TREE}" ]; then
+    STABLE_DEC="${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-decrypt-k4"
+    copy_file "${STABLE_DEC}/compute/ntt_u/f203_decrypt_ntt_u_tiling.h" "${TILING_IN_TREE}"
+else
+    echo "[vendor_sync] keep in-tree compute/ntt_u/f203_decrypt_ntt_u_tiling.h"
+fi
 
 sed -i 's|"tiling.h"|"f203_decrypt_ntt_u_tiling.h"|g' "${NTT_DST}/aiv_func.hpp"
 
