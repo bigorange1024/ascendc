@@ -10,7 +10,13 @@
 # @verify KEYGEN_KAT=1 bash run.sh 或 kat_*.sh；对比 liboqs。
 
 # coding=utf-8
-"""分阶段 KAT：G0–G4 每段对 Host golden；G4 再对 liboqs。用于定位 example/探针分歧点。
+"""
+本文件在 KeyGen 流水线中的位置：Host KAT 编排（分阶段门控 + liboqs）。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价；liboqs 为外部 oracle，非 AscendC 规格。
+文件：scripts/kat_liboqs_staged.py
+
+分阶段 KAT：G0–G4 每段对 Host golden；G4 再对 liboqs。用于定位 example/探针分歧点。
 
 门禁与 output/ 中间产物（run.sh 默认保留）：
   g0 — 仅 Host golden 自检 + golden↔liboqs
@@ -53,12 +59,18 @@ DEFAULT_GATES = ("g0", "g2", "g3", "g4")
 
 
 def _ensure_liboqs() -> Path:
+    """若缺 liboqs 参考二进制则调用 build 脚本；返回可执行路径。
+    """
     if not REF_BIN.is_file():
         subprocess.check_call(["bash", str(BUILD_REF)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return REF_BIN
 
 
 def liboqs_pke(d: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """调用 liboqs PKE KeyGen 参考，返回 (ek_pke, dk_pke) uint8 数组。
+
+    @param d  32B 确定性种子（与 derand_bytes_from_seed 一致）
+    """
     with tempfile.TemporaryDirectory(prefix="stg_") as td:
         ek_p, dk_p = Path(td) / "ek", Path(td) / "dk"
         subprocess.check_call(
@@ -70,6 +82,8 @@ def liboqs_pke(d: bytes) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _run_gate(gate: str, seed_d: int) -> None:
+    """以 KEYGEN_GATE 调用探针 run.sh（cpu/sim 由 KAT_RUN_MODE 决定）。
+    """
     env = os.environ.copy()
     env["SEED_D"] = str(seed_d)
     env["KEYGEN_GATE"] = gate
@@ -77,18 +91,24 @@ def _run_gate(gate: str, seed_d: int) -> None:
 
 
 def _verify_gate(gate: str) -> None:
+    """对当前门控产物跑 scripts/verify_result.py。
+    """
     env = os.environ.copy()
     env["KEYGEN_GATE"] = gate
     subprocess.check_call([sys.executable, str(ROOT / "scripts/verify_result.py")], cwd=ROOT, env=env)
 
 
 def _cmp_bytes(name: str, got: np.ndarray, exp: np.ndarray) -> None:
+    """字节级断言；失败打印首个差异下标。
+    """
     if got.shape != exp.shape or not np.array_equal(got, exp):
         idx = int(np.argmax(got != exp)) if got.size == exp.size else 0
         raise SystemExit(f"[staged FAIL] {name} @ {idx}: got={got.flat[idx] if got.size else '?'} expect={exp.flat[idx] if exp.size else '?'}")
 
 
 def stage_g0(seed_d: int, d: bytes, kg: dict) -> None:
+    """G0：Host golden 自检 + golden↔liboqs（不跑设备核）。
+    """
     _run_gate("g0", seed_d)
     _verify_gate("g0")
     ek_oqs, dk_oqs = liboqs_pke(d)
@@ -98,6 +118,8 @@ def stage_g0(seed_d: int, d: bytes, kg: dict) -> None:
 
 
 def stage_g2(seed_d: int, kg: dict) -> None:
+    """G2：presample 后门控，对拍 src.bin。
+    """
     _ = kg
     _run_gate("g2", seed_d)
     _verify_gate("g2")
@@ -118,6 +140,8 @@ def _check_a_hat_rows() -> None:
 
 
 def stage_g3(seed_d: int, kg: dict) -> None:
+    """G3：Â 生成后门控；额外逐行诊断 a_hat。
+    """
     _ = kg
     _run_gate("g3", seed_d)
     _verify_gate("g3")
@@ -126,6 +150,8 @@ def stage_g3(seed_d: int, kg: dict) -> None:
 
 
 def stage_g4(seed_d: int, d: bytes, kg: dict) -> None:
+    """G4：全链 ek_pke/dk_pke 对 golden 与 liboqs。
+    """
     _run_gate("g4", seed_d)
     _verify_gate("g4")
     ek = np.fromfile(OUT / "ek_pke.bin", dtype=np.uint8)
@@ -142,6 +168,10 @@ STAGES = {"g0": stage_g0, "g2": stage_g2, "g3": stage_g3, "g4": stage_g4}
 
 
 def main() -> int:
+    """按 KAT_GATES 依次跑门控；默认 g0,g2,g3,g4。
+
+    @return 0 全过
+    """
     seed_d = int(os.environ.get("KAT_SEED_D", "20260619"))
     gates = tuple(os.environ.get("KAT_GATES", ",".join(DEFAULT_GATES)).split(","))
     d = derand_bytes_from_seed(seed_d)

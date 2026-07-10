@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 hat 点积（Â∘ŝ）与相关 UB/tiling。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/hat_alg11_basemul.hpp
+ */
+/**
  * @file hat_alg11_basemul.hpp
  * @brief 行 18 专用：半多项式（128 对）MultiplyNTTs 向量封装与 ROM/ws 绑定。
  *
@@ -46,6 +52,10 @@ __aicore__ inline void bind_rom_ub(AscendC::LocalTensor<int32_t> &base, alg11_ve
     (void)pairCount;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `init_rom_luts`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void init_rom_luts(AscendC::LocalTensor<int32_t> &romBase, alg11_vec::RomUbLuts &rom,
                                      int32_t pairCount)
 {

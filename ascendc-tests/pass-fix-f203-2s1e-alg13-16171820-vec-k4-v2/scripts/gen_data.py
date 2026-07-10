@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-gen_data.py — pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2 的 golden 生成器。
+gen_data.py — pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2 的 golden / input 生成器。
+
+流水线位置：run.sh 编译前调用；写出 input/*.bin 与 golden_*.bin，供 Host launch 与 verify_result 对拍。
+作用：按与设备同构的平面 mat_c / Stage3 merge 链生成 NTT golden，并用 C ref 生成行 18–20。
+与 golden 关系：本脚本即 oracle 生成端；AscendC 只验 I/O 一致，不要求实现同构。
 
 ## 数据契约（与设备 mmad_custom / aiv_func 必须一致）
 

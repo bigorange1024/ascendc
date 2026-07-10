@@ -8,6 +8,7 @@
 # @ai_core N/A（非 AI Core 内核源）
 # @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
 # @verify run.sh 编译前生成 input/；KEYGEN_VERIFY=1 时参与对拍。
+# 亦服务 Alg.14 Encrypt prep 探针（lines3-15 / device）：生成/校验 LUT 或 golden；仅 I/O oracle。
 
 # coding=utf-8
 """Golden 生成器：Alg.7 单 poly SampleNTT — xof[672]、d1/d2[224]、â[256]。

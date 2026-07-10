@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-10（**T20** 活跃用例中文注释补课 Wave1；T19 KEM↔stable；PKE 三段 stable 齐备）
+**最近刷新**：2026-07-10（**T20** Wave1–5 中文注释补课完成；T19 KEM↔stable 仍待）
 
 ---
 
@@ -24,7 +24,7 @@
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
-| **P0** | **T20** | **活跃用例详细中文注释补课**（跳过 `frozen/`/`add_custom/`/`vendor/`/`thirdparty/`） | **Wave1 完成**；下一波 **T20-W2** `pass-fix` PKE device |
+| **P0** | **T20** | **活跃用例详细中文注释补课**（跳过 `frozen/`/`add_custom/`/`vendor/`/`thirdparty/`） | **Wave1–5 完成**（2026-07-10） |
 | **P0** | **T19** | **KEM 探针重构**：vendor 源从 frozen correctness **对齐 stable PKE**（见下拆分） | **待开工**（2026-07-10 记入） |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps：[`fix-f203-alg21-kem-decaps-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-k4/) · vendor D+E + **设备 FO** | **CPU+SIM PASS**（现状仍 vendor frozen G4+G5）；分项 kat PASS；单 session / **T19** 后重验 |
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps：[`fix-f203-alg20-kem-encaps-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-k4/) | **CPU+SIM PASS**（现状仍 vendor frozen G5）；待 **T19** 后 `#交付#` / stable |
@@ -65,8 +65,10 @@
 | **T20-W1b** | [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **完成** |
 | **T20-W1c** | [`stable-…-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | **完成** |
 | **T20-W1d** | KEM alg19/20/21 **自有**代码（跳过 vendor） | **完成** |
-| **T20-W2** | `pass-fix` PKE device / prep-compute-pack 分段 | **待开工**（下一会话） |
-| **T20-W3+** | NTT 积木、小探针、incubating | 待 |
+| **T20-W2** | `pass-fix` PKE device / prep-compute-pack 分段 | **完成** |
+| **T20-W3** | NTT 积木（vec-k4-v2、stage123、innerproduct、multiplyntts、byteencode12） | **完成** |
+| **T20-W4** | compress/decompress/byteencode/bytedecode、alg7/8、shake/toy 小探针 | **完成** |
+| **T20-W5** | `examples/incubating/exp-*` | **完成** |
 
 ---
 

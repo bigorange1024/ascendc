@@ -1,5 +1,12 @@
 #!/usr/bin/python3
-# F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
+# coding=utf-8
+"""
+mlkem_ref.py — F203 交付语义参考辅助（Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod）。
+
+流水线位置：scripts/；被 gen_data / 调研脚本按需 import，非设备运行时。
+作用：从 ntt_study 表头解析 ζ、生成固定 se polyvec、提供与交付 ONNX 对齐的参考计算片段。
+与 golden 关系：本探针主 golden 链在 gen_data.py；本文件为共享参考工具，勿当作 AscendC 规格。
+"""
 import re
 from pathlib import Path
 

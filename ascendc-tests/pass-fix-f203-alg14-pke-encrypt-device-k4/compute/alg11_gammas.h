@@ -1,6 +1,10 @@
 /**
- * FIPS 203 kMlkemGammas[128] — ζ^(2·BitRev7(i)+1) mod q, q=3329.
- * Sync: mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c
+ * @file alg11_gammas.h
+ * @brief FIPS 203 Alg.11 basemul γ 表：kMlkemGammas[128] = ζ^(2·BitRev7(i)+1) mod q（q=3329）。
+ *
+ * 流水线：行 18 MultiplyNTTs / 向量 basemul 只读本表；禁止在 Compute 热路径重填。
+ * 同步源：mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c / scripts gen_data K_ALG11_GAMMAS。
+ * 巨表：仅文件头说明用途，不逐行注释表项。
  */
 #ifndef ALG11_GAMMAS_H
 #define ALG11_GAMMAS_H

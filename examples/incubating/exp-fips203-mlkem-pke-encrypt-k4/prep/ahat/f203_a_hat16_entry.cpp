@@ -1,3 +1,10 @@
+/**
+ * @file f203_a_hat16_entry.cpp
+ * @brief Alg.13 行 3–7 设备核：SEED_D → 向量 SampleNTT → a_hat[16,256] GM（1 或 2 AIV）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/f203_a_hat16_entry.cpp
 // @layer prep
@@ -8,11 +15,6 @@
 // @depends #include: f203_a_hat16_config.h, f203_a_hat16_layout.h, f203_a_hat16_ub.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_a_hat16_entry.cpp
- * @brief Alg.13 行 3–7 设备核：SEED_D → 向量 SampleNTT → a_hat[16,256] GM（1 或 2 AIV）。
- */
 #include "f203_a_hat16_config.h"
 #include "f203_a_hat16_layout.h"
 #include "f203_a_hat16_ub.hpp"

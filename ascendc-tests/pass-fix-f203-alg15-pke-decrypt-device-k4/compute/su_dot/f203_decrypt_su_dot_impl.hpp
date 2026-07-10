@@ -39,6 +39,7 @@ constexpr int32_t kSuDotScratchInts = 4 * kSuDotN;
 #if defined(ASCENDC_CPU_DEBUG)
 #include "alg11_gammas.h"
 
+/** CPU 孪生：单系数 Barrett。 */
 __aicore__ inline int32_t su_dot_barrett_red(int32_t x)
 {
     const int32_t q = kSuDotQ;
@@ -51,6 +52,7 @@ __aicore__ inline int32_t su_dot_barrett_red(int32_t x)
     return x;
 }
 
+/** CPU：标量 MultiplyNTTs。 */
 __aicore__ inline void su_dot_multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g)
 {
     for (int32_t i = 0; i < kSuDotN / 2; ++i) {
@@ -65,6 +67,7 @@ __aicore__ inline void su_dot_multiply_ntts_scalar(int32_t *h, const int32_t *f,
     }
 }
 
+/** CPU：ŵ = Σ_j MultiplyNTTs(ŝ_j, û_j)。 */
 __aicore__ inline void su_dot_scalar_impl(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
 {
     const auto *sGm = reinterpret_cast<const __gm__ int32_t *>(sHatGm);
@@ -211,8 +214,9 @@ private:
 };
 
 /**
- * ŵ[N] ← Σ_j MultiplyNTTs(ŝ[j], û[j]) mod q。
+ * 设备入口：ŵ[N] ← Σ_j MultiplyNTTs(ŝ[j], û[j]) mod q（向量或 CPU 标量）。
  * @param sHatGm ŝ [k×N]；@param uHatGm û [k×N]；@param wHatGm ŵ [N]
+ * 前置：仅 AIV0。
  */
 __aicore__ inline void su_dot_impl(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm)
 {
@@ -222,7 +226,7 @@ __aicore__ inline void su_dot_impl(GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatG
 }
 
 /**
- * w_hat → k=4 polyvec 前缀，余下清零，供 INTT Stage1 DataCopy 读。
+ * 生产 pad：ŵ[n] → wPadded[k×n]，仅 slot0 有值，其余 0（供 INTT Stage1 DataCopy）。
  * 背景：单 kernel 内禁止标量写 GM 再 MTE 读（Encrypt R2）；须 Duplicate+DataCopy。
  * 注：2026-07-09 UB 驻留实验曾尝试跳过本函数写盘；SIM 无 tick 收益已回滚（见 STATUS §UB）。
  */

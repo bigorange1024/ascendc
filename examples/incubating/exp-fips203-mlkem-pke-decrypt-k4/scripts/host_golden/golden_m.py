@@ -29,6 +29,7 @@ C2_BYTES = 160
 
 
 def poly_byte_decode12(buf: bytes) -> np.ndarray:
+    """单 poly ByteDecode₁₂：384B → [N] int32（每 3 字节拆 2 个 12-bit 系数）。"""
     out = np.empty(N, dtype=np.int32)
     for i in range(N // 2):
         b0, b1, b2 = buf[3 * i], buf[3 * i + 1], buf[3 * i + 2]
@@ -38,6 +39,7 @@ def poly_byte_decode12(buf: bytes) -> np.ndarray:
 
 
 def decode_s_hat(dk: bytes) -> np.ndarray:
+    """Alg.15：ŝ ← ByteDecode₁₂(dk_PKE)，形状 [K,N]。"""
     s = np.empty((K, N), dtype=np.int32)
     for j in range(K):
         s[j] = poly_byte_decode12(dk[j * 384 : (j + 1) * 384])
@@ -45,6 +47,7 @@ def decode_s_hat(dk: bytes) -> np.ndarray:
 
 
 def byte_decode_d(bits_src: bytes, d: int) -> np.ndarray:
+    """ByteDecode_d：LSB-first 抽出 N 个 d-bit 整数。"""
     out = np.empty(N, dtype=np.int32)
     bit_pos = 0
     mask = (1 << d) - 1
@@ -61,6 +64,7 @@ def byte_decode_d(bits_src: bytes, d: int) -> np.ndarray:
 
 
 def decompress_d_scalar(u: int, d: int) -> int:
+    """Decompress_d：⌊(u·q + 2^(d-1))/2^d⌋；Decrypt 用 d=11/5。"""
     u = int(u)
     if d == 11:
         return (u * Q + 1024) >> 11
@@ -74,6 +78,7 @@ def decompress_d_scalar(u: int, d: int) -> int:
 
 
 def unpack_ciphertext(c: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """Alg.15 行 3–4：c₁‖c₂ → u'[K,N]、v'[N]（Decode+Decompress）。"""
     u = np.empty((K, N), dtype=np.int32)
     for p in range(K):
         chunk = c[p * C1_POLY_BYTES : (p + 1) * C1_POLY_BYTES]
@@ -96,6 +101,7 @@ def compress_1_scalar(x: int) -> int:
 
 
 def extract_message(w: np.ndarray) -> bytes:
+    """ByteEncode₁(Compress₁(w))：LSB-first 打成 32B 消息。"""
     msg = bytearray(MSG_BYTES)
     for i in range(N):
         bit = compress_1_scalar(int(w[i]))
@@ -105,6 +111,7 @@ def extract_message(w: np.ndarray) -> bytes:
 
 
 def golden_w_hat(s_hat: np.ndarray, u_hat: np.ndarray) -> np.ndarray:
+    """ŵ ← Σ_j MultiplyNTTs(ŝ_j, û_j) mod q，形状 [N]。"""
     acc = np.zeros(N, dtype=np.int64)
     for j in range(K):
         prod = multiply_ntts(s_hat[j], u_hat[j])
@@ -113,6 +120,7 @@ def golden_w_hat(s_hat: np.ndarray, u_hat: np.ndarray) -> np.ndarray:
 
 
 def golden_decrypt(dk: bytes, c: bytes) -> bytes:
+    """Alg.15 全链 Host oracle：dk+c → m[32]（与设备 I/O 等价，非实现同构）。"""
     s_hat = decode_s_hat(dk)
     u, v = unpack_ciphertext(c)
     u_hat = stage123_transform(u, "ntt")

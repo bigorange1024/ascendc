@@ -33,6 +33,10 @@ __aicore__ inline uint32_t e_local_lp(uint16_t p, uint16_t pBegin)
     return static_cast<uint32_t>(tiling::kS) + (static_cast<uint32_t>(p) - static_cast<uint32_t>(pBegin));
 }
 
+/**
+ * 本 AIV 负责的 ê/t̂ 行号下界（闭区间起点）。
+ * @param subCoreIdx 0→p∈[0,1]；1→p∈[2,3]
+ */
 __aicore__ inline uint16_t p_begin(int32_t subCoreIdx)
 {
     /* AIV0: p∈[0,1]；AIV1: p∈[2,3] */

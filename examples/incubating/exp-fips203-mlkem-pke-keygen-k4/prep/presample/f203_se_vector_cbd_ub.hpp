@@ -1,3 +1,5 @@
+
+/** CBD_η=2 的 UB 路径：读 prf_out，写 src poly。 */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_cbd_ub.hpp
 // @layer prep
@@ -9,6 +11,12 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 行 8–15 PRF+CBD presample 链。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/presample/f203_se_vector_cbd_ub.hpp
+ */
 /**
  * @file f203_se_vector_cbd_ub.hpp
  * @brief V2.5 实验 Phase C：一次 bulk GM→UB DataCopy；CBD 无逐行 prf GM 读（更慢，不接入集成）。

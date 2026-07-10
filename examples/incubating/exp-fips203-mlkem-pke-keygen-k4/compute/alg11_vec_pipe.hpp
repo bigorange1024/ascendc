@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 Alg.11 basemul / γ 表与向量管线。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/alg11_vec_pipe.hpp
+ */
+/**
  * @file alg11_vec_pipe.hpp
  * @brief Alg.11 向量路径的 PIPE / MTE2→V 同步宏（tikicpu 与设备行为差异封装）。
  *

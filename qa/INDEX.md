@@ -12,7 +12,7 @@
 
 ### 2026-07-10 — [Decrypt `#交付#` → stable · 冻结 correctness · KEM T19](2026-07/2026-07-10-Decrypt交付stable.md)
 
-**stable Decrypt** · 冻结 correctness · KEM vendor←frozen · **T19** · **T20 中文注释补课**（1A 跳过 vendor；Wave1=stable PKE+KEM）· T15a/T15c/T7b 关闭
+**stable Decrypt** · 冻结 correctness · KEM vendor←frozen · **T19** · **T20** Wave1–5 中文注释补课完成 · T15a/T15c/T7b 关闭
 
 ### 2026-07-09 — [Encrypt 默认 SIM_DIRECT + 工程债 1–3 + 路线 11 关闭 + Encrypt `#交付#`](2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md)
 

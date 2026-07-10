@@ -44,6 +44,7 @@
 #include "byte_encode12_rom_tables.cpp"
 #endif
 
+/** 跨核握手状态机：AIV_SPLIT → AIC_MMAD → AIV_PACK（AIV_MERGE 历史保留，生产走 UB 融合） */
 enum MachineState : uint16_t {
     IDLE = 0,
     AIV_SPLIT,
@@ -57,6 +58,10 @@ enum MachineState : uint16_t {
 volatile int g_2s1e_mix_pass = 0;
 #endif
 
+/**
+ * 跨核 Wait：PIPE_ALL 后 CrossCoreWaitFlag（mode=2, PIPE_MTE2）。
+ * @param STATE 期望握手阶段；AIC/subBlockID 仅占位（与 SET 对称）
+ */
 __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -66,6 +71,9 @@ __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t 
     KYBER_PIPE_ALL();
 }
 
+/**
+ * 跨核 Set：PIPE_ALL 后 CrossCoreSetFlag，通知对端本阶段完成。
+ */
 __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -82,6 +90,21 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
 #include "f203_keygen_ek_pke_fuse.hpp"
 #endif
 
+/**
+ * MIX 核入口：1×AIC + 2×AIV，按 mixPass 调度 Stage1/2/3 + 行18 + ByteEncode。
+ *
+ * @param dst     GM [12,256] int32：NTT 后 ŝ/ê dump（及 mixPass 预设入口）
+ * @param t_hat   GM [4,256] int32：行 18 输出 t̂
+ * @param ek_out  GM ByteEncode₁₂(t̂) polyvec（行 19）
+ * @param sk_out  GM ByteEncode₁₂(ŝ) polyvec（行 20）
+ * @param src     GM [8,256] int32：host 1s+1e 物理布局
+ * @param a_hat   GM [16,256] int32：Â 矩阵
+ * @param ws      GM workspace：LUT + S0 + mat_c 临时 + 平面 mat_c（见 tiling.h）
+ * @param tiling  Host 下发的 TilingData（含 mixPass）
+ * @param rho_gm / ek_pke_gm  可选 KeyGen 融合（F203_KEYGEN_EK_PKE）
+ *
+ * 前置条件：KERNEL_TYPE_MIX_AIC_1_2；AIV 侧 subBlockID∈{0,1}；poly-batch（每 AIV 握完整 ŝ）。
+ */
 extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out, GM_ADDR sk_out,
                                                   GM_ADDR src, GM_ADDR a_hat, GM_ADDR ws, TilingData tiling
 #if F203_KEYGEN_EK_PKE >= 1
@@ -93,6 +116,7 @@ extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
     using namespace tiling;
 
+    /* AIC：GetSubBlockNum()==1；AIV：subBlockID 0/1 */
     const bool AIC = AscendC::GetSubBlockNum() == 1;
     const int32_t subBlockID = static_cast<int32_t>(AscendC::GetSubBlockIdx());
     const auto coeffN = static_cast<uint32_t>(tiling.tileLength);

@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_vector_entry.cpp
+ * @brief SE 向量采样独立入口（历史/对照；Encrypt 主路径走 f203_encrypt_prep）。
+ *
+ * 流水线位置：FIPS 203 / ML-KEM-1024 采样子系统。
+ * 与 golden：若启用则对拍中间态；主交付以 c.bin 为准。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_entry.cpp
 // @layer prep
@@ -8,12 +16,6 @@
 // @depends #include: f203_se_vector.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_vector_entry.cpp
- * @brief SEED_D → Phase G + PRF + CBD → src[8,256]（单 AIV，blockDim=1）。
- * 阶段宏见 f203_se_stage_config.hpp（默认 V3）。
- */
 #include "f203_se_vector.hpp"
 
 extern "C" __global__ __aicore__ void f203_se_vector_k4(GM_ADDR seed_d_gm, GM_ADDR prf_out_gm, GM_ADDR src_gm,

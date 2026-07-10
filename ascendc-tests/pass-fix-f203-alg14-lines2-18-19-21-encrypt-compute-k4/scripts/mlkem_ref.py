@@ -1,11 +1,18 @@
 #!/usr/bin/python3
-# F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
+"""
+@file mlkem_ref.py
+@brief F203 / ML-KEM 交付语义参考：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
+
+流水线位置：被本探针 scripts/gen_data.py 引用（stage31_mod 等）；与设备 NTT/INTT I/O 对拍。
+覆盖：limb6 编码、平面 mat_c RouteA、Barrett/stage31_mod；非 AscendC 实现规格。
+巨表/第三方 LUT：从 ntt_study 头文件解析，不在此逐项注释。
+"""
 import re
 from pathlib import Path
 
-Q = 3329
-N = 256
-K = 8
+Q = 3329  # ML-KEM 模数
+N = 256   # 多项式长度
+K = 8     # 交付 sepolyvec8 批大小（本探针 Encrypt 另用 k=4 / pad-8）
 M_MAT_A = 2 * K
 OUT_COLS = 512
 

@@ -48,6 +48,7 @@ extern volatile int g_f203_ntt_y_mix_pass;
 #endif
 
 // NTT LUT 装入 ws（CPU/SIM 共用；写 ws 内 LUT_NTT_* 段）。
+/** 读 lut_ntt_{even,odd}_stacked → LUT_NTT_* */
 static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -70,7 +71,7 @@ static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
     return ReadFile("./input/lut_intt_odd_stacked.bin", rd, ws + tiling::LUT_NTT_ODD_STACKED, lutBytes);
 }
 
-// CPU 固定三 launch（tikicpu MIX 串行 → 单 launch 死锁）；只产设备 u，v 由 golden 补。
+/** CPU：三 launch 产设备 u；随后独立 pack 写 c（v 用 golden） */
 static int32_t RunCpuThreeLaunch(TilingData tilingHost, uint8_t *uOut, uint8_t *ySrc, uint8_t *yHat, uint8_t *uNtt,
                                  uint8_t *aHat, uint8_t *e1, uint8_t *ws, size_t lutBytes)
 {
@@ -91,6 +92,7 @@ static int32_t RunCpuThreeLaunch(TilingData tilingHost, uint8_t *uOut, uint8_t *
     return 0;
 }
 #else
+/** 融合路径：INTT LUT → LUT_INTT_* */
 static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -101,6 +103,10 @@ static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
     return ReadFile("./input/lut_intt_odd_stacked.bin", rd, ws + tiling::LUT_INTT_ODD_STACKED, lutBytes);
 }
 
+/**
+ * SIM：单 launch compute+μ+内联 pack → c。
+ * @param cDev 密文 GM；mDev 消息；其余同 compute 探针
+ */
 static int32_t RunSimFusedLaunch(aclrtStream stream, TilingData *tilingHost, uint8_t *uDev, uint8_t *vDev, uint8_t *cDev,
                                  uint8_t *yDev, uint8_t *yHatDev, uint8_t *uNttDev, uint8_t *uTrDev, uint8_t *aHatDev,
                                  uint8_t *mDev, uint8_t *e1Dev, uint8_t *e2Dev, uint8_t *ekPkeDev, uint8_t *tHatDev,

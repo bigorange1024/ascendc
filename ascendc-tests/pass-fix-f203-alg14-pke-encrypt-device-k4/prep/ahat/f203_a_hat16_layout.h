@@ -11,12 +11,12 @@
 
 /**
  * @file f203_a_hat16_layout.h
- * @brief Alg.13 行 3–7：16× SampleNTT 几何与 GM 布局（k=4，与单 poly alg7 几何锁定一致）。
+ * @brief 16× SampleNTT 几何与 GM 布局（k=4，与单 poly alg7 几何锁定一致）。
  *
- * 流水线：pass-fix-f203-alg13-lines3-7-a-hat-k4 专用；XOF/d12/rej 常量与
- * pass-fix-f203-alg7-sample-ntt-k4 的 f203_alg7_layout.h 同值。
+ * 流水线：KeyGen Â / Encrypt prep Â 共用；XOF/d12/rej 常量与
+ * f203_alg7_layout.h 同值。Encrypt prep 顶层 I/O 尺寸另见 f203_encrypt_prep_layout.h。
  *
- * GM 布局与 vec-k4 hat_dot_layout::a_hat_offset(p,j) 一致。
+ * GM 布局与 vec-k4 hat_dot_layout::a_hat_offset(p,j) 一致：offset=(p*k+j)*N。
  */
 #pragma once
 

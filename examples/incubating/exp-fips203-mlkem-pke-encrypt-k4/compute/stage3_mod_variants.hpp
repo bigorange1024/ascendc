@@ -1,16 +1,9 @@
 /**
  * @file stage3_mod_variants.hpp
- * @brief Stage3 RouteA Horner 合并后的三种 mod q 实现（与行 18 mod 分离）。
+ * @brief Stage3 RouteA 合并后的 mod q 向量实现变体。
  *
- * 用途：由 ntt_vec.hpp 在 combine_limb6_horner_raw_vec 之后 include；提供 barrett / scalar_i64 / cast_div 变体。
- *
- * 调用方：ntt_vec.hpp::combine_limb6_routea_mod_vec（F203_STAGE3_MOD 选择）。
- *
- * 不变量：kF203BarrettMu/K；kKyberMergeShift1=6；wrap_mod_vec_runtime 与 Stage3 Barrett 共用。
- *
- * Golden：与 gen_data stage31_mod 等价（方案 0）；方案 1 SIM 慢需 KERNEL_COMPUTE_BUDGET_SEC≥20。
- *
- * CMake：F203_STAGE3_MOD（stage3_config.hpp）。
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt NTT/INTT Stage3。
+ * 与 golden：系数落在 [0,q)。
  */
 #ifndef F203_STAGE3_MOD_VARIANTS_HPP
 #define F203_STAGE3_MOD_VARIANTS_HPP

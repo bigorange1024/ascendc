@@ -8,6 +8,7 @@
 # @ai_core N/A（非 AI Core 内核源）
 # @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
+# 亦服务 Alg.14 Encrypt prep 探针（lines3-15 / device）：生成/校验 LUT 或 golden；仅 I/O oracle。
 
 # coding=utf-8
 """生成 Alg.7 xof[672] 三字节解交织 Gather 索引 ROM → f203_alg7_deinterleave_rom.h。

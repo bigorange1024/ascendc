@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""gate_g2.py — golden s_hat, u_hat。"""
+# 门禁脚本：生成/核对中间 golden；失败即 exit。
+# 验收仅黑盒 I/O，不把参考实现当 AscendC 规格。
+"""
+gate_g2.py — Decrypt 分段门禁 G2：golden ŝ、û。
+
+ŝ ← ByteDecode₁₂(dk)；û ← NTT(u')（Host stage123）。
+用法：gate_g2.py <case_dir> <out_dir> → golden_s_hat.bin / golden_u_hat.bin
+"""
+# 中文补充：scripts/host_golden/gate_g2.py — Decrypt 门禁/对拍脚本；仅 I/O 黑盒；禁止当设备规格。
 from __future__ import annotations
 
 import sys

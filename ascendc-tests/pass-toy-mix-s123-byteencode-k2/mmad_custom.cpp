@@ -33,7 +33,15 @@ enum MachineState : uint16_t {
 volatile int g_toy_mix_pass = 0;
 #endif
 
-/** 等待对端 SET 的 flag；PIPE_MTE2 与现有 fix-f203 探针保持一致。 */
+/**
+ * 等待对端 SET 的 flag；PIPE_MTE2 与现有 fix-f203 探针保持一致。
+ * @param STATE      [in] 等待的事件编号（AIV_SPLIT 或 AIC_MMAD）
+ * @param AIC        [in] 当前调用者是否为 AIC（仅用于代码可读性标注，函数体内未使用，故显式 (void) 消除未用参数警告）
+ * @param subBlockID [in] 当前调用者的 subBlock 编号（同上，仅标注用途）
+ * 前后各插入一次全流水屏障（PIPE_ALL/KYBER_PIPE_ALL），确保等待前后的访存/计算
+ * 均已按序落地，`CrossCoreWaitFlag<2,...>` 的模板参数 2 表示等待来自另一组核
+ * （AIC 与 AIV 属于不同硬件分组）发出的同步事件。
+ */
 __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -43,7 +51,12 @@ __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t 
     KYBER_PIPE_ALL();
 }
 
-/** 通知对端可继续；与 __WAIT 成对使用。 */
+/**
+ * 通知对端可继续；与 __WAIT 成对使用。
+ * @param STATE      [in] 置位的事件编号
+ * @param AIC        [in] 同 __WAIT，仅标注用途
+ * @param subBlockID [in] 同 __WAIT，仅标注用途
+ */
 __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -57,10 +70,16 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
 #define SET  __SET(STATE, AIC, subBlockID);
 
 /**
- * @param out  GM 输出 out[4096] int8
- * @param src  GM 输入 src[2048] int32
- * @param ws   GM workspace（S0 | LUT | MAT_C，见 tiling.h）
- * @param tiling mixPass 等运行时参数
+ * MIX kernel 主入口：单趟 PEM（1 个 AIC + 2 个 AIV）编排 S1→S2→S3 三阶段。
+ * @param out  [out] GM 指针，最终输出，长度 4096 的 int8 数组（AIV0 写前 2048，AIV1 写后 2048）
+ * @param src  [in]  GM 指针，输入多项式系数，长度 2048 的 int32 数组（AIV0 读前 1024，AIV1 读后 1024）
+ * @param ws   [in/out] GM 指针，workspace 基址，内部按 tiling::S0/LUT/MAT_C 三段布局
+ *             （S0=左矩阵 A int8[64,64]，LUT=右矩阵 B int8[64,64] 由 host 预填单位阵，
+ *             MAT_C=Cube 输出 C int32[64,64]），S1 写 S0、S2 读 S0+LUT 写 MAT_C、S3 读 MAT_C
+ * @param tiling [in] Host 传入的运行时参数（本函数仅使用 mixPass 控制跑哪些阶段，
+ *               CPU 孪生下改用全局变量 g_toy_mix_pass，见下方 ASCENDC_CPU_DEBUG 分支）
+ * 前置条件：核函数按 KERNEL_TYPE_MIX_AIC_1_2 拓扑启动（1 个 AIC block + 每 block 2 个 AIV
+ * subBlock）；AIC 与 AIV 之间无直接数据通路，仅通过 GM 上的 ws 与 CrossCore flag 协作。
  */
 extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR out, GM_ADDR src, GM_ADDR ws, TilingData tiling)
 {

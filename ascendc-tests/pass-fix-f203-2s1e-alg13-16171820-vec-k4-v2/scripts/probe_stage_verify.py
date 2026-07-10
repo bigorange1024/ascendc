@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""阶段中间产物快速对拍（F203_PROBE_EARLY / 开发期手动调用）。
+"""
+probe_stage_verify.py — 阶段中间产物快速对拍（开发期手动调用）。
 
-不必等全链路跑完再发现前段已错；每阶段只比前 HEAD_COEFFS=16 个系数。
+流水线位置：任意 mixPass 跑完后可选执行；不必等全链路。
+作用：只比 output/ 与 golden 的前 HEAD_COEFFS=16 个系数，定位「从哪一段开始偏」。
+与 golden 关系：与 verify_result 同源 golden；与 pipeline_probe.hpp（CPU UB printf）互补。
 
-用法（任意 mixPass 跑完后）：
+用法：
   python3 scripts/probe_stage_verify.py
-
-检查 output/ 里已有文件与 golden 的前若干系数/行；失败立即返回非 0。
-与 pipeline_probe.hpp（CPU UB printf）互补：本脚本比 bin 文件头。
 """
 import os
 import sys

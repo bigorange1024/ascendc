@@ -52,6 +52,7 @@ enum MachineState : uint16_t {
 volatile int g_2s1e_mix_pass = 0;
 #endif
 
+/** CrossCore WaitFlag：等对端到达 STATE。 */
 __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -61,6 +62,7 @@ __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t 
     KYBER_PIPE_ALL();
 }
 
+/** CrossCore SetFlag：通知对端本端完成 STATE。 */
 __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -73,6 +75,14 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
 #define WAIT __WAIT(STATE, AIC, subBlockID);
 #define SET  __SET(STATE, AIC, subBlockID);
 
+/**
+ * 设备核入口参数：
+ * @param dst/t_hat     NTT 后 ŝ/ê 与 t̂（中间/输出 GM）
+ * @param ek_out/sk_out ByteEncode 后公钥/私钥片段
+ * @param src           输入 [8,256]：s₀..s₃‖e₀..e₃（独立 CBD）
+ * @param a_hat         Â[16,256]；@param ws workspace+LUT；@param tiling 含 mixPass
+ * 前置：MIX_AIC_1_2；默认 mixPass=0 全量
+ */
 extern "C" __global__ __aicore__ void f203_alg13_16171820_2s1e_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out, GM_ADDR sk_out,
                                                   GM_ADDR src, GM_ADDR a_hat, GM_ADDR ws, TilingData tiling)
 {

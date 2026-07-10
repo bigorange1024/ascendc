@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""对拍 output/ 与 golden/。"""
+"""
+对拍 output/ 与 golden/（Alg.14 pack 探针）。
+
+流水线位置：run.sh 在 kernel 落盘后调用；验收 mu_embed.bin 与 c.bin 字节级一致。
+golden I/O：output/{mu_embed,c}.bin vs golden/{mu_embed,c}.bin。
+"""
 from __future__ import annotations
 
 import sys
@@ -8,6 +13,12 @@ from pathlib import Path
 
 
 def cmp_files(a: Path, b: Path) -> bool:
+    """
+    逐字节比较两个文件。
+    @param a  实际输出（output/）
+    @param b  期望（golden/）
+    @return   True 完全一致
+    """
     if not a.is_file() or not b.is_file():
         print(f"[FAIL] missing {a} or {b}")
         return False
@@ -25,6 +36,7 @@ def cmp_files(a: Path, b: Path) -> bool:
 
 
 def main() -> int:
+    """依次对拍 mu_embed 与 c；全部通过打印 SUCCESS。"""
     root = Path(__file__).resolve().parents[1]
     ok = True
     for name in ("mu_embed.bin", "c.bin"):

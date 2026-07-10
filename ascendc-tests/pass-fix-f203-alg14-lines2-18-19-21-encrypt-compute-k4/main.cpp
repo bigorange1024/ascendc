@@ -1,13 +1,18 @@
 /**
  * @file main.cpp
- * @brief Alg.14 compute 行 2/18/19/21 host 编排（不含 μ）。
+ * @brief Alg.14 compute 行 2/18/19/21 Host 编排（不含 μ / 不含 prep）。
+ *
+ * 流水线位置：Encrypt compute 探针 host 入口；读 `input/`（y/a_hat/e1/e2/ek_pke + NTT/INTT LUT），
+ * 按 CPU/SIM 路径 launch 设备核，写出中间态对拍 bin（y_hat/u_ntt/u/…）。
+ * 探针：pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4（2026-07-07 晋级 pass-）。
  *
  * CPU / SIM 分叉（全仓统一宏，见 library/shared/ascendc_build_mode.hpp）：
  *   ASCENDC_BUILD_CPU → RunCpuThreeLaunch()（3 launch；tikicpu 不得融合，仅 û/u 子集）
  *   ASCENDC_BUILD_SIM → 默认 RunSimFusedSingleLaunch()（单 launch 全量含 v）
  *                       ASCENDC_SIM_HOST_MODE=phased_launch → RunSimThreeLaunch()（调试）
  *
- * 探针：pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4（2026-07-07 晋级 pass-）。
+ * 与 golden：scripts/gen_data.py 生成期望中间态；run.sh + cmp 对拍 output/。
+ * tiling：`f203_encrypt_tiling.cpp` 运行时 GenerateTiling（替代旧 Python tiling.bin）。
  */
 #include "ascendc_build_mode.hpp"
 #include "data_utils.h"
@@ -21,7 +26,7 @@
 #include <chrono>
 #include <thread>
 
-// 运行时 tiling 生成（见 f203_encrypt_tiling.cpp）；替代旧 Python input/tiling.bin。
+/** 运行时 tiling 生成（见 f203_encrypt_tiling.cpp）；替代旧 Python input/tiling.bin。 */
 extern void GenerateTiling(TilingData &data);
 
 #ifndef ASCENDC_CPU_DEBUG
@@ -43,7 +48,10 @@ extern volatile int g_f203_ntt_y_mix_pass;
 #endif
 
 #ifdef ASCENDC_CPU_DEBUG
-// CPU 侧对拍用的 tr_hat_ntt 参考实现：与 scripts/gen_data.py::multiply_ntts 一致。
+/**
+ * CPU 侧 Barrett 约化到 [0,q)：供 Host 参考 MultiplyNTTs / tr_hat_ntt 对拍。
+ * 与 scripts/gen_data.py::multiply_ntts 所用约化同构；非设备路径。
+ */
 static inline int32_t CpuBarrettRedCoeff(int32_t x)
 {
     constexpr int32_t q = 3329;
@@ -56,6 +64,10 @@ static inline int32_t CpuBarrettRedCoeff(int32_t x)
     return x;
 }
 
+/**
+ * Host 标量 Alg.11 MultiplyNTTs：h ← f ⊙ g（NTT 域 basemul）。
+ * 仅 CPU 路径算 tr_hat_ntt golden；SIM 由设备核产出。
+ */
 static inline void CpuMultiplyNtts(int32_t *h, const int32_t *f, const int32_t *g)
 {
     constexpr int32_t kN = static_cast<int32_t>(tiling::n);
@@ -76,6 +88,11 @@ static inline void CpuMultiplyNtts(int32_t *h, const int32_t *f, const int32_t *
 // 共用：LUT 装入 host ws（与 CPU/SIM 无关）
 // ---------------------------------------------------------------------------
 
+/**
+ * 将 NTT 正变换 LUT（even/odd planar-stacked）装入 workspace 的 LUT_NTT_* 段。
+ * @param ws host/device 可见的 workspace 基址；@param lutBytes 单份 even/odd 字节数
+ * @return 两份文件均读成功为 true
+ */
 static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -86,6 +103,10 @@ static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
     return ReadFile("./input/lut_ntt_odd_stacked.bin", rd, ws + tiling::LUT_NTT_ODD_STACKED, lutBytes);
 }
 
+/**
+ * 三 launch / phased：INTT LUT 覆盖写入同一 LUT_NTT_* 区（NTT 完成后才跑 INTT，可安全覆盖）。
+ * 与 intt_e1 布局一致。
+ */
 static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -97,6 +118,9 @@ static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
 }
 
 #ifndef ASCENDC_CPU_DEBUG
+/**
+ * SIM 融合单 launch：INTT LUT 写入独立 LUT_INTT_* 段，与 NTT LUT 并存于同一 ws。
+ */
 static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -113,6 +137,10 @@ static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 // CPU 路径：固定 3 launch（tikicpu MIX 串行 → 单 launch 死锁）
 // ===========================================================================
 
+/**
+ * CPU：ntt_y → at_jp → intt_e1；仅对拍 y_hat/u_ntt/u（无 v/u_tr）。
+ * @return 0 成功；非 0 为 LUT 读失败码
+ */
 static int32_t RunCpuThreeLaunch(TilingData tilingHost, uint8_t *uOut, uint8_t *ySrc, uint8_t *yHat, uint8_t *uNtt,
                                  uint8_t *aHat, uint8_t *e1, uint8_t *ws, size_t lutBytes)
 {
@@ -144,6 +172,7 @@ constexpr const char *kFusedTraceNames[kFusedTraceSlots] = {
     "AIV_E1_DONE",      "AIC_AT_JP_GATE",   "AIV_AT_JP_GATE",   "AIV_DECODE_T",    nullptr,
 };
 
+/** 返回 trace 中最高已置位槽下标；全 0 则 -1 */
 static int32_t FusedTraceHighest(const int32_t *trace)
 {
     for (int32_t i = kFusedTraceSlots - 1; i >= 0; --i) {
@@ -154,6 +183,7 @@ static int32_t FusedTraceHighest(const int32_t *trace)
     return -1;
 }
 
+/** 轮询打印 fused FSM 进度（stall 或前进） */
 static void PrintFusedTrace(const int32_t *trace, int32_t prevHigh, double elapsedSec)
 {
     const int32_t high = FusedTraceHighest(trace);
@@ -172,12 +202,14 @@ static void PrintFusedTrace(const int32_t *trace, int32_t prevHigh, double elaps
     std::fprintf(stderr, "\n");
 }
 
+/** Host ws（含 LUT）整段 H2D */
 static void CopyWsLutToDevice(uint8_t *wsDev, const uint8_t *wsHost, size_t wsSize, size_t lutBytes)
 {
     CHECK_ACL(aclrtMemcpy(wsDev, wsSize, wsHost, wsSize, ACL_MEMCPY_HOST_TO_DEVICE));
     (void)lutBytes;
 }
 
+/** SIM 调试：三 launch 分段（与 CPU 同口径，非生产） */
 static int32_t RunSimThreeLaunch(aclrtStream stream, TilingData *tilingHost, uint8_t *uDev, uint8_t *yDev,
                                  uint8_t *yHatDev, uint8_t *uNttDev, uint8_t *aHatDev, uint8_t *eDev, uint8_t *wsDev,
                                  uint8_t *wsHost, size_t lutBytes)
@@ -204,6 +236,10 @@ static int32_t RunSimThreeLaunch(aclrtStream stream, TilingData *tilingHost, uin
     return 0;
 }
 
+/**
+ * SIM 生产：单 launch f203_encrypt_l18_l19；后台线程每 5s 轮询 trace 防挂死诊断。
+ * 覆盖行 2/16–21（含 v）；须同时装 NTT+INTT LUT。
+ */
 static int32_t RunSimFusedSingleLaunch(aclrtStream stream, TilingData *tilingHost, uint8_t *uDev, uint8_t *vDev,
                                        uint8_t *yDev, uint8_t *yHatDev, uint8_t *uNttDev, uint8_t *uTrDev,
                                        uint8_t *aHatDev, uint8_t *e1Dev, uint8_t *e2Dev, uint8_t *ekPkeDev,
@@ -260,6 +296,7 @@ static int32_t RunSimFusedSingleLaunch(aclrtStream stream, TilingData *tilingHos
     return 0;
 }
 
+/** 按 ASCENDC_SIM_HOST_MODE 选择 fused 或 phased */
 static int32_t RunSimFeasibility(aclrtStream stream, TilingData *tilingHost, uint8_t *uDev, uint8_t *vDev,
                                  uint8_t *yDev, uint8_t *yHatDev, uint8_t *uNttDev, uint8_t *uTrDev, uint8_t *aHatDev,
                                  uint8_t *e1Dev, uint8_t *e2Dev, uint8_t *wsDev, uint8_t *ekPkeDev, uint8_t *tHatDev,
@@ -276,6 +313,10 @@ static int32_t RunSimFeasibility(aclrtStream stream, TilingData *tilingHost, uin
 }
 #endif
 
+/**
+ * Host 主函数：按编译宏走 CPU 三 launch 或 SIM fused/phased，写出 compute 中间态 bin。
+ * 输入：y / a_hat / e1 / e2 / ek_pke + LUT；返回 0 成功，非 0 为读/写失败码。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -302,6 +343,7 @@ int32_t main(int32_t argc, char *argv[])
     GenerateTiling(tilingHost);
 
 #ifdef ASCENDC_CPU_DEBUG
+    // --- CPU 孪生：GmAlloc + 读 input → 三 launch → 写 output 中间态 ---
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
 
     uint8_t *uOut = (uint8_t *)AscendC::GmAlloc(uSize > 1024 ? uSize : 1024);
@@ -337,7 +379,7 @@ int32_t main(int32_t argc, char *argv[])
         return 13;
     }
 
-    // CPU：行 2 decode_t_hat（ek_pke[0:1536] → t_hat），仅用于计算 tr_hat_ntt golden；不落盘输出。
+    // CPU：Alg.14 行 2 decode_t_hat（ek_pke[0:1536] → t_hat），仅用于 Host 算 tr_hat_ntt；不落盘 t_hat。
     constexpr int32_t kN = static_cast<int32_t>(tiling::n);
     constexpr int32_t kK = static_cast<int32_t>(tiling::kK);
     int32_t tHatI32[kK * kN];
@@ -356,12 +398,13 @@ int32_t main(int32_t argc, char *argv[])
         }
     }
 
+    // ntt_y → at_jp → intt_e1（仅 û/u 子集；无设备侧 v）
     const int32_t rc = RunCpuThreeLaunch(tilingHost, uOut, ySrc, yHat, uNtt, aHat, e1, ws, lutBytes);
     if (rc != 0) {
         return rc;
     }
 
-    // CPU：tr_hat_ntt 参考 + v ← INTT(tr̂)+e₂（3 launch 无 k=8 INTT 核，host 补 v）
+    // Host 补算 tr_hat_ntt = Σ_j MultiplyNTTs(t̂_j, ŷ_j) mod q（3 launch 无设备内积核）
     {
         const auto *tI32 = tHatI32;
         const auto *yHatI32 = reinterpret_cast<const int32_t *>(yHat);
@@ -416,6 +459,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(vOut);
     AscendC::GmFree(ws);
 #else
+    // --- SIM/NPU：ACL 分配 + H2D → fused/phased launch → D2H 写 output ---
     const size_t uTrSize = tiling::uTrFileBytes;
 
     CHECK_ACL(aclInit(nullptr));
@@ -482,6 +526,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&uNttDev), uNttSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&uDev), uSize, ACL_MEM_MALLOC_HUGE_FIRST));
 
+    // 生产默认 fused：需 trace 缓冲；phased 调试路径不分配 trace
     const bool simPhasedDebug = ascendc::SimHostEncryptFeasPhasedLaunch();
     if (!simPhasedDebug) {
         CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&traceHost), kFusedTraceSlots * sizeof(int32_t)));
@@ -516,6 +561,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMemcpy(e1Dev, e1Size, e1Host, e1Size, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(e2Dev, e2Size, e2Host, e2Size, ACL_MEMCPY_HOST_TO_DEVICE));
 
+    // tHatDev 由 fused 核内部 decode；Host 传空指针占位（与布局约定一致）
     uint8_t *tHatDev = nullptr;
     const int32_t rc = RunSimFeasibility(stream, tilingPinned, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev,
                                          e1Dev, e2Dev, wsDev, ekPkeDev, tHatDev, trHatNttDev, wsHost, traceDev,
@@ -524,6 +570,7 @@ int32_t main(int32_t argc, char *argv[])
         return rc;
     }
 
+    // D2H：中间态落盘供 run.sh cmp（生产 Encrypt 全链不落这些；本探针验收需要）
     CHECK_ACL(aclrtMemcpy(yHatHost, yHatSize, yHatDev, yHatSize, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(uNttHost, uNttSize, uNttDev, uNttSize, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(uHost, uSize, uDev, uSize, ACL_MEMCPY_DEVICE_TO_HOST));

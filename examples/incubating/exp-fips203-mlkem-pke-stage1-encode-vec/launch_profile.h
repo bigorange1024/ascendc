@@ -1,9 +1,12 @@
 /**
  * @file launch_profile.h
- * Stage1 Vector launch：aiv=1（单核串行 8 poly）/ aiv=2（每核 4 poly）/ aiv=8（每核 1 poly）。
+ * @brief Stage1 Vector launch 剖面：aiv=1 / aiv=2 / aiv=8。
  *
- * run.sh 通过 --aiv N 设置 LAUNCH_PROFILE=aiv=N；
- * aiv=2 覆盖融合算子要求的偶数 AIV 最小多核场景（见 customspec §AI Core）。
+ * 流水线位置：Host main 读 LAUNCH_PROFILE，决定 blockDim 与每核 poly 数。
+ * - aiv=1：单核串行处理 8 条 poly
+ * - aiv=2：每核 4 poly（偶数 AIV 最小多核，对齐融合算子 customspec）
+ * - aiv=8：每核 1 poly（blockIdx = poly 下标）
+ * run.sh 经 --aiv N 设置环境变量 LAUNCH_PROFILE=aiv=N。
  */
 #ifndef LAUNCH_PROFILE_H
 #define LAUNCH_PROFILE_H
@@ -21,6 +24,10 @@ struct Config {
     uint32_t blockDim;
 };
 
+/**
+ * 解析 "aiv=N" 字符串为 Profile；非法/空则回落 aiv=1。
+ * @param name 环境变量或命令行剖面名
+ */
 inline Profile Parse(const char *name)
 {
     if (name != nullptr && strncmp(name, "aiv=", 4) == 0) {
@@ -35,11 +42,16 @@ inline Profile Parse(const char *name)
     return Profile::k1Aiv;
 }
 
+/** 从环境变量 LAUNCH_PROFILE 读取剖面。 */
 inline Profile FromEnv()
 {
     return Parse(std::getenv("LAUNCH_PROFILE"));
 }
 
+/**
+ * 剖面 → Config：blockDim 即 AIV 核数。
+ * @param p 已解析剖面
+ */
 inline Config Get(Profile p)
 {
     switch (p) {
@@ -53,6 +65,7 @@ inline Config Get(Profile p)
     }
 }
 
+/** 剖面可读名（日志用）。 */
 inline const char *Name(Profile p)
 {
     if (p == Profile::k8Aiv) {

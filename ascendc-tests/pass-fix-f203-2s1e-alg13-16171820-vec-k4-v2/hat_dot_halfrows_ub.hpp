@@ -23,12 +23,16 @@
 
 class HatDotUbKernel {
 public:
+    /**
+     * @param subCoreIdx 0/1；初始化本核 p∈[pBegin_,pEnd_)（各 2 行）。
+     */
     __aicore__ inline explicit HatDotUbKernel(int32_t subCoreIdx) : subCoreIdx_(subCoreIdx)
     {
         pBegin_ = static_cast<int32_t>(subCoreIdx_) * hat_dot_ub::kPPerAiv;
         pEnd_ = pBegin_ + hat_dot_ub::kPPerAiv;
     }
 
+    /** scratch_ 上按 int32 偏移取视图。 */
     __aicore__ inline LocalTensor<int32_t> bufI32(int32_t offInts, int32_t len)
     {
         return scratch_.GetWithOffset<int32_t>(static_cast<uint32_t>(len),
@@ -115,6 +119,10 @@ public:
 
 #ifndef ASCENDC_CPU_DEBUG
 private:
+    /**
+     * 设备向量路径：j 外环固定 ŝ[j]，内环 p 累加 compute_on_ub，最后 mod 写入 ub_that。
+     * @param ub_ntt 输入 ŝ（及可选布局）；@param ub_that 输出本核 t̂
+     */
     __aicore__ inline void ProcessVec(AscendC::LocalTensor<int32_t> &ub_ntt, AscendC::LocalTensor<int32_t> &ub_that,
                                       AscendC::GlobalTensor<int32_t> &gm_a, uint32_t coeffN)
     {
@@ -232,6 +240,9 @@ public:
         tGm_.SetGlobalBuffer((__gm__ int32_t *)tHat, static_cast<uint32_t>(kPOut) * static_cast<uint32_t>(kN));
     }
 
+    /**
+     * 独立探针入口：自 GM 读 a_hat/ŝ 跑完整 dot（调试用，非 2s1e 融合路径）。
+     */
     __aicore__ inline void Process()
     {
 #if defined(ASCENDC_CPU_DEBUG)
@@ -273,6 +284,9 @@ public:
     }
 
 private:
+    /**
+     * 从 dst 半行布局灌入后跑 half-row 内积（legacy 布局探针）。
+     */
     __aicore__ inline void ProcessHalfRowsFromDst()
     {
         HatDotUbKernel dot(subCoreIdx_);

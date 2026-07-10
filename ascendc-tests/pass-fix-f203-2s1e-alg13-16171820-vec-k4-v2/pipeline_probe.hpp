@@ -23,6 +23,11 @@ namespace pipeline_probe {
 
 #if defined(ASCENDC_CPU_DEBUG) && F203_PIPELINE_PROBE >= 1
 
+/**
+ * CPU 调试：从 UB LocalTensor 抽样打印 n 个 int32。
+ * @param tag 阶段标签；@param t UB 张量；@param off 元素偏移；@param n 抽样个数
+ * 前置：仅 ASCENDC_CPU_DEBUG 且 F203_PIPELINE_PROBE≥1；不写 GM。
+ */
 __aicore__ inline void print_ub_i32_sample(const char *tag, const AscendC::LocalTensor<int32_t> &t, uint32_t off,
                                            int32_t n)
 {
@@ -33,6 +38,9 @@ __aicore__ inline void print_ub_i32_sample(const char *tag, const AscendC::Local
     printf("\n");
 }
 
+/**
+ * CPU 调试：从 GM GlobalTensor 抽样打印 n 个 int32（只读）。
+ */
 __aicore__ inline void print_gm_i32_sample(const char *tag, const AscendC::GlobalTensor<int32_t> &gm, uint32_t off,
                                            int32_t n)
 {

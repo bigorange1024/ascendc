@@ -9,6 +9,17 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * @file aic_func.hpp
+ * @brief KeyGen Launch 2 — AIC 侧 Stage2 Cube MMAD（int8×int8→int32）。
+ *
+ * ## 流水线位置
+ * Tag5T NTT Stage2：左矩阵 S0（limb6 int8）× 右 LUT → mat_c 临时竖堆。
+ * 由 `mmad_custom` 在 AIC 上调用四次（even/odd × lo/hi）。
+ *
+ * ## 对齐与 golden
+ * FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 Host golden 仅 I/O 等价，不要求实现同构。
+ */
 #ifndef F203_AIC_FUNC_HPP
 #define F203_AIC_FUNC_HPP
 
@@ -17,22 +28,33 @@
 #include <cstddef>
 #include <cstdint>
 
+/** 编译期 max，供 pad 计算 */
 template <typename T, typename U>
 __aicore__ inline static constexpr T max(T a, U b)
 {
     return (a > (T)b) ? a : (T)b;
 }
 
+/** Cube 分块：16×32 int8 元素为一块（LoadData 步进） */
 static constexpr uint32_t CUBE_BLOCK_SIZE = 16 * 32;
 
+/** 向上取整除法：a 按 mod 对齐所需块数 */
 static constexpr __aicore__ inline uint16_t ceil_div(uint16_t a, uint16_t mod)
 {
     return (a + mod - 1) / mod;
 }
 
-/** Stage2 AicMmad（官方 LoadDataWithTranspose）+ F203 mat_c [16,512] 列拼接写回 */
+/**
+ * Stage2 AicMmad：官方 LoadDataWithTranspose 路径 + Fixpipe 写回。
+ * 几何：A[m,k] int8 × B[k,n] int8 → C[m,n] int32（m/k 按 16 对齐 pad）。
+ */
 class AicMmad {
 public:
+    /**
+     * @param m 左矩阵行（逻辑 mRowsLogic，如 32）
+     * @param k 归约维（coeffN=256）
+     * @param n 右矩阵列（halfN=128，偶/奇半列）
+     */
     __aicore__ inline AicMmad(uint16_t m, uint16_t k, uint16_t n) : m(m), k(k), n(n)
     {
         const uint16_t mPadded = ceil_div(m, 16) * 16;
@@ -42,6 +64,7 @@ public:
         cSize = mPadded * n;
     }
 
+    /** 初始化 A1/A2/B1/B2/CO1 五级 TQue 缓冲 */
     __aicore__ inline void Init()
     {
         pipe.InitBuffer(inQueueA1, 1, aSize * sizeof(int8_t));
@@ -51,7 +74,14 @@ public:
         pipe.InitBuffer(outQueueCO1, 1, cSize * sizeof(int32_t));
     }
 
-    /** @param dstColOffset 目标矩阵列偏移（int32 元素）；@param dstRowStride 行 stride（0 表示 n） */
+    /**
+     * 一次完整 MMAD：CopyIn → SplitA/B → Compute → CopyOut。
+     * @param dst          结果 GM（int32），可带列偏移
+     * @param a            左矩阵 GM int8（S0）
+     * @param b            右 LUT GM int8
+     * @param dstColOffset 目标矩阵列偏移（int32 元素）
+     * @param dstRowStride 行 stride（0 表示 n）
+     */
     template <int debug_val = 0>
     __aicore__ inline void Process(GM_ADDR dst, GM_ADDR a, GM_ADDR b, uint32_t dstColOffset = 0,
                                    uint32_t dstRowStride = 0)
@@ -69,6 +99,7 @@ public:
     }
 
 private:
+    /** GM ND → A1/B1 NZ：左 [m,k]、右 [k,n] */
     template <int debug_val = 0>
     __aicore__ inline void CopyIn()
     {
@@ -101,6 +132,7 @@ private:
         inQueueB1.EnQue(b1Local);
     }
 
+    /** A1→A2：按 16 行块 LoadData 到 L0A 布局 */
     template <int debug_val = 0>
     __aicore__ inline void SplitA()
     {
@@ -115,6 +147,7 @@ private:
         loadDataParams.srcStride = ceil_div(m, 16);
         loadDataParams.dstGap = 0;
         loadDataParams.ifTranspose = false;
+        // i：按 16 行一块遍历 m 维
         for (int32_t i = 0; i < ceil_div(m, 16); i++) {
             AscendC::LoadData(a2Local[i * dstOffset], a1Local[i * srcOffset], loadDataParams);
         }
@@ -122,6 +155,7 @@ private:
         inQueueA2.EnQue<int8_t>(a2Local);
     }
 
+    /** B1→B2：LoadDataWithTranspose，右矩阵进 L0B */
     template <int debug_val = 0>
     __aicore__ inline void SplitB()
     {
@@ -137,6 +171,7 @@ private:
         loadDataParams.dstGap = 1;
         loadDataParams.dstFracGap = 0;
 
+        // i：按 k 维 32 对齐块遍历
         for (int i = 0; i < ceil_div(k, 32); i++) {
             AscendC::LoadDataWithTranspose(b2Local[i * dstOffset], b1Local[i * srcOffset], loadDataParams);
         }
@@ -144,6 +179,7 @@ private:
         inQueueB2.EnQue<int8_t>(b2Local);
     }
 
+    /** Cube Mmad：cmatrixInitVal=true 表示累加器清零后一次乘加 */
     template <int debug_val = 0>
     __aicore__ inline void Compute()
     {
@@ -161,6 +197,7 @@ private:
         inQueueB2.FreeTensor(b2Local);
     }
 
+    /** CO1 → GM：Fixpipe，dstStride 支持列拼接写回 */
     template <int debug_val = 0>
     __aicore__ inline void CopyOut()
     {

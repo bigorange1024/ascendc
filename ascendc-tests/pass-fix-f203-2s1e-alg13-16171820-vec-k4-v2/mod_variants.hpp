@@ -28,6 +28,10 @@
 // C ref hat_inner_product_add 固定 HAT_MOD_SCALAR_I64，与下列设备变体对拍。
 // ---------------------------------------------------------------------------
 
+/**
+ * 标量 floor mod：单元素 x mod q，结果落在 [0,q)。
+ * 与 hat_inner_product_ref 的 HAT_MOD_SCALAR_I64 语义对齐（golden 固定此路径）。
+ */
 __aicore__ inline int32_t mod_q_scalar_i64_one(int64_t x, int32_t q)
 {
     const int64_t q64 = static_cast<int64_t>(q);
@@ -42,6 +46,10 @@ __aicore__ inline int32_t mod_q_scalar_i64_one(int64_t x, int32_t q)
     return static_cast<int32_t>(rem);
 }
 
+/**
+ * 行 18 final mod 变体 0：逐元素 GetValue/SetValue 标量 int64 mod（调试用，SIM 慢）。
+ * @param dst 原地约化；@param q 模数；@param count 系数个数
+ */
 __aicore__ inline void mod_q_scalar_i64_vec(LocalTensor<int32_t> &dst, int32_t q, int32_t count)
 {
     for (int32_t i = 0; i < count; ++i) {
@@ -50,6 +58,9 @@ __aicore__ inline void mod_q_scalar_i64_vec(LocalTensor<int32_t> &dst, int32_t q
     }
 }
 
+/**
+ * 行 18 final mod 变体 1（默认）：Barrett 向量 μ=314、k=20 + wrap。
+ */
 __aicore__ inline void mod_q_barrett_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
                                          LocalTensor<int32_t> &t2, int32_t count)
 {
@@ -60,6 +71,9 @@ __aicore__ inline void mod_q_barrett_vec(LocalTensor<int32_t> &dst, int32_t q, L
     wrap_mod_vec_runtime(dst, dst, q, t1, t2, count);
 }
 
+/**
+ * 行 18 final mod 变体 2：Cast→float Div→TRUNC 商→Muls/Sub（需额外 float UB）。
+ */
 __aicore__ inline void mod_q_cast_div_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
                                           LocalTensor<float> &fRaw, LocalTensor<float> &fTmp,
                                           LocalTensor<float> &fQuot, int32_t count)

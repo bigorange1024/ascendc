@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """
-golden_m.py — Alg.15 全链 host golden：dk,c → m.bin（32B）。
+golden_m.py — FIPS 203 Alg.15 全链 Host golden：dk_PKE + c → m（32B）。
 
-禁止 liboqs；与设备 G1–G4 语义对齐。
+流水线位置：gen_data（DECRYPT_VERIFY=1）写出 output/golden_m.bin；
+verify_result 与设备 output/m.bin 对拍。
+
+语义对齐设备 1-kernel fused：
+  ByteDecode₁₂(dk) → ŝ；unpack(c)→u',v'；NTT(u')→û；
+  ⟨ŝ,û⟩→ŵ；pad+INTT→w；Compress₁(v'−w)+Encode₁→m。
+
+禁止 liboqs；仅 I/O 等价验收，非 AscendC 实现规格。
 """
 from __future__ import annotations
 
@@ -29,6 +36,11 @@ C2_BYTES = 160
 
 
 def poly_byte_decode12(buf: bytes) -> np.ndarray:
+    """
+    FIPS ByteDecode₁₂：384B → n=256 个 12-bit 系数（int32）。
+
+    每 3 字节装 2 个系数：低 12 bit / 高 12 bit。
+    """
     out = np.empty(N, dtype=np.int32)
     for i in range(N // 2):
         b0, b1, b2 = buf[3 * i], buf[3 * i + 1], buf[3 * i + 2]
@@ -38,6 +50,12 @@ def poly_byte_decode12(buf: bytes) -> np.ndarray:
 
 
 def decode_s_hat(dk: bytes) -> np.ndarray:
+    """
+    Alg.15 行 5：ŝ ← ByteDecode₁₂(dk_PKE)。
+
+    @param dk 1536B = k×384
+    @return shape (k,n) int32
+    """
     s = np.empty((K, N), dtype=np.int32)
     for j in range(K):
         s[j] = poly_byte_decode12(dk[j * 384 : (j + 1) * 384])
@@ -45,6 +63,12 @@ def decode_s_hat(dk: bytes) -> np.ndarray:
 
 
 def byte_decode_d(bits_src: bytes, d: int) -> np.ndarray:
+    """
+    FIPS ByteDecode_d：按 bit 流解出 n 个 d-bit 整数。
+
+    @param bits_src 打包字节（长度 ≥ 32*d）
+    @param d 位宽（本探针用 11 / 5）
+    """
     out = np.empty(N, dtype=np.int32)
     bit_pos = 0
     mask = (1 << d) - 1
@@ -61,6 +85,11 @@ def byte_decode_d(bits_src: bytes, d: int) -> np.ndarray:
 
 
 def decompress_d_scalar(u: int, d: int) -> int:
+    """
+    FIPS Decompress_d：把 d-bit 压缩值映回 Z_q。
+
+    公式 round(u·q / 2^d)，用偏置移位实现（d∈{4,5,10,11}）。
+    """
     u = int(u)
     if d == 11:
         return (u * Q + 1024) >> 11
@@ -74,6 +103,12 @@ def decompress_d_scalar(u: int, d: int) -> int:
 
 
 def unpack_ciphertext(c: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Alg.15 行 3–4：c=c₁‖c₂ → (u', v')。
+
+    c₁：k×352B，d=11；c₂：160B，d=5。
+    @return u shape (k,n)，v shape (n)，均为 int32
+    """
     u = np.empty((K, N), dtype=np.int32)
     for p in range(K):
         chunk = c[p * C1_POLY_BYTES : (p + 1) * C1_POLY_BYTES]
@@ -85,10 +120,11 @@ def unpack_ciphertext(c: bytes) -> tuple[np.ndarray, np.ndarray]:
 
 
 def compress_1_scalar(x: int) -> int:
-    """Compress₁：对齐 liboqs mlk_scalar_compress_d1（Barrett），非 G4 的 (Q+1)/2。
+    """
+    Compress₁：对齐 liboqs mlk_scalar_compress_d1（Barrett），非旧 G4 的 (Q+1)/2。
 
     与 ((2x + Q//2)//Q)%2 在 u∈[0,q) 全量一致；与旧 G4 ((2x+(Q+1)//2)//Q)&1
-    仅在 u=832 差 1 bit。设备向量路径用同一 Barrett 常数 1290168。
+    仅在 u=832 差 1 bit。设备向量尾段用同一 Barrett 常数 1290168。
     """
     u = mod_q_i64(int(x))
     d0 = (u * 1290168) & 0xFFFFFFFF
@@ -96,6 +132,11 @@ def compress_1_scalar(x: int) -> int:
 
 
 def extract_message(w: np.ndarray) -> bytes:
+    """
+    Alg.15 行 6–7 尾：对 w[i]= (v'−w_time)[i] 做 Compress₁，按 bit 拼成 32B。
+
+    位序：系数 i → 字节 i>>3 的 bit (i&7)（小端 bit）。
+    """
     msg = bytearray(MSG_BYTES)
     for i in range(N):
         bit = compress_1_scalar(int(w[i]))
@@ -105,6 +146,12 @@ def extract_message(w: np.ndarray) -> bytes:
 
 
 def golden_w_hat(s_hat: np.ndarray, u_hat: np.ndarray) -> np.ndarray:
+    """
+    Alg.15 行 6：ŵ ← Σ_j MultiplyNTTs(ŝ_j, û_j) mod q。
+
+    @param s_hat / u_hat shape (k,n)
+    @return shape (n,) int32
+    """
     acc = np.zeros(N, dtype=np.int64)
     for j in range(K):
         prod = multiply_ntts(s_hat[j], u_hat[j])
@@ -113,10 +160,16 @@ def golden_w_hat(s_hat: np.ndarray, u_hat: np.ndarray) -> np.ndarray:
 
 
 def golden_decrypt(dk: bytes, c: bytes) -> bytes:
+    """
+    Alg.15 全链 Host 参考（与 1-kernel fused 段序一致）。
+
+    pad：ŵ 放在 polyvec 第 0 槽，其余 0，供 Stage123 INTT（与设备 wPadded 一致）。
+    """
     s_hat = decode_s_hat(dk)
     u, v = unpack_ciphertext(c)
     u_hat = stage123_transform(u, "ntt")
     w_hat = golden_w_hat(s_hat, u_hat)
+    # 设备：pad→wPadded 再 INTT；此处同构
     w_pad = np.zeros((K, N), dtype=np.int32)
     w_pad[0] = w_hat
     w_time = stage123_transform(w_pad, "intt")[0]
@@ -125,6 +178,7 @@ def golden_decrypt(dk: bytes, c: bytes) -> bytes:
 
 
 def main() -> None:
+    """CLI：dk_pke + c.bin → golden_m.out（32B）。"""
     if len(sys.argv) != 4:
         print(f"usage: {sys.argv[0]} <dk_pke> <c.bin> <golden_m.out>", file=sys.stderr)
         sys.exit(1)

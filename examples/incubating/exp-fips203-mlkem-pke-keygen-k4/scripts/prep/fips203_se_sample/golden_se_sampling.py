@@ -10,6 +10,12 @@
 # @verify run.sh 编译前生成 input/；KEYGEN_VERIFY=1 时参与对拍。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：prep 段 golden / ROM 生成脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/prep/fips203_se_sample/golden_se_sampling.py
+"""
 """Python golden for Alg.13 行 8–15 — 与 fips203_prf / fips203_se_sample.c 同语义。"""
 from __future__ import annotations
 
@@ -30,6 +36,7 @@ def derand_bytes_from_seed(seed_d: int) -> bytes:
     return hashlib.sha3_256(msg).digest()
 
 
+# 本函数为 KeyGen 流水线组件 `hash_g_sigma`（详见 STATUS/customspec）。
 def hash_g_sigma(d: bytes) -> bytes:
     buf = hashlib.sha3_512(d + bytes([K & 0xFF])).digest()
     return buf[32:64]
@@ -52,6 +59,7 @@ def _prf(sigma: bytes, nonce: int) -> bytes:
     return prf_shake128(sigma, nonce)
 
 
+# 本函数为 KeyGen 流水线组件 `_load32_le`（详见 STATUS/customspec）。
 def _load32_le(buf: bytes, off: int) -> int:
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
@@ -71,6 +79,7 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
     return coeffs
 
 
+# 本函数为 KeyGen 流水线组件 `build_src`（详见 STATUS/customspec）。
 def build_src(seed_d: int | None = None) -> np.ndarray:
     if seed_d is None:
         seed_d = int(os.environ.get("SEED_D", str(SEED_D_DEFAULT)))

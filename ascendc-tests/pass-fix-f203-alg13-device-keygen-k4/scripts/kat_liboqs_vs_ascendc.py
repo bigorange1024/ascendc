@@ -10,6 +10,12 @@
 # @verify KEYGEN_KAT=1 bash run.sh 或 kat_*.sh；对比 liboqs。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：KeyGen 输入、golden、KAT、验收脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/kat_liboqs_vs_ascendc.py
+"""
 """liboqs PKE KeyGen ↔ 探针 AscendC 对拍（pass-fix-f203-alg13-device-keygen-k4）。
 
 种子契约（与 run.sh / 设备 DerandFromSeedD 一致）：
@@ -20,6 +26,7 @@
 用法：
   bash kat_liboqs_vs_ascendc.sh
   KAT_CPU_COUNT=5 KAT_SIM_COUNT=1 bash kat_liboqs_vs_ascendc.sh
+  KAT_SEEDS="20260619,123,456,..." bash kat_liboqs_vs_ascendc.sh  # 11 个整数，前 10 CPU、后 1 SIM
   KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
 """
 from __future__ import annotations
@@ -49,6 +56,7 @@ VERBOSE = os.environ.get("KAT_VERBOSE", "0") == "1"
 LOG_PATH = Path(os.environ.get("KAT_LOG", str(ROOT / "output" / "kat_liboqs_vs_ascendc.log")))
 
 
+# 本函数为 KeyGen 流水线组件 `_fail`（详见 STATUS/customspec）。
 def _fail(label: str, round_no: int, total: int, seed_d: int, msg: str) -> None:
   raise SystemExit(f"[KAT FAIL] {label} round {round_no}/{total} seed_d={seed_d}: {msg}")
 
@@ -83,6 +91,7 @@ def liboqs_pke_keygen(d: bytes) -> tuple[np.ndarray, np.ndarray]:
     return ek, dk
 
 
+# 本函数为 KeyGen 流水线组件 `run_ascendc_keygen`（详见 STATUS/customspec）。
 def run_ascendc_keygen(seed_d: int, run_mode: str) -> tuple[np.ndarray, np.ndarray]:
   env = os.environ.copy()
   env["SEED_D"] = str(seed_d)
@@ -105,6 +114,7 @@ def run_ascendc_keygen(seed_d: int, run_mode: str) -> tuple[np.ndarray, np.ndarr
   return ek, dk
 
 
+# 本函数为 KeyGen 流水线组件 `compare_pke`（详见 STATUS/customspec）。
 def compare_pke(round_no: int, total: int, seed_d: int, label: str, ek_oqs, dk_oqs, ek_dev, dk_dev) -> None:
   if not np.array_equal(ek_dev, ek_oqs):
     idx = int(np.argmax(ek_dev != ek_oqs))
@@ -121,6 +131,7 @@ def one_round(seed_d: int, run_mode: str, label: str, round_no: int, total: int)
   compare_pke(round_no, total, seed_d, label, ek_oqs, dk_oqs, ek_dev, dk_dev)
 
 
+# 本函数为 KeyGen 流水线组件 `parse_seed_list`（详见 STATUS/customspec）。
 def parse_seed_list() -> tuple[list[int], list[int]]:
   cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
   sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))
@@ -138,6 +149,7 @@ def parse_seed_list() -> tuple[list[int], list[int]]:
   return cpu_seeds, sim_seeds
 
 
+# 本函数为 KeyGen 流水线组件 `main`（详见 STATUS/customspec）。
 def main() -> int:
   cpu_count = int(os.environ.get("KAT_CPU_COUNT", "10"))
   sim_count = int(os.environ.get("KAT_SIM_COUNT", "1"))

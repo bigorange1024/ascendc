@@ -1,11 +1,15 @@
 /**
- * Alg.13 行 18 参考（纯 C）：MultiplyNTTs + lazy ∑ + mod q。
+ * @file hat_inner_product_ref.c
+ * @brief Alg.13 行 18 参考（纯 C）：MultiplyNTTs + lazy ∑ + mod q。
+ *
  * 语义对齐 ntt_study ref_inner_product_add / MlkemMultiplyNttsDot 路径。
+ * 供 scripts/gen_data.py 编译为 .so，生成 golden_t_hat.bin（仅 I/O oracle，非 AscendC 规格）。
  */
 #include "hat_inner_product_ref.h"
 
 #include <string.h>
 
+/** Alg.11 逐对乘用的 γ 表（长度 N/2=128），与设备 ROM / kAlg11Gammas 同源。 */
 static const int32_t kGammas[HAT_N / 2] = {
     17,   3312, 2761, 568,  583,  2746, 2649, 680,  1637, 1692, 723,  2606, 2288, 1041, 1100, 2229, 1409, 1920,
     2662, 667,  3281, 48,   233,  3096, 756,  2573, 2156, 1173, 3015, 314,  3050, 279,  1703, 1626, 1651, 1678,
@@ -17,6 +21,9 @@ static const int32_t kGammas[HAT_N / 2] = {
     2154, 1175,
 };
 
+/**
+ * 标量 Barrett 约减（系数 78/18、5039/24），结果 ∈ [0,q)。
+ */
 static int32_t barrett_red_coeff(int32_t x)
 {
     const int32_t q = HAT_Q;
@@ -29,6 +36,7 @@ static int32_t barrett_red_coeff(int32_t x)
     return x;
 }
 
+/** 非负路径优先的 int64 mod（HAT_MOD_BARRETT 对照用）。 */
 static int32_t mod_q_nonneg_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -47,6 +55,7 @@ static int32_t mod_q_nonneg_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/** 向零除法取模再规范到 [0,q)。 */
 static int32_t mod_q_cast_div_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -61,6 +70,7 @@ static int32_t mod_q_cast_div_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/** 默认 golden 用的标量 int64 mod（与 HAT_MOD_SCALAR_I64 一致）。 */
 static int32_t mod_q_scalar_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -75,6 +85,11 @@ static int32_t mod_q_scalar_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/**
+ * 按 mod_variant 分派 final mod。
+ * @param x           lazy 累加 int64
+ * @param mod_variant HatModVariant
+ */
 static int32_t final_mod_i64(int64_t x, int mod_variant)
 {
     if (mod_variant == HAT_MOD_CAST_DIV) {
@@ -86,6 +101,9 @@ static int32_t final_mod_i64(int64_t x, int mod_variant)
     return mod_q_nonneg_i64(x);
 }
 
+/**
+ * MultiplyNTTs：拆偶奇 → 对乘（含 γ）→ 交织写回。
+ */
 void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
 {
     int32_t a0[HAT_N / 2];
@@ -95,6 +113,7 @@ void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
     int32_t c0[HAT_N / 2];
     int32_t c1[HAT_N / 2];
 
+    // 偶/奇拆分
     for (int i = 0; i < HAT_N / 2; ++i) {
         a0[i] = f[i * 2];
         a1[i] = f[i * 2 + 1];
@@ -102,6 +121,7 @@ void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
         b1[i] = g[i * 2 + 1];
     }
 
+    // 逐对：c0 = a0*b0 + a1*b1*γ；c1 = a0*b1 + a1*b0
     for (int i = 0; i < HAT_N / 2; ++i) {
         int32_t a1b1 = barrett_red_coeff(a1[i] * b1[i]);
         int32_t t0 = barrett_red_coeff(a0[i] * b0[i] + a1b1 * kGammas[i]);
@@ -110,12 +130,16 @@ void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
         c1[i] = t1;
     }
 
+    // 交织写回 h
     for (int i = 0; i < HAT_N / 2; ++i) {
         h[i * 2] = c0[i];
         h[i * 2 + 1] = c1[i];
     }
 }
 
+/**
+ * polyvec 内积：对每个 p，Σ_j MultiplyNTTs 后 final_mod。
+ */
 void hat_inner_product_dot(const int32_t *a_hat, const int32_t *s_hat, int32_t *t_hat, int mod_variant)
 {
     int32_t prod[HAT_N];

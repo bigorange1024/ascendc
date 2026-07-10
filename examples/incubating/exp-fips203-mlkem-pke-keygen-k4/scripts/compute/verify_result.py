@@ -11,6 +11,12 @@
 
 # coding=utf-8
 """
+本文件在 KeyGen 流水线中的位置：Host：compute 段 golden / 对拍脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/compute/verify_result.py
+"""
+"""
 verify_result.py — 2s1e vec-k4-v2 对拍脚本。
 
 ## 检查矩阵（mixPass=0 一次 launch 全比）
@@ -52,6 +58,7 @@ RHO_BYTES = 32
 EK_PKE_BYTES = POLYVEC_BYTES + RHO_BYTES
 
 
+# 本函数为 KeyGen 流水线组件 `check`（详见 STATUS/customspec）。
 def check(label: str, got: np.ndarray, ref: np.ndarray) -> int:
     diff = np.abs(got.astype(np.int64) - ref.astype(np.int64))
     mx = int(diff.max())
@@ -78,6 +85,7 @@ def check_bytes(label: str, got: np.ndarray, ref: np.ndarray) -> int:
     return 0
 
 
+# 本函数为 KeyGen 流水线组件 `_read_mix_pass`（详见 STATUS/customspec）。
 def _read_mix_pass() -> int | None:
     path = "./input/tiling.bin"
     if not os.path.isfile(path):

@@ -1,5 +1,9 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ *
+ * @file data_utils.h
+ * @brief Host 侧 bin 读写与调试打印（本探针 main.cpp 加载 a_hat/s_hat、写出 t_hat）。
+ * 源自 CANN 样例工具头；本仓仅作 I/O 胶水，不含密码学逻辑。
  */
 #ifndef DATA_UTILS_H
 #define DATA_UTILS_H
@@ -47,13 +51,16 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从路径读取整个常规文件到 host 缓冲。
+ * @param filePath 输入 bin 路径（如 input/ek_pke.bin）
+ * @param fileSize [out] 实际读入字节数
+ * @param buffer 调用方预分配缓冲
+ * @param bufferSize 缓冲容量；文件更大则失败
+ * @return true 成功；false 路径非法 / 空文件 / 溢出
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
+    // 1) 确认路径存在且为常规文件（拒绝目录等）
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
@@ -65,6 +72,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 2) 以二进制打开
     std::ifstream file;
     file.open(filePath, std::ios::binary);
     if (!file.is_open()) {
@@ -72,6 +80,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 3) 测长：空文件或超过 bufferSize 均拒绝，避免半读
     std::filebuf *buf = file.rdbuf();
     size_t size = buf->pubseekoff(0, std::ios::end, std::ios::in);
     if (size == 0) {
@@ -84,6 +93,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         file.close();
         return false;
     }
+    // 4) 回卷并一次性读入
     buf->pubseekpos(0, std::ios::in);
     buf->sgetn(static_cast<char *>(buffer), size);
     fileSize = size;

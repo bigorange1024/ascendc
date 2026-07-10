@@ -1,3 +1,12 @@
+/**
+ * @file byte_encode12_vec.hpp
+ * @brief ByteEncode₁₂ 向量实现：tile Gather 解交错 / prefetch 整 poly 路径。
+ *
+ * 流水线位置：行 19–20，经 byte_encode12_pair::poly_byte_encode12_local 分发。
+ * 作用：int32[256] → uint8[384]；与 byte_encode12_ref.c 位级一致。
+ * 与 golden 关系：verify_result 对 ek/sk_polyvec；本文件无独立 bin。
+ */
+
 #ifndef BYTE_ENCODE12_VEC_HPP
 #define BYTE_ENCODE12_VEC_HPP
 
@@ -40,6 +49,7 @@ struct Encode12VecWs {
     LocalTensor<int32_t> idx2;
 };
 
+/** 将 encode scratch 字节偏移绑定为 Encode12VecWs 各字段视图。 */
 __aicore__ inline void bind_encode12_vec_ws(LocalTensor<int32_t> &ws, Encode12VecWs &v)
 {
     auto base = ws.ReinterpretCast<uint8_t>();
@@ -55,6 +65,10 @@ __aicore__ inline void bind_encode12_vec_ws(LocalTensor<int32_t> &ws, Encode12Ve
     v.idx2 = base[1248].ReinterpretCast<int32_t>();
 }
 
+/**
+ * 从交错 row 用 Gather 取出偶/奇系数到 t0/t1（字节索引 8i / 8i+4）。
+ * 注：ByteEncode 路径允许 Gather；与 NTT S1–S3 禁 Gather 范围不同。
+ */
 __aicore__ inline void gather_pairs_i32(LocalTensor<int32_t> &t0, LocalTensor<int32_t> &t1, LocalTensor<int32_t> &row,
                                         LocalTensor<int32_t> &idx, LocalTensor<int32_t> &idx2, uint32_t pairCount)
 {
@@ -69,6 +83,7 @@ __aicore__ inline void gather_pairs_i32(LocalTensor<int32_t> &t0, LocalTensor<in
     Gather(t1, row, idx2.ReinterpretCast<uint32_t>(), 0U, pairCount);
 }
 
+/** 向量取低 bits 位：v = v - (v>>bits)*2^bits（等价 & (2^bits-1)）。 */
 __aicore__ inline void mask_low_bits_i32(LocalTensor<int32_t> &v, LocalTensor<int32_t> &tmp, int32_t bits,
                                           uint32_t count)
 {
@@ -82,6 +97,10 @@ __aicore__ inline void mask_low_bits_i32(LocalTensor<int32_t> &v, LocalTensor<in
     Sub(v, v, tmp, n);
 }
 
+/**
+ * 由 t0/t1（已 mask 12bit）计算三字节分量 b0/b1/b2 的 int32 车道。
+ * 布局对应 Alg.5：b0=t0低8；b1=t0高4|t1低4；b2=t1高8。
+ */
 __aicore__ inline void compute_b012_tile(Encode12VecWs &v, uint32_t pairCount)
 {
     using AscendC::Add;
@@ -108,6 +127,7 @@ __aicore__ inline void compute_b012_tile(Encode12VecWs &v, uint32_t pairCount)
     Add(v.b1W, v.tmp, v.b1W, n);
 }
 
+/** SoA b0/b1/b2 → AoS 字节：标量 SetValue 写 r[3i..]。 */
 __aicore__ inline void scatter_b012_scalar(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &b0, LocalTensor<int32_t> &b1,
                                            LocalTensor<int32_t> &b2, uint32_t pairBase, uint32_t pairCount)
 {
@@ -121,6 +141,7 @@ __aicore__ inline void scatter_b012_scalar(LocalTensor<uint8_t> &r, LocalTensor<
 }
 
 #if BYTE_ENCODE12_SCATTER_VEC >= 1
+/** 取 w[lane] 低 8 位为 uint8。 */
 __aicore__ inline uint8_t lane_byte_i32(LocalTensor<int32_t> &w, int32_t lane)
 {
     return static_cast<uint8_t>(w.GetValue(lane) & 0xFF);
@@ -157,6 +178,7 @@ __aicore__ inline void pack_quad12_i32(LocalTensor<int32_t> &packW, LocalTensor<
     }
 }
 
+/** 将 packW 中已打包字 DataCopy 到 r 的 tile 字节区。 */
 __aicore__ inline void scatter_b012_vec(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &packW,
                                         LocalTensor<int32_t> &b0W, LocalTensor<int32_t> &b1W, LocalTensor<int32_t> &b2W,
                                         uint32_t byteBase)
@@ -168,6 +190,10 @@ __aicore__ inline void scatter_b012_vec(LocalTensor<uint8_t> &r, LocalTensor<int
 }
 #endif
 
+/**
+ * tile=32 向量 ByteEncode：分块 Gather→算 b012→scatter。
+ * @param r 输出 384B；@param a 输入 256 int32；@param encodeWs scratch
+ */
 __aicore__ inline void poly_byte_encode12_vec_local(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &a, uint32_t coeffN,
                                                     LocalTensor<int32_t> &ws)
 {
@@ -214,6 +240,7 @@ struct Encode12PrefetchWs {
     LocalTensor<int32_t> idxOdd;
 };
 
+/** prefetch 路径：绑定整 poly 宽工作区视图。 */
 __aicore__ inline void bind_encode12_prefetch_ws(LocalTensor<int32_t> &ws, Encode12PrefetchWs &v)
 {
     auto base = ws.ReinterpretCast<uint8_t>();
@@ -229,6 +256,7 @@ __aicore__ inline void bind_encode12_prefetch_ws(LocalTensor<int32_t> &ws, Encod
                    .ReinterpretCast<int32_t>();
 }
 
+/** 从 GM ROM 导入 Gather even/odd 索引到 prefetch ws。 */
 __aicore__ inline void init_encode12_prefetch_rom(LocalTensor<int32_t> &ws)
 {
     Encode12PrefetchWs v;
@@ -240,6 +268,7 @@ __aicore__ inline void init_encode12_prefetch_rom(LocalTensor<int32_t> &ws)
     KYBER_PIPE_ALL();
 }
 
+/** 整 poly 一次 Gather×2：交错 a → t0/t1 各 128。 */
 __aicore__ inline void deinterleave_pairs_once(Encode12PrefetchWs &v, LocalTensor<int32_t> &a)
 {
     using AscendC::Gather;
@@ -255,6 +284,7 @@ __aicore__ inline void deinterleave_pairs_once(Encode12PrefetchWs &v, LocalTenso
 }
 
 #if BYTE_ENCODE12_SCATTER_VEC >= 1
+/** 128 pair 按 4 一组 pack 为 96 个 int32 字（384B）。 */
 __aicore__ inline void pack_quad12_groups(LocalTensor<int32_t> &packW, LocalTensor<int32_t> &b0, LocalTensor<int32_t> &b1,
                                           LocalTensor<int32_t> &b2, uint32_t groups)
 {
@@ -286,6 +316,7 @@ __aicore__ inline void pack_quad12_groups(LocalTensor<int32_t> &packW, LocalTens
     }
 }
 
+/** prefetch：整 poly 384B pack 写回 r。 */
 __aicore__ inline void scatter_poly12_prefetch(LocalTensor<uint8_t> &r, Encode12PrefetchWs &v)
 {
     pack_quad12_groups(v.packW, v.b0W, v.b1W, v.b2W, kEncodePolyPackGroups);
@@ -295,6 +326,10 @@ __aicore__ inline void scatter_poly12_prefetch(LocalTensor<uint8_t> &r, Encode12
 }
 #endif
 
+/**
+ * PREFETCH=1 生产路径：ROM 索引 + 1×Gather×2 + 128-wide 向量算 + 384B pack。
+ * @param r/a/encodeWs 同 vec_local；coeffN 须为 256
+ */
 __aicore__ inline void poly_byte_encode12_prefetch_local(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &a,
                                                          uint32_t coeffN, LocalTensor<int32_t> &ws)
 {

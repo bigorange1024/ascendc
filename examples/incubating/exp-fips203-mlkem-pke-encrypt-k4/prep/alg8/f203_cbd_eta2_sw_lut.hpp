@@ -1,3 +1,11 @@
+/**
+ * @file f203_cbd_eta2_sw_lut.hpp
+ * @brief CBD η=2：SWAR + LUT 单行采样（UB）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt prep。
+ * 与 golden：一行 128B PRF → 256 系数。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/alg8/f203_cbd_eta2_sw_lut.hpp
 // @layer prep
@@ -8,19 +16,6 @@
 // @depends #include: cbd2_ab_lut.h, kernel_operator.h, cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_cbd_eta2_sw_lut.hpp
- * @brief P1a：SWAR 比特展开 + 16 项 LUT（无分支、无运行时 mod Q）。
- *
- * 算法（与 mlkem-native / fips203_se_sample.c 同式）：
- *   t = load32_le(prf + 4*i)
- *   d = (t & 0x55555555) + ((t >> 1) & 0x55555555)   // 4×uint32 含 8 组 (a,b)
- *   coeff[j] = CBD2_AB_LUT[(a<<2)|b]
- *
- * 相对 P0：去掉内层 j 循环与 `% 3329`；实测总 tick 仅 −9.8%（GM scalar I/O 未动）。
- * 详见 docs/notes/F203-CBD-eta2-性能优化技术总结.md §3.1。
- */
 #pragma once
 
 #include "cbd2_ab_lut.h"

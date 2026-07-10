@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 Alg.11 basemul / γ 表与向量管线。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/alg11_tiling.h
+ */
+/**
  * @file alg11_tiling.h
  * @brief Alg.11 向量 basemul 的静态尺寸：N、pairCount、VecWs 槽位数。
  *

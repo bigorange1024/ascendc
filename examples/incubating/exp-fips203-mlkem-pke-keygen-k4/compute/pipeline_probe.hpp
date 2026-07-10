@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 流水探针/调试辅助。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/pipeline_probe.hpp
+ */
+/**
  * @file pipeline_probe.hpp
  * @brief 开发期流水线中间态探测：CPU printf 抽样系数（不改 GM、不破坏 UB 不变量）。
  *
@@ -44,6 +50,10 @@ __aicore__ inline void print_ub_i32_sample(const char *tag, const AscendC::Local
     printf("\n");
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `print_gm_i32_sample`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void print_gm_i32_sample(const char *tag, const AscendC::GlobalTensor<int32_t> &gm, uint32_t off,
                                            int32_t n)
 {

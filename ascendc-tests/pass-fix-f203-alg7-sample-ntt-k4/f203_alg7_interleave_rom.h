@@ -1,8 +1,26 @@
 /**
  * @file f203_alg7_interleave_rom.h
- * @brief Alg.7 rej：d1[224]||d2[224] scratch → stream[448] Gather 字节索引（自动生成）。
+ * @brief Alg.7 rej「交错」段只读索引表：d1[224]‖d2[224] scratch → stream[448] 的
+ *        AscendC::Gather **源字节偏移**（自动生成，禁止手改）。
  *
- * 生成：scripts/gen_alg7_interleave_rom.py
+ * 表语义：
+ *   - rej 向量路径把剔除后的 d1'/d2'（各 224 个 int32）先 DataCopy 拼接为一段连续 scratch
+ *     （布局 = d1'[0..223] || d2'[0..223]，字节基址依次为 0 与 224×4=896）；
+ *   - FIPS 203 Alg.7 line 8–15 的规范扫描顺序是「同一三元组内先 d1 后 d2」，即
+ *     stream[2k] = d1[k]，stream[2k+1] = d2[k]（k=0..223），共 kStreamLen=448 个 lane；
+ *   - `kAlg7InterleaveReorderByte[m]` 即 stream 第 m 个 lane 对应 scratch 内的**字节偏移**
+ *     （非元素下标）：偶数下标 m=2k → 值为 `4*k`（落在 d1 段）；
+ *     奇数下标 m=2k+1 → 值为 `896+4*k`（落在 d2 段，896 = d2 相对 scratch 首地址的偏移）；
+ *   - 表长 `kInterleaveRomLen = kInterleaveStreamLen = 448`，与 `f203_alg7_layout.h`
+ *     的 `kStreamLen` 保持一致（由 `alg7_geom.STREAM_LEN` 同步）。
+ *
+ * 用法：Init 阶段由 `f203_alg7_rej_vec.hpp::InitAlg7InterleaveRomUb` 把本表逐元素拷入 UB
+ * `idxRom` 张量（一次性、非热路径）；随后 `InterleaveD12GatherUb` 用
+ * `AscendC::Gather(stream, scratchT1, idxRom, 0, kInterleaveStreamLen)` 一次性完成交错重排，
+ * 避免逐 lane `GetValue`/`SetValue` 标量循环。
+ *
+ * 生成脚本：`python3 scripts/gen_alg7_interleave_rom.py`（纯算术推导，无随机性，可重复复现；
+ * 若修改 `alg7_geom.CAND_PAIRS`/`STREAM_LEN` 须重新运行本脚本同步刷新本文件）。
  */
 #pragma once
 
@@ -10,9 +28,12 @@
 
 namespace F203Alg7 {
 
+/** 交错输出 stream 的 lane 总数：224 对 (d1,d2) × 2 = 448。 */
 constexpr uint32_t kInterleaveStreamLen = 448U;
+/** 本索引表长度，与 kInterleaveStreamLen 一一对应（每个 stream lane 一个 Gather 偏移）。 */
 constexpr uint32_t kInterleaveRomLen = 448U;
 
+/** stream[m] ← scratch 字节偏移 kAlg7InterleaveReorderByte[m]；偶 m 取自 d1 段，奇 m 取自 d2 段。 */
 constexpr int32_t kAlg7InterleaveReorderByte[kInterleaveRomLen] = {
     0, 896, 4, 900, 8, 904, 12, 908, 
     16, 912, 20, 916, 24, 920, 28, 924, 

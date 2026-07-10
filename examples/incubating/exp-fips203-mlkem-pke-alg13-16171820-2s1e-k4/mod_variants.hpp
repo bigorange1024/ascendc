@@ -1,3 +1,20 @@
+// @probe exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4
+// @file mod_variants.hpp
+// @layer compute
+// @role compute/：Tag5T NTT + Alg.11 basemul + 行18–20 UB 融合 MMAD 内核与 host 驱动；第二次 launch，读 prep 写 GM + LUT，写 ek/sk 与 ek_pke。 / Full keygen compute (mmad_custom) sources. 本文件 `mod_variants.hpp` 为该子模块组件。 / Component: mod_variants.hpp.
+// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
+// @launch mmad launch: blockDim=1, MIX_AIC_1_2（1×AIC + 2×AIV 融合 NTT+Alg11+行18–20）
+// @ai_core SIM 剖面：mmad 段 1×AIC + 2×AIV；CPU SUCCESS 中 AIC_x 为 tikicpu artifact。
+// @depends #include: basic.hpp, kernel_operator.h, kyber_limb6.hpp, mod_config.hpp, stage3_mod_variants.hpp
+// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+
+
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 模约化变体配置。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/mod_variants.hpp
+ */
 /**
  * @file mod_variants.hpp
  * @brief 行 18 final mod q 的三种设备实现与 MOD_Q_I32 统一入口。
@@ -42,6 +59,10 @@ __aicore__ inline int32_t mod_q_scalar_i64_one(int64_t x, int32_t q)
     return static_cast<int32_t>(rem);
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `mod_q_scalar_i64_vec`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void mod_q_scalar_i64_vec(LocalTensor<int32_t> &dst, int32_t q, int32_t count)
 {
     for (int32_t i = 0; i < count; ++i) {
@@ -60,6 +81,10 @@ __aicore__ inline void mod_q_barrett_vec(LocalTensor<int32_t> &dst, int32_t q, L
     wrap_mod_vec_runtime(dst, dst, q, t1, t2, count);
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `mod_q_cast_div_vec`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void mod_q_cast_div_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
                                           LocalTensor<float> &fRaw, LocalTensor<float> &fTmp,
                                           LocalTensor<float> &fQuot, int32_t count)

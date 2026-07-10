@@ -1,3 +1,11 @@
+
+/** liboqs KAT 对照胶水：调用上游 KeyGen 写期望 ek/dk，非 AscendC 规格。 */
+/**
+ * 本文件在 KeyGen 流水线中的位置：Host：KeyGen 输入、golden、KAT、验收脚本。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：scripts/liboqs_pke_keygen_ref.c
+ */
 /**
  * liboqs ML-KEM-1024（k=4）PKE KeyGen 黑盒参考：Alg.13 indcpa_keypair_derand。
  *
@@ -28,6 +36,10 @@ static int hex_nibble(char c)
     return -1;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `parse_hex32`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 static int parse_hex32(const char *hex, uint8_t out[32])
 {
     if (hex == NULL || strlen(hex) != 64) return -1;
@@ -53,6 +65,10 @@ static int write_file(const char *path, const uint8_t *buf, size_t len)
     return 0;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `main`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 int main(int argc, char **argv)
 {
     uint8_t d[32];

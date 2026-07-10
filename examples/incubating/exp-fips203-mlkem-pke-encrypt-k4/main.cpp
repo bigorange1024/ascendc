@@ -1,18 +1,22 @@
 /**
  * @file main.cpp
- * @brief exp-fips203-mlkem-pke-encrypt-k4 — 完整 Encrypt host 编排（Alg.14 行 1–22）。
+ * @brief exp-fips203-mlkem-pke-encrypt-k4 — 完整 Encrypt host 编排（FIPS 203 Alg.14 行 1–22）。
  *
- * 对齐 customspec：exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex
+ * 流水线位置：ML-KEM-1024（k=4）K-PKE.Encrypt 的 **host 入口**；负责读 `input/`、
+ * 分配 GM/workspace、按 CPU/SIM 路径 launch 设备核，并写出 **唯一产物** `output/c.bin`。
  *
- * 生产 I/O（强制）：
- *   输入 ek_pke + m + coins（+ 静态 NTT/INTT LUT）→ 设备产 **仅** c = c₁‖c₂（1568B）。
+ * 对齐 customspec：`exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec`（自 incubating exp 晋级）。
+ *
+ * 生产 I/O（强制，与 golden 对拍）：
+ *   输入 `ek_pke` + `m` + `coins`（+ 静态 NTT/INTT LUT）→ 设备产 **仅** c = c₁‖c₂（1568B）。
  *   Â / re(y,e₁,e₂) / u / v 等仅设备 GM handoff，**不 D2H、不落盘**。
+ *   golden：`scripts/gen_data.py` 生成 `golden/c.bin`；`run.sh` 对拍 `output/c.bin`。
  *
  * Launch：
- *   SIM  **2×** prep → l18_l19（含 e₂+=μ 与内联 tail pack）
- *   CPU  **5×** prep + ntt_y/at_jp/intt_e1 + pack（v=golden_v 注入，非产物）
+ *   SIM  **2×** prep → l18_l19（含 e₂+=μ 与内联 tail pack）——生产主路径
+ *   CPU  **5×** prep + ntt_y/at_jp/intt_e1 + pack（v=`golden_v` 注入，非 Alg.14 产物）
  *
- * handoff：f203_encrypt_full_layout.h；golden：scripts/gen_data.py（自包含）。
+ * handoff 布局：`f203_encrypt_full_layout.h`；compute tiling：`f203_encrypt_tiling.cpp`。
  */
 #include "ascendc_build_mode.hpp"
 #include "data_utils.h"
@@ -71,7 +75,13 @@ void FillPrfTiling(ShakeGeneralTilingData *t)
 }
 }  // namespace
 
-// NTT LUT 装入 ws（CPU/SIM 共用；写 ws 内 LUT_NTT_* 段）。
+/**
+ * 将 NTT 正变换 LUT（even/odd planar-stacked）装入 workspace 的 LUT_NTT_* 段。
+ * @param ws        host/device 可见的 workspace 基址
+ * @param lutBytes  单份 even 或 odd LUT 字节数（与 tiling::lutEvenOddBytes 一致）
+ * @return 两份文件均读成功为 true；失败时调用方应中止（返回码 20）
+ * 前置：`input/lut_ntt_{even,odd}_stacked.bin` 已由 gen_data 生成。
+ */
 static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -83,7 +93,10 @@ static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 }
 
 #ifdef ASCENDC_CPU_DEBUG
-// CPU 三 launch：INTT 段复用 LUT_NTT_* 区（phased，与 compute 探针 RunCpuThreeLaunch 一致）。
+/**
+ * CPU 分段路径：INTT LUT 覆盖写入同一 LUT_NTT_* 区（phased 复用，与探针 RunCpuThreeLaunch 一致）。
+ * 原因：CPU 三 launch 串行，NTT 完成后才跑 INTT，可安全覆盖；SIM 融合核则用独立 LUT_INTT_* 段。
+ */
 static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -94,6 +107,9 @@ static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
     return ReadFile("./input/lut_intt_odd_stacked.bin", rd, ws + tiling::LUT_NTT_ODD_STACKED, lutBytes);
 }
 #else
+/**
+ * SIM 融合路径：INTT LUT 写入独立 LUT_INTT_* 段，与 NTT LUT 并存于同一 ws（单 launch 内两用）。
+ */
 static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -105,18 +121,23 @@ static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 }
 #endif
 
+/**
+ * Host 主函数：按编译宏走 CPU 五 launch 或 SIM 两 launch，产出 `output/c.bin`（1568B）。
+ * 输入：`input/{ek_pke,coins}`（SIM 另需 `m`）；LUT 与（仅 CPU）`golden_v`。
+ * 返回：0 成功；非 0 为读文件/写文件失败码（与历史探针约定一致）。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
-    constexpr size_t cBytes = F203_TAIL_C_BYTES;
+    constexpr size_t cBytes = F203_TAIL_C_BYTES;  // 密文长度：c₁‖c₂ = 1568B（ML-KEM-1024）
 
-    // compute 运行时 tiling（3 标量）
+    // compute 运行时 tiling：tileLength / mixPass 等 3 标量，供 NTT/INTT MIX 核使用
     TilingData tilingHost{};
     GenerateTiling(tilingHost);
 
-    // prep PRF tiling（SHAKE256）
+    // prep 侧 PRF(SHAKE256) tiling：batch/msgStride/outLen 与 FillPrfTiling 锁定值一致
     ShakeGeneralTilingData prepTilingHost{};
     FillPrfTiling(&prepTilingHost);
     const size_t prepTilingBytes = sizeof(ShakeGeneralTilingData);

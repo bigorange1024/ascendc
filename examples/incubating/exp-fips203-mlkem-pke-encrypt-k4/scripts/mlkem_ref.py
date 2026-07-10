@@ -1,5 +1,12 @@
 #!/usr/bin/python3
-# F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
+# coding=utf-8
+"""
+mlkem_ref.py — F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
+
+流水线位置：Encrypt 用例附属的 **NTT 数学对照脚本**（非设备 launch 路径）。
+用于理解/校验 limb6 Stage123 与交付 ONNX 语义；golden 主路径走 `host_golden/`。
+与设备：I/O 等价参考，禁止当作 AscendC 必须复刻的实现规格。
+"""
 import re
 from pathlib import Path
 

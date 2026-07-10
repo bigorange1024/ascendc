@@ -1,6 +1,15 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
+/**
+ * @file data_utils.h
+ * @brief host 侧读写 bin 文件与打印数据的通用工具头（CANN 官方样例模板，非本探针自研算法逻辑）。
+ *        在流水线中的位置：main.cpp 用其中的 ReadFile/WriteFile 完成
+ *        「input 目录下的 .bin → host 内存 → device → kernel 计算 → device → host 内存 → output 目录下的 .bin」
+ *        的搬运两端；PrintData/DoPrintData 系列为调试打印辅助，本探针未使用但保留以兼容模板。
+ *        与 golden 的关系：本文件不参与任何算法计算，只负责按字节读写 gen_data.py/verify_result.py
+ *        约定的 .bin 文件，不改变数据内容与语义。
+ */
 #ifndef DATA_UTILS_H
 #define DATA_UTILS_H
 #include <iostream>
@@ -51,9 +60,17 @@ typedef enum {
  * @param [in] filePath: file path
  * @param [out] fileSize: file size
  * @return read result
+ *
+ * 中文说明：从 filePath 读取二进制文件内容到 buffer。
+ * @param filePath   输入文件路径（如 "./input/comp.bin"）
+ * @param fileSize   [出参] 实际读取的字节数
+ * @param buffer     调用方预先分配好的接收缓冲区（host 侧内存，非 GM/device 指针）
+ * @param bufferSize buffer 的容量上限；若文件实际大小超过此值则读取失败（防越界写）
+ * @return 成功返回 true；文件不存在/非常规文件/打开失败/大小为 0/超出缓冲区容量时返回 false
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
+    /* 先用 stat 校验路径存在且为常规文件，避免对目录/设备文件等做后续 ifstream 操作。 */
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
@@ -72,6 +89,8 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    /* 通过 filebuf 定位到文件末尾获取文件大小，再校验是否超过调用方缓冲区容量，
+     * 最后 seek 回文件头一次性读入，避免逐块读取的额外开销。 */
     std::filebuf *buf = file.rdbuf();
     size_t size = buf->pubseekoff(0, std::ios::end, std::ios::in);
     if (size == 0) {
@@ -97,6 +116,12 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
  * @param [in] buffer: data to write to file
  * @param [in] size: size to write
  * @return write result
+ *
+ * 中文说明：把 host 内存 buffer 中的 size 字节写出到 filePath（覆盖已有文件）。
+ * @param filePath 输出文件路径（如 "./output/encoded.bin"）
+ * @param buffer   待写出的 host 侧内存指针（非 GM/device 指针）
+ * @param size     待写出的字节数
+ * @return 成功返回 true；buffer 为空/打开失败/实际写入字节数与 size 不符时返回 false
  */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
@@ -105,6 +130,7 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
         return false;
     }
 
+    /* O_TRUNC：若文件已存在则清空重写，保证每次运行的 output 输出文件都是本次结果。 */
     int fd = open(filePath.c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWRITE);
     if (fd < 0) {
         ERROR_LOG("Open file failed. path = %s", filePath.c_str());
@@ -121,6 +147,12 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
     return true;
 }
 
+/**
+ * 中文说明：按 elementsPerRow 个元素一行的格式打印任意数值类型数组（调试辅助，本探针未调用）。
+ * @param data           待打印数组首地址（host 侧内存）
+ * @param count          元素个数
+ * @param elementsPerRow 每行打印的元素个数，用于换行
+ */
 template<typename T>
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
@@ -133,6 +165,7 @@ void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
     }
 }
 
+/** 中文说明：DoPrintData 的 fp16 特化版本，打印前先转换为 float（调试辅助，本探针未调用）。 */
 void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -144,6 +177,13 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 中文说明：按 dataType 分发到对应类型的 DoPrintData/DoPrintHalfData（调试辅助，本探针未调用）。
+ * @param data           待打印数据首地址
+ * @param count          元素个数
+ * @param dataType       元素的数据类型枚举（见上方 printDataType）
+ * @param elementsPerRow 每行打印的元素个数，默认 16
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

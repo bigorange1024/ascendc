@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""ntt_lut_bins.py — 写入 input/ LUT（与 Encrypt 探针同布局）。"""
+"""
+ntt_lut_bins.py — Decrypt 静态 NTT/INTT LUT 落盘（与 Encrypt 探针同布局）。
+
+从 transpose_mlkem_luts_i8.h 解析 T 矩阵，切 even/odd stacked，写入 input/：
+  lut_even_stacked.bin / lut_odd_stacked.bin
+  lut_intt_even_stacked.bin / lut_intt_odd_stacked.bin
+与 seed 无关；设备 workspace 由 Host memcpy 装入固定偏移。
+"""
 from __future__ import annotations
 
 import re
@@ -14,6 +21,7 @@ LUT_HDR = CASE / "compute/ntt_u/thirdparty/ntt_study/include/mlkem/stable/transp
 
 
 def load_lut_t_i8(mode: str) -> np.ndarray:
+    """解析头文件中 kMlkemLimb6Ntt_T_i8 或 Intt 表 → [N,512] int8。"""
     symbol = "kMlkemLimb6Ntt_T_i8" if mode == "ntt" else "kMlkemLimb6Intt_T_i8"
     txt = LUT_HDR.read_text(encoding="utf-8")
     i0 = txt.index(symbol)
@@ -24,6 +32,7 @@ def load_lut_t_i8(mode: str) -> np.ndarray:
 
 
 def lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
+    """按 even/odd 列切 top/bottom 半区后纵向拼接（设备 LUT_EVEN/ODD_STACKED 布局）。"""
     if even:
         top = lut[:, 0:N:2]
         bottom = lut[:, N:512:2]

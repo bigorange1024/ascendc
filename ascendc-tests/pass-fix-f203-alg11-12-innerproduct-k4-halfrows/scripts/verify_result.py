@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 # coding=utf-8
+"""
+@file verify_result.py
+@brief Alg.11/12 内积探针（halfrows）：对拍 t_hat 与 golden。
+
+## 流水线位置
+halfrows 变体仅算 t_hat 前半行；形状仍 [P_OUT, N]。
+
+## 与设备
+仅 I/O 对拍；非 AscendC 规格。
+"""
 import os
 import sys
 
@@ -12,6 +22,7 @@ _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 
 
 def main() -> None:
+    """读 golden 与实际输出，reshape 后比较 max_abs_diff；非零则 exit 1。"""
     golden = np.fromfile(os.path.join(_CASE_DIR, "output", "golden_t_hat.bin"), dtype=np.int32)
     actual = np.fromfile(os.path.join(_CASE_DIR, "output", "t_hat.bin"), dtype=np.int32)
     golden = golden.reshape(P_OUT, N)

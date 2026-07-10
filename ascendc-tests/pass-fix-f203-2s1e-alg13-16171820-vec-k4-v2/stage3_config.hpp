@@ -11,6 +11,7 @@
  * Golden：output/dst.bin vs golden_dst；mixPass=3 可隔离 Stage3。
  *
  * CMake：F203_STAGE3_MOD（头文件默认 0；改后重编；方案 2 需 aiv_func calc_f TBuf）。
+ * 本文件仅宏选型，实现见 stage3_mod_variants.hpp / ntt_vec.hpp。
  */
 #ifndef F203_STAGE3_CONFIG_HPP
 #define F203_STAGE3_CONFIG_HPP

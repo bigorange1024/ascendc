@@ -1,3 +1,20 @@
+// @probe exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4
+// @file multiply_ntts_vec.hpp
+// @layer compute
+// @role compute/：Tag5T NTT + Alg.11 basemul + 行18–20 UB 融合 MMAD 内核与 host 驱动；第二次 launch，读 prep 写 GM + LUT，写 ek/sk 与 ek_pke。 / Full keygen compute (mmad_custom) sources. 本文件 `multiply_ntts_vec.hpp` 为该子模块组件。 / Component: multiply_ntts_vec.hpp.
+// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
+// @launch mmad launch: blockDim=1, MIX_AIC_1_2（1×AIC + 2×AIV 融合 NTT+Alg11+行18–20）
+// @ai_core SIM 剖面：mmad 段 1×AIC + 2×AIV；CPU SUCCESS 中 AIC_x 为 tikicpu artifact。
+// @depends #include: alg11_fixed_n256.hpp, alg11_gammas.h, alg11_rom_tables.h, alg11_ub_load.hpp, alg11_vec_pipe.hpp, kernel_operator.h, multiply_ntts_config.hpp, alg11_tiling.h
+// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+
+
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 NTT 后乘积 / 配置辅助。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/multiply_ntts_vec.hpp
+ */
 /**
  * @file multiply_ntts_vec.hpp
  * @brief Alg.11 MultiplyNTTs 向量实现：SoA 车道、Gather 解交错（B2）、Barrett basemul、interleave 写回。
@@ -56,6 +73,10 @@ struct RomUbLuts {
     AscendC::LocalTensor<int32_t> interleaveReorderByte;
 };
 
+/**
+ * 本函数为 KeyGen 流水线组件 `bind_vec_ws`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void bind_vec_ws(AscendC::LocalTensor<int32_t> &base, VecWs &w, int32_t pairCount,
                                    const RomUbLuts &rom)
 {
@@ -79,6 +100,10 @@ __aicore__ inline void bind_vec_ws(AscendC::LocalTensor<int32_t> &base, VecWs &w
 
 #if ALG11_MEM_OPS == 1
 
+/**
+ * 本函数为 KeyGen 流水线组件 `init_rom_luts_ub`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void init_rom_luts_ub(RomUbLuts &rom, int32_t pairCount)
 {
     alg11_ub_load::copy_rom_int32_ub(rom.gammaV, gAlg11GammasGm, pairCount);
@@ -98,6 +123,10 @@ __aicore__ inline void materialize_gamma_lut_ub_once(AscendC::LocalTensor<int32_
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `init_rom_luts_ub`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void init_rom_luts_ub(RomUbLuts &rom, int32_t pairCount)
 {
     materialize_gamma_lut_ub_once(rom.gammaV, pairCount);
@@ -186,6 +215,10 @@ __aicore__ inline void reduce_zq_vec_barrett_basemul(AscendC::LocalTensor<int32_
 }
 #endif
 
+/**
+ * 本函数为 KeyGen 流水线组件 `reduce_zq_vec_barrett_dispatch`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void reduce_zq_vec_barrett_dispatch(AscendC::LocalTensor<int32_t> &dst,
                                                       AscendC::LocalTensor<int32_t> &s1,
                                                       AscendC::LocalTensor<int32_t> &s2, int32_t count)
@@ -319,6 +352,10 @@ __aicore__ inline void interleave_pairs_dispatch(AscendC::LocalTensor<int32_t> &
 #endif
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `multiply_ntts_vec_b1`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void multiply_ntts_vec_b1(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                             const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                             int32_t pairCount)
@@ -341,6 +378,10 @@ __aicore__ inline void multiply_ntts_vec_b2(AscendC::LocalTensor<int32_t> &h, co
     ALG11_PIPE_ALL();
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `multiply_ntts_vec_dispatch`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void multiply_ntts_vec_dispatch(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                                 const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                                 int32_t pairCount)

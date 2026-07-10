@@ -11,7 +11,18 @@
 
 /**
  * @file main_keygen_prep.cpp
- * @brief Host：G4 准备段 — SEED_D → 单内核 f203_keygen_prep → a_hat + src GM。
+ * @brief Host：prep 子工程入口 — SEED_D → 单内核 `f203_keygen_prep` → a_hat + src GM。
+ *
+ * ## 流水线位置
+ * 单独调试 Launch 1（Alg.13 行 3–15）：AIV×2 生成 Â、ŝ/ê（src）、ρ、prf_out。
+ * 生产全链由 `main_keygen.cpp` 串联 prep+compute；本文件供 prep 子 CMake / 门控调试。
+ *
+ * ## 与 golden 关系
+ * 写出 `output/a_hat.bin`、`src.bin`、`prf_out.bin`、`rho.bin` 供对拍；
+ * 验收仅 I/O 等价，禁止把 Host 流程当作 AscendC 实现规格。
+ *
+ * ## 输入
+ * `input/seed_d.bin`（uint32 LE）；SHAKE tiling 由 Host `FillShakeTiling` 填充。
  */
 #include "data_utils.h"
 #include "f203_keygen_prep_layout.h"
@@ -38,14 +49,20 @@ extern "C" __global__ __aicore__ void f203_keygen_prep(GM_ADDR seed_d_gm, GM_ADD
 namespace {
 using namespace F203KeygenPrep;
 
+/** ShakeGeneralTilingData 字节数（拷入 se_tiling GM） */
 constexpr size_t kTilingBytes = sizeof(ShakeGeneralTilingData);
 }  // namespace
 
+/**
+ * prep-only Host：读 seed → launch f203_keygen_prep → 落盘中间 GM（调试用）。
+ * @return 0 成功；1 读 seed 失败；2–5 写 a_hat/src/prf/rho 失败
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    // --- 读生产种子 d（32-bit LE）---
     uint32_t seed_d = 0U;
     size_t rs = 0;
     if (!ReadFile("./input/seed_d.bin", rs, &seed_d, kSeedBytes) || rs != kSeedBytes) {
@@ -53,6 +70,7 @@ int32_t main(int32_t argc, char *argv[])
         return 1;
     }
 
+    // presample SHAKE batch tiling：batch/PRF 长度与 prep 双 AIV 一致
     ShakeGeneralTilingData tilingHost{};
     FillShakeTiling(&tilingHost, kSeBatch, kSeMaxMsgLen, kSePrfOutLen, SHAKE256_RATE_BYTES);
     tilingHost.blockDim = kPrepBlockDim;
@@ -61,6 +79,7 @@ int32_t main(int32_t argc, char *argv[])
               << " a_hat_bytes=" << kAHatBytes << " src_bytes=" << kSrcBytes << "\n";
 
 #ifdef __CCE_KT_TEST__
+    // --- CPU 孪生：分配 prep 全套 GM 并 ICPU_RUN_KF ---
     uint8_t *seedGm = static_cast<uint8_t *>(AscendC::GmAlloc(kSeedBytes));
     uint8_t *aHatGm = static_cast<uint8_t *>(AscendC::GmAlloc(kAHatBytes));
     uint8_t *prfGm = static_cast<uint8_t *>(AscendC::GmAlloc(kPrfBytes));
@@ -71,11 +90,13 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *wsGm = static_cast<uint8_t *>(AscendC::GmAlloc(kSeWsBytes));
     uint8_t *tilingGm = static_cast<uint8_t *>(AscendC::GmAlloc(kTilingBytes));
 
+    // Host→GM：种子与 tiling；其余输出 GM 由核写入
     std::memcpy(seedGm, &seed_d, kSeedBytes);
     std::memcpy(tilingGm, &tilingHost, kTilingBytes);
 
     ICPU_RUN_KF(f203_keygen_prep, kPrepBlockDim, seedGm, aHatGm, prfGm, srcGm, rhoGm, xGm, lenGm, wsGm, tilingGm);
 
+    // 调试落盘：Â / src(ŝ‖ê) / PRF 中间 / ρ
     if (!WriteFile("./output/a_hat.bin", aHatGm, kAHatBytes)) {
         return 2;
     }
@@ -99,6 +120,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(wsGm);
     AscendC::GmFree(tilingGm);
 #else
+    // --- SIM/NPU：ACL 分配 Host/Device，H2D → prep_do → D2H 写盘 ---
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));

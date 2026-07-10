@@ -1,12 +1,16 @@
 /**
  * @file data_utils.h
+ * @brief sepolyvec8 探针 Host I/O 工具（Huawei CANN 样例 ReadFile/WriteFile）。
  *
- * Copyright (C) 2023-2024. Huawei Technologies Co., Ltd. All rights reserved.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * 流水线位置：main 读写 input/output 二进制；与 golden 尺寸须一致。
+ * 用途：ReadFile 装 se/LUT/tiling；WriteFile 落 output.bin。
+ * 与 AscendC：仅 Host 胶水；以下实现保持样例逻辑，不改算法。
  */
+
+// Host 读盘写盘：se/LUT/tiling → output。
+// 与 golden 字节尺寸必须一致。
+// 实现保持 Huawei 样例，不改逻辑。
+
 #ifndef DATA_UTILS_H
 #define DATA_UTILS_H
 #include <fcntl.h>
@@ -55,13 +59,16 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从路径读取整个常规文件到 host 缓冲。
+ * @param filePath 输入 bin 路径（如 input/ek_pke.bin）
+ * @param fileSize [out] 实际读入字节数
+ * @param buffer 调用方预分配缓冲
+ * @param bufferSize 缓冲容量；文件更大则失败
+ * @return true 成功；false 路径非法 / 空文件 / 溢出
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
+    // 1) 确认路径存在且为常规文件（拒绝目录等）
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
@@ -73,6 +80,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 2) 以二进制打开
     std::ifstream file;
     file.open(filePath, std::ios::binary);
     if (!file.is_open()) {
@@ -80,6 +88,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 3) 测长：空文件或超过 bufferSize 均拒绝，避免半读
     std::filebuf *buf = file.rdbuf();
     size_t size = buf->pubseekoff(0, std::ios::end, std::ios::in);
     if (size == 0) {
@@ -92,6 +101,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         file.close();
         return false;
     }
+    // 4) 回卷并一次性读入
     buf->pubseekpos(0, std::ios::in);
     buf->sgetn(static_cast<char *>(buffer), size);
     fileSize = size;

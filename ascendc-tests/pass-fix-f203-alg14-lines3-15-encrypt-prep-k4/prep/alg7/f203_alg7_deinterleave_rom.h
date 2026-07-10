@@ -1,9 +1,13 @@
 /**
  * @file f203_alg7_deinterleave_rom.h
- * @brief Alg.7 xof 672B → c0/c1/c2[224] Gather 字节索引（自动生成）。
+ * @brief Alg.7 xof 672B → c0/c1/c2[224] Gather 字节索引（自动生成巨表）。
  *
+ * 用途：将 XOF 字节流解交织为三路候选字节，供 d12 向量计算。
  * expanded[j]=byte j（int32）；索引为 expanded 内 4 对齐字节偏移。
- * 生成：scripts/gen_alg7_deinterleave_rom.py
+ * 流水线：SampleNTT SHAKE 之后、ComputeD12Vec 之前。
+ *
+ * 生成：scripts/prep/gen_alg7_deinterleave_rom.py。
+ * 本文件仅文件头说明用途；表体为 ROM 数据，不逐项注释。
  */
 #pragma once
 

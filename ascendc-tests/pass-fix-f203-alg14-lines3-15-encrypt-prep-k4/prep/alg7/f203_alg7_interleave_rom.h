@@ -1,8 +1,12 @@
 /**
  * @file f203_alg7_interleave_rom.h
- * @brief Alg.7 rej：d1[224]||d2[224] scratch → stream[448] Gather 字节索引（自动生成）。
+ * @brief Alg.7 rej：d1[224]||d2[224] scratch → stream[448] Gather 字节索引（自动生成巨表）。
  *
- * 生成：scripts/gen_alg7_interleave_rom.py
+ * 用途：向量 rej 前将交错候选重排为规范扫描顺序的 stream lane，供后续 mask/compact。
+ * 流水线：SampleNTT 内 d12 之后、compact 之前；Encrypt prep Â 路径经 F203Alg7::InitAlg7InterleaveRomUb 装入 UB。
+ *
+ * 生成：scripts/prep/gen_alg7_interleave_rom.py（须与 f203_alg7_layout.h / alg7_geom 同步）。
+ * 本文件仅文件头说明用途；表体为 ROM 数据，不逐项注释。
  */
 #pragma once
 

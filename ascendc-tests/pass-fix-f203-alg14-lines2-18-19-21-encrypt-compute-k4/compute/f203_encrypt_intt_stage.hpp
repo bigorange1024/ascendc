@@ -23,6 +23,10 @@ constexpr uint32_t kInttPolysPerAiv = static_cast<uint32_t>(tiling::kInttPolysPe
 
 namespace planar_intt {
 
+/**
+ * INTT 平面 mat_c 行号（kInttBatch=8 槽）。
+ * 与 planar_k8::mat_row 同构，但 half 维乘 kInttBatch 而非 NTT kK。
+ */
 __aicore__ inline uint32_t mat_row(uint32_t slot, uint32_t limb, uint32_t half)
 {
     return half * kInttBatch * tiling::kLimbsPerPoly + slot * tiling::kLimbsPerPoly + limb;
@@ -30,15 +34,26 @@ __aicore__ inline uint32_t mat_row(uint32_t slot, uint32_t limb, uint32_t half)
 
 } // namespace planar_intt
 
-/** INTT S1：k=8 几何；loRow 基准为 kInttBatch 而非 NTT kK。 */
+/**
+ * INTT S1：k=8 几何；loRow 基准为 kInttBatch（非 NTT 的 kK）。
+ * 输入：ProcessFromLocal 的 pad-8 UB；输出：S0 [16,N] int8。
+ */
 class AivInttK8Split {
 public:
+    /**
+     * @param subCoreIdx AIV 0/1；@param coeffN 通常 256
+     * polyBase_：AIV0→0，AIV1→4（每核 4 行 pad-8）
+     */
     __aicore__ inline AivInttK8Split(int32_t subCoreIdx, uint32_t coeffN)
         : subCoreIdx_(subCoreIdx), coeffN_(coeffN),
           polyBase_((subCoreIdx == 0) ? 0U : kInttPolysPerAiv)
     {
     }
 
+    /**
+     * 仅绑定 S0 并分配 lo/hi 输出队列（及可选 splitScratch）。
+     * @param wsS0 Stage1 输出；src 保留签名兼容，融合路径不读 GM
+     */
     __aicore__ inline void Init(GM_ADDR wsS0, GM_ADDR /*src*/)
     {
         gm_s0_.SetGlobalBuffer((__gm__ int8_t *)wsS0);
@@ -54,18 +69,26 @@ public:
 #endif
     }
 
-    /** uTr pad 8 已在 UB；不经 GM 绕路。 */
+    /**
+     * uTr pad-8 已在 UB；不经 GM 绕路。
+     * @param local_src [kInttPolysPerAiv,N] int32，与本核分片对齐
+     */
     __aicore__ inline void ProcessFromLocal(AscendC::LocalTensor<int32_t> &local_src)
     {
         encodeCore(polyBase_, static_cast<uint16_t>(kInttPolysPerAiv), local_src);
     }
 
 private:
+    /**
+     * limb6 分裂 → 写 S0：hi 行 [polyBase..)；lo 行 [kInttBatch+polyBase..)。
+     * 与 NTT AivK8Split 的差异：lo 基准用 kInttBatch=8，不是 kK=4。
+     */
     __aicore__ inline void encodeCore(uint32_t polyBase, uint16_t kPolys, AscendC::LocalTensor<int32_t> &local_src)
     {
         AscendC::LocalTensor<int8_t> local_dst0 = out0_.AllocTensor<int8_t>();
         AscendC::LocalTensor<int8_t> local_dst1 = out1_.AllocTensor<int8_t>();
         Tensor_int8x4 res{local_dst0, local_dst1};
+        // —— Stage1 split：int32 → lo(x0)/hi(x1) int8 ——
 #if F203_STAGE1_SPLIT >= 1
         const uint32_t elemCount = static_cast<uint32_t>(kPolys) * coeffN_;
         split_vec(res, local_src, static_cast<int32_t>(elemCount), splitScratch_, 32);
@@ -77,6 +100,7 @@ private:
 
         local_dst0 = out0_.DeQue<int8_t>();
         local_dst1 = out1_.DeQue<int8_t>();
+        // —— 按 poly 写回 S0（hi 在上半、lo 在下半，间距 kInttBatch）——
         for (uint16_t lp = 0; lp < kPolys; ++lp) {
             const uint32_t hiRow = polyBase + static_cast<uint32_t>(lp);
             const uint32_t loRow = kInttBatch + polyBase + static_cast<uint32_t>(lp);
@@ -101,7 +125,7 @@ private:
     AscendC::GlobalTensor<int8_t> gm_s0_;
 };
 
-/** INTT S2 后 pack：k=8 平面 mat_c。 */
+/** INTT S2 后 pack：k=8 平面 mat_c（loRow 用 kInttBatch）。 */
 class AivInttK8PackMatCPlanar {
 public:
     __aicore__ inline AivInttK8PackMatCPlanar(int32_t subCoreIdx, uint32_t coeffN)
@@ -111,6 +135,7 @@ public:
     {
     }
 
+    /** @param matPlanar 平面输出；其余为 AIC 四路临时 */
     __aicore__ inline void Init(GM_ADDR matPlanar, GM_ADDR tmpLoEven, GM_ADDR tmpLoOdd, GM_ADDR tmpHiEven,
                                 GM_ADDR tmpHiOdd)
     {
@@ -122,12 +147,17 @@ public:
         pipe_.InitBuffer(que_limb_tile_, 1, limbTileLength_ * sizeof(int32_t));
     }
 
+    /** 打包本核 4 个 slot 的 lo/hi 半平面 */
     __aicore__ inline void Process()
     {
         packBank(polyBase_, static_cast<uint16_t>(kInttPolysPerAiv));
     }
 
 private:
+    /**
+     * 每 poly：从 even/odd 临时取 hi/lo 行各 halfLen，拼 [hh|lh|hl|ll] 写入平面。
+     * @param half 0=偶半平面 / 1=奇半平面；lo 行偏移用 kInttBatch
+     */
     __aicore__ inline void packPolyHalf(uint32_t polyBase, uint16_t kPolys, uint32_t half,
                                         AscendC::GlobalTensor<int32_t> &gmEven,
                                         AscendC::GlobalTensor<int32_t> &gmOdd)
@@ -137,6 +167,7 @@ private:
             const uint32_t loR = kInttBatch + polyBase + static_cast<uint32_t>(lp);
             const uint32_t slot = polyBase + static_cast<uint32_t>(lp);
             AscendC::LocalTensor<int32_t> tile = que_limb_tile_.AllocTensor<int32_t>();
+            // tile：[hh | lh | hl | ll]，供 Stage3 RouteA Horner
             AscendC::DataCopy(tile[0], gmEven[hiR * halfLen_], halfLen_);
             AscendC::DataCopy(tile[halfLen_], gmOdd[hiR * halfLen_], halfLen_);
             AscendC::DataCopy(tile[2 * halfLen_], gmEven[loR * halfLen_], halfLen_);
@@ -178,6 +209,9 @@ public:
     {
     }
 
+    /**
+     * @param uOut u[4,N]；@param vOut v[N]（仅 AIV0 写）；@param matPlanar 平面 mat_c
+     */
     __aicore__ inline void Init(GM_ADDR uOut, GM_ADDR vOut, GM_ADDR matPlanar)
     {
         gm_u_.SetGlobalBuffer((__gm__ int32_t *)uOut);
@@ -195,12 +229,16 @@ public:
         pipe_.InitBuffer(tmp_half_, 1, halfLen_ * sizeof(int32_t));
     }
 
+    /** RouteA 合并本核 4 行 → scatter 到 u/v（跳过 pad 零行） */
     __aicore__ inline void Process()
     {
         ProcessBank(polyBase_, static_cast<uint16_t>(kInttPolysPerAiv));
     }
 
 private:
+    /**
+     * 先 lo 半平面再 hi 半平面：每 poly Horner+mod → local_dst[lp] 满 N 系数，再 scatterOut。
+     */
     __aicore__ inline void ProcessBank(uint32_t slotBase, uint16_t kPolys)
     {
         const uint32_t batchHalfPlaneLength = static_cast<uint32_t>(kPolys) * limbTileLength_;
@@ -214,6 +252,7 @@ private:
         AscendC::LocalTensor<int32_t> plane = half_plane_.AllocTensor<int32_t>();
         const uint32_t loPlaneBase = planar_intt::mat_row(slotBase, 0U, 0U) * halfLen_;
         const uint32_t hiPlaneBase = planar_intt::mat_row(slotBase, 0U, 1U) * halfLen_;
+        // —— lo 半：系数 [0,halfN) ——
         AscendC::DataCopy(plane, gm_planar_[loPlaneBase], batchHalfPlaneLength);
         KYBER_PIPE_ALL();
 
@@ -239,6 +278,7 @@ private:
             limb_scratch_.FreeTensor(limbs);
         }
 
+        // —— hi 半：系数 [halfN,N) ——
         AscendC::DataCopy(plane, gm_planar_[hiPlaneBase], batchHalfPlaneLength);
         KYBER_PIPE_ALL();
         for (uint16_t lp = 0; lp < kPolys; ++lp) {
@@ -273,7 +313,10 @@ private:
         scatterOut(kPolys);
     }
 
-    /** 将 local_dst[lp] scatter 到 u / v GM（跳过 pad 行）。 */
+    /**
+     * 将 local_dst[lp] scatter 到 u / v GM（跳过 pad 行 lp=3 及 AIV1 的 lp≥2）。
+     * AIV0: lp0/1→u[0]/u[1]，lp2→v；AIV1: lp0/1→u[2]/u[3]。
+     */
     __aicore__ inline void scatterOut(uint16_t kPolys)
     {
         AscendC::LocalTensor<int32_t> local_dst = out_dst_.DeQue<int32_t>();
@@ -286,6 +329,7 @@ private:
                 } else if (lp == 2) {
                     AscendC::DataCopy(gm_v_[0], local_dst[locOff], coeffN_);
                 }
+                // lp==3 为零 pad，不写
             } else {
                 if (lp == 0) {
                     AscendC::DataCopy(gm_u_[2U * coeffN_], local_dst[locOff], coeffN_);

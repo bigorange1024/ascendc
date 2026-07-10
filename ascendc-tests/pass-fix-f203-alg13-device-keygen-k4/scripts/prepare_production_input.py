@@ -10,6 +10,12 @@
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：prep 段 golden / ROM 生成脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/prepare_production_input.py
+"""
 """生产 I/O：仅准备 input/seed_d.bin；LUT 缺失时从本目录 compute golden 生成。
 
 契约（与 exp customspec 一致）：
@@ -40,6 +46,7 @@ _STRAY_INPUT = (
 )
 
 
+# 本函数为 KeyGen 流水线组件 `write_lut_if_missing`（详见 STATUS/customspec）。
 def write_lut_if_missing(inp: Path) -> None:
     lut_even = inp / "lut_even_stacked.bin"
     lut_odd = inp / "lut_odd_stacked.bin"
@@ -59,6 +66,7 @@ def scrub_stray_input(inp: Path) -> None:
             print(f"[prepare_input] removed stray input/{name}")
 
 
+# 本函数为 KeyGen 流水线组件 `main`（详见 STATUS/customspec）。
 def main() -> None:
     seed_d = int(os.environ.get("SEED_D", "20260619"))
     inp = ROOT / "input"

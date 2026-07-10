@@ -26,6 +26,7 @@
 #define F203_C1_BYTES (F203_DECRYPT_K * F203_C1_POLY_BYTES)
 #define F203_C2_BYTES 160U /* 256×5/8 */
 
+/* 中间态（仅设备 GM）：u'/ŝ/û 为 k×n int32；v'/ŵ/w 为 n int32 */
 #define F203_U_POLYVEC_BYTES (F203_DECRYPT_K * F203_DECRYPT_N * (uint32_t)sizeof(int32_t))
 #define F203_V_POLY_BYTES (F203_DECRYPT_N * (uint32_t)sizeof(int32_t))
 #define F203_S_HAT_BYTES F203_U_POLYVEC_BYTES

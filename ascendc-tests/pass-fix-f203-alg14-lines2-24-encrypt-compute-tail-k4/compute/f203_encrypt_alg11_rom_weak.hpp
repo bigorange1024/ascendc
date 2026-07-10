@@ -2,9 +2,11 @@
 
 /**
  * @file f203_encrypt_alg11_rom_weak.hpp
- * @brief Alg11 GM ROM 弱符号：多 kernel 同库各自 include，per-kernel 链接自洽，最终 device 合并去重。
+ * @brief Alg.11 GM ROM 弱符号（γ + Gather 字节索引 + interleave 重排）。
  *
- * 背景：AscendC 对每个 kernel .cpp 单独 ld 合并；须每 TU 带 ROM 定义，但最终 device.o 不能重复强符号。
+ * 流水线：SIM 且 ALG11_MEM_OPS=1 时，各内积相关 kernel .cpp include 本头，把 ROM 放进 GM。
+ * 背景：AscendC 每 kernel 单独 ld；须每 TU 带定义，最终 device.o 用 weak 去重。
+ * 巨表：ALG11_*_TABLE 宏仅用途说明，不逐行注释表项。
  */
 #if !defined(ASCENDC_CPU_DEBUG) && ALG11_MEM_OPS == 1
 

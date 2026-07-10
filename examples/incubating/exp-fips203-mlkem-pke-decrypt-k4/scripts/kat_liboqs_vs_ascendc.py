@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 # coding=utf-8
+# KAT 对照说明：Decrypt 与 liboqs 同 seed 比对 m；仅黑盒 I/O；禁止把 liboqs 当设备规格。
 """liboqs PKE Decrypt ↔ exp-fips203-mlkem-pke-decrypt-k4 AscendC 对拍。
 
-流程（每轮）：
+## 流水线位置
+incubating Decrypt 探针 KAT 门禁；与 stable 同型脚本，路径指向 exp 目录。
+
+## 每轮流程
   1. liboqs_pke_decrypt_fixture(SEED_D) → liboqs keygen + host golden_c → dk/c/m
   2. prepare_kat_input（写 input + golden_m，与 fixture m 自检）
   3. DECRYPT_KAT=1 bash run.sh（跳过 gen_data / verify_result）
   4. output/m.bin 与 fixture m.bin 逐字节比
 
-用法：
+## 用法
   bash kat_liboqs_vs_ascendc.sh
   KAT_CPU_COUNT=10 KAT_SIM_COUNT=1 bash kat_liboqs_vs_ascendc.sh
-  KAT_SEEDS="20260619,1,2,..." bash kat_liboqs_vs_ascendc.sh
-  KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
 """
 from __future__ import annotations
 

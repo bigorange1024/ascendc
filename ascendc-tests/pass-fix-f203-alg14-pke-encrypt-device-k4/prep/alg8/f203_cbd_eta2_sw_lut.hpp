@@ -20,6 +20,7 @@
  *
  * 相对 P0：去掉内层 j 循环与 `% 3329`；实测总 tick 仅 −9.8%（GM scalar I/O 未动）。
  * 详见 docs/notes/F203-CBD-eta2-性能优化技术总结.md §3.1。
+ * Encrypt prep batch9 经 SamplePolyCbd2RowSwLutUb 调用；本文件含 LUT 用法，表体见 cbd2_ab_lut.h。
  */
 #pragma once
 

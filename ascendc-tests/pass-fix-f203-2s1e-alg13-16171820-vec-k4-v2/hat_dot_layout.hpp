@@ -23,6 +23,11 @@ namespace hat_dot_layout {
 
 constexpr uint32_t kN = 256U;
 
+/**
+ * Â[p,j] 多项式在扁平 a_hat GM/UB 中的起始元素下标。
+ * @param p 行（ê/t̂ 索引 0..3）；@param j 列（ŝ 索引 0..3）
+ * @return (p*K+j)*256，dtype int32 元素偏移
+ */
 __aicore__ inline uint32_t a_hat_offset(uint16_t p, uint16_t j)
 {
     return (static_cast<uint32_t>(p) * static_cast<uint32_t>(tiling::kHatK) + static_cast<uint32_t>(j)) * kN;

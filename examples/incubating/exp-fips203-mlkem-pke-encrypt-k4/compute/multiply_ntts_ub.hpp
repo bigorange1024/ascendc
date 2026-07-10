@@ -1,3 +1,11 @@
+/**
+ * @file multiply_ntts_ub.hpp
+ * @brief Alg.11 MultiplyNTTs 的 UB 缓冲与装载辅助。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt 内积。
+ * 与 golden：中间态，不落盘。
+ */
+
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/multiply_ntts_ub.hpp
 // @layer compute
@@ -8,24 +16,6 @@
 // @depends #include: kernel_operator.h, multiply_ntts_config.hpp, alg11_tiling.h, multiply_ntts_vec.hpp, alg11_gammas.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file multiply_ntts_ub.hpp
- * @brief Alg.11 MultiplyNTTs 的 UB 门面：标量回退 + 向量分发（compute_on_ub / init_rom_luts_ub）。
- *
- * 用途：在 LocalTensor 上完成 f∘g→h（256 系数交错布局）；CPU 孪生强制标量路径保证与 C ref 一致。
- *
- * 调用方：`2s1e_post_ntt_ub.hpp`（j→p 全 poly）、`hat_dot_halfrows_ub.hpp`；向量细节在 multiply_ntts_vec.hpp。
- *
- * 不变量：
- *   - ALG11_IMPL=0 仅标量；ALG11_IMPL=1 时设备走 alg11_vec::multiply_ntts_vec_dispatch；
- *   - ASCENDC_CPU_DEBUG 下即使 ALG11_IMPL=1 也走 compute_on_ub_scalar；
- *   - 热路径禁止在 Compute 阶段 SetValue 填 γ/索引（ALG11_MEM_OPS=1 用 ROM Init）。
- *
- * Golden：逐系数由 hat_multiply_ntts 隐式覆盖；整行 18 对拍 golden_t_hat_*.bin。
- *
- * CMake：ALG11_IMPL、ALG11_MEM_OPS 等见 multiply_ntts_config.hpp。
- */
 #pragma once
 
 #include "kernel_operator.h"

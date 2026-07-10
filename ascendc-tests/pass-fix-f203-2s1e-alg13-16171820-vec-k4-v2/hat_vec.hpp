@@ -24,7 +24,11 @@
 #include "ntt_vec.hpp"
 #include "mod_variants.hpp"
 
-/** Alg.11 basemul 约化：MlkemReduceToZq（与 C ref barrett_red_coeff 一致，不随 F203_MOD_VARIANT 变）。 */
+/**
+ * Alg.11 basemul 内系数约化 MlkemReduceToZq（与 C ref barrett_red_coeff 一致）。
+ * 注意：此为 basemul 中间约化，不随 F203_MOD_VARIANT（行 18 final mod）切换。
+ * @param x 任意 int32 乘积；@return ∈[0,q)
+ */
 __aicore__ inline int32_t hat_reduce_zq_scalar(int32_t x)
 {
     const int32_t q = kHatQ;
@@ -37,6 +41,7 @@ __aicore__ inline int32_t hat_reduce_zq_scalar(int32_t x)
     return x;
 }
 
+/** 对 dst[0..count) 逐元素调用 hat_reduce_zq_scalar（标量循环）。 */
 __aicore__ inline void hat_reduce_zq_vec(LocalTensor<int32_t> &dst, int32_t count)
 {
     for (int32_t i = 0; i < count; ++i) {
@@ -70,7 +75,12 @@ __aicore__ inline void interleave_pairs_vec(LocalTensor<int32_t> &h, LocalTensor
     }
 }
 
-/** 标量 BaseCaseMultiply（CPU/SIM/NPU 当前唯一 basemul 路径）。 */
+/**
+ * 标量 BaseCaseMultiply / MultiplyNTTs 半核（HAT_ALG11_VEC=0 或回退）。
+ * @param h 输出交错 [2*pairCount]；@param f/g 输入交错；@param pairCount≤128
+ * @param gammaOff γ 表起点（0 或 64，对应 lo/hi 半核）
+ * 数学：c0 = a0*b0 + a1*b1*γ；c1 = a0*b1 + a1*b0（均经 hat_reduce_zq）。
+ */
 __aicore__ inline void multiply_ntts_half_scalar(LocalTensor<int32_t> &h, LocalTensor<int32_t> &f, LocalTensor<int32_t> &g,
                                                  int32_t pairCount, int32_t gammaOff)
 {

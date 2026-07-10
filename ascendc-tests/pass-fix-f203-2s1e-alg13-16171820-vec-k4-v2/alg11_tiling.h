@@ -9,6 +9,7 @@
  * 不变量：kN=256、kPairCount=128；kBlockDim=1（本探针单核 MIX）；MEM_OPS=1 时 kVecWsInts=8*128。
  *
  * Golden：无直接对拍；经行 18 t_hat 间接验收。
+ * 本文件仅常量，无运行时函数。
  *
  * CMake：ALG11_MEM_OPS（multiply_ntts_config.hpp）。
  */

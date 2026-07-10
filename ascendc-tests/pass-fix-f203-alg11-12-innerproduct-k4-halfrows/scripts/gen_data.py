@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""Golden for halfrows inner product; GM layout = alg13 a_hat row-major."""
+"""
+@file gen_data.py
+@brief 半行内积探针 golden：GM 布局与全量 alg13 a_hat 行主序相同。
+
+写出 a_hat.bin / s_hat.bin / golden_t_hat.bin；C 参考 hat_inner_product_dot 算整幅 t̂，
+与双 AIV 拼写结果对拍（I/O 等价，不关心分核）。
+"""
 import ctypes
 import os
 import subprocess
@@ -17,16 +23,19 @@ SEED = 20260617
 
 
 def make_a_hat() -> np.ndarray:
+    """随机 Â：[P_OUT*S_VEC, N]，系数 ∈ [0,Q)。"""
     rng = np.random.default_rng(SEED)
     return rng.integers(0, Q, size=(P_OUT * S_VEC, N), dtype=np.int32)
 
 
 def make_s_hat() -> np.ndarray:
+    """随机 ŝ：[S_VEC, N]。"""
     rng = np.random.default_rng(SEED + 1)
     return rng.integers(0, Q, size=(S_VEC, N), dtype=np.int32)
 
 
 def build_c_ref():
+    """编译 C 参考 .so，返回 (hat_inner_product_dot, so_path)。"""
     src = os.path.join(_CASE_DIR, "hat_inner_product_ref.c")
     out = os.path.join(_SCRIPT_DIR, "_hat_ip_ref.so")
     subprocess.check_call(
@@ -56,6 +65,7 @@ def build_c_ref():
 
 
 def main() -> None:
+    """生成 input 与 golden；mod_variant=0。"""
     os.makedirs(os.path.join(_CASE_DIR, "input"), exist_ok=True)
     os.makedirs(os.path.join(_CASE_DIR, "output"), exist_ok=True)
 

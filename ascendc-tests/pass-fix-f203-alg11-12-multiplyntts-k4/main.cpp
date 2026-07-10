@@ -1,3 +1,10 @@
+/**
+ * 【文件头】host 入口：读 input bin、launch MultiplyNTTs、写 output/h.bin。
+ *
+ * 本文件在流水线中的位置：run.sh 编译后的可执行主程序（CPU 孪生或 ACL 设备路径）。
+ * 作用：分配 GM/Host 缓冲，加载 a.bin/b.bin，调用 kernel，写出 h.bin 供 verify。
+ * 与 golden 关系：不计算 golden；仅产出实际输出，由 scripts/verify_result.py 对拍。
+ */
 #include "data_utils.h"
 #include "tiling.h"
 
@@ -10,6 +17,11 @@ extern void multiply_ntts_custom_do(uint32_t coreDim, void *l2ctrl, void *stream
 extern "C" __global__ __aicore__ void multiply_ntts_custom(GM_ADDR f, GM_ADDR g, GM_ADDR h);
 #endif
 
+/**
+ * 主函数：单次 launch，处理一对长度 256 的 int32 多项式。
+ * @return 0 成功（对拍由外部 verify 脚本完成）
+ * 分支：__CCE_KT_TEST__ 走 ICPU_RUN_KF；否则 ACL H2D/D2H。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -19,6 +31,7 @@ int32_t main(int32_t argc, char *argv[])
     const uint32_t blockDim = static_cast<uint32_t>(alg11_tiling::kBlockDim);
 
 #ifdef __CCE_KT_TEST__
+    /* CPU 孪生：GmAlloc + ICPU_RUN_KF */
     uint8_t *f = (uint8_t *)AscendC::GmAlloc(polyBytes);
     uint8_t *g = (uint8_t *)AscendC::GmAlloc(polyBytes);
     uint8_t *h = (uint8_t *)AscendC::GmAlloc(polyBytes);
@@ -36,6 +49,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)g);
     AscendC::GmFree((void *)h);
 #else
+    /* ACL 路径：Host 读 bin → H2D → kernel → D2H → 写 h.bin */
     CHECK_ACL(aclInit(nullptr));
     aclrtContext context;
     int32_t deviceId = 0;

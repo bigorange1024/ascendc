@@ -1,8 +1,12 @@
 /**
  * @file f203_alg7_interleave_rom.h
- * @brief Alg.7 rej：d1[224]||d2[224] scratch → stream[448] Gather 字节索引（自动生成）。
+ * @brief Alg.7 交错 ROM：d1[224]||d2[224] scratch → stream[448] Gather 字节索引。
  *
- * 生成：scripts/gen_alg7_interleave_rom.py
+ * ## 流水线位置
+ * Launch 1 SampleNTT（Â）向量路径；将线性 lane 映射为向量友好布局，设备只读。
+ *
+ * ## 对齐与 golden
+ * FIPS 203 Alg.13 / ML-KEM-1024（k=4）；由 `scripts/prep/gen_alg7_interleave_rom.py` 生成。
  */
 #pragma once
 
@@ -10,9 +14,12 @@
 
 namespace F203Alg7 {
 
+/** 交错后字节流长度：d1||d2 各 224 → 448 */
 constexpr uint32_t kInterleaveStreamLen = 448U;
+/** ROM 表项数（与 stream 等长，每项为 Gather 字节偏移） */
 constexpr uint32_t kInterleaveRomLen = 448U;
 
+/** Gather 字节索引：偶位取 d1、奇位取 d2 交错布局 */
 constexpr int32_t kAlg7InterleaveReorderByte[kInterleaveRomLen] = {
     0, 896, 4, 900, 8, 904, 12, 908, 
     16, 912, 20, 916, 24, 920, 28, 924, 

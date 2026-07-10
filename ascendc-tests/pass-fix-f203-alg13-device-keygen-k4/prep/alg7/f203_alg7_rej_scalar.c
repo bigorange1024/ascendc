@@ -6,6 +6,9 @@
  *
  * 与 golden 关系：本文件为 rej 段最简 oracle；向量路径产出须与本函数 bit-exact（对同一 d1/d2）。
  */
+
+/** Host/设备共用标量拒绝采样参考实现（Alg.7）；golden 与对照路径。 */
+
 #include "f203_alg7_rej_scalar.h"
 
 /**

@@ -11,7 +11,13 @@
 
 /**
  * @file f203_keygen_layout.h
- * @brief Alg.13 KeyGen 行 21 I/O 尺寸（k=4，ML-KEM-768）。
+ * @brief compute 侧副本：Alg.13 行 21 ek/dk 字节尺寸（与根目录同名头语义一致）。
+ *
+ * ## 流水线位置
+ * FuseEkPke / ByteEncode 路径包含；定义 1536/1568 定长。
+ *
+ * ## 对齐
+ * FIPS 203 ML-KEM-1024（k=4）；与 golden I/O 尺寸一致。
  */
 #pragma once
 
@@ -19,7 +25,9 @@
 
 namespace F203Keygen {
 
+/** 矩阵维数 k（ML-KEM-1024） */
 constexpr uint32_t kKyberK = 4U;
+/** ByteEncode₁₂ 单 poly：256×12/8 = 384B */
 constexpr uint32_t kPolyBytesEncoded = 384U;
 constexpr uint32_t kEkPolyvecBytes = kKyberK * kPolyBytesEncoded;  // 1536
 constexpr uint32_t kRhoBytes = 32U;

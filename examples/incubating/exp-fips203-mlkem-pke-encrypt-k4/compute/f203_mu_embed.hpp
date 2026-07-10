@@ -1,12 +1,14 @@
-#pragma once
-
 /**
  * @file f203_mu_embed.hpp
  * @brief Alg.14 行 20：m[32] → μ_embed[256]（⌊(q+1)/2⌋·bit），供 e₂+=μ 前缀折叠。
- *
  * 语义：FIPS 203 Decompress_1(m) 展开为 per-coeff 嵌入量；本文件只生成 μ，**不写 v**。
  * 融合核在 INTT 前对 e₂ GM 做 mod_q 加，使行 21 的 v←INTT(tr̂)+e₂' 与 tail 纯 pack 兼容。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
+#pragma once
+
 #include "f203_encrypt_tail_layout.h"
 #include "kernel_operator.h"
 

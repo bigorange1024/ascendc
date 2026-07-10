@@ -73,6 +73,7 @@ void FillPrfTiling(ShakeGeneralTilingData *t)
 }  // namespace
 
 // NTT LUT 装入 ws（CPU/SIM 共用；写 ws 内 LUT_NTT_* 段）。
+/** 读 lut_ntt_* → LUT_NTT_*（prep 之后 compute 共用） */
 static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -95,6 +96,7 @@ static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
     return ReadFile("./input/lut_intt_odd_stacked.bin", rd, ws + tiling::LUT_NTT_ODD_STACKED, lutBytes);
 }
 #else
+/** SIM 融合：INTT LUT → LUT_INTT_* */
 static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;

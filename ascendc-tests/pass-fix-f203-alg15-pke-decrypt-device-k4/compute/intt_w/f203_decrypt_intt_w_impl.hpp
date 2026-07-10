@@ -1,6 +1,11 @@
 /**
  * @file f203_decrypt_intt_w_impl.hpp
- * @brief INTT(w_hat) 三段式 MIX 段（g4_full 内联）。
+ * @brief Alg.15 行 6'：w ← INTT(ŵ_padded) 三段式 MIX（可内联进 fused）。
+ *
+ * 流水线位置：su_dot+pad 之后、尾段 Compress 之前。
+ * 骨架与 ntt_u_impl 同构；差异仅 ws 前缀为 INTT LUT。
+ * CrossCore：INTT 路径禁 flag 2（对齐 Encrypt；本实现仍用 SPLIT/PACK 语义）。
+ * 与 golden：Host stage123_transform("intt")[0]。
  */
 #ifndef F203_DECRYPT_INTT_W_IMPL_HPP
 #define F203_DECRYPT_INTT_W_IMPL_HPP
@@ -14,6 +19,7 @@
 
 namespace decrypt_g4 {
 
+/** INTT CrossCore 状态（与 NTT 编号语义对齐）。 */
 enum InttMachineState : uint16_t {
     INTT_IDLE = 0,
     INTT_AIV_SPLIT,
@@ -21,6 +27,7 @@ enum InttMachineState : uint16_t {
     INTT_AIV_PACK,
 };
 
+/** 等待对端 CrossCore flag。 */
 __aicore__ inline void intt_wait(InttMachineState state, const bool aic, const int32_t subBlockID)
 {
     (void)aic;
@@ -30,6 +37,7 @@ __aicore__ inline void intt_wait(InttMachineState state, const bool aic, const i
     KYBER_PIPE_ALL();
 }
 
+/** 置位 CrossCore flag。 */
 __aicore__ inline void intt_set(InttMachineState state, const bool aic, const int32_t subBlockID)
 {
     (void)aic;
@@ -39,6 +47,10 @@ __aicore__ inline void intt_set(InttMachineState state, const bool aic, const in
     KYBER_PIPE_ALL();
 }
 
+/**
+ * INTT：src=ŵ_padded polyvec → dst=时域 w（取 slot0 语义由调用方保证 pad）。
+ * @param dst/src/ws  wTime / wPadded / inttWs
+ */
 __aicore__ inline void intt_w_impl(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tilingParam)
 {
     const bool AIC = AscendC::GetSubBlockNum() == 1;
@@ -55,6 +67,7 @@ __aicore__ inline void intt_w_impl(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingD
     InttMachineState state;
 
     if (AIC) {
+        /* AIC：四块 INTT LUT MMAD */
         if (!runS2) {
             return;
         }
@@ -78,6 +91,7 @@ __aicore__ inline void intt_w_impl(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingD
             intt_set(state, AIC, subBlockID);
         }
     } else {
+        /* AIV Stage1 / pack / Stage3（同 NTT） */
         if (runS1) {
             state = INTT_AIV_SPLIT;
             AivK8Split split(subBlockID, coeffN);

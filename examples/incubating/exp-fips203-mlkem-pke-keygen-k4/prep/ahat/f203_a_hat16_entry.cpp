@@ -1,3 +1,5 @@
+
+/** 独立 Â 探针入口；全链由 f203_keygen_prep 内联 BuildAHat16ShardWithUb。 */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/f203_a_hat16_entry.cpp
 // @layer prep
@@ -10,6 +12,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 Â[16,256] 分片构建。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/ahat/f203_a_hat16_entry.cpp
+ */
+/**
  * @file f203_a_hat16_entry.cpp
  * @brief Alg.13 行 3–7 设备核：SEED_D → 向量 SampleNTT → a_hat[16,256] GM（1 或 2 AIV）。
  */
@@ -20,6 +28,8 @@
 extern "C" __global__ __aicore__ void f203_alg13_a_hat_16poly(GM_ADDR seed_d_gm, GM_ADDR a_hat_gm)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
+    // 独立 Â 探针；blockIdx 分片或 CPU 串行两分片
+
     if (AscendC::GetBlockIdx() >= static_cast<uint32_t>(F203_AHAT16_BLOCK_DIM)) {
         return;
     }

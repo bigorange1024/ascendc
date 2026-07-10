@@ -1,5 +1,11 @@
 #!/usr/bin/python3
 # coding=utf-8
+"""sepolyvec8 全流程对拍：output.bin vs golden.bin（[8,256] int32）。
+
+流水线位置：run.sh 核跑完后调用。
+用途：逐系数比较；失败打印最大差 poly/coeff。
+与 AscendC：仅验 I/O 等价，不要求实现同构。
+"""
 import sys
 
 import numpy as np
@@ -9,6 +15,7 @@ N = 256
 
 
 def verify_result(output_path: str, golden_path: str) -> bool:
+    """逐系数比较；失败打印最大差位置。"""
     output = np.fromfile(output_path, dtype=np.int32).reshape(K, N)
     golden = np.fromfile(golden_path, dtype=np.int32).reshape(K, N)
     if np.array_equal(output, golden):

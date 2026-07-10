@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 集成宏与生产默认开关。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/integration_config.hpp
+ */
+/**
  * @file integration_config.hpp
  * @brief v2 探针行 18–20 集成开关：Alg11 向量 basemul、dot-only、全 poly、ByteEncode、探测与 UB 尺寸常量。
  *

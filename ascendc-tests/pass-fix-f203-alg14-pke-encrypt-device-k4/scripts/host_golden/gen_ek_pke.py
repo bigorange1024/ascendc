@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-gen_ek_pke.py — vendored KeyGen golden 生成 ek_pke（1568B，自包含，禁止 liboqs）。
+@file gen_ek_pke.py
+@brief host_golden：KeyGen 语义生成 ek_pke（1568B，自包含，禁止 liboqs）。
 
-逻辑抄写 pass-fix-f203-alg13-device-keygen-k4/scripts/keygen_golden.py 语义，
-仅保留 ek 生产所需：ρ→Â、σ→s/e→NTT→t̂→ByteEncode₁₂‖ρ。
+流水线：Alg.14 Encrypt 输入公钥；逻辑对齐 pass-fix-f203-alg13-device-keygen-k4
+keygen_golden（ρ→Â、σ→s/e→NTT→t̂→ByteEncode₁₂‖ρ）。仅 golden，非设备实现。
+golden I/O：SEED_D → ek_pke.bin（1536B t̂ ‖ 32B ρ）。
 """
 from __future__ import annotations
 
@@ -31,20 +33,24 @@ POLY_D12_BYTES = 384
 
 
 def derand_bytes_from_seed(seed_d: int) -> bytes:
+    """确定性种子派生：SHA3-256(标签‖SEED_D) → 32B d。"""
     msg = f"exp-mlkem-f203-2s1e-k4:SEED_D={seed_d}".encode()
     return hashlib.sha3_256(msg).digest()
 
 
 def hash_g_rho_sigma(d: bytes) -> tuple[bytes, bytes]:
+    """Alg.13 G：SHA3-512(d‖k) → (ρ,σ) 各 32B。"""
     buf = hashlib.sha3_512(d + bytes([K & 0xFF])).digest()
     return buf[:32], buf[32:64]
 
 
 def shake128_squeeze(msg: bytes, outlen: int) -> bytes:
+    """SHAKE128 XOF（SampleNTT）。"""
     return hashlib.shake_128(msg).digest(outlen)
 
 
 def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
+    """XOF 字节 → 候选 12-bit 对 (d1,d2)。"""
     d1 = np.empty(CAND_PAIRS, dtype=np.int32)
     d2 = np.empty(CAND_PAIRS, dtype=np.int32)
     pos = 0
@@ -57,6 +63,7 @@ def unpack_d12_from_xof(buf: bytes) -> tuple[np.ndarray, np.ndarray]:
 
 
 def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
+    """拒绝采样凑满 N 个 <q 系数。"""
     out: list[int] = []
     for i in range(d1.shape[0]):
         v1 = int(d1[i])
@@ -71,6 +78,7 @@ def rej_scalar_from_d12(d1: np.ndarray, d2: np.ndarray) -> np.ndarray:
 
 
 def build_a_hat(rho: bytes) -> np.ndarray:
+    """ρ → Â 扁平 [K*K*N]；偏移 a_hat_offset(p,j)=(p*K+j)*N。"""
     polys = K * K
     a_hat = np.empty(polys * N, dtype=np.int32)
     for p in range(K):
@@ -85,14 +93,17 @@ def build_a_hat(rho: bytes) -> np.ndarray:
 
 
 def prf_shake256(sigma: bytes, nonce: int) -> bytes:
+    """PRF(σ‖nonce) → 128B CBD 输入。"""
     return hashlib.shake_256(sigma + bytes([nonce & 0xFF])).digest(128)
 
 
 def _load32_le(buf: bytes, off: int) -> int:
+    """小端 32-bit 读。"""
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
 def sample_poly_cbd2(buf: bytes) -> np.ndarray:
+    """η=2 CBD：128B → int32[N]。"""
     coeffs = np.zeros(N, dtype=np.int32)
     for i in range(N // 8):
         t = _load32_le(buf, 4 * i)
@@ -108,6 +119,7 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
 
 
 def build_src(sigma: bytes) -> np.ndarray:
+    """σ → s‖e 共 2K 行 poly（nonce 递增）。"""
     rows = []
     nonce = 0
     for _ in range(K):
@@ -120,6 +132,7 @@ def build_src(sigma: bytes) -> np.ndarray:
 
 
 def golden_t_hat(a_hat_flat: np.ndarray, s_hat: np.ndarray, e_hat: np.ndarray) -> np.ndarray:
+    """t̂ ← Â∘ŝ + ê（NTT 域）。"""
     t = np.zeros((K, N), dtype=np.int32)
     for p in range(K):
         acc = np.zeros(N, dtype=np.int64)
@@ -134,6 +147,10 @@ def golden_t_hat(a_hat_flat: np.ndarray, s_hat: np.ndarray, e_hat: np.ndarray) -
 
 
 def build_ek_pke(seed_d: int) -> np.ndarray:
+    """
+    KeyGen golden 主路径：SEED_D → ek = ByteEncode₁₂(t̂)‖ρ。
+    分段：d→(ρ,σ) → Â/s/e → NTT → t̂ → 编码。
+    """
     d = derand_bytes_from_seed(seed_d)
     rho, sigma = hash_g_rho_sigma(d)
     a_hat = build_a_hat(rho)
@@ -153,6 +170,7 @@ def build_ek_pke(seed_d: int) -> np.ndarray:
 
 
 def main() -> None:
+    """CLI：gen_ek_pke.py <SEED_D> <ek_pke.out>"""
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <SEED_D> <ek_pke.out>", file=sys.stderr)
         sys.exit(1)

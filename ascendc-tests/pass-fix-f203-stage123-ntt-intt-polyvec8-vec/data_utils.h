@@ -1,15 +1,19 @@
 /**
  * @file data_utils.h
- * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
+ * @brief 本探针 Host 侧二进制 I/O 与 ACL 检查宏（Huawei CANN 样例工具头）。
+ *
+ * 流水线位置：仅被 main.cpp include；在 kernel 启动前后读写 input/output 下的 bin。
  *
  * 本探针用途：
- *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
- *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
- *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
+ *   - ReadFile：input/src.bin、lut_*_stacked.bin、tiling.bin（及 mixPass 调试用 preset）；
+ *   - WriteFile：output/dst.bin（CPU 路径还可 dump s0.bin / mat_c.bin）；
+ *   - CHECK_ACL：SIM/NPU 路径 ACL 错误打印。
  *
- * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
+ * 与 golden 关系：读写缓冲尺寸须与 tiling.h 中 src/dst/lut/s0/matC 字节常量一致；
+ * 数值对拍由 scripts/verify_result.py 完成（dst vs golden_dst），本头不参与计算。
  *
- * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
+ * 说明：以下 ReadFile/WriteFile/PrintData 等为 Huawei 样例实现，本任务仅维护本文件头，
+ * 不改函数体逻辑。
  */
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
@@ -60,13 +64,16 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从路径读取整个常规文件到 host 缓冲。
+ * @param filePath 输入 bin 路径（如 input/ek_pke.bin）
+ * @param fileSize [out] 实际读入字节数
+ * @param buffer 调用方预分配缓冲
+ * @param bufferSize 缓冲容量；文件更大则失败
+ * @return true 成功；false 路径非法 / 空文件 / 溢出
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
+    // 1) 确认路径存在且为常规文件（拒绝目录等）
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
@@ -78,6 +85,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 2) 以二进制打开
     std::ifstream file;
     file.open(filePath, std::ios::binary);
     if (!file.is_open()) {
@@ -85,6 +93,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 3) 测长：空文件或超过 bufferSize 均拒绝，避免半读
     std::filebuf *buf = file.rdbuf();
     size_t size = buf->pubseekoff(0, std::ios::end, std::ios::in);
     if (size == 0) {
@@ -97,6 +106,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         file.close();
         return false;
     }
+    // 4) 回卷并一次性读入
     buf->pubseekpos(0, std::ios::in);
     buf->sgetn(static_cast<char *>(buffer), size);
     fileSize = size;

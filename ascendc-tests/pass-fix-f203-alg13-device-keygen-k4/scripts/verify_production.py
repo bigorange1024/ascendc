@@ -1,3 +1,5 @@
+
+# 生产输出对拍：比较 output/ek_pke.bin、dk_pke.bin 与 golden（I/O 等价）。
 #!/usr/bin/env python3
 # @probe pass-fix-f203-alg13-device-keygen-k4
 # @file scripts/verify_production.py
@@ -10,6 +12,12 @@
 # @verify python3 调用或由 run.sh 对拍 output vs golden。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：KeyGen 输入、golden、KAT、验收脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/verify_production.py
+"""
 """生产路径对拍：仅 ek_PKE / dk_PKE 与 golden 字节一致。"""
 from __future__ import annotations
 

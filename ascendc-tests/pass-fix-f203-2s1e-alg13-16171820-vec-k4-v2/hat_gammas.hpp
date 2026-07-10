@@ -11,6 +11,7 @@
  * Golden：hat_inner_product_ref.c 内 kGammas[] 须逐元相同。
  *
  * CMake：无。
+ * 本文件仅 constexpr 表与 kHatQ，无函数。
  */
 #ifndef HAT_GAMMAS_HPP
 #define HAT_GAMMAS_HPP

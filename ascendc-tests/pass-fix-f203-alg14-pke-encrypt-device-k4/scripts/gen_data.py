@@ -1,20 +1,13 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt golden 生成（自包含）。
+@file gen_data.py
+@brief pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt golden 生成（自包含）。
 
-设计（见 INTEGRATION_PLAN §4.1、§8）：
-  * 锁死 SEED_D=20260619，全链唯一种子。
-  * 输入 / golden_c：
-      - **优先**复用 correctness 探针现成产物（若存在）
-      - **缺失时**本目录自生成：gen_ek_pke(SEED_D) + rng(SEED_D+991)→m/coins + golden_encrypt→c
-  * 本地派生（确定性，非随机）：
-      - LUT：lut_ntt_even/odd、lut_intt_even/odd（供 compute kernel NTT/INTT）
-      - input/golden_v.bin：v = INTT(t̂·r̂) + e₂ + μ(m)。**仅 CPU 分段实现的注入数据**
-        （CPU 三 launch 无 k=8 INTT 不产 v），非 Alg.14 输出；SIM 全设备不需要它。
-  * 若从 correctness 复制了 golden_c，则用本地 golden_encrypt 做一致性自检。
-
-Alg.14 输出只有密文 c（golden/c.bin）；u/v 为内部中间量，不作为产物。
+流水线（INTEGRATION_PLAN §4.1、§8）：
+  * 锁死 SEED_D=20260619；输入/golden_c 优先复用 correctness，缺失则 host_golden 自生成
+  * 本地派生 LUT 与 golden_v（CPU 分段注入；SIM 全设备不需 v）
+  * Alg.14 产物仅 c（golden/c.bin）；u/v 为中间量
 输出：input/{ek_pke,m,coins,lut_*,golden_v}.bin、golden/c.bin
 """
 from __future__ import annotations
@@ -64,6 +57,7 @@ def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
 
 
 def _gen_lut_bins(inp: str) -> None:
+    """写 NTT/INTT even/odd stacked LUT 到 input/。"""
     lut_ntt = load_lut_t_i8("ntt")
     lut_intt = load_lut_t_i8("intt")
     _lut_planar_stacked(lut_ntt, True).tofile(os.path.join(inp, "lut_ntt_even_stacked.bin"))
@@ -73,6 +67,7 @@ def _gen_lut_bins(inp: str) -> None:
 
 
 def _corr_inputs_ready() -> bool:
+    """stable encrypt 探针是否已有 ek/m/coins。"""
     corr_in = os.path.join(_CORR, "input")
     return all(os.path.isfile(os.path.join(corr_in, name)) for name in _LOCKED_INPUTS)
 
@@ -82,6 +77,7 @@ def _corr_golden_ready() -> bool:
 
 
 def _copy_locked_inputs(inp: str) -> None:
+    """从 correctness/stable 复制锁定输入。"""
     corr_in = os.path.join(_CORR, "input")
     for name in _LOCKED_INPUTS:
         shutil.copyfile(os.path.join(corr_in, name), os.path.join(inp, name))
@@ -112,7 +108,7 @@ def _ensure_locked_inputs(inp: str) -> str:
 
 
 def _write_golden_c(gold: str, ek: bytes, m: bytes, coins: bytes, prefer_corr: bool) -> tuple[bytes, str]:
-    """写 golden/c.bin；返回 (bytes, 来源标签)。"""
+    """写 golden/c.bin；若复用 correctness 则与本地 golden_encrypt 交叉校验。"""
     dst = os.path.join(gold, "c.bin")
     if prefer_corr and _corr_golden_ready():
         src = os.path.join(_CORR, "output", "golden_c.bin")
@@ -144,12 +140,14 @@ def _compute_golden_v(ek: bytes, m: bytes, coins: bytes) -> np.ndarray:
 
 
 def main() -> None:
+    """全链：锁定输入 → LUT → golden_c → golden_v（CPU 注入）。"""
     inp = os.path.join(_CASE_DIR, "input")
     out = os.path.join(_CASE_DIR, "output")
     gold = os.path.join(_CASE_DIR, "golden")
     for d in (inp, out, gold):
         os.makedirs(d, exist_ok=True)
 
+    # —— ek/m/coins ——
     src_in = _ensure_locked_inputs(inp)
     _gen_lut_bins(inp)
 
@@ -159,6 +157,7 @@ def main() -> None:
     if len(ek) != _EK_BYTES or len(m) != _MSG_BYTES or len(coins) != _COINS_BYTES:
         raise SystemExit(f"[gen_data] bad sizes ek={len(ek)} m={len(m)} coins={len(coins)}")
 
+    # —— c 与 CPU 用 v ——
     _c_bytes, src_c = _write_golden_c(gold, ek, m, coins, prefer_corr=(src_in == "correctness"))
 
     v = _compute_golden_v(ek, m, coins)

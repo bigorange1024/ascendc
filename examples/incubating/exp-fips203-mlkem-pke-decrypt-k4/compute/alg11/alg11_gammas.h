@@ -1,7 +1,14 @@
 /**
- * FIPS 203 kMlkemGammas[128] — ζ^(2·BitRev7(i)+1) mod q, q=3329.
- * Sync: mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c
+ * @file alg11_gammas.h
+ * @brief FIPS 203 kMlkemGammas[128]：ζ^(2·BitRev7(i)+1) mod q（q=3329）。
+ *
+ * Decrypt Alg.11 MultiplyNTTs 的 γ 表；须与 mlkem_ntt_tables.h / Host golden 同步。
+ * 设备侧禁止在 Compute 热路径重填；用 ALG11_GAMMAS_TABLE 或 gAlg11GammasGm ROM。
  */
+// Alg.11 γ 常量宏表（FIPS kMlkemGammas）。
+// 流水线：basemul 扭因子；须与 ROM/ref 一致。
+// LUT/常量表：仅文件头+用途。
+
 #ifndef ALG11_GAMMAS_H
 #define ALG11_GAMMAS_H
 

@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""Legacy：mixPass=5→4 分段调试时 pass5 后 Host 重算 mat_c/dst（G4 / mixPass=0 生产路径已废弃，勿用）。"""
+"""
+cpu_fixup_pass5_outputs.py — Legacy：mixPass=5→4 分段调试时 Host 重算 mat_c/dst。
+
+流水线位置：历史 G4 调试；mixPass=0 生产路径已废弃本脚本，勿用于验收。
+作用：读 device s0，用 gen_data 的 mat_c_tmp_golden/pack/merge 在 Host 重算并写 checkpoint。
+与 golden 关系：写出的 mat_c/dst 供后续 mixPass=4 预设，非生产对拍入口。
+"""
 from __future__ import annotations
 
 import importlib.util

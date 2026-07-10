@@ -16,7 +16,10 @@
 
 #include "kernel_operator.h"
 
-/** DataCopy(MTE2) 写 UB 后、Gather/向量读 UB 前；tikicpu 须显式 MTE2_V 配对。 */
+/**
+ * DataCopy(MTE2) 写 UB 后、Gather/向量读 UB 前的同步。
+ * CPU 孪生：HardEvent::MTE2_V WaitFlag；设备：PipeBarrier<PIPE_ALL>。
+ */
 __aicore__ inline void alg11_mte2_to_v_sync()
 {
 #if defined(ASCENDC_CPU_DEBUG)

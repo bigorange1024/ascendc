@@ -25,6 +25,7 @@ enum MachineState : uint16_t {
 volatile int g_f203_decrypt_ntt_u_mix_pass = 3;
 #endif
 
+/** CrossCore Wait。 */
 __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -34,6 +35,7 @@ __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t 
     KYBER_PIPE_ALL();
 }
 
+/** CrossCore Set。 */
 __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -46,6 +48,10 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
 #define WAIT __WAIT(STATE, AIC, subBlockID);
 #define SET  __SET(STATE, AIC, subBlockID);
 
+/**
+ * 独立 NTT kernel：src 时域 → dst NTT 域；ws 含 NTT LUT。
+ * 生产路径请用 fused / ntt_u_impl。
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_ntt_u(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);

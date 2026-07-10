@@ -1,3 +1,13 @@
+/**
+ * @file main.cpp
+ * @brief Host 入口：Alg.13 行 18 polyvec NTT 域内积探针（单 AIV，P_OUT×S_VEC，无 ê）。
+ *
+ * 流水线位置：读 input/a_hat.bin、s_hat.bin → 调 kernel → 写 output/t_hat.bin，
+ * 由 scripts/verify_result.py 与 golden_t_hat.bin 对拍。
+ *
+ * 形状与字节数来自 innerproduct_tiling（默认 4×4×1，N=256 int32）。
+ * __CCE_KT_TEST__：CPU 孪生（GmAlloc + ICPU_RUN_KF）；否则 ACL 设备路径。
+ */
 #include "data_utils.h"
 #include "innerproduct_tiling.h"
 
@@ -10,17 +20,25 @@ extern void hat_innerproduct_k4_custom_do(uint32_t coreDim, void *l2ctrl, void *
 extern "C" __global__ __aicore__ void hat_innerproduct_k4_custom(GM_ADDR aHat, GM_ADDR sHat, GM_ADDR tHat);
 #endif
 
+/**
+ * Host main：按 tiling 分配 GM/Host 缓冲，加载 a_hat/s_hat，启动内积 kernel，写出 t_hat。
+ * @param argc 未使用
+ * @param argv 未使用
+ * @return 恒为 0（ACL 错误经 CHECK_ACL 打印，不改返回码）
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    // 与 gen_data / kernel 一致的 GM 字节数与 blockDim
     const size_t aHatBytes = static_cast<size_t>(innerproduct_tiling::kAHatBytes);
     const size_t sHatBytes = static_cast<size_t>(innerproduct_tiling::kSHatBytes);
     const size_t tHatBytes = static_cast<size_t>(innerproduct_tiling::kTHatBytes);
     const uint32_t blockDim = static_cast<uint32_t>(innerproduct_tiling::kBlockDim);
 
 #ifdef __CCE_KT_TEST__
+    // ---------- CPU 孪生路径：仿真 GM + ICPU 直接跑 kernel ----------
     uint8_t *aHat = (uint8_t *)AscendC::GmAlloc(aHatBytes);
     uint8_t *sHat = (uint8_t *)AscendC::GmAlloc(sHatBytes);
     uint8_t *tHat = (uint8_t *)AscendC::GmAlloc(tHatBytes);
@@ -37,6 +55,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)sHat);
     AscendC::GmFree((void *)tHat);
 #else
+    // ---------- ACL 设备路径：H2D → kernel → D2H ----------
     CHECK_ACL(aclInit(nullptr));
     aclrtContext context;
     int32_t deviceId = 0;

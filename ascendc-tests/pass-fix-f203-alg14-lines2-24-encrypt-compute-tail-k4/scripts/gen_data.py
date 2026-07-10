@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4 — golden 生成。
+@file gen_data.py
+@brief pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4 — golden 生成。
 
-链路与设备语义对齐：
+流水线与设备语义对齐：
   1. 行 2/16–21：与 compute 探针相同（host 预置 y/a_hat/e1/e2/m/ek）
   2. e₂+=μ 折叠：golden 在 INTT 前对 e₂ 加 μ(m)，与 SIM 融合核前缀一致
   3. 行 22–24：Compress + ByteEncode → golden/c.bin（1568B = c₁‖c₂）
 
-输出：input/*、golden/u.bin、golden_v.bin、golden/c.bin
+输出：input/*、golden/u.bin、golden_v.bin、golden/c.bin；非设备实现规格。
 """
 from __future__ import annotations
 
@@ -35,6 +36,7 @@ K_INTT_PAD = 8
 
 
 def m_rows_for_k(k_batch: int) -> int:
+    """Stage1 S0 行数 = 2 * k_batch。"""
     return 2 * k_batch
 
 
@@ -72,6 +74,7 @@ C_BYTES = C1_BYTES + C2_BYTES
 
 
 def mu_embed_from_m(m: bytes) -> np.ndarray:
+    """行 20：m[32] → μ[256]，bit=1 → HALF_Q，与设备 mu_embed_from_message_ub 一致。"""
     out = np.zeros(N, dtype=np.int32)
     for c in range(N):
         i, j = c // 8, c % 8
@@ -81,6 +84,7 @@ def mu_embed_from_m(m: bytes) -> np.ndarray:
 
 
 def compress_d_scalar(u: int, d: int) -> int:
+    """Compress_d 标量参考（d=5 Barrett / d=11 定点）。"""
     u = int(u) % Q
     if d == 5:
         d0 = u * 1290176
@@ -93,6 +97,7 @@ def compress_d_scalar(u: int, d: int) -> int:
 
 
 def byte_encode_d(F: np.ndarray, d: int) -> bytes:
+    """ByteEncode_d：逐系数 LSB-first 比特流打包。"""
     bits: list[int] = []
     mask = (1 << d) - 1
     for val in F:
@@ -108,6 +113,7 @@ def byte_encode_d(F: np.ndarray, d: int) -> bytes:
 
 
 def pack_ciphertext(u: np.ndarray, v: np.ndarray) -> bytes:
+    """行 22–24：c = ByteEncode₁₁(Compress₁₁(u)) ‖ ByteEncode₅(Compress₅(v))，1568B。"""
     c1 = bytearray(C1_BYTES)
     for p in range(K):
         comp = np.array([compress_d_scalar(int(x), 11) for x in u[p]], dtype=np.int32)
@@ -259,11 +265,13 @@ def a_hat_offset_jp(j: int, p: int) -> int:
 
 
 def main() -> None:
+    """生成 compute+tail golden：行 2/16–24（含 e₂+=μ 与 c.bin）。"""
     os.makedirs(os.path.join(_CASE_DIR, "input"), exist_ok=True)
     os.makedirs(os.path.join(_CASE_DIR, "output"), exist_ok=True)
 
     os.makedirs(os.path.join(_CASE_DIR, "golden"), exist_ok=True)
 
+    # —— 随机输入 + μ ——
     rng = np.random.default_rng(SEED)
     m = rng.integers(0, 256, size=MSG_BYTES, dtype=np.uint8).tobytes()
     mu = mu_embed_from_m(m)
@@ -273,6 +281,7 @@ def main() -> None:
     e1 = rng.integers(-2, 3, size=(K, N), dtype=np.int32)
     e2 = rng.integers(-2, 3, size=(N,), dtype=np.int32)
 
+    # —— 行 16–18：NTT + û + tr̂ ——
     y_hat = stage123_transform(y, "ntt")
 
     u_ntt = np.zeros((K, N), dtype=np.int32)
@@ -297,6 +306,7 @@ def main() -> None:
     u_tr_pad = np.zeros((K_INTT_PAD, N), dtype=np.int32)
     u_tr_pad[:K_P] = u_tr
 
+    # —— 行 19/21：INTT；e₂+=μ 折叠后加噪；再 pack c ——
     time_pad = stage123_transform(u_tr_pad, "intt", K_INTT_PAD)
     u = ((time_pad[:K].astype(np.int64) + e1.astype(np.int64)) % Q).astype(np.int32)
     # 设备 Launch 1 前缀 e₂+=μ；v = INTT(tr̂) + e₂ + μ
@@ -304,7 +314,7 @@ def main() -> None:
     v = ((time_pad[4].astype(np.int64) + e2_eff.astype(np.int64)) % Q).astype(np.int32)
     c_golden = pack_ciphertext(u, v)
 
-    # 行 2：ek_pke[0:1536] = ByteEncode12(t_hat)
+    # —— 行 2 ek + LUT + 落盘 ——
     ek_pke = np.zeros((K, 384), dtype=np.uint8)
     for j in range(K):
         for i in range(N // 2):

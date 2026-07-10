@@ -1,6 +1,10 @@
 /**
- * FIPS 203 kMlkemGammas[128] — ζ^(2·BitRev7(i)+1) mod q, q=3329.
- * Sync: mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c
+ * @file alg11_gammas.h
+ * @brief FIPS 203 kMlkemGammas[128] — ζ^(2·BitRev7(i)+1) mod q（q=3329）。
+ *
+ * 流水线位置：Alg.14 行 18 NTT 域 basemul / MultiplyNTTs（Alg.11）的 γ 表。
+ * 同步来源：mlkem_ntt_tables.h / hat_gammas.hpp；设备侧作编译期 ROM，禁止热路径重填。
+ * 与 golden：host `f203_ref_common.GAMMAS` 同表，保证 basemul I/O 一致。
  */
 #ifndef ALG11_GAMMAS_H
 #define ALG11_GAMMAS_H
@@ -21,6 +25,7 @@
         2237, 403, 2926, 1026, 2303, 1143, 2186, 2150, 1179, 2775, 554, 886, 2443, 1722, 1607, \
         1212, 2117, 1874, 1455, 1029, 2300, 2110, 1219, 2935, 394, 885, 2444, 2154, 1175
 
+/** 设备/CPU 共用的 γ 常量表（128 对）。 */
 static const int32_t kAlg11Gammas[ALG11_PAIR_COUNT] = {ALG11_GAMMAS_TABLE};
 
 #endif

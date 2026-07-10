@@ -1,3 +1,20 @@
+// @probe exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4
+// @file hat_alg11_basemul.hpp
+// @layer compute
+// @role compute/：Tag5T NTT + Alg.11 basemul + 行18–20 UB 融合 MMAD 内核与 host 驱动；第二次 launch，读 prep 写 GM + LUT，写 ek/sk 与 ek_pke。 / Full keygen compute (mmad_custom) sources. 本文件 `hat_alg11_basemul.hpp` 为该子模块组件。 / Component: hat_alg11_basemul.hpp.
+// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
+// @launch mmad launch: blockDim=1, MIX_AIC_1_2（1×AIC + 2×AIV 融合 NTT+Alg11+行18–20）
+// @ai_core SIM 剖面：mmad 段 1×AIC + 2×AIV；CPU SUCCESS 中 AIC_x 为 tikicpu artifact。
+// @depends #include: alg11_rom_tables.h, alg11_ub_load.hpp, integration_config.hpp, kernel_operator.h, multiply_ntts_vec.hpp
+// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+
+
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 hat 点积（Â∘ŝ）与相关 UB/tiling。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/hat_alg11_basemul.hpp
+ */
 /**
  * @file hat_alg11_basemul.hpp
  * @brief 行 18 专用：半多项式（128 对）MultiplyNTTs 向量封装与 ROM/ws 绑定。
@@ -35,6 +52,10 @@ __aicore__ inline void bind_rom_ub(AscendC::LocalTensor<int32_t> &base, alg11_ve
     (void)pairCount;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `init_rom_luts`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void init_rom_luts(AscendC::LocalTensor<int32_t> &romBase, alg11_vec::RomUbLuts &rom,
                                      int32_t pairCount)
 {

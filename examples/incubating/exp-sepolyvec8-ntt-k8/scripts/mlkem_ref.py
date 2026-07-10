@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
+# 流水线位置：verify_stage / 调试用 Host 参考；仅提供 golden 语义，非 AscendC 实现规格。
 import re
 from pathlib import Path
 
@@ -25,11 +26,13 @@ def _parse_i16_array(text: str, symbol: str, expect: int) -> list:
 
 
 def load_zetas() -> list:
+    """从 mlkem_ntt_tables.h 解析 kMlkemZetas。"""
     text = _TABLES_H.read_text(encoding="utf-8")
     return _parse_i16_array(text, "kMlkemZetas", 128)
 
 
 def gen_fixed_se_polyvec() -> "np.ndarray":
+    """生成固定可复现 se[8,256]（调试用，非 gen_data 随机路径）。"""
     import numpy as np
 
     a = np.zeros((K, N), dtype=np.int32)

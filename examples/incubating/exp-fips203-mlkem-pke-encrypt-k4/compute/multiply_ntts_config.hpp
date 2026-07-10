@@ -1,3 +1,17 @@
+/**
+ * @file multiply_ntts_config.hpp
+ * @brief FIPS 203 Alg.11 MultiplyNTTs 的设备实现选型宏（标量 vs 向量、B1/B2、ROM 导入）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 用途：编译期选择 basemul 后端：标量 GetValue/SetValue、向量 SoA 车道、Gather 解交错、GM ROM DataCopy 等。
+ * 调用方：被 `multiply_ntts_ub.hpp`、`multiply_ntts_vec.hpp`、`integration_config.hpp` 间接包含；
+ *         行 18 经 `alg11_ub::compute_on_ub` 或 `hat_alg11::multiply_ntts_half_vec` 进入。
+ * 不变量：n=256、q=3329；pairCount=128；γ 表与 alg11_gammas.h / hat_gammas.hpp 同步。
+ * Golden：hat_inner_product_ref.c 标量 Alg.11；verify 对拍 t_hat 系数（非逐 basemul）。
+ * CMake（CMakeLists.txt CACHE，经 cpu_lib/npu_lib 传入内核）：
+ *   ALG11_IMPL、ALG11_VEC_VARIANT、ALG11_VEC_OPTS、ALG11_MEM_OPS
+ */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/multiply_ntts_config.hpp
 // @layer compute
@@ -8,23 +22,6 @@
 // @depends compute 树内互引；host 经 main/mmad_custom 与 tiling.h 链接。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file multiply_ntts_config.hpp
- * @brief FIPS 203 Alg.11 MultiplyNTTs 的设备实现选型宏（标量 vs 向量、B1/B2、ROM 导入）。
- *
- * 用途：编译期选择 basemul 后端：标量 GetValue/SetValue、向量 SoA 车道、Gather 解交错、GM ROM DataCopy 等。
- *
- * 调用方：被 `multiply_ntts_ub.hpp`、`multiply_ntts_vec.hpp`、`integration_config.hpp` 间接包含；
- *         行 18 经 `alg11_ub::compute_on_ub` 或 `hat_alg11::multiply_ntts_half_vec` 进入。
- *
- * 不变量：n=256、q=3329；pairCount=128；γ 表与 alg11_gammas.h / hat_gammas.hpp 同步。
- *
- * Golden：hat_inner_product_ref.c 标量 Alg.11；verify 对拍 t_hat 系数（非逐 basemul）。
- *
- * CMake（CMakeLists.txt CACHE，经 cpu_lib/npu_lib 传入内核）：
- *   ALG11_IMPL、ALG11_VEC_VARIANT、ALG11_VEC_OPTS、ALG11_MEM_OPS
- */
 #pragma once
 
 /* Toy polynomial dimension and modulus */

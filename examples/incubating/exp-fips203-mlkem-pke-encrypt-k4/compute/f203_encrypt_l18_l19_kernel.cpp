@@ -11,6 +11,9 @@
  *   行 18 内积:      kP=5 uTr pad→8 驻留 UB（AIV0 [û0,û1,tr̂,0]；AIV1 [û2,û3,0,0]）
  *   GATE:            ST_IP_AIV_DONE=4 → ST_AT_JP_GATE=8 → 释放 INTT MMAD
  *   行 19/21 INTT:   k=8 batch → u[0..3]+e₁ / v(tr̂ 行)+e₂；flag **1/3**（禁止 flag 2）
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
 #if !defined(ASCENDC_CPU_DEBUG) && ALG11_MEM_OPS == 1
 #include "f203_encrypt_alg11_rom_weak.hpp"

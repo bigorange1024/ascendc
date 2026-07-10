@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-Golden generator for pass-fix-f203-alg11-12-multiplyntts-k4.
+【文件头】pass-fix-f203-alg11-12-multiplyntts-k4 的 golden 生成器。
 
-FIPS 203 Alg.11/12:
-  f, g — length-256 polynomials in Z_q (canonical coeffs in [0,q))
-  gamma[i] = kMlkemGammas[i] per BaseCaseMultiply pair
+本文件在流水线中的位置：run.sh 调用，写出 input/a.bin、input/b.bin、output/golden_h.bin。
+作用：按 FIPS 203 Alg.11/12 生成玩具输入与期望输出；Python 与 C 参考交叉验证。
+与 golden 关系：本脚本即 golden 真源（黑盒 oracle）；设备实现只验 I/O 一致。
+
+FIPS 203 Alg.11/12：
+  f, g — 长度 256 的 Z_q 多项式（canonical 系数 ∈ [0,q)）
+  gamma[i] = kMlkemGammas[i]，对应第 i 对 BaseCaseMultiply
 """
 import ctypes
 import os
@@ -20,7 +24,7 @@ _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 N = 256
 Q = 3329
 
-# sync alg11_gammas.h
+# 与 alg11_gammas.h 同步的 kMlkemGammas[128]
 K_ALG11_GAMMAS = [
     17, 3312, 2761, 568, 583, 2746, 2649, 680, 1637, 1692, 723, 2606, 2288, 1041, 1100, 2229,
     1409, 1920, 2662, 667, 3281, 48, 233, 3096, 756, 2573, 2156, 1173, 3015, 314, 3050, 279,
@@ -34,27 +38,44 @@ K_ALG11_GAMMAS = [
 
 
 def make_f_poly() -> np.ndarray:
-    """Toy f̂ ∈ R_q: varied canonical coeffs (not constant)."""
+    """
+    构造玩具左多项式 f̂ ∈ R_q。
+    输出：形状 [256]、dtype int32，系数 (17*i+3) mod q（非常数，便于发现布局错误）。
+    """
     return np.array([(17 * i + 3) % Q for i in range(N)], dtype=np.int32)
 
 
 def make_g_poly() -> np.ndarray:
-    """Toy ĝ ∈ R_q: different pattern from f."""
+    """
+    构造玩具右多项式 ĝ ∈ R_q。
+    输出：形状 [256]、dtype int32，系数 (13*i+7) mod q，与 f 模式不同。
+    """
     return np.array([(13 * i + 7) % Q for i in range(N)], dtype=np.int32)
 
 
 def barrett_red_coeff(x: int) -> int:
+    """
+    Barrett 模约化到 [0, q)。
+    输入：任意 int 中间积/和（可负）；输出：x mod q。
+    步骤与 alg11_12_ref.h 的 alg11_barrett_red_coeff 一致。
+    """
     q = Q
+    # 负值抬升
     t = x + (q & (x >> 31))
     t1 = (t * 78) >> 18
     x = t - t1 * q
     t2 = (x * 5039) >> 24
     x = x - t2 * q
+    # wrap_mod 末步
     x = x - (q & ~((x - q) >> 31))
     return int(x)
 
 
 def alg12_base_case_multiply(a0: int, a1: int, b0: int, b1: int, gamma: int) -> tuple[int, int]:
+    """
+    FIPS 203 Alg.12 BaseCaseMultiply。
+    输入：一对 (a0,a1)、(b0,b1) 与 γ；输出：(c0,c1)，均已约化。
+    """
     a1b1 = barrett_red_coeff(a1 * b1)
     c0 = barrett_red_coeff(a0 * b0 + a1b1 * gamma)
     c1 = barrett_red_coeff(a0 * b1 + a1 * b0)
@@ -62,6 +83,11 @@ def alg12_base_case_multiply(a0: int, a1: int, b0: int, b1: int, gamma: int) -> 
 
 
 def alg11_multiply_ntts_py(f: np.ndarray, g: np.ndarray) -> np.ndarray:
+    """
+    FIPS 203 Alg.11 MultiplyNTTs（Python 参考）。
+    输入：f,g 各 [256] int32 AoS；输出：h [256] int32。
+    循环：对 i=0..127，取 2i/2i+1 对调用 Alg.12。
+    """
     h = np.zeros(N, dtype=np.int32)
     for i in range(N // 2):
         a0, a1 = int(f[i * 2]), int(f[i * 2 + 1])
@@ -73,6 +99,11 @@ def alg11_multiply_ntts_py(f: np.ndarray, g: np.ndarray) -> np.ndarray:
 
 
 def build_c_ref():
+    """
+    编译 alg11_12_ref.c 为共享库并加载 ctypes 符号。
+    返回：(alg11_multiply_ntts 函数对象, .so 路径)。
+    前置：gcc 可用；头文件在用例根目录。
+    """
     src = os.path.join(_CASE_DIR, "alg11_12_ref.c")
     hdr_dir = _CASE_DIR
     out = os.path.join(_SCRIPT_DIR, "_alg11_ref.so")
@@ -99,6 +130,11 @@ def build_c_ref():
 
 
 def alg11_multiply_ntts_c(fn, f: np.ndarray, g: np.ndarray) -> np.ndarray:
+    """
+    通过 ctypes 调用 C 参考 MultiplyNTTs。
+    输入：fn 为 build_c_ref 返回的函数；f,g [256] int32。
+    输出：h [256] int32。
+    """
     h = np.zeros(N, dtype=np.int32)
     fn(
         h.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
@@ -109,6 +145,11 @@ def alg11_multiply_ntts_c(fn, f: np.ndarray, g: np.ndarray) -> np.ndarray:
 
 
 def main() -> None:
+    """
+    生成 input/a.bin、input/b.bin、output/golden_h.bin。
+    流程：构造 f/g → Python golden → C 参考交叉验证 → 写 bin → 删除临时 .so。
+    失败：Python 与 C 不一致时 exit 1。
+    """
     os.makedirs(os.path.join(_CASE_DIR, "input"), exist_ok=True)
     os.makedirs(os.path.join(_CASE_DIR, "output"), exist_ok=True)
 
@@ -116,6 +157,7 @@ def main() -> None:
     g = make_g_poly()
     golden_py = alg11_multiply_ntts_py(f, g)
 
+    # Python 与 C 参考必须逐系数一致，否则 golden 不可信
     fn, so_path = build_c_ref()
     golden_c = alg11_multiply_ntts_c(fn, f, g)
     if not np.array_equal(golden_py, golden_c):

@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 hat 点积（Â∘ŝ）与相关 UB/tiling。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/hat_dot_ub_tiling.hpp
+ */
+/**
  * @file hat_dot_ub_tiling.hpp
  * @brief 行 18 UB 驻留内积路径的 scratch / ROM / 分核常量（与 hat_dot_halfrows_ub 及 2s1e 管线共用）。
  *

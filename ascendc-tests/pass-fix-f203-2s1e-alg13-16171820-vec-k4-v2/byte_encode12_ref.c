@@ -14,10 +14,15 @@
  */
 #include "byte_encode12_ref.h"
 
+/**
+ * 单 poly ByteEncode₁₂。
+ * @param r 输出至少 3*n/2 字节；@param a 输入 n 个 int32 系数；@param n 通常 256
+ */
 void poly_byte_encode12_ref(uint8_t *r, const int32_t *a, int32_t n)
 {
     const int32_t pairs = n / 2;
     for (int32_t i = 0; i < pairs; i++) {
+        /* 每对系数取低 12 bit，交织为 3 字节（FIPS Alg.5） */
         const uint16_t t0 = (uint16_t)(a[2 * i] & 0xFFF);
         const uint16_t t1 = (uint16_t)(a[2 * i + 1] & 0xFFF);
         r[3 * i + 0] = (uint8_t)(t0 & 0xFF);
@@ -26,6 +31,10 @@ void poly_byte_encode12_ref(uint8_t *r, const int32_t *a, int32_t n)
     }
 }
 
+/**
+ * polyvec：对 k 个连续 poly 依次编码，输出拼接 k×384B。
+ * @param polys 行主序 [k,n] int32；@param k 通常 4
+ */
 void polyvec_byte_encode12_ref(uint8_t *r, const int32_t *polys, int32_t k, int32_t n)
 {
     for (int32_t p = 0; p < k; p++) {

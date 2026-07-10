@@ -11,6 +11,7 @@
  * Golden：即本库输出；verify_result.py 对 output/t_hat.bin；生产 gen 固定 mod_variant=HAT_MOD_SCALAR_I64。
  *
  * CMake：无（gen_data 用 gcc -shared 现场编译 hat_inner_product_ref.c）。
+ * 实现与分段注释见同目录 hat_inner_product_ref.c。
  */
 #ifndef HAT_INNER_PRODUCT_REF_H
 #define HAT_INNER_PRODUCT_REF_H

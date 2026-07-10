@@ -25,11 +25,13 @@ constexpr int32_t kDecompBias5 = 16;
 constexpr int32_t kDecompShift11 = 11;
 constexpr int32_t kDecompShift5 = 5;
 
+/** 标量 Decompress₁₁。 */
 __aicore__ inline uint32_t decompress_d11_u32(uint32_t u)
 {
     return ((u * static_cast<uint32_t>(kUnpackQ)) + 1024u) >> 11;
 }
 
+/** 标量 Decompress₅。 */
 __aicore__ inline uint32_t decompress_d5_u32(uint32_t u)
 {
     return ((u * static_cast<uint32_t>(kUnpackQ)) + 16u) >> 5;
@@ -60,6 +62,7 @@ __aicore__ inline void byte_decode_bits_scalar(int32_t *out, const uint8_t *in, 
     }
 }
 
+/** 向量 Decompress：out = (in*q + bias) >> shift。 */
 __aicore__ inline void decompress_d_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
                                         AscendC::LocalTensor<int32_t> &tmp, int32_t bias, int32_t shift)
 {
@@ -116,6 +119,11 @@ __aicore__ inline void unpack_one_poly_ub(const uint8_t *cPoly, __gm__ int32_t *
  * @param uGm  输出 u' polyvec [k×N] int32（Decompress₁₁）
  * @param vGm  输出 v' poly [N] int32（Decompress₅）
  * 前置：仅 AIV0 调用；中间态不回 Host。
+ */
+/**
+ * Alg.15 行 3–4 入口：c → u'/v'（Decode 标量 + Decompress 向量，UB 落盘）。
+ * @param cGm 密文；uGm/vGm 输出 int32
+ * 前置：仅 AIV0。
  */
 __aicore__ inline void unpack_c_impl(GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm)
 {

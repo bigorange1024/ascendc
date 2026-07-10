@@ -11,7 +11,14 @@
 
 /**
  * @file f203_keygen_ek_pke_fuse.hpp
- * @brief 行 21：在 Launch 2（mmad）末尾将 ρ 拼至 ek_polyvec → ek_PKE（仅 F203_KEYGEN_EK_PKE=1）。
+ * @brief Alg.13 行 21：ek_PKE = ByteEncode₁₂(t̂) ‖ ρ（设备侧融合）。
+ *
+ * ## 流水线位置
+ * Launch 2（mmad_custom）末尾、ByteEncode 之后；仅 AIV0 且 F203_KEYGEN_EK_PKE=1。
+ * ρ 来自 prep Launch 写入的 rho_gm。
+ *
+ * ## 对齐与 golden
+ * ML-KEM-1024（k=4）：1536B polyvec + 32B ρ = 1568B；与 golden_ek_pke.bin I/O 等价。
  */
 #pragma once
 
@@ -22,6 +29,13 @@ namespace F203KeygenEkPke {
 
 using namespace F203Keygen;
 
+/**
+ * 将 ek_polyvec 与 ρ 拼接写入 ek_pke GM。
+ * @param ek_polyvec_gm 输入：1536B 编码公钥多项式向量
+ * @param rho_gm        输入：32B ρ（prep 产出）
+ * @param ek_pke_gm     输出：1568B 生产公钥
+ * 前置：仅 subBlockID==0 的 AIV 调用；ByteEncode 已写完 ek_polyvec。
+ */
 __aicore__ inline void FuseEkPke(GM_ADDR ek_polyvec_gm, GM_ADDR rho_gm, GM_ADDR ek_pke_gm)
 {
     AscendC::GlobalTensor<uint8_t> ekSrc;
@@ -31,6 +45,7 @@ __aicore__ inline void FuseEkPke(GM_ADDR ek_polyvec_gm, GM_ADDR rho_gm, GM_ADDR 
     AscendC::GlobalTensor<uint8_t> ekDst;
     ekDst.SetGlobalBuffer(reinterpret_cast<__gm__ uint8_t *>(ek_pke_gm), kEkPkeBytes);
 
+    // 独立小 TPipe：ek 与 ρ 各一块 UB，避免与上游 UbPipeline 生命周期纠缠
     AscendC::TPipe pipe;
     AscendC::TBuf<AscendC::TPosition::VECCALC> bufEk;
     AscendC::TBuf<AscendC::TPosition::VECCALC> bufRho;
@@ -40,10 +55,12 @@ __aicore__ inline void FuseEkPke(GM_ADDR ek_polyvec_gm, GM_ADDR rho_gm, GM_ADDR 
     AscendC::LocalTensor<uint8_t> ekUb = bufEk.Get<uint8_t>();
     AscendC::LocalTensor<uint8_t> rhoUb = bufRho.Get<uint8_t>();
 
+    // GM→UB：先 ek 再 ρ
     AscendC::DataCopy(ekUb, ekSrc, kEkPolyvecBytes);
     AscendC::PipeBarrier<PIPE_ALL>();
     AscendC::DataCopy(rhoUb, rhoSrc, kRhoBytes);
     AscendC::PipeBarrier<PIPE_ALL>();
+    // UB→GM：ek 写偏移 0，ρ 紧随其后（偏移 kEkPolyvecBytes）
     AscendC::DataCopy(ekDst, ekUb, kEkPolyvecBytes);
     AscendC::PipeBarrier<PIPE_ALL>();
     AscendC::DataCopy(ekDst[kEkPolyvecBytes], rhoUb, kRhoBytes);

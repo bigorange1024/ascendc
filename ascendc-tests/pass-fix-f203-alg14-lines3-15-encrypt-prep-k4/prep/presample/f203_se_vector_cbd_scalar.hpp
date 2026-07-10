@@ -1,17 +1,23 @@
-// @probe stable-fips203-mlkem-pke-keygen-k4
+// @probe pass-fix-f203-alg14-lines3-15-encrypt-prep-k4
 // @file prep/presample/f203_se_vector_cbd_scalar.hpp
 // @layer prep
-// @role prep/presample：SHAKE/PRF/CBD 预采样与 NTT17 链入口；从 seed 派生设备侧中间量供 alg7/alg8/ahat。 / Presample + Keccak/PRF device vector entry. 本文件 `f203_se_vector_cbd_scalar.hpp` 为该子模块组件。 / Component: f203_se_vector_cbd_scalar.hpp.
-// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
-// @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
-// @depends #include: kernel_operator.h, cstdint
-// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+// @role prep/presample：SHAKE/PRF/CBD 预采样
+// @production_io Encrypt prep：input ek_pke.bin+coins.bin；output a_hat.bin+re.bin；中间 prf 不落盘。
+// @launch prep launch: blockDim=2, AIV_ONLY
+// @ai_core SIM：0×AIC+2×AIV；双 AIV 并行 Â；block0 独占 PRF+CBD。
+// @depends 见文件内 #include
+// @verify run.sh CPU+SIM；verify_result.py max_abs_diff=0。
 
 
 /**
  * @file f203_se_vector_cbd_scalar.hpp
- * @brief V3 Phase C：标量 SamplePolyCBD_η=2（与 se-device-scalar 同式，生产默认）。
+ * @brief V3 Phase C：标量 SamplePolyCBD_η=2（与 se-device-scalar 同式，生产默认对照路径）。
+ *
+ * 流水线位置（presample / KeyGen 行 8–15 对照）：
+ *   prf_out[8,128] → 逐行标量 CBD → src[8,256] int32
+ * Encrypt prep 生产路径用 alg8 SWAR+LUT（f203_encrypt_re_cbd.hpp），本文件保留作标量语义参考。
+ *
+ * 与 golden：sample_poly_cbd2（FIPS 203 / Kyber）。
  */
 #pragma once
 
@@ -23,18 +29,26 @@ namespace F203SeVector {
 
 constexpr uint32_t N = 256U;
 constexpr uint32_t Q = 3329U;
+/** KeyGen/presample：8 行（s‖e），不含 Encrypt 的 e₂。 */
 constexpr uint32_t SRC_ROWS = 8U;
 
+/** 小端 load32：从 PRF 缓冲取 4B。 */
 __aicore__ inline uint32_t Load32Le(const uint8_t *buf)
 {
     return static_cast<uint32_t>(buf[0]) | (static_cast<uint32_t>(buf[1]) << 8) |
            (static_cast<uint32_t>(buf[2]) << 16) | (static_cast<uint32_t>(buf[3]) << 24);
 }
 
+/**
+ * 单行 CBD_η=2：prf_row[128] → dst_row[256]。
+ *
+ * SWAR：d 的每 4 bit 含 (a,b)；c = (a-b) mod q。
+ */
 __aicore__ inline void SamplePolyCbd2Row(int32_t *dst_row, const uint8_t *buf)
 {
     for (uint32_t i = 0; i < N / 8U; ++i) {
         const uint32_t t = Load32Le(buf + 4U * i);
+        // 相邻 bit 对求和 → 8 组 2-bit 半系数
         const uint32_t d = (t & 0x55555555U) + ((t >> 1) & 0x55555555U);
         for (uint32_t j = 0; j < 8U; ++j) {
             int32_t a = static_cast<int32_t>((d >> (4U * j + 0U)) & 0x3U);
@@ -49,11 +63,16 @@ __aicore__ inline void SamplePolyCbd2Row(int32_t *dst_row, const uint8_t *buf)
     }
 }
 
+/**
+ * 8 行：逐 nonce 从 prf_out GM 标量读 → CBD → 写 src GM。
+ * @param prf_out_gm [8,128] uint8；@param src_gm [8,256] int32
+ */
 __aicore__ inline void BuildSrcFromPrfGm(const __gm__ uint8_t *prf_out_gm, __gm__ int32_t *src_gm)
 {
     uint8_t prf_buf[128];
     int32_t row[N];
     for (uint8_t nonce = 0; nonce < SRC_ROWS; ++nonce) {
+        // 标量 GM 读一行 PRF（慢路径；生产用 DataCopy+LUT）
         const __gm__ uint8_t *prf_row = prf_out_gm + static_cast<uint32_t>(nonce) * 128U;
         for (uint32_t i = 0; i < 128U; ++i) {
             prf_buf[i] = prf_row[i];

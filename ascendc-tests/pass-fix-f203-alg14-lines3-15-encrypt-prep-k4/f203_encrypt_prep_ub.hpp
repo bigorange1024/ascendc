@@ -2,7 +2,15 @@
  * @file f203_encrypt_prep_ub.hpp
  * @brief Alg.14 Encrypt prep 单 TPipe：ρ→Â（双 AIV）→ coins→PRF+CBD batch9（block0）。
  *
+ * 流水线位置（行 3–15）：
+ *   1. 自 ek_pke GM 读 ρ[32]（偏移 1536）
+ *   2. BuildAHat16ShardWithUb：本 block 分片 SampleNTT → a_hat_gm
+ *   3. 仅 block0：LoadCoins → PRF×9 → CBD×9 → re_gm
+ *
  * 背景：对齐 stable KeyGen `BuildKeygenPrepSinglePipe`；ρ 自 ek_pke 尾 32B，不经 G(d)。
+ * UB 复用：shakeX/Len/Staging 先服务 Â，再给 PRF；prfYQue 兼作 aHatQue / CBD rowQue。
+ *
+ * 与 golden：output a_hat / re 对拍；prf_out 为中间态。
  */
 #pragma once
 
@@ -16,11 +24,12 @@ namespace F203EncryptPrep {
 
 #define F203_ENCRYPT_PREP_PIPE_ALL() AscendC::PipeBarrier<PIPE_ALL>()
 
+/** PRF batch8 的 x/len UB 尺寸（≥ 单 poly SampleNTT 消息缓冲，可复用）。 */
 constexpr uint32_t kPrepShakeXUbBytes = F203SeVector::PRF_X_UB_BYTES;
 constexpr uint32_t kPrepShakeLenUbBytes = F203SeVector::PRF_LEN_UB_BYTES;
 constexpr uint32_t kPrepPrfYUbBytes = F203SeVector::PRF_Y_UB_BYTES;
 
-/** 从 ek_pke GM 读取 ρ[32]（偏移 1536）。 */
+/** 从 ek_pke GM 读取 ρ[32]（偏移 kRhoOffset=1536）。 */
 __aicore__ inline void LoadRhoFromEkGm(const __gm__ uint8_t *ek_gm, uint8_t rho[kRhoBytes])
 {
     for (uint32_t i = 0U; i < kRhoBytes; ++i) {
@@ -45,12 +54,13 @@ __aicore__ inline void LoadCoinsFromGm(const __gm__ uint8_t *coins_gm, uint8_t c
  * @param a_hat_gm    输出 Â[16,256] int32
  * @param prf_out_gm  PRF 中间态 [9,128] uint8（block0 写）
  * @param re_gm       输出 r‖e₁‖e₂ [9,256] int32
- * @param tiling_gm   SHAKE batch tiling（host 填 batch=9）
+ * @param tiling_gm   SHAKE batch tiling（host 填 batch=8，设备补 nonce 8）
  */
 __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, const __gm__ uint8_t *coins_gm,
                                                   uint32_t blockIdx, __gm__ int32_t *a_hat_gm,
                                                   __gm__ uint8_t *prf_out_gm, __gm__ int32_t *re_gm, GM_ADDR tiling_gm)
 {
+    // 越界 block 直接返回（与 launch blockDim 防护一致）
     if (AscendC::GetBlockIdx() >= static_cast<uint32_t>(F203_AHAT16_BLOCK_DIM)) {
         return;
     }
@@ -58,6 +68,7 @@ __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, c
     uint8_t rho[kRhoBytes];
     LoadRhoFromEkGm(ek_gm, rho);
 
+    // 单 TPipe：Â 与 PRF/CBD 共用 shake / scratch / y 队列
     AscendC::TPipe pipe;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeXBuf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeLenBuf;
@@ -74,18 +85,22 @@ __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, c
     pipe.InitBuffer(xofBuf, F203Alg7::kXofUbBytes);
     pipe.InitBuffer(d1Que, 1, F203Ahat16::kD12Bytes);
     pipe.InitBuffer(d2Que, 1, F203Ahat16::kD12Bytes);
+    // prfYQue 容量按 PRF batch y；Â 路径作 aHatQue（256×int32），CBD 作 rowQue
     pipe.InitBuffer(prfYQue, 1, kPrepPrfYUbBytes);
     pipe.InitBuffer(scratchBuf, F203Alg7::kScratchInt32ElemsActive * sizeof(int32_t));
 
+    // 行 3–7：本分片 Â
     F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, blockIdx, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf,
                                        d1Que, d2Que, prfYQue, scratchBuf);
 
     F203_ENCRYPT_PREP_PIPE_ALL();
 
+    // 行 8–15：仅 block0 写 PRF + CBD，避免双 AIV 写同一 re_gm
     if (AscendC::GetBlockIdx() == 0U) {
         uint8_t coins[kCoinsBytes];
         LoadCoinsFromGm(coins_gm, coins);
 
+        // tiling 由 RunShakePrfEncrypt9UbWithUb 自 tiling_gm 加载；此处局部变量为历史占位
         ShakeGeneralTilingData tilingLocal{};
         F203EncryptRePrf::RunShakePrfEncrypt9UbWithUb(coins, prf_out_gm, tiling_gm, shakeXBuf, shakeLenBuf,
                                                       shakeStagingBuf, prfYQue);

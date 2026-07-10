@@ -1,6 +1,22 @@
 /**
  * @file f203_alg7_compact_lut.h
- * @brief 8-lane accept mask → Gather 字节偏移（由 gen_alg7_compact_lut.py 生成）。
+ * @brief Alg.7 拒绝采样：8-lane accept mask → count / Gather 字节偏移 LUT。
+ *
+ * ## 流水线位置
+ * Encrypt prep SampleNTT（ρ→Â）向量 compact 路径：Compare 得到 8-bit accept mask 后，
+ * 用本表把「接受 lane」紧凑 Gather 到输出缓冲。FIPS 203 / ML-KEM-1024。
+ * 探针：pass-fix-f203-alg14-lines3-15-encrypt-prep-k4（prep/alg7）。
+ *
+ * ## 生成与维护
+ * 由 `scripts/gen_alg7_compact_lut.py` 生成；**勿手改数值**。巨型数组仅作查表，不逐元素注释。
+ *
+ * ## 表用途
+ * - `kAlg7CompactMask8Count[mask]`：`popcount(mask)`，本 chunk 接受 lane 数（0..8）
+ * - `kAlg7CompactMask8GatherByte[mask][k]`：第 k 个接受 lane 在 8×int32 tile 内的**字节**偏移
+ *   （供 AscendC `Gather`；未用槽位填 0）
+ *
+ * ## 与 golden
+ * 仅加速设备采样；语义与标量 rej 等价，I/O 对拍不依赖本表数值形态。
  */
 #pragma once
 
@@ -8,12 +24,18 @@
 
 namespace F203Alg7 {
 
+/** 每 chunk 比较 lane 数（与向量 Compare 宽度对齐） */
 constexpr uint32_t kAlg7CompactChunkLanes = 8U;
+/** accept-mask LUT 长度：2^8 = 256 */
 constexpr uint32_t kAlg7CompactMaskLutLen = 256U;
+/** XOF 流按 8 lane 切分的 chunk 数（448/8） */
 constexpr uint32_t kAlg7CompactStreamChunks = 448U / 8U;
+/** 单次 Compare 覆盖的候选数（含 pad） */
 constexpr uint32_t kAlg7CompactCompareCount = 128U;
+/** Compare 尾部填充 lane，使宽度对齐 */
 constexpr uint32_t kAlg7CompactComparePad = kAlg7CompactCompareCount - kAlg7CompactChunkLanes;
 
+/** popcount(mask)：8-bit accept mask 中置位个数 */
 constexpr uint8_t kAlg7CompactMask8Count[kAlg7CompactMaskLutLen] = {
 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };

@@ -1,20 +1,25 @@
+/**
+ * @file f203_decrypt_ntt_u_tiling.h
+ * @brief Alg.15 NTT(u') / INTT(ŵ) 共用 workspace 与几何常量（k=4 poly-batch）。
+ *
+ * 流水线位置：ntt_u / intt_w / fused 的 nttWsGm、inttWsGm 布局。
+ * 语义：Stage1 紧凑 [HI₄‖LO₄] → AIC MMAD → 平面 mat_c → Stage3 merge；
+ * 对齐 polyvec Stage123，k 由 8 缩为 4。mixPass=3 为生产全链。
+ *
+ * 须写 ::tiling::（与 AscendC::tiling 歧义）。偏移单位：元素字节（int8/int32 混用处见注释）。
+ * 与 golden：Host stage123_transform 同 LUT / 同平面行语义。
+ */
 #ifndef F203_DECRYPT_NTT_U_TILING_H
 #define F203_DECRYPT_NTT_U_TILING_H
 
-/**
- * @file f203_decrypt_ntt_u_tiling.h
- * @brief G2：r polyvec k=4 紧凑 Stage1 [HI₄, LO₄] → NTT r̂ [4,256]。
- *
- * 语义对齐 pass-fix-f203-stage123-ntt-intt-polyvec8-vec，k 由 8 缩为 4（Encrypt r̂）。
- * mixPass=3：S1+S2+S3 全链 NTT（无 INTT）。
- */
 #include <cstddef>
 #include <cstdint>
 
+/** Host/设备传递的运行时 tiling（几何仍以本头 constexpr 为准）。 */
 struct TilingData {
     int32_t tileLength; /**< n = 256 */
     int32_t kPolys;     /**< 4 */
-    /** 0=仅 S1；1=仅 S2；2=仅 S3；3=S1+S2+S3（G2 默认） */
+    /** 0=仅 S1；1=仅 S2；2=仅 S3；3=S1+S2+S3（生产默认） */
     int32_t mixPass;
 };
 
@@ -23,14 +28,14 @@ namespace tiling {
 constexpr size_t n = 256;
 constexpr size_t halfN = n / 2;
 constexpr size_t kK = 4;
-constexpr size_t kPolysPerAiv = kK / 2;
+constexpr size_t kPolysPerAiv = kK / 2; /* 每 AIV 握 2 poly（poly-batch，非 limbsplit） */
 constexpr size_t kLimbsPerPoly = 4;
 
 constexpr size_t lutCols = 512;
 constexpr size_t lutPlanarCols = halfN;
 constexpr size_t lutStackedRows = 512;
 
-constexpr size_t s0RowsLogic = 2 * kK;
+constexpr size_t s0RowsLogic = 2 * kK; /* Stage1 输出：hi 行 + lo 行 */
 constexpr size_t mRowsLogic = s0RowsLogic;
 constexpr size_t mRowsPad = 0;
 constexpr size_t mRows = mRowsLogic;
@@ -38,13 +43,14 @@ constexpr size_t mRows = mRowsLogic;
 constexpr size_t kPlanarSlots = kK;
 constexpr size_t matCPlanarRows = kPlanarSlots * kLimbsPerPoly * 2;
 
+/* ---- workspace 字节偏移（相对 ws 基址）---- */
 constexpr size_t LUT_EVEN_STACKED = 0;
 constexpr size_t LUT_EVEN_TOP = LUT_EVEN_STACKED;
 constexpr size_t LUT_EVEN_BOTTOM = LUT_EVEN_STACKED + n * lutPlanarCols;
 constexpr size_t LUT_ODD_STACKED = LUT_EVEN_BOTTOM + n * lutPlanarCols;
 constexpr size_t LUT_ODD_TOP = LUT_ODD_STACKED;
 constexpr size_t LUT_ODD_BOTTOM = LUT_ODD_STACKED + n * lutPlanarCols;
-constexpr size_t S0 = LUT_ODD_BOTTOM + n * lutPlanarCols;
+constexpr size_t S0 = LUT_ODD_BOTTOM + n * lutPlanarCols; /* Stage1 紧凑 s0 */
 
 constexpr size_t matCTmpBytes = mRows * halfN * sizeof(int32_t);
 constexpr size_t MAT_C_TMP_LO_EVEN = S0 + mRows * n;
@@ -57,6 +63,7 @@ constexpr size_t MAT_C = MAT_C_PLANAR;
 
 constexpr size_t wssize = MAT_C_PLANAR + matCPlanarRows * halfN * sizeof(int32_t);
 
+/* Host 文件尺寸（gen_data / 对拍夹具） */
 constexpr size_t srcFileBytes = kK * n * sizeof(int32_t);
 constexpr size_t dstFileBytes = kK * n * sizeof(int32_t);
 constexpr size_t matCFileBytes = matCPlanarRows * halfN * sizeof(int32_t);

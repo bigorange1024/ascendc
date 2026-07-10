@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_vector_cbd_scalar.hpp
+ * @brief CBD 标量对照路径（调试；生产用 SWAR+LUT）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt prep。
+ * 与 golden：I/O 等价对照。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_cbd_scalar.hpp
 // @layer prep
@@ -8,11 +16,6 @@
 // @depends #include: kernel_operator.h, cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_vector_cbd_scalar.hpp
- * @brief V3 Phase C：标量 SamplePolyCBD_η=2（与 se-device-scalar 同式，生产默认）。
- */
 #pragma once
 
 #include "kernel_operator.h"

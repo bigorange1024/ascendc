@@ -28,6 +28,10 @@
 #include <sys/stat.h>
 #include "acl/acl.h"
 
+/**
+ * PrintData 支持的调试打印数据类型枚举（对齐 ACL aclDataType 取值，本探针仅用 INT32_T/UINT8_T 等少数几种）。
+ * 本探针实际只搬运 uint32/uint8/int32（SEED_D、poly(j,i)、xof/d1/d2/a_hat），其余取值为模板保留、未使用。
+ */
 typedef enum {
     DT_UNDEFINED = -1,
     FLOAT = 0,
@@ -48,9 +52,15 @@ typedef enum {
     BF16 = 27
 } printDataType;
 
+// 统一格式日志宏：INFO/WARN/ERROR 分级前缀，供 main.cpp Host 侧打印诊断信息
 #define INFO_LOG(fmt, args...) fprintf(stdout, "[INFO]  " fmt "\n", ##args)
 #define WARN_LOG(fmt, args...) fprintf(stdout, "[WARN]  " fmt "\n", ##args)
 #define ERROR_LOG(fmt, args...) fprintf(stdout, "[ERROR]  " fmt "\n", ##args)
+/**
+ * ACL 调用错误检查宏：执行 x（任意返回 aclError 的 ACL 接口调用），
+ * 若返回码非 ACL_ERROR_NONE 则打印文件名:行号+错误码，但**不中止程序**（仅打印，无 return/abort）。
+ * 用于 main.cpp 中 SIM/NPU（非 __CCE_KT_TEST__）分支的 aclrtMalloc/Memcpy/Stream 等调用包裹。
+ */
 #define CHECK_ACL(x)                                                                        \
     do {                                                                                    \
         aclError __ret = x;                                                                 \
@@ -60,10 +70,14 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * @brief 从二进制文件读取数据到 Host 内存缓冲（Read data from file）。
+ * @param [in]  filePath   文件路径（如 input/seed_d.bin）
+ * @param [out] fileSize   实际读取的字节数（成功时等于文件大小）
+ * @param [out] buffer     调用方预分配的 Host 缓冲，读取内容写入此处
+ * @param [in]  bufferSize 缓冲区容量上限（字节）；文件大小超过此值视为失败
+ * @return 成功返回 true；文件不存在/非普通文件/为空/超过 bufferSize/打开失败均返回 false
+ *
+ * 本探针用法：main.cpp 用本函数读 input/seed_d.bin（4B uint32）与 input/poly_ij.bin（2B）。
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
@@ -105,11 +119,13 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
 }
 
 /**
- * @brief Write data to file
- * @param [in] filePath: file path
- * @param [in] buffer: data to write to file
- * @param [in] size: size to write
- * @return write result
+ * @brief 将 Host 内存缓冲写出为二进制文件（Write data to file）。
+ * @param [in] filePath 输出文件路径（如 output/a_hat.bin）
+ * @param [in] buffer   待写出的 Host 数据指针；为 nullptr 直接失败
+ * @param [in] size     写出字节数
+ * @return 成功返回 true；buffer 为空/打开失败/实际写入字节数不等于 size 均返回 false
+ *
+ * 本探针用法：main.cpp 用本函数落盘 output/{xof,d1,d2,a_hat}.bin，供 verify_result.py 对拍。
  */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
@@ -134,6 +150,10 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
     return true;
 }
 
+/**
+ * 按固定列宽打印任意算术类型数组（调试用），每行 elementsPerRow 个元素后换行。
+ * 本探针未在主链路调用（main.cpp 走 WriteFile 落盘 + Python 对拍），保留供人工调试打印中间量。
+ */
 template<typename T>
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
@@ -146,6 +166,7 @@ void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
     }
 }
 
+/** DoPrintData 的 fp16 特化版：先经 aclFloat16ToFloat 转 float 再按列宽打印（本探针未使用 fp16）。 */
 void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -157,6 +178,14 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 按 dataType 分发到对应 DoPrintData/DoPrintHalfData 特化实现的统一打印入口（调试用）。
+ * @param data          原始字节指针，按 dataType 重新解释
+ * @param count         元素个数（非字节数）
+ * @param dataType      元素类型标签（见 printDataType 枚举）
+ * @param elementsPerRow 每行打印元素个数，默认 16
+ * 本探针未在生产路径调用；保留供人工调试时打印 UB/GM dump 数据。
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

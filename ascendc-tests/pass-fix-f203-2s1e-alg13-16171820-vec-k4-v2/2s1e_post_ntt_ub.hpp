@@ -43,6 +43,10 @@ using AscendC::DataCopy;
  */
 class Aiv2s1eUbPipeline {
 public:
+    /**
+     * 构造：记录本 AIV 的 p 区间、平面 slot 基址与各 UB 长度常量。
+     * @param subCoreIdx 0/1；@param coeffN 通常 256
+     */
     __aicore__ inline Aiv2s1eUbPipeline(int32_t subCoreIdx, uint32_t coeffN)
         : subCoreIdx_(subCoreIdx), coeffN_(coeffN), halfLen_(coeffN / 2), pairCount_(halfLen_ / 2),
           kPolysS_(static_cast<uint16_t>(tiling::kS)),
@@ -63,6 +67,11 @@ public:
     {
     }
 
+    /**
+     * 绑定 GM 并按 HAT_LINE18_FULLPOLY / BYTE_ENCODE 分配单 TPipe UB。
+     * @param matPlanar 平面 mat_c；@param a_hat Â[16,256]；@param ek_out/sk_out ByteEncode 输出
+     * @param dst_dump NTT dump / 预设；@param t_dump t̂ dump / 预设
+     */
     __aicore__ inline void Init(GM_ADDR matPlanar, GM_ADDR a_hat, GM_ADDR ek_out, GM_ADDR sk_out, GM_ADDR dst_dump,
                                 GM_ADDR t_dump)
     {
@@ -238,6 +247,7 @@ public:
     }
 
 private:
+    /** scratch_ 上按 int32 元素偏移取视图：offElems 起 nElems 个。 */
     __aicore__ inline LocalTensor<int32_t> bufI32(uint32_t offElems, uint32_t nElems)
     {
         return scratch_.GetWithOffset<int32_t>(nElems, offElems * static_cast<uint32_t>(sizeof(int32_t)));
@@ -295,6 +305,10 @@ private:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * 单 poly 单 half：从 plane 取四 limb → combine_limb6_routea_mod_vec → ub_ntt[ubLp] 的 lo/hi 半。
+     * @param ubLp ub_ntt 中 poly 行号；@param lp 本 batch 内 poly 下标；@param halfIdx 0=低半/1=高半
+     */
     __aicore__ inline void mergePolyHalf(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &plane,
                                          LocalTensor<int32_t> &half_out, LocalTensor<int32_t> &t1,
                                          LocalTensor<float> &fRaw, LocalTensor<float> &fTmp, LocalTensor<float> &fQuot,
@@ -324,6 +338,10 @@ private:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * 单 poly 单 half（Barrett/int64 变体）：四 limb merge+mod 写入 ub_ntt。
+     * @param t1/t2 int32 临时；其余参数同 float 重载
+     */
     __aicore__ inline void mergePolyHalf(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &plane,
                                          LocalTensor<int32_t> &half_out, LocalTensor<int32_t> &t1,
                                          LocalTensor<int32_t> &t2, uint32_t ubLp, uint16_t lp, uint32_t halfIdx)
@@ -356,6 +374,10 @@ private:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * 行 18 入口：FULLPOLY=1 → stageHatDotOnly；否则 legacy half-row（非生产）。
+     * @param ub_ntt ŝ[0..3]+ê；@param ub_that 输出本核 t̂[2,256]
+     */
     __aicore__ inline void stageHatInto(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &ub_that)
     {
 #if HAT_LINE18_FULLPOLY >= 1
@@ -502,6 +524,10 @@ private:
     }
 #endif
 
+    /**
+     * 行 18 legacy：按 halfLen 切片 basemul，每 half 立即 MOD_Q（与 v2 lazy Σ 不同）。
+     * 仅 HAT_LINE18_FULLPOLY=0 编译；勿作生产路径。
+     */
     __aicore__ inline void stageHatIntoLegacy(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &ub_that)
     {
         /* halfLen 切片 + multiply_ntts_half_vec；j 外环、subOff 半核；每 half 立即 mod（与 v2 lazy Σ 不同） */
@@ -636,11 +662,13 @@ private:
         LocalTensor<uint8_t> sk_local = scratch_.GetWithOffset<uint8_t>(
             byte_encode12::kAivShardBytes, encByteBase + byte_encode12::kAivShardBytes);
 
+        /* 对本核每个 p：先编 t̂→ek，再编 ŝ[p]→sk，写 GM polyvec 偏移 p*384 */
         for (uint16_t p = pBegin_; p < pEnd_; ++p) {
             const uint32_t localIdx = static_cast<uint32_t>(p) - static_cast<uint32_t>(pBegin_);
             const uint32_t byteLocal = localIdx * byte_encode12::kPolyBytes;
             const uint32_t byteGlobal = static_cast<uint32_t>(p) * byte_encode12::kPolyBytes;
 
+            /* 行 19：ByteEncode₁₂(t̂[p]) → ek_polyvec */
             LocalTensor<int32_t> t_poly = ub_that[localIdx * coeffN_];
             LocalTensor<uint8_t> ek_poly = ek_local[byteLocal];
 #if BYTE_ENCODE12_VEC >= 1
@@ -652,6 +680,7 @@ private:
             DataCopy(gm_ek_[byteGlobal], ek_poly, byte_encode12::kPolyBytes);
             KYBER_PIPE_ALL();
 
+            /* 行 20：ByteEncode₁₂(ŝ[p]) → sk_polyvec（ŝ 行号即 p，poly-batch） */
             LocalTensor<int32_t> s_poly = ub_ntt[twos1e::s_row(p) * coeffN_];
             LocalTensor<uint8_t> sk_poly = sk_local[byteLocal];
 #if BYTE_ENCODE12_VEC >= 1

@@ -1,3 +1,9 @@
+/**
+ * @file innerproduct_ub_scalar.hpp
+ * @brief CPU 孪生半行内积：仅计算 [pBegin,pEnd) 行，与双 AIV 分核一致。
+ *
+ * 仅 ASCENDC_CPU_DEBUG 编译；MultiplyNTTs / Barrett 与全量单核标量路径同源。
+ */
 #pragma once
 
 #if defined(ASCENDC_CPU_DEBUG)
@@ -11,6 +17,9 @@ namespace hat_ip {
 
 constexpr int32_t kQ = 3329;
 
+/**
+ * 非负剩余：x mod q ∈ [0,q)。
+ */
 __aicore__ inline int32_t mod_q_i64(int64_t x)
 {
     const int64_t q = kQ;
@@ -21,6 +30,9 @@ __aicore__ inline int32_t mod_q_i64(int64_t x)
     return static_cast<int32_t>(rem);
 }
 
+/**
+ * 标量 Barrett 约减（系数同 C ref）。
+ */
 __aicore__ inline int32_t barrett_red(int32_t x)
 {
     const int32_t q = kQ;
@@ -33,6 +45,12 @@ __aicore__ inline int32_t barrett_red(int32_t x)
     return x;
 }
 
+/**
+ * 标量 MultiplyNTTs：N/2 对偶奇乘。
+ * @param h 输出 [n]
+ * @param f,g 左右多项式
+ * @param n 系数个数
+ */
 __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g, int32_t n)
 {
     const int32_t pairCount = n / 2;
@@ -50,6 +68,12 @@ __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const 
     }
 }
 
+/**
+ * CPU 孪生半行：仅对 p∈[pBegin,pEnd) 做 Σ_j MultiplyNTTs 后 mod_q 写 t̂。
+ * @param aHat,sHat,tHat GM 指针
+ * @param pBegin 本核起始输出行（含）
+ * @param pEnd   本核结束输出行（不含）
+ */
 __aicore__ inline void innerproduct_scalar_halfrows(GM_ADDR aHat, GM_ADDR sHat, GM_ADDR tHat, int32_t pBegin,
                                                     int32_t pEnd)
 {

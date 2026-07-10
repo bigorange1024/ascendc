@@ -11,6 +11,7 @@
  * Golden：Stage1 不单独 golden；全链路 dst.bin [12,256] 与 gen_data 一致。
  *
  * CMake：F203_STAGE1_SPLIT（CMakeLists CACHE，cpu_lib/npu_lib 传入内核）。
+ * 本文件仅宏选型，实现见 ntt_vec.hpp::split_vec_*。
  */
 #ifndef F203_STAGE1_CONFIG_HPP
 #define F203_STAGE1_CONFIG_HPP

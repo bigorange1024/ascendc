@@ -1,3 +1,20 @@
+// @probe exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4
+// @file multiply_ntts_ub.hpp
+// @layer compute
+// @role compute/：Tag5T NTT + Alg.11 basemul + 行18–20 UB 融合 MMAD 内核与 host 驱动；第二次 launch，读 prep 写 GM + LUT，写 ek/sk 与 ek_pke。 / Full keygen compute (mmad_custom) sources. 本文件 `multiply_ntts_ub.hpp` 为该子模块组件。 / Component: multiply_ntts_ub.hpp.
+// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
+// @launch mmad launch: blockDim=1, MIX_AIC_1_2（1×AIC + 2×AIV 融合 NTT+Alg11+行18–20）
+// @ai_core SIM 剖面：mmad 段 1×AIC + 2×AIV；CPU SUCCESS 中 AIC_x 为 tikicpu artifact。
+// @depends #include: kernel_operator.h, multiply_ntts_config.hpp, alg11_tiling.h, multiply_ntts_vec.hpp, alg11_gammas.h
+// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+
+
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 NTT 后乘积 / 配置辅助。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/multiply_ntts_ub.hpp
+ */
 /**
  * @file multiply_ntts_ub.hpp
  * @brief Alg.11 MultiplyNTTs 的 UB 门面：标量回退 + 向量分发（compute_on_ub / init_rom_luts_ub）。
@@ -43,6 +60,10 @@ __aicore__ inline int32_t barrett_red_coeff(int32_t x)
     return x;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `base_case_multiply`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void base_case_multiply(int32_t *c0, int32_t *c1, int32_t a0, int32_t a1, int32_t b0, int32_t b1,
                                           int32_t gamma)
 {
@@ -66,6 +87,10 @@ __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const 
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `compute_on_ub_scalar`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void compute_on_ub_scalar(AscendC::LocalTensor<int32_t> &hLocal,
                                             const AscendC::LocalTensor<int32_t> &fLocal,
                                             const AscendC::LocalTensor<int32_t> &gLocal)

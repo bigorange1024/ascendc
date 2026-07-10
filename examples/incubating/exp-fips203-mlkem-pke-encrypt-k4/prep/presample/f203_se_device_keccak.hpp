@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_device_keccak.hpp
+ * @brief 设备侧 Keccak/SHAKE 入口转发（Encrypt prep PRF/XOF）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt prep。
+ * 与 golden：哈希 I/O 与 host hashlib 对齐。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_device_keccak.hpp
 // @layer prep
@@ -8,10 +16,5 @@
 // @depends #include: fips203_device_sha3.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_device_keccak.hpp
- * @brief 兼容头：实现已迁至 library/shared/keccak_f1600_kernel/fips203_device_sha3.hpp
- */
 #pragma once
 #include "fips203_device_sha3.hpp"

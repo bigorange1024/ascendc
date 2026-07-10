@@ -12,6 +12,9 @@
 /**
  * @file f203_a_hat16_entry.cpp
  * @brief Alg.13 行 3–7 设备核：SEED_D → 向量 SampleNTT → a_hat[16,256] GM（1 或 2 AIV）。
+ *
+ * Encrypt prep 探针不 launch 本核：ρ 来自 ek_pke，入口为 f203_encrypt_prep_entry.cpp
+ * → BuildAHat16ShardWithUb。本文件保留作 KeyGen/独立 Â 探针入口。
  */
 #include "f203_a_hat16_config.h"
 #include "f203_a_hat16_layout.h"

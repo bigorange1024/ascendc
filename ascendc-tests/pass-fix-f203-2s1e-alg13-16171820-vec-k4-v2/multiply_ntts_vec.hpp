@@ -56,6 +56,9 @@ struct RomUbLuts {
     AscendC::LocalTensor<int32_t> interleaveReorderByte;
 };
 
+/**
+ * 将连续 ws 基址切成 VecWs 车道：a0..t2（各 pairCount），γ/索引来自 rom 或尾部槽。
+ */
 __aicore__ inline void bind_vec_ws(AscendC::LocalTensor<int32_t> &base, VecWs &w, int32_t pairCount,
                                    const RomUbLuts &rom)
 {
@@ -79,6 +82,10 @@ __aicore__ inline void bind_vec_ws(AscendC::LocalTensor<int32_t> &base, VecWs &w
 
 #if ALG11_MEM_OPS == 1
 
+/**
+ * ALG11_MEM_OPS=1：从 GM ROM DataCopy γ / GatherEven|Odd / Interleave 到 UB。
+ * Init 调用一次；之后 ALG11_PIPE 同步。
+ */
 __aicore__ inline void init_rom_luts_ub(RomUbLuts &rom, int32_t pairCount)
 {
     alg11_ub_load::copy_rom_int32_ub(rom.gammaV, gAlg11GammasGm, pairCount);
@@ -91,6 +98,7 @@ __aicore__ inline void init_rom_luts_ub(RomUbLuts &rom, int32_t pairCount)
 
 #else
 
+/** ALG11_MEM_OPS=0：用 SetValue 将 kAlg11Gammas 填入 UB（legacy，非热路径推荐）。 */
 __aicore__ inline void materialize_gamma_lut_ub_once(AscendC::LocalTensor<int32_t> &gammaV, int32_t pairCount)
 {
     for (int32_t i = 0; i < pairCount; ++i) {
@@ -98,6 +106,7 @@ __aicore__ inline void materialize_gamma_lut_ub_once(AscendC::LocalTensor<int32_
     }
 }
 
+/** ALG11_MEM_OPS=0：仅物化 γ 表到 rom.gammaV。 */
 __aicore__ inline void init_rom_luts_ub(RomUbLuts &rom, int32_t pairCount)
 {
     materialize_gamma_lut_ub_once(rom.gammaV, pairCount);
@@ -186,6 +195,9 @@ __aicore__ inline void reduce_zq_vec_barrett_basemul(AscendC::LocalTensor<int32_
 }
 #endif
 
+/**
+ * basemul 内 Barrett 约化分发：OPTS=1 走 basemul 专用；否则 legacy reduce_zq_vec_barrett。
+ */
 __aicore__ inline void reduce_zq_vec_barrett_dispatch(AscendC::LocalTensor<int32_t> &dst,
                                                       AscendC::LocalTensor<int32_t> &s1,
                                                       AscendC::LocalTensor<int32_t> &s2, int32_t count)
@@ -197,6 +209,7 @@ __aicore__ inline void reduce_zq_vec_barrett_dispatch(AscendC::LocalTensor<int32
 #endif
 }
 
+/** 标量解交错：aos[2i]/aos[2i+1] → even/odd[i]。 */
 __aicore__ inline void deinterleave_pairs_scalar(AscendC::LocalTensor<int32_t> &even,
                                                  AscendC::LocalTensor<int32_t> &odd,
                                                  const AscendC::LocalTensor<int32_t> &aos, int32_t pairCount)
@@ -305,6 +318,9 @@ __aicore__ inline void deinterleave_four_lanes_scalar(VecWs &w, const AscendC::L
 #endif
 }
 
+/**
+ * c0/c1 → 交错 h：全 128 对且 MEM_OPS=1 用 DataCopy+Gather reorder；否则标量。
+ */
 __aicore__ inline void interleave_pairs_dispatch(AscendC::LocalTensor<int32_t> &h, VecWs &w,
                                                  const RomUbLuts &rom, int32_t pairCount)
 {
@@ -319,6 +335,10 @@ __aicore__ inline void interleave_pairs_dispatch(AscendC::LocalTensor<int32_t> &
 #endif
 }
 
+/**
+ * B1 路径：解交错（标量或 Gather）→ alg12_elementwise_vec → interleave。
+ * @param h/f/g 交错 [2*pairCount]；@param w/rom 工作区与 ROM
+ */
 __aicore__ inline void multiply_ntts_vec_b1(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                             const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                             int32_t pairCount)
@@ -330,6 +350,9 @@ __aicore__ inline void multiply_ntts_vec_b1(AscendC::LocalTensor<int32_t> &h, co
     ALG11_PIPE_ALL();
 }
 
+/**
+ * B2 路径（默认）：Gather 解交错 → alg12_elementwise_vec → interleave。
+ */
 __aicore__ inline void multiply_ntts_vec_b2(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                             const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                             int32_t pairCount)
@@ -341,6 +364,10 @@ __aicore__ inline void multiply_ntts_vec_b2(AscendC::LocalTensor<int32_t> &h, co
     ALG11_PIPE_ALL();
 }
 
+/**
+ * Alg.11 向量入口：按 ALG11_VEC_VARIANT 分派 B1/B2。
+ * @param h 输出；@param f/g 输入交错系数；@param pairCount 通常 128
+ */
 __aicore__ inline void multiply_ntts_vec_dispatch(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                                 const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                                 int32_t pairCount)

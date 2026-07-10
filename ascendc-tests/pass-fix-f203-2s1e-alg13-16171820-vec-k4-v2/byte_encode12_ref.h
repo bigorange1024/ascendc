@@ -24,7 +24,9 @@ extern "C" {
 #define BYTE_ENCODE12_POLY_BYTES 384
 #define BYTE_ENCODE12_POLYVEC_BYTES (4 * BYTE_ENCODE12_POLY_BYTES)
 
+/** 单 poly：int32[n] → uint8[3*n/2]（n=256 → 384B）。 */
 void poly_byte_encode12_ref(uint8_t *r, const int32_t *a, int32_t n);
+/** polyvec：k 个 poly 拼接编码（k=4 → 1536B）。 */
 void polyvec_byte_encode12_ref(uint8_t *r, const int32_t *polys, int32_t k, int32_t n);
 
 #ifdef __cplusplus

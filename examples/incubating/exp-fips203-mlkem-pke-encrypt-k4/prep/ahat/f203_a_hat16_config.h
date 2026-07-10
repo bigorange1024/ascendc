@@ -1,3 +1,10 @@
+/**
+ * @file f203_a_hat16_config.h
+ * @brief 16-poly Â 探针编译开关（与单 poly alg7 config 对齐）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/f203_a_hat16_config.h
 // @layer prep
@@ -8,11 +15,6 @@
 // @depends prep 子模块头文件 + CANN AscendC；entry 由 f203_keygen_prep_entry 聚合。
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_a_hat16_config.h
- * @brief 16-poly Â 探针编译开关（与单 poly alg7 config 对齐）。
- */
 #pragma once
 
 #ifndef F203_ALG7_REJ_IMPL

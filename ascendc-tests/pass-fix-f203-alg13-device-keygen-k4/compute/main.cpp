@@ -10,21 +10,26 @@
 
 
 /**
- * @file main.cpp
+ * @file compute/main.cpp
  * @brief Host 驱动：读 input bin → launch `mmad_custom` → 写 output bin。
  *
- * ## GM 参数顺序（与内核一致）
+ * ## 流水线位置
+ * Alg.13 KeyGen **Launch 2**（compute）：Tag5T NTT + Alg.11 + 行18–20；
+ * `F203_KEYGEN_EK_PKE>=1` 时同核融合行 21（ρ→ek_pke）。
+ * 本文件为 compute 子工程 / 分阶段调试入口；生产全链见 `main_keygen.cpp`。
  *
- *   dst, t_hat, ek_out, sk_out, src, a_hat, ws, tiling
+ * ## 与 golden 关系
+ * 写出 dst/t_hat/ek/sk（及可选 ek_pke）供 `verify_result` / golden 对拍；
+ * 验收仅 I/O 等价，禁止把本 Host 当作 AscendC 实现规格。
+ *
+ * ## GM 参数顺序（与内核一致）
+ *   dst, t_hat, ek_out, sk_out, src, a_hat, ws, tiling[, rho, ek_pke]
  *
  * ## workspace `ws` 布局（见 tiling.h）
- *
  *   LUT even/odd stacked → S0 [32,256] → mat_c 四路临时 → MAT_C_PLANAR [96,128]
  *
- * ## mixPass 预设输入（分阶段调试）
- *
+ * ## mixPass 预设输入（分阶段调试，非默认）
  *   2 → s0_preset；3 → mat_c_preset；4/7 → dst_preset；7 → t_hat_preset
- *
  * CPU：`g_2s1e_mix_pass` 与 tiling.mixPass 同步；SIM/设备读 tiling。
  */
 #include "data_utils.h"
@@ -50,11 +55,16 @@ extern "C" void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out, GM_ADDR 
 extern volatile int g_2s1e_mix_pass;
 #endif
 
+/**
+ * compute Host 主流程：装载 src/a_hat/LUT（及 mixPass 预设）→ launch mmad_custom → 落盘。
+ * @return 0 成功；非 0 为读/写盘错误码（见各 ReadFile/WriteFile 分支）
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    // tiling 缓冲固定 64B（TilingData 须装得下）
     size_t tilingSize = 64;
     static_assert(sizeof(TilingData) <= 64, "");
     size_t srcFileSize = tiling::srcFileBytes;
@@ -70,6 +80,7 @@ int32_t main(int32_t argc, char *argv[])
     size_t lutFileSize = tiling::lutEvenOddFileBytes;
     size_t matCFileSize = tiling::matCFileBytes;
     size_t s0FileSize = tiling::s0FileBytes;
+    // MIX 核 blockDim=1（内部 1AIC+2AIV）
     uint32_t blockDim = 1;
     const size_t wsFileSize = tiling::wssize;
     bool ok;
@@ -78,6 +89,7 @@ int32_t main(int32_t argc, char *argv[])
     /* ---------- CPU tikicpu：GmAlloc + ReadFile + ICPU_RUN_KF ---------- */
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     uint8_t *tiling_data = (uint8_t *)AscendC::GmAlloc(tilingSize);
+    // 读 tiling；CPU 路径同步全局 mixPass 供核内分支
     ReadFile("./input/tiling.bin", tilingSize, tiling_data, tilingSize);
     if (tilingSize < sizeof(TilingData)) {
         return 1;
@@ -96,6 +108,7 @@ int32_t main(int32_t argc, char *argv[])
         ws[i] = 0;
     }
 
+    // 必选输入：ŝ‖ê（src）与 Â；LUT 写入 ws 前缀
     ok = ReadFile("./input/src.bin", srcFileSize, src, srcFileSize);
     if (!ok) {
         return 9;
@@ -112,6 +125,7 @@ int32_t main(int32_t argc, char *argv[])
     if (!ok) {
         return 10;
     }
+    // 调试：按 mixPass 注入分段预设（生产 mixPass=0 不走这些分支）
     if (tiling->mixPass == 2) {
         ok = ReadFile("./input/s0_preset.bin", s0FileSize, ws + tiling::S0, s0FileSize);
         if (!ok) {
@@ -152,11 +166,13 @@ int32_t main(int32_t argc, char *argv[])
     if (!ok) {
         return 22;
     }
+    // 启动 compute 核（可选带 rho/ek_pke）
     ICPU_RUN_KF(mmad_custom, blockDim, dst, t_hat, ek_out, sk_out, src, a_hat, ws, *tiling, rho, ek_pke);
 #else
     ICPU_RUN_KF(mmad_custom, blockDim, dst, t_hat, ek_out, sk_out, src, a_hat, ws, *tiling);
 #endif
 
+    // 落盘：NTT dst、t̂、编码 ek/sk、可选 ek_pke，以及调试用 s0/mat_c
     ok = WriteFile("./output/dst.bin", dst, dstFileSize);
     if (!ok) {
         return 11;
@@ -306,6 +322,7 @@ int32_t main(int32_t argc, char *argv[])
         return 22;
     }
     CHECK_ACL(aclrtMemcpy(rhoDevice, rhoFileSize, rhoHost, rhoFileSize, ACL_MEMCPY_HOST_TO_DEVICE));
+    // ACL 启动 mmad_custom（参数序与 CPU 路径一致）
     ACLRT_LAUNCH_KERNEL(mmad_custom)(blockDim, stream, dstDevice, tHatDevice, ekDevice, skDevice, srcDevice, aHatDevice,
                                      wsDevice, tiling, rhoDevice, ekPkeDevice);
 #else

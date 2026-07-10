@@ -26,6 +26,10 @@
 
 namespace hat_alg11 {
 
+/**
+ * 将连续 ROM 基址切成 RomUbLuts 四段视图：γ | gatherEven | gatherOdd | interleave。
+ * @param base 至少 4×pairCount 个 int32；@param pairCount 通常 128
+ */
 __aicore__ inline void bind_rom_ub(AscendC::LocalTensor<int32_t> &base, alg11_vec::RomUbLuts &rom, int32_t pairCount)
 {
     rom.gammaV = base[0];
@@ -35,6 +39,9 @@ __aicore__ inline void bind_rom_ub(AscendC::LocalTensor<int32_t> &base, alg11_ve
     (void)pairCount;
 }
 
+/**
+ * bind_rom_ub 后从 GM ROM 填表到 UB（Init 阶段调用一次）。
+ */
 __aicore__ inline void init_rom_luts(AscendC::LocalTensor<int32_t> &romBase, alg11_vec::RomUbLuts &rom,
                                      int32_t pairCount)
 {
@@ -42,6 +49,9 @@ __aicore__ inline void init_rom_luts(AscendC::LocalTensor<int32_t> &romBase, alg
     alg11_vec::init_rom_luts_ub(rom, pairCount);
 }
 
+/**
+ * 绑定 basemul 向量工作区 VecWs（与 alg11_vec::bind_vec_ws 一致）。
+ */
 __aicore__ inline void bind_basemul_ws(AscendC::LocalTensor<int32_t> &base, alg11_vec::VecWs &w,
                                        alg11_vec::RomUbLuts &rom, int32_t pairCount)
 {
@@ -50,7 +60,10 @@ __aicore__ inline void bind_basemul_ws(AscendC::LocalTensor<int32_t> &base, alg1
 
 /**
  * 半多项式 MultiplyNTTs（128 对），γ 从 gammaOff 起（0 或 64）。
- * f/g/h 长度 halfLen=128（交错系数）。
+ * @param h 输出交错系数 [128]；@param f/g 输入交错 [128] int32
+ * @param w/rom 向量 ws 与 ROM；@param gammaSlice gammaOff≠0 时的 γ 切片缓冲
+ * @param pairCount 对数（128）；@param gammaOff 0=用 rom.gammaV，64=拷 GM γ[64..]
+ * 前置：f/g 已在 UB；调用后恢复 w.gammaV=rom.gammaV。
  */
 __aicore__ inline void multiply_ntts_half_vec(AscendC::LocalTensor<int32_t> &h,
                                               const AscendC::LocalTensor<int32_t> &f,
@@ -59,6 +72,7 @@ __aicore__ inline void multiply_ntts_half_vec(AscendC::LocalTensor<int32_t> &h,
                                               int32_t pairCount, int32_t gammaOff)
 {
     if (gammaOff != 0) {
+        /* hi 半核：从 GM ROM 拷 γ[64..127] 到切片，再绑到 w */
         alg11_ub_load::copy_rom_int32_ub(gammaSlice, gAlg11GammasGm + gammaOff, pairCount);
         ALG11_PIPE_MTE2();
         w.gammaV = gammaSlice;

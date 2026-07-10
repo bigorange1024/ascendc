@@ -1,3 +1,11 @@
+/**
+ * @file multiply_ntts_ub.hpp
+ * @brief Alg.11 UB 入口：按 ALG11_IMPL 分派标量或向量 MultiplyNTTs。
+ *
+ * 流水线位置：su_dot_impl / su_dot_kernel。
+ * CPU debug 强制标量路径；设备生产走 multiply_ntts_vec。
+ * 与 golden：同 multiply_ntts 数学契约。
+ */
 #pragma once
 
 #include "kernel_operator.h"
@@ -14,7 +22,7 @@ namespace alg11_ub {
 
 #include "alg11_gammas.h"
 
-/* Device-side mirror of alg11_12_ref.h (must stay in sync). */
+/** 设备侧 Barrett（与 Host barrett_red / alg11_12_ref 同步）。 */
 __aicore__ inline int32_t barrett_red_coeff(int32_t x)
 {
     const int32_t q = 3329;
@@ -27,6 +35,7 @@ __aicore__ inline int32_t barrett_red_coeff(int32_t x)
     return x;
 }
 
+/** Alg.12 基域一对： (a0+a1X)(b0+b1X) 在 γ 下。 */
 __aicore__ inline void base_case_multiply(int32_t *c0, int32_t *c1, int32_t a0, int32_t a1, int32_t b0, int32_t b1,
                                           int32_t gamma)
 {
@@ -35,6 +44,7 @@ __aicore__ inline void base_case_multiply(int32_t *c0, int32_t *c1, int32_t a0, 
     *c1 = barrett_red_coeff(a0 * b1 + a1 * b0);
 }
 
+/** 标量 MultiplyNTTs：128 对基域乘。 */
 __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g)
 {
     for (int i = 0; i < alg11_tiling::kN / 2; ++i) {

@@ -9,6 +9,16 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * @file basic.hpp
+ * @brief KeyGen compute 公共前置：引入 kernel_operator 并导出 LocalTensor 别名。
+ *
+ * ## 流水线位置
+ * 被 aic_func / aiv_func / mmad_custom 等 Launch 2 头文件包含；无算法逻辑。
+ *
+ * ## 对齐
+ * FIPS 203 Alg.13 / ML-KEM-1024（k=4）compute 段公共依赖；与 golden 无直接 I/O。
+ */
 #ifndef F203_BASIC_HPP
 #define F203_BASIC_HPP
 

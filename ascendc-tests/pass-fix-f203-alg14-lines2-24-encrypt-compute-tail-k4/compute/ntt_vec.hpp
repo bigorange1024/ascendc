@@ -25,22 +25,25 @@
 #include "stage3_config.hpp"
 
 struct Tensor_int8x4 {
-    LocalTensor<int8_t> &x0;
-    LocalTensor<int8_t> &x1;
+    LocalTensor<int8_t> &x0; /**< lo limb 输出 */
+    LocalTensor<int8_t> &x1; /**< hi limb 输出 */
 };
 
+/** LocalTensor 类型重解释（Cast 链中间缓冲） */
 template <typename U, typename T>
 __aicore__ static inline auto tr(LocalTensor<T> x)
 {
     return x.template ReinterpretCast<U>();
 }
 
+/** 标量：一个 int32 → 低/高各 6-bit int8（lo=d0，hi=d1） */
 __aicore__ static inline void split_2xint6(int8_t &d0, int8_t &d1, int32_t a)
 {
     d0 = static_cast<int8_t>(a & kKyberLimbMask);
     d1 = static_cast<int8_t>((a >> kKyberLimbBits) & kKyberLimbMask);
 }
 
+/** Stage1 标量路径：按 4 系数一组 GetValue/SetValue 写 lo/hi */
 __aicore__ inline void split_vec_scalar(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, const int32_t count)
 {
     auto x0 = tr<int32_t>(dst.x0);
@@ -79,6 +82,7 @@ __aicore__ inline void cast_i32_to_i8(LocalTensor<int8_t> &dst, LocalTensor<int3
 __aicore__ inline void limb6_hi_lo_i32(LocalTensor<int32_t> &hi, LocalTensor<int32_t> &lo, LocalTensor<int32_t> &v,
                                        LocalTensor<int32_t> &tmp, int32_t count)
 {
+    // hi = v>>6；lo = v - hi*64（Sub，禁止 And）
     AscendC::ShiftRight(hi, v, kKyberLimbBits, count);
     KYBER_PIPE_ALL();
     AscendC::Muls(tmp, hi, kLimbScale, count);
@@ -87,6 +91,7 @@ __aicore__ inline void limb6_hi_lo_i32(LocalTensor<int32_t> &hi, LocalTensor<int
     KYBER_PIPE_ALL();
 }
 
+/** 单 tile：hi/lo 分裂后 Cast 到 int8 写入 dst.x1/x0 */
 __aicore__ inline void limb6_tile(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, int32_t off, int32_t tileLen,
                                   LocalTensor<int32_t> &scratchI32, LocalTensor<int16_t> &scratchI16,
                                   LocalTensor<half> &scratchHalf)
@@ -150,6 +155,7 @@ __aicore__ inline void split_vec_tile(Tensor_int8x4 &dst, LocalTensor<int32_t> &
 
 #endif // F203_STAGE1_SPLIT >= 1
 
+/** 无 scratch 重载：仅 F203_STAGE1_SPLIT==0 时走标量；否则为空操作占位 */
 __aicore__ inline void split_vec(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, const int32_t count)
 {
 #if F203_STAGE1_SPLIT == 0
@@ -161,6 +167,7 @@ __aicore__ inline void split_vec(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, 
 #endif
 }
 
+/** 带 scratch：按 F203_STAGE1_SPLIT 选 bulk / tile / scalar */
 __aicore__ inline void split_vec(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, const int32_t count,
                                  AscendC::TBuf<AscendC::TPosition::VECCALC> &scratch, const int32_t tileLen)
 {
@@ -179,6 +186,7 @@ __aicore__ inline void split_vec(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, 
 __aicore__ inline void wrap_mod_vec_runtime(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &src, int32_t q,
                                             LocalTensor<int32_t> &t1, LocalTensor<int32_t> &t2, int32_t count)
 {
+    // 将可能 ≥q 的值折回 [0,q)：用符号位掩码在 src 与 src-q 间取 Max
     AscendC::Adds(t1, src, -q, count);
     auto &t1_u32 = *reinterpret_cast<LocalTensor<uint32_t> *>(&t1);
     auto &t2_u32 = *reinterpret_cast<LocalTensor<uint32_t> *>(&t2);
@@ -187,6 +195,7 @@ __aicore__ inline void wrap_mod_vec_runtime(LocalTensor<int32_t> &dst, LocalTens
     AscendC::Max(dst, t1, t2, count);
 }
 
+/** Barrett 一步：dst = dst - ((dst>>(k-1))*mu>>(k+1))*q，再 wrap */
 __aicore__ inline void barrett_mul_vec_runtime(LocalTensor<int32_t> &dst, int32_t q, int32_t k, int32_t mu,
                                                LocalTensor<int32_t> &t1, LocalTensor<int32_t> &t2, int32_t count)
 {
@@ -199,6 +208,7 @@ __aicore__ inline void barrett_mul_vec_runtime(LocalTensor<int32_t> &dst, int32_
 }
 
 /** Stage3 RouteA 合并与 mod（平面读数，无 Gather）。 */
+/** Horner：(((hh<<6)+hl+lh)<<6)+ll，结果在 dst（尚未 mod） */
 __aicore__ inline void combine_limb6_horner_raw_vec(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
                                                     LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
                                                     LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1, int32_t count)

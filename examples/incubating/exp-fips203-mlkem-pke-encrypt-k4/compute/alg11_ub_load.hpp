@@ -1,3 +1,11 @@
+/**
+ * @file alg11_ub_load.hpp
+ * @brief Alg.11：把 γ ROM / 系数行装入 UB，供向量 basemul。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt compute 内积段。
+ * 与 golden：中间搬运，最终对拍仍为 output/c.bin。
+ */
+
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/alg11_ub_load.hpp
 // @layer compute
@@ -8,21 +16,6 @@
 // @depends #include: alg11_rom_tables.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file alg11_ub_load.hpp
- * @brief GM 侧 Alg.11 ROM 表导入 UB 的薄封装（DataCopy int32 块）。
- *
- * 用途：copy_rom_int32_ub — 将 __gm__ const int32_t* 连续拷贝到 LocalTensor（须 32B 对齐，128/256 满足）。
- *
- * 调用方：hat_alg11_basemul.hpp（γ 切片）、multiply_ntts_vec.hpp::init_rom_luts_ub。
- *
- * 不变量：count 个 int32；调用方负责后续 ALG11_PIPE_MTE2()。
- *
- * Golden：无直接对拍；ROM 内容与 alg11_rom_tables.cpp / alg11_gammas.h 一致。
- *
- * CMake：ALG11_MEM_OPS=1 启用 GM ROM 路径。
- */
 #pragma once
 
 #include "alg11_rom_tables.h"

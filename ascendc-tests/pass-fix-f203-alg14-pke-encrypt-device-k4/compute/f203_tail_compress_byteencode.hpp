@@ -37,7 +37,10 @@ __aicore__ inline void mask_low_bits_i32(AscendC::LocalTensor<int32_t> &v, Ascen
     Sub(v, v, tmp, n);
 }
 
-/** d=5 Barrett 向量（抄自 pass-f203-compress-d-vec-k4::poly_compress_barrett_vec）。 */
+/**
+ * d=5 Barrett 向量 Compress（抄自 pass-f203-compress-d-vec-k4）。
+ * @param out/in/tmp 各 [256] int32；结果掩到 5 bit
+ */
 __aicore__ inline void poly_compress_d5_vec(AscendC::LocalTensor<int32_t> &out, AscendC::LocalTensor<int32_t> &in,
                                             AscendC::LocalTensor<int32_t> &tmp)
 {

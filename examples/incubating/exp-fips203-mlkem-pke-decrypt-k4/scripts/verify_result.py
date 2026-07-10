@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""verify — output/m.bin vs output/golden_m.bin。"""
+# 门禁脚本：生成/核对中间 golden；失败即 exit。
+# 验收仅黑盒 I/O，不把参考实现当 AscendC 规格。
+"""
+verify_result.py — Decrypt 生产验收：output/m.bin vs output/golden_m.bin。
+
+对齐 FIPS 203 Alg.15 输出 m（32B）；仅验 I/O 字节一致，不对照设备实现细节。
+由 run.sh 在 kernel 成功后调用。
+"""
+# 中文补充：scripts/verify_result.py — Decrypt 门禁/对拍脚本；仅 I/O 黑盒；禁止当设备规格。
 import sys
 from pathlib import Path
 import numpy as np

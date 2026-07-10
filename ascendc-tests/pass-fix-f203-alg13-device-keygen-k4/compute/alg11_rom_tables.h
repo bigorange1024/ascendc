@@ -1,3 +1,5 @@
+
+/** Alg.11 ROM 表声明（γ/Gather）；定义在 alg11_rom_tables.cpp。 */
 // @probe pass-fix-f203-alg13-device-keygen-k4
 // @file compute/alg11_rom_tables.h
 // @layer compute
@@ -9,6 +11,12 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 Alg.11 basemul / γ 表与向量管线。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/alg11_rom_tables.h
+ */
 /**
  * @file alg11_rom_tables.h
  * @brief 设备侧 Alg.11 常量 ROM 的 __gm__ 声明（γ、Gather 字节索引、interleave 重排表）。

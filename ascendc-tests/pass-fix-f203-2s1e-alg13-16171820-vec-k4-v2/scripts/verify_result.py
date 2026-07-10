@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-verify_result.py — 2s1e vec-k4-v2 对拍脚本。
+verify_result.py — 2s1e vec-k4-v2 对拍脚本（run.sh 在 kernel 后调用）。
+
+流水线位置：验收末端；读 output/*.bin 与 gen_data 的 golden_* 做逐元素 cmp。
+作用：按 mixPass / HAT_* 开关选择比对子集（S1/S2/S3/行18/Encode/KeyGen）。
+与 golden 关系：唯一 I/O 验收入口；失败打印 max_abs_diff 与索引。
 
 ## 检查矩阵（mixPass=0 一次 launch 全比）
 

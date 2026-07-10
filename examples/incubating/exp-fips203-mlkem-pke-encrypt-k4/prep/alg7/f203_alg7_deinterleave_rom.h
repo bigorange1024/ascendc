@@ -1,9 +1,19 @@
 /**
  * @file f203_alg7_deinterleave_rom.h
- * @brief Alg.7 xof 672B → c0/c1/c2[224] Gather 字节索引（自动生成）。
+ * @brief Alg.7：XOF 672B → c0/c1/c2[224] 的 Gather 字节索引 ROM。
  *
- * expanded[j]=byte j（int32）；索引为 expanded 内 4 对齐字节偏移。
- * 生成：scripts/gen_alg7_deinterleave_rom.py
+ * ## 流水线位置
+ * Encrypt prep SampleNTT：把 SHAKE128 挤出的 672 字节流拆成三路 12-bit 候选字节列，
+ * 供后续拼 d1/d2 与拒绝采样。FIPS 203 / ML-KEM-1024。
+ *
+ * ## 布局约定
+ * - Host/设备侧先把 XOF 字节扩展为 `expanded[j] = byte_j`（存为 int32）
+ * - 本 ROM 给出 Gather 用的**字节偏移**（4 对齐：0,4,8,...）
+ * - `kAlg7DeinterleaveC{0,1,2}Byte[i]`：第 i 个候选对应的 c0/c1/c2 在 expanded 中的偏移
+ *   （三字节一组：c0@12i、c1@12i+4、c2@12i+8，再乘以 int32 宽度后的字节地址）
+ *
+ * ## 生成
+ * `scripts/gen_alg7_deinterleave_rom.py`；数值表勿手改。与 golden `unpack_d12_from_xof` I/O 等价。
  */
 #pragma once
 
@@ -11,9 +21,12 @@
 
 namespace F203Alg7 {
 
+/** 每路候选个数（672/3 = 224） */
 constexpr uint32_t kDeinterleaveRomLen = 224U;
+/** XOF 挤出字节数 */
 constexpr uint32_t kDeinterleaveExpandedLen = 672U;
 
+/** Gather：第 i 个候选的 c0 字节在 expanded(int32) 缓冲中的字节偏移 */
 constexpr int32_t kAlg7DeinterleaveC0Byte[kDeinterleaveRomLen] = {
     0, 12, 24, 36, 48, 60, 72, 84, 
     96, 108, 120, 132, 144, 156, 168, 180, 
@@ -45,6 +58,7 @@ constexpr int32_t kAlg7DeinterleaveC0Byte[kDeinterleaveRomLen] = {
     2592, 2604, 2616, 2628, 2640, 2652, 2664, 2676, 
 };
 
+/** Gather：第 i 个候选的 c1 字节偏移（相对 expanded） */
 constexpr int32_t kAlg7DeinterleaveC1Byte[kDeinterleaveRomLen] = {
     4, 16, 28, 40, 52, 64, 76, 88, 
     100, 112, 124, 136, 148, 160, 172, 184, 
@@ -76,6 +90,7 @@ constexpr int32_t kAlg7DeinterleaveC1Byte[kDeinterleaveRomLen] = {
     2596, 2608, 2620, 2632, 2644, 2656, 2668, 2680, 
 };
 
+/** Gather：第 i 个候选的 c2 字节偏移（相对 expanded） */
 constexpr int32_t kAlg7DeinterleaveC2Byte[kDeinterleaveRomLen] = {
     8, 20, 32, 44, 56, 68, 80, 92, 
     104, 116, 128, 140, 152, 164, 176, 188, 

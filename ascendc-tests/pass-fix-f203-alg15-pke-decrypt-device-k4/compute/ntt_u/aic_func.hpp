@@ -1,3 +1,12 @@
+/**
+ * @file aic_func.hpp
+ * @brief Alg.15 NTT/INTT Stage2：AIC 侧 AicMmad（int8×int8→int32）。
+ *
+ * 流水线位置：fused / ntt_u / intt_w 的 MMAD 四块（lo/hi × even/odd）。
+ * 数据面：A=s0（Stage1 int8），B=LUT 条带，C=mat_c_tmp。
+ * 步骤：CopyIn(Nd2Nz) → SplitA/LoadData → SplitB/LoadDataWithTranspose → Mmad → Fixpipe。
+ * 与 golden：Host mat_c_tmp_golden 同数学；非实现同构验收。
+ */
 #ifndef F203_AIC_FUNC_HPP
 #define F203_AIC_FUNC_HPP
 
@@ -6,6 +15,7 @@
 #include <cstddef>
 #include <cstdint>
 
+/** 编译期 max（padding 用）。 */
 template <typename T, typename U>
 __aicore__ inline static constexpr T max(T a, U b)
 {
@@ -14,6 +24,7 @@ __aicore__ inline static constexpr T max(T a, U b)
 
 static constexpr uint32_t CUBE_BLOCK_SIZE = 16 * 32;
 
+/** 向上取整除法（cube 对齐到 16）。 */
 static constexpr __aicore__ inline uint16_t ceil_div(uint16_t a, uint16_t mod)
 {
     return (a + mod - 1) / mod;
@@ -31,6 +42,7 @@ public:
         cSize = mPadded * n;
     }
 
+    /** 分配 A1/A2/B1/B2/CO1 队列缓冲。 */
     __aicore__ inline void Init()
     {
         pipe.InitBuffer(inQueueA1, 1, aSize * sizeof(int8_t));
@@ -58,6 +70,7 @@ public:
     }
 
 private:
+    /** GM ND → L1 NZ：A[m,k]、B[k,n] int8。 */
     template <int debug_val = 0>
     __aicore__ inline void CopyIn()
     {
@@ -90,6 +103,7 @@ private:
         inQueueB1.EnQue(b1Local);
     }
 
+    /** A1→A2：按 16 行块 LoadData（不转置）。 */
     template <int debug_val = 0>
     __aicore__ inline void SplitA()
     {
@@ -111,6 +125,7 @@ private:
         inQueueA2.EnQue<int8_t>(a2Local);
     }
 
+    /** B1→B2：LoadDataWithTranspose（官方 cube B 布局）。 */
     template <int debug_val = 0>
     __aicore__ inline void SplitB()
     {
@@ -133,6 +148,7 @@ private:
         inQueueB2.EnQue<int8_t>(b2Local);
     }
 
+    /** Cube Mmad：C = A×B（int32 累加）。 */
     template <int debug_val = 0>
     __aicore__ inline void Compute()
     {
@@ -150,6 +166,7 @@ private:
         inQueueB2.FreeTensor(b2Local);
     }
 
+    /** Fixpipe：CO1 → GM，按 dstRowStride_ 写回 mat_c_tmp。 */
     template <int debug_val = 0>
     __aicore__ inline void CopyOut()
     {

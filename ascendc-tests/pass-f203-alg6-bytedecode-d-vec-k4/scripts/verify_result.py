@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
+"""verify_result — ByteDecode_d 探针：output/comp.bin 与 output/golden_comp.bin 逐系数对拍。
+
+在流水线中的位置：main.cpp（CPU 孪生或 SIM/NPU）运行结束后，由 run.sh 调用本脚本，
+比较 kernel 实际写出的 output/comp.bin 与 scripts/gen_data.py 生成的
+output/golden_comp.bin，验证 FIPS 203 Alg.6 ByteDecode_d 语义正确性（I/O 等价，
+不要求与参考实现逐行同构）。
+"""
 import os
 import sys
 
 import numpy as np
 
-N = 256
+N = 256  # 单个多项式的系数个数，与 f203_mlkem_params.h 的 F203_MLKEM_N 保持一致。
 
 
 def main() -> None:
@@ -25,6 +32,7 @@ def main() -> None:
         print("[verify] size mismatch", file=sys.stderr)
         sys.exit(1)
 
+    # 逐系数求绝对差；用 int64 避免 int32 减法在极端值下溢出。
     diff = np.abs(got.astype(np.int64) - golden.astype(np.int64))
     mx = int(diff.max())
     nz = int(np.count_nonzero(diff))

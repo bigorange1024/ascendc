@@ -1,6 +1,15 @@
 /**
  * @file main.cpp
- * @brief Alg.14 tail host：m/u/v → mu_embed + c（单 launch，AIV_ONLY blockDim=1）。
+ * @brief Alg.14 pack 探针 host：m/u/v → mu_embed + c（单 launch，AIV_ONLY blockDim=1）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 行 20（μ 展开）+ 行 22–24（Compress/ByteEncode→密文 c）。
+ * 本探针不覆盖行 21（v←v+μ，由 compute 探针负责）；输入 u/v 已是时域系数。
+ *
+ * golden I/O（与 scripts/gen_data.py / verify_result.py 对齐）：
+ *   输入：input/m.bin(32B)、u.bin(K×N int32)、v.bin(N int32)
+ *   输出：output/mu_embed.bin(N int32)、c.bin(1568B = c₁‖c₂)
+ *
+ * CPU 孪生走 ICPU_RUN_KF；SIM/NPU 走 ACL H2D → launch → D2H。
  */
 #include "data_utils.h"
 #include "f203_encrypt_tail_layout.h"
@@ -16,19 +25,25 @@
 extern "C" void f203_encrypt_alg14_tail(GM_ADDR mGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR muEmbedGm, GM_ADDR cGm);
 #endif
 
+/**
+ * host 入口：装载 m/u/v，launch f203_encrypt_alg14_tail，落盘 mu_embed 与 c。
+ * @return 0 成功；1–3 读入失败；4–5 写出失败
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    // 字节数由 layout 宏锁定（ml_kem_1024 / k=4）
     constexpr size_t mBytes = F203_TAIL_MSG_BYTES;
     constexpr size_t uBytes = F203_TAIL_U_BYTES;
     constexpr size_t vBytes = F203_TAIL_V_BYTES;
     constexpr size_t muBytes = F203_TAIL_MU_BYTES;
     constexpr size_t cBytes = F203_TAIL_C_BYTES;
-    constexpr uint32_t blockDim = 1U;
+    constexpr uint32_t blockDim = 1U; // AIV_ONLY：仅 block 0 执行
 
 #ifdef ASCENDC_CPU_DEBUG
+    // --- CPU 孪生：GmAlloc + ICPU_RUN_KF ---
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
     uint8_t *mGm = (uint8_t *)AscendC::GmAlloc(mBytes > 64 ? mBytes : 64);
     uint8_t *uGm = (uint8_t *)AscendC::GmAlloc(uBytes);
@@ -62,6 +77,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)muGm);
     AscendC::GmFree((void *)cGm);
 #else
+    // --- SIM/NPU：ACL 分配 → H2D → launch → D2H → 落盘 ---
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));

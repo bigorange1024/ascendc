@@ -1,5 +1,10 @@
 /**
- * FIPS γ + 固定 n=256 Gather / interleave 字节索引 ROM（与 alg11_fixed_n256 公式一致）。
+ * @file alg11_rom_tables.cpp
+ * @brief Alg.11 ROM 常量表定义：γ + Gather even/odd + interleave 重排。
+ *
+ * 流水线位置：链接进设备镜像；su_dot Init DataCopy 到 UB。
+ * 数值与 alg11_fixed_n256 / ALG11_GAMMAS_TABLE 一致；仅数据，无运行逻辑。
+ * interleave 注释：scratch=[c0‖c1] 各 128 int32，h[i]←scratch[reorder[i]]。
  */
 #include "alg11_rom_tables.h"
 #include "kernel_operator.h"

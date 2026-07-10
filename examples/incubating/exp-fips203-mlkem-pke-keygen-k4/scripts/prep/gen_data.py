@@ -10,6 +10,12 @@
 # @verify run.sh 编译前生成 input/；KEYGEN_VERIFY=1 时参与对拍。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：prep 段 golden / ROM 生成脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/prep/gen_data.py
+"""
 """Golden 生成器：Alg.7 单 poly SampleNTT — xof[672]、d1/d2[224]、â[256]。
 
 本脚本是探针 pass-fix-f203-alg7-sample-ntt-k4 的**黑盒 oracle**：

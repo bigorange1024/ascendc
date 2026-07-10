@@ -1,6 +1,10 @@
 /**
- * FIPS 203 kMlkemGammas[128] — ζ^(2·BitRev7(i)+1) mod q, q=3329.
- * Sync: mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c
+ * @file alg11_gammas.h
+ * @brief FIPS 203 kMlkemGammas[128]：ζ^(2·BitRev7(i)+1) mod q（q=3329）。
+ *
+ * 流水线位置：Alg.11 MultiplyNTTs / su_dot；与 Host GAMMAS、设备 ROM 同源。
+ * 同步源：mlkem_ntt_tables.h / hat_gammas.hpp / hat_inner_product_ref.c。
+ * 设备侧禁止在 Compute 热路径重填本表。
  */
 #ifndef ALG11_GAMMAS_H
 #define ALG11_GAMMAS_H

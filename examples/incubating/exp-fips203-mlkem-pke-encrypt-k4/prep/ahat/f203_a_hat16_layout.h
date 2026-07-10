@@ -1,3 +1,13 @@
+/**
+ * @file f203_a_hat16_layout.h
+ * @brief Alg.13 行 3–7：16× SampleNTT 几何与 GM 布局（k=4，与单 poly alg7 几何锁定一致）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 流水线：pass-fix-f203-alg13-lines3-7-a-hat-k4 专用；XOF/d12/rej 常量与
+ * pass-fix-f203-alg7-sample-ntt-k4 的 f203_alg7_layout.h 同值。
+ * GM 布局与 vec-k4 hat_dot_layout::a_hat_offset(p,j) 一致。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/f203_a_hat16_layout.h
 // @layer prep
@@ -8,16 +18,6 @@
 // @depends #include: f203_a_hat16_config.h, f203_alg7_layout.h, cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_a_hat16_layout.h
- * @brief Alg.13 行 3–7：16× SampleNTT 几何与 GM 布局（k=4，与单 poly alg7 几何锁定一致）。
- *
- * 流水线：pass-fix-f203-alg13-lines3-7-a-hat-k4 专用；XOF/d12/rej 常量与
- * pass-fix-f203-alg7-sample-ntt-k4 的 f203_alg7_layout.h 同值。
- *
- * GM 布局与 vec-k4 hat_dot_layout::a_hat_offset(p,j) 一致。
- */
 #pragma once
 
 #include "f203_a_hat16_config.h"

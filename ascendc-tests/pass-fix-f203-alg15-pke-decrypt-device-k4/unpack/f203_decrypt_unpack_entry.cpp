@@ -1,6 +1,10 @@
 /**
  * @file f203_decrypt_unpack_entry.cpp
- * @brief G1：c GM → u polyvec + v poly（ByteDecode_d + Decompress_d，d_u=11 / d_v=5）。
+ * @brief Alg.15 行 3–4 独立 kernel：c → (u', v')（ByteDecode + Decompress）。
+ *
+ * 流水线位置：历史 G1；生产 fused 用 unpack_impl.hpp（Decode 标量 + Decompress 向量）。
+ * d_u=11（c₁ 每 poly 352B），d_v=5（c₂ 160B）。
+ * 与 golden：gate_g1 golden_u / golden_v。
  */
 #include "f203_decrypt_layout.h"
 #include "kernel_operator.h"
@@ -13,11 +17,13 @@ constexpr int32_t kN = static_cast<int32_t>(F203_DECRYPT_N);
 constexpr int32_t kK = static_cast<int32_t>(F203_DECRYPT_K);
 constexpr int32_t kQ = static_cast<int32_t>(F203_DECRYPT_Q);
 
+/** Decompress₁₁：round(u·q/2¹¹)。 */
 __aicore__ inline uint32_t decompress_d11_u32(uint32_t u)
 {
     return ((u * static_cast<uint32_t>(kQ)) + 1024u) >> 11;
 }
 
+/** Decompress₅：round(u·q/2⁵)。 */
 __aicore__ inline uint32_t decompress_d5_u32(uint32_t u)
 {
     return ((u * static_cast<uint32_t>(kQ)) + 16u) >> 5;
@@ -42,6 +48,7 @@ __aicore__ inline void byte_decode_bits_scalar(int32_t *out, const uint8_t *in, 
     }
 }
 
+/** 单 poly：ByteDecode₁₁ + Decompress₁₁ → Z_q 系数。 */
 __aicore__ inline void unpack_poly_u11(int32_t *polyOut, const uint8_t *cPoly)
 {
     int32_t comp[kN];
@@ -51,6 +58,7 @@ __aicore__ inline void unpack_poly_u11(int32_t *polyOut, const uint8_t *cPoly)
     }
 }
 
+/** 单 poly：ByteDecode₅ + Decompress₅ → Z_q 系数。 */
 __aicore__ inline void unpack_poly_v5(int32_t *polyOut, const uint8_t *cPoly)
 {
     int32_t comp[kN];
@@ -62,6 +70,11 @@ __aicore__ inline void unpack_poly_v5(int32_t *polyOut, const uint8_t *cPoly)
 
 } // namespace
 
+/**
+ * unpack 独立入口。
+ * @param cGm 密文 c₁‖c₂；uGm/vGm 输出 int32 平面
+ * 前置：非 AIC；仅 block0。
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_unpack_c(GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm)
 {
 #if defined(ASCENDC_CPU_DEBUG)
@@ -82,6 +95,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_unpack_c(GM_ADDR cGm, GM_ADDR
 
     int32_t uLocal[kK * kN];
     int32_t vLocal[kN];
+    // ---- c₁：k 个 d=11 poly → u' ----
     for (int32_t p = 0; p < kK; ++p) {
         uint8_t cPolyLocal[F203_C1_POLY_BYTES];
         const uint32_t cOff = static_cast<uint32_t>(p) * F203_C1_POLY_BYTES;
@@ -90,12 +104,14 @@ extern "C" __global__ __aicore__ void f203_decrypt_unpack_c(GM_ADDR cGm, GM_ADDR
         }
         unpack_poly_u11(uLocal + p * kN, cPolyLocal);
     }
+    // ---- c₂：d=5 → v' ----
     uint8_t c2Local[F203_C2_BYTES];
     for (uint32_t b = 0; b < F203_C2_BYTES; ++b) {
         c2Local[b] = cIn[F203_C1_BYTES + b];
     }
     unpack_poly_v5(vLocal, c2Local);
 
+    // 写回 GM（独立 launch 可用标量写）
     for (int32_t i = 0; i < kK * kN; ++i) {
         uOut[i] = uLocal[i];
     }
@@ -105,6 +121,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_unpack_c(GM_ADDR cGm, GM_ADDR
 }
 
 #ifndef __CCE_KT_TEST__
+/** Host launch 包装。 */
 void f203_decrypt_unpack_c_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *cGm, uint8_t *uGm,
                               uint8_t *vGm)
 {

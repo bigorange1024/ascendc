@@ -1,3 +1,5 @@
+
+/** 独立探针入口 f203_se_vector_k4；全链 KeyGen 走 f203_keygen_prep，本文件供分段验证。 */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_entry.cpp
 // @layer prep
@@ -10,6 +12,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 行 8–15 PRF+CBD presample 链。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/presample/f203_se_vector_entry.cpp
+ */
+/**
  * @file f203_se_vector_entry.cpp
  * @brief SEED_D → Phase G + PRF + CBD → src[8,256]（单 AIV，blockDim=1）。
  * 阶段宏见 f203_se_stage_config.hpp（默认 V3）。
@@ -21,6 +29,8 @@ extern "C" __global__ __aicore__ void f203_se_vector_k4(GM_ADDR seed_d_gm, GM_AD
                                                         GM_ADDR tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_AIV_ONLY);
+    // 独立探针：仅 block0；全链 KeyGen 不走本入口
+
     (void)workspace;
     if (AscendC::GetBlockIdx() != 0U) {
         return;

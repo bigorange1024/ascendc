@@ -1,5 +1,12 @@
 /**
- * Decompress_d host：input/comp.bin → output/poly.bin
+ * @file main.cpp
+ * @brief Decompress_d 探针 host 侧驱动：input/comp.bin → output/poly.bin
+ *
+ * 本文件在流水线中的位置：位于设备 kernel（decompress_d_custom.cpp）之外的 host 程序，
+ * 按编译宏 ASCENDC_CPU_DEBUG 二选一走 CPU 孪生（ICPU_RUN_KF）或真实设备/SIM（ACL 接口）路径；
+ * 负责读入 scripts/gen_data.py 生成的 input/comp.bin、发起一次 kernel 计算、把结果写回
+ * output/poly.bin。与 golden 的关系：本文件不做任何解压计算，仅搬运数据；正确性由
+ * scripts/verify_result.py 对比 output/poly.bin 与 output/golden_poly.bin 判定。
  */
 #include "data_utils.h"
 #include "f203_mlkem_params.h"
@@ -20,11 +27,14 @@ int32_t main(int32_t argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    // 单个多项式 256 个 int32 系数的字节数，input/output bin 文件与 GM/host 缓冲均按此大小分配。
     constexpr size_t polyBytes = static_cast<size_t>(F203_MLKEM_N) * sizeof(int32_t);
-    uint32_t blockDim = 1;
+    uint32_t blockDim = 1;  // 本探针纯 per-lane 运算，单核即可，不做多核切分。
 
 #ifdef ASCENDC_CPU_DEBUG
+    // ---- CPU 孪生路径：不经过真实 NPU，用 tikicpulib 在 host 进程内模拟 kernel 执行 ----
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    // GmAlloc 分配的是 CPU 孪生用的“仿真 GM”内存；分配尺寸对齐到至少 1024 字节，避免小 buffer 越界告警。
     uint8_t *comp_in = (uint8_t *)AscendC::GmAlloc(polyBytes > 1024 ? polyBytes : 1024);
     uint8_t *poly_out = (uint8_t *)AscendC::GmAlloc(polyBytes > 1024 ? polyBytes : 1024);
 
@@ -33,6 +43,7 @@ int32_t main(int32_t argc, char *argv[])
         return 1;
     }
 
+    // 直接在 host 进程内“调起”kernel 函数（不走真实 launch），blockDim=1 对应单核。
     ICPU_RUN_KF(decompress_d_custom, blockDim, comp_in, poly_out, F203_MLKEM_N);
 
     if (!WriteFile("./output/poly.bin", poly_out, polyBytes)) {
@@ -42,6 +53,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)comp_in);
     AscendC::GmFree((void *)poly_out);
 #else
+    // ---- 真实设备 / SIM 路径：走标准 ACL 初始化 → 建流 → host/device 内存搬运 → launch → 同步 → 回读 ----
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));
@@ -53,6 +65,7 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *compDevice = nullptr;
     uint8_t *polyDevice = nullptr;
 
+    // Host 侧使用锁页内存（MallocHost）加速 H2D/D2H；Device 侧用 huge-page-first 策略分配显存。
     CHECK_ACL(aclrtMallocHost((void **)(&compHost), polyBytes));
     CHECK_ACL(aclrtMalloc((void **)&compDevice, polyBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMallocHost((void **)(&polyHost), polyBytes));
@@ -62,11 +75,14 @@ int32_t main(int32_t argc, char *argv[])
     if (!ReadFile("./input/comp.bin", rs, compHost, polyBytes) || rs != polyBytes) {
         return 1;
     }
+    // H2D：把从 bin 文件读入的压缩域系数拷贝到设备侧输入 buffer。
     CHECK_ACL(aclrtMemcpy(compDevice, polyBytes, compHost, polyBytes, ACL_MEMCPY_HOST_TO_DEVICE));
 
+    // 发起一次 kernel launch（blockDim=1 单核），并同步等待其执行完成。
     ACLRT_LAUNCH_KERNEL(decompress_d_custom)(blockDim, stream, compDevice, polyDevice, F203_MLKEM_N);
     CHECK_ACL(aclrtSynchronizeStream(stream));
 
+    // D2H：把设备侧输出结果拷回 host，再写入 output/poly.bin 供 verify_result.py 对拍。
     CHECK_ACL(aclrtMemcpy(polyHost, polyBytes, polyDevice, polyBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     if (!WriteFile("./output/poly.bin", polyHost, polyBytes)) {
         return 2;

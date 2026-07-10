@@ -10,6 +10,12 @@
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：prep 段 golden / ROM 生成脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/prep/gen_alg7_deinterleave_rom.py
+"""
 """生成 Alg.7 xof[672] 三字节解交织 Gather 索引 ROM → f203_alg7_deinterleave_rom.h。
 
 设备侧将 xof 展开为 uint8 数组后，按每 3 字节一组解出 d1/d2 需要分别 Gather c0、c1、c2 列：

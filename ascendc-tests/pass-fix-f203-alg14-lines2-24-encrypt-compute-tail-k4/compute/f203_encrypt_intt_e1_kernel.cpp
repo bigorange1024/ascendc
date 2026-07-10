@@ -1,6 +1,12 @@
 /**
  * @file f203_encrypt_intt_e1_kernel.cpp
- * @brief 行 19 时域段：u ← INTT(û) + e₁（MIX INTT k=4 + 分片加噪）。
+ * @brief Alg.14 行 19 时域段（CPU 三 launch）：u ← INTT(û) + e₁。
+ *
+ * 流水线：AIV Split(uNtt) → AIC INTT LUT MMAD → Pack → RouteA → mod_q_add(e₁)。
+ * 注意：本核 LUT 偏移用 LUT_NTT_*（与独立 INTT 探针 workspace 布局一致）；
+ * 融合单 launch 的 INTT 见 f203_encrypt_l18_l19_kernel（LUT_INTT_* + k=8 pad）。
+ *
+ * Golden I/O：input/u_ntt.bin + e1.bin → output/u.bin。
  */
 #include "aic_func.hpp"
 #include "aiv_func.hpp"
@@ -31,6 +37,10 @@ __aicore__ inline void FsmSet(FsmState st)
     KYBER_PIPE_ALL();
 }
 
+/**
+ * MIX：INTT(û)+e₁（k=4，无 pad-8）。
+ * @param uOut 输出 u；@param uNtt 输入 û；@param e1 时域噪声；@param ws workspace
+ */
 extern "C" __global__ __aicore__ void f203_encrypt_intt_e1(GM_ADDR uOut, GM_ADDR uNtt, GM_ADDR e1, GM_ADDR ws,
                                                            TilingData tiling)
 {
@@ -43,6 +53,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_intt_e1(GM_ADDR uOut, GM_ADDR
     FsmState st;
 
     if (aic) {
+        // AIC：等 S1 → 四路 MMAD（本路径 LUT 落在 LUT_NTT_* 槽）→ SET Pack
         st = ST_AIV_SPLIT;
         FsmWait(st);
         AicMmad mmad(static_cast<uint16_t>(mRowsLogic), coeffN, static_cast<uint16_t>(halfN));
@@ -58,6 +69,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_intt_e1(GM_ADDR uOut, GM_ADDR
         st = ST_AIV_PACK;
         FsmSet(st);
     } else {
+        // AIV：S1(uNtt) → Pack → RouteA → 半行加 e₁（mod q）
         st = ST_AIV_SPLIT;
         {
             AivK8Split split(subBlockID, coeffN);
@@ -82,6 +94,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_intt_e1(GM_ADDR uOut, GM_ADDR
             merge.Process();
             KYBER_PIPE_ALL();
         }
+        // 行 19：u ← INTT(û) + e₁（按 AIV halfrows 分片）
         f203_mod_q::mod_q_add_gm_halfrows(uOut, uOut, e1, subBlockID, encrypt_at_jp::kN, encrypt_at_jp::kQ);
         KYBER_PIPE_ALL();
     }

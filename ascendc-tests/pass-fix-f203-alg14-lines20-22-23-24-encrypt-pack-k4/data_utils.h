@@ -1,5 +1,12 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
+ *
+ * @file data_utils.h
+ * @brief Alg.14 pack 探针 host 侧 bin I/O 与调试打印工具。
+ *
+ * 流水线位置：本探针仅覆盖 FIPS 203 Alg.14 行 20/22–24（μ_embed + Compress/ByteEncode→c）。
+ * golden I/O：ReadFile 读 input/{m,u,v}.bin；WriteFile 写 output/{mu_embed,c}.bin。
+ * 本文件不参与设备算法，仅提供 host 读写与 ACL 错误宏。
  */
 #ifndef DATA_UTILS_H
 #define DATA_UTILS_H
@@ -15,6 +22,7 @@
 #include <sys/stat.h>
 #include "acl/acl.h"
 
+/** 调试打印用的元素类型枚举（与 ACL 常见 dtype 对齐）。 */
 typedef enum {
     DT_UNDEFINED = -1,
     FLOAT = 0,
@@ -38,6 +46,7 @@ typedef enum {
 #define INFO_LOG(fmt, args...) fprintf(stdout, "[INFO]  " fmt "\n", ##args)
 #define WARN_LOG(fmt, args...) fprintf(stdout, "[WARN]  " fmt "\n", ##args)
 #define ERROR_LOG(fmt, args...) fprintf(stdout, "[ERROR]  " fmt "\n", ##args)
+/** ACL 调用失败时打印文件行号与错误码（不中止进程，由调用方决定返回值）。 */
 #define CHECK_ACL(x)                                                                        \
     do {                                                                                    \
         aclError __ret = x;                                                                 \
@@ -47,10 +56,12 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从文件读入二进制到 buffer。
+ * @param filePath   输入路径（如 ./input/m.bin）
+ * @param fileSize   输出：实际读入字节数
+ * @param buffer     目标缓冲区
+ * @param bufferSize 缓冲区容量；文件更大则失败
+ * @return true 成功；false 文件不存在/非常规文件/尺寸不符
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
@@ -92,11 +103,11 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
 }
 
 /**
- * @brief Write data to file
- * @param [in] filePath: file path
- * @param [in] buffer: data to write to file
- * @param [in] size: size to write
- * @return write result
+ * 将 buffer 整段写入文件（覆盖创建）。
+ * @param filePath 输出路径（如 ./output/c.bin）
+ * @param buffer   源数据
+ * @param size     字节数
+ * @return true 写满 size 字节
  */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
@@ -121,6 +132,7 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
     return true;
 }
 
+/** 按行打印整型/浮点数组（调试用）。 */
 template<typename T>
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
@@ -133,6 +145,7 @@ void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
     }
 }
 
+/** 打印 aclFloat16，先转 float 再输出。 */
 void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -144,6 +157,13 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 按 printDataType 分派打印。
+ * @param data           主机侧指针
+ * @param count          元素个数
+ * @param dataType       元素类型
+ * @param elementsPerRow 每行打印个数，默认 16
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

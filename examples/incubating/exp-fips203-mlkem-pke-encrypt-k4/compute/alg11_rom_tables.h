@@ -1,3 +1,11 @@
+/**
+ * @file alg11_rom_tables.h
+ * @brief Alg.11 basemul ROM 表声明（γ 等）；Encrypt compute 内积段使用。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 行 18 NTT 域 MultiplyNTTs。
+ * 与 golden：表内容与 host GAMMAS 对齐，保证 basemul I/O 等价。
+ */
+
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/alg11_rom_tables.h
 // @layer compute
@@ -8,15 +16,6 @@
 // @depends #include: alg11_gammas.h, kernel_operator.h, stdint.h, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file alg11_rom_tables.h
- * @brief 设备侧 Alg.11 常量 ROM 的 __gm__ 声明（γ、Gather 字节索引、interleave 重排表）。
- *
- * 定义见 alg11_rom_tables.cpp；Init 阶段 DataCopy 进 UB，Compute 热路径禁止 SetValue 重填。
- *
- * 同步：alg11_gammas.h、hat_gammas.hpp、hat_inner_product_ref.c 中 kGammas 须一致。
- */
 #ifndef ALG11_ROM_TABLES_H
 #define ALG11_ROM_TABLES_H
 

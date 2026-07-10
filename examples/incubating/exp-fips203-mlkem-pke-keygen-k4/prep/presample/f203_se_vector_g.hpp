@@ -1,3 +1,5 @@
+
+/** Phase G：从 seed 派生 ρ/σ 的设备辅助（与 Alg.7 G 一致）。 */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_g.hpp
 // @layer prep
@@ -9,6 +11,12 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 行 8–15 PRF+CBD presample 链。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/presample/f203_se_vector_g.hpp
+ */
 /**
  * @file f203_se_vector_g.hpp
  * @brief Phase G：SEED_D → σ（与 Alg.7 / KeyGen 同式，一次 G 派生 ρ‖σ）。

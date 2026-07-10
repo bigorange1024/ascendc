@@ -1,7 +1,13 @@
 /**
  * @file main.cpp
- * F203 Stage3 Host 入口：mat_c_gm → out_gm。
- * Launch：LAUNCH_PROFILE=aiv=1|2|8（run.sh --aiv，见 launch_profile.h）。
+ * @brief F203 Stage3 Host 入口：mat_c → RouteA+mod → out。
+ *
+ * 流水线位置：Stage2 MMAD 之后；读平面/交错 mat_c，写 NTT 后系数。
+ * 张量布局：
+ *   输入 mat_c [16,512] int32（行 0..7=hi，8..15=lo；偶奇列交错）
+ *   输出 out   [8,256]  int32
+ * Launch：LAUNCH_PROFILE=aiv=1|2|8（run.sh --aiv）。
+ * 与 golden：output/out_gm.bin 与 scripts 对拍；仅 I/O 等价。
  */
 #include "data_utils.h"
 #include "launch_profile.h"
@@ -22,15 +28,20 @@ constexpr size_t kMatCBytes = kRowsC * kOutCols * sizeof(int32_t);
 constexpr size_t kOutBytes = kKPolys * kN * sizeof(int32_t);
 } // namespace
 
+/**
+ * Host main：按剖面分配 GM / ACL，调用 f203_stage3_routea_mod，写出 out_gm.bin。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    // 解析 LAUNCH_PROFILE → blockDim
     const launch_profile::Config launchCfg = launch_profile::Get(launch_profile::FromEnv());
     const uint32_t blockDim = launchCfg.blockDim;
 
 #ifdef ASCENDC_CPU_DEBUG
+    // CPU 孪生：GmAlloc 模拟 GM，ICPU_RUN_KF 直调核
     uint8_t *matC = static_cast<uint8_t *>(AscendC::GmAlloc(kMatCBytes));
     uint8_t *out = static_cast<uint8_t *>(AscendC::GmAlloc(kOutBytes));
 
@@ -43,6 +54,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(matC);
     AscendC::GmFree(out);
 #else
+    // 真机/SIM：ACL H2D → kernel → D2H
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));

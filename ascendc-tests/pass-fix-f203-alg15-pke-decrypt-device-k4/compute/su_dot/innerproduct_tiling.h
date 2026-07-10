@@ -1,3 +1,11 @@
+/**
+ * @file innerproduct_tiling.h
+ * @brief Alg.11 / 内积（su_dot）tiling：P_OUT×S_VEC 几何与 scratch 偏移。
+ *
+ * 流水线位置：Decrypt 行 6 ⟨ŝ,û⟩ 时 P_OUT=1、S_VEC=k=4（由 su_dot 侧覆写语义）；
+ * 本头默认常量对齐 KeyGen 行 18 的 4×4 对照，可用 CMake -DINNERPRODUCT_* 改。
+ * 与 golden：仅约束字节布局；密码学正确性由 MultiplyNTTs + mod 保证。
+ */
 #pragma once
 
 #include <cstdint>
@@ -16,7 +24,7 @@ constexpr int32_t kN = 256;
 constexpr int32_t kPOut = INNERPRODUCT_P_OUT;
 constexpr int32_t kSVec = INNERPRODUCT_S_VEC;
 constexpr int32_t kBlockDim = 1;
-constexpr int32_t kRomPairCount = kN / 2;
+constexpr int32_t kRomPairCount = kN / 2;   /* 128：γ / Gather 对 */
 constexpr int32_t kVecWsInts = 8 * kRomPairCount;
 constexpr int32_t kHatQ = 3329;
 
@@ -25,6 +33,7 @@ constexpr int32_t kAHatBytes = kPOut * kSVec * kN * static_cast<int32_t>(sizeof(
 constexpr int32_t kSHatBytes = kSVec * kN * static_cast<int32_t>(sizeof(int32_t));
 constexpr int32_t kTHatBytes = kPOut * kN * static_cast<int32_t>(sizeof(int32_t));
 
+/* scratch 槽：acc / 当前行 / Barrett 临时 / 输出行 */
 constexpr int32_t kOffAcc = 0;
 constexpr int32_t kOffRow = kN;
 constexpr int32_t kOffModT2 = 2 * kN;

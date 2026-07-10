@@ -1,3 +1,15 @@
+/**
+ * @file aiv_func.hpp
+ * @brief Stage1/2后/Stage3 AIV：poly-batch limb 编码、平面 mat_c 打包、RouteA+mod。
+ *
+ * 流水线位置（与 AIC CrossCore 配合）：
+ *   AivK8Split → AIC MMAD → AivK8PackMatCPlanar → AivK8RouteAMod
+ *
+ * 几何：本探针 tiling 中 kInttBatch=8、kPlanarSlots=8；NTT(y) 段仅用前 kK=4 行语义，
+ * workspace 仍按 INTT pad-8 分配。poly-batch：每 AIV 握完整 poly 的 hi+lo（非 limbsplit）。
+ *
+ * Golden：经 NTT/INTT kernel 写 y_hat / u / v；本文件无独立 I/O。
+ */
 #ifndef STAGE123_POLYVEC8_AIV_FUNC_HPP
 #define STAGE123_POLYVEC8_AIV_FUNC_HPP
 
@@ -13,6 +25,11 @@ using AscendC::DataCopy;
 
 namespace planar_k8 {
 
+/**
+ * 平面 mat_c 行号：slot×4 limb × half(lo/hi)。
+ * @param slot poly 槽位 [0,kPlanarSlots)；@param limb [0,4)；@param half 0=lo 半平面 / 1=hi
+ * @return 行索引，乘 halfLen 得 int32 元素偏移
+ */
 __aicore__ inline uint32_t mat_row(uint32_t slot, uint32_t limb, uint32_t half)
 {
     return half * static_cast<uint32_t>(tiling::kPlanarSlots) * tiling::kLimbsPerPoly +
@@ -21,15 +38,30 @@ __aicore__ inline uint32_t mat_row(uint32_t slot, uint32_t limb, uint32_t half)
 
 } // namespace planar_k8
 
-/** Stage1：k=8 紧凑 [HI, LO] → S0 int8 [16,256] */
+/**
+ * Stage1：int32 系数 → hi/lo 各 6-bit limb（int8）写入 S0。
+ *
+ * 输入：GM src [kK 或 kInttBatch, N] int32（NTT 用 y / INTT 用 û）；
+ * 或 ProcessFromLocal：UB 已驻留的 halfrows（融合核内积后不经 GM）。
+ * 输出：wsS0 紧凑 [HI 行 0..k-1 | LO 行 k..2k-1] int8，供 AIC MMAD。
+ * 前置：subCoreIdx∈{0,1}；本核处理 polyBase 起 kPolysPerAiv 条 poly。
+ */
 class AivK8Split {
 public:
+    /**
+     * @param subCoreIdx AIV 子核 0/1；@param coeffN 系数个数（通常 256）
+     * polyBase_：AIV0→0，AIV1→kPolysPerAiv（NTT 时为 2）
+     */
     __aicore__ inline AivK8Split(int32_t subCoreIdx, uint32_t coeffN)
         : subCoreIdx_(subCoreIdx), coeffN_(coeffN),
           polyBase_((subCoreIdx == 0) ? 0U : static_cast<uint32_t>(tiling::kPolysPerAiv))
     {
     }
 
+    /**
+     * 绑定 GM 并分配 VECIN/VECOUT（及可选 splitScratch）。
+     * @param wsS0 Stage1 输出 S0；@param src 输入系数 GM（ProcessFromLocal 时仍需合法指针）
+     */
     __aicore__ inline void Init(GM_ADDR wsS0, GM_ADDR src)
     {
         (void)src;
@@ -47,6 +79,7 @@ public:
 #endif
     }
 
+    /** 从 GM src 读本核 poly bank → 编码写 S0 */
     __aicore__ inline void Process()
     {
         encodeBank(polyBase_, static_cast<uint16_t>(tiling::kPolysPerAiv));
@@ -62,6 +95,10 @@ public:
     }
 
 private:
+    /**
+     * 核心编码：split_vec → lo/hi int8 → 按 poly 写 S0 的 hi 行与 lo 行。
+     * lo 行偏移 = kK + polyBase + lp（与 NTT k=4 布局兼容；INTT pad-8 时调用方用专用类）。
+     */
     __aicore__ inline void encodeCore(uint32_t polyBase, uint16_t kPolys, AscendC::LocalTensor<int32_t> &local_src)
     {
         LocalTensor<int8_t> local_dst0 = out0_.AllocTensor<int8_t>();
@@ -78,6 +115,7 @@ private:
 
         local_dst0 = out0_.DeQue<int8_t>();
         local_dst1 = out1_.DeQue<int8_t>();
+        // 写回 S0：hi 行在 [0,k)，lo 行在 [k,2k)；每 poly 一次 DataCopy + PIPE_ALL
         for (uint16_t lp = 0; lp < kPolys; ++lp) {
             const uint32_t hiRow = polyBase + static_cast<uint32_t>(lp);
             const uint32_t loRow = static_cast<uint32_t>(tiling::kK) + polyBase + static_cast<uint32_t>(lp);
@@ -90,6 +128,7 @@ private:
         out1_.FreeTensor(local_dst1);
     }
 
+    /** GM→UB 拷贝本核 bank，再 encodeCore */
     __aicore__ inline void encodeBank(uint32_t polyBase, uint16_t kPolys)
     {
         const uint32_t srcOff = polyBase * coeffN_;
@@ -118,7 +157,13 @@ private:
     AscendC::GlobalTensor<int8_t> gm_s0_;
 };
 
-/** Stage2 后：Cube 四路临时 → 平面 mat_c [64,128] */
+/**
+ * Stage2 后：Cube 四路临时（lo/hi × even/odd）→ 平面 mat_c。
+ *
+ * 输入：MAT_C_TMP_{LO,HI}_{EVEN,ODD}，每路 [mRows, halfN] int32；
+ * 输出：matPlanar 按 mat_row(slot,limb,half) 排布，供 Stage3 RouteA。
+ * 前置：AIC 四次 MMAD 已完成且 CrossCore 已通知 AIV。
+ */
 class AivK8PackMatCPlanar {
 public:
     __aicore__ inline AivK8PackMatCPlanar(int32_t subCoreIdx, uint32_t coeffN)
@@ -128,6 +173,9 @@ public:
     {
     }
 
+    /**
+     * @param matPlanar 平面 mat_c GM；其余为四路 Cube 临时 GM
+     */
     __aicore__ inline void Init(GM_ADDR matPlanar, GM_ADDR tmpLoEven, GM_ADDR tmpLoOdd, GM_ADDR tmpHiEven,
                                 GM_ADDR tmpHiOdd)
     {
@@ -139,12 +187,17 @@ public:
         pipe_.InitBuffer(que_limb_tile_, 1, limbTileLength_ * sizeof(int32_t));
     }
 
+    /** 打包本核 poly bank 的 lo 半平面与 hi 半平面 */
     __aicore__ inline void Process()
     {
         packBank(polyBase_, static_cast<uint16_t>(tiling::kPolysPerAiv));
     }
 
 private:
+    /**
+     * 对每个 poly：从 even/odd 临时取 hi 行与 lo 行各 halfLen，拼成 4×halfLen limb tile 写入平面。
+     * @param half 0=偶半（系数 0..127）/ 1=奇半（128..255）对应的平面 half 维
+     */
     __aicore__ inline void packPolyHalf(uint32_t polyBase, uint16_t kPolys, uint32_t half,
                                         AscendC::GlobalTensor<int32_t> &gmEven,
                                         AscendC::GlobalTensor<int32_t> &gmOdd)
@@ -154,6 +207,7 @@ private:
             const uint32_t loR = static_cast<uint32_t>(tiling::kK) + polyBase + static_cast<uint32_t>(lp);
             const uint32_t slot = polyBase + static_cast<uint32_t>(lp);
             LocalTensor<int32_t> tile = que_limb_tile_.AllocTensor<int32_t>();
+            // tile 布局：[hh | lh | hl | ll] 各 halfLen，与 RouteA Horner 输入一致
             DataCopy(tile[0], gmEven[hiR * halfLen_], halfLen_);
             DataCopy(tile[halfLen_], gmOdd[hiR * halfLen_], halfLen_);
             DataCopy(tile[2 * halfLen_], gmEven[loR * halfLen_], halfLen_);
@@ -183,7 +237,13 @@ private:
     AscendC::GlobalTensor<int32_t> gm_lo_even_, gm_lo_odd_, gm_hi_even_, gm_hi_odd_;
 };
 
-/** Stage3：平面 mat_c → dst [8,256]（与 vec-k4-v2 Aiv2s1eRouteAMod 同构） */
+/**
+ * Stage3：平面 mat_c → dst [polys,256] int32（RouteA Horner + mod q）。
+ *
+ * 与 vec-k4-v2 Aiv2s1eRouteAMod 同构；三段式 NTT/INTT 内禁止 Gather。
+ * 输入：matPlanar；输出：dst 行主序 poly×N。
+ * F203_STAGE3_MOD 选型见 stage3_config.hpp。
+ */
 class AivK8RouteAMod {
 public:
     __aicore__ inline AivK8RouteAMod(int32_t subCoreIdx, uint32_t coeffN)
@@ -192,6 +252,9 @@ public:
     {
     }
 
+    /**
+     * @param dst 合并后系数 GM；@param matPlanar 平面 mat_c
+     */
     __aicore__ inline void Init(GM_ADDR dst, GM_ADDR matPlanar)
     {
         gm_dst_.SetGlobalBuffer((__gm__ int32_t *)dst);
@@ -210,12 +273,17 @@ public:
         pipe_.InitBuffer(tmp_half_, 1, halfLen_ * sizeof(int32_t));
     }
 
+    /** 处理本核 poly bank：先 lo 半系数再 hi 半，写满 [kPolys,N] 后 copyOut */
     __aicore__ inline void Process()
     {
         ProcessBank(polyBase_, polyBase_, static_cast<uint16_t>(tiling::kPolysPerAiv));
     }
 
 private:
+    /**
+     * 批量 RouteA：读 lo 半平面 → 每 poly combine → 写 local_dst[0..half)；
+     * 再读 hi 半平面 → 写 local_dst[half..N)；最后 GM copyOut。
+     */
     __aicore__ inline void ProcessBank(uint32_t slotBase, uint32_t dstPolyOff, uint16_t kPolys)
     {
         const uint32_t batchHalfPlaneLength = static_cast<uint32_t>(kPolys) * limbTileLength_;
@@ -236,6 +304,7 @@ private:
         LocalTensor<int32_t> plane = half_plane_.AllocTensor<int32_t>();
         const uint32_t loPlaneBase = planar_k8::mat_row(slotBase, 0U, 0U) * halfLen_;
         const uint32_t hiPlaneBase = planar_k8::mat_row(slotBase, 0U, 1U) * halfLen_;
+        // —— lo 半平面（系数低 halfN）——
         DataCopy(plane, gm_planar_[loPlaneBase], batchHalfPlaneLength);
         KYBER_PIPE_ALL();
 
@@ -262,6 +331,7 @@ private:
             limb_scratch_.FreeTensor(limbs);
         }
 
+        // —— hi 半平面（系数高 halfN）——
         DataCopy(plane, gm_planar_[hiPlaneBase], batchHalfPlaneLength);
         KYBER_PIPE_ALL();
         for (uint16_t lp = 0; lp < kPolys; ++lp) {
@@ -297,6 +367,7 @@ private:
         copyOut(dstPolyOff, kPolys);
     }
 
+    /** UB local_dst → GM dst，按 poly 行写 */
     __aicore__ inline void copyOut(uint32_t dstPolyOff, uint16_t kPolys)
     {
         LocalTensor<int32_t> local_dst = out_dst_.DeQue<int32_t>();

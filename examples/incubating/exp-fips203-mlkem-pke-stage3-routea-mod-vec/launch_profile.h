@@ -1,6 +1,10 @@
 /**
  * @file launch_profile.h
- * Stage3 Vector launch：aiv=1 / aiv=2 / aiv=8（与 Stage1 命名一致）。
+ * @brief Stage3 RouteA+mod Vector launch 剖面：aiv=1 / aiv=2 / aiv=8。
+ *
+ * 流水线位置：与 Stage1 同构分核；Host main 读 LAUNCH_PROFILE 得 blockDim。
+ * - aiv=1：单核串行 8 poly；aiv=2：每核 4；aiv=8：每核 1。
+ * 与 golden：仅影响并行度，不改变 I/O 语义。
  */
 #ifndef LAUNCH_PROFILE_H
 #define LAUNCH_PROFILE_H
@@ -18,6 +22,7 @@ struct Config {
     uint32_t blockDim;
 };
 
+/** 解析 "aiv=N"；非法回落 aiv=1。 */
 inline Profile Parse(const char *name)
 {
     if (name != nullptr && strncmp(name, "aiv=", 4) == 0) {
@@ -32,11 +37,13 @@ inline Profile Parse(const char *name)
     return Profile::k1Aiv;
 }
 
+/** 读环境变量 LAUNCH_PROFILE。 */
 inline Profile FromEnv()
 {
     return Parse(std::getenv("LAUNCH_PROFILE"));
 }
 
+/** 剖面 → blockDim。 */
 inline Config Get(Profile p)
 {
     switch (p) {
@@ -50,6 +57,7 @@ inline Config Get(Profile p)
     }
 }
 
+/** 剖面可读名。 */
 inline const char *Name(Profile p)
 {
     if (p == Profile::k8Aiv) {

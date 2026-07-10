@@ -18,6 +18,7 @@
  *
  * Golden：与 `golden_se_sampling.sample_poly_cbd2` / C `fips203_sample_poly_cbd2_row` 一致。
  * 详见 docs/notes/F203-CBD-eta2-性能优化技术总结.md §3.1。
+ * Encrypt prep：f203_encrypt_re_cbd / SamplePolyCbd2RowSwLutUb 查本表；巨表仅文件头说明用途。
  */
 #pragma once
 

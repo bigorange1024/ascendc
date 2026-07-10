@@ -8,6 +8,9 @@
  *         pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/f203_encrypt_tail_layout.h
  *
  * 背景：T17 — SIM **1 launch** 内联 pack；CPU 仍 4 launch。全链 prep 并入为下一步。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
 #ifndef F203_ENCRYPT_COMPUTE_TAIL_LAYOUT_H
 #define F203_ENCRYPT_COMPUTE_TAIL_LAYOUT_H

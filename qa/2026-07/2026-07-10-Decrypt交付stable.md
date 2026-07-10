@@ -113,3 +113,32 @@
 | 验收 | 密度抽查 thin≈0；`git diff` 无 `vendor/`；仅注释不改逻辑 |
 
 下一会话开 **T20-W2**。
+
+#### Wave2–5 完成（同日续）
+
+| 波次 | 范围 | 规模 |
+|------|------|------|
+| **W2** | `pass-fix` alg13/14/15 device、encrypt prep/compute/pack 分段 | ~470 文件 |
+| **W3** | vec-k4-v2、stage123、innerproduct、multiplyntts、byteencode12 | ~130 文件 |
+| **W4** | compress/decompress/byteencode/bytedecode、alg7/8、shake/toy | ~86 文件 |
+| **W5** | `examples/incubating/exp-*` | ~275 文件 |
+
+验收：`git diff` **无** `vendor/`、`thirdparty/`、`frozen/`；仅注释不改逻辑；commit `docs(comments): T20-W2–W5 …`。
+
+#### T20-W2 片段（同日，pass-fix 9 文件）
+
+仅加中文注释、不改逻辑；对照 `examples/stable` 同名风格：
+
+| 路径 |
+|------|
+| `pass-fix-f203-alg14-pke-encrypt-device-k4/prep/alg7/f203_alg7_compact_lut.h` |
+| `pass-fix-f203-alg14-pke-encrypt-device-k4/prep/ahat/data_utils.h` |
+| `pass-fix-f203-alg15-pke-decrypt-device-k4/data_utils.h` |
+| `pass-fix-f203-alg15-pke-decrypt-device-k4/compute/intt_w/f203_decrypt_intt_w_entry.cpp` |
+| `pass-fix-f203-alg15-pke-decrypt-device-k4/compute/su_dot/f203_decrypt_su_dot_kernel.cpp` |
+| `pass-fix-f203-alg15-pke-decrypt-device-k4/compute/ntt_u/aiv_func.hpp` |
+| `pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/prep/alg7/f203_alg7_compact_lut.h` |
+| `pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/prep/ahat/data_utils.h` |
+| `pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/main.cpp` |
+
+验收：`intt_w` / `su_dot` 去注释后与 stable 同构；LUT 仅文件头+表用途。

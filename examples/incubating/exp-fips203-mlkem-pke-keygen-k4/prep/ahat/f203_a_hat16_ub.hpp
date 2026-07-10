@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 Â[16,256] 分片构建。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/ahat/f203_a_hat16_ub.hpp
+ */
+/**
  * @file f203_a_hat16_ub.hpp
  * @brief Alg.13 行 3–7：16×（SHAKE + 向量 d12/rej），UB 全链，链末写 GM a_hat[16,256]。
  *
@@ -216,6 +222,10 @@ __aicore__ inline void BuildAHat16ShardWithUb(const uint8_t rho[F203Alg7::kRhoBy
     }
 }
 
+/**
+ * 从 seed_d 派生 ρ 后构建 Â 分片（独立探针入口）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void BuildAHat16ShardFromSeedD(uint32_t seed_d, __gm__ int32_t *a_hat_gm, uint32_t blockIdx)
 {
 #if F203_AHAT16_BLOCK_DIM == 2

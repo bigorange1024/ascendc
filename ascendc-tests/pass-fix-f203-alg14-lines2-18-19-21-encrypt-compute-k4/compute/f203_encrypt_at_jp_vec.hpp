@@ -28,12 +28,17 @@ class EncryptAtJpHalfRowsVec {
 public:
     __aicore__ inline EncryptAtJpHalfRowsVec() {}
 
+    /** scratch_ 内按 int32 偏移切片 */
     __aicore__ inline AscendC::LocalTensor<int32_t> bufI32(int32_t offInts, int32_t len)
     {
         return scratch_.GetWithOffset<int32_t>(static_cast<uint32_t>(len),
                                                static_cast<uint32_t>(offInts) * sizeof(int32_t));
     }
 
+    /**
+     * 绑定 Â/ŷ GM、分配 MultiplyNTTs 队列与 ROM LUT。
+     * @param pBegin,pEnd 本 AIV 负责的 û 行半开区间
+     */
     __aicore__ inline void Init(GM_ADDR aHat, GM_ADDR yHat, int32_t pBegin, int32_t pEnd)
     {
         constexpr int32_t kN = encrypt_at_jp_tiling::kN;
@@ -94,15 +99,18 @@ public:
     }
 
     /**
-     * halfrows 内积（û）+ 可选追加 tr_hat（kP=5 统一 uTr pad→8）。
-     *
-     * @param unifiedUTrPad8 true：dstUb 为 [kInttPolysPerAiv,kN]；AIV0 写 [û0,û1,tr̂,0]，AIV1 写 [û2,û3,0,0]。
-     */
-    __aicore__ inline void ProcessToUbMaybeTrHat(AscendC::LocalTensor<int32_t> &dstUb, GM_ADDR tHat,
+ * halfrows 内积（û）+ 可选 tr̂（kP=5）→ UB。
+ *
+ * 分段：① 取 ROM/scratch → ② 对 j=0..3 累加 Âᵀ∘ŷ → ③ 可选累加 t̂ᵀ∘ŷ →
+ * ④ final mod → ⑤ 写 dstUb（pad-8 或紧凑 halfrows）。
+ *
+ * @param unifiedUTrPad8 true：dstUb [4,N]；AIV0 [û0,û1,tr̂,0]，AIV1 [û2,û3,0,0]
+ */
+__aicore__ inline void ProcessToUbMaybeTrHat(AscendC::LocalTensor<int32_t> &dstUb, GM_ADDR tHat,
                                                 GM_ADDR trHatNtt, bool doTrHat,
                                                 const AscendC::LocalTensor<int32_t> *tHatUbOpt,
                                                 bool unifiedUTrPad8 = false)
-    {
+{
         constexpr int32_t kN = encrypt_at_jp_tiling::kN;
         constexpr int32_t kK = encrypt_at_jp_tiling::kK;
         constexpr int32_t kQ = encrypt_at_jp_tiling::kHatQ;
@@ -112,6 +120,7 @@ public:
         AscendC::LocalTensor<int32_t> trLine = bufI32(encrypt_at_jp_tiling::kOffTrLine, kN);
         AscendC::LocalTensor<int32_t> fLoc = bufI32(encrypt_at_jp_tiling::kOffAcc, kN);
 
+        // ① 取出 MultiplyNTTs 工作区与 ROM LUT
         AscendC::LocalTensor<int32_t> wsLocal = wsQue_.AllocTensor<int32_t>();
         AscendC::LocalTensor<int32_t> gammaLocal = gammaLutQue_.DeQue<int32_t>();
         AscendC::LocalTensor<int32_t> gatherEvenLocal = gatherEvenQue_.DeQue<int32_t>();
@@ -134,6 +143,7 @@ public:
             doTrHat = false;
         }
 
+        // ② 外层 j：ŷ[j]；内层 p：累加 MultiplyNTTs(A[j,p], ŷ[j]) 到 outLine
         for (int32_t j = 0; j < kK; ++j) {
             AscendC::LocalTensor<int32_t> gPoly = inQueueG_.AllocTensor<int32_t>();
             AscendC::DataCopy(gPoly, yGm_[encrypt_at_jp_layout::y_hat_offset(j)], kN);
@@ -163,9 +173,9 @@ public:
                 }
             }
 
+            // ③ 可选：同一 ŷ[j] 与 t̂[j] basemul，累加到 trLine
             if (doTrHat) {
-                // 优先走 UB：tHatUbOpt 持有 [kK,kN] 连续 int32（行 2 ByteDecode₁₂ 的中间结果驻留 UB）。
-                // 若为空则回退 GM 读（仍禁止 DataCopy 读 GM，以免 SIM 可见性问题）。
+                // 优先 UB：tHatUbOpt 持有行 2 decode 结果；否则标量读 GM（禁止 DataCopy 读 GM）
                 AscendC::LocalTensor<int32_t> fPolyT = inQueueF_.AllocTensor<int32_t>();
                 if (tHatUbOpt != nullptr) {
                     AscendC::LocalTensor<int32_t> tRow =
@@ -195,6 +205,7 @@ public:
             inQueueG_.FreeTensor(gPoly);
         }
 
+        // ④ û 行 final mod q
         for (int32_t p = pBegin_; p < pEnd_; ++p) {
             const uint32_t localP = static_cast<uint32_t>(p - pBegin_);
             AscendC::LocalTensor<int32_t> lineP = outLine[localP * static_cast<uint32_t>(kN)];
@@ -203,12 +214,11 @@ public:
         }
 
         if (doTrHat) {
-            // trLine 可能含负值（alg11 basemul 结果为有符号代表），而共享库 Barrett wrap 末步假设输入非负。
-            // 这里先做 2 次「若负则 +q」的归一化，把范围推回到 [0, 2q) 再做 Barrett final mod。
+            // trLine 可能为负：先两次「若负则 +q」再 Barrett（共享库 wrap 假设非负）
             {
                 auto &tr_u32 = *reinterpret_cast<AscendC::LocalTensor<uint32_t> *>(&trLine);
                 auto &mask_u32 = *reinterpret_cast<AscendC::LocalTensor<uint32_t> *>(&fLoc);
-                AscendC::ShiftRight(mask_u32, tr_u32, 31U, kN); // 负数→1，非负→0
+                AscendC::ShiftRight(mask_u32, tr_u32, 31U, kN);
                 AscendC::Muls(modT2, fLoc, kQ, kN);
                 AscendC::Add(trLine, trLine, modT2, kN);
                 AscendC::PipeBarrier<PIPE_ALL>();
@@ -231,6 +241,7 @@ public:
         interleaveReorderQue_.EnQue(interleaveLocal);
         wsQue_.FreeTensor(wsLocal);
 
+        // ⑤ 写出 dstUb：pad-8 布局或紧凑 halfrows
         if (unifiedUTrPad8) {
             constexpr int32_t kRows = static_cast<int32_t>(tiling::kInttPolysPerAiv);
             for (int32_t lp = 0; lp < kRows; ++lp) {
@@ -252,7 +263,10 @@ public:
         }
     }
 
-    /** 3 launch 路径：final mod 后 DataCopy 写 uNtt GM。 */
+    /**
+     * 3 launch：û 累加 + final mod 后 DataCopy 写 uNtt GM（无 tr̂）。
+     * 分段同 ProcessToUbMaybeTrHat 的 ①②④，末尾写 GM。
+     */
     __aicore__ inline void ProcessToGm(GM_ADDR uNtt)
     {
         constexpr int32_t kN = encrypt_at_jp_tiling::kN;

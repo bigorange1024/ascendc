@@ -1,3 +1,11 @@
+/**
+ * @file aiv_func.hpp
+ * @brief sepolyvec8 AIV：Stage1 batch Split 与 Stage3 batch Merge。
+ *
+ * 流水线位置：MIX 核 AIV 侧；与 AIC MMAD 经 CrossCore 握手。
+ * 语义：poly-batch — 每个 AIV 握有完整 poly 的 hi+lo 半段（subCoreIdx 分半）。
+ * 与 golden：仅 I/O 等价。
+ */
 #ifndef __AIV_FUNC_HPP__
 #define __AIV_FUNC_HPP__
 #include "basic.hpp"
@@ -16,6 +24,10 @@ public:
     {
     }
 
+    /**
+     * 绑定 src 与 S0；wsS2/S3 本路径未用（保留签名）。
+     * @param wsS0 Stage1 输出 A[16,256] int8；@param src se [8,256] int32
+     */
     __aicore__ inline void Init(GM_ADDR wsS0, GM_ADDR src, GM_ADDR wsS2, GM_ADDR wsS3)
     {
         (void)wsS2;
@@ -27,6 +39,7 @@ public:
         pipe.InitBuffer(out_dst1, 1, tileLength * sizeof(int8_t));
     }
 
+    /** 按 poly 拉取本 AIV 半段系数到 UB（subCoreIdx*halfLen）。 */
     __aicore__ inline void CopyIn()
     {
         LocalTensor<int32_t> local_src = in_src.AllocTensor<int32_t>();
@@ -39,6 +52,7 @@ public:
         KYBER_PIPE_ALL();
     }
 
+    /** limb6 split_vec：写 lo/hi 两路 int8。 */
     __aicore__ inline void Compute()
     {
         LocalTensor<int32_t> local_src = in_src.DeQue<int32_t>();
@@ -52,6 +66,7 @@ public:
         KYBER_PIPE_ALL();
     }
 
+    /** 写回 S0：行序 [hi0,lo0,…,hi7,lo7]，每行半段按 subCoreIdx。 */
     __aicore__ inline void CopyOut()
     {
         LocalTensor<int8_t> local_dst0 = out_dst0.DeQue<int8_t>();
@@ -95,6 +110,10 @@ public:
     {
     }
 
+    /**
+     * 绑定 dst 与 A0/A1（Stage2 积）。
+     * @param dst 输出 [8,256]；@param a0/@param a1 Cube 输出半幅
+     */
     __aicore__ inline void Init(GM_ADDR dst, GM_ADDR a0, GM_ADDR a1)
     {
         gm_dst.SetGlobalBuffer((__gm__ int32_t *)dst);
@@ -106,6 +125,7 @@ public:
         pipe.InitBuffer(tmp_poly, 1, halfLen * sizeof(int32_t));
     }
 
+    /** 读 A0/A1 的 hi/lo 行到 UB；槽 2/3 置零以对齐单 poly limb6 四槽布局。 */
     __aicore__ inline void CopyIn()
     {
         const uint32_t bufLen = static_cast<uint32_t>(kPolys) * polyStride;
@@ -131,6 +151,10 @@ public:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * RouteA 移位累加 + 两次 Barrett；每 poly 独立。
+     * 背景：槽 2/3 为零，等价单 poly 四 limb 合并。
+     */
     __aicore__ inline void Compute()
     {
         LocalTensor<int32_t> local_src0 = in_src0.DeQue<int32_t>();
@@ -149,6 +173,7 @@ public:
                 x[1][j] = local_src1[base + static_cast<uint32_t>(j) * halfLen];
             }
 
+            // 按 limb 权重左移后累加（RouteA）
             ShiftLeft(x[0][1], x[0][1], kKyberMergeShift1, halfLen);
             KYBER_PIPE_ALL();
             ShiftLeft(x[1][0], x[1][0], kKyberMergeShift1, halfLen);
@@ -175,6 +200,7 @@ public:
             Add(poly_dst, poly_dst, x[1][2], halfLen);
             KYBER_PIPE_ALL();
 
+            // 连调两次 Barrett（与 ntt_sim 约定）
             barrett_mul_vec_runtime(poly_dst, q, 12, 5039, local_src0, local_src1, static_cast<int32_t>(halfLen));
             KYBER_PIPE_ALL();
             barrett_mul_vec_runtime(poly_dst, q, 12, 5039, local_src0, local_src1, static_cast<int32_t>(halfLen));
@@ -191,6 +217,7 @@ public:
         KYBER_PIPE_ALL();
     }
 
+    /** 写回 dst 各 poly 的本 AIV 半段。 */
     __aicore__ inline void CopyOut()
     {
         LocalTensor<int32_t> local_dst = out_dst.DeQue<int32_t>();

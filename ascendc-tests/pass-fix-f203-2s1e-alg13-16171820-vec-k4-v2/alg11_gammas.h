@@ -2,7 +2,9 @@
  * @file alg11_gammas.h
  * @brief FIPS 203 kMlkemGammas[128] 编译期表：γ[i]=ζ^(2·BitRev7(i)+1) mod 3329。
  *
- * 宏 ALG11_GAMMAS_TABLE / kAlg11Gammas 供标量路径与 ROM 生成；与 hat_gammas.hpp、hat_inner_product_ref.c 同步。
+ * 流水线位置：Alg.11 basemul / 行 18；供标量路径与 alg11_rom_tables.cpp 生成 GM ROM。
+ * 与 golden 关系：须与 hat_gammas.hpp、hat_inner_product_ref.c 中 kGammas 逐元一致。
+ * 宏 ALG11_GAMMAS_TABLE / 数组 kAlg11Gammas；设备 Compute 热路径禁止重填。
  */
 #ifndef ALG11_GAMMAS_H
 #define ALG11_GAMMAS_H

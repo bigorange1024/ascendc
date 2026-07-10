@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-mixPass=6 — AicMmad 隔离 sanity 数据（对照 tag5t planar-s12：16×256×128 单路 lo_even）。
+gen_mmad_sanity_data.py — mixPass=6 AicMmad 隔离 sanity 的 input/golden 生成。
+
+流水线位置：调试 Stage2 Cube；对照 tag5t planar-s12 同维 16×256×128 单路 lo_even。
+作用：写 s0_sanity / lut / tiling(mixPass=6) 与 golden_mat_c_tmp_lo_even。
+与 golden 关系：verify_mmad_sanity.py 对拍；不进入生产 mixPass=0 验收。
 
 用法：
   MMAD_SANITY_CASE=eye16 python3 scripts/gen_mmad_sanity_data.py

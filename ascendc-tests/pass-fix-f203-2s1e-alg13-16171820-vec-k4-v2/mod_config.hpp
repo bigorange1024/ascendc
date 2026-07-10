@@ -11,6 +11,7 @@
  * Golden：gen_data.py 编译 hat_inner_product_ref.c 时 HAT_GOLDEN_MOD_VARIANT=0，与设备变体无关仍须对拍。
  *
  * CMake：当前仅头文件默认；run.sh 注释提及 F203_MOD_VARIANT 环境覆盖（改宏后重编）。
+ * 本文件仅宏选型，实现见 mod_variants.hpp。
  */
 #ifndef F203_MOD_CONFIG_HPP
 #define F203_MOD_CONFIG_HPP

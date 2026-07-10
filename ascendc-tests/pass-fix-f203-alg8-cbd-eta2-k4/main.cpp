@@ -1,6 +1,14 @@
 /**
  * @file main.cpp
  * @brief Alg.8 CBD η=2 探针 Host：读 prf_out[8,128] → 启动核 → 写 output/src.bin。
+ *
+ * 流水线位置：读取 `scripts/gen_data.py` 产出的 `input/prf_out.bin`（8 行 PRF
+ * 输出，行优先 uint8），下发设备核 `f203_cbd_eta2_batch8`（CPU 孪生走
+ * ICPU_RUN_KF，SIM/NPU 走 acl 下发），落盘计算结果到 `output/src.bin`（8 行
+ * int32 系数）。与 golden 的关系：本文件只负责跑通计算并落盘，真正的逐元素
+ * 对拍在 `scripts/verify_result.py` 中完成（与
+ * `library/shared/fips203_se_sample/golden_se_sampling.py::sample_poly_cbd2`
+ * 产出的 golden_src.bin 比对），验收标准为 I/O 等价，不要求实现同构。
  */
 #include "data_utils.h"
 #include "f203_cbd_eta2_config.h"
@@ -19,12 +27,17 @@ extern "C" __global__ __aicore__ void f203_cbd_eta2_batch8(GM_ADDR prf_gm, GM_AD
 #endif
 
 namespace {
-constexpr size_t kPrfBytes = F203CbdEta2Host::PRF_TOTAL_BYTES;
-constexpr size_t kSrcBytes = static_cast<size_t>(F203CbdEta2Host::SRC_COEFFS) * sizeof(int32_t);
+constexpr size_t kPrfBytes = F203CbdEta2Host::PRF_TOTAL_BYTES;               // 输入总字节数：8*128=1024
+constexpr size_t kSrcBytes = static_cast<size_t>(F203CbdEta2Host::SRC_COEFFS) * sizeof(int32_t);  // 输出总字节数：8*256*4=8192
 /** CPU 孪生：910B 每 blockDim 会 fork 1 AIC+2 AIV；AIV_ONLY 探针固定 launch=1。 */
 constexpr uint32_t kCpuLaunchBlockDim = 1U;
 }  // namespace
 
+/**
+ * 主流程：读 input/prf_out.bin → 构造 GM 缓冲 → 下发核函数（CPU 孪生 / SIM-NPU
+ * 二选一编译分支）→ 落盘 output/src.bin。
+ * @return 0=成功；1=读输入文件失败；2=写输出文件失败
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -41,6 +54,10 @@ int32_t main(int32_t argc, char *argv[])
               << " launch_blockDim=" << kHostBlockDim << " F203_CBD_BLOCK_DIM=" << F203_CBD_BLOCK_DIM << "\n";
 
 #ifdef __CCE_KT_TEST__
+    /* CPU 孪生路径：固定 launch blockDim=1（AIV_ONLY 探针避免 tikicpu 按 launch
+     * blockDim 误 fork 出多颗 AIC 进程）；核内若检测到 GetBlockNum()==1 会自动
+     * 退化为单核串行 8 行，与 P2 双核结果语义一致。GM 缓冲用 AscendC::GmAlloc
+     * 模拟设备内存，计算完成后直接从该内存落盘（无需显式 Device→Host 拷贝）。 */
     std::cout << "[main] CPU twin launch_blockDim=" << kCpuLaunchBlockDim
               << " (P2 kernel serializes 8 rows when GetBlockNum()==1)\n";
     uint8_t *prf_gm = static_cast<uint8_t *>(AscendC::GmAlloc(kPrfBytes));
@@ -55,6 +72,9 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(prf_gm);
     AscendC::GmFree(src_gm);
 #else
+    /* SIM/NPU 路径：acl 初始化 → 建流 → 分配 Device 侧输入/输出缓冲 + Host 侧输出
+     * 回读缓冲 → Host→Device 拷入 PRF → 下发核函数（kHostBlockDim，探针默认 2，
+     * 即 P2 双 AIV）→ 同步 → Device→Host 拷回结果 → 落盘。 */
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));

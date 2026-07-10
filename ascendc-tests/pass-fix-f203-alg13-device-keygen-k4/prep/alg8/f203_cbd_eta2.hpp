@@ -4,11 +4,17 @@
 // @role prep/alg8：η=2 centered binomial（secret/noise）设备采样与 LUT；与 presample/alg7 链接成 prep 链。 / Alg.8 η=2 CBD prep helpers. 本文件 `f203_cbd_eta2.hpp` 为该子模块组件。 / Component: f203_cbd_eta2.hpp.
 // @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
 // @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影，以 profile_subtask_log*.toml 为准。
+// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
 // @depends #include: kernel_operator.h, cstdint, f203_cbd_eta2_sw_lut.hpp, f203_cbd_eta2_ub_io.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 Alg.8 CBD_η=2：ŝ/ê 采样。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/alg8/f203_cbd_eta2.hpp
+ */
 /**
  * @file f203_cbd_eta2.hpp
  * @brief FIPS 203 Alg.8 SamplePolyCBD_η=2 — batch 8 poly 入口与编译期契约。

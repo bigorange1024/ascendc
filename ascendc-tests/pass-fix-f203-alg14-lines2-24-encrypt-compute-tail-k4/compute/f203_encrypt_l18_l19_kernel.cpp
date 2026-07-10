@@ -94,6 +94,11 @@ __aicore__ inline void FsmSet(FsmState st, const bool aic, const int32_t subBloc
     KYBER_PIPE_ALL();
 }
 
+/**
+ * 四路 MMAD 一轮：lo/hi × even/odd LUT → MAT_C_TMP_*。
+ * @param lutEvenTop / lutOddTop NTT 或 INTT stacked LUT 基址
+ * @param mRows NTT 用 nttMRowsLogic，INTT pad-8 用 inttMRowsLogic
+ */
 __aicore__ inline void AicMmadRound(GM_ADDR ws, uint32_t coeffN, size_t lutEvenTop, size_t lutOddTop, uint16_t mRows)
 {
     using namespace tiling;
@@ -152,6 +157,13 @@ __aicore__ inline void PrefixEmbedMuIntoE2Gm(GM_ADDR mGm, GM_ADDR e2Gm, int32_t 
     queM.FreeTensor(mLocal);
 }
 
+/**
+ * SIM 融合 MIX：行 2/16–24（含 μ 折叠 + 可选内联 pack）。
+ *
+ * @param uOut/vOut 时域 u、v；@param ySrc/yHat；@param uNtt/uTr 对拍
+ * @param aHat/ekPke/tHat/trHatNtt；@param mGm 消息 32B；@param e1/e2
+ * @param cGm 非空则尾部内联 pack 写密文；@param traceGm 可选进度
+ */
 extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR vOut, GM_ADDR ySrc, GM_ADDR yHat,
                                                            GM_ADDR uNtt, GM_ADDR uTr, GM_ADDR aHat, GM_ADDR ekPke,
                                                            GM_ADDR tHat, GM_ADDR trHatNtt, GM_ADDR mGm, GM_ADDR e1,

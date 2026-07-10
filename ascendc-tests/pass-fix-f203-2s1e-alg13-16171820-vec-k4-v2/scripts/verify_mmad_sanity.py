@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""mixPass=6 对拍：device MAT_C_TMP_LO_EVEN vs numpy golden。"""
+"""
+verify_mmad_sanity.py — mixPass=6 对拍：device MAT_C_TMP_LO_EVEN vs numpy golden。
+
+流水线位置：run.sh 在 mixPass=6 后调用；隔离验证 AicMmad 单路 lo_even。
+与 golden 关系：output/mat_c_tmp_lo_even.bin vs golden_mat_c_tmp_lo_even.bin（gen_mmad_sanity_data 生成）。
+"""
 from __future__ import annotations
 
 import sys

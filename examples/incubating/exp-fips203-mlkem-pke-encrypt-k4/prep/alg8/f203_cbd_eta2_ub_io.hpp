@@ -1,3 +1,21 @@
+/**
+ * @file f203_cbd_eta2_ub_io.hpp
+ * @brief P1b/P2：GM↔UB MTE DataCopy + PipeBarrier。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 每行流水线（8 行或 P2 下每 AIV 4 行）：
+ *   1. DataCopy 128B  prf_gm[row] → prfLocal
+ *   2. PipeBarrier    — MTE 完成后再读 UB（无 barrier 时 SIM ~23k 但对拍 FAIL）
+ *   3. SamplePolyCbd2RowSwLutUb
+ *   4. PipeBarrier    — 计算完成后再写 GM
+ *   5. DataCopy 256×int32 rowLocal → src_gm[row]
+ *   6. PipeBarrier
+ * P1b：`F203_CBD_BLOCK_DIM==1`，block0 串行 8 行（μ≈51156 tick）。
+ * P2：`F203_CBD_BLOCK_DIM==2`，RowForBlock 分片（μ≈28872 tick）。
+ * Pipe 细同步（Opt-5 Phase 1+5）：CopyIn→PIPE_MTE2，Vector 后→PIPE_V；CopyOut 后 barrier 已删减（C-04，下一行 CopyIn 由 MTE2 覆盖）。
+ * 见 ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/PIPE_SYNC_EVAL.md §4。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/alg8/f203_cbd_eta2_ub_io.hpp
 // @layer prep
@@ -8,25 +26,6 @@
 // @depends #include: f203_cbd_eta2_sw_lut.hpp, kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_cbd_eta2_ub_io.hpp
- * @brief P1b/P2：GM↔UB MTE DataCopy + PipeBarrier。
- *
- * 每行流水线（8 行或 P2 下每 AIV 4 行）：
- *   1. DataCopy 128B  prf_gm[row] → prfLocal
- *   2. PipeBarrier    — MTE 完成后再读 UB（无 barrier 时 SIM ~23k 但对拍 FAIL）
- *   3. SamplePolyCbd2RowSwLutUb
- *   4. PipeBarrier    — 计算完成后再写 GM
- *   5. DataCopy 256×int32 rowLocal → src_gm[row]
- *   6. PipeBarrier
- *
- * P1b：`F203_CBD_BLOCK_DIM==1`，block0 串行 8 行（μ≈51156 tick）。
- * P2：`F203_CBD_BLOCK_DIM==2`，RowForBlock 分片（μ≈28872 tick）。
- *
- * Pipe 细同步（Opt-5 Phase 1+5）：CopyIn→PIPE_MTE2，Vector 后→PIPE_V；CopyOut 后 barrier 已删减（C-04，下一行 CopyIn 由 MTE2 覆盖）。
- * 见 ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/PIPE_SYNC_EVAL.md §4。
- */
 #pragma once
 
 #include "f203_cbd_eta2_sw_lut.hpp"

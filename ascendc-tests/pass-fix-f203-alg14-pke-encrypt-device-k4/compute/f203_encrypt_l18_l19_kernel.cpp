@@ -1,16 +1,13 @@
 /**
  * @file f203_encrypt_l18_l19_kernel.cpp
- * @brief Alg.14 行 2/16–17/18/19/21/22–24：**SIM 单 launch** 融合 MIX + 内联 tail pack（Phase C）。
+ * @brief Alg.14 行 2/16–24：**SIM 单 launch** 融合 MIX + μ 折叠 + 内联 tail pack。
  *
- * 流水线：pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4（**PASS** 基线）；μ 折叠进行 21；cGm 非空时 AIV 分片 pack。
+ * 流水线位置：device 探针在 prep launch 之后调用；与 compute-tail PASS 基线同构。
+ * Golden：全链 c.bin；中间 u/v 可选落盘。cGm 非空时 AIV 分片 pack。
  *
- * FSM 阶段（CrossCore 仅 AIC↔AIV）：
+ * FSM（CrossCore 仅 AIC↔AIV）：
  *   [前缀] AIV0: μ←m；e₂ GM += μ (mod q)
- *   行 16–17 NTT(y): …
- *   行 2 decode:     AIV0 ByteDecode₁₂(ek)→t_hat UB（默认标量 F203_BYTE_DECODE12_IMPL=0）
- *   行 18 内积:      kP=5 uTr pad→8 驻留 UB（AIV0 [û0,û1,tr̂,0]；AIV1 [û2,û3,0,0]）
- *   GATE:            ST_IP_AIV_DONE=4 → ST_AT_JP_GATE=8 → 释放 INTT MMAD
- *   行 19/21 INTT:   k=8 batch → u[0..3]+e₁ / v(tr̂ 行)+e₂；flag **1/3**（禁止 flag 2）
+ *   行 16–17 NTT(y) → 行 2 decode → 行 18 uTr pad-8 → GATE → 行 19/21 INTT → pack
  */
 #if !defined(ASCENDC_CPU_DEBUG) && ALG11_MEM_OPS == 1
 #include "f203_encrypt_alg11_rom_weak.hpp"
@@ -94,6 +91,11 @@ __aicore__ inline void FsmSet(FsmState st, const bool aic, const int32_t subBloc
     KYBER_PIPE_ALL();
 }
 
+/**
+ * 四路 MMAD 一轮：lo/hi × even/odd LUT → MAT_C_TMP_*。
+ * @param lutEvenTop / lutOddTop NTT 或 INTT stacked LUT 基址
+ * @param mRows NTT 用 nttMRowsLogic，INTT pad-8 用 inttMRowsLogic
+ */
 __aicore__ inline void AicMmadRound(GM_ADDR ws, uint32_t coeffN, size_t lutEvenTop, size_t lutOddTop, uint16_t mRows)
 {
     using namespace tiling;
@@ -152,6 +154,10 @@ __aicore__ inline void PrefixEmbedMuIntoE2Gm(GM_ADDR mGm, GM_ADDR e2Gm, int32_t 
     queM.FreeTensor(mLocal);
 }
 
+/**
+ * SIM 融合 MIX（device）：行 2/16–24；输入 y/e₁/e₂ 通常来自 prep re 切片。
+ * @param mGm 消息；@param cGm 非空则内联 pack；其余同 compute-tail
+ */
 extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR vOut, GM_ADDR ySrc, GM_ADDR yHat,
                                                            GM_ADDR uNtt, GM_ADDR uTr, GM_ADDR aHat, GM_ADDR ekPke,
                                                            GM_ADDR tHat, GM_ADDR trHatNtt, GM_ADDR mGm, GM_ADDR e1,

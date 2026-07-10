@@ -1,6 +1,10 @@
 /**
  * @file f203_decrypt_extract_m_entry.cpp
- * @brief G4：v − w_time → Compress₁ → m.bin（32B）。
+ * @brief 历史 G4 独立 kernel：v' − w_time → Compress₁ → m.bin（32B）。
+ *
+ * 流水线位置：旧多 launch 尾段；生产 fused 内联 tail_compress1_byteencode1。
+ * Compress₁ 公式同 extract_impl（(Q+1)/2），非 Barrett 生产路径。
+ * 与 golden：仅在旧 G4 对拍语境使用。
  */
 #include "f203_decrypt_layout.h"
 #include "kernel_operator.h"
@@ -12,6 +16,7 @@ namespace {
 constexpr int32_t kN = static_cast<int32_t>(F203_DECRYPT_N);
 constexpr int32_t kQ = static_cast<int32_t>(F203_DECRYPT_Q);
 
+/** (a−b) mod q。 */
 __aicore__ inline int32_t mod_q_sub(int32_t a, int32_t b)
 {
     int32_t x = a - b;
@@ -22,7 +27,7 @@ __aicore__ inline int32_t mod_q_sub(int32_t a, int32_t b)
     return x;
 }
 
-/** FIPS 203 Compress₁：输出 0/1。 */
+/** 旧 FIPS 风格 Compress₁：输出 0/1（非 Barrett）。 */
 __aicore__ inline uint32_t compress_1_u32(int32_t x)
 {
     x = mod_q_sub(x, 0);
@@ -33,6 +38,11 @@ __aicore__ inline uint32_t compress_1_u32(int32_t x)
 
 } // namespace
 
+/**
+ * 尾段 kernel 入口。
+ * @param vGm / wTimeGm int32[256]；mGm uint8[32]
+ * 前置：非 AIC；仅 block0。
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_extract_m(GM_ADDR vGm, GM_ADDR wTimeGm, GM_ADDR mGm)
 {
 #if defined(ASCENDC_CPU_DEBUG)
@@ -77,6 +87,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_extract_m(GM_ADDR vGm, GM_ADD
 }
 
 #ifndef __CCE_KT_TEST__
+/** Host 侧 launch 包装（非 KT 单测）。 */
 void f203_decrypt_extract_m_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *vGm, uint8_t *wTimeGm,
                                uint8_t *mGm)
 {

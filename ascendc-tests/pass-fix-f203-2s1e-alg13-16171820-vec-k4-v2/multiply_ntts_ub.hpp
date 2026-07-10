@@ -31,6 +31,7 @@ namespace alg11_ub {
 
 #include "alg11_gammas.h"
 
+/** Alg.11 basemul 内 Barrett 约化（与 hat_inner_product_ref.c 同公式）。 */
 __aicore__ inline int32_t barrett_red_coeff(int32_t x)
 {
     const int32_t q = 3329;
@@ -43,6 +44,9 @@ __aicore__ inline int32_t barrett_red_coeff(int32_t x)
     return x;
 }
 
+/**
+ * BaseCaseMultiply：c0=a0*b0+a1*b1*γ；c1=a0*b1+a1*b0（均经 barrett_red_coeff）。
+ */
 __aicore__ inline void base_case_multiply(int32_t *c0, int32_t *c1, int32_t a0, int32_t a1, int32_t b0, int32_t b1,
                                           int32_t gamma)
 {
@@ -51,6 +55,9 @@ __aicore__ inline void base_case_multiply(int32_t *c0, int32_t *c1, int32_t a0, 
     *c1 = barrett_red_coeff(a0 * b1 + a1 * b0);
 }
 
+/**
+ * 标量 MultiplyNTTs：交错 f/g[256] → h[256]；γ 取自 kAlg11Gammas。
+ */
 __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const int32_t *g)
 {
     for (int i = 0; i < alg11_tiling::kN / 2; ++i) {
@@ -66,6 +73,10 @@ __aicore__ inline void multiply_ntts_scalar(int32_t *h, const int32_t *f, const 
     }
 }
 
+/**
+ * UB 标量门面：LocalTensor GetValue → multiply_ntts_scalar → SetValue。
+ * CPU_DEBUG 与 ALG11_IMPL=0 使用。
+ */
 __aicore__ inline void compute_on_ub_scalar(AscendC::LocalTensor<int32_t> &hLocal,
                                             const AscendC::LocalTensor<int32_t> &fLocal,
                                             const AscendC::LocalTensor<int32_t> &gLocal)

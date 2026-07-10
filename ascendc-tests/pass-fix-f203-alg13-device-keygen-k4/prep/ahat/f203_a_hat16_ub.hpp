@@ -4,11 +4,17 @@
 // @role prep/ahat：设备侧生成矩阵 A_hat（FIPS203 Alg.6/布局 f203_a_hat16）；AIV-only UB 流水，为 compute MMAD 提供 a_hat GM。 / Device A_hat generation for keygen prep. 本文件 `f203_a_hat16_ub.hpp` 为该子模块组件。 / Component: f203_a_hat16_ub.hpp.
 // @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
 // @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影，以 profile_subtask_log*.toml 为准。
+// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
 // @depends #include: f203_a_hat16_config.h, f203_a_hat16_layout.h, f203_alg7_d12_vec.hpp, f203_alg7_g.hpp, f203_alg7_layout.h, f203_alg7_shake_xof.hpp, shake_general.h, shake_general_tiling_data.h, shake_ub_helpers.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 1 Â[16,256] 分片构建。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：prep/ahat/f203_a_hat16_ub.hpp
+ */
 /**
  * @file f203_a_hat16_ub.hpp
  * @brief Alg.13 行 3–7：16×（SHAKE + 向量 d12/rej），UB 全链，链末写 GM a_hat[16,256]。
@@ -216,6 +222,10 @@ __aicore__ inline void BuildAHat16ShardWithUb(const uint8_t rho[F203Alg7::kRhoBy
     }
 }
 
+/**
+ * 从 seed_d 派生 ρ 后构建 Â 分片（独立探针入口）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void BuildAHat16ShardFromSeedD(uint32_t seed_d, __gm__ int32_t *a_hat_gm, uint32_t blockIdx)
 {
 #if F203_AHAT16_BLOCK_DIM == 2

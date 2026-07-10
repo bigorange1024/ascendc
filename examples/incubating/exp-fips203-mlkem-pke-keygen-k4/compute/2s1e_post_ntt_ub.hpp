@@ -9,6 +9,12 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 S3+行18–20 单 TPipe UB 融合主路径。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/2s1e_post_ntt_ub.hpp
+ */
 #ifndef NTTS_2S1E_POST_NTT_UB_HPP
 #define NTTS_2S1E_POST_NTT_UB_HPP
 
@@ -74,6 +80,10 @@ public:
     {
     }
 
+    /**
+     * 绑定 GM 并分配/预填 UB（NTT、t̂、dot scratch、ROM）。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void Init(GM_ADDR matPlanar, GM_ADDR a_hat, GM_ADDR ek_out, GM_ADDR sk_out, GM_ADDR dst_dump,
                                 GM_ADDR t_dump)
     {
@@ -196,6 +206,7 @@ public:
                                    bool loadThatPreset)
     {
 #if HAT_LINE18_FULLPOLY >= 1
+        // FULLPOLY：NTT/t̂ 常驻 TBuf，避免 Que Alloc/Free
         LocalTensor<int32_t> ub_ntt = ubNttBuf_.GetWithOffset<int32_t>(ubNttLength_, 0);
         LocalTensor<int32_t> ub_that = ubThatBuf_.GetWithOffset<int32_t>(thatTileLength_, 0);
 #else
@@ -203,6 +214,7 @@ public:
         LocalTensor<int32_t> ub_that = que_ub_that_.AllocTensor<int32_t>();
 #endif
 
+        // --- Stage3 或预设灌入 ŝ/ê ---
         if (loadNttPreset) {
             loadNttPresetInto(ub_ntt);
 #if HAT_LINE18_FULLPOLY >= 1
@@ -217,6 +229,7 @@ public:
 #endif
         }
 
+        // --- 行 18：t̂[p] = Σ_j Â[p,j]∘ŝ[j] + ê[p]（或从 t_dump 预设）---
         if (loadThatPreset) {
             for (uint16_t p = pBegin_; p < pEnd_; ++p) {
                 const uint32_t localP = (static_cast<uint32_t>(p) - static_cast<uint32_t>(pBegin_)) * coeffN_;
@@ -227,6 +240,7 @@ public:
             stageHatInto(ub_ntt, ub_that);
         }
 
+        // --- 行 19–20：ByteEncode₁₂ ---
         if (runEncode) {
 #if HAT_BYTE_ENCODE >= 1 && HAT_LINE18_DOT_ONLY < 1
             stageEncodeOut(ub_ntt, ub_that);
@@ -306,6 +320,10 @@ private:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * 单 poly 的 half（128 系数）四 limb RouteA 合并。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void mergePolyHalf(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &plane,
                                          LocalTensor<int32_t> &half_out, LocalTensor<int32_t> &t1,
                                          LocalTensor<float> &fRaw, LocalTensor<float> &fTmp, LocalTensor<float> &fQuot,
@@ -335,6 +353,10 @@ private:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * 单 poly 的 half（128 系数）四 limb RouteA 合并。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void mergePolyHalf(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &plane,
                                          LocalTensor<int32_t> &half_out, LocalTensor<int32_t> &t1,
                                          LocalTensor<int32_t> &t2, uint32_t ubLp, uint16_t lp, uint32_t halfIdx)
@@ -367,6 +389,10 @@ private:
         KYBER_PIPE_ALL();
     }
 
+    /**
+     * 行 18 入口：分发到 DotOnly 或 Legacy。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void stageHatInto(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &ub_that)
     {
 #if HAT_LINE18_FULLPOLY >= 1
@@ -513,6 +539,10 @@ private:
     }
 #endif
 
+    /**
+     * 行 18 旧路径（非 FULLPOLY）对照实现。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void stageHatIntoLegacy(LocalTensor<int32_t> &ub_ntt, LocalTensor<int32_t> &ub_that)
     {
         /* halfLen 切片 + multiply_ntts_half_vec；j 外环、subOff 半核；每 half 立即 mod（与 v2 lazy Σ 不同） */

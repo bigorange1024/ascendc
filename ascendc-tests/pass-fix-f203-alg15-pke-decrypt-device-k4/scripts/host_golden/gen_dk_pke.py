@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""gen_dk_pke.py — 与 Encrypt gen_ek_pke 同源 KeyGen golden，输出 dk 段 ŝ（1536B）。"""
+"""
+gen_dk_pke.py — Alg.15 输入 dk_PKE Host 夹具：ByteEncode₁₂(ŝ)（1536B）。
+
+流水线位置：gen_data 第一步；与 Encrypt 侧 gen_ek_pke 同源 KeyGen golden（同 SEED_D）。
+语义：d→(ρ,σ)→CBD 采样 s → NTT → ByteEncode₁₂ → dk（不含 ρ；ρ 在 ek 尾）。
+与 golden 关系：仅造合法私钥字节；设备 decode_s_hat 再解回 ŝ。
+禁止 liboqs。
+"""
 from __future__ import annotations
 
 import sys
@@ -19,12 +26,20 @@ from gen_ek_pke import (
     stage123_transform,
 )
 
-DK_BYTES = K * POLY_D12_BYTES
+DK_BYTES = K * POLY_D12_BYTES  # 4×384 = 1536
 
 
 def build_dk_pke(seed_d: int) -> np.ndarray:
+    """
+    由 SEED_D 确定性派生 dk_PKE。
+
+    @param seed_d 与 gen_data / Encrypt 夹具共用的整数种子
+    @return shape (1536,) uint8：k 个 poly 的 ByteEncode₁₂(ŝ)
+    """
+    # 与 KeyGen 相同的 derand → G → σ（ρ 此处不用）
     d = derand_bytes_from_seed(seed_d)
     _, sigma = hash_g_rho_sigma(d)
+    # CBD2 采样 s‖e；Decrypt 私钥只要 s 的 NTT
     src = build_src(sigma)
     s = src[:K]
     s_hat = stage123_transform(s, "ntt")
@@ -35,6 +50,7 @@ def build_dk_pke(seed_d: int) -> np.ndarray:
 
 
 def main() -> None:
+    """CLI：SEED_D → dk_pke.out。"""
     if len(sys.argv) != 3:
         print(f"usage: {sys.argv[0]} <SEED_D> <dk_pke.out>", file=sys.stderr)
         sys.exit(1)

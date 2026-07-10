@@ -2,7 +2,11 @@
 #define BYTE_ENCODE12_CONFIG_HPP
 
 /**
- * ByteEncode₁₂ 实现变体（CMake -DBYTE_ENCODE12_VEC / -DBYTE_ENCODE12_SCATTER_VEC 覆盖）。
+ * @file byte_encode12_config.hpp
+ * @brief ByteEncode₁₂ 探针编译期开关（CMake -D 覆盖）。
+ *
+ * 流水线位置：被 pair / vec / only / custom 等设备侧头文件包含，决定标量/向量/prefetch 路径。
+ * 与 golden 关系：仅影响设备实现路径；I/O 语义须与 byte_encode12_ref / gen_data golden 一致。
  *
  * BYTE_ENCODE12_VEC:
  *   0 — 标量 poly_byte_encode12_scalar（与 2s1e 原实现一致）

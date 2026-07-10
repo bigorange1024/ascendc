@@ -10,6 +10,12 @@
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
 # coding=utf-8
+"""
+本文件在 KeyGen 流水线中的位置：Host：prep 段 golden / ROM 生成脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/prep/gen_alg7_interleave_rom.py
+"""
 """生成 Alg.7 rej 阶段 d1/d2 交错 Gather 字节索引 ROM → f203_alg7_interleave_rom.h。
 
 设备侧 rej 向量路径将 scratch 布局视为连续字节流：

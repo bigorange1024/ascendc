@@ -1,15 +1,12 @@
 /**
  * @file data_utils.h
- * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
+ * @brief Alg.14 Encrypt compute 探针 Host I/O 工具（Huawei CANN 样例模板 + 本仓文件头）。
  *
- * 本探针用途：
- *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
- *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
- *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
+ * 流水线位置：main.cpp 读 input/{y,a_hat,e1,e2,ek,lut_*}.bin，写 output/{y_hat,u_ntt,u_tr,u,v}.bin。
+ * Golden：尺寸与 f203_l18_l19_tiling.h 中 *FileBytes 一致；对拍由 run.sh + cmp 完成。
+ * CHECK_ACL：SIM/NPU 路径 ACL 错误检查。
  *
- * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
- *
- * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
+ * 以下 ReadFile/WriteFile/PrintData 等为 Huawei 样例实现，本任务仅刷新文件头说明，不改逻辑。
  */
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
@@ -60,10 +57,9 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从文件读入二进制到 buffer。
+ * @param filePath 路径；@param fileSize 输出实际字节数；@param buffer 目标；@param bufferSize 容量上限
+ * @return true 成功；失败时打 ERROR_LOG（空文件 / 超容量 / 打不开）
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
@@ -105,11 +101,9 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
 }
 
 /**
- * @brief Write data to file
- * @param [in] filePath: file path
- * @param [in] buffer: data to write to file
- * @param [in] size: size to write
- * @return write result
+ * 将 buffer 整段写入文件（O_CREAT|O_TRUNC）。
+ * @param filePath 路径；@param buffer 源；@param size 字节数
+ * @return true 当且仅当 write 字节数 == size
  */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
@@ -134,6 +128,7 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
     return true;
 }
 
+/** 按行打印标量数组（每行 elementsPerRow 个，setw(10)） */
 template<typename T>
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
@@ -146,6 +141,7 @@ void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
     }
 }
 
+/** 打印 aclFloat16：先转 float 再按行输出 */
 void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -157,6 +153,10 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 按 printDataType 分派打印 host 缓冲（调试用；本探针 golden 对拍不依赖本函数）。
+ * @param data 首地址；@param count 元素个数；@param dataType 见 printDataType；@param elementsPerRow 默认 16
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 NTT 后乘积 / 配置辅助。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/multiply_ntts_config.hpp
+ */
+/**
  * @file multiply_ntts_config.hpp
  * @brief FIPS 203 Alg.11 MultiplyNTTs 的设备实现选型宏（标量 vs 向量、B1/B2、ROM 导入）。
  *

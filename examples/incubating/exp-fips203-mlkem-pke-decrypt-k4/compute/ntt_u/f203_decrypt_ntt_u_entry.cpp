@@ -1,10 +1,11 @@
 /**
  * @file f203_decrypt_ntt_u_entry.cpp
- * @brief G2：r polyvec k=4 三段式 NTT（MIX 1×AIC + 2×AIV，mixPass=3）。
+ * @brief Decrypt 流水线独立入口：û ← NTT(u') 三段式 MIX（1×AIC + 2×AIV，mixPass=3）。
  *
- * 语义 vendored 自 pass-fix-f203-stage123-ntt-intt-polyvec8-vec，k 缩为 4。
- * 输入 src [4,256] int32（time 域 r）；输出 dst [4,256] int32（NTT 域 r̂）。
- * workspace 含 even/odd stacked LUT（host 自 input/ 写入 ws 前缀）。
+ * 对齐 FIPS 203 Alg.15 中 NTT(u')；生产路径内联于 f203_decrypt_device_fused。
+ * 输入 src [4,256] int32（时域 u'）；输出 dst [4,256] int32（NTT 域 û）。
+ * workspace 含 even/odd stacked LUT（Host 自 input/ 写入 ws 前缀）。
+ * golden I/O：中间态不落盘；全链以 m.bin 对拍。
  */
 #include "aic_func.hpp"
 #include "aiv_func.hpp"
@@ -13,6 +14,7 @@
 #include "kernel_operator.h"
 #include "kyber_limb6.hpp"
 
+/** MIX 跨核握手：S1 split → S2 MMAD → S2 pack →（S3 在 AIV 本地）。 */
 enum MachineState : uint16_t {
     IDLE = 0,
     AIV_SPLIT,
@@ -21,10 +23,11 @@ enum MachineState : uint16_t {
 };
 
 #ifdef ASCENDC_CPU_DEBUG
-/** CPU tikicpu：main 写入；SIM/设备用 tiling.mixPass。 */
+/** CPU tikicpu：main 写入；SIM/设备用 tiling.mixPass（生产默认 3）。 */
 volatile int g_f203_decrypt_ntt_u_mix_pass = 3;
 #endif
 
+/** 等待对端 CrossCore 标志。 */
 __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -34,6 +37,7 @@ __aicore__ inline void __WAIT(MachineState STATE, const bool AIC, const int32_t 
     KYBER_PIPE_ALL();
 }
 
+/** 置位 CrossCore 标志。 */
 __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t subBlockID)
 {
     (void)AIC;
@@ -46,6 +50,12 @@ __aicore__ inline void __SET(MachineState STATE, const bool AIC, const int32_t s
 #define WAIT __WAIT(STATE, AIC, subBlockID);
 #define SET  __SET(STATE, AIC, subBlockID);
 
+/**
+ * NTT(u') 独立入口：1×AIC + 2×AIV，poly-batch（每 AIV 握完整 poly 的 hi+lo）。
+ * @param dst NTT 域 û [4,256] int32
+ * @param src 时域 u' [4,256] int32
+ * @param ws 含 LUT even/odd stacked 与 S0/mat_c 临时
+ */
 extern "C" __global__ __aicore__ void f203_decrypt_ntt_u(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
@@ -70,6 +80,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_ntt_u(GM_ADDR dst, GM_ADDR sr
     MachineState STATE;
 
     if (AIC) {
+        // --- AIC Stage2：四路 MMAD（正向 NTT LUT）---
         if (!runS2) {
             return;
         }
@@ -93,6 +104,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_ntt_u(GM_ADDR dst, GM_ADDR sr
             SET
         }
     } else {
+        // --- AIV：S1 limb 编码 → pack 平面 → RouteA merge/mod ---
         if (runS1) {
             STATE = AIV_SPLIT;
             AivK8Split split(subBlockID, coeffN);

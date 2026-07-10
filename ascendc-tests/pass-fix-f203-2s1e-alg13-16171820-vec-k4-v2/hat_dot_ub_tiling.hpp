@@ -21,12 +21,13 @@
 
 namespace hat_dot_ub {
 
-constexpr int32_t kN = 256;
-constexpr int32_t kHatQ = 3329;
-constexpr int32_t kRomPairCount = kN / 2;
-constexpr int32_t kVecWsInts = 8 * kRomPairCount;
-constexpr int32_t kPPerAiv = 2;
+constexpr int32_t kN = 256;              /**< 单 poly 系数数 */
+constexpr int32_t kHatQ = 3329;          /**< ML-KEM 模数 q */
+constexpr int32_t kRomPairCount = kN / 2; /**< Alg.11 对数 = 128 */
+constexpr int32_t kVecWsInts = 8 * kRomPairCount; /**< Alg11 向量工作区 int32 槽 */
+constexpr int32_t kPPerAiv = 2;          /**< 每 AIV 负责 2 个 p */
 
+/* dotScratch 内相对偏移（int32 元素）：fLoc | row累加 | modT2 | outLine×kPPerAiv */
 constexpr int32_t kOffFLoc = 0;
 constexpr int32_t kOffRow = kN;
 constexpr int32_t kOffModT2 = 2 * kN;

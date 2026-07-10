@@ -43,13 +43,34 @@ def main() -> None:
         lines.append("};")
         return lines
 
+    # 注：本头文件由本脚本每次 run.sh 重新生成并覆盖；若要调整文件头注释须改这里，
+    #     直接手改生成后的 .h 文件会在下次 run.sh 时被覆盖丢失。
     body = [
         "/**",
         " * @file f203_alg7_deinterleave_rom.h",
-        f" * @brief Alg.7 xof {XOF_BYTES}B → c0/c1/c2[{NPAIRS}] Gather 字节索引（自动生成）。",
+        " * @brief Alg.7「xof 解交织」实验路径（F203_ALG7_D12_GATHER=1）只读索引表：",
+        f" *        xof[{XOF_BYTES}B] 按每 3 字节一组的 (C0,C1,C2) → 三个 Gather 字节索引表（自动生成，禁止手改）。",
         " *",
-        " * expanded[j]=byte j（int32）；索引为 expanded 内 4 对齐字节偏移。",
-        " * 生成：scripts/gen_alg7_deinterleave_rom.py",
+        " * 表语义：",
+        " *   - 设备侧先将 xof 的 672 个 uint8 逐字节零扩展进 `expanded[j]`（int32，j=0..671），",
+        " *     使得可以用 AscendC::Gather（仅支持 int32、4 字节对齐偏移）按字节位置取值；",
+        " *   - Alg.7 line 6 把 xof 每 3 字节视为一组三元组 (C0,C1,C2)：第 k 组（k=0..223）",
+        " *     C0/C1/C2 分别位于 xof 字节下标 `3k`、`3k+1`、`3k+2`；",
+        " *   - 三个表 `kAlg7DeinterleaveC0Byte/C1Byte/C2Byte[k]` 即该组 C0/C1/C2 在 `expanded`",
+        " *     内的 **4 字节对齐偏移** = `4*(3k)`、`4*(3k+1)`、`4*(3k+2)`（expanded 元素本身是 int32，",
+        " *     故字节偏移 = 元素下标×4）；",
+        f" *   - 表长 `kDeinterleaveRomLen={NPAIRS}` 与候选对数 `kCandPairs` 一致，",
+        f" *     `kDeinterleaveExpandedLen={XOF_BYTES}` 与 XOF 总字节数 `kXofBytes` 一致（均由",
+        " *     `alg7_geom.CAND_PAIRS`/`XOF_BYTES` 同步）。",
+        " *",
+        " * 用法：仅 `F203_ALG7_D12_GATHER=1`（实验对照，生产默认 0）时生效——",
+        " *   `f203_alg7_d12_vec.hpp::InitAlg7DeinterleaveRomUb` 把三表拷入 UB 索引张量 `idxC0/C1/C2`，",
+        " *   `PackXofBytesToExpandedInt32` 完成零扩展，`DeinterleaveCandGatherFromUb` 用三次",
+        " *   `AscendC::Gather` 一次性取出 c0/c1/c2[224]。生产路径（GATHER=0）不依赖本表，",
+        " *   改用 `DeinterleaveCandScalarFromUb` 标量 `GetValue` 顺序拆字节（Phase2 tick 更优，见 STATUS.md）。",
+        " *",
+        " * 生成脚本：`python3 scripts/gen_alg7_deinterleave_rom.py`（纯算术推导，无随机性，可重复复现；",
+        " * 若修改 `alg7_geom.CAND_PAIRS`/`XOF_BYTES` 须重新运行本脚本同步刷新本文件）。",
         " */",
         "#pragma once",
         "",
@@ -57,14 +78,19 @@ def main() -> None:
         "",
         "namespace F203Alg7 {",
         "",
+        "/** 候选三元组个数（=XOF 总字节数/3），三张表的行数。 */",
         f"constexpr uint32_t kDeinterleaveRomLen = {NPAIRS}U;",
+        "/** xof 逐字节零扩展后的 expanded 数组长度，等于 XOF 总字节数。 */",
         f"constexpr uint32_t kDeinterleaveExpandedLen = {NPAIRS * 3}U;",
         "",
     ]
+    body.append("/** 第 k 组三元组的 C0 在 expanded 内的 4 对齐字节偏移 = 4*(3k)。 */")
     body.extend(emit_array("kAlg7DeinterleaveC0Byte", c0))
     body.append("")
+    body.append("/** 第 k 组三元组的 C1 在 expanded 内的 4 对齐字节偏移 = 4*(3k+1)。 */")
     body.extend(emit_array("kAlg7DeinterleaveC1Byte", c1))
     body.append("")
+    body.append("/** 第 k 组三元组的 C2 在 expanded 内的 4 对齐字节偏移 = 4*(3k+2)。 */")
     body.extend(emit_array("kAlg7DeinterleaveC2Byte", c2))
     body.extend(["", "}  // namespace F203Alg7", ""])
 

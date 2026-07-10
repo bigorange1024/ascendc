@@ -27,6 +27,9 @@ constexpr size_t kSeBytes = kKPolys * kN * sizeof(int32_t);
 constexpr size_t kMatABytes = kRowsA * kN * sizeof(int8_t);
 } // namespace
 
+/**
+ * Host main：读 se → 调 Stage1 encode → 写 mat_a；CPU/ACL 双路径。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;

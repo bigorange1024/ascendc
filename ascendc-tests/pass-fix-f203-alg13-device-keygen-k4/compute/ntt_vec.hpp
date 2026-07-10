@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 Tag5T NTT 向量原语（S3 merge/mod 等）。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/ntt_vec.hpp
+ */
+/**
  * @file ntt_vec.hpp
  * @brief F203 Tag5T Stage1 limb6 分裂与 Stage3 RouteA 平面 merge/mod（无 Gather）。
  *
@@ -52,6 +58,10 @@ __aicore__ static inline void split_2xint6(int8_t &d0, int8_t &d1, int32_t a)
     d1 = static_cast<int8_t>((a >> kKyberLimbBits) & kKyberLimbMask);
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `split_vec_scalar`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void split_vec_scalar(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, const int32_t count)
 {
     auto x0 = tr<int32_t>(dst.x0);
@@ -76,6 +86,10 @@ namespace split_vec_detail {
 
 constexpr int32_t kLimbScale = static_cast<int32_t>(1) << kKyberLimbBits;
 
+/**
+ * 本函数为 KeyGen 流水线组件 `cast_i32_to_i8`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void cast_i32_to_i8(LocalTensor<int8_t> &dst, LocalTensor<int32_t> &src,
                                       LocalTensor<int16_t> &tmpI16, LocalTensor<half> &tmpHalf, int32_t count)
 {
@@ -98,6 +112,10 @@ __aicore__ inline void limb6_hi_lo_i32(LocalTensor<int32_t> &hi, LocalTensor<int
     KYBER_PIPE_ALL();
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `limb6_tile`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void limb6_tile(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, int32_t off, int32_t tileLen,
                                   LocalTensor<int32_t> &scratchI32, LocalTensor<int16_t> &scratchI16,
                                   LocalTensor<half> &scratchHalf)
@@ -161,6 +179,10 @@ __aicore__ inline void split_vec_tile(Tensor_int8x4 &dst, LocalTensor<int32_t> &
 
 #endif // F203_STAGE1_SPLIT >= 1
 
+/**
+ * 本函数为 KeyGen 流水线组件 `split_vec`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void split_vec(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, const int32_t count)
 {
 #if F203_STAGE1_SPLIT == 0
@@ -187,6 +209,10 @@ __aicore__ inline void split_vec(Tensor_int8x4 &dst, LocalTensor<int32_t> &src, 
 #endif
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `wrap_mod_vec_runtime`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void wrap_mod_vec_runtime(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &src, int32_t q,
                                             LocalTensor<int32_t> &t1, LocalTensor<int32_t> &t2, int32_t count)
 {
@@ -226,6 +252,10 @@ __aicore__ inline void combine_limb6_horner_raw_vec(LocalTensor<int32_t> &dst, L
 #include "stage3_mod_variants.hpp"
 
 #if F203_STAGE3_MOD == 0
+/**
+ * 本函数为 KeyGen 流水线组件 `combine_limb6_routea_mod_vec`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void combine_limb6_routea_mod_vec(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
                                                     LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
                                                     LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,
@@ -243,6 +273,10 @@ __aicore__ inline void combine_limb6_routea_mod_vec(LocalTensor<int32_t> &dst, L
     combine_limb6_routea_mod_scalar_i64(dst, hh, lh, hl, ll, t1, q, count);
 }
 #else
+/**
+ * 本函数为 KeyGen 流水线组件 `combine_limb6_routea_mod_vec`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void combine_limb6_routea_mod_vec(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
                                                     LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
                                                     LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,

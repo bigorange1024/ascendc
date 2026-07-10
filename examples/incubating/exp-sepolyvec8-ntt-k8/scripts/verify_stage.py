@@ -1,5 +1,9 @@
 #!/usr/bin/python3
-"""分阶段验收：verify_stage.py <stage>"""
+"""分阶段验收：verify_stage.py <stage>。
+
+流水线位置：调试 Stage1/2/3 中间产物对拍（非默认全流程）。
+stage=1：stage1_mata；stage=2：stage2_matc；stage=3：output 全链。
+"""
 import os
 import sys
 
@@ -24,6 +28,7 @@ from mlkem_ref import (  # noqa: E402
 
 
 def verify_stage1():
+    """对拍 Stage1 encode_mat_a。"""
     se = gen_fixed_se_polyvec()
     golden = encode_mat_a(se)
     got = np.fromfile("./output/stage1_mata.bin", dtype=np.int8).reshape(M_MAT_A, N)
@@ -33,6 +38,7 @@ def verify_stage1():
 
 
 def verify_stage2():
+    """对拍 Stage2 int8 MatMul。"""
     se = gen_fixed_se_polyvec()
     mat_a = encode_mat_a(se)
     mat_b = load_mat_b_lut_i8()
@@ -44,6 +50,7 @@ def verify_stage2():
 
 
 def verify_stage3():
+    """对拍全三段 NTT 输出。"""
     golden = f203_three_stage_batch(gen_fixed_se_polyvec())
     got = np.fromfile("./output/output.bin", dtype=np.int32).reshape(K, N)
     diff = int(np.max(np.abs(golden.astype(np.int64) - got.astype(np.int64))))

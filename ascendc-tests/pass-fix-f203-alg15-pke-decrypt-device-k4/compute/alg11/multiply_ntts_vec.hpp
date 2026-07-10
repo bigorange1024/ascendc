@@ -1,3 +1,11 @@
+/**
+ * @file multiply_ntts_vec.hpp
+ * @brief FIPS Alg.11 MultiplyNTTs 向量实现（SoA + Gather deinterleave + Barrett）。
+ *
+ * 流水线位置：su_dot 设备路径经 multiply_ntts_ub → 本文件。
+ * 生产：ALG11_VEC_VARIANT=2、MEM_OPS=1（ROM γ/索引）。
+ * 与 golden：Host multiply_ntts / GAMMAS；仅 I/O 等价。
+ */
 #pragma once
 
 #if ALG11_VEC_OPTS == 1
@@ -39,6 +47,7 @@ struct RomUbLuts {
     AscendC::LocalTensor<int32_t> interleaveReorderByte;
 };
 
+/** 把连续 ws 切成 a0..t2（及可选 idx）视图。 */
 __aicore__ inline void bind_vec_ws(AscendC::LocalTensor<int32_t> &base, VecWs &w, int32_t pairCount,
                                    const RomUbLuts &rom)
 {
@@ -100,6 +109,7 @@ __aicore__ inline void init_rom_luts_ub(RomUbLuts &rom, int32_t pairCount)
 #endif
 
 /** x ∈ [0,q)：x - (q & ~((x-q)>>31))，与 alg11_barrett_red_coeff 末步一致。 */
+/** 折回 [0,q)：与 hat_ip / tail wrap 同构。 */
 __aicore__ inline void wrap_mod_vec_runtime(AscendC::LocalTensor<int32_t> &dst, AscendC::LocalTensor<int32_t> &src,
                                             int32_t q, AscendC::LocalTensor<int32_t> &t1,
                                             AscendC::LocalTensor<int32_t> &t2, int32_t count)
@@ -118,6 +128,7 @@ __aicore__ inline void wrap_mod_vec_runtime(AscendC::LocalTensor<int32_t> &dst, 
 }
 
 /** 全向量 Barrett 约化（μ=78,k=18 与 μ=5039,k=24 + wrap_mod）。 */
+/** 向量 Barrett 约减（含负值修正路径）。 */
 __aicore__ inline void reduce_zq_vec_barrett(AscendC::LocalTensor<int32_t> &dst, AscendC::LocalTensor<int32_t> &s1,
                                               AscendC::LocalTensor<int32_t> &s2, int32_t count)
 {
@@ -153,6 +164,7 @@ __aicore__ inline void reduce_zq_vec_barrett(AscendC::LocalTensor<int32_t> &dst,
 /**
  * BaseCaseMultiply / 行 18 专用：输入为 NTT 域 canonical [0,q)，无负值，省略负值修正。
  */
+/** basemul 专用 Barrett（§9 优化路径）。 */
 __aicore__ inline void reduce_zq_vec_barrett_basemul(AscendC::LocalTensor<int32_t> &dst,
                                                     AscendC::LocalTensor<int32_t> &s1,
                                                     AscendC::LocalTensor<int32_t> &s2, int32_t count)
@@ -193,6 +205,7 @@ __aicore__ inline void reduce_zq_vec_barrett_dispatch(AscendC::LocalTensor<int32
 
 #if ALG11_MEM_OPS == 0 || defined(ASCENDC_CPU_DEBUG)
 
+/** 标量 deinterleave：AoS → even/odd 两路。 */
 __aicore__ inline void deinterleave_pairs_scalar(AscendC::LocalTensor<int32_t> &even,
                                                  AscendC::LocalTensor<int32_t> &odd,
                                                  const AscendC::LocalTensor<int32_t> &aos, int32_t pairCount)
@@ -203,6 +216,7 @@ __aicore__ inline void deinterleave_pairs_scalar(AscendC::LocalTensor<int32_t> &
     }
 }
 
+/** 标量 interleave：even/odd → AoS。 */
 __aicore__ inline void interleave_pairs_scalar(AscendC::LocalTensor<int32_t> &aos, AscendC::LocalTensor<int32_t> &even,
                                                AscendC::LocalTensor<int32_t> &odd, int32_t pairCount)
 {
@@ -215,6 +229,7 @@ __aicore__ inline void interleave_pairs_scalar(AscendC::LocalTensor<int32_t> &ao
 #endif
 
 /** B2：4 次宽 Gather 填齐 a0,a1,b0,b1（索引来自 Init DataCopy ROM）。 */
+/** B2：Gather 把 f/g 拆成 a0,a1,b0,b1 四路（共享字节索引）。 */
 __aicore__ inline void deinterleave_four_lanes_gather(VecWs &w, const AscendC::LocalTensor<int32_t> &f,
                                                       const AscendC::LocalTensor<int32_t> &g, int32_t pairCount)
 {
@@ -250,6 +265,7 @@ __aicore__ inline void deinterleave_four_lanes_gather(VecWs &w, const AscendC::L
 #if ALG11_MEM_OPS == 1
 
 /** scratch=t1||c1@t2（ws 内连续 256 int）；reorder 字节索引来自 ROM。 */
+/** MEM_OPS=1：DataCopy+Gather 做 interleave。 */
 __aicore__ inline void interleave_pairs_datacopy(AscendC::LocalTensor<int32_t> &aos, AscendC::LocalTensor<int32_t> &even,
                                                  AscendC::LocalTensor<int32_t> &odd, VecWs &w,
                                                  const AscendC::LocalTensor<int32_t> &reorderByte, int32_t pairCount)
@@ -268,6 +284,7 @@ __aicore__ inline void interleave_pairs_datacopy(AscendC::LocalTensor<int32_t> &
 #endif
 
 /** 四 lane 就绪后的向量 Alg.12 主核（B1/B2 共用）；w.gammaV 须 Init 物化。 */
+/** Alg.12 向量：四路上 Mul/Add + γ·(a1b1) + Barrett。 */
 __aicore__ inline void alg12_elementwise_vec(VecWs &w, int32_t pairCount)
 {
     using AscendC::Add;
@@ -319,6 +336,7 @@ __aicore__ inline void interleave_pairs_dispatch(AscendC::LocalTensor<int32_t> &
 #endif
 }
 
+/** 变体 B1：标量 deinterleave → 向量基域乘 → interleave。 */
 __aicore__ inline void multiply_ntts_vec_b1(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                             const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                             int32_t pairCount)
@@ -330,6 +348,7 @@ __aicore__ inline void multiply_ntts_vec_b1(AscendC::LocalTensor<int32_t> &h, co
     ALG11_PIPE_ALL();
 }
 
+/** 变体 B2（生产）：Gather deinterleave → 向量基域乘 → interleave。 */
 __aicore__ inline void multiply_ntts_vec_b2(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                             const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                             int32_t pairCount)
@@ -345,6 +364,7 @@ __aicore__ inline void multiply_ntts_vec_b2(AscendC::LocalTensor<int32_t> &h, co
     ALG11_PIPE_ALL();
 }
 
+/** 按 ALG11_VEC_VARIANT 分派 B1/B2。 */
 __aicore__ inline void multiply_ntts_vec_dispatch(AscendC::LocalTensor<int32_t> &h, const AscendC::LocalTensor<int32_t> &f,
                                                 const AscendC::LocalTensor<int32_t> &g, VecWs &w, const RomUbLuts &rom,
                                                 int32_t pairCount)

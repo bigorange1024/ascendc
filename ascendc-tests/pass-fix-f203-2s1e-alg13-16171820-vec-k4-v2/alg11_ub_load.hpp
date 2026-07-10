@@ -19,7 +19,11 @@
 
 namespace alg11_ub_load {
 
-/** GM ROM → UB 连续 DataCopy（count 个 int32，须 32B 对齐；128/256 满足）。 */
+/**
+ * GM ROM → UB 连续 DataCopy。
+ * @param dst UB int32；@param rom __gm__ 常量表基址；@param count 元素数（须 32B 对齐；128/256 满足）
+ * 前置：调用方随后 ALG11_PIPE_MTE2() 再读 UB。
+ */
 __aicore__ inline void copy_rom_int32_ub(AscendC::LocalTensor<int32_t> &dst, __gm__ const int32_t *rom, int32_t count)
 {
     AscendC::GlobalTensor<int32_t> gm;

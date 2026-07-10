@@ -10,7 +10,14 @@
 # @verify python3 调用或由 run.sh 对拍 output vs golden。
 
 # coding=utf-8
-"""G4 全链对拍：device 产物 vs Host golden。"""
+"""
+本文件在 KeyGen 流水线中的位置：Host 验收脚本（G4 / 分阶段门控）。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价（output/* vs golden_*）；禁止把本脚本当作 AscendC 规格。
+文件：scripts/verify_result.py
+
+G4 全链对拍：device 产物 vs Host golden（含中间 src/a_hat/rho 与 ek/dk）。
+"""
 from __future__ import annotations
 
 import sys
@@ -27,6 +34,10 @@ EK_PKE_BYTES = EK_POLYVEC_BYTES + 32
 
 
 def check_bytes(name: str, got: np.ndarray, golden: np.ndarray) -> int:
+    """逐字节对拍；形状或内容不一致则 SystemExit。
+
+    @return 0 表示通过
+    """
     if got.shape != golden.shape:
         raise SystemExit(f"{name} shape {got.shape} != {golden.shape}")
     if not np.array_equal(got, golden):
@@ -37,6 +48,10 @@ def check_bytes(name: str, got: np.ndarray, golden: np.ndarray) -> int:
 
 
 def check_int32(name: str, path_out: str, path_golden: str) -> int:
+    """按 int32 读 output 与 golden，要求 max_abs_diff==0。
+
+    @return 0 表示通过
+    """
     g = np.fromfile(OUT / path_golden, dtype=np.int32)
     a = np.fromfile(OUT / path_out, dtype=np.int32)
     if g.size != a.size:
@@ -49,8 +64,13 @@ def check_int32(name: str, path_out: str, path_golden: str) -> int:
 
 
 def main() -> int:
+    """先自检 golden 拼接不变量，再对拍设备落盘产物。
+
+    @return 0 全过；非 0 由 check_* 抛错退出
+    """
     rc = 0
 
+    # --- golden 自检：ek_pke = ek_polyvec‖ρ；dk_pke = sk_polyvec ---
     ek = np.fromfile(OUT / "golden_ek_polyvec.bin", dtype=np.uint8)
     rho = np.fromfile(OUT / "golden_rho.bin", dtype=np.uint8)
     ek_pke_gold = np.fromfile(OUT / "golden_ek_pke.bin", dtype=np.uint8)
@@ -59,6 +79,7 @@ def main() -> int:
     sk = np.fromfile(OUT / "golden_sk_polyvec.bin", dtype=np.uint8)
     rc |= check_bytes("golden dk_pke == sk_polyvec", dk, sk)
 
+    # --- prep 中间量：ŝ‖ê 与 Â ---
     for name, out_n, gold_n in (
         ("src", "src.bin", "golden_src.bin"),
         ("a_hat", "a_hat.bin", "golden_a_hat.bin"),
@@ -73,6 +94,7 @@ def main() -> int:
         np.fromfile(OUT / "golden_rho.bin", dtype=np.uint8),
     )
 
+    # --- 生产/门控输出：编码公钥、私钥、ek_pke/dk_pke ---
     for pair in (
         ("ek_polyvec.bin", "golden_ek_polyvec.bin"),
         ("sk_polyvec.bin", "golden_sk_polyvec.bin"),
@@ -88,6 +110,7 @@ def main() -> int:
             np.fromfile(OUT / gold_p, dtype=np.uint8),
         )
 
+    # --- NTT 后 dst（int32 polyvec）---
     if not (OUT / "dst.bin").is_file():
         raise SystemExit("missing output/dst.bin")
     rc |= check_int32("dst", "dst.bin", "golden.bin")

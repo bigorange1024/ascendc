@@ -12,7 +12,14 @@
 
 /**
  * @file f203_keygen_prep_ub.hpp
- * @brief KeyGen 准备段单 TPipe：行 3–7 Â → 行 8–15 presample V3（一次 G 派生 + UB 复用）。
+ * @brief KeyGen 准备段单 TPipe 设备编排：行 3–7 Â → 行 8–15 PRF+CBD。
+ *
+ * ## 流水线位置
+ * Launch 1 核心逻辑（由 `f203_keygen_prep` 调用）：一次 G(d‖k) 得 ρ/σ，
+ * 再在同一 TPipe 生命周期内完成 SampleNTT(Â) 与 SamplePolyCBD(ŝ/ê)。
+ *
+ * ## 对齐与 golden
+ * FIPS 203 Alg.13，ML-KEM-1024（k=4）；输出 a_hat/src/ρ 与 Host golden 中间态 I/O 等价。
  *
  * 背景：多 TPipe 串接（Â 析构后再 Init PRF/CBD）在 SIM 上较分段探针之和多 ~3% tick；
  * 本路径与 a_hat / presample 子探针语义一致，仅编排为同一 pipe 生命周期。
@@ -29,16 +36,24 @@
 
 namespace F203KeygenPrep {
 
+/**
+ * 将设备侧 ρ[32] 标量写回 GM（供行 21 ek‖ρ）。
+ * @param rho_gm 输出 GM：uint8[32]
+ * @param rho    UB/寄存器侧 ρ 字节
+ * 前置：通常仅 blockIdx==0 调用，避免双写。
+ */
 __aicore__ inline void StoreRhoToGm(__gm__ uint8_t *rho_gm, const uint8_t rho[32])
 {
     AscendC::GlobalTensor<uint8_t> rhoOut;
     rhoOut.SetGlobalBuffer(reinterpret_cast<__gm__ uint8_t *>(rho_gm), 32U);
+    // 逐字节 SetValue：ρ 仅 32B，标量路径足够且避免额外 TQue
     for (uint32_t i = 0U; i < 32U; ++i) {
         rhoOut.SetValue(i, rho[i]);
     }
 }
 
 
+/** 全核屏障宏：Â→PRF、PRF→CBD、双 AIV 收尾对齐均依赖 PIPE_ALL */
 #define F203_PREP_PIPE_ALL() AscendC::PipeBarrier<PIPE_ALL>()
 
 constexpr uint32_t kPrepShakeXUbBytes = F203SeVector::PRF_X_UB_BYTES;
@@ -53,6 +68,7 @@ constexpr uint32_t kPrepPrfYUbBytes = F203SeVector::PRF_Y_UB_BYTES;
  * @param a_hat_gm    输出 Â[16,256] int32，行主序
  * @param prf_out_gm  PRF 中间态 [8,128] uint8（block0 写入，供 CBD 读）
  * @param src_gm      输出 ŝ 秘密向量 [8,256] int32
+ * @param rho_gm      输出 ρ[32]（block0 写入）
  * @param tiling_gm   presample SHAKE batch tiling（host 填充）
  *
  * 双 AIV（F203_AHAT16_BLOCK_DIM=2）：
@@ -64,10 +80,12 @@ __aicore__ inline void BuildKeygenPrepSinglePipe(uint32_t seed_d, uint32_t block
                                                  __gm__ uint8_t *prf_out_gm, __gm__ int32_t *src_gm, __gm__ uint8_t *rho_gm,
                                                  GM_ADDR tiling_gm)
 {
+    // 超出配置 blockDim 的核直接退出（防御性；正常 launch 不会进入）
     if (AscendC::GetBlockIdx() >= static_cast<uint32_t>(F203_AHAT16_BLOCK_DIM)) {
         return;
     }
 
+    // Alg.13 行 1–2：G(d‖k) → (ρ, σ)；两 AIV 各自算同一结果（确定性）
     uint8_t rho[32];
     uint8_t sigma[32];
     F203Alg7::BuildRhoSigmaFromSeedD(seed_d, rho, sigma);
@@ -76,6 +94,7 @@ __aicore__ inline void BuildKeygenPrepSinglePipe(uint32_t seed_d, uint32_t block
         StoreRhoToGm(rho_gm, rho);
     }
 
+    // --- 单 TPipe：Â 与后续 PRF/CBD 复用同一组 UB 缓冲，避免二次 Init 的 tick 开销 ---
     AscendC::TPipe pipe;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeXBuf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeLenBuf;
@@ -100,19 +119,23 @@ __aicore__ inline void BuildKeygenPrepSinglePipe(uint32_t seed_d, uint32_t block
     F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, blockIdx, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf,
                                       d1Que, d2Que, aHatQue, scratchBuf);
 
+    // Â 写完后全核对齐，再进入 PRF（block1 也必须到达此处）
     F203_PREP_PIPE_ALL();
 
     // block0 独占 PRF+CBD；block1 不得在 block0 完成前 return（SIM 上否则可能提前结束整核）
     if (AscendC::GetBlockIdx() == 0U) {
         ShakeGeneralTilingData tilingLocal{};
         F203SeVector::LoadTilingFromGm(tiling_gm, tilingLocal);
+        // 行 8–11：σ → PRF → prf_out_gm[8,128]
         F203SeVector::RunShakePrfBatchUbWithUb(sigma, prf_out_gm, tilingLocal, shakeXBuf, shakeLenBuf,
                                                shakeStagingBuf, aHatQue);
         F203_PREP_PIPE_ALL();
 
+        // 行 12–15：CBD_η=2 → src_gm[8,256]；复用 scratch/aHatQue 作 UB
         F203CbdEta2::SamplePolyCbd2Batch8WithUb(0U, prf_out_gm, src_gm, scratchBuf, aHatQue);
     }
 
+    // 末尾屏障：保证 block1 等待 block0 写完 src/prf，再结束内核
     F203_PREP_PIPE_ALL();
 }
 

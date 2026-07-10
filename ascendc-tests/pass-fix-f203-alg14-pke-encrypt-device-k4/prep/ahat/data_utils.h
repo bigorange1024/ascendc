@@ -1,25 +1,15 @@
-// @probe stable-fips203-mlkem-pke-keygen-k4
-// @file prep/ahat/data_utils.h
-// @layer prep
-// @role prep/ahat：设备侧生成矩阵 A_hat（FIPS203 Alg.6/布局 f203_a_hat16）；AIV-only UB 流水，为 compute MMAD 提供 a_hat GM。 / Device A_hat generation for keygen prep. 本文件 `data_utils.h` 为该子模块组件。 / Component: data_utils.h.
-// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
-// @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
-// @depends #include: iostream, fstream, cstdio, string, vector, iomanip, cassert, fcntl.h, unistd.h, sys/stat.h, acl/acl.h
-// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
-
-
 /**
  * @file data_utils.h
- * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
+ * @brief Alg.7 / Â prep 子树 Host I/O 工具（在 Huawei 模板基础上增本文件头与函数中文说明）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）Encrypt prep；本文件位于 prep/ahat，
+ * 供 ahat 子树 include 路径使用（与用例根 data_utils.h 逻辑同构的 vendoring 副本）。
  *
  * 本探针用途：
- *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
- *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
+ *   - main / prep 编排通过 ReadFile 读 input（seed、LUT、中间态等）
+ *   - 核运行后 WriteFile 写 output 对拍 bin
  *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
- *
- * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
- *
+ * 与 golden 关系：二进制读写须与调用方 layout 尺寸一致；verify 由 scripts/verify_result.py 完成。
  * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
  */
 /*
@@ -39,6 +29,7 @@
 #include <sys/stat.h>
 #include "acl/acl.h"
 
+/** 调试打印用的元素类型枚举（与 ACL 标量类型对应，非设备 dtype）。 */
 typedef enum {
     DT_UNDEFINED = -1,
     FLOAT = 0,
@@ -62,6 +53,7 @@ typedef enum {
 #define INFO_LOG(fmt, args...) fprintf(stdout, "[INFO]  " fmt "\n", ##args)
 #define WARN_LOG(fmt, args...) fprintf(stdout, "[WARN]  " fmt "\n", ##args)
 #define ERROR_LOG(fmt, args...) fprintf(stdout, "[ERROR]  " fmt "\n", ##args)
+/** ACL 调用失败时打印文件行号与错误码（不抛异常，便于 Host 编排继续收尾）。 */
 #define CHECK_ACL(x)                                                                        \
     do {                                                                                    \
         aclError __ret = x;                                                                 \
@@ -71,10 +63,10 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从文件读入二进制到 Host 缓冲（prep：seed / LUT / 中间态 bin）。
+ * @param filePath   路径；@param fileSize 输出实际字节数
+ * @param buffer     目标缓冲；@param bufferSize 容量（须 ≥ 文件大小）
+ * @return true 成功；文件不存在 / 非普通文件 / 空文件 / 超容量则 false
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
@@ -84,6 +76,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         ERROR_LOG("failed to get file");
         return false;
     }
+    /* 拒绝目录等非普通文件，避免误把路径当 bin */
     if (S_ISREG(sBuf.st_mode) == 0) {
         ERROR_LOG("%s is not a file, please enter a file", filePath.c_str());
         return false;
@@ -108,6 +101,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         file.close();
         return false;
     }
+    /* 回到文件头，整文件读入 buffer；fileSize 供调用方校验期望长度 */
     buf->pubseekpos(0, std::ios::in);
     buf->sgetn(static_cast<char *>(buffer), size);
     fileSize = size;
@@ -116,11 +110,9 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
 }
 
 /**
- * @brief Write data to file
- * @param [in] filePath: file path
- * @param [in] buffer: data to write to file
- * @param [in] size: size to write
- * @return write result
+ * 将 Host 缓冲写为二进制文件（prep output 对拍 bin）。
+ * @param filePath 目标路径；@param buffer 数据；@param size 字节数
+ * @return true 当且仅当完整写出 size 字节
  */
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
 {
@@ -145,6 +137,10 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size)
     return true;
 }
 
+/**
+ * 按行打印标量数组（调试用；验收以 cmp golden 为准，通常不调用）。
+ * @param data 首元素；@param count 元素个数；@param elementsPerRow 每行个数
+ */
 template<typename T>
 void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
 {
@@ -157,6 +153,7 @@ void DoPrintData(const T *data, size_t count, size_t elementsPerRow)
     }
 }
 
+/** fp16（aclFloat16）转 float 后按行打印。 */
 void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow)
 {
     assert(elementsPerRow != 0);
@@ -168,6 +165,10 @@ void DoPrintHalfData(const aclFloat16 *data, size_t count, size_t elementsPerRow
     }
 }
 
+/**
+ * 按 printDataType 分派打印；prep 中间态多为 INT32_T / UINT8_T。
+ * @param elementsPerRow 默认 16
+ */
 void PrintData(const void *data, size_t count, printDataType dataType, size_t elementsPerRow=16)
 {
     if (data == nullptr) {

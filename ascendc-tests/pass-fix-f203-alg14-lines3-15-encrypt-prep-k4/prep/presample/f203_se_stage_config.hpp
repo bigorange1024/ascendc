@@ -9,6 +9,8 @@
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
 
+
+// @encrypt_probe_note 本文件亦用于 pass-fix-f203-alg14-lines3-15-encrypt-prep-k4 / pke-encrypt-device-k4 的 Alg.14 行 3–15 prep；Encrypt 生产 I/O 为 ek_pke+coins → a_hat+re（见该探针 STATUS），上方 @production_io 若写 keygen ek/dk 为 vendored 来源标签，勿与 Encrypt 验收混淆。
 /**
  * @file f203_se_stage_config.hpp
  * @brief 行 8–15 设备预采样阶段开关（由 CMake / run.sh 注入，勿手改本文件）。

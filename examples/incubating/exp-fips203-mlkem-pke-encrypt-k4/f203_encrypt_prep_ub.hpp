@@ -2,7 +2,9 @@
  * @file f203_encrypt_prep_ub.hpp
  * @brief Alg.14 Encrypt prep 单 TPipe：ρ→Â（双 AIV）→ coins→PRF+CBD batch9（block0）。
  *
- * 背景：对齐 stable KeyGen `BuildKeygenPrepSinglePipe`；ρ 自 ek_pke 尾 32B，不经 G(d)。
+ * 流水线位置：设备核 `f203_encrypt_prep` 的主体；FIPS 203 / ML-KEM-1024。
+ * 背景：对齐 KeyGen `BuildKeygenPrepSinglePipe`；ρ 自 ek_pke 尾 32B，不经 G(d)。
+ * 与 golden：产出 Â/re 供后续 compute；最终对拍仍为 `c.bin`。
  */
 #pragma once
 
@@ -51,13 +53,15 @@ __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, c
                                                   uint32_t blockIdx, __gm__ int32_t *a_hat_gm,
                                                   __gm__ uint8_t *prf_out_gm, __gm__ int32_t *re_gm, GM_ADDR tiling_gm)
 {
+    // 超出双 AIV 分片的 block 直接返回（防御性）
     if (AscendC::GetBlockIdx() >= static_cast<uint32_t>(F203_AHAT16_BLOCK_DIM)) {
         return;
     }
 
     uint8_t rho[kRhoBytes];
-    LoadRhoFromEkGm(ek_gm, rho);
+    LoadRhoFromEkGm(ek_gm, rho);  // ρ = ek[1536:1568]
 
+    // 单 TPipe：SampleNTT 与 PRF/CBD 共用 shake/xof/d12/prf 缓冲（串行阶段复用）
     AscendC::TPipe pipe;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeXBuf;
     AscendC::TBuf<AscendC::TPosition::VECCALC> shakeLenBuf;
@@ -77,11 +81,13 @@ __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, c
     pipe.InitBuffer(prfYQue, 1, kPrepPrfYUbBytes);
     pipe.InitBuffer(scratchBuf, F203Alg7::kScratchInt32ElemsActive * sizeof(int32_t));
 
+    // 行 3–7：本 block 负责的 Â 分片（8 poly）写 a_hat_gm
     F203Ahat16::BuildAHat16ShardWithUb(rho, a_hat_gm, blockIdx, shakeXBuf, shakeLenBuf, shakeStagingBuf, xofBuf,
                                        d1Que, d2Que, prfYQue, scratchBuf);
 
     F203_ENCRYPT_PREP_PIPE_ALL();
 
+    // 行 8–15：仅 block0 做 PRF+CBD，避免双核写同一 re/prf
     if (AscendC::GetBlockIdx() == 0U) {
         uint8_t coins[kCoinsBytes];
         LoadCoinsFromGm(coins_gm, coins);

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""gen_dk_pke.py — 与 Encrypt gen_ek_pke 同源 KeyGen golden，输出 dk 段 ŝ（1536B）。"""
+"""
+gen_dk_pke.py — Decrypt 夹具：由 SEED_D 派生 dk_PKE = ByteEncode₁₂(ŝ)（1536B）。
+
+与 Encrypt gen_ek_pke 同源 KeyGen golden；仅输出 dk 段（ŝ），供 Alg.15 输入。
+禁止当作设备算法规格；仅 Host oracle / gen_data 夹具。
+用法：gen_dk_pke.py <SEED_D> <dk_pke.out>
+"""
 from __future__ import annotations
 
 import sys
@@ -23,6 +29,7 @@ DK_BYTES = K * POLY_D12_BYTES
 
 
 def build_dk_pke(seed_d: int) -> np.ndarray:
+    """KeyGen 得 ŝ 后 ByteEncode₁₂ → dk_PKE 字节数组。"""
     d = derand_bytes_from_seed(seed_d)
     _, sigma = hash_g_rho_sigma(d)
     src = build_src(sigma)

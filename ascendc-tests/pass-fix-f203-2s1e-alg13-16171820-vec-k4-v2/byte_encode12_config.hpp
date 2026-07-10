@@ -11,6 +11,7 @@
  * Golden：gen_data.py 经 libbyte_encode12_ref.so 生成 golden_ek/sk；verify_result.py cmp ek_out/sk_out。
  *
  * CMake：BYTE_ENCODE12_VEC、BYTE_ENCODE12_SCATTER_VEC、BYTE_ENCODE12_PREFETCH。
+ * 本文件仅编译期宏，无运行时函数体。
  */
 #ifndef BYTE_ENCODE12_CONFIG_HPP
 #define BYTE_ENCODE12_CONFIG_HPP

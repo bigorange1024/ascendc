@@ -59,6 +59,7 @@ def _scrub_input(inp: Path) -> None:
 
 
 def main() -> None:
+    """按 SEED_D 生成生产 input/ + golden_m；夹具进 _gen_fixture。"""
     seed_d = int(os.environ.get("SEED_D", str(SEED_D_DEFAULT)))
     inp = CASE_DIR / "input"
     out = CASE_DIR / "output"

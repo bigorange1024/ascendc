@@ -55,6 +55,7 @@ __aicore__ inline void mod_q_barrett_vec(AscendC::LocalTensor<int32_t> &dst, int
 }
 
 #if defined(ASCENDC_CPU_DEBUG)
+/** CPU 孪生：单元素 floor mod，结果 ∈[0,q)。 */
 __aicore__ inline int32_t mod_q_scalar_i64_one(int64_t x, int32_t q)
 {
     const int64_t q64 = static_cast<int64_t>(q);

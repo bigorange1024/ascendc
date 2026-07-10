@@ -1,3 +1,15 @@
+/**
+ * @file alg11_fixed_n256.hpp
+ * @brief n=256 固定尺寸：Gather 字节索引用线性公式填表（替代 CreateVecIndex+Muls+Adds）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 用途：ALG11_VEC_OPTS=1 时 load_gather_byte_indices — even[i]=i*8, odd[i]=i*8+4。
+ * 调用方：multiply_ntts_vec.hpp（仅 ALG11_VEC_OPTS=1 编译进）。
+ * 不变量：pairCount≤128；索引与 B2 Gather 解交错布局一致。
+ * Golden：无；属微优化，数学与 legacy 索引等价。
+ * CMake：ALG11_VEC_OPTS（默认 CMakeLists 为 1）。
+ */
 // @probe exp-fips203-mlkem-pke-keygen-k4
 // @file compute/alg11_fixed_n256.hpp
 // @layer compute
@@ -8,21 +20,6 @@
 // @depends #include: kernel_operator.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file alg11_fixed_n256.hpp
- * @brief n=256 固定尺寸：Gather 字节索引用线性公式填表（替代 CreateVecIndex+Muls+Adds）。
- *
- * 用途：ALG11_VEC_OPTS=1 时 load_gather_byte_indices — even[i]=i*8, odd[i]=i*8+4。
- *
- * 调用方：multiply_ntts_vec.hpp（仅 ALG11_VEC_OPTS=1 编译进）。
- *
- * 不变量：pairCount≤128；索引与 B2 Gather 解交错布局一致。
- *
- * Golden：无；属微优化，数学与 legacy 索引等价。
- *
- * CMake：ALG11_VEC_OPTS（默认 CMakeLists 为 1）。
- */
 #pragma once
 
 #include "kernel_operator.h"

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 # coding=utf-8
-"""Alg.14 行 2/18/19/21 golden（自包含；k=4 NTT，kP=5 INTT pad→8）。
+"""
+@file gen_data.py
+@brief Alg.14 行 2/18/19/21 golden 生成（自包含；k=4 NTT，kP=5 INTT pad→8）。
 
+流水线：写 input/ 与 golden output/，供 run.sh + main 对拍；非设备实现规格。
 行 2:  t̂ ← ByteDecode₁₂(ek)
-行 18: û ← Âᵀ∘ŷ；tr̂ ← t̂ᵀ∘ŷ
+行 18: û ← Âᵀ∘ŷ；tr̂ ← t̂ᵀ∘ŷ → u_tr[5]
 行 19: u ← INTT(û) + e₁
 行 21: v ← INTT(tr̂) + e₂（无 μ）
 """
@@ -26,20 +29,23 @@ _NTT_LUT_HDR = os.path.normpath(
 
 N = 256
 HALF_N = N // 2
-K = 4
-K_P = 5
-K_INTT_PAD = 8
+K = 4          # NTT(y) / Â 维
+K_P = 5        # uTr = û[0..3] + tr̂
+K_INTT_PAD = 8 # INTT batch pad
 
 
 def m_rows_for_k(k_batch: int) -> int:
+    """Stage1 S0 行数 = 2 * k_batch（hi 行 + lo 行）。"""
     return 2 * k_batch
 
 
 def mat_c_planar_rows_for_k(k_batch: int) -> int:
+    """平面 mat_c 行数 = k_batch * 4 limb * 2 half。"""
     return k_batch * LIMBS * 2
 
 
 def encode_compact(batch: np.ndarray, s0: np.ndarray, k_batch: int) -> None:
+    """将 [P,N] int32 系数编码为 S0：hi 在 [0,k)，lo 在 [k,2k)，各 6-bit。"""
     for lp in range(batch.shape[0]):
         for r in range(N):
             v = int(batch[lp, r]) % Q
@@ -48,6 +54,7 @@ def encode_compact(batch: np.ndarray, s0: np.ndarray, k_batch: int) -> None:
 
 
 def encode_s0(polys: np.ndarray, k_batch: int) -> np.ndarray:
+    """分配并填充 S0 int8 矩阵。"""
     s0 = np.zeros((m_rows_for_k(k_batch), N), dtype=np.int8)
     encode_compact(polys, s0, k_batch)
     return s0
@@ -74,6 +81,7 @@ K_ALG11_GAMMAS = [
 
 
 def load_lut_t_i8(mode: str) -> np.ndarray:
+    """从 transpose_mlkem_luts_i8.h 解析 NTT/INTT 右 LUT，形状 [256,512] int8。"""
     symbol = "kMlkemLimb6Ntt_T_i8" if mode == "ntt" else "kMlkemLimb6Intt_T_i8"
     with open(_NTT_LUT_HDR, encoding="utf-8") as f:
         txt = f.read()
@@ -89,6 +97,7 @@ def load_lut_t_i8(mode: str) -> np.ndarray:
 
 
 def lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
+    """偶/奇列拆成 top|bottom stacked，供设备 LUT_*_STACKED 装载。"""
     if even:
         top = lut[:, 0:N:2]
         bottom = lut[:, N:512:2]
@@ -99,6 +108,7 @@ def lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
 
 
 def encode_compact_k4(batch: np.ndarray, s0: np.ndarray) -> None:
+    """k=4 便捷封装。"""
     encode_compact(batch, s0, K)
 
 
@@ -107,6 +117,7 @@ def encode_s0_k4(polys: np.ndarray) -> np.ndarray:
 
 
 def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray):
+    """S0×LUT 四路 MatMul（lo/hi × even/odd），模拟 Stage2 Cube 输出。"""
     le = lut[:, 0:N:2]
     lo = lut[:, 1:N:2]
     he = lut[:, N:512:2]
@@ -119,12 +130,14 @@ def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray):
 
 
 def planar_row_k(k_batch: int, slot: int, limb: int, half: int) -> int:
+    """平面 mat_c 行号，与设备 planar_*::mat_row 同构。"""
     return half * (k_batch * LIMBS) + slot * LIMBS + limb
 
 
 def pack_bank_planar_k(
     c_lo_even, c_lo_odd, c_hi_even, c_hi_odd, k_batch: int, poly_base: int, k_polys: int, out: np.ndarray
 ) -> None:
+    """将四路临时打包进平面 out（单 AIV bank）。"""
     for lp in range(k_polys):
         hi_r = poly_base + lp
         lo_r = k_batch + poly_base + lp
@@ -140,6 +153,7 @@ def pack_bank_planar_k(
 
 
 def pack_mat_c_planar_k(c_lo_even, c_lo_odd, c_hi_even, c_hi_odd, k_batch: int) -> np.ndarray:
+    """双 AIV bank 拼完整平面 mat_c。"""
     k_per_aiv = k_batch // 2
     out = np.zeros((mat_c_planar_rows_for_k(k_batch), HALF_N), dtype=np.int32)
     pack_bank_planar_k(c_lo_even, c_lo_odd, c_hi_even, c_hi_odd, k_batch, 0, k_per_aiv, out)
@@ -148,6 +162,7 @@ def pack_mat_c_planar_k(c_lo_even, c_lo_odd, c_hi_even, c_hi_odd, k_batch: int) 
 
 
 def merge_planar_poly_k(mat_planar: np.ndarray, k_batch: int, slot: int) -> np.ndarray:
+    """RouteA Horner + stage31_mod → 单 poly [N]。"""
     hh = mat_planar[planar_row_k(k_batch, slot, 0, 0)].astype(np.int64)
     lh = mat_planar[planar_row_k(k_batch, slot, 1, 0)].astype(np.int64)
     hl = mat_planar[planar_row_k(k_batch, slot, 2, 0)].astype(np.int64)
@@ -165,6 +180,7 @@ def merge_planar_poly_k(mat_planar: np.ndarray, k_batch: int, slot: int) -> np.n
 
 
 def stage123_transform(polys: np.ndarray, mode: str, k_batch: int | None = None) -> np.ndarray:
+    """Stage1–3 参考：encode → MatMul → planar pack → RouteA mod。mode=ntt|intt。"""
     k_batch = K if k_batch is None else k_batch
     lut = load_lut_t_i8(mode)
     s0 = encode_s0(polys, k_batch)
@@ -177,6 +193,7 @@ def stage123_transform(polys: np.ndarray, mode: str, k_batch: int | None = None)
 
 
 def barrett_red_coeff(x: int) -> int:
+    """与设备 basemul 对照的 Barrett 约化。"""
     q = Q
     t = x + (q & (x >> 31))
     t1 = (t * 78) >> 18
@@ -188,6 +205,7 @@ def barrett_red_coeff(x: int) -> int:
 
 
 def multiply_ntts(f: np.ndarray, g: np.ndarray) -> np.ndarray:
+    """FIPS MultiplyNTTs：128 对带 γ。"""
     h = np.zeros(N, dtype=np.int32)
     for i in range(N // 2):
         gamma = K_ALG11_GAMMAS[i]
@@ -200,13 +218,16 @@ def multiply_ntts(f: np.ndarray, g: np.ndarray) -> np.ndarray:
 
 
 def a_hat_offset_jp(j: int, p: int) -> int:
+    """flat(j,p) 首系数下标（Encrypt 读 Âᵀ）。"""
     return (j * K + p) * N
 
 
 def main() -> None:
+    """生成 input/* 与 golden_*：行 2/18/19/21（无 μ）。"""
     os.makedirs(os.path.join(_CASE_DIR, "input"), exist_ok=True)
     os.makedirs(os.path.join(_CASE_DIR, "output"), exist_ok=True)
 
+    # —— 随机输入（固定 SEED）——
     rng = np.random.default_rng(SEED)
     y = rng.integers(0, Q, size=(K, N), dtype=np.int32)
     a_hat = rng.integers(0, Q, size=(K, K, N), dtype=np.int32)  # 存 A[p,j] 于 [p,j]
@@ -214,8 +235,10 @@ def main() -> None:
     e1 = rng.integers(-2, 3, size=(K, N), dtype=np.int32)
     e2 = rng.integers(-2, 3, size=(N,), dtype=np.int32)
 
+    # —— 行 16–17：ŷ ← NTT(y) ——
     y_hat = stage123_transform(y, "ntt")
 
+    # —— 行 18：û ← Âᵀ∘ŷ ——
     u_ntt = np.zeros((K, N), dtype=np.int32)
     for p in range(K):
         acc = np.zeros(N, dtype=np.int64)
@@ -225,6 +248,7 @@ def main() -> None:
             acc += prod.astype(np.int64)
         u_ntt[p] = acc % Q
 
+    # —— tr̂ ← t̂ᵀ∘ŷ；拼 u_tr[5] 并 pad→8 ——
     acc_tr = np.zeros(N, dtype=np.int64)
     for j in range(K):
         prod = multiply_ntts(t_hat[j], y_hat[j])
@@ -238,11 +262,12 @@ def main() -> None:
     u_tr_pad = np.zeros((K_INTT_PAD, N), dtype=np.int32)
     u_tr_pad[:K_P] = u_tr
 
+    # —— 行 19/21：INTT + e₁/e₂ ——
     time_pad = stage123_transform(u_tr_pad, "intt", K_INTT_PAD)
     u = ((time_pad[:K].astype(np.int64) + e1.astype(np.int64)) % Q).astype(np.int32)
     v = ((time_pad[4].astype(np.int64) + e2.astype(np.int64)) % Q).astype(np.int32)
 
-    # 行 2：ek_pke[0:1536] = ByteEncode12(t_hat)
+    # —— 行 2：ek_pke = ByteEncode₁₂(t_hat) ——
     ek_pke = np.zeros((K, 384), dtype=np.uint8)
     for j in range(K):
         for i in range(N // 2):
@@ -255,6 +280,7 @@ def main() -> None:
             ek_pke[j, 3 * i + 1] = b1
             ek_pke[j, 3 * i + 2] = b2
 
+    # —— LUT stacked 落盘 ——
     lut_ntt = load_lut_t_i8("ntt")
     lut_intt = load_lut_t_i8("intt")
     lut_ntt_even = lut_planar_stacked(lut_ntt, True)

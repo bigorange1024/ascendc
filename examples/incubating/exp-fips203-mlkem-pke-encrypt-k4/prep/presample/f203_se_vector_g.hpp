@@ -1,3 +1,11 @@
+/**
+ * @file f203_se_vector_g.hpp
+ * @brief G / SHA3-512 相关向量辅助（KeyGen 风格；Encrypt 用 ρ 自 ek）。
+ *
+ * 流水线位置：FIPS 203 / ML-KEM-1024；Encrypt prep 可能间接包含。
+ * 与 golden：无 Encrypt 主 I/O。
+ */
+
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_g.hpp
 // @layer prep
@@ -8,11 +16,6 @@
 // @depends #include: f203_alg7_g.hpp, cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_vector_g.hpp
- * @brief Phase G：SEED_D → σ（与 Alg.7 / KeyGen 同式，一次 G 派生 ρ‖σ）。
- */
 #pragma once
 
 #include "f203_alg7_g.hpp"

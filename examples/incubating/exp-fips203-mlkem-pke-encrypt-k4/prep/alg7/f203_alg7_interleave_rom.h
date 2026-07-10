@@ -1,8 +1,18 @@
 /**
  * @file f203_alg7_interleave_rom.h
- * @brief Alg.7 rej：d1[224]||d2[224] scratch → stream[448] Gather 字节索引（自动生成）。
+ * @brief Alg.7：d1[224]||d2[224] scratch → stream[448] 的 Gather 字节索引 ROM。
  *
- * 生成：scripts/gen_alg7_interleave_rom.py
+ * ## 流水线位置
+ * Encrypt prep SampleNTT：解出 d1/d2 后，在拒绝采样前把两路候选交错成单一 stream，
+ * 便于按 lane 做向量 Compare。FIPS 203 / ML-KEM-1024。
+ *
+ * ## 表用途
+ * - scratch 布局：`[d1[0..223] | d2[0..223]]`，各元素 int32
+ * - `kAlg7InterleaveReorderByte[i]`：输出 stream[i] 应从 scratch 哪一字节偏移 Gather
+ *   （偶位取 d1、奇位取 d2；偏移含跨半区 +896B 等）
+ *
+ * ## 生成
+ * `scripts/gen_alg7_interleave_rom.py`；数值表勿手改。与 golden 采样语义一致。
  */
 #pragma once
 
@@ -10,9 +20,12 @@
 
 namespace F203Alg7 {
 
+/** 交错后候选流长度（224×2） */
 constexpr uint32_t kInterleaveStreamLen = 448U;
+/** ROM 项数（与 stream 等长） */
 constexpr uint32_t kInterleaveRomLen = 448U;
 
+/** Gather：stream[i] ← scratch 内字节偏移 */
 constexpr int32_t kAlg7InterleaveReorderByte[kInterleaveRomLen] = {
     0, 896, 4, 900, 8, 904, 12, 908, 
     16, 912, 20, 916, 24, 920, 28, 924, 

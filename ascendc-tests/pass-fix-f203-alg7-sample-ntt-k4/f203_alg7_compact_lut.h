@@ -1,6 +1,29 @@
 /**
  * @file f203_alg7_compact_lut.h
- * @brief 8-lane accept mask → Gather 字节偏移（由 gen_alg7_compact_lut.py 生成）。
+ * @brief Alg.7 rej **向量 compact（R5 实验路径）** 查表：8-lane accept mask → Gather 字节偏移。
+ *
+ * 表语义（由 scripts/gen_alg7_compact_lut.py 穷举生成，非手写）：
+ *   - rej 剔除后的 stream[448]（拒绝 lane 已标为 q）按 8×int32 一个 chunk 处理；
+ *     每 chunk 先用 AscendC::Compare(EQ, q) 得到「拒绝掩码」，取反得到 8-bit **accept mask**
+ *     （bit i =1 表示 chunk 内第 i 个 lane 是「接受」系数，即 v<q）。
+ *   - `kAlg7CompactMask8Count[mask]`：该 8-bit mask 对应 chunk 内被接受的系数个数
+ *     = popcount(mask)，取值范围 [0,8]，供上层决定本 chunk 要 Gather 出多少个系数。
+ *   - `kAlg7CompactMask8GatherByte[mask][0..7]`：该 mask 下，被接受的 lane 在
+ *     「8×int32 tile」内的**字节偏移**（lane i 的偏移 = i×4），按 lane 序号从低到高排列；
+ *     未用满的槽位（超出 popcount(mask) 的位置）填 0，仅为凑齐 C++ 定长数组 `[8]`，
+ *     调用方须依据 `kAlg7CompactMask8Count[mask]` 只取前 `count` 个有效槽位，
+ *     不能把填充的 0 当作「第 0 字节也被接受」误用。
+ *   - 256 = 2^8，枚举全部 8-bit mask 取值，故表长 `kAlg7CompactMaskLutLen=256`。
+ *
+ * 用法：`f203_alg7_rej_compact.hpp::RejVecCompactStreamUb` 每 chunk 用 `accept8` 查
+ * `kAlg7CompactMask8Count` 得本 chunk 接受数 `nTake`，再查 `kAlg7CompactMask8GatherByte[accept8]`
+ * 填 Gather 索引，将接受系数紧凑写入输出缓冲；`kAlg7CompactStreamChunks=448/8=56` 为总 chunk 数。
+ *
+ * 现状（2026-06，见 STATUS.md §R5）：本表所属向量 compact 路线在 SIM 上 `Compare` 掩码读法
+ * 未通过验收，生产默认走标量 compact（`f203_alg7_rej_scalar.hpp::RejScalarCompactStreamUb`）；
+ * 本表与 `RejVecCompactStreamUb` 仅作 NPU/非 CPU 孪生下的实验对照，不在默认路径调用。
+ *
+ * 重新生成：`python3 scripts/gen_alg7_compact_lut.py`（纯枚举，无随机性，可重复复现）。
  */
 #pragma once
 
@@ -8,12 +31,18 @@
 
 namespace F203Alg7 {
 
+/** 每个 compact chunk 处理的 int32 lane 数（与 Compare tile 的「有效数据」宽度一致）。 */
 constexpr uint32_t kAlg7CompactChunkLanes = 8U;
+/** LUT 行数：8-bit accept mask 全枚举 = 2^8。 */
 constexpr uint32_t kAlg7CompactMaskLutLen = 256U;
+/** stream[448] 按 8-lane 一组切分的 chunk 总数（448/8=56），须与 kStreamLen 同步。 */
 constexpr uint32_t kAlg7CompactStreamChunks = 448U / 8U;
+/** AscendC::Compare 单次调用要求的最小 lane 数（int32 Level-2 API 约束，非本表自定义）。 */
 constexpr uint32_t kAlg7CompactCompareCount = 128U;
+/** Compare tile 中「有效 8 lane 之外」需要 pad 的哑元 lane 数：128-8=120。 */
 constexpr uint32_t kAlg7CompactComparePad = kAlg7CompactCompareCount - kAlg7CompactChunkLanes;
 
+/** kAlg7CompactMask8Count[mask] = popcount(mask)，即该 8-bit accept mask 对应的接受系数个数。 */
 constexpr uint8_t kAlg7CompactMask8Count[kAlg7CompactMaskLutLen] = {
 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 };

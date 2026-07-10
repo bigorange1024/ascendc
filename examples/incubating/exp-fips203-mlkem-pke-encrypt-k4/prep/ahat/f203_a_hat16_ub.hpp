@@ -1,3 +1,12 @@
+/**
+ * @file f203_a_hat16_ub.hpp
+ * @brief Alg.13 行 3–7：16×（SHAKE + 向量 d12/rej），UB 全链，链末写 GM a_hat[16,256]。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 复用 pass-fix-f203-alg7-sample-ntt-k4 的 F203Alg7 模块（Mins+Gather+标量 compact）。
+ * 每 poly：SHAKE → 解交织 → d12 → rej → DataCopy 到 a_hat_offset(p,j)。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/f203_a_hat16_ub.hpp
 // @layer prep
@@ -8,14 +17,6 @@
 // @depends #include: f203_a_hat16_config.h, f203_a_hat16_layout.h, f203_alg7_d12_vec.hpp, f203_alg7_g.hpp, f203_alg7_layout.h, f203_alg7_shake_xof.hpp, shake_general.h, shake_general_tiling_data.h, shake_ub_helpers.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_a_hat16_ub.hpp
- * @brief Alg.13 行 3–7：16×（SHAKE + 向量 d12/rej），UB 全链，链末写 GM a_hat[16,256]。
- *
- * 复用 pass-fix-f203-alg7-sample-ntt-k4 的 F203Alg7 模块（Mins+Gather+标量 compact）。
- * 每 poly：SHAKE → 解交织 → d12 → rej → DataCopy 到 a_hat_offset(p,j)。
- */
 #pragma once
 
 #include "f203_a_hat16_config.h"

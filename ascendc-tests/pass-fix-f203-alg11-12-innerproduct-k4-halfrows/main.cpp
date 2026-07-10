@@ -1,3 +1,13 @@
+/**
+ * @file main.cpp
+ * @brief Host 入口：Alg.13 行 18 半行内积探针（双 AIV，每核写 P_OUT/2 行 t̂，无 ê）。
+ *
+ * 流水线位置：读 input/a_hat.bin、s_hat.bin → 调 halfrows kernel → 写 output/t_hat.bin，
+ * 由 scripts/verify_result.py 与 golden_t_hat.bin 对拍。
+ *
+ * GM 仍为全量 4×4 a_hat / s_hat；blockDim=2，与单核内积探针 I/O 兼容。
+ * __CCE_KT_TEST__：CPU 孪生；否则 ACL 设备路径。
+ */
 #include "data_utils.h"
 #include "innerproduct_tiling.h"
 
@@ -10,17 +20,25 @@ extern void hat_innerproduct_halfrows_custom_do(uint32_t coreDim, void *l2ctrl, 
 extern "C" __global__ __aicore__ void hat_innerproduct_halfrows_custom(GM_ADDR aHat, GM_ADDR sHat, GM_ADDR tHat);
 #endif
 
+/**
+ * Host main：按 tiling 分配缓冲，加载 a_hat/s_hat，以 blockDim=2 启动半行内积，写出 t_hat。
+ * @param argc 未使用
+ * @param argv 未使用
+ * @return 恒为 0
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    // 全量 GM 字节数；blockDim=2（每 AIV 负责 kPPerAiv 行）
     const size_t aHatBytes = static_cast<size_t>(innerproduct_tiling::kAHatBytes);
     const size_t sHatBytes = static_cast<size_t>(innerproduct_tiling::kSHatBytes);
     const size_t tHatBytes = static_cast<size_t>(innerproduct_tiling::kTHatBytes);
     const uint32_t blockDim = static_cast<uint32_t>(innerproduct_tiling::kBlockDim);
 
 #ifdef __CCE_KT_TEST__
+    // ---------- CPU 孪生路径 ----------
     uint8_t *aHat = (uint8_t *)AscendC::GmAlloc(aHatBytes);
     uint8_t *sHat = (uint8_t *)AscendC::GmAlloc(sHatBytes);
     uint8_t *tHat = (uint8_t *)AscendC::GmAlloc(tHatBytes);
@@ -37,6 +55,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)sHat);
     AscendC::GmFree((void *)tHat);
 #else
+    // ---------- ACL 设备路径 ----------
     CHECK_ACL(aclInit(nullptr));
     aclrtContext context;
     int32_t deviceId = 0;

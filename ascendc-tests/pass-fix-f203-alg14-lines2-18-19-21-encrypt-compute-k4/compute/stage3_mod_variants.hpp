@@ -27,6 +27,7 @@ constexpr int32_t kF203BarrettK = 20;
 // SIM：~10.5s 全链路
 // ---------------------------------------------------------------------------
 
+/** Barrett 一步：dst -= ((dst*mu)>>k)*q，再 wrap 到 [0,q) */
 __aicore__ inline void barrett_reduce_limb6_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
                                                 LocalTensor<int32_t> &t2, int32_t count)
 {
@@ -37,7 +38,10 @@ __aicore__ inline void barrett_reduce_limb6_vec(LocalTensor<int32_t> &dst, int32
     wrap_mod_vec_runtime(dst, dst, q, t1, t2, count);
 }
 
-/** acc=hh; acc=acc*64+(hl+lh); acc=acc*64+ll，每步 Barrett。 */
+/**
+ * 方案 0：acc=hh；acc=(acc<<6)+(hl+lh)；acc=(acc<<6)+ll，每步 Barrett。
+ * @param hh/lh/hl/ll 平面四 limb；@param t1/t2 scratch；@param q 通常 3329
+ */
 __aicore__ inline void combine_limb6_horner_barrett_vec(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
                                                         LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
                                                         LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,
@@ -63,6 +67,7 @@ __aicore__ inline void combine_limb6_horner_barrett_vec(LocalTensor<int32_t> &ds
 // SIM：~16s（标量 GetValue/SetValue 在 PEM 很慢）；需 KERNEL_COMPUTE_BUDGET_SEC≥20
 // ---------------------------------------------------------------------------
 
+/** 方案 1：标量 int64 向零取整商，dst = raw - q*floor(raw/q) */
 __aicore__ inline void stage31_mod_i64_scalar(LocalTensor<int32_t> &dst, int32_t q, int32_t count)
 {
     const int64_t q64 = static_cast<int64_t>(q);
@@ -73,6 +78,7 @@ __aicore__ inline void stage31_mod_i64_scalar(LocalTensor<int32_t> &dst, int32_t
     }
 }
 
+/** Horner raw 后接 stage31_mod_i64_scalar */
 __aicore__ inline void combine_limb6_routea_mod_scalar_i64(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
                                                            LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
                                                            LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,
@@ -88,6 +94,10 @@ __aicore__ inline void combine_limb6_routea_mod_scalar_i64(LocalTensor<int32_t> 
 // SIM：~10s；UB：scratch_t1 + calc_f(3×halfLen float)，勿再堆 VECIN TQue（上限 8）
 // ---------------------------------------------------------------------------
 
+/**
+ * 方案 2：float Div 求商再 Muls/Sub（CAST_TRUNC）。
+ * @param fRaw/fTmp/fQuot 各 count 个 float 的 scratch
+ */
 __aicore__ inline void stage31_div_mod_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
                                            LocalTensor<float> &fRaw, LocalTensor<float> &fTmp,
                                            LocalTensor<float> &fQuot, int32_t count)

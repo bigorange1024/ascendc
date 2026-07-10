@@ -1,20 +1,41 @@
 /**
  * @file main.cpp
- * @brief Host 驱动：读 input bin → launch `mmad_custom` → 写 output bin。
+ * @brief Host 驱动入口：读 input bin → launch `mmad_custom` → 写 output bin，供 run.sh + cmp 对拍。
  *
- * ## GM 参数顺序（与内核一致）
+ * 流水线位置：探针最外层 Host；不实现密码学，只负责 GM 分配、H2D/D2H 与文件 I/O。
+ * 与 golden 关系：写出的 output/*.bin 由 scripts/verify_result.py 与 gen_data 生成的 golden_* 比对。
  *
- *   dst, t_hat, ek_out, sk_out, src, a_hat, ws, tiling
+ * ## GM 参数顺序（与内核 mmad_custom 一致）
+ *
+ *   dst, t_hat, ek_out, sk_out, src, a_hat, ws, tiling（可选 rho_gm, ek_pke_gm）
  *
  * ## workspace `ws` 布局（见 tiling.h）
  *
  *   LUT even/odd stacked → S0 [32,256] → mat_c 四路临时 → MAT_C_PLANAR [96,128]
  *
- * ## mixPass 预设输入（分阶段调试）
+ * ## mixPass 预设输入（分阶段调试，非默认生产路径）
  *
  *   2 → s0_preset；3 → mat_c_preset；4/7 → dst_preset；7 → t_hat_preset
  *
- * CPU：`g_2s1e_mix_pass` 与 tiling.mixPass 同步；SIM/设备读 tiling。
+ * CPU：`g_2s1e_mix_pass` 与 tiling.mixPass 同步；SIM/设备读 tiling.mixPass。
+ */
+
+/**
+ * Host main：按 tiling 尺寸分配缓冲、装载 input、启动内核、落盘 output。
+ *
+ * 输入（文件 → GM）：
+ *   - input/tiling.bin：TilingData（含 mixPass）
+ *   - input/src.bin：[8,256] int32（逻辑 1s+1e，物理 4×s 重复 + 4×e）
+ *   - input/a_hat.bin：[16,256] int32（Â 矩阵，k×k poly）
+ *   - input/lut_{even,odd}_stacked.bin：Stage2 int8 LUT，写入 ws 对应偏移
+ *   - 可选 mixPass 预设 / KeyGen rho.bin
+ *
+ * 输出（GM → 文件）：
+ *   - output/dst.bin、t_hat.bin、ek_polyvec.bin、sk_polyvec.bin、s0.bin、mat_c.bin
+ *   - 可选 ek_pke.bin、mat_c_tmp_lo_even.bin（mixPass=6）
+ *
+ * 前置条件：当前工作目录为用例根；input/ 已由 gen_data.py 生成。
+ * 分支：ASCENDC_CPU_DEBUG → tikicpu GmAlloc；否则 → aclrt + ACLRT_LAUNCH_KERNEL。
  */
 #include "data_utils.h"
 #include "tiling.h"
@@ -39,11 +60,15 @@ extern "C" void mmad_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out, GM_ADDR 
 extern volatile int g_2s1e_mix_pass;
 #endif
 
+/**
+ * 见文件头「Host main」说明：装载 input → launch mmad_custom → 落盘 output。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
 
+    /* 各 bin 字节数与 tiling.h / byte_encode 命名空间常量对齐 */
     size_t tilingSize = 64;
     static_assert(sizeof(TilingData) <= 64, "");
     size_t srcFileSize = tiling::srcFileBytes;
@@ -59,7 +84,7 @@ int32_t main(int32_t argc, char *argv[])
     size_t lutFileSize = tiling::lutEvenOddFileBytes;
     size_t matCFileSize = tiling::matCFileBytes;
     size_t s0FileSize = tiling::s0FileBytes;
-    uint32_t blockDim = 1;
+    uint32_t blockDim = 1; /* 本探针单 block MIX：1 AIC + 2 AIV */
     const size_t wsFileSize = tiling::wssize;
     bool ok;
 
@@ -72,8 +97,10 @@ int32_t main(int32_t argc, char *argv[])
         return 1;
     }
     TilingData *tiling = (TilingData *)tiling_data;
+    /* CPU 孪生：内核读全局 g_2s1e_mix_pass，须与 tiling 同步 */
     g_2s1e_mix_pass = tiling->mixPass;
 
+    /* GmAlloc 下限 1024：避免极小缓冲触发工具链边角问题 */
     uint8_t *dst = (uint8_t *)AscendC::GmAlloc(dstFileSize > 1024 ? dstFileSize : 1024);
     uint8_t *t_hat = (uint8_t *)AscendC::GmAlloc(tHatFileSize > 1024 ? tHatFileSize : 1024);
     uint8_t *ek_out = (uint8_t *)AscendC::GmAlloc(ekFileSize > 1024 ? ekFileSize : 1024);
@@ -85,6 +112,7 @@ int32_t main(int32_t argc, char *argv[])
         ws[i] = 0;
     }
 
+    /* 生产路径必读：src / a_hat / 偶奇 LUT（LUT 直接落入 ws 偏移） */
     ok = ReadFile("./input/src.bin", srcFileSize, src, srcFileSize);
     if (!ok) {
         return 9;
@@ -101,6 +129,7 @@ int32_t main(int32_t argc, char *argv[])
     if (!ok) {
         return 10;
     }
+    /* mixPass 分段调试：跳过前级时灌入预设中间态 */
     if (tiling->mixPass == 2) {
         ok = ReadFile("./input/s0_preset.bin", s0FileSize, ws + tiling::S0, s0FileSize);
         if (!ok) {
@@ -134,6 +163,7 @@ int32_t main(int32_t argc, char *argv[])
     }
 
 #if F203_KEYGEN_EK_PKE >= 1
+    /* KeyGen 融合：ρ 输入 + ek_PKE 输出缓冲 */
     uint8_t *rho = (uint8_t *)AscendC::GmAlloc(rhoFileSize > 32 ? rhoFileSize : 32);
     uint8_t *ek_pke = (uint8_t *)AscendC::GmAlloc(ekPkeFileSize > 1024 ? ekPkeFileSize : 1024);
     size_t rhoRead = rhoFileSize;
@@ -146,6 +176,7 @@ int32_t main(int32_t argc, char *argv[])
     ICPU_RUN_KF(mmad_custom, blockDim, dst, t_hat, ek_out, sk_out, src, a_hat, ws, *tiling);
 #endif
 
+    /* 落盘：NTT dst、行18 t_hat、行19–20 ek/sk、中间态 s0/mat_c */
     ok = WriteFile("./output/dst.bin", dst, dstFileSize);
     if (!ok) {
         return 11;
@@ -173,6 +204,7 @@ int32_t main(int32_t argc, char *argv[])
         return 12;
     }
     if (tiling->mixPass == 6) {
+        /* MMAD sanity：只 dump 单路 lo_even 临时 */
         ok = WriteFile("./output/mat_c_tmp_lo_even.bin", ws + ::tiling::MAT_C_TMP_LO_EVEN, ::tiling::sanityMatCTmpBytes);
         if (!ok) {
             return 15;
@@ -204,6 +236,7 @@ int32_t main(int32_t argc, char *argv[])
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
 
+    /* Host 页 + Device GM 成对分配（与 CPU 路径语义相同的逻辑缓冲） */
     uint8_t *dstHost, *tHatHost, *ekHost, *skHost, *srcHost, *aHatHost, *wsHost;
     uint8_t *dstDevice, *tHatDevice, *ekDevice, *skDevice, *srcDevice, *aHatDevice, *wsDevice;
 
@@ -224,6 +257,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMallocHost((void **)(&aHatHost), aHatFileSize));
     CHECK_ACL(aclrtMalloc((void **)&aHatDevice, aHatFileSize, ACL_MEM_MALLOC_HUGE_FIRST));
 
+    /* H2D：src / a_hat 先上设备；LUT 与预设先拼进 wsHost 再整块拷 ws */
     ok = ReadFile("./input/src.bin", srcFileSize, srcHost, srcFileSize);
     if (!ok) {
         return 9;
@@ -303,6 +337,7 @@ int32_t main(int32_t argc, char *argv[])
 #endif
     CHECK_ACL(aclrtSynchronizeStream(stream));
 
+    /* D2H：结果与 workspace 中间态一并取回后写文件 */
     CHECK_ACL(aclrtMemcpy(dstHost, dstFileSize, dstDevice, dstFileSize, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(tHatHost, tHatFileSize, tHatDevice, tHatFileSize, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(ekHost, ekFileSize, ekDevice, ekFileSize, ACL_MEMCPY_DEVICE_TO_HOST));

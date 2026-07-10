@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-10（**T20-W1** 中文注释补课完成：stable PKE+KEM 自有；下一波 T20-W2；T19 仍待）
+> **最后刷新**：2026-07-10（**T20** Wave1–5 中文注释补课完成；下一优先 **T19** KEM↔stable）
 
 ---
 
@@ -60,10 +60,11 @@
 
 ## ★ 下一任务（P0）
 
-1. **T20-W2 — 中文注释补课**：`pass-fix` PKE device / encrypt prep-compute-pack（跳过 vendor/frozen/add_custom）
-2. **T19 — KEM 探针重构对齐 stable PKE**（见 `qa/TODO.md` T19a–e）  
+1. **T19 — KEM 探针重构对齐 stable PKE**（见 `qa/TODO.md` T19a–e）  
    - 现状：alg20/21 `vendor_sync` ← frozen G5/G4；stable 布局不兼容 drop-in  
-3. **Alg.21** 单 session SIM 真修；**NPU**；KEM `#交付#`（视节奏）
+2. **Alg.21** 单 session SIM 真修；**NPU**；KEM `#交付#`（视节奏）
+
+**T20 注释补课**：Wave1–5 已完成（stable PKE + KEM 自有 + pass-fix + incubating；跳过 vendor/frozen）。
 
 **禁止**：未改接线就把 `vendor_sync` SRC 指回 stable；从 frozen **抄码改写**；新代码缺详细中文注释。
 

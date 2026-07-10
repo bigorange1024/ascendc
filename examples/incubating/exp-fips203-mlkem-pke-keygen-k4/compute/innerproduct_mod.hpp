@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 内积模约辅助。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/innerproduct_mod.hpp
+ */
+/**
  * @file innerproduct_mod.hpp
  * @brief 行 18 内积累加后的 final mod q（与 Stage3 mod 解耦）。
  *

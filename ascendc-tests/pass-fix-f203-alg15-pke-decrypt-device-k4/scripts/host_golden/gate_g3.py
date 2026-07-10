@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""gate_g3.py — golden w_hat。"""
+"""
+gate_g3.py — Alg.15 门控 G3 Host golden：ŵ = ⟨ŝ, û⟩。
+
+流水线位置：verify_gate 在 G2 通过后调用。
+语义：对 k 个 poly 做 Alg.11 MultiplyNTTs 累加后 mod q → ŵ[n]。
+与设备关系：对拍 su_dot 输出；实现用 golden_m.golden_w_hat。
+"""
 from __future__ import annotations
 
 import sys
@@ -12,6 +18,7 @@ from golden_m import decode_s_hat, golden_w_hat, unpack_ciphertext
 
 
 def main() -> None:
+    """读 dk+c，经 NTT 后算 ŵ，写出 golden_w_hat.bin。"""
     case = Path(sys.argv[1])
     out = Path(sys.argv[2])
     dk = bytes(np.fromfile(case / "input/dk_pke.bin", dtype=np.uint8))
@@ -19,6 +26,7 @@ def main() -> None:
     s_hat = decode_s_hat(dk)
     u, _ = unpack_ciphertext(c)
     u_hat = stage123_transform(u, "ntt")
+    # Alg.15 行 6：内积（NTT 域）
     w_hat = golden_w_hat(s_hat, u_hat)
     w_hat.astype(np.int32).tofile(out / "golden_w_hat.bin")
     print("[gate_g3] w_hat golden OK")

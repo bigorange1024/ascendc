@@ -11,6 +11,7 @@
  * Golden：间接经 dst.bin；无独立 limb golden。
  *
  * CMake：无；ASCENDC_CPU_DEBUG 时 KYBER_PIPE_ALL 为空操作。
+ * 本文件仅常量与 PIPE 宏，无非平凡函数体。
  */
 #ifndef KYBER_LIMB6_HPP
 #define KYBER_LIMB6_HPP

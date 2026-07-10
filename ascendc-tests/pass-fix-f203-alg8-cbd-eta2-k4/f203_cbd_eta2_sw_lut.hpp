@@ -20,7 +20,12 @@
 
 namespace F203CbdEta2 {
 
-/** 从 SWAR 字 d 的第 j 组 4-bit 半系数提取 LUT 索引。 */
+/**
+ * 从 SWAR 字 d 的第 j 组 4-bit 半系数提取 LUT 索引。
+ * @param d [in] SWAR 聚合字：每 4-bit 一组 (a,b)，a 占低 2 位，b 占高 2 位
+ * @param j [in] 组号，范围 [0,8)（一个 32-bit 字含 8 组 (a,b)）
+ * @return LUT 下标 `(a<<2)|b`，范围 [0,16)，用于索引 CBD2_AB_LUT
+ */
 __aicore__ inline uint32_t Cbd2AbIndex(uint32_t d, uint32_t j)
 {
     const uint32_t shift = 4U * j;
@@ -29,11 +34,18 @@ __aicore__ inline uint32_t Cbd2AbIndex(uint32_t d, uint32_t j)
     return (a << 2U) | b;
 }
 
-/** 单 poly：栈缓冲区版（P1a scalar I/O 路径调用）。 */
+/**
+ * 单 poly：栈缓冲区版（P1a scalar I/O 路径调用）。
+ * @param dst_row [out] 单行输出，长度 N=256 的 int32 栈数组
+ * @param prf_row [in]  单行 PRF 输出，长度 PRF_BYTES=128 的 uint8 栈数组
+ * 算法：每 4 字节打包成 SWAR 字 d（8 组 (a,b)），逐组查 16 项 LUT 得到 CBD 系数，
+ * 相比 f203_cbd_eta2.hpp 中 P0 对照版，省去内层 j 循环的运行时分支与 `% Q`。
+ */
 __aicore__ inline void SamplePolyCbd2RowSwLut(int32_t *dst_row, const uint8_t *prf_row)
 {
     for (uint32_t i = 0; i < N / 8U; ++i) {
         const uint32_t t = Load32Le(prf_row + 4U * i);
+        /* SWAR：奇偶位分别求和，把交错排列的 2-bit 计数聚合为每 4-bit 一组的 (a,b) 对 */
         const uint32_t d = (t & 0x55555555U) + ((t >> 1) & 0x55555555U);
         const uint32_t base = 8U * i;
         /* 8 系数展开：避免内层 j 循环与分支（编译器可进一步全展开 32×块）。 */
@@ -48,7 +60,12 @@ __aicore__ inline void SamplePolyCbd2RowSwLut(int32_t *dst_row, const uint8_t *p
     }
 }
 
-/** UB LocalTensor 读 4 字节（DataCopy 入 UB 后使用）。 */
+/**
+ * UB LocalTensor 读 4 字节（DataCopy 入 UB 后使用），小端序拼装为 uint32_t。
+ * @param buf [in] UB 上的 uint8 LocalTensor，须已通过 DataCopy 从 GM 填入有效数据
+ * @param off [in] 起始偏移（字节），要求 off+3 未越界
+ * @return 小端序拼装的 32-bit 值
+ */
 __aicore__ inline uint32_t Load32LeUb(const AscendC::LocalTensor<uint8_t> &buf, uint32_t off)
 {
     return static_cast<uint32_t>(buf.GetValue(off)) | (static_cast<uint32_t>(buf.GetValue(off + 1U)) << 8) |
@@ -56,7 +73,13 @@ __aicore__ inline uint32_t Load32LeUb(const AscendC::LocalTensor<uint8_t> &buf, 
            (static_cast<uint32_t>(buf.GetValue(off + 3U)) << 24);
 }
 
-/** 单 poly：UB 版（P1b/P2 DataCopy 路径；结果写 rowQue 再 DataCopy 到 GM）。 */
+/**
+ * 单 poly：UB 版（P1b/P2 DataCopy 路径；结果写 rowQue 再 DataCopy 到 GM）。
+ * @param dst_row [out] UB 上的 int32 LocalTensor，长度 N=256，写入该行 CBD 采样结果
+ * @param prf_row [in]  UB 上的 uint8 LocalTensor，长度 PRF_BYTES=128，该行 PRF 输出
+ * 算法与 SamplePolyCbd2RowSwLut 完全一致（SWAR+LUT），仅将栈数组替换为 UB
+ * LocalTensor 的 GetValue/SetValue 访问，供 GM↔UB DataCopy 流水线路径（P1b/P2）调用。
+ */
 __aicore__ inline void SamplePolyCbd2RowSwLutUb(AscendC::LocalTensor<int32_t> &dst_row,
                                                 const AscendC::LocalTensor<uint8_t> &prf_row)
 {

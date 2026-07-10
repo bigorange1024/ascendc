@@ -33,7 +33,11 @@ constexpr uint32_t kVecScratchBytes = 0U;
 constexpr uint32_t kVecScratchInt32Slots = 0U;
 #endif
 
-/** 标量 ByteEncode₁₂：每对系数 12 bit → 3 字节（FIPS Alg.5） */
+/**
+ * 标量 ByteEncode₁₂：每对系数 12 bit → 3 字节（FIPS Alg.5）。
+ * @param r 输出 uint8[3*pairs]；@param a 输入 int32[coeffN]（取低 12 bit）；@param coeffN 通常 256
+ * 字节布局：r[3i]=t0低8；r[3i+1]=t0高4|t1低4；r[3i+2]=t1高8。
+ */
 __aicore__ inline void poly_byte_encode12_scalar(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &a, uint32_t coeffN)
 {
     const uint32_t pairs = coeffN / 2U;
@@ -46,7 +50,10 @@ __aicore__ inline void poly_byte_encode12_scalar(LocalTensor<uint8_t> &r, LocalT
     }
 }
 
-/** 按 BYTE_ENCODE12_VEC 分发标量/向量编码；encodeWs 仅向量路径使用 */
+/**
+ * 按 BYTE_ENCODE12_VEC / PREFETCH 分发标量或向量编码。
+ * @param encodeWs 向量路径 scratch（标量路径忽略）
+ */
 __aicore__ inline void poly_byte_encode12_local(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &a, uint32_t coeffN,
                                                 LocalTensor<int32_t> &encodeWs)
 {

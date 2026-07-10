@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """
-f203_ref_common.py — host_golden 共用 FIPS 203 参考（禁止 liboqs）。
+f203_ref_common.py — Decrypt/Encrypt host_golden 共用 FIPS 203 参考（禁止 liboqs）。
 
-含 NTT/INTT Stage123、Compress/ByteEncode、Alg.11 basemul 等。
+## 职责
+NTT/INTT Stage123、Compress/ByteEncode、Alg.11 等纯 Python 参考，供 golden/gate 生成期望 bin。
+
+## 约束
+仅作 golden I/O oracle；禁止当作 AscendC 必须复刻的实现规格。
 """
 from __future__ import annotations
 
@@ -41,6 +45,9 @@ GAMMAS = np.array(
 
 
 def mod_q_i64(x: int) -> int:
+    """
+    将整数约化到 [0,q)。
+    """
     rem = x % Q
     if rem < 0:
         rem += Q
@@ -48,6 +55,9 @@ def mod_q_i64(x: int) -> int:
 
 
 def barrett_red(x: int) -> int:
+    """
+    双段 Barrett 约化到 Z_q（参考参数 μ=78/5039）。
+    """
     t = x + (Q & (x >> 31))
     t1 = (t * 78) >> 18
     x = t - t1 * Q
@@ -58,6 +68,11 @@ def barrett_red(x: int) -> int:
 
 
 def multiply_ntts(f: np.ndarray, g: np.ndarray) -> np.ndarray:
+    """
+    Alg.11：两 NTT 域 poly 按对 ×γ。
+
+    输入/输出：长度 N 的 int32 数组。
+    """
     h = np.zeros(N, dtype=np.int32)
     for i in range(N // 2):
         gamma = int(GAMMAS[i])
@@ -70,6 +85,9 @@ def multiply_ntts(f: np.ndarray, g: np.ndarray) -> np.ndarray:
 
 
 def load_lut_t_i8(mode: str) -> np.ndarray:
+    """
+    从 transpose LUT 头解析 T[N,512] int8（mode=ntt|intt）。
+    """
     symbol = "kMlkemLimb6Ntt_T_i8" if mode == "ntt" else "kMlkemLimb6Intt_T_i8"
     txt = LUT_HDR.read_text(encoding="utf-8")
     i0 = txt.index(symbol)
@@ -80,18 +98,30 @@ def load_lut_t_i8(mode: str) -> np.ndarray:
 
 
 def a_hat_offset(p: int, j: int) -> int:
+    """
+    Â 行主序偏移：poly (p,j) 起点。
+    """
     return (p * K + j) * N
 
 
 def a_hat_offset_at(p: int, j: int) -> int:
+    """
+    Âᵀ 访问用偏移（Encrypt at 路径）。
+    """
     return (j * K + p) * N
 
 
 def planar_row(slot: int, limb: int, half: int) -> int:
+    """
+    平面 mat_c 行号。
+    """
     return half * (K * LIMBS) + slot * LIMBS + limb
 
 
 def encode_compact(polys: np.ndarray) -> np.ndarray:
+    """
+    Stage1 参考：polyvec → s0[2K,N] int8（HI 前 K 行，LO 后）。
+    """
     s0 = np.zeros((2 * K, N), dtype=np.int8)
     for lp in range(K):
         for r in range(N):
@@ -102,6 +132,9 @@ def encode_compact(polys: np.ndarray) -> np.ndarray:
 
 
 def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray) -> tuple[np.ndarray, ...]:
+    """
+    Stage2 参考：s0×LUT 四路 matmul。
+    """
     le = lut[:, 0:N:2]
     lo = lut[:, 1:N:2]
     he = lut[:, N:512:2]
@@ -114,6 +147,9 @@ def mat_c_tmp_golden(s0: np.ndarray, lut: np.ndarray) -> tuple[np.ndarray, ...]:
 
 
 def pack_bank(c_le, c_lo, c_he, c_ho, poly_base: int, k_polys: int, out: np.ndarray) -> None:
+    """
+    四路临时写入平面 mat_c 一段 poly 批。
+    """
     for lp in range(k_polys):
         hi_r = poly_base + lp
         lo_r = K + poly_base + lp
@@ -129,12 +165,18 @@ def pack_bank(c_le, c_lo, c_he, c_ho, poly_base: int, k_polys: int, out: np.ndar
 
 
 def pack_mat_c_planar(c_le, c_lo, c_he, c_ho) -> np.ndarray:
+    """
+    组装完整平面 mat_c。
+    """
     out = np.zeros((MAT_C_PLANAR_ROWS, HALF_N), dtype=np.int32)
     pack_bank(c_le, c_lo, c_he, c_ho, 0, K, out)
     return out
 
 
 def stage31_mod(raw: np.ndarray) -> np.ndarray:
+    """
+    合并后 raw 系数 mod q（参考）。
+    """
     raw64 = raw.astype(np.int64)
     q = np.int64(Q)
     t = np.where(raw64 >= 0, raw64 // q, -((-raw64) // q))
@@ -145,6 +187,9 @@ def stage31_mod(raw: np.ndarray) -> np.ndarray:
 
 
 def merge_planar_poly(mat_planar: np.ndarray, slot: int) -> np.ndarray:
+    """
+    RouteA：平面四 limb → Horner+mod → 一 poly。
+    """
     hh = mat_planar[planar_row(slot, 0, 0)].astype(np.int64)
     lh = mat_planar[planar_row(slot, 1, 0)].astype(np.int64)
     hl = mat_planar[planar_row(slot, 2, 0)].astype(np.int64)
@@ -162,7 +207,9 @@ def merge_planar_poly(mat_planar: np.ndarray, slot: int) -> np.ndarray:
 
 
 def stage123_transform(polys: np.ndarray, mode: str) -> np.ndarray:
-    """k=4 polyvec Stage123 NTT 或 INTT。"""
+    """
+    k=4 polyvec 完整 Stage1–3（NTT/INTT 由 mode 选 LUT）。
+    """
     if polys.shape != (K, N):
         raise ValueError(f"expected ({K},{N}) got {polys.shape}")
     lut = load_lut_t_i8(mode)
@@ -176,6 +223,9 @@ def stage123_transform(polys: np.ndarray, mode: str) -> np.ndarray:
 
 
 def compress_d_scalar(u: int, d: int) -> int:
+    """
+    FIPS Compress_d：单系数 → d-bit（d=5/11）。
+    """
     u = int(u) % Q
     if d == 5:
         # FIPS 203 Compress_5 / liboqs mlk_scalar_compress_d5：round(u*32/q) 用 (1<<26) 偏置
@@ -189,7 +239,9 @@ def compress_d_scalar(u: int, d: int) -> int:
 
 
 def byte_encode_d(F: np.ndarray, d: int) -> bytes:
-    """FIPS 203 Alg.5：256 个 d-bit 整数 → 32*d 字节。"""
+    """
+    Alg.5：256 个 d-bit → 32*d 字节。
+    """
     bits: list[int] = []
     mask = (1 << d) - 1
     for val in F:
@@ -205,6 +257,9 @@ def byte_encode_d(F: np.ndarray, d: int) -> bytes:
 
 
 def poly_byte_encode12(poly: np.ndarray) -> bytes:
+    """
+    ByteEncode₁₂：256 系数 → 384B。
+    """
     out = bytearray(384)
     for i in range(128):
         t0 = int(poly[2 * i]) % Q
@@ -216,7 +271,9 @@ def poly_byte_encode12(poly: np.ndarray) -> bytes:
 
 
 def pack_ciphertext(u: np.ndarray, v: np.ndarray) -> bytes:
-    """ml_kem_1024：c₁=4×ByteEncode₁₁(Compress₁₁(u))，c₂=ByteEncode₅(Compress₅(v))。"""
+    """
+    ML-KEM-1024：u 用 d=11、v 用 d=5 拼 c。
+    """
     c1 = bytearray(1408)
     for p in range(K):
         comp = np.array([compress_d_scalar(int(x), 11) for x in u[p]], dtype=np.int32)
@@ -227,6 +284,9 @@ def pack_ciphertext(u: np.ndarray, v: np.ndarray) -> bytes:
 
 
 def embed_message(v: np.ndarray, m: bytes) -> np.ndarray:
+    """
+    把 32B 消息嵌到 v：bit=1 时加 ⌈q/2⌉。
+    """
     out = v.copy()
     half_q = (Q + 1) // 2
     for i in range(32):

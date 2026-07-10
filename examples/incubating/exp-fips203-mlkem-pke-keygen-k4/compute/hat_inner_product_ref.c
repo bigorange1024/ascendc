@@ -1,4 +1,10 @@
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 hat 点积（Â∘ŝ）与相关 UB/tiling。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/hat_inner_product_ref.c
+ */
+/**
  * @file hat_inner_product_ref.c
  * @brief Alg.13 行 18 参考实现（纯 C）：MultiplyNTTs + lazy int64 累加 + final mod q。
  *
@@ -28,6 +34,10 @@ static const int32_t kGammas[HAT_N / 2] = {
     2154, 1175,
 };
 
+/**
+ * 本函数为 KeyGen 流水线组件 `barrett_red_coeff`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 static int32_t barrett_red_coeff(int32_t x)
 {
     const int32_t q = HAT_Q;
@@ -58,6 +68,10 @@ static int32_t mod_q_nonneg_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `mod_q_cast_div_i64`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 static int32_t mod_q_cast_div_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -72,6 +86,10 @@ static int32_t mod_q_cast_div_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `mod_q_scalar_i64`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 static int32_t mod_q_scalar_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -86,6 +104,10 @@ static int32_t mod_q_scalar_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `final_mod_i64`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 static int32_t final_mod_i64(int64_t x, int mod_variant)
 {
     if (mod_variant == HAT_MOD_CAST_DIV) {
@@ -127,6 +149,10 @@ void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `hat_inner_product_dot`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 void hat_inner_product_dot(const int32_t *a_hat, const int32_t *s_hat, int32_t *t_hat, int mod_variant)
 {
     int32_t prod[HAT_N];
@@ -148,6 +174,10 @@ void hat_inner_product_dot(const int32_t *a_hat, const int32_t *s_hat, int32_t *
     }
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `hat_inner_product_add`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 void hat_inner_product_add(const int32_t *a_hat, const int32_t *s_hat, const int32_t *e_hat, int32_t *t_hat,
                            int mod_variant)
 {

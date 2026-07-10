@@ -11,7 +11,18 @@
 
 /**
  * @file main.cpp
- * @brief Host：G1 门控 — input/ek_polyvec.bin + input/rho.bin → output/ek_pke.bin。
+ * @brief Host：G1 门控 — `input/ek_polyvec.bin` + `input/rho.bin` → `output/ek_pke.bin`。
+ *
+ * ## 流水线位置
+ * 本文件为 **legacy / 分阶段调试** Host：仅 launch `f203_keygen_ek_append`（Alg.13 行 21 拼接）。
+ * 生产全链以 `main_keygen.cpp` + `run.sh` 为准（行 21 已在 `mmad_custom` 内 `F203_KEYGEN_EK_PKE` 融合）。
+ *
+ * ## 与 golden 关系
+ * 验收仅 I/O 等价：`ek_pke` = ByteEncode₁₂(t̂) ‖ ρ（1568B）；禁止把本 Host 当作 AscendC 规格。
+ *
+ * ## 输入 / 输出
+ * - 入：`ek_polyvec` 1536B、`rho` 32B（均由上游门控或 golden 预置）
+ * - 出：`ek_pke` 1568B
  */
 #include "data_utils.h"
 #include "f203_keygen_layout.h"
@@ -28,12 +39,17 @@ extern "C" __global__ __aicore__ void f203_keygen_ek_append(GM_ADDR ek_polyvec_g
 #endif
 
 namespace {
+/** AIV_ONLY 单核拼接；blockDim 固定 1 */
 constexpr uint32_t kBlockDim = 1U;
 constexpr size_t kEkPolyvecBytes = F203Keygen::kEkPolyvecBytes;
 constexpr size_t kRhoBytes = F203Keygen::kRhoBytes;
 constexpr size_t kEkPkeBytes = F203Keygen::kEkPkeBytes;
 }  // namespace
 
+/**
+ * G1 Host 主流程：读 ek_polyvec/ρ → launch ek_append → 写 ek_pke。
+ * @return 0 成功；1 读盘失败；2 写盘失败
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -43,6 +59,7 @@ int32_t main(int32_t argc, char *argv[])
               << " ek_pke=" << kEkPkeBytes << "\n";
 
 #ifdef __CCE_KT_TEST__
+    // --- CPU 孪生：GmAlloc 直接当 Host/Device 统一缓冲 ---
     uint8_t *ekGm = static_cast<uint8_t *>(AscendC::GmAlloc(kEkPolyvecBytes));
     uint8_t *rhoGm = static_cast<uint8_t *>(AscendC::GmAlloc(kRhoBytes));
     uint8_t *outGm = static_cast<uint8_t *>(AscendC::GmAlloc(kEkPkeBytes));
@@ -67,6 +84,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(rhoGm);
     AscendC::GmFree(outGm);
 #else
+    // --- SIM/NPU：Host 读盘 → H2D → ACL launch → D2H 写盘 ---
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));

@@ -11,6 +11,12 @@
 
 # -*- coding: utf-8 -*-
 """
+本文件在 KeyGen 流水线中的位置：Host：KeyGen 输入、golden、KAT、验收脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/inject_probe_code_comments.py
+"""
+"""
 一次性/可重复：为探针源码树 prepend @probe 注释块（已含 marker 的文件跳过）。
 从探针根目录运行: python3 scripts/inject_probe_code_comments.py
 """
@@ -125,6 +131,7 @@ def comment_prefix(suffix: str) -> str:
     return "#"
 
 
+# 本函数为 KeyGen 流水线组件 `layer_for`（详见 STATUS/customspec）。
 def layer_for(rel_posix: str) -> str:
     if rel_posix.startswith("prep/"):
         return "prep"
@@ -143,6 +150,7 @@ def layer_for(rel_posix: str) -> str:
     return "host"
 
 
+# 本函数为 KeyGen 流水线组件 `launch_for`（详见 STATUS/customspec）。
 def launch_for(layer: str, rel_posix: str) -> str:
     if layer == "prep" or rel_posix.startswith("prep/") or "prep_entry" in rel_posix:
         return LAUNCH_PREP
@@ -159,6 +167,7 @@ def ai_core_for(layer: str, rel_posix: str) -> str:
     return AI_CORE_NA
 
 
+# 本函数为 KeyGen 流水线组件 `production_io_for`（详见 STATUS/customspec）。
 def production_io_for(rel_posix: str) -> str:
     legacy_hints = ("kat_liboqs_staged", "staged", "legacy", "main.cpp")
     if any(h in rel_posix for h in legacy_hints):
@@ -253,6 +262,7 @@ def build_block(rel_posix: str, path: Path, original: str, prefix: str) -> str:
     return body + "\n\n"
 
 
+# 本函数为 KeyGen 流水线组件 `should_process`（详见 STATUS/customspec）。
 def should_process(path: Path, root: Path) -> bool:
     if path.suffix not in SOURCE_SUFFIXES:
         return False
@@ -281,6 +291,7 @@ def inject_file(path: Path, root: Path) -> bool:
     return True
 
 
+# 本函数为 KeyGen 流水线组件 `main`（详见 STATUS/customspec）。
 def main() -> int:
     root = probe_root_from_script()
     updated = 0

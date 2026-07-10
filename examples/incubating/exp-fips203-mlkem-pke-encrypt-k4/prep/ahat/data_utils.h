@@ -1,3 +1,16 @@
+/**
+ * @file data_utils.h
+ * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 本探针用途：
+ *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
+ *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
+ *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
+ * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
+ * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/ahat/data_utils.h
 // @layer prep
@@ -8,20 +21,6 @@
 // @depends #include: iostream, fstream, cstdio, string, vector, iomanip, cassert, fcntl.h, unistd.h, sys/stat.h, acl/acl.h
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file data_utils.h
- * @brief Alg.7 SampleNTT 探针 Host I/O 工具（在 Huawei 模板基础上仅增本文件头说明）。
- *
- * 本探针用途：
- *   - main.cpp 通过 ReadFile 读 input/seed_d.bin、input/poly_ij.bin
- *   - 核运行后 WriteFile 写 output/{xof,d1,d2,a_hat}.bin
- *   - CHECK_ACL 宏用于 SIM/NPU 路径 ACL 错误检查
- *
- * 与 golden 关系：二进制读写须与 f203_alg7_layout.h 尺寸一致；verify 由 scripts/verify_result.py 完成。
- *
- * 以下 ReadFile/WriteFile/PrintData 等为 Huawei CANN 样例代码，保持原实现不改逻辑。
- */
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2022-2023. All rights reserved.
  */
@@ -71,13 +70,16 @@ typedef enum {
     } while (0);
 
 /**
- * @brief Read data from file
- * @param [in] filePath: file path
- * @param [out] fileSize: file size
- * @return read result
+ * 从路径读取整个常规文件到 host 缓冲。
+ * @param filePath 输入 bin 路径（如 input/ek_pke.bin）
+ * @param fileSize [out] 实际读入字节数
+ * @param buffer 调用方预分配缓冲
+ * @param bufferSize 缓冲容量；文件更大则失败
+ * @return true 成功；false 路径非法 / 空文件 / 溢出
  */
 bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_t bufferSize)
 {
+    // 1) 确认路径存在且为常规文件（拒绝目录等）
     struct stat sBuf;
     int fileStatus = stat(filePath.data(), &sBuf);
     if (fileStatus == -1) {
@@ -89,6 +91,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 2) 以二进制打开
     std::ifstream file;
     file.open(filePath, std::ios::binary);
     if (!file.is_open()) {
@@ -96,6 +99,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         return false;
     }
 
+    // 3) 测长：空文件或超过 bufferSize 均拒绝，避免半读
     std::filebuf *buf = file.rdbuf();
     size_t size = buf->pubseekoff(0, std::ios::end, std::ios::in);
     if (size == 0) {
@@ -108,6 +112,7 @@ bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer, size_
         file.close();
         return false;
     }
+    // 4) 回卷并一次性读入
     buf->pubseekpos(0, std::ios::in);
     buf->sgetn(static_cast<char *>(buffer), size);
     fileSize = size;

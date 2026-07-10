@@ -11,6 +11,7 @@
  *   - gAlg11InterleaveReorder  — basemul 后 c0||c1 → 交错 h[256] 的索引
  *
  * 同步：hat_inner_product_ref.c / hat_gammas.hpp 中 γ 须逐元一致。
+ * 本文件仅 __gm__ 常量表定义，无函数体。
  */
 #include "alg11_rom_tables.h"
 #include "kernel_operator.h"

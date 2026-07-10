@@ -5,6 +5,10 @@
  * @file tiling.h
  * @brief pass-toy-mix-s123-byteencode-k2 的维度常量、GM workspace 布局与 host 侧 tiling 结构。
  *
+ * 流水线位置：被 main.cpp（Host，构造 TilingData 并落盘/下发）、aic_func.hpp、
+ * aiv_func.hpp、mmad_custom.cpp（设备侧，读取维度常量与 workspace 偏移）共同
+ * include，是本探针 Host↔Device 共享的维度/布局契约头。不含任何计算逻辑。
+ *
  * 设计目标：用最小 64³ 矩阵乘验证 MIX 三阶段流水（S1 双 AIV → S2 Cube → S3+encode 双 AIV），
  * 不含跨 AIV 数据交换。详见 TOY_MIX_S123.md。
  */

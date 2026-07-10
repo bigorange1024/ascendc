@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 Stage1/3 编译期配置开关。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/stage3_mod_variants.hpp
+ */
+/**
  * @file stage3_mod_variants.hpp
  * @brief Stage3 RouteA Horner 合并后的三种 mod q 实现（与行 18 mod 分离）。
  *
@@ -126,6 +132,10 @@ __aicore__ inline void stage31_div_mod_vec(LocalTensor<int32_t> &dst, int32_t q,
     // KYBER_PIPE_ALL();
 }
 
+/**
+ * 本函数为 KeyGen 流水线组件 `combine_limb6_routea_mod_cast_div`（详见 STATUS/customspec）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void combine_limb6_routea_mod_cast_div(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
                                                          LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
                                                          LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,

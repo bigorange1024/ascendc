@@ -1,3 +1,10 @@
+/**
+ * @file f203_se_vector_prf.hpp
+ * @brief Phase P：σ → 8× SHAKE256 PRF（单 TPipe UB shake，链末 DataCopy 对拍 prf_out GM）。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/presample/f203_se_vector_prf.hpp
 // @layer prep
@@ -8,11 +15,6 @@
 // @depends #include: f203_se_vector_g.hpp, shake_general.h, shake_general_tiling_data.h, shake_ub_helpers.hpp, cstdint
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_se_vector_prf.hpp
- * @brief Phase P：σ → 8× SHAKE256 PRF（单 TPipe UB shake，链末 DataCopy 对拍 prf_out GM）。
- */
 #pragma once
 
 #include "f203_se_vector_g.hpp"

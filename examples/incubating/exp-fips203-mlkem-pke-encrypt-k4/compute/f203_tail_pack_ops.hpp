@@ -1,13 +1,15 @@
-#pragma once
-
 /**
  * @file f203_tail_pack_ops.hpp
  * @brief Alg.14 行 22–24 tail pack 可复用设备例程（Compress 向量 + ByteEncode 标量 pack）。
- *
  * 供 f203_encrypt_alg14_pack（CPU 独立 launch）与 f203_encrypt_l18_l19（SIM 单 launch 内联 pack）共用。
  * 分片：subBlock0 → c₁[0..1]+c₂；subBlock1 → c₁[2..3]（与 INTT 双 AIV 各握 halfrows u 对齐）。
  * 选型：docs/notes/F203-ByteEncode-ByteDecode-d-向量与标量选型.md
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
+#pragma once
+
 #include "f203_encrypt_tail_layout.h"
 #include "f203_tail_compress_byteencode.hpp"
 #include "kernel_operator.h"

@@ -28,6 +28,7 @@ static const int32_t kGammas[HAT_N / 2] = {
     2154, 1175,
 };
 
+/** basemul 内 Barrett 约化（与设备 hat_reduce_zq_scalar / alg11 barrett_red_coeff 同公式）。 */
 static int32_t barrett_red_coeff(int32_t x)
 {
     const int32_t q = HAT_Q;
@@ -40,6 +41,7 @@ static int32_t barrett_red_coeff(int32_t x)
     return x;
 }
 
+/** 行级 mod 变体 Barrett：非负余数路径（HAT_MOD_BARRETT）。 */
 static int32_t mod_q_nonneg_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -58,6 +60,7 @@ static int32_t mod_q_nonneg_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/** 行级 mod 变体：向零截断商（HAT_MOD_CAST_DIV，对齐设备 Cast+Div）。 */
 static int32_t mod_q_cast_div_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -72,6 +75,7 @@ static int32_t mod_q_cast_div_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/** 行级 mod 变体：floor 除法（HAT_MOD_SCALAR_I64，golden 默认）。 */
 static int32_t mod_q_scalar_i64(int64_t x)
 {
     const int64_t q = HAT_Q;
@@ -86,6 +90,7 @@ static int32_t mod_q_scalar_i64(int64_t x)
     return (int32_t)rem;
 }
 
+/** 按 mod_variant 分发行级 final mod；golden 固定 HAT_MOD_SCALAR_I64。 */
 static int32_t final_mod_i64(int64_t x, int mod_variant)
 {
     if (mod_variant == HAT_MOD_CAST_DIV) {
@@ -97,6 +102,10 @@ static int32_t final_mod_i64(int64_t x, int mod_variant)
     return mod_q_nonneg_i64(x);
 }
 
+/**
+ * Alg.11 MultiplyNTTs：交错 f/g[HAT_N] → h[HAT_N]。
+ * 内部解交错→BaseCaseMultiply(γ)→再交错；约化用 barrett_red_coeff。
+ */
 void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
 {
     int32_t a0[HAT_N / 2];
@@ -127,6 +136,10 @@ void hat_multiply_ntts(int32_t *h, const int32_t *f, const int32_t *g)
     }
 }
 
+/**
+ * 行 18 dot-only：t̂[p]=mod(Σ_j MultiplyNTTs(Â[p,j],ŝ[j]))，无 ê。
+ * @param a_hat [K*K*N]；@param s_hat [K*N]；@param t_hat [K*N]；@param mod_variant HatModVariant
+ */
 void hat_inner_product_dot(const int32_t *a_hat, const int32_t *s_hat, int32_t *t_hat, int mod_variant)
 {
     int32_t prod[HAT_N];
@@ -148,6 +161,10 @@ void hat_inner_product_dot(const int32_t *a_hat, const int32_t *s_hat, int32_t *
     }
 }
 
+/**
+ * 行 18 完整：t̂[p]=mod(Σ_j MultiplyNTTs(Â[p,j],ŝ[j]) + ê[p])。
+ * lazy int64 累加，最后一次 final_mod_i64。
+ */
 void hat_inner_product_add(const int32_t *a_hat, const int32_t *s_hat, const int32_t *e_hat, int32_t *t_hat,
                            int mod_variant)
 {

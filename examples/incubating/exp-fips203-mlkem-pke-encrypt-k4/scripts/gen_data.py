@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 # coding=utf-8
 """
-exp-fips203-mlkem-pke-encrypt-k4 — 全链 Encrypt golden 生成（自包含）。
+gen_data.py — exp-fips203-mlkem-pke-encrypt-k4 全链 Encrypt golden 生成（自包含）。
 
-设计（见 INTEGRATION_PLAN §4.1、§8）：
+流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 K-PKE.Encrypt 的 **host 数据准备**；
+`run.sh` 调用本脚本写出 `input/` 与 `golden/c.bin`，供设备 `output/c.bin` 对拍。
+Alg.14 输出只有密文 c；Â/y/u/v 等为设备内部中间量，禁止作为产物落盘。
+
+设计：
   * 锁死 SEED_D=20260619，全链唯一种子。
-  * 输入 / golden_c：
-      - **优先**复用 correctness 探针现成产物（若存在）
-      - **缺失时**本目录自生成：gen_ek_pke(SEED_D) + rng(SEED_D+991)→m/coins + golden_encrypt→c
-  * 本地派生（确定性，非随机）：
-      - LUT：lut_ntt_even/odd、lut_intt_even/odd（供 compute kernel NTT/INTT）
-      - input/golden_v.bin：v = INTT(t̂·r̂) + e₂ + μ(m)。**仅 CPU 分段实现的注入数据**
-        （CPU 三 launch 无 k=8 INTT 不产 v），非 Alg.14 输出；SIM 全设备不需要它。
-  * 若从 correctness 复制了 golden_c，则用本地 golden_encrypt 做一致性自检。
-
-Alg.14 输出只有密文 c（golden/c.bin）；Â/y/u/v 等为设备内部中间量，禁止作为产物落盘。
-输出：input/{ek_pke,m,coins,lut_*,golden_v}.bin、golden/c.bin
-说明：lut_* 为静态表；golden_v 仅 CPU 分段注入（非 Alg.14 输出）。
+  * 输入 / golden_c：优先复用历史 correctness 产物（若存在）；缺失则本地
+    gen_ek_pke(SEED_D) + rng(SEED_D+991)→m/coins + golden_encrypt→c。
+  * 本地派生 LUT（NTT/INTT even/odd stacked）与 CPU 专用 `golden_v`
+    （v=INTT(t̂·r̂)+e₂+μ(m)；仅 CPU 分段注入，非 Alg.14 输出；SIM 不需要）。
 """
 from __future__ import annotations
 
@@ -43,7 +39,7 @@ from f203_ref_common import (  # noqa: E402
 import golden_c as gc  # noqa: E402
 
 SEED_D = 20260619
-# 可选对照目录（历史 correctness 已冻结；默认缺失则本地生成）
+# 可选对照目录（历史 correctness 已冻结；默认缺失则本地生成，不依赖外部 fixture）
 _CORR = os.path.normpath(
     os.path.join(
         _CASE_DIR,

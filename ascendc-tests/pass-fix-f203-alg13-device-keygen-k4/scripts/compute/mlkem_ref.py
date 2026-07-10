@@ -9,6 +9,12 @@
 # @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+"""
+本文件在 KeyGen 流水线中的位置：Host：compute 段 golden / 对拍脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/compute/mlkem_ref.py
+"""
 # F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo + 右 LUT MatMul + RouteA Stage3 + mod。
 import re
 from pathlib import Path
@@ -19,11 +25,12 @@ K = 8
 M_MAT_A = 2 * K
 OUT_COLS = 512
 
-_REPO = Path(__file__).resolve().parents[2]  # 探针/example 根
+_REPO = Path(__file__).resolve().parents[2]  # 探针根目录（含 thirdparty/ntt_study）
 _TABLES_H = _REPO / "thirdparty/ntt_study/include/mlkem/stable/mlkem_ntt_tables.h"
 _F203_CASE = _REPO / "thirdparty/ntt_study/deliverables/sepolyvec8_ntt_f203"
 
 
+# 从 mlkem_ntt_tables.h 解析 int16 数组字面量。
 def _parse_i16_array(text: str, symbol: str, expect: int) -> list:
     m = re.search(rf"{symbol}\s*\[[^\]]*\]\s*=\s*\{{(.*?)\}};", text, re.S)
     if not m:
@@ -34,11 +41,13 @@ def _parse_i16_array(text: str, symbol: str, expect: int) -> list:
     return nums
 
 
+# 加载 kMlkemZetas[128]（NTT 旋转因子表）。
 def load_zetas() -> list:
     text = _TABLES_H.read_text(encoding="utf-8")
     return _parse_i16_array(text, "kMlkemZetas", 128)
 
 
+# 生成固定 se polyvec（golden 输入）；非 AscendC 规格。
 def gen_fixed_se_polyvec() -> "np.ndarray":
     import numpy as np
 
@@ -61,6 +70,7 @@ def load_f203_se_and_lut_fp16():
     return se, lut
 
 
+# fp16 LUT → int8 饱和（与 Stage2 右矩阵编码一致，仅 golden）。
 def fp16_lut_to_i8(lut_fp16: "np.ndarray") -> "np.ndarray":
     import numpy as np
 
@@ -128,6 +138,7 @@ def f203_stage3_route_a(mat_c: "np.ndarray") -> "np.ndarray":
     return raw.astype(np.int32)
 
 
+# Stage3 后 mod q；保留双校正写法（合法输入下恒等）。
 def stage31_mod(raw: "np.ndarray") -> "np.ndarray":
     """mod q；保留 ONNX/ntt_study 双校正写法（CANN 9.0.0 下对合法输入为恒等）。"""
     import numpy as np
@@ -165,6 +176,7 @@ def mlkem_reduce_to_zq(x: int) -> int:
     return x
 
 
+# 标量 ML-KEM NTT（Host oracle）；禁止当作设备实现模板。
 def mlkem_ntt(coeffs: list) -> list:
     zetas = load_zetas()
     f = [mlkem_reduce_to_zq(c) for c in coeffs]
@@ -180,6 +192,7 @@ def mlkem_ntt(coeffs: list) -> list:
     return f
 
 
+# 批量 NTT golden：对 se[K,N] 逐 poly 调用 mlkem_ntt。
 def golden_mlkem_ntt_batch(se: "np.ndarray") -> "np.ndarray":
     import numpy as np
 

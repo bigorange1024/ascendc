@@ -1,3 +1,17 @@
+/**
+ * @file f203_cbd_eta2.hpp
+ * @brief FIPS 203 Alg.8 SamplePolyCBD_η=2 — batch 8 poly 入口与编译期契约。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：中间态不落盘时最终对拍 output/c.bin；本文件职责见上文 @brief。
+ * 数据流（P1b/P2 默认路径）：
+ *   prf_out[8,128] GM ──DataCopy──► UB ──SWAR+LUT──► src[8,256] GM
+ * 编译开关（CMake）：
+ *   -Dcbd_p0_scalar=ON          → P0 标量 CBD + scalar GM（对照）
+ *   -Dcbd_p1a_scalar_io=ON      → P1a SWAR+LUT，仍 scalar GM
+ *   -Dcbd_block_dim=1|2         → P1b-single 单 AIV / P2 双 AIV
+ * 布局与 vec-k4-v2 `src.bin` 一致；双 AIV 分片见 RowForBlock / LAYOUT.md。
+ */
 // @probe stable-fips203-mlkem-pke-keygen-k4
 // @file prep/alg8/f203_cbd_eta2.hpp
 // @layer prep
@@ -8,21 +22,6 @@
 // @depends #include: kernel_operator.h, cstdint, f203_cbd_eta2_sw_lut.hpp, f203_cbd_eta2_ub_io.hpp
 // @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
 
-
-/**
- * @file f203_cbd_eta2.hpp
- * @brief FIPS 203 Alg.8 SamplePolyCBD_η=2 — batch 8 poly 入口与编译期契约。
- *
- * 数据流（P1b/P2 默认路径）：
- *   prf_out[8,128] GM ──DataCopy──► UB ──SWAR+LUT──► src[8,256] GM
- *
- * 编译开关（CMake）：
- *   -Dcbd_p0_scalar=ON          → P0 标量 CBD + scalar GM（对照）
- *   -Dcbd_p1a_scalar_io=ON      → P1a SWAR+LUT，仍 scalar GM
- *   -Dcbd_block_dim=1|2         → P1b-single 单 AIV / P2 双 AIV
- *
- * 布局与 vec-k4-v2 `src.bin` 一致；双 AIV 分片见 RowForBlock / LAYOUT.md。
- */
 #pragma once
 
 #include "kernel_operator.h"

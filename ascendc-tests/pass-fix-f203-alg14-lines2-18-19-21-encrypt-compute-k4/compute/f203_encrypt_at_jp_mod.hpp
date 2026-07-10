@@ -2,7 +2,10 @@
 
 /**
  * @file f203_encrypt_at_jp_mod.hpp
- * @brief 行 19 内积 final mod：复用 library/shared/f203_mod_q。
+ * @brief Alg.14 行 18 内积累加后的 final mod q：转发 library/shared/f203_mod_q。
+ *
+ * 流水线：EncryptAtJpHalfRowsVec 在 Σ_j MultiplyNTTs 之后调用 mod_q_*_vec。
+ * 本文件无独立算法，仅导出 Barrett 常量与向量入口别名。
  */
 #include "f203_encrypt_at_jp_tiling.h"
 #include "f203_mod_q/mod_q_vec.hpp"

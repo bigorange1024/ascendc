@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 模约化变体配置。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/mod_config.hpp
+ */
+/**
  * @file mod_config.hpp
  * @brief 行 18 final mod（Σ basemul + ê 之后）设备变体编号；与 Stage3 mod 解耦。
  *

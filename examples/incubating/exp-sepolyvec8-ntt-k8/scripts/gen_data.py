@@ -1,6 +1,11 @@
 #!/usr/bin/python3
 # coding=utf-8
-"""exp-sepolyvec8-ntt-k8：8 条互不相同随机 poly；golden 为逐行 NTT [8,256]。"""
+"""exp-sepolyvec8-ntt-k8 golden 生成。
+
+流水线位置：run.sh 前生成 input/se_polyvec_gm.bin、mat_b_lut_gm.bin、tiling.bin 与 output/golden.bin。
+语义：8 条互异随机 poly；golden 为逐行正向 NTT [8,256]（ntt_sim_kyber）。
+与 AscendC：仅 I/O 等价验收，禁止把本脚本当设备实现规格。
+"""
 import hashlib
 import os
 import sys
@@ -37,6 +42,7 @@ def gen_distinct_random_polys(rng: np.random.Generator) -> np.ndarray:
 
 
 def gen_lut_m4() -> np.ndarray:
+    """将 ntt_sim 矩阵 M 拆成 4 个 6-bit limb 平面并拼接为 mat_b_lut。"""
     m = ntt_sim_kyber.M.astype(np.int32)
     m0 = ((m >> 0) & LIMB_MASK).astype(np.int8).reshape(-1)
     m1 = ((m >> LIMB_BITS) & LIMB_MASK).astype(np.int8).reshape(-1)
@@ -46,6 +52,7 @@ def gen_lut_m4() -> np.ndarray:
 
 
 def golden_ntt_batch(src: np.ndarray) -> np.ndarray:
+    """逐 poly 调 ntt_forward，并用 ntt_test01 交叉校验。"""
     golden = np.zeros((K_POLYS, N), dtype=np.int32)
     for p in range(K_POLYS):
         golden[p] = np.array(ntt_sim_kyber.ntt_forward(src[p], N, Q, G), dtype=np.int32)
@@ -55,6 +62,7 @@ def golden_ntt_batch(src: np.ndarray) -> np.ndarray:
 
 
 def gen_tiling():
+    """写 tiling.bin：int32[tileLength=N, kPolys]。"""
     os.makedirs("input", exist_ok=True)
     os.makedirs("output", exist_ok=True)
     np.array([N, K_POLYS], dtype=np.int32).tofile("./input/tiling.bin")

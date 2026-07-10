@@ -1,11 +1,19 @@
+/**
+ * @file tiling.h
+ * @brief sepolyvec8 NTT Host/设备共享几何与 workspace 偏移。
+ *
+ * 流水线位置：main 读 tiling.bin（tileLength,kPolys）；kernel 用 tiling::M0..A1 切 ws。
+ * 布局：LUT 四块 M0..M3 各 [256,256] int8；S0 为 Stage1 后 A[16,256] int8；A0/A1 为 Stage2 积。
+ */
 #ifndef __TIILING_H__
 #define __TIILING_H__
 #include <cstddef>
 #include <cstdint>
 
+/** Host↔设备传递的最小 tiling：系数长度与 poly 批大小。 */
 struct TilingData {
-    int32_t tileLength;
-    int32_t kPolys;
+    int32_t tileLength;  // 通常 = n = 256
+    int32_t kPolys;      // 本探针固定 8
 };
 
 namespace tiling {

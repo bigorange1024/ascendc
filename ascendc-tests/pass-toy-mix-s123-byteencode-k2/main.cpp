@@ -27,6 +27,11 @@ extern "C" void mmad_custom(GM_ADDR out, GM_ADDR src, GM_ADDR ws, TilingData til
 extern volatile int g_toy_mix_pass;
 #endif
 
+/**
+ * 主流程：读取 tiling/src/lut（及可选的 s0_preset/mat_c_preset）→ 下发 MIX kernel
+ * （CPU 孪生 / SIM-NPU 二选一编译分支）→ 落盘最终输出与中间结果（out/s0/mat_c）。
+ * @return 0=成功；9/10/13/15=对应输入文件读取失败；12/14/16=对应输出文件写入失败
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -44,6 +49,9 @@ int32_t main(int32_t argc, char *argv[])
     bool ok;
 
 #ifdef ASCENDC_CPU_DEBUG
+    /* CPU 孪生路径：MIX_MODE 告知 tikicpu 本核为 Cube+Vector 混合核；GM 缓冲
+     * 用 AscendC::GmAlloc 模拟设备内存，读取各输入文件后直接 ICPU_RUN_KF 调用
+     * 核函数，完成后从同一块「GM」内存落盘（无需显式 Device→Host 拷贝）。 */
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     uint8_t *tiling_data = (uint8_t *)AscendC::GmAlloc(tilingSize);
     ReadFile("./input/tiling.bin", tilingSize, tiling_data, tilingSize);
@@ -66,17 +74,20 @@ int32_t main(int32_t argc, char *argv[])
         return 10;
     }
     if (tiling->mixPass == 2) {
+        /* mixPass=2（仅跑 S2）时 S1 被跳过，需要预置左矩阵 A（S0）供 Cube 直接读取 */
         ok = ReadFile("./input/s0_preset.bin", s0FileSize, ws + tiling::S0, s0FileSize);
         if (!ok) {
             return 13;
         }
     }
     if (tiling->mixPass == 3) {
+        /* mixPass=3（仅跑 S3+encode）时 S1+S2 被跳过，需要预置 Cube 输出 C（MAT_C）供 S3 直接读取 */
         ok = ReadFile("./input/mat_c_preset.bin", matCFileSize, ws + tiling::MAT_C, matCFileSize);
         if (!ok) {
             return 15;
         }
     }
+    /* CPU 孪生下 tiling 结构体在核内可能读取不可靠，改用全局变量传递 mixPass（见 mmad_custom.cpp 头部说明） */
     g_toy_mix_pass = tiling->mixPass;
     ICPU_RUN_KF(mmad_custom, blockDim, out, src, ws, *tiling);
 
@@ -98,6 +109,10 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)ws);
     AscendC::GmFree((void *)tiling_data);
 #else
+    /* SIM/NPU 路径：acl 初始化 → 建流 → 分配 Host/Device 双份缓冲（out/src/ws）
+     * → 读输入文件到 Host 缓冲 → Host→Device 拷入 → ACLRT_LAUNCH_KERNEL 下发
+     * → 同步 → Device→Host 拷回 → 落盘。tiling 结构体本身走 Host 侧内存直接传参
+     * （ACLRT_LAUNCH_KERNEL 按值传递 TilingData，无需显式拷到 Device）。 */
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));
@@ -128,12 +143,14 @@ int32_t main(int32_t argc, char *argv[])
         return 10;
     }
     if (tiling->mixPass == 2) {
+        /* 同 CPU 路径：mixPass=2 跳过 S1，预置左矩阵 A 到 Host 侧 ws 缓冲，随后统一拷入 Device */
         ok = ReadFile("./input/s0_preset.bin", s0FileSize, wsHost + tiling::S0, s0FileSize);
         if (!ok) {
             return 13;
         }
     }
     if (tiling->mixPass == 3) {
+        /* 同 CPU 路径：mixPass=3 跳过 S1+S2，预置 Cube 输出 C 到 Host 侧 ws 缓冲 */
         ok = ReadFile("./input/mat_c_preset.bin", matCFileSize, wsHost + tiling::MAT_C, matCFileSize);
         if (!ok) {
             return 15;

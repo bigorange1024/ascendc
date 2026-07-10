@@ -1,17 +1,24 @@
-// @probe stable-fips203-mlkem-pke-keygen-k4
+// @probe pass-fix-f203-alg14-lines3-15-encrypt-prep-k4
 // @file prep/presample/f203_se_vector_prf.hpp
 // @layer prep
-// @role prep/presample：SHAKE/PRF/CBD 预采样与 NTT17 链入口；从 seed 派生设备侧中间量供 alg7/alg8/ahat。 / Presample + Keccak/PRF device vector entry. 本文件 `f203_se_vector_prf.hpp` 为该子模块组件。 / Component: f203_se_vector_prf.hpp.
-// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
-// @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
-// @depends #include: f203_se_vector_g.hpp, shake_general.h, shake_general_tiling_data.h, shake_ub_helpers.hpp, cstdint
-// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+// @role prep/presample：SHAKE/PRF/CBD 预采样
+// @production_io Encrypt prep：input ek_pke.bin+coins.bin；output a_hat.bin+re.bin；中间 prf 不落盘。
+// @launch prep launch: blockDim=2, AIV_ONLY
+// @ai_core SIM：0×AIC+2×AIV；双 AIV 并行 Â；block0 独占 PRF+CBD。
+// @depends 见文件内 #include
+// @verify run.sh CPU+SIM；verify_result.py max_abs_diff=0。
 
 
 /**
  * @file f203_se_vector_prf.hpp
  * @brief Phase P：σ → 8× SHAKE256 PRF（单 TPipe UB shake，链末 DataCopy 对拍 prf_out GM）。
+ *
+ * 流水线位置：
+ *   - KeyGen/presample：σ = G(d) 后半 → PRF(σ, nonce=0..7) → prf_out[8,128]
+ *   - Encrypt prep：复用 RunShakePrfBatchUbWithUb（coins 代替 σ），再由 f203_encrypt_re_prf 补 nonce 8
+ *
+ * 关键点：PRF_MSG_STRIDE=64（8B 对齐），lengths 仍为 33；见 2026-06-25 SIM pem_lsu 回归。
+ * 与 golden：prf_shake256 / PRF_BYTES=128。
  */
 #pragma once
 
@@ -40,6 +47,9 @@ constexpr uint32_t PRF_X_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * PRF_MSG_
 constexpr uint32_t PRF_LEN_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * static_cast<uint32_t>(sizeof(uint32_t)));
 constexpr uint32_t PRF_Y_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * PRF_OUT_LEN);
 
+/**
+ * 自 GM 加载 ShakeGeneralTilingData（uint32 字段顺序与 host FillShakeTiling 一致）。
+ */
 __aicore__ inline void LoadTilingFromGm(GM_ADDR tiling, ShakeGeneralTilingData &td)
 {
     const __gm__ uint32_t *p = reinterpret_cast<const __gm__ uint32_t *>(tiling);
@@ -54,7 +64,7 @@ __aicore__ inline void LoadTilingFromGm(GM_ADDR tiling, ShakeGeneralTilingData &
     td.reserved2 = p[8];
 }
 
-/** σ‖N 写入 UB x/lengths（batch=8，行优先）。 */
+/** σ‖N 写入 UB x/lengths（batch=8，行优先；stride=PRF_MSG_STRIDE）。 */
 __aicore__ inline void FillPrfMessagesUb(const uint8_t sigma[32], AscendC::LocalTensor<uint8_t> &xUb,
                                          AscendC::LocalTensor<uint32_t> &lengthsUb)
 {
@@ -66,7 +76,10 @@ __aicore__ inline void FillPrfMessagesUb(const uint8_t sigma[32], AscendC::Local
     F203_SE_PRF_PIPE_ALL();
 }
 
-/** UB SHAKE batch → prf_out GM；yQue 须已 InitBuffer(1, PRF_Y_UB_BYTES)。 */
+/**
+ * UB SHAKE batch → prf_out GM；yQue 须已 InitBuffer(1, PRF_Y_UB_BYTES)。
+ * Encrypt prep 与 KeyGen 共用此入口（密钥材料为 coins 或 σ）。
+ */
 __aicore__ inline void RunShakePrfBatchUbWithUb(const uint8_t sigma[32], __gm__ uint8_t *prf_out_gm,
                                                 const ShakeGeneralTilingData &tilingLocal,
                                                 AscendC::TBuf<AscendC::TPosition::VECCALC> &xBuf,
@@ -83,6 +96,7 @@ __aicore__ inline void RunShakePrfBatchUbWithUb(const uint8_t sigma[32], __gm__ 
     ShakeXofUb::RunKernelShakeGeneralUb(xUb, lengthsUb, yUb, stagingUb, &tilingLocal);
     F203_SE_PRF_PIPE_ALL();
 
+    // 链末一次写出 8×128B
     AscendC::GlobalTensor<uint8_t> prfGm;
     prfGm.SetGlobalBuffer(prf_out_gm, PRF_BATCH * PRF_OUT_LEN);
     AscendC::DataCopy(prfGm, yUb, PRF_BATCH * PRF_OUT_LEN);
@@ -90,7 +104,7 @@ __aicore__ inline void RunShakePrfBatchUbWithUb(const uint8_t sigma[32], __gm__ 
     yQue.FreeTensor(yUb);
 }
 
-/** 单 TPipe：UB SHAKE batch → prf_out GM。 */
+/** 单 TPipe：UB SHAKE batch → prf_out GM（独立探针入口用）。 */
 __aicore__ inline void RunShakePrfBatchUb(const uint8_t sigma[32], __gm__ uint8_t *prf_out_gm,
                                           const ShakeGeneralTilingData &tilingLocal)
 {
@@ -107,6 +121,10 @@ __aicore__ inline void RunShakePrfBatchUb(const uint8_t sigma[32], __gm__ uint8_
     RunShakePrfBatchUbWithUb(sigma, prf_out_gm, tilingLocal, xBuf, lenBuf, stagingBuf, yQue);
 }
 
+/**
+ * SEED_D → σ → PRF×8 → prf_out（KeyGen/presample 独立核路径）。
+ * Encrypt prep 不经此函数（coins 直接进 RunShakePrfEncrypt9UbWithUb）。
+ */
 __aicore__ inline void BuildPrfOutFromSeedD(uint32_t seed_d, GM_ADDR prf_out_gm, GM_ADDR tiling_gm)
 {
     uint8_t sigma[32];

@@ -11,10 +11,16 @@
 
 /**
  * @file f203_a_hat16_ub.hpp
- * @brief Alg.13 行 3–7：16×（SHAKE + 向量 d12/rej），UB 全链，链末写 GM a_hat[16,256]。
+ * @brief Alg.14 Encrypt / Alg.13 KeyGen 共用：16×（SHAKE + 向量 d12/rej），UB 全链 → GM a_hat[16,256]。
+ *
+ * 流水线位置（本 Encrypt prep 探针）：
+ *   ρ（自 ek_pke 尾）→ 本分片 poly 的 SampleNTT → a_hat 对应块
+ *   双 AIV：blockIdx 0→poly 0–7，1→8–15；与 golden build_a_hat_from_rho 布局一致。
  *
  * 复用 pass-fix-f203-alg7-sample-ntt-k4 的 F203Alg7 模块（Mins+Gather+标量 compact）。
  * 每 poly：SHAKE → 解交织 → d12 → rej → DataCopy 到 a_hat_offset(p,j)。
+ *
+ * 历史标签 @probe 仍写 keygen：本文件自 KeyGen prep vendoring，Encrypt 路径只换 ρ 来源。
  */
 #pragma once
 
@@ -38,12 +44,17 @@ constexpr uint32_t kShardPolys = kShakeBatch;
 
 #define F203_AHAT16_PIPE_ALL() AscendC::PipeBarrier<PIPE_ALL>()
 
-/** 设备侧 GM 偏移（与 layout.h AHatOffset 公式一致）。 */
+/**
+ * 设备侧 GM 系数偏移（与 layout.h AHatOffset 公式一致）。
+ * @param p 行下标 0..k-1；@param j 列下标 0..k-1
+ * @return 扁平 int32 起点：(p*k+j)*N
+ */
 __aicore__ inline uint32_t AHatOffsetUb(uint32_t p, uint32_t j)
 {
     return (p * kKyberK + j) * kKyberN;
 }
 
+/** polyIdx ∈ [0,16) → (p,j)，行主序：p = polyIdx/k，j = polyIdx%k。 */
 __aicore__ inline void PolyIdxToPJUb(uint32_t polyIdx, uint8_t &p, uint8_t &j)
 {
     p = static_cast<uint8_t>(polyIdx / kKyberK);
@@ -194,18 +205,22 @@ __aicore__ inline void BuildAHat16ShardWithUb(const uint8_t rho[F203Alg7::kRhoBy
 #endif
     F203_AHAT16_PIPE_ALL();
 
+    // 本分片逐 poly：单次 SHAKE128 → 向量 SampleNTT → 写 GM 对应行
     for (uint32_t polyIdx = polyBegin; polyIdx < polyEnd; ++polyIdx) {
         uint8_t p = 0U;
         uint8_t j = 0U;
         PolyIdxToPJUb(polyIdx, p, j);
 
+        // 消息 ρ‖j‖p；XOF 672B 落入 xofUb
         F203Alg7::FillSampleSeedUb(rho, j, p, xUb, lenUb);
         F203Alg7::RunShake128SampleNttUb(xUb, lenUb, xofUb, stagingUb);
         F203_AHAT16_PIPE_ALL();
 
+        // d12 + rej → aLocal[256]
         AscendC::LocalTensor<int32_t> aLocal;
         SampleNttVecOnePolyFromXofUb(xofUb, scratchBuf, d1Que, d2Que, aHatQue, rejWs, aLocal);
 
+        // VECOUT 队列同步后 DataCopy 到 a_hat GM
         const uint32_t gmOff = AHatOffsetUb(static_cast<uint32_t>(p), static_cast<uint32_t>(j));
         aHatQue.EnQue(aLocal);
         aLocal = aHatQue.DeQue<int32_t>();
@@ -216,6 +231,10 @@ __aicore__ inline void BuildAHat16ShardWithUb(const uint8_t rho[F203Alg7::kRhoBy
     }
 }
 
+/**
+ * KeyGen 独立入口：SEED_D → ρ → 本分片 Â（自建 TPipe）。
+ * Encrypt prep 不走此路径（ρ 已由 ek 提供，见 BuildAHat16ShardWithUb）。
+ */
 __aicore__ inline void BuildAHat16ShardFromSeedD(uint32_t seed_d, __gm__ int32_t *a_hat_gm, uint32_t blockIdx)
 {
 #if F203_AHAT16_BLOCK_DIM == 2

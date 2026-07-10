@@ -1,3 +1,5 @@
+
+# 历史 FIXED_POLY 辅助；当前生产 KeyGen 用 prep CBD 输出，本脚本仅保留对照。
 # @probe pass-fix-f203-alg13-device-keygen-k4
 # @file scripts/compute/merged_kyber_fixed_poly.py
 # @layer script
@@ -8,6 +10,12 @@
 # @depends Python3 标准库；可能 import 同目录 keygen_golden / numpy。
 # @verify 随 run.sh 全链或子目录 run_orchestrated/sim_*.sh 验收。
 
+"""
+本文件在 KeyGen 流水线中的位置：Host：compute 段 golden / 对拍脚本。
+对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+文件：scripts/compute/merged_kyber_fixed_poly.py
+"""
 """固定 Kyber poly（seed=42），供 vec-k4-v2 探针 golden 与 NTT 对拍。"""
 from __future__ import annotations
 

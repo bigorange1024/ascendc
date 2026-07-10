@@ -1,9 +1,10 @@
 /**
  * @file f203_encrypt_l19_kernel.cpp
- * @brief 行 19 单段：û←Âᵀ∘ŷ；u←INTT(û)+e₁。
+ * @brief Alg.14 行 18–19 组合段（无 NTT y）：û←Âᵀ∘ŷ；u←INTT(û)+e₁。
  *
- * 双 AIV halfrows 内积（读 GM 全量 ŷ）→ SET IP_DONE → AIC INTT MMAD → AIV S3 → +e₁。
- * 本段不含 NTT(y)；输入 y_hat 须已由行 18 写满 GM。
+ * FSM：双 AIV halfrows 内积写 uNtt → AIV0 SET IP_DONE → AIC 等 → INTT S1/MMAD/Pack → +e₁。
+ * 本段不含 NTT(y)；输入 y_hat 须已由 ntt_y 或 host 写满。
+ * Golden：y_hat + a_hat + e1 → u_ntt + u（CPU 三 launch 中段）。
  */
 #include "aic_func.hpp"
 #include "aiv_func.hpp"
@@ -15,10 +16,10 @@
 #include "kyber_limb6.hpp"
 
 enum FsmState : uint16_t {
-    ST_IP_AIV_DONE = 4,
-    ST_INTT_AIV_SPLIT = 5,
-    ST_INTT_AIC_MMAD = 6,
-    ST_INTT_AIV_PACK = 7,
+    ST_IP_AIV_DONE = 4,     /**< 双 AIV 内积写完 uNtt（仅 AIV0 Set） */
+    ST_INTT_AIV_SPLIT = 5,  /**< INTT Stage1 完成 */
+    ST_INTT_AIC_MMAD = 6,   /**< 保留 */
+    ST_INTT_AIV_PACK = 7,   /**< AIC INTT MMAD 完成，可 Pack */
 };
 
 __aicore__ inline void FsmWait(FsmState st)
@@ -35,6 +36,11 @@ __aicore__ inline void FsmSet(FsmState st)
     KYBER_PIPE_ALL();
 }
 
+/**
+ * MIX：内积 + INTT + e₁。
+ * @param uOut u；@param yHat ŷ；@param uNtt û 中间；@param aHat Â；@param e1；@param ws
+ * INTT LUT 使用 LUT_INTT_*（与融合核 workspace 尾部一致）。
+ */
 extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHat, GM_ADDR uNtt, GM_ADDR aHat,
                                                        GM_ADDR e1, GM_ADDR ws, TilingData tiling)
 {
@@ -47,6 +53,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHa
     FsmState st;
 
     if (aic) {
+        // AIC 空等内积 → 等 INTT S1 → 四路 INTT MMAD → SET Pack
         st = ST_IP_AIV_DONE;
         FsmWait(st);
         st = ST_INTT_AIV_SPLIT;
@@ -64,6 +71,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHa
         st = ST_INTT_AIV_PACK;
         FsmSet(st);
     } else {
+        // AIV：halfrows 内积（pBegin..pEnd）写 uNtt；AIV0 通知 AIC
         const int32_t pBegin = subBlockID * 2;
         const int32_t pEnd = pBegin + 2;
         encrypt_at_jp::innerproduct_halfrows_to_gm(aHat, yHat, uNtt, pBegin, pEnd);
@@ -74,6 +82,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l19(GM_ADDR uOut, GM_ADDR yHa
         }
         KYBER_PIPE_ALL();
 
+        // INTT S1(uNtt) → Pack → RouteA → +e₁
         st = ST_INTT_AIV_SPLIT;
         {
             AivK8Split split(subBlockID, coeffN);

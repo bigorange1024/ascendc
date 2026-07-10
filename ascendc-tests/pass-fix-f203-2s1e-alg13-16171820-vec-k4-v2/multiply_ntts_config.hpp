@@ -16,22 +16,22 @@
  */
 #pragma once
 
-/* Toy polynomial dimension and modulus */
+/* Alg.11 多项式维数与模数（与 FIPS ML-KEM n/q 一致） */
 constexpr int32_t kAlg11N = 256;
 constexpr int32_t kAlg11Q = 3329;
 
 /*
- * ALG11_IMPL:
- *   0 — scalar C on UB (GetValue/SetValue)
- *   1 — vector Alg.12 on SoA lanes
+ * ALG11_IMPL（编译期选型）：
+ *   0 — UB 标量 GetValue/SetValue
+ *   1 — 向量 SoA 车道 Mul/Add（生产默认）
  *
- * ALG11_VEC_VARIANT (only when ALG11_IMPL=1):
- *   1 — B1: scalar deinterleave → vec Mul/Add
- *   2 — B2: Gather deinterleave (shared index) → vec Mul/Add
+ * ALG11_VEC_VARIANT（仅 ALG11_IMPL=1）：
+ *   1 — B1：标量解交错 → 向量 Mul/Add
+ *   2 — B2：Gather 解交错（共享索引）→ 向量 Mul/Add（默认）
  *
- * ALG11_VEC_OPTS (only when ALG11_IMPL=1):
- *   0 — legacy: CreateVecIndex Gather 索引、标量 γ、含负值修正 Barrett
- *   1 — §9 优化: 固定 n 索引填表、Duplicate γ、reduce_zq_vec_barrett_basemul
+ * ALG11_VEC_OPTS（仅 ALG11_IMPL=1）：
+ *   0 — legacy：CreateVecIndex 建 Gather 索引、标量 γ、含负值修正 Barrett
+ *   1 — 优化：固定 n 索引填表、Duplicate γ、reduce_zq_vec_barrett_basemul
  */
 #ifndef ALG11_IMPL
 #define ALG11_IMPL 1

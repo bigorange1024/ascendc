@@ -8,6 +8,9 @@
  *
  * 本头把 prep 侧尺寸（F203EncryptPrep::*）与 compute 侧尺寸（tiling::*）用
  * static_assert 绑定，任何一侧改形状都会在编译期暴露，避免 handoff 静默错位。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 exp-fips203-mlkem-pke-encrypt-k4。
+ * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
  */
 #pragma once
 

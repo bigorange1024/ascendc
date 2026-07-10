@@ -1,5 +1,10 @@
 /**
- * ByteEncode₁₂-only host：dst_preset + t_hat_preset → ek/sk。
+ * @file main.cpp
+ * @brief ByteEncode₁₂-only host：dst_preset + t_hat_preset → ek/sk。
+ *
+ * 流水线位置：host 入口；读 input/*.bin，启动 byte_encode12_custom，写 output/ek|sk_polyvec.bin。
+ * 与 golden 关系：不计算 golden；verify_result.py 将本程序输出与 gen_data 的 golden_* 对拍。
+ * 作用：CPU 孪生（ICPU_RUN_KF）与 NPU/SIM（ACL launch）两条路径共用同一 I/O 契约。
  */
 #include "data_utils.h"
 #include "tiling.h"
@@ -17,6 +22,11 @@ extern "C" void byte_encode12_custom(GM_ADDR dst, GM_ADDR t_hat, GM_ADDR ek_out,
 // 运行时 tiling 生成（见 byte_encode12_tiling.cpp）；替代旧 Python input/tiling.bin。
 extern void GenerateTiling(TilingData &data);
 
+/**
+ * Host main：分配缓冲、读 preset、launch kernel、写 ek/sk。
+ * @return 0 成功；17/18 读输入失败；20/21 写输出失败
+ * 前置条件：已运行 gen_data，存在 ./input/dst.bin 与 ./input/t_hat.bin
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -31,6 +41,7 @@ int32_t main(int32_t argc, char *argv[])
     bool ok;
 
 #ifdef ASCENDC_CPU_DEBUG
+    // —— CPU 孪生路径 ——
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     // 运行时生成 tiling（模板风格；数值集中于 byte_encode12_tiling.cpp）
     TilingData tilingHost{};
@@ -66,6 +77,7 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree((void *)ek_out);
     AscendC::GmFree((void *)sk_out);
 #else
+    // —— NPU / SIM 路径：host↔device 拷贝 + ACLRT_LAUNCH_KERNEL ——
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));

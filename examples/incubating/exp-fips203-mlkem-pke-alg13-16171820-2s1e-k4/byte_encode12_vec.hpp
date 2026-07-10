@@ -1,3 +1,20 @@
+// @probe exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4
+// @file byte_encode12_vec.hpp
+// @layer compute
+// @role compute/：Tag5T NTT + Alg.11 basemul + 行18–20 UB 融合 MMAD 内核与 host 驱动；第二次 launch，读 prep 写 GM + LUT，写 ek/sk 与 ek_pke。 / Full keygen compute (mmad_custom) sources. 本文件 `byte_encode12_vec.hpp` 为该子模块组件。 / Component: byte_encode12_vec.hpp.
+// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
+// @launch mmad launch: blockDim=1, MIX_AIC_1_2（1×AIC + 2×AIV 融合 NTT+Alg11+行18–20）
+// @ai_core SIM 剖面：mmad 段 1×AIC + 2×AIV；CPU SUCCESS 中 AIC_x 为 tikicpu artifact。
+// @depends #include: byte_encode12_config.hpp, basic.hpp, kernel_operator.h, tiling.h, byte_encode12_rom_tables.h, byte_encode12_ub_load.hpp
+// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+
+
+/**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 19–20 ByteEncode₁₂：将 t̂/ŝ 编成 ek/dk polyvec。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/byte_encode12_vec.hpp
+ */
 #ifndef BYTE_ENCODE12_VEC_HPP
 #define BYTE_ENCODE12_VEC_HPP
 
@@ -40,8 +57,13 @@ struct Encode12VecWs {
     LocalTensor<int32_t> idx2;
 };
 
+/**
+ * 将 scratch UB 按固定字节偏移切成 Encode12VecWs 各字段。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void bind_encode12_vec_ws(LocalTensor<int32_t> &ws, Encode12VecWs &v)
 {
+    // 字节偏移与 kVecScratchBytes=1664 布局一一对应（aTile@0 … idx2@1248）
     auto base = ws.ReinterpretCast<uint8_t>();
     v.aTile = base[0].ReinterpretCast<int32_t>();
     v.t0 = base[256].ReinterpretCast<int32_t>();
@@ -55,6 +77,10 @@ __aicore__ inline void bind_encode12_vec_ws(LocalTensor<int32_t> &ws, Encode12Ve
     v.idx2 = base[1248].ReinterpretCast<int32_t>();
 }
 
+/**
+ * 按偶/奇下标 Gather 出 pair 系数到 t0/t1，供 12-bit 打包。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void gather_pairs_i32(LocalTensor<int32_t> &t0, LocalTensor<int32_t> &t1, LocalTensor<int32_t> &row,
                                         LocalTensor<int32_t> &idx, LocalTensor<int32_t> &idx2, uint32_t pairCount)
 {
@@ -62,6 +88,7 @@ __aicore__ inline void gather_pairs_i32(LocalTensor<int32_t> &t0, LocalTensor<in
     using AscendC::CreateVecIndex;
     using AscendC::Gather;
     using AscendC::Muls;
+    // idx=0..pairCount-1；字节偏移×8 取偶系数，再 +4 取奇系数（int32）
     CreateVecIndex(idx, static_cast<int32_t>(0), pairCount);
     Muls(idx2, idx, static_cast<int32_t>(8), static_cast<int32_t>(pairCount));
     Gather(t0, row, idx2.ReinterpretCast<uint32_t>(), 0U, pairCount);
@@ -69,6 +96,10 @@ __aicore__ inline void gather_pairs_i32(LocalTensor<int32_t> &t0, LocalTensor<in
     Gather(t1, row, idx2.ReinterpretCast<uint32_t>(), 0U, pairCount);
 }
 
+/**
+ * 保留系数低 12 bit（与 ByteEncode₁₂ 位宽一致）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void mask_low_bits_i32(LocalTensor<int32_t> &v, LocalTensor<int32_t> &tmp, int32_t bits,
                                           uint32_t count)
 {
@@ -82,6 +113,10 @@ __aicore__ inline void mask_low_bits_i32(LocalTensor<int32_t> &v, LocalTensor<in
     Sub(v, v, tmp, n);
 }
 
+/**
+ * 由 pair (a,b) 计算三字节 b0/b1/b2 的中间字。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void compute_b012_tile(Encode12VecWs &v, uint32_t pairCount)
 {
     using AscendC::Add;
@@ -91,6 +126,8 @@ __aicore__ inline void compute_b012_tile(Encode12VecWs &v, uint32_t pairCount)
 
     const int32_t n = static_cast<int32_t>(pairCount);
 
+    // 先截断到 12 bit，再按 FIPS ByteEncode₁₂ 拆成 3 字节：
+    // b0=a[7:0], b1=(a[11:8]<<4)|b[3:0], b2=b[11:4]
     mask_low_bits_i32(v.t0, v.tmp, 12, pairCount);
     mask_low_bits_i32(v.t1, v.tmp, 12, pairCount);
 
@@ -108,9 +145,14 @@ __aicore__ inline void compute_b012_tile(Encode12VecWs &v, uint32_t pairCount)
     Add(v.b1W, v.tmp, v.b1W, n);
 }
 
+/**
+ * 标量路径把 b0/b1/b2 散写到输出字节缓冲。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void scatter_b012_scalar(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &b0, LocalTensor<int32_t> &b1,
                                            LocalTensor<int32_t> &b2, uint32_t pairBase, uint32_t pairCount)
 {
+    // 每 pair 写 3 字节；o = 3*(pairBase+i)
     for (uint32_t i = 0; i < pairCount; ++i) {
         const uint32_t o = 3U * (pairBase + i);
         const int32_t ii = static_cast<int32_t>(i);
@@ -126,6 +168,10 @@ __aicore__ inline uint8_t lane_byte_i32(LocalTensor<int32_t> &w, int32_t lane)
     return static_cast<uint8_t>(w.GetValue(lane) & 0xFF);
 }
 
+/**
+ * 四个 pair 的 12-bit 组打包为连续字。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void pack_quad12_i32(LocalTensor<int32_t> &packW, LocalTensor<int32_t> &b0, LocalTensor<int32_t> &b1,
                                        LocalTensor<int32_t> &b2)
 {
@@ -157,6 +203,10 @@ __aicore__ inline void pack_quad12_i32(LocalTensor<int32_t> &packW, LocalTensor<
     }
 }
 
+/**
+ * 向量路径散写 b0/b1/b2 到输出。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void scatter_b012_vec(LocalTensor<uint8_t> &r, LocalTensor<int32_t> &packW,
                                         LocalTensor<int32_t> &b0W, LocalTensor<int32_t> &b1W, LocalTensor<int32_t> &b2W,
                                         uint32_t byteBase)
@@ -214,6 +264,10 @@ struct Encode12PrefetchWs {
     LocalTensor<int32_t> idxOdd;
 };
 
+/**
+ * 绑定 prefetch 路径的 ROM/scratch 视图。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void bind_encode12_prefetch_ws(LocalTensor<int32_t> &ws, Encode12PrefetchWs &v)
 {
     auto base = ws.ReinterpretCast<uint8_t>();
@@ -229,6 +283,10 @@ __aicore__ inline void bind_encode12_prefetch_ws(LocalTensor<int32_t> &ws, Encod
                    .ReinterpretCast<int32_t>();
 }
 
+/**
+ * 将 Gather/交错 ROM 表装入 UB（Init 一次）。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void init_encode12_prefetch_rom(LocalTensor<int32_t> &ws)
 {
     Encode12PrefetchWs v;
@@ -255,6 +313,10 @@ __aicore__ inline void deinterleave_pairs_once(Encode12PrefetchWs &v, LocalTenso
 }
 
 #if BYTE_ENCODE12_SCATTER_VEC >= 1
+/**
+ * 按组打包 12-bit quad。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void pack_quad12_groups(LocalTensor<int32_t> &packW, LocalTensor<int32_t> &b0, LocalTensor<int32_t> &b1,
                                           LocalTensor<int32_t> &b2, uint32_t groups)
 {
@@ -286,6 +348,10 @@ __aicore__ inline void pack_quad12_groups(LocalTensor<int32_t> &packW, LocalTens
     }
 }
 
+/**
+ * prefetch 路径把打包结果写到输出字节区。
+ * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+ */
 __aicore__ inline void scatter_poly12_prefetch(LocalTensor<uint8_t> &r, Encode12PrefetchWs &v)
 {
     pack_quad12_groups(v.packW, v.b0W, v.b1W, v.b2W, kEncodePolyPackGroups);

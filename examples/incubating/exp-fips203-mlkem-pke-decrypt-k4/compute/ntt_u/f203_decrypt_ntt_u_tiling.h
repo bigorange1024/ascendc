@@ -1,12 +1,16 @@
+// Decrypt NTT(u) tiling 常量。
+// 流水线：Alg.15 正向 NTT(u) 段。
+// 与 golden：布局一致即可。
+
 #ifndef F203_DECRYPT_NTT_U_TILING_H
 #define F203_DECRYPT_NTT_U_TILING_H
 
 /**
  * @file f203_decrypt_ntt_u_tiling.h
- * @brief G2：r polyvec k=4 紧凑 Stage1 [HI₄, LO₄] → NTT r̂ [4,256]。
+ * @brief Decrypt NTT/INTT workspace 与几何常量（k=4 polyvec，平面 mat_c）。
  *
- * 语义对齐 pass-fix-f203-stage123-ntt-intt-polyvec8-vec，k 由 8 缩为 4（Encrypt r̂）。
- * mixPass=3：S1+S2+S3 全链 NTT（无 INTT）。
+ * Stage1 紧凑 [HI₄, LO₄] → S0；Stage2 AIC MMAD；Stage3 平面 pack + RouteA merge。
+ * mixPass=3：S1+S2+S3 全量（生产默认）。INTT 复用本头尺寸，仅 LUT 内容不同。
  */
 #include <cstddef>
 #include <cstdint>

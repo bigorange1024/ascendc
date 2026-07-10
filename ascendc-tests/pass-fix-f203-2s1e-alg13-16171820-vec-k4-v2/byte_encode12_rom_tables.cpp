@@ -1,5 +1,9 @@
 /**
- * ByteEncode₁₂ 固定 n=256 Gather 字节索引（与 Alg.11 even/odd 公式一致：8i / 8i+4）。
+ * @file byte_encode12_rom_tables.cpp
+ * @brief ByteEncode₁₂ 固定 n=256 Gather 字节索引 ROM 定义（8i / 8i+4）。
+ *
+ * 流水线位置：mmad_custom 条件 include；仅 AIV/CPU 链接，避免 AIC 重复符号。
+ * 与 golden 关系：无独立 bin；编码结果对拍 ek/sk。
  */
 #include "byte_encode12_rom_tables.h"
 #include "kernel_operator.h"

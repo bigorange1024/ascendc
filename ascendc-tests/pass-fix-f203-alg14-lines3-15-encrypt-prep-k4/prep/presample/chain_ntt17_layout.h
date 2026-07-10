@@ -1,19 +1,29 @@
-// @probe stable-fips203-mlkem-pke-keygen-k4
+// @probe pass-fix-f203-alg14-lines3-15-encrypt-prep-k4
 // @file prep/presample/chain_ntt17_layout.h
 // @layer prep
-// @role prep/presample：SHAKE/PRF/CBD 预采样与 NTT17 链入口；从 seed 派生设备侧中间量供 alg7/alg8/ahat。 / Presample + Keccak/PRF device vector entry. 本文件 `chain_ntt17_layout.h` 为该子模块组件。 / Component: chain_ntt17_layout.h.
-// @production_io 默认 run.sh 生产 I/O：input/ 仅 seed_d.bin + lut_even/odd_stacked.bin；output/ ek_pke.bin (1568B) + dk_pke.bin (1536B)；中间 GM 不落盘。 / Default production I/O: seed+LUT in; ek_pke+dk_pke out; no intermediate GM dumps.
-// @launch prep launch: blockDim=2, AIV_ONLY（双 AIV 分担 presample/alg7/alg8/ahat 链）
-// @ai_core SIM 剖面：prep 0×AIC+2×AIV；双 AIV 并行 Â（blockIdx 分片）；block0 独占 PRF+CBD；CPU AIC_* 为 tikicpu 伪影。
-// @depends #include: cstddef, cstdint
-// @verify 经 main_keygen 或 split main_* + run.sh；SIM/CPU golden 或生产 cmp。
+// @role prep/presample：NTT17 链布局常量
+// @production_io Encrypt prep：input ek_pke.bin+coins.bin；output a_hat.bin+re.bin；中间 prf 不落盘。
+// @launch prep launch: blockDim=2, AIV_ONLY
+// @ai_core SIM：0×AIC+2×AIV；双 AIV 并行 Â；block0 独占 PRF+CBD。
+// @depends 见文件内 #include
+// @verify run.sh CPU+SIM；verify_result.py max_abs_diff=0。
 
 
+/**
+ * @file chain_ntt17_layout.h
+ * @brief KeyGen/NTT17 链 workspace 与文件尺寸常量（presample 旁路布局参考）。
+ *
+ * 流水线位置：历史 chain_ntt17 / KeyGen 全链 GM 布局；Encrypt prep 主路径不直接使用本头，
+ * 但 vendoring 的 presample 树仍保留，供对照 kS/kE、LUT stacked、mat_c 平面尺寸。
+ *
+ * 与 Encrypt prep golden：无直接 I/O；Â/re 尺寸见 f203_encrypt_prep_layout.h。
+ */
 #pragma once
 
 #include <cstddef>
 #include <cstdint>
 
+/** Host tiling 占位（tileLength / kS / mixPass）；本 Encrypt prep 核不用。 */
 struct TilingData {
     int32_t tileLength;
     int32_t kS;
@@ -24,18 +34,22 @@ namespace chain_ntt17 {
 
 constexpr size_t n = 256;
 constexpr size_t halfN = n / 2;
+/** 秘密/误差向量长度（ML-KEM-1024：k=4）。 */
 constexpr size_t kS = 4;
 constexpr size_t kE = 4;
+/** dst：ŝ‖ê 共 2*kS+kE 行（历史命名）。 */
 constexpr size_t kDstPolys = 2 * kS + kE;
 constexpr size_t kHatK = kS;
 constexpr size_t kHatKK = kHatK * kHatK;
 constexpr size_t lutStackedRows = 512;
 constexpr size_t lutPlanarCols = halfN;
+/** Stage1 编码行数（含 ZERO 填充几何）。 */
 constexpr size_t mRows = 8 + 2 * (2 * kS) + 2 * (2 * (kE / 2));
 constexpr size_t kPlanarSlots = 2 * kS + kE;
 constexpr size_t kLimbsPerPoly = 4;
 constexpr size_t matCPlanarRows = kPlanarSlots * kLimbsPerPoly * 2;
 
+// ---- workspace 字节偏移（LUT even/odd stacked → s0 → mat_c 四分 → planar）----
 constexpr size_t LUT_EVEN_STACKED = 0;
 constexpr size_t LUT_EVEN_BOTTOM = LUT_EVEN_STACKED + n * lutPlanarCols;
 constexpr size_t LUT_ODD_STACKED = LUT_EVEN_BOTTOM + n * lutPlanarCols;

@@ -1,3 +1,12 @@
+/**
+ * @file aic_func.hpp
+ * @brief Stage2 AIC Cube：int8 MMAD（S0 × LUT → mat_c 临时半矩阵）。
+ *
+ * 流水线位置：mmad_custom 在 AIV Stage1 完成后调用 AicMmad×4（even/odd × lo/hi）。
+ * 作用：官方 LoadDataWithTranspose 路径；输出 int32 半宽列（halfN=128）写入 ws 临时区。
+ * 与 golden 关系：中间态；最终对拍经平面 pack + Stage3 后的 dst.bin，非单独 MMAD golden
+ * （mixPass=6 除外，见 gen_mmad_sanity_data.py）。
+ */
 #ifndef F203_AIC_FUNC_HPP
 #define F203_AIC_FUNC_HPP
 
@@ -6,22 +15,32 @@
 #include <cstddef>
 #include <cstdint>
 
+/** 编译期 max（模板工具）。 */
 template <typename T, typename U>
 __aicore__ inline static constexpr T max(T a, U b)
 {
     return (a > (T)b) ? a : (T)b;
 }
 
+/** Cube 分块：16×32 int8 元素块大小（LoadData 步进）。 */
 static constexpr uint32_t CUBE_BLOCK_SIZE = 16 * 32;
 
+/** 向上取整除法：a 按 mod 对齐所需块数。 */
 static constexpr __aicore__ inline uint16_t ceil_div(uint16_t a, uint16_t mod)
 {
     return (a + mod - 1) / mod;
 }
 
-/** Stage2 AicMmad（官方 LoadDataWithTranspose）+ F203 mat_c [16,512] 列拼接写回 */
+/**
+ * Stage2 AicMmad：A[m,k] int8 × B[k,n] int8 → C[m,n] int32。
+ * 本探针典型：m=mRowsLogic(32)、k=256、n=halfN(128)；sanity 用 m=16。
+ */
 class AicMmad {
 public:
+    /**
+     * @param m 左矩阵行（S0 有效行）；@param k 收缩维（系数 n=256）；@param n 右矩阵列（半宽 128）
+     * 内部按 16 对齐计算 A1/A2/B/CO1 缓冲字节数。
+     */
     __aicore__ inline AicMmad(uint16_t m, uint16_t k, uint16_t n) : m(m), k(k), n(n)
     {
         const uint16_t mPadded = ceil_div(m, 16) * 16;
@@ -31,6 +50,7 @@ public:
         cSize = mPadded * n;
     }
 
+    /** 分配 A1/A2/B1/B2/CO1 TQue 缓冲（单次 Process 复用）。 */
     __aicore__ inline void Init()
     {
         pipe.InitBuffer(inQueueA1, 1, aSize * sizeof(int8_t));
@@ -40,7 +60,11 @@ public:
         pipe.InitBuffer(outQueueCO1, 1, cSize * sizeof(int32_t));
     }
 
-    /** @param dstColOffset 目标矩阵列偏移（int32 元素）；@param dstRowStride 行 stride（0 表示 n） */
+    /**
+     * 执行一次 MMAD：GM a×b → GM dst。
+     * @param dst 结果基址（int32）；@param a S0 int8；@param b LUT 半片 int8
+     * @param dstColOffset 目标列偏移（int32 元素）；@param dstRowStride 行 stride（0→n）
+     */
     template <int debug_val = 0>
     __aicore__ inline void Process(GM_ADDR dst, GM_ADDR a, GM_ADDR b, uint32_t dstColOffset = 0,
                                    uint32_t dstRowStride = 0)
@@ -58,12 +82,14 @@ public:
     }
 
 private:
+    /** GM ND → A1/B1 NZ：左矩阵 [m,k]、右矩阵 [k,n] int8。 */
     template <int debug_val = 0>
     __aicore__ inline void CopyIn()
     {
         AscendC::LocalTensor<int8_t> a1Local = inQueueA1.AllocTensor<int8_t>();
         AscendC::LocalTensor<int8_t> b1Local = inQueueB1.AllocTensor<int8_t>();
 
+        /* 左矩阵 A：行 m、列 k，ND→NZ */
         AscendC::Nd2NzParams nd2nzA1Params;
         nd2nzA1Params.ndNum = 1;
         nd2nzA1Params.nValue = m;
@@ -75,6 +101,7 @@ private:
         nd2nzA1Params.dstNzMatrixStride = 0;
         AscendC::DataCopy(a1Local, aGM, nd2nzA1Params);
 
+        /* 右矩阵 B：行 k、列 n（半宽 LUT） */
         AscendC::Nd2NzParams nd2nzB1Params;
         nd2nzB1Params.ndNum = 1;
         nd2nzB1Params.nValue = k;
@@ -90,6 +117,7 @@ private:
         inQueueB1.EnQue(b1Local);
     }
 
+    /** A1→A2：按 16 行块 LoadData（不转置）。 */
     template <int debug_val = 0>
     __aicore__ inline void SplitA()
     {
@@ -111,6 +139,7 @@ private:
         inQueueA2.EnQue<int8_t>(a2Local);
     }
 
+    /** B1→B2：LoadDataWithTranspose，供 Cube 右矩阵格式。 */
     template <int debug_val = 0>
     __aicore__ inline void SplitB()
     {
@@ -133,6 +162,7 @@ private:
         inQueueB2.EnQue<int8_t>(b2Local);
     }
 
+    /** Cube Mmad：cmatrixInitVal=true 清零累加器后做 int8×int8→int32。 */
     template <int debug_val = 0>
     __aicore__ inline void Compute()
     {
@@ -150,6 +180,7 @@ private:
         inQueueB2.FreeTensor(b2Local);
     }
 
+    /** CO1→GM：Fixpipe 按 dstRowStride_ 写回 ND int32。 */
     template <int debug_val = 0>
     __aicore__ inline void CopyOut()
     {

@@ -1,5 +1,17 @@
 /**
- * exp-mlkem-sepolyvec8-ntt-k4：se_polyvec_gm [8,256] + mat_b_lut_gm → output.bin [8,256] NTT。
+ * @file main.cpp
+ * @brief sepolyvec8 NTT Host：se_polyvec + LUT → output.bin [8,256]。
+ *
+ * ## 流水线位置
+ * exp-sepolyvec8-ntt-k8：8 poly 批 NTT 探针；读 input/se_polyvec_gm.bin、
+ * mat_b_lut_gm.bin、tiling.bin；启动 MIX 核 sepolyvec8_ntt_custom；写 output/output.bin。
+ *
+ * ## 与 golden
+ * scripts/verify_result.py 对拍；仅 I/O 等价，非设备实现规格。
+ *
+ * ## 分支
+ * - ASCENDC_CPU_DEBUG：tikicpu 孪生
+ * - 否则：ACL + aclrtLaunchKernel
  */
 #include "data_utils.h"
 #include "tiling.h"
@@ -15,6 +27,9 @@
 extern "C" void sepolyvec8_ntt_custom(GM_ADDR dst, GM_ADDR src, GM_ADDR ws, TilingData tiling);
 #endif
 
+/**
+ * Host main：分配 GM/ACL，装入 LUT 到 ws+M0，启动 sepolyvec8_ntt_custom。
+ */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
@@ -30,6 +45,7 @@ int32_t main(int32_t argc, char *argv[])
     bool ok;
 
 #ifdef ASCENDC_CPU_DEBUG
+    // CPU 孪生 MIX 模式
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     uint8_t *tiling_data = (uint8_t *)AscendC::GmAlloc(tilingSize);
     ReadFile("./input/tiling.bin", tilingSize, tiling_data, tilingSize);
@@ -46,6 +62,7 @@ int32_t main(int32_t argc, char *argv[])
     if (!ok) {
         return 9;
     }
+    // LUT 装入 workspace M0 起（四块 M0..M3 连续）
     ok = ReadFile("./input/mat_b_lut_gm.bin", lutFileSize, ws + tiling::M0, lutFileSize);
     if (!ok) {
         return 10;
@@ -86,6 +103,7 @@ int32_t main(int32_t argc, char *argv[])
 
     CHECK_ACL(aclrtMallocHost((void **)(&wsHost), wsFileSize));
     CHECK_ACL(aclrtMalloc((void **)&wsDevice, wsFileSize, ACL_MEM_MALLOC_HUGE_FIRST));
+    // Host 侧同样把 LUT 放到 wsHost+M0，再 H2D 整块 ws
     ok = ReadFile("./input/mat_b_lut_gm.bin", lutFileSize, wsHost + tiling::M0, lutFileSize);
     if (!ok) {
         return 10;

@@ -10,6 +10,12 @@
 
 
 /**
+ * 本文件在 KeyGen 流水线中的位置：Launch 2 行 18 hat 点积（Â∘ŝ）与相关 UB/tiling。
+ * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。
+ * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
+ * 文件：compute/hat_dot_halfrows_ub.hpp
+ */
+/**
  * @file hat_dot_halfrows_ub.hpp
  * @brief 行 18 dot-only 独立瘦 TPipe 探针（legacy half-row 布局，**非生产路径**）。
  *
@@ -126,6 +132,10 @@ public:
 
 #ifndef ASCENDC_CPU_DEBUG
 private:
+    /**
+     * 本函数为 KeyGen 流水线组件 `ProcessVec`（详见 STATUS/customspec）。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void ProcessVec(AscendC::LocalTensor<int32_t> &ub_ntt, AscendC::LocalTensor<int32_t> &ub_that,
                                       AscendC::GlobalTensor<int32_t> &gm_a, uint32_t coeffN)
     {
@@ -243,6 +253,10 @@ public:
         tGm_.SetGlobalBuffer((__gm__ int32_t *)tHat, static_cast<uint32_t>(kPOut) * static_cast<uint32_t>(kN));
     }
 
+    /**
+     * 按开关跑 S3 → 行18 → 行19–20；可选从 dump 预设灌入。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void Process()
     {
 #if defined(ASCENDC_CPU_DEBUG)
@@ -284,6 +298,10 @@ public:
     }
 
 private:
+    /**
+     * 本函数为 KeyGen 流水线组件 `ProcessHalfRowsFromDst`（详见 STATUS/customspec）。
+     * 对齐 FIPS 203 Alg.13 / ML-KEM-1024（k=4）；与 golden 仅 I/O 等价。
+     */
     __aicore__ inline void ProcessHalfRowsFromDst()
     {
         HatDotUbKernel dot(subCoreIdx_);

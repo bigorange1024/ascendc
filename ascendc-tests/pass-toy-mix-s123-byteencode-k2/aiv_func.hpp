@@ -56,6 +56,11 @@ public:
         pipe_.InitBuffer(outQ_, 1, tiling::kOutPerAiv * sizeof(int8_t));
     }
 
+    /**
+     * 执行 Stage1 完整流水：CopyIn（GM→UB 读 src 半片）→ 玩具 limb 拆分
+     * → 填数覆盖 → CopyOut（UB→GM 写 ws+S0 半片）。
+     * 前置条件：须在 Init() 之后调用；无返回值，直接写入构造时绑定的 GM 区间。
+     */
     __aicore__ inline void Process()
     {
         // ---- GM → UB：读本核 src 半片 ----
@@ -130,6 +135,12 @@ public:
         pipe_.InitBuffer(outQ_, 1, tiling::kOutPerAiv * sizeof(int8_t));
     }
 
+    /**
+     * 执行 Stage3+encode 完整流水：入口 DataCopy（MAT_C 半片 → UB）→ Adds(+1)
+     * → func1（%64→int8，均在 UB 内完成）→ 出口 DataCopy（UB → GM out 半片）。
+     * 前置条件：须在 Init() 之后调用；须在 AIC 完成 MAT_C 写入并通过 CrossCore
+     * SET(AIC_MMAD) 通知后才能调用（由 mmad_custom.cpp 中的 WAIT 保证）。
+     */
     __aicore__ inline void Process()
     {
         // ---- 入口：MAT_C 半片 → UB（int32）----
