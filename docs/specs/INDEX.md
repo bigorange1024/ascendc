@@ -6,6 +6,7 @@
 |---------------|----------|
 | [ascendc/INDEX.md](ascendc/INDEX.md) | AscendC 多核 tiling、融合算子 Host 配参规范 |
 | [fips203-mlkem1024-pke-encrypt-baseline-registry.md](fips203-mlkem1024-pke-encrypt-baseline-registry.md) | Alg.14 Encrypt 交付 golden / KAT 计算块登记 |
+| [fips203-mlkem1024-kem-keygen-baseline-registry.md](fips203-mlkem1024-kem-keygen-baseline-registry.md) | Alg.19 KEM KeyGen 交付 golden / KAT 计算块登记 |
 
 ---
 

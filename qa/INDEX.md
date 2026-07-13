@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-13 — [thirdparty 外部仓清单 · merged_kyber 迁入用例](2026-07/2026-07-13-thirdparty外部仓清单.md)
+### 2026-07-13 — [thirdparty · KEM KeyGen 规格重置 · T21](2026-07/2026-07-13-thirdparty外部仓清单.md)
 
-**五仓→六仓 URL** · `clone-thirdparty.sh` · **ntt_study→ntt_onnx** · **merged_kyber → pass-merged** · thirdparty 清理
+**六仓 URL** · **debug：dk@1152 / SyncAll** · **删 stable+exp 实现，仅留 customspec** · **T21** · **AGENT_HANDOFF**
 
 ### 2026-07-10 — [Decrypt `#交付#` → stable · 统一整数 Compress/Decompress · KEM KeyGen pass-fix](2026-07/2026-07-10-Decrypt交付stable.md)
 

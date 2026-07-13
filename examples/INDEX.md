@@ -30,6 +30,9 @@
 | [stable-fips203-mlkem-pke-encrypt-k4/](stable/stable-fips203-mlkem-pke-encrypt-k4/) | FIPS 203 **Alg.14 ML-KEM-1024 PKE Encrypt**（k=4）：`ek`+`m`+`coins`→**仅** `c` | SIM 2 launch；**SIM 主参考** tick **627590**（CPU 辅助；KAT×10+1/roundtrip×10+1 ✓） | **定型交付算子** |
 | [stable-fips203-mlkem-pke-decrypt-k4/](stable/stable-fips203-mlkem-pke-decrypt-k4/) | FIPS 203 **Alg.15 ML-KEM-1024 PKE Decrypt**（k=4）：`dk`+`c`→**仅** `m` | 1 launch MIX；SIM **283290** tick（CPU/SIM/KAT×10+1/roundtrip×10+1 ✓） | **定型交付算子** |
 
+> Alg.19 KEM KeyGen：`examples/stable/…-kem-keygen-k4` **已删**（2026-07-13）；规格仅 [`incubating/exp-…-kem-keygen-k4`](incubating/exp-fips203-mlkem-kem-keygen-k4/) customspec。
+
+
 
 
 ---

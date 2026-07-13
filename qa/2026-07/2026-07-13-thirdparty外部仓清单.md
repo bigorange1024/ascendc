@@ -1,4 +1,4 @@
-# 2026-07-13 — thirdparty 外部仓清单与一键 clone
+# 2026-07-13 — thirdparty · KEM KeyGen 规格重置 · T21
 
 ## 决策
 
@@ -36,6 +36,72 @@
 | 本机路径 | `thirdparty/ntt_onnx/`（**已删除** `thirdparty/ntt_study/`） |
 | 仓内引用 | `thirdparty/ntt_study` → `thirdparty/ntt_onnx`（含 vendored 子树改名） |
 | 脚本 | `clone-thirdparty.sh` 已纳入；私有仓 HTTPS 失败时回退 `gh repo clone` |
+
+## §4 Alg.19 KEM KeyGen incubating 规格（同日）
+
+| 项 | 内容 |
+|----|------|
+| 触发 | `$写规格$`（ascendc-impl-spec）；基线 `pass-fix-f203-alg19-kem-keygen-device-k4` |
+| 落点 | [`examples/incubating/exp-fips203-mlkem-kem-keygen-k4/`](../../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) |
+| 产出 | [`…-实现方案-customspec.tex/.pdf`](../../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
+| 锁定 | 2 launch；ek\_kem 1568 / dk\_kem 3168；incubating **vendored 自包含**（异于探针 `STABLE_ROOT`）；`F203_KEM_KEYGEN_TAIL=1` |
+| 状态 | 规格已确认 → §5 写码 |
+
+## §5 Alg.19 KEM KeyGen 【预研】写码（同日）
+
+| 项 | 内容 |
+|----|------|
+| 实现 | vendored PKE + `kem/` 尾；CMake/run.sh 自包含 |
+| 验收 | CPU **PASS**；SIM **PASS** Total tick **713241**；ek/dk max=0 |
+| TODO | 新增 **T21**：分析 `thirdparty/SHA3hp` 替换 SHA3-256/512；**T19f** 记 incubating PASS |
+| 未做 | `#交付#` 晋级 stable |
+
+## §6 T21 SHA3hp 对照讨论（同日）
+
+| 结论 | 说明 |
+|------|------|
+| SHA3hp 内容 | 仅 **KeccakF1600 + SHAKE128/256**；**无** SHA3-256/512 算子 |
+| 与先前 SHAKE128 | **同系**：ops-math `shake128_general`；本仓 `library/shared/shake_xof_kernel` 已派生（UB/`ProcessInline`） |
+| keccak 头 | `SHA3hp/.../keccak_f1600.h` 与 `library/shared/keccak_f1600_kernel/keccak_f1600.h` **实质同文**（仅 shared 多文件头注释） |
+| 改 SHA3-256/512 | 算法上改 rate=`200-2·mdlen`、域分隔 **0x06**（非 SHAKE 的 0x1F）；**勿**把 SHAKE256 当 SHA3-256 |
+| 性能预期 | SHA3hp permute 仍是 **标量 uint64 状态机**，非矢量 Keccak；当前 `F203SeDeviceKeccak::Sha3OneShot` **已调用同一 `PermuteChain`** |
+| 晋级 stable | 用户前提：SHA3 问题先拍板；T21 仍打开 |
+
+## §7 `#验收#` KEM KeyGen → stable（同日，**已撤回**）
+
+| 项 | 内容 |
+|----|------|
+| 操作 | 曾自 exp 复制到 [`stable-fips203-mlkem-kem-keygen-k4/`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) |
+| 问题 | 用户指出：incubating CPU 偶发对拍未根治即晋级不当 |
+| 处置 | **stable 标「晋级撤回 / 非权威」**；权威仅 incubating；T19f **重开** |
+
+## §8 incubating 同步修复与复验（同日）
+
+| 项 | 内容 |
+|----|------|
+| 根因（初判） | `KYBER_PIPE_ALL` 空操作 → Fuse/Tail 本核「半新旧」 |
+| 初修 | 真实 `PipeBarrier`；`run.sh` 源码新鲜度强制 rebuild |
+| 仍失败 | CPU 压测仍偶发 `dk` FAIL |
+
+## §9 根因锁定与曾重晋级（同日，**已被 §10 取代**）
+
+| 项 | 内容 |
+|----|------|
+| 精确定位 | FAIL 时 **仅** `dk_pke[1152:)` 错（≈384B / AIV1 末 poly）；`ek`/`H`/`z`/`ek_in_dk` 全对 |
+| 根因 | AIV0 在 AIV1 写完 `sk_out` 前执行 Fuse/Tail；本核 `PipeBarrier` 无法汇合双 AIV；残留 GM 曾掩盖偶发 |
+| 曾用修复 | 设备 `SyncAll<isAIVOnly=true>()` 后 AIV0 做尾；CPU 由 `subBlockID==1` 做尾；`KYBER_PIPE_ALL` 恒真实 |
+| API 查阅 | 索引追加 SyncAll §2.3.7.2.3 p.1086 |
+| 曾验收 | CPU **40/40** + SIM **709778**（但用户否决「stable/incubating 双轨」维护方式） |
+
+## §10 用户裁决：删实现、只留规格（同日）
+
+| 项 | 内容 |
+|----|------|
+| 意见 | incubating 与 stable 双份实现易漂移；出错先改谁不清晰；过早晋级不当 |
+| 操作 | **整树删除** `examples/stable/stable-fips203-mlkem-kem-keygen-k4/`；**删除** incubating 内全部源码/脚本/build，**仅留** customspec `.tex`/`.pdf` |
+| 规格 | 已写入 **§踩坑与强制同步（landmines）**：SyncAll、CPU AIV1 做尾、禁空 `KYBER_PIPE_ALL`、禁残留侥幸验收、禁未绿晋级 |
+| 交接 | 刷新根 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)；T19f →「按规格【预研】从零重写」 |
+| 回家任务 | 家里 Agent 读 PDF + registry，**【预研】** 在 incubating 重写；**勿**先建 stable |
 
 ## 备注
 

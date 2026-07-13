@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-10（Alg.19 KeyGen **pass-fix** 更名；T19d/e 关闭；**下一 P0：T19a Encaps device**）
+**最近刷新**：2026-07-13（KEM KeyGen：**删** stable+incubating 实现；**仅留** customspec；T19f 重置为「按规格重写」；T21 仍开）
 
 ---
 
@@ -31,6 +31,7 @@
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps（correctness）：[`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | **PASS**；device：[`…-device-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/) 待 T19 |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen（correctness）：[`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | **PASS**；device：[`…-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) **CPU+SIM PASS** |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
+| **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
 | **P1** | **T2** | KEM **后继**：Alg.21 **单 session SIM 真修**、**NPU 实机**（PKE/KEM） | 宜在 **T19** 后做；三分项 kat 已 PASS |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
@@ -53,8 +54,22 @@
 | **T19c** | **同上 device-k4 Phase-D**：改接 [`stable-…-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) fused | CPU+SIM `K` max=0 |
 | **T19d** | **[`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)** | **PASS**（2026-07-10）；2 launch；P1 后 SIM tick 均值 **~713k** |
 | **T19e** | **`scripts/` KeyGen 默认 → `pass-fix-f203-alg19-kem-keygen-device-k4`**；correctness 标为 oracle 对照 | **KeyGen 段完成**（2026-07-10）；Encaps/Decaps 脚本仍走 correctness 直至 T19a/b |
+| **T19f** | 按 [`exp-…-kem-keygen-k4` customspec](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) **【预研】从零重写** incubating → 验收后再 `#交付#` stable | **进行中**：旧实现/stable **已删**（2026-07-13）；须遵守 §踩坑 SyncAll；见 AGENT_HANDOFF |
 
 **禁止**：未改接线前把 `SRC` 指回 stable 强行 sync；从 frozen **抄码改写**冒充新实现（rsync 拼装快照除外，直至 T19e 关闭）。
+
+### T21 — SHA3hp / 设备 SHA3-256·512 AscendC 替换（分析）
+
+**背景**：当前设备哈希走 `library/shared/keccak_f1600_kernel`（`F203SeDeviceKeccak::Sha3OneShot` 标量）。仓库已 clone [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/)。用户要求**先分析可行性**，再决定是否替换。
+
+| 检查点 | 说明 |
+|--------|------|
+| API 契约 | `__aicore__` one-shot；mdlen=32（KEM 尾）与 64（prep `G`） |
+| 调用点 | `kem/f203_kem_kg_*.hpp`（256）；KeyGen prep HashG（512）；Encrypt/其它若共用 |
+| 验收 | 替换后 `exp-…-kem-keygen-k4` / stable PKE KeyGen CPU+SIM + golden max=0；SIM tick 对比 |
+| 非目标 | 本项**仅分析**；未拍板前不改生产默认路径 |
+
+---
 
 ### T20 — 活跃用例中文注释补课（拆分）
 
