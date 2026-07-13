@@ -8,7 +8,7 @@ import numpy as np
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _SHARED = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../../../library/shared"))
-_MERGED_SCRIPTS = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../../../thirdparty/merged_kyber/scripts"))
+_MERGED_SCRIPTS = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../../../ascendc-tests/pass-merged-kyber-mix-ntt256/scripts"))
 sys.path.insert(0, _SHARED)
 sys.path.insert(0, _MERGED_SCRIPTS)
 

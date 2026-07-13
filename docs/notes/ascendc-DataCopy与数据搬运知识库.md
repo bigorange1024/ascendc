@@ -156,7 +156,7 @@ Cube 进 L0 前常需 **ND→NZ**；`DataCopy(..., Nd2NzParams)` 随路转换。
 
 ### 6.5 离线教材
 
-`thirdparty/ntt_study/html/` — 排布、Matmul、`Nd2NzParams`、架构。  
+`thirdparty/ntt_onnx/html/` — 排布、Matmul、`Nd2NzParams`、架构。  
 CANN：[07_0101](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0101.html)、[07_0105](https://www.hiascend.com/document/detail/zh/CANNCommunityEdition/900/API/ascendcopapi/atlasascendc_api_07_0105.html)。
 
 ---

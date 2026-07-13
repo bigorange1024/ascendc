@@ -90,7 +90,7 @@ python3 scripts/inject_probe_code_comments.py  # files_updated=0
 
 | 项 | 内容 |
 |---|---|
-| 源码 vendored | `prep/`、`compute/`、`cmake/keygen/`、`scripts/prep/`、`scripts/compute/`、`thirdparty/ntt_study/`（Host LUT golden，非 AscendC 编译依赖） |
+| 源码 vendored | `prep/`、`compute/`、`cmake/keygen/`、`scripts/prep/`、`scripts/compute/`、`thirdparty/ntt_onnx/`（Host LUT golden，非 AscendC 编译依赖） |
 | 唯一入口 | `bash run.sh` → `main_keygen.cpp` → 2 launch（prep \| compute+ek‖ρ） |
 | 已删除旁路 | G0–G4 门禁、`main_keygen_prep`、`f203_keygen_ek_append`、分段 `cmake/cpu_lib*`、`compute_io/` staging、`kat_liboqs_staged.sh` 等 |
 | SIM 指标 | `scripts/parse_keygen_sim_metrics.py`：两次 launch tick + wall_ms 加总打印 |
@@ -121,7 +121,7 @@ KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
 3. **KAT SIM 超时预算**：全链 SIM 单轮可 >900s；`KEYGEN_KERNEL_BUDGET_SEC=1200`（`run.sh` 默认），否则 exit **124** 误判失败。
 4. **SIM tick 拆分**：单进程 SIM 可能只有一条 `Total tick`；优先读 `sim_log/profile_task_log0.toml`，否则按 launch 墙钟比例分摊。
 5. **备份须含 vendored 树**：旧快照缺 `prep/`/`compute/` 会导致「从 backup 恢复后半天找不到源码」——见 [`backup-project.sh`](../../backup-project.sh) §用例树。
-6. **ntt_study 边界**：`thirdparty/ntt_study/` 在 exp 内仅 vendored **Host LUT**；其 docs/specs 为**另一研究线**，CPU/设备切分**不得**默认当作本仓规范（Encrypt 规划须写独立 customspec）。
+6. **ntt_study 边界**：`thirdparty/ntt_onnx/` 在 exp 内仅 vendored **Host LUT**；其 docs/specs 为**另一研究线**，CPU/设备切分**不得**默认当作本仓规范（Encrypt 规划须写独立 customspec）。
 
 ### 6.4 教学总结（如何复制为下一用例）
 
@@ -165,7 +165,7 @@ KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
 
 ### 8.1 背景
 
-独立 AscendC 探针，验证 **8×256 polyvec** 上 Tag5T 三段式 **NTT/INTT** 批量向量化（与 ML-KEM 方案参数 **k** 无关；仅表示 **8 个 poly**）。构图对齐 ntt_study 交付 [`sepolyvec8_ntt_f203`](../../thirdparty/ntt_study/examples/mlkem/deliverables/sepolyvec8_ntt_f203/)：紧凑 Stage1 `[HI₈,LO₈]`、**同一计算图仅换 LUT**。
+独立 AscendC 探针，验证 **8×256 polyvec** 上 Tag5T 三段式 **NTT/INTT** 批量向量化（与 ML-KEM 方案参数 **k** 无关；仅表示 **8 个 poly**）。构图对齐 ntt_study 交付 [`sepolyvec8_ntt_f203`](../../thirdparty/ntt_onnx/examples/mlkem/deliverables/sepolyvec8_ntt_f203/)：紧凑 Stage1 `[HI₈,LO₈]`、**同一计算图仅换 LUT**。
 
 ### 8.2 变更摘要
 

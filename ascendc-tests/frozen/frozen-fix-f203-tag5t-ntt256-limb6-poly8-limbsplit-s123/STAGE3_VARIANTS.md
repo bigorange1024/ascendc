@@ -161,5 +161,5 @@ CPU debug 下宏为空；真机 SIM 上 Cast/Div 链建议保留 barrier。注�
 
 - golden：`examples/incubating/exp-sepolyvec8-ntt-k8/scripts/mlkem_ref.py`（`stage31_mod`）
 - 标量参考：`examples/incubating/exp-fips203-mlkem-pke-stage3-routea-mod-vec/f203_stage3_routea_mod_custom.cpp`
-- Barrett 表：`thirdparty/ntt_study/include/mlkem/stable/mlkem_ntt_tables.h`（μ=314, K=20）
-- ntt_study Div 讨论：`thirdparty/ntt_study/qa/2026-05/讨论记录_2026-05-11__问题定位__Div-RealDiv-取模链与代码调查.md`
+- Barrett 表：`thirdparty/ntt_onnx/include/mlkem/stable/mlkem_ntt_tables.h`（μ=314, K=20）
+- ntt_study Div 讨论：`thirdparty/ntt_onnx/qa/2026-05/讨论记录_2026-05-11__问题定位__Div-RealDiv-取模链与代码调查.md`

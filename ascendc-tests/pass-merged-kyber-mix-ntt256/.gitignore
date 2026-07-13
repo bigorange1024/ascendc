@@ -1,0 +1,13 @@
+/build/
+/out/
+/input/
+/output/
+/OPPROF_*/
+/msprof/
+/cceprint/
+/npuchk/
+/ascendc_kernels_bbit
+/*.log
+/compile_commands.json
+/__pycache__/
+/scripts/__pycache__/

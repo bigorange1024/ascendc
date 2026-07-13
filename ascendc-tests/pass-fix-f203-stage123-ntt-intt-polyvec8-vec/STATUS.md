@@ -47,5 +47,5 @@ python3 scripts/cross_check_ntt_study_c.py --regen
 ## 参考
 
 - 代码基线（fork 自）：[`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)
-- ntt_study：`thirdparty/ntt_study/examples/mlkem/deliverables/sepolyvec8_ntt_f203/`
+- ntt_study：`thirdparty/ntt_onnx/examples/mlkem/deliverables/sepolyvec8_ntt_f203/`
 - 定稿 note：[F203-polyvec8-stage123-NTT-INTT技术总结.md](../../docs/notes/F203-polyvec8-stage123-NTT-INTT技术总结.md)

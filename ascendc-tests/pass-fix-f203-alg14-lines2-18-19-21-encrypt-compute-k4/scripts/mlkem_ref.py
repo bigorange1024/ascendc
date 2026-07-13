@@ -17,8 +17,8 @@ M_MAT_A = 2 * K
 OUT_COLS = 512
 
 _REPO = Path(__file__).resolve().parents[1]
-_TABLES_H = _REPO / "thirdparty/ntt_study/include/mlkem/stable/mlkem_ntt_tables.h"
-_F203_CASE = _REPO / "thirdparty/ntt_study/deliverables/sepolyvec8_ntt_f203"
+_TABLES_H = _REPO / "thirdparty/ntt_onnx/include/mlkem/stable/mlkem_ntt_tables.h"
+_F203_CASE = _REPO / "thirdparty/ntt_onnx/deliverables/sepolyvec8_ntt_f203"
 
 
 def _parse_i16_array(text: str, symbol: str, expect: int) -> list:

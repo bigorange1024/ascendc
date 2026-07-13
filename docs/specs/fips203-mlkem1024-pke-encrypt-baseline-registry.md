@@ -27,7 +27,7 @@
 |--------|------|------------|------|
 | `golden_encrypt(ek,m,coins)→c` | host golden / prepare 自检 | 本目录 `scripts/host_golden/golden_c.py` | 禁止 liboqs 作生产 golden |
 | `decode_t_hat` / `build_re` / `pack_ciphertext` | Alg.14 子步骤 | 同上 + `f203_ref_common.py` | |
-| Stage1–3 NTT/INTT（host） | golden_v、中间参考 | `f203_ref_common.stage123_transform` + `thirdparty/ntt_study/.../transpose_mlkem_luts_i8.h` | LUT 只读 |
+| Stage1–3 NTT/INTT（host） | golden_v、中间参考 | `f203_ref_common.stage123_transform` + `thirdparty/ntt_onnx/.../transpose_mlkem_luts_i8.h` | LUT 只读 |
 | `gen_ek_pke(SEED_D)` | 缺 fixture 时本地造 ek | `scripts/host_golden/gen_ek_pke.py` | 与 KeyGen golden 同语义 |
 | m/coins 派生 | `SEED_D+991` RNG | `numpy.random.default_rng` | 与 correctness / fixture 同规则 |
 | liboqs indcpa_enc | **KAT 对照 oracle** | `scripts/liboqs_pke_ref`（encrypt） | **仅** KAT；非 AscendC 实现规格 |

@@ -10,7 +10,7 @@ import numpy as np
 
 N = 256
 CASE = Path(__file__).resolve().parent.parent.parent
-LUT_HDR = CASE / "compute/ntt_u/thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+LUT_HDR = CASE / "compute/ntt_u/thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
 
 
 def load_lut_t_i8(mode: str) -> np.ndarray:

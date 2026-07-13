@@ -51,7 +51,7 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, "../.."))
 _MLKEM_REF = _SCRIPT_DIR
 _NTT_LUT_HDR = os.path.normpath(
-    os.path.join(_CASE_DIR, "thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h")
+    os.path.join(_CASE_DIR, "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h")
 )
 sys.path.insert(0, _MLKEM_REF)
 

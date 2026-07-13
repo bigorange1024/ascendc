@@ -26,7 +26,7 @@ NTT_DST="${CASE_DIR}/compute/ntt_u"
 INTT_DST="${CASE_DIR}/compute/intt_w"
 ALG11_DST="${CASE_DIR}/compute/alg11"
 SU_DOT_DST="${CASE_DIR}/compute/su_dot"
-LUT_DST="${NTT_DST}/thirdparty/ntt_study/include/mlkem/stable"
+LUT_DST="${NTT_DST}/thirdparty/ntt_onnx/include/mlkem/stable"
 
 mkdir -p "${NTT_DST}" "${INTT_DST}" "${ALG11_DST}" "${SU_DOT_DST}" "${LUT_DST}"
 
@@ -34,7 +34,7 @@ for f in basic.hpp kyber_limb6.hpp ntt_vec.hpp stage1_config.hpp stage3_config.h
     aic_func.hpp aiv_func.hpp; do
     copy_file "${NTT_SRC}/${f}" "${NTT_DST}/${f}"
 done
-copy_file "${NTT_SRC}/thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h" \
+copy_file "${NTT_SRC}/thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h" \
     "${LUT_DST}/transpose_mlkem_luts_i8.h"
 
 # k=4 完整 workspace 常量（对齐 encrypt compute/ntt_r/f203_ntt_r_tiling.h）

@@ -41,6 +41,7 @@
 | [**pass-f203-decompress-d-vec-k4/**](pass-f203-decompress-d-vec-k4/) | **§4.2.1 Decompress_d**（**d=4/5/10/11**；**默认向量** `DECOMPRESS_D_VEC=1`；同上指南 + ByteEncode 选型笔记 §4） | ✓ | ✓ |
 | [**pass-f203-decompress-unified-int-vec-k4/**](pass-f203-decompress-unified-int-vec-k4/) | **已迁至** [`exp-fips203-decompress-unified-int-vec-k4`](../examples/incubating/exp-fips203-decompress-unified-int-vec-k4/)（canonical + customspec） | ✓ | 部分 |
 | [**pass-toy-mix-s123-byteencode-k2/**](pass-toy-mix-s123-byteencode-k2/) | **MIX 玩具**：双 AIV S1 → Cube 64³ → UB Adds+func1（无跨 AIV） | ✓ | ✓ |
+| [**pass-merged-kyber-mix-ntt256/**](pass-merged-kyber-mix-ntt256/) | **授权示例**：Kyber 单 poly n=256 MIX NTT（AivSplit→AicMmad×2→Merge）；原 `thirdparty/merged_kyber`；**非** FIPS Tag5T；SIM **10348** tick | ✓ | ✓ |
 | [**pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/**](pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/) | **Alg.14 prep**：`ek` 尾 ρ→`a_hat` + `coins`→`y/e₁/e₂`（单 launch，stable vendored）；**不含** `t̂` decode | ✓ | ✓ **470502** |
 | [**pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/**](pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) | **Alg.14 compute**：行 2/18/19/21（不含 μ）；SIM 单 launch **完成**；CPU 三 launch **部分**（û/u） | 部分 | ✓ **~125k** |
 | [**pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/**](pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4/) | **Alg.14 tail**：行 20 μ_embed + 行 22–24 pack→`c`（分组 ByteEncode；SIM **56259** tick） | ✓ | ✓ |

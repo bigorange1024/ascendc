@@ -28,7 +28,7 @@ FIPS 203 **Alg.13 PKE KeyGen**（ML-KEM-768，\(K=4\)）：
 |------|------|
 | 本目录 `prep/`、`compute/`、`cmake/keygen/`、`scripts/prep/`、`scripts/compute/` | `../../ascendc-tests/` include/import |
 | `library/shared/`（SHAKE、Keccak） | 运行时依赖 `thirdparty/liboqs`（KAT 脚本除外） |
-| vendored `thirdparty/ntt_study/`（**Host LUT golden 表**） | 把 ntt_study **docs/specs** 当作本仓 CPU/设备切分规范 |
+| vendored `thirdparty/ntt_onnx/`（**Host LUT golden 表**） | 把 ntt_study **docs/specs** 当作本仓 CPU/设备切分规范 |
 
 中间 GM（`a_hat`、`src`、ρ 等）**不落盘**；`KEYGEN_DEBUG_DUMP=1` 仅调试。
 

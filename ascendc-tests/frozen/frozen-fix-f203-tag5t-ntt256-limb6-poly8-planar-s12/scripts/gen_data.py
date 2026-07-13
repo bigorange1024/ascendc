@@ -13,7 +13,7 @@ import numpy as np
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _SHARED = os.path.normpath(os.path.join(_SCRIPT_DIR, "../../../../library/shared"))
 _NTT_LUT_HDR = os.path.normpath(
-    os.path.join(_SCRIPT_DIR, "../../../../thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h")
+    os.path.join(_SCRIPT_DIR, "../../../../thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h")
 )
 sys.path.insert(0, _SHARED)
 

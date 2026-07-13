@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(Ascend_c)
 
-set(MERGED_KYBER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../thirdparty/merged_kyber")
+set(MERGED_KYBER_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 set(TEST_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
 set(RUN_MODE "npu" CACHE STRING "cpu/sim/npu")

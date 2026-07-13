@@ -56,7 +56,7 @@ done
 # --- compute/ntt_r：stage123 三段式 NTT（k=4 polyvec，G2）---
 NTT_SRC="${TESTS}/pass-fix-f203-stage123-ntt-intt-polyvec8-vec"
 NTT_DST="${CASE_DIR}/compute/ntt_r"
-NTT_LUT_DST="${NTT_DST}/thirdparty/ntt_study/include/mlkem/stable"
+NTT_LUT_DST="${NTT_DST}/thirdparty/ntt_onnx/include/mlkem/stable"
 
 mkdir -p "${NTT_DST}" "${NTT_LUT_DST}"
 
@@ -65,7 +65,7 @@ for f in basic.hpp kyber_limb6.hpp ntt_vec.hpp stage1_config.hpp stage3_config.h
     copy_file "${NTT_SRC}/${f}" "${NTT_DST}/${f}"
 done
 
-copy_file "${NTT_SRC}/thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h" \
+copy_file "${NTT_SRC}/thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h" \
     "${NTT_LUT_DST}/transpose_mlkem_luts_i8.h"
 
 # k=4 polyvec tiling（自 stage123 k=8 改写）

@@ -25,9 +25,9 @@ K = 8
 M_MAT_A = 2 * K
 OUT_COLS = 512
 
-_REPO = Path(__file__).resolve().parents[2]  # 探针根目录（含 thirdparty/ntt_study）
-_TABLES_H = _REPO / "thirdparty/ntt_study/include/mlkem/stable/mlkem_ntt_tables.h"
-_F203_CASE = _REPO / "thirdparty/ntt_study/deliverables/sepolyvec8_ntt_f203"
+_REPO = Path(__file__).resolve().parents[2]  # 探针根目录（含 thirdparty/ntt_onnx）
+_TABLES_H = _REPO / "thirdparty/ntt_onnx/include/mlkem/stable/mlkem_ntt_tables.h"
+_F203_CASE = _REPO / "thirdparty/ntt_onnx/deliverables/sepolyvec8_ntt_f203"
 
 
 # 从 mlkem_ntt_tables.h 解析 int16 数组字面量。

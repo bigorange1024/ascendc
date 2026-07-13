@@ -29,8 +29,8 @@ CAND_PAIRS = XOF_BYTES // 3
 
 CASE = Path(__file__).resolve().parent.parent.parent
 # 自包含：优先本目录 vendored LUT 头；否则回退仓库级 thirdparty（仅 Host golden）。
-_LUT_LOCAL = CASE / "thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h"
-_LUT_REPO = CASE / "../../../thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+_LUT_LOCAL = CASE / "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+_LUT_REPO = CASE / "../../../thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
 LUT_HDR = _LUT_LOCAL if _LUT_LOCAL.is_file() else _LUT_REPO
 
 # Alg.11 γ 表（与设备 alg11_gammas.h 同序）

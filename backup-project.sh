@@ -153,7 +153,7 @@ cat > "$DEST/BACKUP_README.txt" << EOF
 - examples/、ascendc-tests/ 完整源码树：
   prep/、compute/、cmake/、scripts/prep、scripts/compute
   *-customspec.tex/.pdf、STATUS.md、INTEGRATION_PLAN.md、run.sh、*.hpp、*.cpp
-  examples 内 vendored thirdparty/ntt_study/（Host LUT 表）
+  examples 内 vendored thirdparty/ntt_onnx/（Host LUT 表）
 - library/（含 shared/shake_xof_kernel 等）
 - qa/、docs/notes/、docs/engineering/、docs/specs/
 

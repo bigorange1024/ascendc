@@ -25,7 +25,7 @@
 - 定稿：[docs/engineering/用例自包含与设备全链约束.md](../../docs/engineering/用例自包含与设备全链约束.md)
 - **活跃探针**：`vec-k4-v2` / `polyvec8` 的 `gen_data.py`、`mlkem_ref.py` 改本目录 `thirdparty/` + `scripts/`；`cross_check_ntt_study_c.py` 改本目录 `thirdparty/`
 - **KeyGen**：`pass` / `exp` 同步 `mlkem_ref` 根路径、删除未用 `load_src_via_c_lib` / `host_ek_append.py`
-- **example**：`exp-sepolyvec8-ntt-k8` vendored `thirdparty/ntt_study` + 修复 `mlkem_ref.py`
+- **example**：`exp-sepolyvec8-ntt-k8` vendored `thirdparty/ntt_onnx` + 修复 `mlkem_ref.py`
 - **允许例外**：`library/shared` 编译期；仓库 `scripts/` CANN 壳；注释中的文档链接
 
 ## liboqs KAT（2026-06-29）

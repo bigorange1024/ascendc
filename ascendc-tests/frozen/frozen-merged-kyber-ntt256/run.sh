@@ -1,6 +1,6 @@
 #!/bin/bash
 # Phase D：第三方 merged_kyber 单 poly N=256 Kyber NTT（7bit split + 2×Mmad + Merge）
-# 源码：thirdparty/merged_kyber/（本目录仅 harness）
+# 源码：ascendc-tests/pass-merged-kyber-mix-ntt256/（本目录仅 harness）
 # Usage:
 #   bash run.sh -r cpu -v Ascend910B4
 #   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
@@ -9,7 +9,7 @@ CURRENT_DIR=$(
     cd $(dirname ${BASH_SOURCE:-$0})
     pwd
 )
-MERGED_KYBER_ROOT="${CURRENT_DIR}/../../../thirdparty/merged_kyber"
+MERGED_KYBER_ROOT="${CURRENT_DIR}/../../pass-merged-kyber-mix-ntt256"
 SIM_DIRECT="${SIM_DIRECT:-1}"
 
 BUILD_TYPE="Debug"

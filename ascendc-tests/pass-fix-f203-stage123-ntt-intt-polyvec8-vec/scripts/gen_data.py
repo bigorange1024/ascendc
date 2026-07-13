@@ -25,14 +25,14 @@ import numpy as np
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 _NTT_LUT_HDR = os.path.normpath(
-    os.path.join(_CASE_DIR, "thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h")
+    os.path.join(_CASE_DIR, "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h")
 )
 _MLKEM_REF = _SCRIPT_DIR
 _NTT_LUT_HDR = os.path.normpath(
-    os.path.join(_CASE_DIR, "thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h")
+    os.path.join(_CASE_DIR, "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h")
 )
 _NTT_STUDY_GOLDEN = os.path.normpath(
-    os.path.join(_CASE_DIR, "thirdparty/ntt_study/deliverables/sepolyvec8_ntt_f203")
+    os.path.join(_CASE_DIR, "thirdparty/ntt_onnx/deliverables/sepolyvec8_ntt_f203")
 )
 sys.path.insert(0, _MLKEM_REF)
 from mlkem_ref import stage31_mod  # noqa: E402

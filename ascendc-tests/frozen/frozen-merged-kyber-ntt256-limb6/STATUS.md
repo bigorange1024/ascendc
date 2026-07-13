@@ -1,6 +1,6 @@
 # frozen-merged-kyber-ntt256-limb6 — Phase D′
 
-> **已冻结**（2026-06-12）：6bit limb 单 poly 基线；**勿 fork**。`thirdparty/merged_kyber` 为 **7bit 参考实现**，思想可借鉴，**不可照抄 limb 相关代码**。
+> **已冻结**（2026-06-12）：6bit limb 单 poly 基线；**勿 fork**。`ascendc-tests/pass-merged-kyber-mix-ntt256` 为 **7bit 参考实现**，思想可借鉴，**不可照抄 limb 相关代码**。
 
 | | |
 |--|--|
@@ -11,7 +11,7 @@
 
 | 来源 | 可借鉴 | 必须 6bit 自研 |
 |------|--------|----------------|
-| `thirdparty/merged_kyber`（7bit） | MIX 状态机、ws 布局、`AicMmad`（`LoadDataWithTranspose` / Fixpipe）、Barrett 流程 | `aiv_func` Merge shift、`ntt_vec` split、`gen_data` M4 切片、`kyber_limb6.hpp` |
+| `ascendc-tests/pass-merged-kyber-mix-ntt256`（7bit） | MIX 状态机、ws 布局、`AicMmad`（`LoadDataWithTranspose` / Fixpipe）、Barrett 流程 | `aiv_func` Merge shift、`ntt_vec` split、`gen_data` M4 切片、`kyber_limb6.hpp` |
 | 本目录 | — | mask `0x3f`，shift **6/12/18**，`LIMB_BITS=6`，golden 仍 `f@M mod q` |
 
 **禁止**：把官方 `aiv_func.hpp` / `gen_data.py`（`& 0x7f`，shift 7/14/21）整份拷入本探针。

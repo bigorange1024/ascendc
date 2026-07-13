@@ -36,9 +36,9 @@ mkdir -p "${CASE_DIR}/scripts/prep" "${CASE_DIR}/scripts/compute"
 rsync -a --delete "${STABLE}/scripts/prep/" "${CASE_DIR}/scripts/prep/"
 rsync -a --delete "${STABLE}/scripts/compute/" "${CASE_DIR}/scripts/compute/"
 mkdir -p "${CASE_DIR}/thirdparty"
-rsync -a "${STABLE}/thirdparty/ntt_study/" "${CASE_DIR}/thirdparty/ntt_study/"
+rsync -a "${STABLE}/thirdparty/ntt_onnx/" "${CASE_DIR}/thirdparty/ntt_onnx/"
 
 # ROM 生成脚本写入 <探针>/prep/alg7/；链到 vendor 树
 ln -sfn "${DST}/prep" "${CASE_DIR}/prep"
 
-echo "[vendor_sync] OK vendor/pke_keygen + scripts/prep + scripts/compute + thirdparty/ntt_study from stable"
+echo "[vendor_sync] OK vendor/pke_keygen + scripts/prep + scripts/compute + thirdparty/ntt_onnx from stable"

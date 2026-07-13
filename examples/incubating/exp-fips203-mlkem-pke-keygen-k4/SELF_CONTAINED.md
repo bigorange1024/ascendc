@@ -34,8 +34,8 @@ output/ ek_pke.bin + dk_pke.bin
 
 | 路径 | 用途 | 状态 |
 |------|------|------|
-| `thirdparty/ntt_study/.../transpose_mlkem_luts_i8.h` | Host LUT golden | ✅ 已有 |
-| `thirdparty/ntt_study/.../mlkem_ntt_tables.h` | 仅 `mlkem_ref.mlkem_ntt()` 调试 | ⚠️ 未 vendored（生产 golden 不调用） |
+| `thirdparty/ntt_onnx/.../transpose_mlkem_luts_i8.h` | Host LUT golden | ✅ 已有 |
+| `thirdparty/ntt_onnx/.../mlkem_ntt_tables.h` | 仅 `mlkem_ref.mlkem_ntt()` 调试 | ⚠️ 未 vendored（生产 golden 不调用） |
 
 ## 4. 审查命令
 

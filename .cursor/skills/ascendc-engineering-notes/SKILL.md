@@ -11,7 +11,7 @@ description: >-
 
 **不算子场景**：NTT、模运算、某条 merged_kyber 路线等 → [references/route-and-scenario-notes.md](references/route-and-scenario-notes.md)（**仅** customspec 或任务点名时读）。
 
-**深度教材**：`thirdparty/ntt_study/`、`docs/notes/`、`qa/`。  
+**深度教材**：`thirdparty/ntt_onnx/`、`docs/notes/`、`qa/`。  
 **DataCopy / 搬运知识库（定稿）**：[`docs/notes/ascendc-DataCopy与数据搬运知识库.md`](../../../docs/notes/ascendc-DataCopy与数据搬运知识库.md)（讨论 [`qa/2026-06/2026-06-11-…#DataCopy`](../../../qa/2026-06/2026-06-11-ascendc-engineering-notes与数据搬运.md#datacopy-知识库归档)）。  
 **TQue / Pipe 知识库（定稿）**：[`docs/notes/ascendc-TQue与Pipe框架知识库.md`](../../../docs/notes/ascendc-TQue与Pipe框架知识库.md)。
 
@@ -47,7 +47,7 @@ description: >-
 
 **搬运单元 MTE** 与计算单元**并行**；不插入同步时，读写顺序在 SIM/NPU 上**不保证**与源码书写顺序一致（见 §7）。
 
-更细：`thirdparty/ntt_study/docs/engineering/新场景设备架构和使用方式概况.txt`（block/repeat/stride、SET_FLAG/WAIT_FLAG）。
+更细：`thirdparty/ntt_onnx/docs/engineering/新场景设备架构和使用方式概况.txt`（block/repeat/stride、SET_FLAG/WAIT_FLAG）。
 
 ---
 
@@ -162,7 +162,7 @@ customspec / `gen_data` / kernel 必须统一：
 - 在 **SIM/NPU 仍通过** 的前提下，再分析哪些 barrier 冗余并删减。  
 - **禁止**：仅凭 CPU 通过就删除 SIM 上必需的 barrier。
 
-本仓 merged_kyber 系探针中常见 `PipeBarrier<PIPE_ALL>()` 较密，属正确性优先策略，见 `thirdparty/merged_kyber/mmad_custom.cpp` 等。
+本仓 merged_kyber 系探针中常见 `PipeBarrier<PIPE_ALL>()` 较密，属正确性优先策略，见 `ascendc-tests/pass-merged-kyber-mix-ntt256/mmad_custom.cpp` 等。
 
 ---
 
@@ -197,7 +197,7 @@ python3 scripts/verify_result.py
 
 ---
 
-## 10. 离线 CANN 文档（`thirdparty/ntt_study/html/`）
+## 10. 离线 CANN 文档（`thirdparty/ntt_onnx/html/`）
 
 | 文件 | 主题 |
 |------|------|

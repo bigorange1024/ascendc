@@ -44,7 +44,7 @@
 
 - **设备**跑的是 Tag5T **三段式**（S1 limb → S2 int8 MMAD → S3 merge+mod），**不是**内核里逐 poly 调蝶形 `MlkemNtt()`。
 - **`gen_data.py` golden** 与设备**同构**：用 Python 模拟 S0 编码、LUT 矩阵乘、平面 merge + `stage31_mod`（`mlkem_ref`），**不**在 gen_data 里逐行调用 C `MlkemNtt`。
-- LUT 来自 `thirdparty/ntt_study/.../transpose_mlkem_luts_i8.h`；与 `ntt_study` 交付链同源。若用您自己的 C `MlkemNtt(FIXED_POLY)` 手算，应与 `golden.bin` 的 **slot 0**（及 slot 1–3，因 s 相同）一致。
+- LUT 来自 `thirdparty/ntt_onnx/.../transpose_mlkem_luts_i8.h`；与 `ntt_study` 交付链同源。若用您自己的 C `MlkemNtt(FIXED_POLY)` 手算，应与 `golden.bin` 的 **slot 0**（及 slot 1–3，因 s 相同）一致。
 - 行 18–20 golden 走 **独立 C ref**：`hat_inner_product_ref.c`、`byte_encode12_ref.c`。
 
 ### 2.2 `src.bin` — `[8,256] int32`

@@ -23,7 +23,7 @@ XOF_BYTES = 672
 CAND_PAIRS = XOF_BYTES // 3
 
 CASE = Path(__file__).resolve().parent.parent.parent
-LUT_HDR = CASE / "compute/ntt_r/thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+LUT_HDR = CASE / "compute/ntt_r/thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
 
 GAMMAS = np.array(
     [

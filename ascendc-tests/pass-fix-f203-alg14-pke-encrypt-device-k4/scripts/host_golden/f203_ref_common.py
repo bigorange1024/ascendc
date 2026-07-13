@@ -25,8 +25,8 @@ XOF_BYTES = 672
 CAND_PAIRS = XOF_BYTES // 3
 
 CASE = Path(__file__).resolve().parent.parent.parent
-# 集成探针：LUT 头取仓库级 thirdparty/ntt_study（本探针不 vendored compute/ntt_r 子树）。
-LUT_HDR = CASE / "../../thirdparty/ntt_study/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+# 集成探针：LUT 头取仓库级 thirdparty/ntt_onnx（本探针不 vendored compute/ntt_r 子树）。
+LUT_HDR = CASE / "../../thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
 
 GAMMAS = np.array(
     [

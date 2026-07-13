@@ -31,7 +31,7 @@
 
 ## 讨论要点
 
-### 离线 CANN 教材（`thirdparty/ntt_study/html/`）
+### 离线 CANN 教材（`thirdparty/ntt_onnx/html/`）
 
 用户提供的四份离线页，用于补齐 Agent 在 **AI Core 数据搬运** 上的知识缺口：
 
@@ -42,7 +42,7 @@
 | `AscendC矩阵数据排布格式-CANN商用版8.5.0-昇腾社区.html` | ND/NZ/ZZ/ZN、分形、ND→NZ |
 | `随路格式转换-DataCopy-…HarmonyOS开发者.html` | `Nd2NzParams` 各字段、GM→A1 通路 |
 
-辅以 `thirdparty/ntt_study/docs/engineering/新场景设备架构和使用方式概况.txt`（block/repeat/stride、SET/WAIT_FLAG）。
+辅以 `thirdparty/ntt_onnx/docs/engineering/新场景设备架构和使用方式概况.txt`（block/repeat/stride、SET/WAIT_FLAG）。
 
 **阅读顺序**（已写入 SKILL §10）：排布格式 → 矩阵基础 → DataCopy → 硬件架构 + txt。
 
@@ -162,7 +162,7 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 1. **文档归位**：原 `ascendc-tests/DATACOPY_SLICE_LESSONS.md` **已撤销**；定稿知识库迁至  
    **`docs/notes/ascendc-DataCopy与数据搬运知识库.md`**（本仓 DataCopy/MTE/GM 搬运 **唯一长文知识库**）。
-2. **内容范围**：合并 fix-f203 **SliceInfo 切片实验**；`thirdparty/ntt_study/docs/engineering/新场景设备架构和使用方式概况.txt` 中 **block/repeat/stride、MTE 通路、同步**；本文 **CANN 教材索引、六项自检、InterleaveMatC 耗时、CPU/SIM 同步**；Skill §5 DataCopy / Nd2Nz 要点。
+2. **内容范围**：合并 fix-f203 **SliceInfo 切片实验**；`thirdparty/ntt_onnx/docs/engineering/新场景设备架构和使用方式概况.txt` 中 **block/repeat/stride、MTE 通路、同步**；本文 **CANN 教材索引、六项自检、InterleaveMatC 耗时、CPU/SIM 同步**；Skill §5 DataCopy / Nd2Nz 要点。
 3. **分层不变**：强制 Skill 仍为 `ascendc-engineering-notes/SKILL.md`（通则）；本知识库为 **按需深读**；场景路线仍见 `references/route-and-scenario-notes.md`。
 
 ### 触发原因

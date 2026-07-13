@@ -1,6 +1,6 @@
 # frozen-fix-merged-kyber-ntt256-limb6-poly2-s123
 
-> **已冻结**（2026-06-12）：merged_kyber 遗产探针；**本目录为路线全集**（原 `thirdparty/merged_kyber` 已并入此处）。
+> **已冻结**（2026-06-12）：merged_kyber 遗产探针；**本目录为路线全集**（原 `ascendc-tests/pass-merged-kyber-mix-ntt256` 已并入此处）。
 
 poly2 全链路：batch Split + 2×Mmad + batch Merge（单 TPipe）。
 
@@ -17,7 +17,7 @@ poly2 全链路：batch Split + 2×Mmad + batch Merge（单 TPipe）。
 | 模式 | 状态 |
 |------|------|
 | gen_data | ✓ `ntt_test01 == ntt_forward` |
-| CPU  | 待复测（自包含 CMake，不依赖 `thirdparty/merged_kyber`） |
+| CPU  | 待复测（自包含 CMake，不依赖 `ascendc-tests/pass-merged-kyber-mix-ntt256`） |
 
 ```bash
 bash run.sh -r cpu -v Ascend910B4

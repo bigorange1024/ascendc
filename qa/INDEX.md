@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-13 — [thirdparty 外部仓清单 · merged_kyber 迁入用例](2026-07/2026-07-13-thirdparty外部仓清单.md)
+
+**五仓→六仓 URL** · `clone-thirdparty.sh` · **ntt_study→ntt_onnx** · **merged_kyber → pass-merged** · thirdparty 清理
+
 ### 2026-07-10 — [Decrypt `#交付#` → stable · 统一整数 Compress/Decompress · KEM KeyGen pass-fix](2026-07/2026-07-10-Decrypt交付stable.md)
 
 **Decrypt `#交付#`** · PKE roundtrip×10+1 · **统一整数向量 Compress/Decompress 验收** · **Compress §8 业界对比定稿** · **Alg.19 KeyGen → pass-fix** · **下一：T19a Encaps device**

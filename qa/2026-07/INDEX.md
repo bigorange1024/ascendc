@@ -8,6 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
+| 2026-07-13 | [2026-07-13-thirdparty外部仓清单.md](2026-07-13-thirdparty外部仓清单.md) | **六仓 URL** · `ntt_onnx` · `clone-thirdparty.sh` · **merged_kyber→pass-merged** |
 | 2026-07-10 | [2026-07-10-Decrypt交付stable.md](2026-07-10-Decrypt交付stable.md) | **Decrypt `#交付#`** · **统一整数 Compress/Decompress** · **§8 业界对比** · **KEM KeyGen pass-fix** · **T19a Encaps 下一** · PKE roundtrip |
 | 2026-07-09 | [2026-07-09-Encrypt默认SIM_DIRECT.md](2026-07-09-Encrypt默认SIM_DIRECT.md) | **Encrypt `#交付#`** · **Decrypt 注释+I/O 收紧** · 家里续 KAT/roundtrip/T15a |
 | 2026-07-08 | [2026-07-08-Alg14-tail-pack探针.md](2026-07-08-Alg14-tail-pack探针.md) | **四算子宏分层** · **compute-tail SIM 1 launch 154781**（Phase C 内联 pack）· ByteEncode 选型笔记 · tiling · sepolyvec8 CAModel FPE |

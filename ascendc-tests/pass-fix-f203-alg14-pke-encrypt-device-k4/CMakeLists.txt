@@ -5,7 +5,7 @@ project(Ascend_c)
 
 set(TEST_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 set(REPO_ROOT "${TEST_ROOT}/../..")
-set(MERGED_KYBER_ROOT "${REPO_ROOT}/thirdparty/merged_kyber")
+set(MERGED_KYBER_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 set(COMPUTE_DIR "${TEST_ROOT}/compute")
 set(ALG11_PROBE_DIR "${TEST_ROOT}/../pass-fix-f203-alg11-12-multiplyntts-k4")
 # prep vendored 子树（自 stable KeyGen prep）+ SHAKE/Keccak 共享库

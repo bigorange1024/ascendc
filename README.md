@@ -40,13 +40,15 @@
 ├── docs/                     # 项目产出 → specs/ engineering/ notes/ reports/
 ├── qa/                       # INDEX.md、TODO.md；日纪要仅在 YYYY-MM/YYYY-MM-DD-关键词.md
 ├── library/                  # 外部资料 + shared/（探针共用代码与 vendored 设备原语）
-├── thirdparty/               # 参考工程（按需查阅，非 Rule 组成部分）
+├── thirdparty/               # 外部依赖（不进 Git；见 docs/engineering/thirdparty-本地依赖.md）
+│                             # 换机：bash scripts/clone-thirdparty.sh
 ├── ascendc-tests/            # 平台功能探针（无 exp- 前缀；见 INDEX.md）
 ├── examples/
 │   ├── incubating/exp-*/     # 研究中
 │   └── stable/stable-*/      # 定型
 ├── src/  include/  Makefile  # 普通 C（唯一 main：src/main.c）
-├── scripts/                  # env.sh、verify-cann.sh、roundtrip_pke_*（Encrypt→Decrypt 闭环）
+├── scripts/                  # env.sh、verify-cann.sh、clone-thirdparty.sh、roundtrip_*
+
 ├── backup-project.sh         # 备份前须先刷新 INDEX 与本 README；含 ascendc-tests/、examples/ 用例树（排除 build/OPPROF/dump 等产物）
 └── packages/  samples/       # Gitee ascend/samples（参考用，含 AscendC MatmulLeakyRelu 等）
 ```

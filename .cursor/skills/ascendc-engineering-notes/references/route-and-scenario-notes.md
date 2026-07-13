@@ -18,7 +18,7 @@
 
 ## 2. MIX 路线对照（merged_kyber vs Matmul — **NTT 内 Matmul 路线已废弃**）
 
-**当前本仓 F203 批 NTT 探针/exp 采用**：`thirdparty/merged_kyber` 手写 FSM（`CrossCore*` + `AivSplit` → `AicMmad`×2 → `AivMerge` + Barrett）。**CPU+SIM 已走通**。
+**当前本仓 F203 批 NTT 探针/exp 采用**：[`pass-merged-kyber-mix-ntt256`](../../../ascendc-tests/pass-merged-kyber-mix-ntt256/) 手写 FSM（`CrossCore*` + `AivSplit` → `AicMmad`×2 → `AivMerge` + Barrett；原 `thirdparty/merged_kyber` 授权迁入）。**CPU+SIM 已走通**。
 
 **NTT 内使用 `Matmul<>` 的路线：废弃中止、冻结**（2026-06-11）。`examples/frozen/frozen-exp-*` 与 `ascendc-tests/frozen/frozen-*` **均已关闭** — 只读各 `FROZEN.md`，**禁止抄实现、禁止抄路线**。纪要 [qa/2026-06/…#NTT-Matmul](../../../qa/2026-06/2026-06-11-ascendc-engineering-notes与数据搬运.md#ntt-matmul路线废弃冻结)。
 
@@ -43,7 +43,7 @@
 3. `tileLength = kPolys × (n/2)`；一趟 `split_vec`；`for (p)` 仅 GM CopyIn/Out。
 4. Stage2：`AicMmad(mRows,256,256)`，`mRows = 2×kPolys`。
 5. Merge：从紧凑 `A0/A1` 读行 **`2p` / `2p+1`**；槽 2/3 置零。
-6. batch 版 `aiv_func.hpp` 须在探针/exp **本地**维护；`thirdparty/merged_kyber/aiv_func.hpp` 仍为单 poly API；CMake `TEST_ROOT` 在 include 最前。
+6. batch 版 `aiv_func.hpp` 须在探针/exp **本地**维护；[`pass-merged-kyber-mix-ntt256/aiv_func.hpp`](../../../ascendc-tests/pass-merged-kyber-mix-ntt256/aiv_func.hpp) 仍为单 poly API；CMake `TEST_ROOT` 在 include 最前。
 
 ---
 

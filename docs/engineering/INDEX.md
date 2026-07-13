@@ -5,7 +5,7 @@
 | 文件 | 何时阅读 |
 |------|----------|
 | [环境复现与开发指南.md](环境复现与开发指南.md) | 新机器 / 新 Agent：CANN 9.0、WSL 无 NPU、`add_custom` 跑通；§12 Prompt、§13 清单、§14 测试矩阵 |
-| [thirdparty-本地依赖.md](thirdparty-本地依赖.md) | `thirdparty/` 不进 Git；clone/拷贝清单；禁止 Agent 误删 |
+| [thirdparty-本地依赖.md](thirdparty-本地依赖.md) | `thirdparty/` 不进 Git；五仓 URL + `scripts/clone-thirdparty.sh`；禁止 Agent 误删 |
 | [用例自包含与设备全链约束.md](用例自包含与设备全链约束.md) | 新建/晋级探针或 example；禁止跨用例源码依赖、Host 辅助密码计算 |
 | [内核计算超时与性能定标.md](内核计算超时与性能定标.md) | `KERNEL_COMPUTE_BUDGET_SEC` 防挂死 vs ML-KEM NTT 全流程 SIM ~15s 性能定标 |
 

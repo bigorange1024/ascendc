@@ -1,7 +1,7 @@
 # F203 — 8-poly 批 Stage123 NTT/INTT（AscendC 向量）
 
 **锚点探针**：[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)  
-**数学/交付对照**：ntt_study [`sepolyvec8_ntt_f203`](../../thirdparty/ntt_study/examples/mlkem/deliverables/sepolyvec8_ntt_f203/)
+**数学/交付对照**：ntt_study [`sepolyvec8_ntt_f203`](../../thirdparty/ntt_onnx/examples/mlkem/deliverables/sepolyvec8_ntt_f203/)
 
 ---
 
