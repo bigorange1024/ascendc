@@ -4,9 +4,10 @@
 > **当日真相 / 下一任务**：[`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)（**每日任务结束前必刷新**）  
 > **详细底线**：[`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc)  
 > **Cloud VM 环境细节**：[`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md)（非 WSL 启动/运行坑与 SIM 绕过）  
+> **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-14（`clone-thirdparty` 默认 build liboqs；Cloud SIM CANN 符号分轨）
+**最后刷新**：2026-07-14（`runtime_env` 多环境分流一期；clone-thirdparty / Cloud SIM 分轨）
 
 ---
 
@@ -33,7 +34,7 @@ bash scripts/clone-thirdparty.sh
 
 ## 2. 仓库性质（一句话）
 
-研究型 AscendC + PQC；**WSL / 无 NPU**，靠 **CPU 孪生 + CAModel SIM** 验收。活跃实现只认各 `INDEX.md`；`**/frozen/**` **可进读判决书，出门不带码**。
+研究型 AscendC + PQC；常见跑在 **WSL / Cloud（无卡）**，靠 **CPU 孪生 + CAModel SIM**；有卡 Linux 可走 **`-r npu`**（见 NPU 说明）。活跃实现只认各 `INDEX.md`；`**/frozen/**` **可进读判决书，出门不带码**。
 
 ---
 
@@ -63,14 +64,20 @@ git pull
 bash scripts/clone-thirdparty.sh          # 缺依赖则装；已装则 skip；默认 build liboqs
 bash ~/ascendc/scripts/verify-cann.sh     # CANN 冒烟（Cloud 若无 CANN：标阻塞）
 
-# 用例（在用例目录；默认即全量）
+# 用例（在用例目录；默认即全量；未写 -r 仍为 cpu）
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+
+# 一期试点另支持（见 NPU真机环境说明 / runtime_env.sh）：
+# bash run.sh -r auto -v Ascend910B4     # 单档最优 npu>sim>cpu
+# bash run.sh -r verify -v Ascend910B4   # cpu → SIM_DIRECT sim [→ npu]
+# WSL 禁止：bash run.sh -r npu …
 ```
 
 | 项 | 说明 |
 |----|------|
 | CANN | 社区版 **9.0.0**；常见路径 `~/Ascend/cann` |
+| 多环境 | [`scripts/runtime_env.sh`](scripts/runtime_env.sh) 探测 host/CANN/SIM/NPU；详文 [`NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) |
 | 并行 | 建议 `CMAKE_BUILD_JOBS=2` / `LIBOQS_JOBS=2`；**勿并行多路 SIM** |
 | `thirdparty/` | **不进 Git**；权威 [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) |
 | liboqs | tag **0.15.0**；[`scripts/build-liboqs.sh`](scripts/build-liboqs.sh)（`clone-thirdparty` 默认调用） |
@@ -95,6 +102,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 |------|-------------------|
 | **`AGENTS.md`** | 开任务入口、硬门禁、文档地图、**Cloud 依赖步骤**变更时 |
 | **`Cursor-Cloud环境说明.md`** | Cloud VM（非 WSL）启动/运行坑、SIM 绕过；随该环境变化刷新 |
+| **`docs/engineering/NPU真机环境说明.md`** | 三环境对照、`runtime_env.sh`、`-r auto|verify`、真机冒烟；分流策略变更时 |
 | **`AGENT_HANDOFF.md`** | **每日**任务结束：当前真相 + 下一 P0（不堆历史） |
 | **`README.md`** | 顶层目录/目标/当前状态表变更时 |
 | **`qa/YYYY-MM/…`** | 当日决策与踩坑；同日只一篇 |

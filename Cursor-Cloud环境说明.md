@@ -3,7 +3,9 @@
 本文件面向在 **Cursor Cloud VM**（云端 Agent）下工作的协作者/AI Agent，记录本仓在该环境
 （**非 WSL**，Ubuntu 24.04 x86_64、无昇腾 NPU）下的启动/运行注意点。仓库总览与阅读顺序见
 `README.md`；全仓底线见 `.cursor/rules/ascendc-development.mdc`；本机 WSL 环境复现细节见
-`docs/engineering/环境复现与开发指南.md`。依赖安装由 Cloud 启动更新脚本完成，此处不重复。
+`docs/engineering/环境复现与开发指南.md`。三环境分流与 `-r auto|verify` 见
+[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md)（探测脚本
+[`scripts/runtime_env.sh`](scripts/runtime_env.sh)）。依赖安装由 Cloud 启动更新脚本完成，此处不重复。
 
 ## 环境概况
 
@@ -12,6 +14,7 @@
 - CANN 社区版 **9.0.0**（Toolkit + 910-ops）装在 `~/Ascend/cann`，由 VM 快照保存，**不**在更新脚本里重装。
   自检：`bash scripts/verify-cann.sh`（应 `version=9.0.0`、`ccec`、`tikicpulib: OK`、`simulator libs`）。
 - `npu` 模式不可用（无实机）。CPU 孪生（`-r cpu`）与 CAModel 仿真（SIM）均可用。
+- 探测：`runtime_env_detect` 在此类主机通常为 `HOST_KIND=cloud`、`HAS_NPU=0`；试点 `run.sh -r auto` → `sim`（有 SIM 库时）。
 
 ## 非显然的坑（Cloud VM 特有）
 

@@ -21,17 +21,23 @@
 # Usage（默认 = 全量生产路径；无需手动 export HAT_* / SIM_DIRECT 等）：
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
+#   bash run.sh -r auto -v Ascend910B4         # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4       # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #   bash kat_liboqs_vs_ascendc.sh              # liboqs KAT（CPU×10 + SIM×1）
 #
 # 调试（须显式指定，非默认验收）：
 #   KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
 #   KEYGEN_DEBUG_DUMP=1 bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r npu …                      # 仅真机；WSL 由 runtime_env 拒绝
+#
+# 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 #
 # 可选环境变量：
 #   SEED_D — 默认 20260619
 #   KEYGEN_KERNEL_BUDGET_SEC — 默认 900（全链 SIM 计算段 timeout）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+_ORIG_ARGS=("$@")
 
 if [ "${KEYGEN_KAT:-0}" = "1" ]; then
     mkdir -p "${CURRENT_DIR}/output"
@@ -72,6 +78,11 @@ while :; do
     esac
 done
 
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
+
 if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
     # shellcheck source=/dev/null
     source "${HOME}/ascendc/scripts/env.sh"
@@ -91,9 +102,11 @@ export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
 if [ "${RUN_MODE}" = "sim" ]; then
-    export SIM_DIRECT=1
+    export SIM_DIRECT="${SIM_DIRECT:-1}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 fi
 
 if [ "${KEYGEN_KAT:-0}" != "1" ]; then

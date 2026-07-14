@@ -109,7 +109,7 @@ bash scripts/build-liboqs.sh
 1. `git clone <本仓 URL>`
 2. `bash scripts/clone-thirdparty.sh`（含 **ntt_onnx**；**默认编好 liboqs**）
 3. 再按 [环境复现与开发指南.md](环境复现与开发指南.md) 配 CANN / 跑 `verify-cann.sh`
-4. Cloud Agent：若缺 CANN / SIM 动态库符号异常，见 [`AGENTS.md`](../../AGENTS.md) §Cloud — **勿把 liboqs 问题与 CANN SIM 问题混为一谈**
+4. Cloud Agent：若缺 CANN / SIM 动态库符号异常，见 [`AGENTS.md`](../../AGENTS.md) §Cloud — **勿把 liboqs 问题与 CANN SIM 问题混为一谈**；多环境 `-r auto|verify` 见 [NPU真机环境说明.md](NPU真机环境说明.md)
 
 ---
 

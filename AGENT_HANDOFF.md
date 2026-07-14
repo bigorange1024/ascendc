@@ -3,16 +3,22 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)（硬门禁与文档地图；入口变更时同步刷新）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（办公室：`AGENTS.md` + **clone-thirdparty 默认 build liboqs**；Cloud SIM CANN 符号与 liboqs 分轨）
+> **最后刷新**：2026-07-14（办公室：`runtime_env` 多环境分流一期落地）
 
 ---
 
-## ★ Cloud / 依赖备忘（办公室补充）
+## ★ Cloud / 依赖 / 多环境（办公室）
 
 | 项 | 说明 |
 |----|------|
 | thirdparty | `bash scripts/clone-thirdparty.sh` **默认**编 liboqs 0.15.0 + `liboqs_*_ref`；单独补编：`bash scripts/build-liboqs.sh` |
 | Cloud SIM | 若报 `libge_common_base.so … InternalSwap` → **CANN 镜像问题**，非 liboqs；标阻塞；本机 WSL SIM 仍为权威 |
+| 多环境分流 | [`scripts/runtime_env.sh`](scripts/runtime_env.sh) · [`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) |
+| `-r` | 默认仍 **cpu**；试点支持 **`auto`** / **`verify`**；WSL **禁 npu** |
+| 一期试点 | KEM KeyGen incubating + PKE keygen/encrypt/decrypt 四个 `run.sh`（**未**批量改全仓） |
+| 二期 | 活跃 `pass-*` / 其余 exp\|stable 逐步接入；真机再压 npu |
+
+WSL 证据（decrypt）：`verify` cpu+sim PASS；`auto→sim` PASS；`-r npu` 明确失败。KEM：`npu` 拒绝 + `cpu` PASS。
 
 ---
 
@@ -32,9 +38,9 @@
 
 ---
 
-## ★ 当前真相（2026-07-14 · 家里 push）
+## ★ 当前真相（2026-07-14）
 
-### PKE 三段 — **stable 交付齐备**（未改）
+### PKE 三段 — **stable 交付齐备**（未改算法）
 
 | 段 | stable | SIM tick（参考） |
 |----|--------|------------------|
@@ -53,8 +59,6 @@
 
 **家里验收（已绿）**：CPU×40（清零 output）· SIM tick **707057** · vs correctness×10 · liboqs CPU×10 · **liboqs SIM×3**。
 
-**踩坑落地**：SIM `SyncAll`→AIV0 尾；CPU soft-flag + AIV1 尾；`KYBER_PIPE_ALL` 恒 barrier；VERIFY 前清零 output。
-
 纪要：[`qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md`](qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
 ---
@@ -65,55 +69,22 @@
 
 **仅当用户明确说 `#交付#` / `#验收#` 时**：
 
-1. 从 [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) **复制晋级**为 `examples/stable/stable-fips203-mlkem-kem-keygen-k4/`（禁从零重写、禁依赖 device）。
-2. 双模式再验收：`bash run.sh -r cpu` + `SIM_DIRECT=1 bash run.sh -r sim`；建议再跑 liboqs CPU×N + SIM×≥1。
-3. 更新 `examples/stable/INDEX.md`、`qa/TODO.md`（关 T19f 交付段）、当日 `qa/`、本文件。
+1. 从 [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) **复制晋级**为 `examples/stable/stable-fips203-mlkem-kem-keygen-k4/`。
+2. 双模式再验收：`bash run.sh -r cpu` + `SIM_DIRECT=1 bash run.sh -r sim`（或试点 `bash run.sh -r verify`）。
+3. 更新 `examples/stable/INDEX.md`、`qa/TODO.md`、当日 `qa/`、本文件。
 
 **未获口令前禁止建 stable。**
 
 ### P0-2 — 主线开工：**T19a Encaps device**
 
-[`fix-f203-alg20-kem-encaps-device-k4`](ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)：改接 [`stable-…-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（或 pass-fix Encrypt device）布局；CPU+SIM `c`/`K` max=0；分项 kat。  
-随后 T19b/c Decaps Phase-E/D。
+[`fix-f203-alg20-kem-encaps-device-k4`](ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)：改接 stable Encrypt 布局；CPU+SIM；分项 kat。随后 T19b/c Decaps。
 
-### P1 — **T21** SHA3hp
-
-待用户拍板是否替换设备 SHA3-256/512；未拍板不改默认路径。
-
-### 纪律提醒（相对 07-13 失败）
-
-- **禁止**未压测绿就晋级 stable。
-- **禁止**从 `frozen/` / 已删树抄实现。
-- FAIL 必须落盘 seed；勿只写「偶发 dk FAIL」。
+### P1 — **T21** SHA3hp · **runtime_env 二期**（其余 `run.sh` 逐步接入）
 
 ---
 
-## 验收命令（smoke）
+## ★ 家里 / Cloud 注意
 
-```bash
-git pull
-
-# KEM KeyGen incubating
-cd examples/incubating/exp-fips203-mlkem-kem-keygen-k4
-bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-
-# liboqs（可按需）
-KEYGEN_DIR="$(pwd)" KEM_KG_CPU_TRIALS=3 KEM_KG_SIM_TRIALS=1 SIM_DIRECT=1 \
-  python3 ../../../scripts/kat_liboqs_kem_keygen.py
-```
-
-**WSL**：`CMAKE_BUILD_JOBS=2`；勿并行多 SIM。
-
----
-
-## 附录：关键路径速查
-
-| 主题 | 路径 |
-|------|------|
-| KEM KeyGen incubating | [`exp-…-kem-keygen-k4/`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) |
-| Cloud / agent 短入口 | [`AGENTS.md`](AGENTS.md) |
-| customspec | [`…-实现方案-customspec.pdf`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
-| device 基线 | [`pass-fix-f203-alg19-kem-keygen-device-k4/`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
-| 家里当日纪要 | [`qa/2026-07/2026-07-14-….md`](qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md) |
-| 遗留总表 | [`qa/TODO.md`](qa/TODO.md) |
+- Cloud：`~/ascendc -> /workspace`；先 `clone-thirdparty.sh`。
+- 声称用例通过：仍须 **cpu + SIM** 证据；`auto` 不算完整验收。
+- WSL：**不要** `-r npu`。

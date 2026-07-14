@@ -13,6 +13,8 @@
 # Usage（默认 = 全量生产路径）：
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4          # 自动 SIM_DIRECT=1
+#   bash run.sh -r auto -v Ascend910B4         # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4       # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #
 # 默认行为（对齐 Encrypt stable）：
 #   DECRYPT_SKIP_REBUILD=1   — 二进制与 RUN_MODE stamp 在则跳过 cmake
@@ -21,13 +23,17 @@
 # 调试（须显式指定，非默认）：
 #   DECRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
 #   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r npu …                      # 仅真机；WSL 由 runtime_env 拒绝
 #   COMPRESS_1_VEC=0 / DECOMPRESS_D_VEC=0 bash run.sh ...
+#
+# 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 #
 # KAT / 外部 fixture（由 kat_liboqs_vs_ascendc.sh / roundtrip 设置）：
 #   DECRYPT_KAT=1              — 静默日志；跳过 gen_data；跳过 verify（由 KAT 对拍 liboqs）
 #   DECRYPT_SKIP_GEN_DATA=1    — 仅跳过 gen_data（input 已由 prepare 写好；仍做 verify）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+_ORIG_ARGS=("$@")
 
 if [ "${DECRYPT_KAT:-0}" = "1" ]; then
     mkdir -p "${CURRENT_DIR}/output"
@@ -70,6 +76,11 @@ while :; do
     esac
 done
 
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
+
 if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
     # shellcheck source=/dev/null
     source "${HOME}/ascendc/scripts/env.sh"
@@ -89,6 +100,8 @@ if [ "${RUN_MODE}" = "sim" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 fi
 
 export COMPRESS_1_VEC="${COMPRESS_1_VEC:-1}"

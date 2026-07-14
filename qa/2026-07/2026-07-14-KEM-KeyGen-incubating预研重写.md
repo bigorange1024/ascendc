@@ -52,3 +52,17 @@
 
 - `#交付#` → stable（用户确认后）
 - T19a Encaps device；T19f incubating 验收可关，stable 仍待交付
+
+## 办公室补充（同日）— 多环境 `runtime_env` + `run.sh` 一期
+
+| 项 | 内容 |
+|----|------|
+| 目标 | WSL / Cloud Linux / 真机 NPU 统一探测，差异进脚本不改算子语义 |
+| 新增 | [`scripts/runtime_env.sh`](../../scripts/runtime_env.sh)；[`docs/engineering/NPU真机环境说明.md`](../../docs/engineering/NPU真机环境说明.md) |
+| 模式 | 默认仍 **`cpu`**；新增 **`-r auto`**（npu>sim>cpu）、**`-r verify`**（cpu→`SIM_DIRECT` sim；有卡非 WSL 再 npu） |
+| 试点 | KEM KeyGen incubating + PKE keygen/encrypt/decrypt 四个 `run.sh` |
+| WSL 验 | decrypt：`verify` PASS（cpu+sim，tick~283k）；`auto→sim` PASS；`-r npu` 明确失败。KEM：`npu` 拒绝；`cpu` PASS |
+| 明确不做（一期） | 不批量改 ~75 个 `run.sh` / frozen；不把默认改成 auto/verify |
+| 二期 | 活跃 `pass-*` / 其余 exp|stable 逐步接入；真机再压 npu host 路径 |
+
+文档挂链：[`AGENTS.md`](../../AGENTS.md)、[`Cursor-Cloud环境说明.md`](../../Cursor-Cloud环境说明.md)、`docs/engineering/INDEX.md`。

@@ -4,16 +4,22 @@
 # customspec：本目录 exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.{tex,pdf}
 # 踩坑：Encode 后双 AIV SyncAll；CPU 由 AIV1 做 Fuse/Tail；KYBER_PIPE_ALL 恒真实；清零 output 多轮压测
 #
-# Usage（默认 = 生产全量 + golden 对拍）：
+# Usage（默认 = 生产全量 + golden 对拍；未写 -r 仍为 cpu）：
 #   bash run.sh -r cpu -v Ascend910B4
 #   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #
 # 调试（非默认）：
 #   KEM_KG_EXT_SEED=1 …          # 旁路 A：input/kem_seed.bin = d‖z
 #   KEM_KEYGEN_FORCE_REBUILD=1 … # 强制重编
 #   KEM_KEYGEN_VERIFY=0 …        # 跳过 liboqs golden（仅尺寸检查）
+#   bash run.sh -r npu …         # 仅真机；WSL 由 runtime_env 拒绝
+#
+# 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+_ORIG_ARGS=("$@")
 
 if [ "${KEM_KEYGEN_KAT:-0}" = "1" ]; then
     mkdir -p "${CURRENT_DIR}/output"
@@ -53,6 +59,11 @@ while :; do
     esac
 done
 
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
+
 if [ "${KEM_KG_EXT_SEED}" = "1" ]; then
     _DEFAULT_PROFILE="extseed"
 else
@@ -83,9 +94,11 @@ export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
 if [ "${RUN_MODE}" = "sim" ]; then
-    export SIM_DIRECT=1
+    export SIM_DIRECT="${SIM_DIRECT:-1}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 fi
 
 if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then

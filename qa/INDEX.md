@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-14 — [KEM KeyGen incubating【预研】重写 · SyncAll/软旗 · AGENTS.md](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
+### 2026-07-14 — [KEM KeyGen incubating【预研】重写 · SyncAll/软旗 · AGENTS.md · runtime_env](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
-关键字：`exp-fips203-mlkem-kem-keygen-k4` · SyncAll · **AGENTS.md** · **clone-thirdparty 默认 build liboqs** · Cloud SIM `InternalSwap` 标 CANN 阻塞 · 有条件完成
+关键字：`exp-fips203-mlkem-kem-keygen-k4` · SyncAll · **AGENTS.md** · **clone-thirdparty 默认 build liboqs** · Cloud SIM `InternalSwap` · **`runtime_env.sh` / `-r auto|verify`** · 有条件完成
 
 ### 2026-07-13 — [thirdparty · KEM KeyGen 规格重置 · T21](2026-07/2026-07-13-thirdparty外部仓清单.md)
 

@@ -11,6 +11,8 @@
 # Usage（默认 = 全量生产路径；无需手动 export SIM_DIRECT / HAT_*）:
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4          # run.sh 在 sim 模式内自动 export SIM_DIRECT=1
+#   bash run.sh -r auto -v Ascend910B4         # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4       # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #
 # 默认行为（对齐 alg20）:
 #   ENCRYPT_SKIP_REBUILD=1   — 二进制与 RUN_MODE stamp 在则跳过 cmake
@@ -19,13 +21,17 @@
 # 调试（须显式指定，非默认）:
 #   ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4   # 强制 rm build/out 全量重编
 #   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4              # 走 msprof + OPPROF_*（慢）
+#   bash run.sh -r npu …                                       # 仅真机；WSL 由 runtime_env 拒绝
 #   改 F203_* / ALG11_* 编译开关后须 FORCE_REBUILD=1（stamp 含主要宏）
+#
+# 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 #
 # KAT / 外部 fixture（须显式；由 kat_liboqs_vs_ascendc.sh / roundtrip 设置）:
 #   ENCRYPT_KAT=1              — 静默日志；跳过 gen_data；跳过 golden cmp（由 KAT 脚本对拍 liboqs）
 #   ENCRYPT_SKIP_GEN_DATA=1    — 仅跳过 gen_data（input/golden 已由 prepare 写好；仍做 golden cmp）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+_ORIG_ARGS=("$@")
 
 if [ "${ENCRYPT_KAT:-0}" = "1" ]; then
     mkdir -p "${CURRENT_DIR}/output"
@@ -65,6 +71,11 @@ while :; do
     esac
 done
 
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
+
 if [ -n "${ASCEND_INSTALL_PATH:-}" ]; then
     _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH}"
 elif [ -n "${ASCEND_HOME_PATH:-}" ]; then
@@ -95,6 +106,8 @@ if [ "${RUN_MODE}" = "sim" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 fi
 
 # 生产默认（compute 全量向量 + prep 全量路径）；调试分段须显式覆盖对应 env
