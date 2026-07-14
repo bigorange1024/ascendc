@@ -75,32 +75,72 @@ git clone --depth 1 https://github.com/bigorange1024/ntt_onnx.git thirdparty/ntt
 
 ### `ntt_onnx` 私有仓认证（强制保持 private）
 
-**不要**为了 Cloud 把仓改成 public。匿名 HTTPS 会失败；按下述配置即可。
+**不要**为了 Cloud / 实机把仓改成 public。匿名 HTTPS 会失败；按环境选认证即可。`clone-thirdparty.sh` 对 `ntt_onnx` 的优先级：
 
-| 环境 | 做法 |
+1. 环境变量 **`ASCENDC_GH_PAT`** 或 **`NTT_ONNX_GITHUB_TOKEN`**（HTTPS `x-access-token`）  
+2. 已登录且能读该仓的 **`gh`**  
+3. 匿名（必败，并打印指引）
+
+#### A. 先做：GitHub fine-grained PAT（Cloud 与实机通用）
+
+1. 打开 [Fine-grained personal access tokens](https://github.com/settings/personal-access-tokens/new)（须登录 **bigorange1024** 或有 `ntt_onnx` 读权限的账号）。  
+2. **Token name**：例如 `ascendc-ntt-onnx-read`。  
+3. **Expiration**：按安全策略选（如 90 天）；到期换新。  
+4. **Resource owner**：`bigorange1024`。  
+5. **Repository access** → **Only select repositories** → 勾选 **`ntt_onnx`**（不要勾整个 org）。  
+6. **Permissions** → Repository permissions → **Contents** → **Read-only**（够 clone；勿给多余写权限）。  
+7. Generate token → **立刻复制**保存（界面只显示一次）。
+
+#### B. 仅 Cursor Cloud Agent：怎么配 Secret
+
+官方入口：[Cloud Agents Dashboard](https://cursor.com/dashboard/cloud-agents)。排障见 [Cloud Agents 文档](https://cursor.com/docs/cloud-agent)（Secrets 不可用 / 找不到页签）。
+
+1. 浏览器登录与跑 Cloud Agent **同一** Cursor 账号。  
+2. 打开 Dashboard → **Secrets**（或当前 Environment 详情里的 **Runtime secrets**）。看不见则检查 team 权限 / 是否进错 workspace。  
+3. **Add secret**：
+
+| 字段 | 取值 |
 |------|------|
-| **本机 WSL** | `gh auth login`（读权限）后 `bash scripts/clone-thirdparty.sh`；或 SSH：`git clone git@github.com:bigorange1024/ntt_onnx.git thirdparty/ntt_onnx` |
-| **Cursor Cloud Agent** | 见下节 Secrets |
+| Name | **`ASCENDC_GH_PAT`**（或 `NTT_ONNX_GITHUB_TOKEN`；脚本只认这两个） |
+| Value | A 节复制的 PAT |
+| 类型 | 优先 **Runtime Secret**（注入为 env，对话/日志脱敏）；次选 Environment Variable |
 
-**Cloud Secrets（推荐）**：
-
-1. GitHub → Settings → Developer settings → **Fine-grained PAT**  
-   - Resource owner: `bigorange1024`  
-   - Repository access: **Only** `ntt_onnx`  
-   - Permissions → Repository → **Contents: Read**  
-2. Cursor → [Cloud Agents Dashboard](https://cursor.com/dashboard?tab=cloud-agents) → **Secrets**  
-   - Name: **`ASCENDC_GH_PAT`**（**不要**只设 `GH_TOKEN`——Cloud 可能注入仅对本仓有效的 `ghs_…` 覆盖之）  
-   - Value: 上一步 PAT  
-3. Cloud Agent：
+4. 作用域尽量挂到跑 `ascendc` 的那个 **Environment**。  
+5. **不要**只建名为 `GH_TOKEN` 的 secret（Cloud 常覆盖为仅对本仓有效的 `ghs_…`）。新加 secret 后须 **新开一轮** Agent。  
+6. Cloud 内验证：
 
 ```bash
+test -n "${ASCENDC_GH_PAT}" && echo "ASCENDC_GH_PAT is set"
 FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 test -f thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h && echo OK
 ```
 
-脚本优先顺序：`ASCENDC_GH_PAT` / `NTT_ONNX_GITHUB_TOKEN` → 已登录的 `gh` → 匿名（必败并打印指引）。
+#### C. NPU 真机 / 办公室 Linux（不是 Cloud）
 
-可选别名：`NTT_ONNX_GITHUB_TOKEN`（与 `ASCENDC_GH_PAT` 等价）。
+与 Cloud **同一私有仓**，但**不依赖 Cursor Secrets**。任选：
+
+| 方式 | 适用 | 做法 |
+|------|------|------|
+| **SSH deploy key**（推荐生产机） | 长期实机 | 机器生成 ed25519 → GitHub `ntt_onnx` → Settings → **Deploy keys**（只读）→ `git clone git@github.com:bigorange1024/ntt_onnx.git thirdparty/ntt_onnx` |
+| **`gh auth login`** | 人工登录的开发机 | 登录后 `bash scripts/clone-thirdparty.sh` |
+| **环境变量 PAT** | CI / 无人值守 | A 节 PAT 写入实机密文（systemd EnvironmentFile / CI secret）；`export ASCENDC_GH_PAT=…` 后跑 `clone-thirdparty.sh`（**勿提交 git**） |
+| **离线拷贝** | 实机无出网 | 能拉仓的机器 clone 后 `rsync`/`tar` 整棵 `thirdparty/ntt_onnx/` 到实机同路径 |
+
+```bash
+cd ~/ascendc
+bash scripts/clone-thirdparty.sh
+test -f thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h && echo OK
+```
+
+真机算子用 `-r npu`；与 clone 无关——缺 `ntt_onnx` 只影响依赖 LUT/golden 的用例。
+
+#### D. 三种主机对照
+
+| 主机 | 如何拿到 `ntt_onnx` |
+|------|---------------------|
+| WSL | `gh auth login` 或 SSH |
+| Cursor Cloud | Dashboard Secrets → **`ASCENDC_GH_PAT`** → `clone-thirdparty.sh` |
+| NPU 实机 | Deploy key / `gh auth` / 机器侧 `ASCENDC_GH_PAT` / 离线拷贝 |
 
 ### 各仓说明
 
