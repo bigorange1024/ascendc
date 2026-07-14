@@ -38,11 +38,40 @@ sim_env_simulator_lib() {
   printf '%s' "${sim_lib}"
 }
 
+# 是否运行在 WSL。真实 libascend_dump 的 DumpManager 在 ASCEND_WORK_PATH 存在时会
+# EnableDfxDumper → InitHardwareInfo950 对空 map 取模除零 → SIGFPE（见 camodel_sim_log.sh 注释）。
+# 该 FPE 在 WSL 与本类无 NPU 环境都会命中；下面据此决定 dump 桩策略。
+sim_env_is_wsl() {
+  grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null && return 0
+  [[ -n "${WSL_DISTRO_NAME:-}" ]] && return 0
+  return 1
+}
+
 sim_env_stub_dump() {
   local case_dir="$1"
   local repo_root="$2"
   local stub_src="${repo_root}/scripts/stub_libascend_dump.cpp"
   local stub_so="${case_dir}/out/lib/libascend_dump.so"
+
+  # 该桩为规避真实 libascend_dump 的 dl_init/DumpManager FPE 而存在，但它缺少
+  # toolkit::aicpu::dump::Output::InternalSwap 等**仅**真库导出的符号；在 Cursor Cloud VM 等
+  # 非 WSL 环境上，桩遮蔽真库 → libge_common_base.so 运行期报 undefined symbol …InternalSwap…、
+  # SIM 直接挂。非 WSL 侧改走 sim_env_export 里的 CAMODEL_SKIP_ADX_WORK_PATH（不设 ASCEND_WORK_PATH →
+  # 不触发 FPE）来规避 FPE，因此**不装桩**、让真库提供全部符号；并清掉历史遗留桩。
+  # 覆盖：SIM_DUMP_STUB=1 强制装桩；SIM_DUMP_STUB=0 强制不装；默认 auto=WSL 装、非 WSL 不装。
+  local mode="${SIM_DUMP_STUB:-auto}"
+  local use_stub=0
+  case "${mode}" in
+    1) use_stub=1 ;;
+    0) use_stub=0 ;;
+    *) sim_env_is_wsl && use_stub=1 || use_stub=0 ;;
+  esac
+
+  if [[ "${use_stub}" != "1" ]]; then
+    [[ -f "${stub_so}" ]] && rm -f "${stub_so}"
+    return 0
+  fi
+
   if [[ ! -f "${stub_src}" ]]; then
     echo "[sim_env] WARN: stub source missing: ${stub_src}" >&2
     return 0
@@ -84,6 +113,12 @@ sim_env_export() {
   sim_env_stub_dump "${case_dir}" "${repo_root}"
   sim_env_filter_ld_no_driver
   sim_lib="$(sim_env_simulator_lib)" || return 1
+
+  # 非 WSL（不装 dump 桩）时，默认让 camodel_sim_log.sh 跳过 ASCEND_WORK_PATH，避免真实
+  # libascend_dump 的 DumpManager 触发 InitHardwareInfo950 SIGFPE。用户显式设过则尊重其值。
+  if [[ -z "${CAMODEL_SKIP_ADX_WORK_PATH:-}" ]] && ! sim_env_is_wsl && [[ "${SIM_DUMP_STUB:-auto}" != "1" ]]; then
+    export CAMODEL_SKIP_ADX_WORK_PATH=1
+  fi
 
   export ASCEND_LATEST_INSTALL_PATH="${ASCEND_LATEST_INSTALL_PATH:-${HOME}/Ascend}"
   export SIM_DIRECT="${SIM_DIRECT:-1}"

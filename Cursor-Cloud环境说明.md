@@ -42,16 +42,30 @@
 - ML-KEM stable 算子（如 PKE Decrypt）：`bash run.sh -r cpu -v Ascend910B4` 开箱即用（CPU 孪生 =
   辅助正确性参考，golden `[verify] PASS max=0`）。
 
-## SIM（stable/exp 新版 aclrtlaunch 路径）的已知阻塞与绕过
+## SIM（stable/exp 新版 aclrtlaunch 路径）：成因与已实施修复
 
-- `scripts/sim_env.sh` 会把由 `scripts/stub_libascend_dump.cpp` 编出的 **WSL 用 FPE 桩**
-  `libascend_dump.so` 预置到 `out/lib` 并优先加载。该桩缺少
-  `toolkit::aicpu::dump::Output::InternalSwap`，在本 **非 WSL** VM 上会让 `libge_common_base.so`
-  在运行期报 `symbol lookup error`，`bash run.sh -r sim` 因此失败。
-- 本 VM **不会**触发桩要规避的 WSL FPE，真实 `libascend_dump.so`（在 `~/Ascend/cann/lib64`）可正常工作。
-  绕过办法（不改仓库代码）：先用 `bash run.sh -r sim ...` 完成一次构建，再把
-  `out/lib/libascend_dump.so` 临时移开，让真实库加载后直接跑 `./ascendc_kernels_bbit`
-  （`LD_LIBRARY_PATH` 前置 `out/lib:out/lib64:<simulator lib>:~/Ascend/cann/lib64`，并过滤 `*/driver/*`）。
-  已如此验证 PKE Decrypt SIM：`Total tick ≈ 283499`、`[verify] PASS max=0`，与文档 ~283k 一致。
-- 若要让标准 `run.sh -r sim` 直接可用，需仓库层面改动（如按「是否 WSL」跳过该桩），属代码变更，
-  需用户决策，未擅自修改。
+**现状：标准 `bash run.sh -r sim -v Ascend910B4` 在本 VM 已可通过**（见下方修复）。
+
+成因（两个叠加，都指向同一个 CANN 侧 FPE）：
+
+1. `scripts/sim_env.sh` 会把 `scripts/stub_libascend_dump.cpp` 编出的 **FPE 桩** `libascend_dump.so`
+   预置到 `out/lib` 优先加载。该桩缺少**仅**真库导出的 `toolkit::aicpu::dump::Output::InternalSwap`
+   等符号 → 非 WSL 上 `libge_common_base.so` 运行期报 `undefined symbol …InternalSwap…`。
+2. 若干脆移开桩、让真库加载：`camodel_sim_log.sh` 默认设 `ASCEND_WORK_PATH` → 真库 DumpManager
+   `EnableDfxDumper` → `cce::runtime::Config::InitHardwareInfo950()` 对空 map 取模除零 → **SIGFPE**
+   （崩在 `main` 之前，与 kernel 数值无关；`camodel_sim_log.sh` 注释已记录）。
+
+**修复（已在 `scripts/sim_env.sh`，非 WSL 自动生效，WSL 行为不变）**：
+
+- 非 WSL（`/proc/version` 无 `microsoft/wsl`）默认**不装桩** → 真实 `libascend_dump.so` 提供全部符号；
+- 并默认 `CAMODEL_SKIP_ADX_WORK_PATH=1`（不设 `ASCEND_WORK_PATH`）→ 不触发 DumpManager FPE；
+- 覆盖开关：`SIM_DUMP_STUB=1` 强制装桩、`=0` 强制不装（默认 `auto` 按是否 WSL）。
+
+已验证（标准命令，非绕过）：
+
+- `examples/incubating/exp-fips203-mlkem-kem-keygen-k4`：`Total tick 706880`、`KEM KeyGen overall PASS`。
+- `examples/stable/stable-fips203-mlkem-pke-decrypt-k4`：`Total tick 283562`、`[verify] PASS max=0`，
+  且用例根**无 stray dump**（跳过 ADX work path 的附带好处）。
+
+前置：带 golden/KAT 的用例需先 `bash scripts/clone-thirdparty.sh`（或 `ONLY=liboqs … + build-liboqs.sh`）
+备好 `thirdparty/liboqs` 与 `scripts/liboqs_kem_ref`。

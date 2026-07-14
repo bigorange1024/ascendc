@@ -82,7 +82,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 | 现象 | 归属 | Agent 该怎么做 |
 |------|------|----------------|
 | `gen_data` / verify 缺 `liboqs` / `liboqs_kem_ref` | **thirdparty** | 跑 `bash scripts/clone-thirdparty.sh` 或 `bash scripts/build-liboqs.sh`；修好后重跑 **CPU** |
-| `libge_common_base.so: undefined symbol: …InternalSwap…`（或同类 GE/runtime 符号） | **CANN SIM 运行时 / 桩或镜像不一致** | **与 liboqs 无关**；默认标 **SIM 阻塞**、保留完整报错；成因与绕过（Cloud VM 上是 WSL 用 `libascend_dump` 桩遮蔽真库）见 [`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md) |
+| `libge_common_base.so: undefined symbol: …InternalSwap…` / 启动即 `Floating point exception` | **dump 桩遮蔽真库 / DumpManager FPE**（与 liboqs 无关） | **已在 `scripts/sim_env.sh` 修复**（非 WSL 自动不装桩 + `CAMODEL_SKIP_ADX_WORK_PATH=1`）；标准 `run.sh -r sim` 直接跑。成因/覆盖开关见 [`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md) |
 | Cloud 无 CANN | 环境 | 可读代码/写规格；**勿假绿** SIM |
 
 完整复现：[docs/engineering/环境复现与开发指南.md](docs/engineering/环境复现与开发指南.md)
