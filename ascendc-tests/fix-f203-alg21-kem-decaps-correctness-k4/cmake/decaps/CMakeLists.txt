@@ -178,9 +178,12 @@ endif()
 target_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${_ALL_INCLUDES})
 
 set(_DECAPS_HOST_SOURCES ${DEC_ROOT}/main_kem_decaps.cpp ${DEC_ROOT}/main_kem_dec_g5_run.cpp)
-# main_encrypt_g5_run.cpp 仅供 SIM 两段 session 回退（KEM_DECAPS_SIM_2SESSION=1，非默认）；
-# 默认 SIM 走单库单 session D→G→E→FO，不调用 run_g5_sim_full。
-if(NOT "${RUN_MODE}" STREQUAL "cpu")
+# 背景：曾无条件把 vendor main_encrypt_g5_run.cpp 编进 SIM host；但当前
+# main_kem_dec_g5_run 走自有 Phase-E / decaps_2session，不调用 run_g5_sim_full。
+# 结论：默认不再编入。该 .cpp 在非 ASCENDC_CPU_DEBUG 下有未使用 constexpr，
+# Cloud Clang -Werror 会挂（见 qa/2026-07-14）。需要遗留 Encrypt G5 host 时再显式打开。
+# 未采用：在 frozen sync 源上大面积包 #ifdef（与活跃 decaps 主路径无关）。
+if(DEFINED ENV{KEM_COMPILE_ENCRYPT_G5_HOST} AND "$ENV{KEM_COMPILE_ENCRYPT_G5_HOST}" STREQUAL "1")
     list(APPEND _DECAPS_HOST_SOURCES ${ENC_VENDOR}/main_encrypt_g5_run.cpp)
 endif()
 add_executable(ascendc_kem_decaps_bbit ${_DECAPS_HOST_SOURCES})

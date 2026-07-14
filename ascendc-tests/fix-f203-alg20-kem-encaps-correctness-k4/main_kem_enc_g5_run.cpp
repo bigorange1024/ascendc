@@ -76,22 +76,25 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size);
 
 namespace {
 
+// SIM path 共用（见 run_g5_sim_full）；CPU session 也引用同名常量。
+constexpr uint32_t kInttBlockDim = 1U;
+constexpr uint32_t kG4NoiseBlockDim = 1U;
+constexpr uint32_t kPackBlockDim = 1U;
+
+#ifdef ASCENDC_CPU_DEBUG
+// 仅 CPU 孪生 session 使用；SIM 侧在 run_g5_sim_full 内有局部 constexpr，勿放命名空间以免 -Wunused。
 constexpr uint32_t kAhatBlockDim = 2U;
 constexpr uint32_t kReBlockDim = 1U;
 constexpr uint32_t kNttBlockDim = 1U;
 constexpr uint32_t kG3BlockDim = 1U;
 constexpr uint32_t kDecodeBlockDim = 1U;
 constexpr uint32_t kNttMixPass = 3U;
-constexpr uint32_t kInttBlockDim = 1U;
 constexpr uint32_t kInttMixPass = 3U;
-constexpr uint32_t kG4NoiseBlockDim = 1U;
-constexpr uint32_t kPackBlockDim = 1U;
 constexpr uint32_t kPrfBatch = F203_ENCRYPT_PRF_BATCH;
 constexpr uint32_t kPrfMaxMsgLen = 64U;
 constexpr uint32_t kPrfOutLen = F203_ENCRYPT_PRF_BYTES_PER_POLY;
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
 
-#ifdef ASCENDC_CPU_DEBUG
 /**
  * CPU 单 session：从 ek/seed 跑完 Encaps，中间态可选拷回调用方缓冲（调试用）。
  * 顺序与 SIM run_g5_sim_full 对齐；K 在 prep_re 后即可读出。
