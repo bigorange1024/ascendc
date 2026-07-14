@@ -107,7 +107,6 @@ void DebugWriteDev(aclrtStream stream, const char *relPath, uint8_t *dev, size_t
 #endif
 
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
-constexpr size_t kVecTilingBytes = 64U;
 /** compute launch 的 blockDim：MIX 核固定 1（内部 1AIC+2AIV） */
 constexpr uint32_t kMmadBlockDim = 1U;
 

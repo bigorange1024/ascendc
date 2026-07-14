@@ -162,4 +162,7 @@ Cloud 反馈：polyvec8/compress/decompress 已双绿；仍挂 7 项。本仓处
 Cloud：4185ba0 后仍挂 se-k4 / device-keygen；根因 `CeilAlign32` 改成仅 `__aicore__ inline` 后无法做 `PRF_*` host constexpr。
 
 修复：`__aicore__ inline constexpr`（host 上 `__aicore__` 为空宏 → `inline constexpr`；设备仍内联，且保持 constexpr）。本机 se/device-keygen cpu + shake128 sim PASS。
+### 同日 — device-keygen `kVecTilingBytes`
+
+Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early stable KeyGen 同类修法）。
 
