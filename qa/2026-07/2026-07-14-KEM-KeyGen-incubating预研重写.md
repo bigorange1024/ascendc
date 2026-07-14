@@ -84,7 +84,16 @@
 | 二期落地 | **活跃 `ascendc-tests/*/run.sh`** 接入 `runtime_env`（32 个；2 个 T19 device stub 跳过）；**本机不跑测**，交 Cloud Agent 跑 cpu+sim |
 | 未改 | `frozen/`、默认仍 `cpu`、examples 其余非试点树 |
 
-## 办公室补充（同日稍后）— `ntt_onnx` 保持私有 + Cloud PAT
+## 办公室补充（同日）— P0 仓内硬伤修补
+
+| 项 | 处理 |
+|----|------|
+| `prepare_production_input.py` | `__future__` 提到文件 docstring 之后、其它语句之前（Cloud Python SyntaxError） |
+| shake128/256 toy | 从 backup 补回 `scripts/emit_toy_active_case_h.py` |
+| `pass-…-byteencode12` | 补提交缺失的 `basic.hpp` |
+| `library/shared/…/fips203_prf.h` | 从 backup 恢复（verify 编 C 参考需要） |
+
+其余：Clang `-Werror` / rsync 仍待下一刀。
 
 | 项 | 内容 |
 |----|------|

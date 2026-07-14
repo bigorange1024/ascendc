@@ -9,13 +9,12 @@
 
 ## ★ Cloud 下一刀（优先）
 
-1. **用户先**：Cursor Dashboard → Cloud Agents → Secrets → 配置 **`ASCENDC_GH_PAT`**（fine-grained PAT，仅 `ntt_onnx` Contents:Read）  
-2. Agent：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 须有 `transpose_mlkem_luts_i8.h`  
-3. 再重跑缺 LUT 的 Encrypt 探针；其余（Clang / rsync / 仓内破损）等下一指令  
+1. **用户先**：Cursor Dashboard → Secrets → **`ASCENDC_GH_PAT`**（详见 thirdparty 文档）  
+2. Agent：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh`  
+3. 仓内硬伤（`__future__` / emit_toy / `basic.hpp` / `fips203_prf.h`）已修：可重跑原失败子集  
+4. 仍待：Clang `-Werror`、rsync  
 
-勿再要求把 `ntt_onnx` 改 public。
-
-说明：[`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) · [`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md)
+说明：[`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)
 
 ---
 
