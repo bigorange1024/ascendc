@@ -166,3 +166,10 @@ Cloud：4185ba0 后仍挂 se-k4 / device-keygen；根因 `CeilAlign32` 改成仅
 
 Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early stable KeyGen 同类修法）。
 
+### 同日收口 — Cloud 第二波全绿
+
+| 项 | 结果 |
+|----|------|
+| 提交 | `995efdd` 上 `pass-fix-f203-alg13-device-keygen-k4` **CPU+SIM PASS**（tick **542494**；`ek_pke=1568`/`dk_pke=1536`） |
+| 结论 | 此前第二波仍红用例（Clang/`__future__`/shake/tiny_sha3/CeilAlign32/kVecTilingBytes 等）**到此全部通过** |
+

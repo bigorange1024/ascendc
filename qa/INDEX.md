@@ -12,7 +12,7 @@
 
 ### 2026-07-14 — [KEM KeyGen incubating【预研】· runtime_env · Cloud 绿 · 探针批量接入](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
-关键字：`runtime_env` · Cloud Clang · **二次失败清单本仓修**（CBD/`__future__`/shake CMake+AIV_MODE+sim_env / tiny_sha3 ensure）· ntt_onnx PAT · 六探针绿
+关键字：`runtime_env` · Cloud Clang · **二次失败清单本仓修 · **第二波全绿****（CBD/`__future__`/shake CMake+AIV_MODE+sim_env / tiny_sha3 ensure）· ntt_onnx PAT · 六探针绿
 
 ### 2026-07-13 — [thirdparty · KEM KeyGen 规格重置 · T21](2026-07/2026-07-13-thirdparty外部仓清单.md)
 
