@@ -156,3 +156,10 @@ Cloud 反馈：polyvec8/compress/decompress 已双绿；仍挂 7 项。本仓处
 | vec-k4-v2 CPU `ek_pke` | Cloud 报 diff@1272；本机 clean cpu **PASS** | **不做臆测改算法**；请 Cloud 干净重跑；若仍红贴 verify 全文 |
 
 说明：[`docs/notes/AscendC多环境运行纪要.md`](../../docs/notes/AscendC多环境运行纪要.md)
+
+## 办公室补充（同日晚）— CeilAlign32 恢复 constexpr
+
+Cloud：4185ba0 后仍挂 se-k4 / device-keygen；根因 `CeilAlign32` 改成仅 `__aicore__ inline` 后无法做 `PRF_*` host constexpr。
+
+修复：`__aicore__ inline constexpr`（host 上 `__aicore__` 为空宏 → `inline constexpr`；设备仍内联，且保持 constexpr）。本机 se/device-keygen cpu + shake128 sim PASS。
+

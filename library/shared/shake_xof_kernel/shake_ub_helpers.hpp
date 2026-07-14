@@ -26,8 +26,13 @@ __aicore__ inline void PipeAll()
 }
 
 
-/** UB 32B 对齐上取整；须 `__aicore__ inline`，否则 ccec 设备链可能出现 undefined CeilAlign32。 */
-__aicore__ inline uint32_t CeilAlign32(uint32_t n)
+/**
+ * UB 32B 对齐上取整。
+ * - 须 `constexpr`：host/设备侧用其初始化 `PRF_*` / `kShake*` 等编译期常量
+ * - 须 `__aicore__ inline`：仅 `constexpr` 时 ccec 设备链可能报 undefined CeilAlign32
+ * Host（tikicpu）上 `__aicore__` 为空宏，退化为 `inline constexpr`。
+ */
+__aicore__ inline constexpr uint32_t CeilAlign32(uint32_t n)
 {
     return (n + 31U) & ~31U;
 }
