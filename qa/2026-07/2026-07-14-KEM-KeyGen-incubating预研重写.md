@@ -219,18 +219,17 @@ Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early 
 
 ### Cloud 测 SIM 指引（同提交推送后）
 
-默认**勿**再写死 `SEED_D=20260619`（除非定点复现旧 KAT）。推荐：
+默认**勿**再写死 `SEED_D=20260619`（除非定点复现旧 KAT）。**勿**手写 `SIM_DIRECT=1`（stable/exp PKE·KEM 的 `-r sim` **已默认** CAModel 直跑）。
 
 ```bash
-# 通用入口（含 add_custom）
+# 标准验收（无需额外 env）
 bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
 
-# 已正确性 examples（默认哈希 SEED_D / m / coins）
-cd examples/stable/stable-fips203-mlkem-pke-keygen-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-cd examples/stable/stable-fips203-mlkem-pke-encrypt-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-cd examples/stable/stable-fips203-mlkem-pke-decrypt-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-cd examples/stable/stable-fips203-mlkem-kem-keygen-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+cd examples/stable/stable-fips203-mlkem-pke-keygen-k4
+cd examples/stable/stable-fips203-mlkem-pke-encrypt-k4
+cd examples/stable/stable-fips203-mlkem-pke-decrypt-k4
+cd examples/stable/stable-fips203-mlkem-kem-keygen-k4
 ```
 
-定点：`SEED_D=20260619 bash run.sh …`。共享实现：[`library/shared/fips203_host_rng/`](../../library/shared/fips203_host_rng/)。
+定点：`SEED_D=20260619 bash run.sh …`。采 msprof/OPPROF（非默认）：`SIM_DIRECT=0 bash run.sh -r sim …`。共享 RNG：[`library/shared/fips203_host_rng/`](../../library/shared/fips203_host_rng/)。

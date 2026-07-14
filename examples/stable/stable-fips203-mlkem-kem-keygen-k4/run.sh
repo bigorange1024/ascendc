@@ -6,12 +6,13 @@
 #
 # Usage（默认 = 生产全量 + golden 对拍；未写 -r 仍为 cpu）：
 #   bash run.sh -r cpu -v Ascend910B4
-#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r sim -v Ascend910B4          # sim 内默认 SIM_DIRECT=1（CAModel）；勿手写
 #   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #
 # 调试（非默认）：
 #   SEED_D=20260619 …        # 定点复现旧 KAT；默认不写死，由 SHA3 派生 host seed_d
+#   SIM_DIRECT=0 … -r sim …  # msprof + OPPROF_*（慢；非默认）
 #   KEM_KG_EXT_SEED=1 …          # 旁路 A：input/kem_seed.bin = d‖z
 #   KEM_KEYGEN_FORCE_REBUILD=1 … # 强制重编
 #   KEM_KEYGEN_VERIFY=0 …        # 跳过 liboqs golden（仅尺寸检查）
