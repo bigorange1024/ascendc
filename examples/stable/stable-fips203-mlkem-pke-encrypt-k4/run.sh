@@ -6,7 +6,7 @@
 #   SIM：2 launch（prep → l18_l19 含 e₂+=μ 与内联 tail pack）
 #   CPU：5 launch（prep + ntt_y/at_jp/intt_e1 + pack；v=golden_v）
 # 生产 I/O：input/{ek_pke,m,coins,lut_*} → output/c.bin 仅密文；中间态不落盘
-# golden：SEED_D=20260619；本目录自包含生成（见 scripts/gen_data.py）
+# golden：SEED_D 定点可覆盖；默认 SHA3+SHAKE 派生 m/coins；本目录自包含生成（见 scripts/gen_data.py）
 #
 # Usage（默认 = 全量生产路径；无需手动 export SIM_DIRECT / HAT_*）:
 #   bash run.sh -r cpu -v Ascend910B4

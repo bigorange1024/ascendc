@@ -13,6 +13,7 @@ gen_data.py — Alg.15 Decrypt 用例数据准备（Host 仅造夹具 + golden�
 
 夹具（仅用于派生 c，禁止当作生产输入落盘）：
   ek_pke / m / coins 写在 output/_gen_fixture/，用完不拷入 input/。
+  SEED_D：定点可覆盖；默认 SHA3。m/coins：SHAKE256 扩字节。
 
 背景：早期 gen_data 把 ek/m/coins/meta 也写进 input/，违反「仅必要 I/O」；
 2026-07-09 收紧为 Alg.15 生产契约。
@@ -31,11 +32,14 @@ import numpy as np
 SCRIPT_DIR = Path(__file__).resolve().parent
 CASE_DIR = SCRIPT_DIR.parent
 HOST_GOLDEN = SCRIPT_DIR / "host_golden"
+_REPO = CASE_DIR.parent.parent.parent
+sys.path.insert(0, str(_REPO / "library/shared/fips203_host_rng"))
+from host_rng import expand_bytes, resolve_seed_d  # noqa: E402
 
 DK_BYTES = 1536
 CT_BYTES = 1568
 MSG_BYTES = 32
-SEED_D_DEFAULT = 20260619
+_CASE_TAG = "fips203-mlkem-pke-decrypt-k4"
 
 # 生产 input 允许的文件名（其余夹具不得残留）
 _PROD_INPUT_NAMES = {
@@ -59,7 +63,7 @@ def _scrub_input(inp: Path) -> None:
 
 
 def main() -> None:
-    seed_d = int(os.environ.get("SEED_D", str(SEED_D_DEFAULT)))
+    seed_d, how = resolve_seed_d(_CASE_TAG)
     inp = CASE_DIR / "input"
     out = CASE_DIR / "output"
     fixture = out / "_gen_fixture"
@@ -75,7 +79,7 @@ def main() -> None:
         check=True,
     )
 
-    # --- 2) 夹具：ek + 随机 m/coins → golden_c → 仅把 c 写入 input/ ---
+    # --- 2) 夹具：ek + SHAKE m/coins → golden_c → 仅把 c 写入 input/ ---
     ek_path = fixture / "ek_pke.bin"
     m_path = fixture / "m.bin"
     coins_path = fixture / "coins.bin"
@@ -83,9 +87,8 @@ def main() -> None:
         [sys.executable, str(HOST_GOLDEN / "gen_ek_pke.py"), str(seed_d), str(ek_path)],
         check=True,
     )
-    rng = np.random.default_rng(seed_d + 991)
-    rng.integers(0, 256, size=MSG_BYTES, dtype=np.uint8).tofile(m_path)
-    rng.integers(0, 256, size=32, dtype=np.uint8).tofile(coins_path)
+    np.frombuffer(expand_bytes(_CASE_TAG, "m", seed_d, MSG_BYTES), dtype=np.uint8).copy().tofile(m_path)
+    np.frombuffer(expand_bytes(_CASE_TAG, "coins", seed_d, 32), dtype=np.uint8).copy().tofile(coins_path)
     subprocess.run(
         [
             sys.executable,
@@ -116,7 +119,7 @@ def main() -> None:
             ],
             check=True,
         )
-        print(f"[gen_data] SEED_D={seed_d} golden_m OK")
+        print(f"[gen_data] SEED_D={seed_d} via={how} golden_m OK")
 
     _scrub_input(inp)
     print(

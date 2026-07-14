@@ -8,6 +8,7 @@
 | [`f203_byte_codec/`](f203_byte_codec/) | ByteDecode₁₂ 等设备侧编解码辅助 |
 | [`shake_xof_kernel/`](shake_xof_kernel/) | SHAKE128/256 XOF：`KernelShakeGeneral`（**LocalTensor I/O only**） |
 | [`keccak_f1600_kernel/`](keccak_f1600_kernel/) | Keccak-f[1600] 置换（device header-only）+ **`fips203_device_sha3.hpp`**（AI Core 标量 SHA3-256/512、SHAKE256；语义对齐 tiny_sha3） |
+| [`fips203_host_rng/`](fips203_host_rng/) | Host `SEED_D` / `m` / `coins`：**定点** `SEED_D=` 可覆盖；默认 SHA3/SHAKE 派生（examples PKE/KEM 正确性后用例） |
 | [`fips203_se_sample/`](fips203_se_sample/) | FIPS 203 采样参考 C + **`golden_se_sampling.py`**（`SEED_D`→`src` Host golden） |
 | [`merged_kyber_fixed_poly.py`](merged_kyber_fixed_poly.py) | Kyber 固定 poly 脚本 |
 | [`stage2_debug_print.hpp`](stage2_debug_print.hpp) | Stage2 调试打印 |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# @probe exp-fips203-mlkem-pke-keygen-k4
+# @probe stable-fips203-mlkem-pke-keygen-k4
 # @file scripts/gen_data.py
 # @layer script
 # @role 根级 gen_data：准备 seed/LUT 与可选 debug golden。 / Top-level input generator.
@@ -31,8 +31,11 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from keygen_golden import build_full_keygen, write_keygen_bins  # noqa: E402
 
-# 默认种子：与 STATUS / KAT 常用值对齐；可用 SEED_D 覆盖
-SEED_D_DEFAULT = 20260619
+_REPO = ROOT.parent.parent.parent
+sys.path.insert(0, str(_REPO / "library/shared/fips203_host_rng"))
+from host_rng import resolve_seed_d  # noqa: E402
+
+_CASE_TAG = "fips203-mlkem-pke-keygen-k4"
 
 
 def write_golden_only(root: Path, kg: dict) -> None:
@@ -54,11 +57,11 @@ def main() -> None:
     读环境变量 → 组装全链 golden → 写 input/ 与/或 output/golden_*。
 
     环境:
-        SEED_D: uint32 种子（默认 SEED_D_DEFAULT）
+        SEED_D: 定点 uint32；未设则 SHA3 派生（host_rng）
         NTTS2S1E_MIX_PASS / TAG5T_MIX_PASS: 调试 mixPass（生产默认 0）
         KEYGEN_GOLDEN_ONLY=1: 只写 golden，不写 input
     """
-    seed_d = int(os.environ.get("SEED_D", str(SEED_D_DEFAULT)))
+    seed_d, how = resolve_seed_d(_CASE_TAG)
     # 生产默认 mixPass=0；非 0 仅调试分段，须显式 export
     mix_pass = int(os.environ.get("NTTS2S1E_MIX_PASS", os.environ.get("TAG5T_MIX_PASS", "0")))
     kg = build_full_keygen(seed_d, mix_pass=mix_pass)
@@ -68,7 +71,7 @@ def main() -> None:
         # 写 seed + LUT（及调试中间 bin）；设备生产路径只消费 seed+LUT
         write_keygen_bins(ROOT, kg)
     print(
-        f"[gen_data] SEED_D={seed_d} XOF_BYTES from alg7_geom mixPass={mix_pass} "
+        f"[gen_data] SEED_D={seed_d} via={how} XOF_BYTES from alg7_geom mixPass={mix_pass} "
         f"ek_pke={len(kg['ek_pke'])}B dk_pke={len(kg['dk_pke'])}B"
     )
 

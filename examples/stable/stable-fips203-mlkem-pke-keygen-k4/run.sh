@@ -33,7 +33,7 @@
 # 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 #
 # 可选环境变量：
-#   SEED_D — 默认 20260619
+#   SEED_D — 定点复现（如 20260619）；默认不写死，由 SHA3 派生
 #   KEYGEN_KERNEL_BUDGET_SEC — 默认 900（全链 SIM 计算段 timeout）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -54,7 +54,10 @@ fi
 SCRIPTS_PREP="${CURRENT_DIR}/scripts/prep"
 INSTALL_PREFIX="${CURRENT_DIR}/out"
 
-export SEED_D="${SEED_D:-20260619}"
+# 默认不写死 SEED_D；未 export 时 prepare/gen_data 用 SHA3（fips203_host_rng）
+if [ -n "${SEED_D:-}" ]; then
+    export SEED_D
+fi
 export KERNEL_COMPUTE_BUDGET_SEC="${KEYGEN_KERNEL_BUDGET_SEC:-900}"
 
 BUILD_TYPE="Debug"
@@ -110,7 +113,7 @@ elif [ "${RUN_MODE}" = "npu" ]; then
 fi
 
 if [ "${KEYGEN_KAT:-0}" != "1" ]; then
-    echo "[keygen] RUN_MODE=${RUN_MODE} SEED_D=${SEED_D} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC} SIM_DIRECT=${SIM_DIRECT:-0}"
+    echo "[keygen] RUN_MODE=${RUN_MODE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC} SIM_DIRECT=${SIM_DIRECT:-0} (SEED_D after prepare)"
 fi
 
 _keygen_gen_alg7_roms() {
@@ -157,6 +160,10 @@ _keygen_build() {
 
 _keygen_prepare_input() {
     python3 "${CURRENT_DIR}/scripts/prepare_production_input.py"
+    export SEED_D="$(python3 "${REPO_ROOT}/library/shared/fips203_host_rng/host_rng.py" fips203-mlkem-pke-keygen-k4)"
+    if [ "${KEYGEN_KAT:-0}" != "1" ]; then
+        echo "[keygen] SEED_D=${SEED_D}"
+    fi
 }
 
 _keygen_scrub_output() {

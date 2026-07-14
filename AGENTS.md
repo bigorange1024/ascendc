@@ -117,6 +117,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 - **PKE** 三段已在 `examples/stable/`  
 - **KEM Alg.19 KeyGen**：**定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 保留  
+- **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
 - 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4`（勿当 CMake 依赖）  
 - 办公室常见下一刀：T19a Encaps device（见 HANDOFF）
 

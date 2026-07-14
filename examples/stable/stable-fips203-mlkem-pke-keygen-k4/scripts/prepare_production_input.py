@@ -68,13 +68,19 @@ def scrub_stray_input(inp: Path) -> None:
 
 # 本函数为 KeyGen 流水线组件 `main`（详见 STATUS/customspec）。
 def main() -> None:
-    seed_d = int(os.environ.get("SEED_D", "20260619"))
+    import sys
+
+    repo = ROOT.parent.parent.parent
+    sys.path.insert(0, str(repo / "library/shared/fips203_host_rng"))
+    from host_rng import resolve_seed_d
+
+    seed_d, how = resolve_seed_d("fips203-mlkem-pke-keygen-k4")
     inp = ROOT / "input"
     inp.mkdir(exist_ok=True)
     (inp / "seed_d.bin").write_bytes(struct.pack("<I", seed_d))
     write_lut_if_missing(inp)
     scrub_stray_input(inp)
-    print(f"[prepare_input] SEED_D={seed_d} input/ ready (seed + LUT only)")
+    print(f"[prepare_input] SEED_D={seed_d} via={how} input/ ready (seed + LUT only)")
 
 
 if __name__ == "__main__":

@@ -207,3 +207,30 @@ Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early 
 | add_custom | `run.sh` 支持 **`bash run.sh -r cpu\|sim -v Ascend910B4`**（Cloud 通用口径）；旧 `./run.sh cpu 910B4` 兼容保留；`source env.sh` 在 `pipefail` 下临时 `set +e` |
 | KeyGen seed | exp+stable：默认不写死 `20260619`；`scripts/resolve_host_seed_d.py` 用 SHA3-256 域分离标签派生 host `SEED_D`；`SEED_D=` 仍可定点 |
 | 验 | add_custom `-r cpu` PASS；stable KeyGen 默认 seed `880681095` CPU ek/dk max=0 |
+
+## 家里补充（同日晚）— examples PKE/KEM 默认哈希随机
+
+| 项 | 内容 |
+|----|------|
+| 共享 | [`library/shared/fips203_host_rng/host_rng.py`](../../library/shared/fips203_host_rng/host_rng.py)：`resolve_seed_d` + `expand_bytes`（SHAKE） |
+| 覆盖 | **已正确性**的 PKE KeyGen/Encrypt/Decrypt + KEM KeyGen（stable + incubating 副本） |
+| 定点 | `SEED_D=20260619` 等仍可用；Encrypt 仅定点且=20260619 时才复用 frozen correctness fixture |
+| 验 | 默认哈希路径 CPU：PKE keygen/encrypt/decrypt PASS |
+
+### Cloud 测 SIM 指引（同提交推送后）
+
+默认**勿**再写死 `SEED_D=20260619`（除非定点复现旧 KAT）。推荐：
+
+```bash
+# 通用入口（含 add_custom）
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+
+# 已正确性 examples（默认哈希 SEED_D / m / coins）
+cd examples/stable/stable-fips203-mlkem-pke-keygen-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+cd examples/stable/stable-fips203-mlkem-pke-encrypt-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+cd examples/stable/stable-fips203-mlkem-pke-decrypt-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+cd examples/stable/stable-fips203-mlkem-kem-keygen-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+```
+
+定点：`SEED_D=20260619 bash run.sh …`。共享实现：[`library/shared/fips203_host_rng/`](../../library/shared/fips203_host_rng/)。

@@ -46,7 +46,10 @@ BUILD_TYPE="Debug"
 INSTALL_PREFIX="${CURRENT_DIR}/out"
 SOC_VERSION="Ascend910B4"
 RUN_MODE="cpu"
-export SEED_D="${SEED_D:-20260619}"
+# 默认不写死 SEED_D；gen_data 用 SHA3/SHAKE
+if [ -n "${SEED_D:-}" ]; then
+    export SEED_D
+fi
 export DECRYPT_GATE="${DECRYPT_GATE:-0}"
 export DECRYPT_VERIFY="${DECRYPT_VERIFY:-1}"
 export DECRYPT_SKIP_REBUILD="${DECRYPT_SKIP_REBUILD:-1}"

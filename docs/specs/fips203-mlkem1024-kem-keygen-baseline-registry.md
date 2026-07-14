@@ -10,7 +10,7 @@
 
 | 角色 | 路径 | 尺寸 | 说明 |
 |------|------|------|------|
-| 输入 | `seed_d.bin` | 4 B | `uint32` LE；**默认** host SHA3 派生（`scripts/resolve_host_seed_d.py`）；可用 `SEED_D=` 覆盖定点（如旧 KAT `20260619`） |
+| 输入 | `seed_d.bin` | 4 B | `uint32` LE；**默认** host SHA3（`library/shared/fips203_host_rng`）；`SEED_D=` 可覆盖定点（如旧 KAT `20260619`） |
 | 输入 | `lut_even/odd_stacked.bin` | 静态 | NTT limb LUT（与 seed 无关） |
 | 输出 / golden | `ek_kem.bin` | 1568 B | `= ek_PKE` |
 | 输出 / golden | `dk_kem.bin` | 3168 B | liboqs 展开：`dk_pke‖ek‖H(ek)‖z` |

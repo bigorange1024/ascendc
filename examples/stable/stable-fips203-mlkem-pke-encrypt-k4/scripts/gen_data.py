@@ -8,11 +8,10 @@ gen_data.py — stable-fips203-mlkem-pke-encrypt-k4 全链 Encrypt golden 生成
 Alg.14 输出只有密文 c；Â/y/u/v 等为设备内部中间量，禁止作为产物落盘。
 
 设计：
-  * 锁死 SEED_D=20260619，全链唯一种子。
-  * 输入 / golden_c：优先复用历史 correctness 产物（若存在）；缺失则本地
-    gen_ek_pke(SEED_D) + rng(SEED_D+991)→m/coins + golden_encrypt→c。
-  * 本地派生 LUT（NTT/INTT even/odd stacked）与 CPU 专用 `golden_v`
-    （v=INTT(t̂·r̂)+e₂+μ(m)；仅 CPU 分段注入，非 Alg.14 输出；SIM 不需要）。
+  * SEED_D：环境变量定点；未设则 SHA3 派生（library/shared/fips203_host_rng）。
+  * m/coins：由 SEED_D 经 SHAKE256 域分离扩字节（不再 numpy default_rng）。
+  * 仅当显式定点 SEED_D=20260619 且历史 correctness 输入存在时，才复用冻结 fixture。
+  * 本地派生 LUT 与 CPU 专用 golden_v（仅 CPU 分段注入）。
 """
 from __future__ import annotations
 
@@ -27,6 +26,8 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 _HOST_GOLDEN = os.path.join(_SCRIPT_DIR, "host_golden")
 sys.path.insert(0, _HOST_GOLDEN)
+_REPO = os.path.normpath(os.path.join(_CASE_DIR, "..", "..", ".."))
+sys.path.insert(0, os.path.join(_REPO, "library/shared/fips203_host_rng"))
 
 from f203_ref_common import (  # noqa: E402
     K,
@@ -37,9 +38,10 @@ from f203_ref_common import (  # noqa: E402
     stage123_transform,
 )
 import golden_c as gc  # noqa: E402
+from host_rng import expand_bytes, resolve_seed_d  # noqa: E402
 
-SEED_D = 20260619
-# 可选对照目录（历史 correctness 已冻结；默认缺失则本地生成，不依赖外部 fixture）
+_CASE_TAG = "fips203-mlkem-pke-encrypt-k4"
+# 可选对照目录（历史 correctness 已冻结；仅定点 SEED_D=20260619 时可选复用）
 _CORR = os.path.normpath(
     os.path.join(
         _CASE_DIR,
@@ -92,27 +94,26 @@ def _copy_locked_inputs(inp: str) -> None:
         shutil.copyfile(os.path.join(corr_in, name), os.path.join(inp, name))
 
 
-def _gen_locked_inputs_local(inp: str) -> None:
-    """本目录自生成 ek/m/coins（与 correctness gen_data 同 SEED_D 语义）。"""
+def _gen_locked_inputs_local(inp: str, seed_d: int) -> None:
+    """本目录自生成 ek/m/coins：ek 由 seed_d KeyGen；m/coins 为 SHAKE256 扩字节。"""
     ek_path = os.path.join(inp, "ek_pke.bin")
     subprocess.check_call(
-        [sys.executable, os.path.join(_HOST_GOLDEN, "gen_ek_pke.py"), str(SEED_D), ek_path],
+        [sys.executable, os.path.join(_HOST_GOLDEN, "gen_ek_pke.py"), str(seed_d), ek_path],
         cwd=_CASE_DIR,
     )
-    rng = np.random.default_rng(SEED_D + 991)
-    m = rng.integers(0, 256, size=_MSG_BYTES, dtype=np.uint8)
-    coins = rng.integers(0, 256, size=_COINS_BYTES, dtype=np.uint8)
+    m = np.frombuffer(expand_bytes(_CASE_TAG, "m", seed_d, _MSG_BYTES), dtype=np.uint8).copy()
+    coins = np.frombuffer(expand_bytes(_CASE_TAG, "coins", seed_d, _COINS_BYTES), dtype=np.uint8).copy()
     m.tofile(os.path.join(inp, "m.bin"))
     coins.tofile(os.path.join(inp, "coins.bin"))
 
 
-def _ensure_locked_inputs(inp: str) -> str:
+def _ensure_locked_inputs(inp: str, seed_d: int, how: str) -> str:
     """返回来源标签：'correctness' | 'local'。"""
-    if _corr_inputs_ready():
+    if how == "env" and seed_d == 20260619 and _corr_inputs_ready():
         _copy_locked_inputs(inp)
         return "correctness"
-    print(f"[gen_data] correctness 输入缺失，本地生成 SEED_D={SEED_D}（ek/m/coins）")
-    _gen_locked_inputs_local(inp)
+    print(f"[gen_data] 本地生成 SEED_D={seed_d} via={how}（ek + SHAKE m/coins）")
+    _gen_locked_inputs_local(inp, seed_d)
     return "local"
 
 
@@ -149,13 +150,14 @@ def _compute_golden_v(ek: bytes, m: bytes, coins: bytes) -> np.ndarray:
 
 
 def main() -> None:
+    seed_d, how = resolve_seed_d(_CASE_TAG)
     inp = os.path.join(_CASE_DIR, "input")
     out = os.path.join(_CASE_DIR, "output")
     gold = os.path.join(_CASE_DIR, "golden")
     for d in (inp, out, gold):
         os.makedirs(d, exist_ok=True)
 
-    src_in = _ensure_locked_inputs(inp)
+    src_in = _ensure_locked_inputs(inp, seed_d, how)
     _gen_lut_bins(inp)
 
     ek = open(os.path.join(inp, "ek_pke.bin"), "rb").read()
@@ -170,7 +172,7 @@ def main() -> None:
     v.tofile(os.path.join(inp, "golden_v.bin"))
 
     print(
-        f"[gen_data] SEED_D={SEED_D} input={src_in} golden_c={src_c}；"
+        f"[gen_data] SEED_D={seed_d} via={how} input={src_in} golden_c={src_c}；"
         f"c={len(_c_bytes)}B；golden_v(CPU 注入) OK"
     )
 

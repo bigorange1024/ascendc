@@ -29,7 +29,7 @@
 | `decode_t_hat` / `build_re` / `pack_ciphertext` | Alg.14 子步骤 | 同上 + `f203_ref_common.py` | |
 | Stage1–3 NTT/INTT（host） | golden_v、中间参考 | `f203_ref_common.stage123_transform` + `thirdparty/ntt_onnx/.../transpose_mlkem_luts_i8.h` | LUT 只读 |
 | `gen_ek_pke(SEED_D)` | 缺 fixture 时本地造 ek | `scripts/host_golden/gen_ek_pke.py` | 与 KeyGen golden 同语义 |
-| m/coins 派生 | `SEED_D+991` RNG | `numpy.random.default_rng` | 与 correctness / fixture 同规则 |
+| m/coins 派生 | SHAKE256 域分离扩字节 | `library/shared/fips203_host_rng/host_rng.py` `expand_bytes` | 定点 `SEED_D=` 可覆盖；默认 SHA3 派生 `SEED_D` |
 | liboqs indcpa_enc | **KAT 对照 oracle** | `scripts/liboqs_pke_ref`（encrypt） | **仅** KAT；非 AscendC 实现规格 |
 | liboqs fixture | ek/m/coins/c 向量 | `scripts/liboqs_pke_fixture.py` | KAT / 交叉验证 |
 
