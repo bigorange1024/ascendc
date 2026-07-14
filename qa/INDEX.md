@@ -12,7 +12,7 @@
 
 ### 2026-07-14 — [KEM KeyGen incubating【预研】· runtime_env · Cloud 绿 · 探针批量接入](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
-关键字：`exp-fips203-mlkem-kem-keygen-k4` · **runtime_env** · Cloud Clang `-Wunused-const` · **AscendC多环境运行纪要** · 活跃探针 `run.sh` 接入 · 有条件完成
+关键字：`exp-fips203-mlkem-kem-keygen-k4` · **runtime_env** · Cloud Clang · **ntt_onnx PAT** · **P0 仓内硬伤**（`__future__`/emit_toy/`basic.hpp`/`fips203_prf.h`）· 探针 `run.sh` 接入
 
 ### 2026-07-13 — [thirdparty · KEM KeyGen 规格重置 · T21](2026-07/2026-07-13-thirdparty外部仓清单.md)
 

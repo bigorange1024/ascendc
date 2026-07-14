@@ -1,7 +1,6 @@
 /**
  * @file fips203_prf.h
  * @brief FIPS 203 PRF_η 抽象接口；后端可替换（标量 SHAKE128/256 → 设备批量 SHAKE256）。
- * @see ascendc-tests/fix-f203-alg13-host-scalar-fullchain-k4/DEVICE_PRF_BATCH_PLAN.md
  */
 #ifndef FIPS203_PRF_H
 #define FIPS203_PRF_H
