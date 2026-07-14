@@ -25,10 +25,16 @@
 #   F203_ALG7_D12_GATHER — 0（默认，标量解交织）| 1（实验 Gather+ROM，SIM 负优化）
 #
 # 解析本脚本所在目录与仓库根目录（后续 source env、camodel 日志均依赖 REPO_ROOT）
+#
+# 多环境分流（scripts/runtime_env.sh）：
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
+#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 CURRENT_DIR=$(
     cd $(dirname ${BASH_SOURCE:-$0})
     pwd
 )
+_ORIG_ARGS=("$@")
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 
 # CMake / 运行默认参数（可通过 -r/-v/-b/-p 覆盖）
@@ -55,6 +61,11 @@ while :; do
     esac
 done
 
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 # 探测 CANN / Ascend Toolkit 安装路径（优先级：显式 -i > ASCEND_HOME > 常见默认路径）
 if [ -n "$ASCEND_INSTALL_PATH" ]; then
     _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH

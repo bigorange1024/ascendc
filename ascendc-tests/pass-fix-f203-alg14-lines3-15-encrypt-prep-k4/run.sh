@@ -9,11 +9,17 @@
 #   COINS_SEED — 默认 20260706
 #   ENCRYPT_PREP_VENDOR_SYNC — 1 时从 stable 刷新 prep/（默认 0，prep 已 vendored）
 #   KERNEL_COMPUTE_BUDGET_SEC — 默认 600
+#
+# 多环境分流（scripts/runtime_env.sh）：
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
+#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 
 CURRENT_DIR=$(
     cd $(dirname ${BASH_SOURCE:-$0})
     pwd
 )
+_ORIG_ARGS=("$@")
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 
 BUILD_TYPE="Debug"
@@ -38,6 +44,11 @@ while :; do
     esac
 done
 
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 if [ -n "$ASCEND_INSTALL_PATH" ]; then
     _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH
 elif [ -n "$ASCEND_HOME_PATH" ]; then

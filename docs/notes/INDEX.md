@@ -45,6 +45,7 @@
 | [AscendC-CAModel-SIM-funckey与单session约束知识库.md](AscendC-CAModel-SIM-funckey与单session约束知识库.md) | **SIM `aclrtLaunchKernel` 507000 病根**（R1 AIV-only `func_key ≤ 4` / R2 单 ACL session + `aclrtSynchronizeStream`）；P1–P6 可复用模式；案例 [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) `at_r5` 落地 |
 | [AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) | **强制** `ASCENDC_BUILD_CPU/SIM` + `ASCENDC_SIM_HOST_MODE` 全仓登记；§4.1 新代码写法；附录 A/B 案例 |
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
+| [AscendC多环境运行纪要.md](AscendC多环境运行纪要.md) | **WSL / Cloud / 真机**：三档 cpu|sim|npu、`runtime_env`、Clang `-Werror`、SIM dump 分轨 |
 
 ## 治理与模板
 

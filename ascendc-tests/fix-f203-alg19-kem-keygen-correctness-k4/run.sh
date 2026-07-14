@@ -23,9 +23,15 @@
 #   目录键 = profile(prod|extseed) × RUN_MODE(cpu|sim)，例如 build_prod_cpu / out_extseed_sim。
 #   如此从物理上杜绝双入口 f203_keygen_prep(_extseed).cpp 的 .o 残留在 host_stub 链接阶段撞符号，
 #   两种用途互不重编、互不污染。可用 KEM_KEYGEN_BUILD_PROFILE=prod|extseed 显式覆盖。
+#
+# 多环境分流（scripts/runtime_env.sh）：
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
+#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+_ORIG_ARGS=("$@")
 # KAT 批测 quiet 路径：全量 log 落 output/kat_liboqs_kem_keygen.log，终端不刷屏（见 scripts/kat_liboqs_kem_keygen.py）
 if [ "${KEM_KEYGEN_KAT:-0}" = "1" ]; then
     mkdir -p "${CURRENT_DIR}/output"
@@ -68,6 +74,11 @@ while :; do
     esac
 done
 
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 # --- Build profile 隔离：prod（KEM_KG_EXT_SEED=0）与 extseed（=1）各自独立 build/install ---
 # RUN_MODE 已解析完毕，可安全组目录键；避免 prod↔extseed / cpu↔sim 共用目录导致 .o 残留冲突。
 if [ "${KEM_KG_EXT_SEED}" = "1" ]; then

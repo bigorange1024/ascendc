@@ -25,9 +25,15 @@
 #   生产/round-trip（KEM_ENC_EXT_SEED=0）与 liboqs kat 旁路（=1）使用独立 build/install：
 #   build_prod_cpu / out_prod_cpu、build_extseed_cpu / out_extseed_cpu 等。
 #   可用 KEM_ENCAPS_BUILD_PROFILE=prod|extseed 显式覆盖。
+#
+# 多环境分流（scripts/runtime_env.sh）：
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
+#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
+_ORIG_ARGS=("$@")
 # KAT 批测 quiet：log → output/kat_liboqs_kem_encaps.log
 if [ "${KEM_ENCAPS_KAT:-0}" = "1" ]; then
     mkdir -p "${CURRENT_DIR}/output"
@@ -67,6 +73,11 @@ while :; do
     esac
 done
 
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 if [ "${KEM_ENC_EXT_SEED}" = "1" ]; then
     _DEFAULT_PROFILE="extseed"
 else

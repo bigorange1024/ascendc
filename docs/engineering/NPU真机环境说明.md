@@ -5,7 +5,7 @@
 > **Cloud 专属坑**：[`Cursor-Cloud环境说明.md`](../../Cursor-Cloud环境说明.md)。  
 > **WSL 无卡复现**：[`环境复现与开发指南.md`](环境复现与开发指南.md)。
 
-**最后刷新**：2026-07-14（一期：共享探测 + 4 个试点 `run.sh`）。
+**最后刷新**：2026-07-14（活跃探针 + 4 例 examples 已接入；原理见 [AscendC多环境运行纪要.md](../notes/AscendC多环境运行纪要.md)）。
 
 ---
 
@@ -32,20 +32,18 @@
 | **`-r auto`** | 单档最优：可用 NPU（且用例 `ASCENDC_CASE_SUPPORTS_NPU=1`）→ `npu`；否则有 SIM → `sim`；否则 `cpu`。落 `sim` 时默认 `SIM_DIRECT=1` |
 | **`-r verify`** | 验收阶梯：**cpu → `SIM_DIRECT=1` sim**；仅当探测到真机且非 WSL、且用例支持时再跑 **npu**。各档**独立**起本脚本（不混编三种 cmake） |
 
-**说明**：`auto` ≠ 完整验收。Agent **声称完成**仍须有 **cpu + SIM**（及有卡时 npu）证据；见 Rule「Agent 跑用例验收」。
+**说明**：`auto` ≠ 完整验收。Agent **声称完成**仍须有 **cpu + SIM**（及有卡时 npu）证据。`auto`/`verify` 为本仓编排便利，**非**昇腾官方 API。
 
-### 一期试点（已接入 `runtime_env`）
+### 已接入 `runtime_env`
 
-- `examples/incubating/exp-fips203-mlkem-kem-keygen-k4/run.sh`
-- `examples/stable/stable-fips203-mlkem-pke-keygen-k4/run.sh`
-- `examples/stable/stable-fips203-mlkem-pke-encrypt-k4/run.sh`
-- `examples/stable/stable-fips203-mlkem-pke-decrypt-k4/run.sh`
+**examples（4 试点）**：KEM KeyGen incubating + PKE keygen/encrypt/decrypt stable。
 
-未改造的 `run.sh` 行为不变（仅 `cpu|sim|npu` 字面量，无 auto/verify）。
+**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）；**跳过** `fix-f203-alg20-kem-encaps-device-k4`、`fix-f203-alg21-kem-decaps-device-k4`（NOT_IMPLEMENTED）。**不改** `frozen/`。
 
-### 二期（未做）
+### 明确不做
 
-活跃 `ascendc-tests/pass-*`、其余 `exp-*` / `stable-*` 逐步 `source runtime_env.sh`；真机上板路径与 host `LD_LIBRARY_PATH` 按板卡再压测。
+- 默认从 `cpu` 改成 `auto`/`verify`
+- 批量改 `**/frozen/**` 内 `run.sh`
 
 ---
 

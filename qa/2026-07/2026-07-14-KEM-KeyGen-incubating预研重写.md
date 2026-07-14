@@ -74,3 +74,12 @@
 | Cloud | 同步 `c0f6e6d` 后 8 轮：KEM / encrypt / decrypt CPU+SIM ✅；**stable PKE keygen** CPU+SIM 编译挂 |
 | 根因 | `main_keygen.cpp` 未用 `kVecTilingBytes`；Cloud Clang `-Werror -Wunused-const-variable`（WSL GCC 常不报） |
 | 修复 | 删该常量（stable + incubating/exp-pke-keygen + kem 内 vendored `main_keygen.cpp`）；WSL 强制重编 CPU+SIM PASS（tick ~542k） |
+
+## 办公室补充（同日）— Cloud 复测绿 + 探针批量接入 runtime_env
+
+| 项 | 内容 |
+|----|------|
+| Cloud 复测 | `a5693dc` 后 stable PKE keygen **CPU+SIM ✅**（tick ~542629）；四例试点 Cloud 全绿 |
+| 笔记 | 新增 [`docs/notes/AscendC多环境运行纪要.md`](../../docs/notes/AscendC多环境运行纪要.md)（三环境不变量、Clang/`sim_env`/门禁） |
+| 二期落地 | **活跃 `ascendc-tests/*/run.sh`** 接入 `runtime_env`（32 个；2 个 T19 device stub 跳过）；**本机不跑测**，交 Cloud Agent 跑 cpu+sim |
+| 未改 | `frozen/`、默认仍 `cpu`、examples 其余非试点树 |

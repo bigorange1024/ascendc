@@ -13,10 +13,17 @@
 #   SIM_DIRECT=1  → 只执行 ./add_custom_npu，不跑 msprof，不生成 OPPROF_*
 #
 # Device examples: 910B4, ascend910B4, 910, 910B1, 310p
+#
+# 多环境分流（scripts/runtime_env.sh）：
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
+#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+_ORIG_ARGS=("$@")
 cd "${SCRIPT_DIR}"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # shellcheck source=/dev/null
 source "${HOME}/ascendc/scripts/env.sh"
@@ -36,6 +43,37 @@ while [[ $# -gt 0 ]]; do
   esac
   shift || true
 done
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+case "${RUN_MODE}" in
+  cpu|sim|npu|auto|verify)
+    export RUN_MODE
+    runtime_env_detect
+    runtime_env_print_banner
+    if [ "${RUN_MODE}" = "verify" ]; then
+      # add_custom 为位置参数（./run.sh cpu），不能把 -r 传给子进程
+      runtime_env_detect
+      for _m in $(runtime_env_verify_ladder); do
+        echo "[runtime_env] === verify: ${_m} ==="
+        if [ "${_m}" = "sim" ]; then export SIM_DIRECT="${SIM_DIRECT:-1}"; fi
+        bash "${BASH_SOURCE[0]}" "${_m}" "${DEVICE}" || exit $?
+      done
+      echo "[runtime_env] verify PASS"
+      exit 0
+    elif [ "${RUN_MODE}" = "auto" ]; then
+      RUN_MODE="$(runtime_env_resolve_mode auto)" || exit $?
+      export RUN_MODE
+      echo "[runtime_env] auto → ${RUN_MODE}"
+      if [ "${RUN_MODE}" = "sim" ]; then export SIM_DIRECT="${SIM_DIRECT:-1}"; fi
+    else
+      RUN_MODE="$(runtime_env_resolve_mode "${RUN_MODE}")" || exit $?
+      export RUN_MODE
+      echo "[runtime_env] resolved RUN_MODE=${RUN_MODE}"
+    fi
+    ;;
+esac
 
 FILE_NAME="add_custom"
 # shellcheck source=scripts/resolve_device.sh

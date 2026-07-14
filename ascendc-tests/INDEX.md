@@ -14,6 +14,8 @@
 
 **自包含与设备全链**（2026-06-29）：活跃探针/example **不得**跨目录引用源码（`library/shared` 与仓库 `scripts/` CANN 壳除外）；KeyGen 生产路径禁止 Host 辅助密码计算。见 [用例自包含与设备全链约束.md](../docs/engineering/用例自包含与设备全链约束.md)；KeyGen 实例 [`pass-fix-f203-alg13-device-keygen-k4/SELF_CONTAINED.md`](pass-fix-f203-alg13-device-keygen-k4/SELF_CONTAINED.md)。
 
+**多环境 `run.sh`**（2026-07-14）：活跃探针已 `source` [`scripts/runtime_env.sh`](../scripts/runtime_env.sh)（`-r auto|verify`、WSL 禁 npu）；见 [NPU真机环境说明.md](../docs/engineering/NPU真机环境说明.md) · [AscendC多环境运行纪要.md](../docs/notes/AscendC多环境运行纪要.md)。`frozen/` 与 T19 device stub **不接入**。
+
 ---
 
 ## 当前探针

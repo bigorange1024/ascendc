@@ -12,10 +12,16 @@
 # 防挂死：KERNEL_COMPUTE_BUDGET_SEC 默认 120（仅 kernel 计算段）
 # WSL：禁止 -r npu
 # =============================================================================
+#
+# 多环境分流（scripts/runtime_env.sh）：
+#   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
+#   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
+#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 CURRENT_DIR=$(
     cd "$(dirname "${BASH_SOURCE:-$0}")"
     pwd
 )
+_ORIG_ARGS=("$@")
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 
 BUILD_TYPE="Debug"
@@ -40,6 +46,11 @@ while :; do
     esac
 done
 
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/runtime_env.sh"
+export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
+runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 RUN_MODE_LIST="cpu sim npu"
 if [[ " ${RUN_MODE_LIST} " != *" ${RUN_MODE} "* ]]; then
     echo "ERROR: RUN_MODE must be one of [${RUN_MODE_LIST}]"
