@@ -1,15 +1,11 @@
-# AGENTS.md
+# Cursor Cloud 环境说明
 
-本文件面向在本仓库工作的 AI Agent。仓库总览与阅读顺序见 `README.md`；全仓底线见
-`.cursor/rules/ascendc-development.mdc`；环境复现细节见
-`docs/engineering/环境复现与开发指南.md`。本文件只补充 **Cursor Cloud VM** 环境下的非显然要点。
+本文件面向在 **Cursor Cloud VM**（云端 Agent）下工作的协作者/AI Agent，记录本仓在该环境
+（**非 WSL**，Ubuntu 24.04 x86_64、无昇腾 NPU）下的启动/运行注意点。仓库总览与阅读顺序见
+`README.md`；全仓底线见 `.cursor/rules/ascendc-development.mdc`；本机 WSL 环境复现细节见
+`docs/engineering/环境复现与开发指南.md`。依赖安装由 Cloud 启动更新脚本完成，此处不重复。
 
-## Cursor Cloud specific instructions
-
-面向「更新脚本已跑过」的后续 Cloud Agent，记录本仓在 Cloud VM（**非 WSL**，Ubuntu 24.04 x86_64、
-无昇腾 NPU）下的启动/运行注意点。依赖安装本身由启动更新脚本完成，此处不重复。
-
-### 环境概况
+## 环境概况
 
 - 代码在 `/workspace`；但仓库大量 `run.sh` 硬编码 `${HOME}/ascendc/...`（如 `scripts/env.sh`）。
   因此必须有软链 **`~/ascendc -> /workspace`**（由更新脚本维护）。
@@ -17,7 +13,7 @@
   自检：`bash scripts/verify-cann.sh`（应 `version=9.0.0`、`ccec`、`tikicpulib: OK`、`simulator libs`）。
 - `npu` 模式不可用（无实机）。CPU 孪生（`-r cpu`）与 CAModel 仿真（SIM）均可用。
 
-### 非显然的坑（Cloud VM 特有）
+## 非显然的坑（Cloud VM 特有）
 
 - **`/etc/ascend_install.info` 必须存在且含 `Driver_Install_Path_Param=` 行。** 两个原因：
   1. `scripts/sim_env.sh` 要求该文件存在，否则 SIM 的 `aclInit` 失败并直接报错。
@@ -39,14 +35,14 @@
 - **`/usr/bin/time`（GNU time 包）** 被 `examples/stable/*/run.sh` 用于包裹 kernel 运行；缺失会导致
   「/usr/bin/time: No such file or directory」且不产出结果。
 
-### 运行/验收（标准命令见各目录，不在此重复）
+## 运行/验收（标准命令见各目录，不在此重复）
 
 - 冒烟：`cd ascendc-tests/add_custom && ./run.sh cpu 910B4`、`SIM_DIRECT=1 ./run.sh sim 910B4`
   （`add_custom` 的 SIM 走较老的 camodel 直连路径，本 VM **可正常跑通**）。
 - ML-KEM stable 算子（如 PKE Decrypt）：`bash run.sh -r cpu -v Ascend910B4` 开箱即用（CPU 孪生 =
   辅助正确性参考，golden `[verify] PASS max=0`）。
 
-### SIM（stable/exp 新版 aclrtlaunch 路径）的已知阻塞与绕过
+## SIM（stable/exp 新版 aclrtlaunch 路径）的已知阻塞与绕过
 
 - `scripts/sim_env.sh` 会把由 `scripts/stub_libascend_dump.cpp` 编出的 **WSL 用 FPE 桩**
   `libascend_dump.so` 预置到 `out/lib` 并优先加载。该桩缺少

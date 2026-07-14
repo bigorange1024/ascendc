@@ -21,6 +21,7 @@
 
 1. **本文件** — 目标与目录结构  
 2. **[AGENT_HANDOFF.md](AGENT_HANDOFF.md)** — **办公室 ↔ 家里 Agent 每日交接**（当前真相、GitHub 范围、smoke）  
+   - Cloud 云端 Agent 另见 **[Cursor-Cloud环境说明.md](Cursor-Cloud环境说明.md)**（非 WSL VM 的启动/运行坑与 SIM 绕过）  
 3. **[qa/INDEX.md](qa/INDEX.md)** — 近期讨论与遗留（**[qa/TODO.md](qa/TODO.md)**）  
 4. **[.cursor/rules/ascendc-development.mdc](.cursor/rules/ascendc-development.mdc)** — 全仓库底线（含 **frozen 禁止抄码**）  
 5. **[docs/notes/研究路线与frozen治理.md](docs/notes/研究路线与frozen治理.md)** — frozen：进门读判决书，出门不带码  
