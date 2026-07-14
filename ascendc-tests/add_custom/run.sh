@@ -1,23 +1,19 @@
 #!/usr/bin/env bash
-# Usage:
-#   ./run.sh cpu [device]              # CPU 孪生调试 + golden 比对
-#   ./run.sh sim [device]              # 默认：msprof 仿真 → prof_sim/ + OPPROF_*
-#   ./run.sh sim [device] SIM_DIRECT=1 # 仅 CAModel 跑算子，不生成 OPPROF_*
-#   SIM_DIRECT=1 ./run.sh sim [device] # 同上
-#   ./run.sh sim-build [device]        # 仅编译 npu 二进制（WSL 无卡）
-#   ./run.sh npu [device]              # 实机运行 add_custom_npu
-#   ./run.sh all [device]              # cpu + sim
-#
-# sim 与 OPPROF_*：由 SIM_DIRECT 控制（默认 0）
-#   SIM_DIRECT=0  → msprof op simulator，生成 prof_sim/ 与 OPPROF_*（若成功）
-#   SIM_DIRECT=1  → 只执行 ./add_custom_npu，不跑 msprof，不生成 OPPROF_*
-#
-# Device examples: 910B4, ascend910B4, 910, 910B1, 310p
-#
-# 多环境分流（scripts/runtime_env.sh）：
+# Usage（默认 / Cloud / Rule 统一口径）：
+#   bash run.sh -r cpu -v Ascend910B4
+#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 #   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
-#   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
+#
+# 兼容旧冒烟写法（勿当作标准文档样板；Cloud Agent 应学 -r/-v）：
+#   ./run.sh cpu [device]
+#   ./run.sh sim [device]              # 默认：msprof → OPPROF_*
+#   SIM_DIRECT=1 ./run.sh sim [device]
+#   ./run.sh sim-build|npu|all [device]
+#
+# sim 与 OPPROF_*：由 SIM_DIRECT 控制（默认 0）
+# Device：Ascend910B4 / 910B4 / ascend910B4 …
+# WSL 禁止 -r npu；见 docs/engineering/NPU真机环境说明.md
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -25,24 +21,59 @@ _ORIG_ARGS=("$@")
 cd "${SCRIPT_DIR}"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
+# env.sh 内可能有 grep|cut 空匹配；在 pipefail 下会误杀，故临时关 -e
+set +e
 # shellcheck source=/dev/null
 source "${HOME}/ascendc/scripts/env.sh"
+set -euo pipefail
 
-RUN_MODE="${1:-cpu}"
-shift || true
-DEVICE="${ASCEND_DEVICE:-910B4}"
+RUN_MODE="cpu"
+DEVICE="${ASCEND_DEVICE:-Ascend910B4}"
 # SIM_DIRECT：0=msprof+OPPROF（默认）  1=仅仿真跑算子
 export SIM_DIRECT="${SIM_DIRECT:-0}"
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    SIM_DIRECT=1|SIM_DIRECT) export SIM_DIRECT=1 ;;
-    SIM_DIRECT=0) export SIM_DIRECT=0 ;;
-    *)
-      DEVICE="$1"
-      ;;
+
+# 通用 getopt（-r/-v）；无短选项时回退位置参数 cpu|sim|…
+_use_getopt=0
+for _a in "$@"; do
+  case "${_a}" in
+    -r|--run-mode|-v|--soc-version|-h|--help) _use_getopt=1; break ;;
   esac
-  shift || true
 done
+
+if [ "${_use_getopt}" = "1" ]; then
+  SHORT=r:,v:,h
+  LONG=run-mode:,soc-version:,help
+  OPTS=$(getopt -a --options "${SHORT}" --longoptions "${LONG}" -- "$@")
+  eval set -- "${OPTS}"
+  while :; do
+    case "$1" in
+      -r | --run-mode) RUN_MODE="$2"; shift 2 ;;
+      -v | --soc-version) DEVICE="$2"; shift 2 ;;
+      -h | --help) RUN_MODE="help"; shift ;;
+      --) shift; break ;;
+      *) echo "[ERROR] Unexpected option: $1" >&2; exit 1 ;;
+    esac
+  done
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      SIM_DIRECT=1|SIM_DIRECT) export SIM_DIRECT=1 ;;
+      SIM_DIRECT=0) export SIM_DIRECT=0 ;;
+      *) DEVICE="$1" ;;
+    esac
+    shift || true
+  done
+else
+  RUN_MODE="${1:-cpu}"
+  shift || true
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      SIM_DIRECT=1|SIM_DIRECT) export SIM_DIRECT=1 ;;
+      SIM_DIRECT=0) export SIM_DIRECT=0 ;;
+      *) DEVICE="$1" ;;
+    esac
+    shift || true
+  done
+fi
 
 # shellcheck source=/dev/null
 source "${REPO_ROOT}/scripts/runtime_env.sh"
@@ -50,27 +81,10 @@ export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
 case "${RUN_MODE}" in
   cpu|sim|npu|auto|verify)
     export RUN_MODE
-    runtime_env_detect
-    runtime_env_print_banner
-    if [ "${RUN_MODE}" = "verify" ]; then
-      # add_custom 为位置参数（./run.sh cpu），不能把 -r 传给子进程
-      runtime_env_detect
-      for _m in $(runtime_env_verify_ladder); do
-        echo "[runtime_env] === verify: ${_m} ==="
-        if [ "${_m}" = "sim" ]; then export SIM_DIRECT="${SIM_DIRECT:-1}"; fi
-        bash "${BASH_SOURCE[0]}" "${_m}" "${DEVICE}" || exit $?
-      done
-      echo "[runtime_env] verify PASS"
-      exit 0
-    elif [ "${RUN_MODE}" = "auto" ]; then
-      RUN_MODE="$(runtime_env_resolve_mode auto)" || exit $?
-      export RUN_MODE
-      echo "[runtime_env] auto → ${RUN_MODE}"
-      if [ "${RUN_MODE}" = "sim" ]; then export SIM_DIRECT="${SIM_DIRECT:-1}"; fi
-    else
-      RUN_MODE="$(runtime_env_resolve_mode "${RUN_MODE}")" || exit $?
-      export RUN_MODE
-      echo "[runtime_env] resolved RUN_MODE=${RUN_MODE}"
+    # verify / auto / npu 门禁：与其它用例同一套 runtime_env_dispatch（子调也用 -r/-v）
+    if [ "${RUN_MODE}" = "verify" ] || [ "${RUN_MODE}" = "auto" ] || [ "${RUN_MODE}" = "npu" ] \
+      || [ "${RUN_MODE}" = "cpu" ] || [ "${RUN_MODE}" = "sim" ]; then
+      runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
     fi
     ;;
 esac
@@ -348,28 +362,35 @@ run_npu() {
 
 usage() {
   cat <<EOF
-Usage: $0 <mode> [device] [SIM_DIRECT=1]
+Usage（推荐 / Cloud）：
+  bash run.sh -r cpu|sim|npu|auto|verify -v Ascend910B4
+
+兼容旧写法：
+  $0 <mode> [device] [SIM_DIRECT=1]
 
 Modes:
   cpu        CPU 孪生调试（无 NPU）
   sim        仿真（见 SIM_DIRECT）
   sim-build  仅编译 npu 目标（WSL 无卡）
   npu        实机 ACL 运行（可选 RUN_WITH_MSPROF=1 采集性能）
+  auto       单档最优 npu>sim>cpu
+  verify     cpu → SIM_DIRECT sim [→ npu]
   all        cpu + sim
 
-Devices: 910, 910B1, 910B4 (default), 310p, ...
+Devices: Ascend910B4 / 910B4 / …（默认 Ascend910B4）
 
-SIM_DIRECT（仅 sim / all 中的 sim 段）:
+SIM_DIRECT（仅 sim）：
   0（默认）  msprof → prof_sim/ + OPPROF_*
   1          仅 ./add_custom_npu，不生成 OPPROF_*
 
   示例:
-    ./run.sh sim 910B4
+    bash run.sh -r cpu -v Ascend910B4
+    SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+    ./run.sh cpu 910B4                    # 兼容旧写法
     SIM_DIRECT=1 ./run.sh sim 910B4
-    ./run.sh sim 910B4 SIM_DIRECT=1
 
 Env:
-  ASCEND_DEVICE=910B4
+  ASCEND_DEVICE=Ascend910B4
   MSPROF_AIC_METRICS_SIM / MSPROF_LAUNCH_COUNT_SIM
   MSPROF_TIMEOUT_MIN=60   MSPROF_WALL_TIMEOUT_SEC=1800
   RUN_WITH_MSPROF=1       # npu 模式走 msprof op

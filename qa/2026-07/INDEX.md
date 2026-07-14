@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-14 | [2026-07-14-KEM-KeyGen-incubating预研重写.md](2026-07-14-KEM-KeyGen-incubating预研重写.md) | **runtime_env** · Cloud 绿 · **二次失败清单修复** · ntt_onnx PAT · 探针 `run.sh` |
+| 2026-07-14 | [2026-07-14-KEM-KeyGen-incubating预研重写.md](2026-07-14-KEM-KeyGen-incubating预研重写.md) | **`#交付#` → stable-kem-keygen** · liboqs KAT · **runtime_env** · Cloud 绿 · 探针 `run.sh` |
 | 2026-07-13 | [2026-07-13-thirdparty外部仓清单.md](2026-07-13-thirdparty外部仓清单.md) | **六仓** · **KEM KeyGen 删实现只留规格** · **T21** |
 | 2026-07-10 | [2026-07-10-Decrypt交付stable.md](2026-07-10-Decrypt交付stable.md) | **Decrypt `#交付#`** · **统一整数 Compress/Decompress** · **§8 业界对比** · **KEM KeyGen pass-fix** · **T19a Encaps 下一** · PKE roundtrip |
 | 2026-07-09 | [2026-07-09-Encrypt默认SIM_DIRECT.md](2026-07-09-Encrypt默认SIM_DIRECT.md) | **Encrypt `#交付#`** · **Decrypt 注释+I/O 收紧** · 家里续 KAT/roundtrip/T15a |

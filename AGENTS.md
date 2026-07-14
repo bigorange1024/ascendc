@@ -116,7 +116,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
 - **PKE** 三段已在 `examples/stable/`  
-- **KEM Alg.19 KeyGen**：incubating [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 有条件完成；**stable 须用户 `#交付#` 后复制晋级**  
+- **KEM Alg.19 KeyGen**：**定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 保留  
 - 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4`（勿当 CMake 依赖）  
 - 办公室常见下一刀：T19a Encaps device（见 HANDOFF）
 

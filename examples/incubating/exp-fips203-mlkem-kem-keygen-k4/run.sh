@@ -11,6 +11,7 @@
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #
 # 调试（非默认）：
+#   SEED_D=20260619 …        # 定点复现旧 KAT；默认不写死，由 SHA3 派生 host seed_d
 #   KEM_KG_EXT_SEED=1 …          # 旁路 A：input/kem_seed.bin = d‖z
 #   KEM_KEYGEN_FORCE_REBUILD=1 … # 强制重编
 #   KEM_KEYGEN_VERIFY=0 …        # 跳过 liboqs golden（仅尺寸检查）
@@ -31,7 +32,10 @@ REPO_ROOT="$(cd "${CURRENT_DIR}/../../.." && pwd)"
 SCRIPTS_PREP="${CURRENT_DIR}/scripts/prep"
 INSTALL_PREFIX=""
 
-export SEED_D="${SEED_D:-20260619}"
+# 默认不写死 SEED_D；未 export 时 prepare/gen_data 用 SHA3 派生（scripts/resolve_host_seed_d.py）
+if [ -n "${SEED_D:-}" ]; then
+    export SEED_D
+fi
 export KEM_KEYGEN_VERIFY="${KEM_KEYGEN_VERIFY:-1}"
 export KEM_KEYGEN_SKIP_REBUILD="${KEM_KEYGEN_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-0}}"
 export KEM_KEYGEN_FORCE_REBUILD="${KEM_KEYGEN_FORCE_REBUILD:-0}"
@@ -101,10 +105,6 @@ elif [ "${RUN_MODE}" = "npu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 fi
 
-if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
-    echo "[kem_keygen incubating] RUN_MODE=${RUN_MODE} SEED_D=${SEED_D} profile=${BUILD_PROFILE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"
-fi
-
 _keygen_gen_alg7_roms() {
     mkdir -p "${CURRENT_DIR}/prep/alg7"
     export PYTHONPATH="${CURRENT_DIR}/scripts/prep:${PYTHONPATH:-}"
@@ -170,6 +170,10 @@ if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
     rm -f "${CURRENT_DIR}/output/"*.bin
 fi
 python3 "${CURRENT_DIR}/scripts/prepare_production_input.py"
+export SEED_D="$(python3 "${CURRENT_DIR}/scripts/resolve_host_seed_d.py")"
+if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
+    echo "[kem_keygen] RUN_MODE=${RUN_MODE} SEED_D=${SEED_D} profile=${BUILD_PROFILE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"
+fi
 if [ "${_need_build}" = "1" ]; then
     if [ "${KEM_KEYGEN_KAT:-0}" != "1" ]; then
         echo "[run.sh] build profile=${BUILD_PROFILE} RUN_MODE=${RUN_MODE} dir=${BUILD_DIR##*/} jobs=${CMAKE_BUILD_JOBS}"

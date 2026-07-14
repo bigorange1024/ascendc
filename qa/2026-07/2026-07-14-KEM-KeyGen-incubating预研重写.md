@@ -173,3 +173,37 @@ Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early 
 | 提交 | `995efdd` 上 `pass-fix-f203-alg13-device-keygen-k4` **CPU+SIM PASS**（tick **542494**；`ek_pke=1568`/`dk_pke=1536`） |
 | 结论 | 此前第二波仍红用例（Clang/`__future__`/shake/tiny_sha3/CeilAlign32/kVecTilingBytes 等）**到此全部通过** |
 
+
+## 家里补充（同日晚）— incubating KeyGen liboqs KAT 复测
+
+| 项 | 内容 |
+|----|------|
+| 范围 | `examples/incubating/exp-fips203-mlkem-kem-keygen-k4` |
+| 命令 | `KEYGEN_DIR=<本目录> KEM_KG_CPU_TRIALS=10 KEM_KG_SIM_TRIALS=1 SIM_DIRECT=1 bash scripts/liboqs_kem_keygen_batch.sh` |
+| 结果 | **PASS** CPU×10 + SIM×1（旁路 A 随机 `kem_seed=d‖z` ↔ liboqs `keypair_derand` 逐字节 ek/dk） |
+| 墙钟 | ≈11 min（`BATCH_EXIT:0`，stamp `20260714-185252`） |
+| log | `output/liboqs_kem_keygen/kat_cpu10_sim1_20260714-185252.log`（每轮完整 `kem_seed=` hex） |
+| fixture | `output/liboqs_kem_keygen/fx_20260714-185252/{cpu/1..10,sim/1}/kem_seed.bin` |
+
+与当日 STATUS「家里 agent CPU×10 / SIM×3」独立复测一致（本轮按用户要求 SIM×1）。
+
+## 家里补充（同日晚）— `#交付#` 晋级 stable
+
+| 项 | 内容 |
+|----|------|
+| 来源 | `examples/incubating/exp-fips203-mlkem-kem-keygen-k4`（副本保留） |
+| 目标 | [`examples/stable/stable-fips203-mlkem-kem-keygen-k4`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) |
+| customspec | `stable-…-实现方案-customspec.{tex,pdf}`（已 `xelatex-clean`） |
+| stable CPU | **PASS** ek/dk max=0 |
+| stable SIM | **PASS** Total tick **706633**；无 stray dump |
+| 索引 | `examples/{INDEX,stable,incubating}` · `README` · `AGENTS` · registry · `qa/TODO` T19f **完成** |
+
+交付验收级别：Rule CPU + `SIM_DIRECT=1` sim。未自动 commit/push。
+
+## 家里补充（同日晚）— add_custom `-r/-v` + KeyGen 默认 SHA3 seed
+
+| 项 | 内容 |
+|----|------|
+| add_custom | `run.sh` 支持 **`bash run.sh -r cpu\|sim -v Ascend910B4`**（Cloud 通用口径）；旧 `./run.sh cpu 910B4` 兼容保留；`source env.sh` 在 `pipefail` 下临时 `set +e` |
+| KeyGen seed | exp+stable：默认不写死 `20260619`；`scripts/resolve_host_seed_d.py` 用 SHA3-256 域分离标签派生 host `SEED_D`；`SEED_D=` 仍可定点 |
+| 验 | add_custom `-r cpu` PASS；stable KeyGen 默认 seed `880681095` CPU ek/dk max=0 |

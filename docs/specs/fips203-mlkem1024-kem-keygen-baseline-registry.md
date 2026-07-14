@@ -1,7 +1,7 @@
 # FIPS 203 ML-KEM-1024 KEM KeyGen — baseline-registry
 
 **主题**：Alg.19 `ML-KEM.KeyGen()`（经 Alg.16 → Alg.13；k=4）交付侧 golden / KAT 计算块登记  
-**适用**：`examples/incubating/exp-fips203-mlkem-kem-keygen-k4`（**当前仅 customspec，待【预研】重写**）；晋级后的 `examples/stable/stable-fips203-mlkem-kem-keygen-k4`（**2026-07-13 已删，待重写后再建**）  
+**适用**：交付以 **`examples/stable/stable-fips203-mlkem-kem-keygen-k4`** 为准（2026-07-14 `#交付#` 自 incubating 复制晋级）；预研副本 `examples/incubating/exp-fips203-mlkem-kem-keygen-k4` 保留。  
 **规则**：生成 `input/` / `golden_*` 的计算内核**仅**可调用下表已验证来源；缺项须停下补登记。
 
 ---
@@ -10,7 +10,7 @@
 
 | 角色 | 路径 | 尺寸 | 说明 |
 |------|------|------|------|
-| 输入 | `seed_d.bin` | 4 B | `uint32` LE；约定 `SEED_D=20260619` |
+| 输入 | `seed_d.bin` | 4 B | `uint32` LE；**默认** host SHA3 派生（`scripts/resolve_host_seed_d.py`）；可用 `SEED_D=` 覆盖定点（如旧 KAT `20260619`） |
 | 输入 | `lut_even/odd_stacked.bin` | 静态 | NTT limb LUT（与 seed 无关） |
 | 输出 / golden | `ek_kem.bin` | 1568 B | `= ek_PKE` |
 | 输出 / golden | `dk_kem.bin` | 3168 B | liboqs 展开：`dk_pke‖ek‖H(ek)‖z` |
