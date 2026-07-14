@@ -66,3 +66,11 @@
 | 二期 | 活跃 `pass-*` / 其余 exp|stable 逐步接入；真机再压 npu host 路径 |
 
 文档挂链：[`AGENTS.md`](../../AGENTS.md)、[`Cursor-Cloud环境说明.md`](../../Cursor-Cloud环境说明.md)、`docs/engineering/INDEX.md`。
+
+## 办公室补充（同日稍后）— Cloud 四用例测回
+
+| 项 | 内容 |
+|----|------|
+| Cloud | 同步 `c0f6e6d` 后 8 轮：KEM / encrypt / decrypt CPU+SIM ✅；**stable PKE keygen** CPU+SIM 编译挂 |
+| 根因 | `main_keygen.cpp` 未用 `kVecTilingBytes`；Cloud Clang `-Werror -Wunused-const-variable`（WSL GCC 常不报） |
+| 修复 | 删该常量（stable + incubating/exp-pke-keygen + kem 内 vendored `main_keygen.cpp`）；WSL 强制重编 CPU+SIM PASS（tick ~542k） |
