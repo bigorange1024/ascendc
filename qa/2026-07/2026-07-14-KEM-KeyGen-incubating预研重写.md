@@ -111,3 +111,33 @@
 | Cloud | Secrets 配 **`ASCENDC_GH_PAT`**（fine-grained，仅 ntt_onnx Contents:Read）；`clone-thirdparty.sh` 优先用该 PAT HTTPS 克隆并去掉 remote 中的 token |
 | 勿用 | 单独依赖 `GH_TOKEN`（Cursor 可能注入仅对本仓的 `ghs_…`） |
 | 复验 | Cloud：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 有 `transpose_mlkem_luts_i8.h` |
+
+## 办公室补充（同日）— Cloud 新会话注入 PAT 后复验六探针
+
+| 项 | 结果 |
+|----|------|
+| Secret | 新 Cloud run 内 `ASCENDC_GH_PAT` **已注入**（旧会话未热更新的结论成立） |
+| 克隆 | `FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → **`ntt_onnx_ok`**（`transpose_mlkem_luts_i8.h` 存在；HEAD `1c5ae1a`） |
+| 附带 | alg19–21 对拍还须 `liboqs`：`ONLY=liboqs bash scripts/clone-thirdparty.sh` |
+
+### 六探针 CPU+SIM（`Ascend910B4`，`SIM_DIRECT=1`）
+
+| 探针 | CPU | SIM | tick（SIM） |
+|------|-----|-----|-------------|
+| `pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4` | PASS | PASS | 123180 |
+| `pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4` | PASS | PASS | 154538 |
+| `pass-fix-f203-alg14-pke-encrypt-device-k4` | PASS | PASS | 626765 |
+| `fix-f203-alg19-kem-keygen-correctness-k4` | PASS | PASS | 742486 |
+| `fix-f203-alg20-kem-encaps-correctness-k4` | PASS | PASS | 1029501 |
+| `fix-f203-alg21-kem-decaps-correctness-k4` | PASS | PASS | 985313 |
+
+### Cloud 再修（同 PR `cursor/ntt-onnx-pat-retry-5334`）
+
+| 根因 | 处理 |
+|------|------|
+| alg19 `kVecTilingBytes` 未用 → Clang `-Werror` | 删除 |
+| alg20/21 `kUTrBytes` 未用 | 删除 |
+| alg20 命名空间 constexpr 仅 CPU 用、SIM 侧局部遮蔽 → `-Wunused` | 包进 `#ifdef ASCENDC_CPU_DEBUG`；SIM 仍共用 `kIntt/G4/PackBlockDim` |
+| alg21 SIM 无条件编入未引用的 `vendor/.../main_encrypt_g5_run.cpp` | 默认不再编入；`KEM_COMPILE_ENCRYPT_G5_HOST=1` 可显式打开 |
+
+**状态**：六探针复验 **完成**；ntt_onnx PAT 路径 **可用**。
