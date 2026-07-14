@@ -138,7 +138,6 @@ constexpr uint32_t kPrfBatch = F203_ENCRYPT_PRF_BATCH;
 constexpr uint32_t kPrfMaxMsgLen = 64U;
 constexpr uint32_t kPrfOutLen = F203_ENCRYPT_PRF_BYTES_PER_POLY;
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
-constexpr size_t kUTrBytes = F203_U_HAT_BYTES + F203_TR_HAT_BYTES;
 
 /** 将 even/odd stacked LUT 填入 NTT/INTT workspace（与 Encrypt host 同布局）。 */
 static void fill_ntt_ws(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, const uint8_t *lut_odd)
