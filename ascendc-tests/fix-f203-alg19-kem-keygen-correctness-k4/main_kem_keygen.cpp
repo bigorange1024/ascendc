@@ -82,7 +82,6 @@ void DebugWriteDev(aclrtStream stream, const char *relPath, uint8_t *dev, size_t
 #endif
 
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
-constexpr size_t kVecTilingBytes = 64U;
 /** mmad_custom 单核 blockDim（与 vendor keygen compute 一致）。 */
 constexpr uint32_t kMmadBlockDim = 1U;
 
