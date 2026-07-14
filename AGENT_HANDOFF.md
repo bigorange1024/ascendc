@@ -1,8 +1,9 @@
 # Agent 交接 — 每日刷新（办公室 ↔ 家里）
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
+> **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)（硬门禁与文档地图；入口变更时同步刷新）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（家里：**KEM KeyGen incubating【预研】有条件完成并 push**；办公室下一项见下）
+> **最后刷新**：2026-07-14（办公室：pull 同步 + **新增 AGENTS.md**；家里 KEM KeyGen incubating 有条件完成）
 
 ---
 
@@ -102,6 +103,7 @@ KEYGEN_DIR="$(pwd)" KEM_KG_CPU_TRIALS=3 KEM_KG_SIM_TRIALS=1 SIM_DIRECT=1 \
 | 主题 | 路径 |
 |------|------|
 | KEM KeyGen incubating | [`exp-…-kem-keygen-k4/`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) |
+| Cloud / agent 短入口 | [`AGENTS.md`](AGENTS.md) |
 | customspec | [`…-实现方案-customspec.pdf`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
 | device 基线 | [`pass-fix-f203-alg19-kem-keygen-device-k4/`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
 | 家里当日纪要 | [`qa/2026-07/2026-07-14-….md`](qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md) |

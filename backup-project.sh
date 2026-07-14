@@ -8,7 +8,7 @@
 #
 # 设计目标（2026-06-28 刷新）：
 #   - 必须能恢复 exp/探针 的 prep/、compute/、cmake/、scripts/ 等 vendored 源码树
-#   - 必须含 scripts/（sim_env.sh 等）与 AGENT_HANDOFF.md（每日交接）
+#   - 必须含 scripts/（sim_env.sh 等）、AGENTS.md（Cloud agent 入口）、AGENT_HANDOFF.md（每日交接）
 #   - 排除 build/out/input/output 及二进制产物
 
 set -euo pipefail
@@ -75,7 +75,7 @@ sync_tree() {
 }
 
 # --- 根文档与脚本 ---
-for f in README.md AGENT_HANDOFF.md Makefile backup-project.sh; do
+for f in README.md AGENTS.md AGENT_HANDOFF.md Makefile backup-project.sh; do
   if [ -f "$f" ]; then
     rsync -a "$f" "$DEST/"
   fi
@@ -148,7 +148,7 @@ cat > "$DEST/BACKUP_README.txt" << EOF
 ## 包含（相对旧 v0.1 快照新增/强调）
 
 - scripts/（sim_env.sh、camodel_sim_log.sh、xelatex-clean.sh、inject_probe_code_comments.py 等）
-- AGENT_HANDOFF.md、backup-project.sh
+- AGENTS.md、AGENT_HANDOFF.md、backup-project.sh
 - .cursor/rules/、.cursor/skills/
 - examples/、ascendc-tests/ 完整源码树：
   prep/、compute/、cmake/、scripts/prep、scripts/compute

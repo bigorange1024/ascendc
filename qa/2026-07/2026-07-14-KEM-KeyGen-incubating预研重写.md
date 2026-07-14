@@ -30,6 +30,15 @@
 - 已 `git push` incubating 实现 + STATUS/SELF_CONTAINED + INDEX/TODO/AGENT_HANDOFF。
 - 办公室：**未** `#交付#` 前勿建 stable；主线开 **T19a Encaps device**；见根 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)。
 
+## 办公室补充（同日）— Cloud Agent 与 `AGENTS.md`
+
+| 项 | 内容 |
+|----|------|
+| 同步 | 办公室 `git pull` 已与 `origin/main` 一致（`e10655a`） |
+| 新增 | 根 [`AGENTS.md`](../../AGENTS.md)：Cloud / coding agent **短入口**（硬门禁 + 文档地图） |
+| 联动 | [`README.md`](../../README.md) 阅读顺序与顶层树、[`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)、[`backup-project.sh`](../../backup-project.sh) |
+| 维护 | 入口/硬门禁/文档地图变更 → 刷新 `AGENTS.md`；**每日真相**仍只写 `AGENT_HANDOFF.md` |
+
 ## 遗留
 
 - `#交付#` → stable（用户确认后）
