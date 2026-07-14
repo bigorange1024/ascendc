@@ -9,10 +9,10 @@
 
 ## ★ Cloud 下一刀（优先）
 
-1. **用户先**：Cursor Dashboard → Secrets → **`ASCENDC_GH_PAT`**（`ntt_onnx` 仍私有，无 PAT 则 Encrypt/LUT 仍挂）  
-2. Agent：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 须有 `transpose_mlkem_luts_i8.h`  
-3. 已修可重跑：`-Werror=comment`（vec-k4-v2 / polyvec8 / compress / decompress）、`scripts/cp_sync.sh`（alg19/20/21 等 vendor_sync）、P0 硬伤  
-4. CBD：本机 cpu+sim 已绿；Cloud 若仍挂请贴编译原文  
+1. **用户已配**：Cloud Secrets 有 **`ASCENDC_GH_PAT`**（Runtime；Network = Allow all）  
+2. Cloud Agent 先验证：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 须有 `thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h`  
+3. 再重跑原失败子集：Encrypt compute/tail/device + alg19/20/21 correctness（已无硬 rsync）+ `-Werror=comment` 四例（应已绿）  
+4. CBD 若仍红：贴编译原文  
 
 说明：[`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) · [`docs/notes/AscendC多环境运行纪要.md`](docs/notes/AscendC多环境运行纪要.md)
 
