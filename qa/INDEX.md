@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-14 — [KEM KeyGen incubating【预研】重写 · SyncAll/软旗 · KAT](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
+
+关键字：`exp-fips203-mlkem-kem-keygen-k4` · SyncAll · CPU 软旗 · CPU×40 · SIM 707057 · vs correctness/liboqs×10 · **有条件完成**（未 `#交付#`）
+
 ### 2026-07-13 — [thirdparty · KEM KeyGen 规格重置 · T21](2026-07/2026-07-13-thirdparty外部仓清单.md)
 
 **六仓 URL** · **debug：dk@1152 / SyncAll** · **删 stable+exp 实现，仅留 customspec** · **T21** · **AGENT_HANDOFF**

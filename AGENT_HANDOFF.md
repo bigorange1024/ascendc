@@ -2,7 +2,7 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-13（KEM KeyGen exp **规格-only 重置**；实现树删除；回家按 customspec 重写）
+> **最后刷新**：2026-07-14（家里：**KEM KeyGen incubating【预研】有条件完成并 push**；办公室下一项见下）
 
 ---
 
@@ -18,9 +18,11 @@
 
 **无 NPU 时验收权重**：全链 PKE — **SIM = 主参考**；**CPU = 辅助正确性**。
 
+**Fail 复现纪律**：偶发 FAIL 必须落盘 `mode` + `kem_seed` hex（或 `SEED_D`）+ 错位偏移 + 是否清零 `output/`（`kat_liboqs_kem_keygen.py` 已写 seed；压测脚本同理）。
+
 ---
 
-## ★ 当前真相（2026-07-13）
+## ★ 当前真相（2026-07-14 · 家里 push）
 
 ### PKE 三段 — **stable 交付齐备**（未改）
 
@@ -30,50 +32,65 @@
 | Encrypt | [`stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | ~627k |
 | Decrypt | [`stable-fips203-mlkem-pke-decrypt-k4`](examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | ~283k |
 
-### KEM Alg.19 KeyGen — **设备探针 PASS；exp 实现已清空**
+### KEM Alg.19 KeyGen — **incubating 有条件完成（已入库）**
 
 | 路径 | 角色 |
 |------|------|
-| [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) | **行为/I/O 基线**（2 launch；~713k）；**可读行为，禁止当 CMake 依赖抄码晋级** |
-| [`exp-fips203-mlkem-kem-keygen-k4/`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) | **仅** [`…-实现方案-customspec.tex/.pdf`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf)（含 §踩坑 SyncAll）；**无源码** |
-| `examples/stable/stable-fips203-mlkem-kem-keygen-k4/` | **已删除**；待 incubating 重写并验收后再 `#交付#` 复制晋级 |
+| [`exp-fips203-mlkem-kem-keygen-k4/`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) | **自包含**实现 + customspec；见 [`STATUS`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/STATUS.md) |
+| [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) | 行为对照基线（~713k）；**禁止** CMake 依赖本树 |
+| `examples/stable/stable-fips203-mlkem-kem-keygen-k4/` | **尚无**；须用户明确 `#交付#` 后从 incubating **复制晋级** |
 | registry | [`docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md`](docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md) |
 
-**办公室 debug 结论（回家必读 customspec §landmines + 当日 qa）**：
+**家里验收（已绿）**：CPU×40（清零 output）· SIM tick **707057** · vs correctness×10 · liboqs CPU×10 · **liboqs SIM×3**。
 
-1. 过早晋级 stable 被用户否决 → 正确流程：incubating 压测绿 → 再 `#验收#`。
-2. 偶发 `ek` PASS / `dk` FAIL：坏在 `dk_pke[1152:)`（AIV1 末 poly）；根因是 **AIV0 Fuse/Tail 抢跑**，本核 `PipeBarrier` **不能**汇合双 AIV。
-3. 强制：SIM/设备 Encode 后 `SyncAll<isAIVOnly=true>()` 再 AIV0 做尾；CPU 由 `subBlockID==1` 做尾；`KYBER_PIPE_ALL` 禁空操作；CPU×N（清零 output）+ SIM 才可声称通过。
-4. 用户裁决：删掉 stable + incubating **全部实现**，只留强化后的 customspec，回家 Agent **【预研】从零写**。
+**踩坑落地**：SIM `SyncAll`→AIV0 尾；CPU soft-flag + AIV1 尾；`KYBER_PIPE_ALL` 恒 barrier；VERIFY 前清零 output。
 
-纪要：[`qa/2026-07/2026-07-13-thirdparty外部仓清单.md`](qa/2026-07/2026-07-13-thirdparty外部仓清单.md) §7–§10
+纪要：[`qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md`](qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
 ---
 
-## ★ 下一任务（P0）— 家里 Agent
+## ★ 办公室 Agent 下一任务（按优先级）
 
-**【预研】按 customspec 重写** [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/)
+### P0-1 — 等用户口令后再做：`#交付#` KEM KeyGen → stable
 
-1. 先读：上述 PDF（全文，尤其 **踩坑 / SyncAll**）+ registry + device 探针 **STATUS/行为**（不抄进 CMake）。
-2. 自 `stable-fips203-mlkem-pke-keygen-k4` **一次性 vendor** PKE，加 `kem/` 尾与 `F203_KEM_KEYGEN_TAIL=1`；遵守双 AIV 汇合条款。
-3. 验收：`bash run.sh -r cpu` + CPU 多轮压测 + `SIM_DIRECT=1 bash run.sh -r sim`；**勿**建 stable，除非用户 `#交付#`。
+**仅当用户明确说 `#交付#` / `#验收#` 时**：
 
-并行遗留（可稍后）：**T19a** Encaps device；**T21** SHA3hp 分析。
+1. 从 [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) **复制晋级**为 `examples/stable/stable-fips203-mlkem-kem-keygen-k4/`（禁从零重写、禁依赖 device）。
+2. 双模式再验收：`bash run.sh -r cpu` + `SIM_DIRECT=1 bash run.sh -r sim`；建议再跑 liboqs CPU×N + SIM×≥1。
+3. 更新 `examples/stable/INDEX.md`、`qa/TODO.md`（关 T19f 交付段）、当日 `qa/`、本文件。
 
-**禁止**：从 frozen / 已删树备份 / 对话残留 **抄实现**；未绿晋级 stable。
+**未获口令前禁止建 stable。**
+
+### P0-2 — 主线开工：**T19a Encaps device**
+
+[`fix-f203-alg20-kem-encaps-device-k4`](ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)：改接 [`stable-…-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（或 pass-fix Encrypt device）布局；CPU+SIM `c`/`K` max=0；分项 kat。  
+随后 T19b/c Decaps Phase-E/D。
+
+### P1 — **T21** SHA3hp
+
+待用户拍板是否替换设备 SHA3-256/512；未拍板不改默认路径。
+
+### 纪律提醒（相对 07-13 失败）
+
+- **禁止**未压测绿就晋级 stable。
+- **禁止**从 `frozen/` / 已删树抄实现。
+- FAIL 必须落盘 seed；勿只写「偶发 dk FAIL」。
 
 ---
 
 ## 验收命令（smoke）
 
 ```bash
-# PKE 全链（三段 stable）
-bash scripts/roundtrip_pke_batch.sh
+git pull
 
-# KEM KeyGen 行为基线（探针；非 exp）
-cd ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4
+# KEM KeyGen incubating
+cd examples/incubating/exp-fips203-mlkem-kem-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+
+# liboqs（可按需）
+KEYGEN_DIR="$(pwd)" KEM_KG_CPU_TRIALS=3 KEM_KG_SIM_TRIALS=1 SIM_DIRECT=1 \
+  python3 ../../../scripts/kat_liboqs_kem_keygen.py
 ```
 
 **WSL**：`CMAKE_BUILD_JOBS=2`；勿并行多 SIM。
@@ -84,7 +101,8 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 | 主题 | 路径 |
 |------|------|
-| KEM KeyGen **规格（待重写）** | [`exp-…-kem-keygen-k4-实现方案-customspec.pdf`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
-| KEM KeyGen device 基线 | [`pass-fix-f203-alg19-kem-keygen-device-k4/`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
-| 当日 debug 纪要 | [`qa/2026-07/2026-07-13-….md`](qa/2026-07/2026-07-13-thirdparty外部仓清单.md) |
+| KEM KeyGen incubating | [`exp-…-kem-keygen-k4/`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) |
+| customspec | [`…-实现方案-customspec.pdf`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
+| device 基线 | [`pass-fix-f203-alg19-kem-keygen-device-k4/`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
+| 家里当日纪要 | [`qa/2026-07/2026-07-14-….md`](qa/2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md) |
 | 遗留总表 | [`qa/TODO.md`](qa/TODO.md) |

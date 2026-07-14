@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-13（KEM KeyGen：**删** stable+incubating 实现；**仅留** customspec；T19f 重置为「按规格重写」；T21 仍开）
+**最近刷新**：2026-07-14（T19f incubating【预研】**有条件完成**：CPU×40 + SIM + KAT×10；待 `#交付#`；下一主线仍 T19a）
 
 ---
 
@@ -54,7 +54,7 @@
 | **T19c** | **同上 device-k4 Phase-D**：改接 [`stable-…-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) fused | CPU+SIM `K` max=0 |
 | **T19d** | **[`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)** | **PASS**（2026-07-10）；2 launch；P1 后 SIM tick 均值 **~713k** |
 | **T19e** | **`scripts/` KeyGen 默认 → `pass-fix-f203-alg19-kem-keygen-device-k4`**；correctness 标为 oracle 对照 | **KeyGen 段完成**（2026-07-10）；Encaps/Decaps 脚本仍走 correctness 直至 T19a/b |
-| **T19f** | 按 [`exp-…-kem-keygen-k4` customspec](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) **【预研】从零重写** incubating → 验收后再 `#交付#` stable | **进行中**：旧实现/stable **已删**（2026-07-13）；须遵守 §踩坑 SyncAll；见 AGENT_HANDOFF |
+| **T19f** | 按 [`exp-…-kem-keygen-k4` customspec](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) **【预研】从零重写** incubating → 验收后再 `#交付#` stable | **incubating 有条件完成**（2026-07-14）：CPU×40 + SIM tick **707057** + vs correctness×10 + liboqs×10；**未** `#交付#`；见 [`STATUS`](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/STATUS.md) |
 
 **禁止**：未改接线前把 `SRC` 指回 stable 强行 sync；从 frozen **抄码改写**冒充新实现（rsync 拼装快照除外，直至 T19e 关闭）。
 
