@@ -20,21 +20,23 @@
 ## 新 Agent 阅读顺序
 
 1. **本文件** — 目标与目录结构  
-2. **[AGENT_HANDOFF.md](AGENT_HANDOFF.md)** — **办公室 ↔ 家里 Agent 每日交接**（当前真相、GitHub 范围、smoke）  
+2. **[AGENTS.md](AGENTS.md)** — **Cloud / coding agent 短入口**（硬门禁 + 文档地图；与 HANDOFF 一并维护）  
    - Cloud 云端 Agent 另见 **[Cursor-Cloud环境说明.md](Cursor-Cloud环境说明.md)**（非 WSL VM 的启动/运行坑与 SIM 绕过）  
-3. **[qa/INDEX.md](qa/INDEX.md)** — 近期讨论与遗留（**[qa/TODO.md](qa/TODO.md)**）  
-4. **[.cursor/rules/ascendc-development.mdc](.cursor/rules/ascendc-development.mdc)** — 全仓库底线（含 **frozen 禁止抄码**）  
-5. **[docs/notes/研究路线与frozen治理.md](docs/notes/研究路线与frozen治理.md)** — frozen：进门读判决书，出门不带码  
-6. **[.cursor/skills/INDEX.md](.cursor/skills/INDEX.md)** — 场景手册（`【】`→预研，`#…#`→交付）  
-7. 环境复现：**[docs/engineering/环境复现与开发指南.md](docs/engineering/环境复现与开发指南.md)**（§12 Prompt、§14 测试矩阵）  
-8. **ML-KEM NTT**：**[docs/notes/MLKEM-NTT-向量与标量实现指南.md](docs/notes/MLKEM-NTT-向量与标量实现指南.md)** — 活跃探针 `vec-k4-v2`；标量对照组已归档 `frozen-fix-f203-2s1e-alg13-16171820-k4`
+3. **[AGENT_HANDOFF.md](AGENT_HANDOFF.md)** — **办公室 ↔ 家里 Agent 每日交接**（当前真相、下一 P0、smoke）  
+4. **[qa/INDEX.md](qa/INDEX.md)** — 近期讨论与遗留（**[qa/TODO.md](qa/TODO.md)**）  
+5. **[.cursor/rules/ascendc-development.mdc](.cursor/rules/ascendc-development.mdc)** — 全仓库底线（含 **frozen 禁止抄码**）  
+6. **[docs/notes/研究路线与frozen治理.md](docs/notes/研究路线与frozen治理.md)** — frozen：进门读判决书，出门不带码  
+7. **[.cursor/skills/INDEX.md](.cursor/skills/INDEX.md)** — 场景手册（`【】`→预研，`#…#`→交付）  
+8. 环境复现：**[docs/engineering/环境复现与开发指南.md](docs/engineering/环境复现与开发指南.md)**（§12 Prompt、§14 测试矩阵）  
+9. **ML-KEM NTT**：**[docs/notes/MLKEM-NTT-向量与标量实现指南.md](docs/notes/MLKEM-NTT-向量与标量实现指南.md)** — 活跃探针 `vec-k4-v2`；标量对照组已归档 `frozen-fix-f203-2s1e-alg13-16171820-k4`
 
 ## 顶层目录结构
 
 ```text
 ~/ascendc/
 ├── README.md                 # 本文件：目标 + 结构（子目录不设 README）
-├── AGENT_HANDOFF.md          # 办公室 ↔ 家里 Agent 每日交接（GitHub 范围、smoke）
+├── AGENTS.md                 # Cloud / coding agent 短入口（硬门禁；随工程刷新）
+├── AGENT_HANDOFF.md          # 办公室 ↔ 家里 Agent 每日交接（当前真相、smoke）
 ├── .cursor/
 │   ├── rules/                # Rule（变更须用户确认）
 │   └── skills/               # ascendc-impl-spec、pre-research、ascendc-delivery
@@ -42,7 +44,7 @@
 ├── qa/                       # INDEX.md、TODO.md；日纪要仅在 YYYY-MM/YYYY-MM-DD-关键词.md
 ├── library/                  # 外部资料 + shared/（探针共用代码与 vendored 设备原语）
 ├── thirdparty/               # 外部依赖（不进 Git；见 docs/engineering/thirdparty-本地依赖.md）
-│                             # 换机：bash scripts/clone-thirdparty.sh
+│                             # 换机：bash scripts/clone-thirdparty.sh（默认 build liboqs）
 ├── ascendc-tests/            # 平台功能探针（无 exp- 前缀；见 INDEX.md）
 ├── examples/
 │   ├── incubating/exp-*/     # 研究中
@@ -77,7 +79,7 @@
 | KeyGen 交付 | [`stable-fips203-mlkem-pke-keygen-k4`](examples/stable/stable-fips203-mlkem-pke-keygen-k4/) **CPU/SIM/KAT ✓**（SIM **542393**）；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) |
 | Encrypt 交付 | [`stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) **SIM 主参考** tick **627590** · CPU 辅助 · KAT×10+1 / roundtrip×10+1 ✓；[交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) |
 | Decrypt 交付 | [`stable-fips203-mlkem-pke-decrypt-k4`](examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) **CPU/SIM/KAT ✓**（SIM **283290** tick）；KAT×10+1 / roundtrip×10+1 ✓ |
-| KEM KeyGen | [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) **仅 customspec**（实现已清空，待【预研】重写）；行为基线探针 [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)（~713k） |
+| KEM KeyGen | [`exp-fips203-mlkem-kem-keygen-k4`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) **incubating 有条件完成**（2026-07-14；SIM ~707k；stable 待 `#交付#`）；行为基线探针 [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)（~713k） |
 | KEM 三分项 | **Alg.19 KeyGen device** [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) **CPU+SIM PASS**（2 launch，~713k tick）；correctness 对照 [`fix-f203-alg19-kem-keygen-correctness-k4`](ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/)；Encaps/Decaps **correctness PASS**、**device 待 T19a/b**；分项 kat `CPU×10+SIM×1`；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) |
 | 统一整数 Compress/Decompress | exp [`exp-fips203-compress-unified-int-vec-k4`](examples/incubating/exp-fips203-compress-unified-int-vec-k4/) · [`exp-fips203-decompress-unified-int-vec-k4`](examples/incubating/exp-fips203-decompress-unified-int-vec-k4/)（customspec）；生产路径已迁入 stable PKE Encrypt/Decrypt；**PKE round-trip PASS** |
 | 官方样例 | `samples/` ← [gitee.com/ascend/samples](https://gitee.com/ascend/samples) `master`（`6511a5f`，2026-06 拉取）；AscendC Cube+Vector 融合参考：`samples/operator/ascendc/tutorials/MatmulLeakyReluCustomSample/` |
