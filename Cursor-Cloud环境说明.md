@@ -71,14 +71,16 @@
   且用例根**无 stray dump**（跳过 ADX work path 的附带好处）。
 
 前置：带 golden/KAT 的用例需先 `bash scripts/clone-thirdparty.sh`（或 `ONLY=liboqs … + build-liboqs.sh`）
-备好 `thirdparty/liboqs` 与 `scripts/liboqs_kem_ref`。**`ntt_onnx` 自 2026-07-14 起为公开仓**，Cloud 上
-`ONLY=ntt_onnx bash scripts/clone-thirdparty.sh` 应可匿名 HTTPS 成功（Encrypt/LUT 探针依赖）。
+备好 `thirdparty/liboqs` 与 `scripts/liboqs_kem_ref`。**`ntt_onnx` 保持私有**；Cloud 须配置 Secrets **`ASCENDC_GH_PAT`**
+（详见 [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)）。**勿**把仓改 public。
 
-## Cloud 拉取 ntt_onnx（P0）
+## Cloud 拉取私有 `ntt_onnx`
+
+1. 创建 fine-grained PAT：仅 `bigorange1024/ntt_onnx`、**Contents: Read**  
+2. Cursor Dashboard → Cloud Agents → Secrets → `ASCENDC_GH_PAT=<pat>`（**不要**只靠 `GH_TOKEN`）  
+3. Agent 内：
 
 ```bash
-ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
-# 或 FORCE 重拉：
 FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 test -f thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h && echo OK
 ```

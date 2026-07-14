@@ -79,7 +79,7 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 | CANN | 社区版 **9.0.0**；常见路径 `~/Ascend/cann` |
 | 多环境 | [`scripts/runtime_env.sh`](scripts/runtime_env.sh) 探测 host/CANN/SIM/NPU；详文 [`NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) |
 | 并行 | 建议 `CMAKE_BUILD_JOBS=2` / `LIBOQS_JOBS=2`；**勿并行多路 SIM** |
-| `thirdparty/` | **不进 Git**；权威 [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) |
+| `thirdparty/` | **不进 Git**；权威 [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)；**`ntt_onnx` 私有**，Cloud 须 Secrets **`ASCENDC_GH_PAT`** |
 | liboqs | tag **0.15.0**；[`scripts/build-liboqs.sh`](scripts/build-liboqs.sh)（`clone-thirdparty` 默认调用） |
 
 ### Cloud Agent 注意（分轨）

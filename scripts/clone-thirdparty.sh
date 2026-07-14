@@ -32,7 +32,7 @@ REPOS=(
   "ascend-samples|https://gitee.com/ascend/samples.git||1|昇腾官方样例（体积大；仅参考）"
   "SHA3hp|https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git||1|第三方 AscendC Keccak/SHA3"
   "cann-ntt|https://openi.pcl.ac.cn/serial2007/cann-ntt.git||1|第三方 AscendC 前向 NTT"
-  "ntt_onnx|https://github.com/bigorange1024/ntt_onnx.git||1|NTT/LUT golden（原 ntt_study；2026-07-14 起公开仓，HTTPS 可匿名浅克隆）"
+  "ntt_onnx|https://github.com/bigorange1024/ntt_onnx.git||1|NTT/LUT golden（**私有仓**；Cloud 须 ASCENDC_GH_PAT / gh 认证，见 thirdparty 文档）"
 )
 
 should_process() {
@@ -85,14 +85,36 @@ clone_one() {
   args+=("${url}" "${dest}")
 
   echo "  git ${args[*]}"
-  if ! git "${args[@]}"; then
-    if [[ "${name}" == "ntt_onnx" ]] && command -v gh >/dev/null 2>&1; then
-      echo "  HTTPS clone failed; retry via gh repo clone…"
+  # ntt_onnx 为私有仓：优先用 PAT（勿单独依赖 GH_TOKEN——Cursor Cloud 可能注入仅对本仓有效的 ghs_）
+  if [[ "${name}" == "ntt_onnx" ]]; then
+    local pat="${ASCENDC_GH_PAT:-${NTT_ONNX_GITHUB_TOKEN:-}}"
+    if [[ -n "${pat}" ]]; then
+      echo "  auth: ASCENDC_GH_PAT / NTT_ONNX_GITHUB_TOKEN（HTTPS x-access-token）"
+      if git clone --depth "${depth:-1}" \
+          "https://x-access-token:${pat}@github.com/bigorange1024/ntt_onnx.git" "${dest}"; then
+        # 去掉 URL 里的 token，避免落入 .git/config
+        git -C "${dest}" remote set-url origin "https://github.com/bigorange1024/ntt_onnx.git"
+      else
+        echo "  ERROR: authenticated HTTPS clone of private ntt_onnx failed" >&2
+        return 1
+      fi
+    elif command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+      echo "  auth: gh repo clone（当前 gh 登录须能读 bigorange1024/ntt_onnx）"
       if ! gh repo clone bigorange1024/ntt_onnx "${dest}"; then
-        echo "  ERROR: ntt_onnx clone failed (HTTPS + gh)。仓应为公开：https://github.com/bigorange1024/ntt_onnx" >&2
+        echo "  ERROR: gh clone failed。Cloud：在 Secrets 配置 ASCENDC_GH_PAT（fine-grained，Contents:Read on ntt_onnx）" >&2
         return 1
       fi
     else
+      if ! git "${args[@]}"; then
+        echo "  ERROR: ntt_onnx 为**私有仓**，匿名 HTTPS 不可用。" >&2
+        echo "  Cloud Agent：Dashboard → Cloud Agents → Secrets 增加 ASCENDC_GH_PAT=（fine-grained PAT，" >&2
+        echo "    仓库 bigorange1024/ntt_onnx → Contents: Read）。勿仅用 GH_TOKEN（易被 Cursor 覆盖为 ghs_）。" >&2
+        echo "  本机：gh auth login 后重跑，或 SSH：git clone git@github.com:bigorange1024/ntt_onnx.git" >&2
+        return 1
+      fi
+    fi
+  else
+    if ! git "${args[@]}"; then
       echo "  ERROR: git clone failed for ${name} (${url})" >&2
       return 1
     fi
@@ -120,7 +142,7 @@ done
 echo "[clone-thirdparty] done."
 echo
 echo "注意：原 thirdparty/merged_kyber 已迁至 ascendc-tests/pass-merged-kyber-mix-ntt256/（勿再 clone 到 thirdparty）"
-echo "注意：原 thirdparty/ntt_study 已改为 thirdparty/ntt_onnx（公开仓，HTTPS 浅克隆即可）"
+echo "注意：ntt_onnx 为**私有仓**；Cloud 须 Secrets 中的 ASCENDC_GH_PAT（见 docs/engineering/thirdparty-本地依赖.md）"
 
 # 默认编译 liboqs（golden / KAT 依赖）；ONLY 排除 liboqs 或不想编时可 BUILD_LIBOQS=0
 BUILD_LIBOQS="${BUILD_LIBOQS:-1}"

@@ -3,17 +3,19 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（办公室：`ntt_onnx` 公开；Cloud 先复验 clone）
+> **最后刷新**：2026-07-14（`ntt_onnx` **保持私有**；Cloud 用 ASCENDC_GH_PAT）
 
 ---
 
 ## ★ Cloud 下一刀（优先）
 
-1. **立刻**：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh`（仓已公开；须见到 `transpose_mlkem_luts_i8.h`）
-2. 再重跑原先因缺 LUT 挂的 Encrypt 探针（`alg14-*-encrypt-*`）cpu+sim
-3. 其余失败（Clang `-Werror` / rsync / 仓内破损）**先别一起改**——等用户下一口令
+1. **用户先**：Cursor Dashboard → Cloud Agents → Secrets → 配置 **`ASCENDC_GH_PAT`**（fine-grained PAT，仅 `ntt_onnx` Contents:Read）  
+2. Agent：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 须有 `transpose_mlkem_luts_i8.h`  
+3. 再重跑缺 LUT 的 Encrypt 探针；其余（Clang / rsync / 仓内破损）等下一指令  
 
-说明：[`docs/notes/AscendC多环境运行纪要.md`](docs/notes/AscendC多环境运行纪要.md) · [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)
+勿再要求把 `ntt_onnx` 改 public。
+
+说明：[`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) · [`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md)
 
 ---
 
@@ -22,7 +24,7 @@
 | 项 | 说明 |
 |----|------|
 | `runtime_env` | 四例 examples 试点 + **活跃探针 run.sh** 已接入；默认仍 **cpu** |
-| thirdparty | `clone-thirdparty.sh` 默认编 liboqs；**`ntt_onnx` 已公开**（HTTPS 匿名可拉） |
+| thirdparty | `clone-thirdparty.sh`；**`ntt_onnx` 私有**，Cloud 靠 **`ASCENDC_GH_PAT`** |
 | Cloud SIM dump | 非 WSL 不装 dump 桩（`sim_env.sh`） |
 
 ---
