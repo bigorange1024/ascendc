@@ -53,3 +53,9 @@ scripts/liboqs_pke_ref
 scripts/liboqs_kem_ref
 **/.liboqs_vs_built_mode
 **/stub_reg.log
+
+# 探针本地编译产物（勿提交；manifest.json 有用例故意入库如 shake256-toy，勿全局忽略）
+**/f203_se_vector_npu
+**/shake128_ops_math_npu
+**/shake256_ops_math_npu
+**/shake*_ops_math_npu
