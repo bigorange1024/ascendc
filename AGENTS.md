@@ -5,19 +5,28 @@
 > **详细底线**：[`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-14
+**最后刷新**：2026-07-14（`clone-thirdparty` 默认 build liboqs；Cloud SIM CANN 符号分轨）
 
 ---
 
 ## 1. 开任务顺序（强制）
 
-1. [`README.md`](README.md) — 目标与顶层结构  
+1. [`README.md`](README.md) — 目标与目录结构  
 2. **本文件** `AGENTS.md`  
 3. [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md) — 当前真相与 P0  
 4. [`qa/INDEX.md`](qa/INDEX.md) · [`qa/TODO.md`](qa/TODO.md)  
 5. [`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc)  
 6. 场景 Skill：[`.cursor/skills/INDEX.md`](.cursor/skills/INDEX.md)  
 7. 写 AscendC 前：[`library/documents/CANN-AscendC算子开发接口参考-查阅索引.md`](library/documents/CANN-AscendC算子开发接口参考-查阅索引.md)
+
+**换机 / Cloud 首次**（在跑任何带 golden 的 `run.sh` 之前）：
+
+```bash
+bash scripts/clone-thirdparty.sh
+# 默认会：clone 六仓 + build liboqs 0.15.0 + 编 liboqs_kem_ref/pke_ref
+# 仅补编：bash scripts/build-liboqs.sh
+# 只 clone 不编：BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
+```
 
 ---
 
@@ -40,6 +49,7 @@
 | 已锁参数 | 形状/tiling/`blockDim` 等不得擅自改参绕过；歧义先问用户 |
 | Rule/Skill | `.cursor/rules/`、`.cursor/skills/` 变更须用户当次确认 |
 | 验收声称 | 同用例目录须 **CPU + `SIM_DIRECT=1` sim** 双过；用例根无 stray dump |
+| thirdparty | **先** `clone-thirdparty.sh`（含 liboqs **build**）；缺库时 golden/KAT 会挂 |
 
 Skill 符号冲突（同句 `【】` 与 `#…#`）→ **告警、禁止仓库操作**。
 
@@ -48,13 +58,11 @@ Skill 符号冲突（同句 `【】` 与 `#…#`）→ **告警、禁止仓库�
 ## 4. 环境与常用命令
 
 ```bash
-# 建议先同步
 git pull
+bash scripts/clone-thirdparty.sh          # 缺依赖则装；已装则 skip；默认 build liboqs
+bash ~/ascendc/scripts/verify-cann.sh     # CANN 冒烟（Cloud 若无 CANN：标阻塞）
 
-# CANN 冒烟
-bash ~/ascendc/scripts/verify-cann.sh
-
-# 用例（在用例目录；默认即全量，勿手写与 default 相同的 HAT_*）
+# 用例（在用例目录；默认即全量）
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
@@ -62,9 +70,17 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 | 项 | 说明 |
 |----|------|
 | CANN | 社区版 **9.0.0**；常见路径 `~/Ascend/cann` |
-| 并行 | WSL 建议 `CMAKE_BUILD_JOBS=2`；**勿并行多路 SIM** |
-| `thirdparty/` | **不进 Git**；换机 `bash scripts/clone-thirdparty.sh` |
-| Cloud VM | 可能无本机 CANN / NPU；缺环境时 **如实标阻塞**，勿假绿；可读文档与写规格仍可进行 |
+| 并行 | 建议 `CMAKE_BUILD_JOBS=2` / `LIBOQS_JOBS=2`；**勿并行多路 SIM** |
+| `thirdparty/` | **不进 Git**；权威 [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) |
+| liboqs | tag **0.15.0**；[`scripts/build-liboqs.sh`](scripts/build-liboqs.sh)（`clone-thirdparty` 默认调用） |
+
+### Cloud Agent 注意（分轨）
+
+| 现象 | 归属 | Agent 该怎么做 |
+|------|------|----------------|
+| `gen_data` / verify 缺 `liboqs` / `liboqs_kem_ref` | **thirdparty** | 跑 `bash scripts/clone-thirdparty.sh` 或 `bash scripts/build-liboqs.sh`；修好后重跑 **CPU** |
+| `libge_common_base.so: undefined symbol: …InternalSwap…`（或同类 GE/runtime 符号） | **CANN SIM 运行时 / 镜像版本不一致** | **与 liboqs 无关**；标 **SIM 阻塞**，保留完整报错；**勿**声称装 liboqs 可修 SIM；本机 WSL SIM 能跑时以本机证据为准 |
+| Cloud 无 CANN | 环境 | 可读代码/写规格；**勿假绿** SIM |
 
 完整复现：[docs/engineering/环境复现与开发指南.md](docs/engineering/环境复现与开发指南.md)
 
@@ -74,7 +90,7 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 | 文件 | 谁维护 / 何时刷新 |
 |------|-------------------|
-| **`AGENTS.md`** | 开任务入口、硬门禁、文档地图变更时 |
+| **`AGENTS.md`** | 开任务入口、硬门禁、文档地图、**Cloud 依赖步骤**变更时 |
 | **`AGENT_HANDOFF.md`** | **每日**任务结束：当前真相 + 下一 P0（不堆历史） |
 | **`README.md`** | 顶层目录/目标/当前状态表变更时 |
 | **`qa/YYYY-MM/…`** | 当日决策与踩坑；同日只一篇 |
@@ -98,8 +114,9 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 ```text
 先读 AGENTS.md、README.md、AGENT_HANDOFF.md、qa/INDEX.md 与 .cursor/rules/ascendc-development.mdc。
+换机/Cloud：先 bash scripts/clone-thirdparty.sh（默认 build liboqs）。
 研究型工程：写码只认活跃 INDEX + docs/notes；frozen 读判决不抄码。
 examples/ 须 active customspec；$…$→规格 【】→预研 #…#→交付。
-验收须 CPU + SIM_DIRECT=1 sim；声称通过须有命令证据。
-每日结束刷新 AGENT_HANDOFF.md；入口/门禁变了同步刷新 AGENTS.md。
+验收须 CPU + SIM_DIRECT=1 sim；缺 CANN/SIM 符号异常须标阻塞勿假绿。
+每日结束刷新 AGENT_HANDOFF.md；入口/门禁/依赖步骤变了同步刷新 AGENTS.md。
 ```

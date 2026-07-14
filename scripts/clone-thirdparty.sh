@@ -5,12 +5,14 @@
 # 清单权威：docs/engineering/thirdparty-本地依赖.md
 #
 # Usage:
-#   bash scripts/clone-thirdparty.sh              # 缺则 clone；已存在则跳过
+#   bash scripts/clone-thirdparty.sh              # 缺则 clone；已存在则跳过；默认顺带 build liboqs
 #   FORCE=1 bash scripts/clone-thirdparty.sh      # 已存在也强制删后重拉（慎用）
 #   ONLY=tiny_sha3,liboqs,ntt_onnx bash scripts/clone-thirdparty.sh
+#   BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh   # 只 clone，不编 liboqs
 #
-# 新机器推荐：
+# 新机器 / Cloud Agent 推荐：
 #   git clone <本仓> && cd ascendc && bash scripts/clone-thirdparty.sh
+#   # 等价：clone 后单独 bash scripts/build-liboqs.sh
 
 set -euo pipefail
 
@@ -115,5 +117,21 @@ echo "[clone-thirdparty] done."
 echo
 echo "注意：原 thirdparty/merged_kyber 已迁至 ascendc-tests/pass-merged-kyber-mix-ntt256/（勿再 clone 到 thirdparty）"
 echo "注意：原 thirdparty/ntt_study 已改为 thirdparty/ntt_onnx（本脚本已拉取）"
-echo "liboqs 还需本地 build 后才能跑 KAT 脚本；见 docs/engineering/thirdparty-本地依赖.md"
 echo "若 ntt_onnx 为私有仓且 HTTPS 404：gh repo clone bigorange1024/ntt_onnx thirdparty/ntt_onnx"
+
+# 默认编译 liboqs（golden / KAT 依赖）；ONLY 排除 liboqs 或不想编时可 BUILD_LIBOQS=0
+BUILD_LIBOQS="${BUILD_LIBOQS:-1}"
+if [[ "${BUILD_LIBOQS}" = "1" ]] && should_process "liboqs"; then
+  if [[ -d "${TP}/liboqs" ]]; then
+    echo
+    echo "[clone-thirdparty] building liboqs (BUILD_LIBOQS=1)…"
+    bash "${SCRIPT_DIR}/build-liboqs.sh"
+  else
+    echo "[clone-thirdparty] WARN: thirdparty/liboqs missing; skip build" >&2
+  fi
+else
+  echo
+  echo "[clone-thirdparty] skip liboqs build (BUILD_LIBOQS=${BUILD_LIBOQS})"
+  echo "需要 golden/KAT 时再跑: bash scripts/build-liboqs.sh"
+fi
+

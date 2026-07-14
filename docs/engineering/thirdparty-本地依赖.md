@@ -2,11 +2,15 @@
 
 `thirdparty/` 整树在根 `.gitignore` 中排除（`/thirdparty/`），**不会**随 `git push` / `git pull` 同步。换机或新 clone 本仓后，须拉齐外部依赖。
 
-**一键安装（可公开 clone 的仓）**：
+**一键安装（可公开 clone 的仓 + 默认编译 liboqs）**：
 
 ```bash
-# clone 本仓后立刻执行
+# clone 本仓后立刻执行（缺则 clone；默认顺带 build liboqs + kem/pke ref）
 bash scripts/clone-thirdparty.sh
+# 仅补编 liboqs（源码已在）：
+bash scripts/build-liboqs.sh
+# 只 clone 不编 liboqs：
+BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 ```
 
 清单与 URL **以本文件 + `scripts/clone-thirdparty.sh` 为准**；改上游地址时须同步改脚本内 `REPOS` 表。
@@ -18,7 +22,7 @@ bash scripts/clone-thirdparty.sh
 | 目录 | 来源 | 上游 URL | 钉住 | 用途 | 换机怎么装 |
 |------|------|----------|------|------|------------|
 | `tiny_sha3/` | 外部 clone | https://github.com/mjosaarinen/tiny_sha3.git | 默认分支（浅） | Host SHA3/SHAKE golden | **`clone-thirdparty.sh`** |
-| `liboqs/` | 外部 clone | https://github.com/open-quantum-safe/liboqs.git | **tag `0.15.0`** | ML-KEM / PKE KAT | **`clone-thirdparty.sh`**（再本地 build） |
+| `liboqs/` | 外部 clone | https://github.com/open-quantum-safe/liboqs.git | **tag `0.15.0`** | ML-KEM / PKE KAT | **`clone-thirdparty.sh`（默认再调 `build-liboqs.sh`）** |
 | `ascend-samples/` | 外部 clone | https://gitee.com/ascend/samples.git | 默认分支（浅） | 昇腾官方样例，仅参考 | **`clone-thirdparty.sh`** |
 | `SHA3hp/` | 外部 clone | https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git | 默认分支（浅） | 第三方 AscendC Keccak/SHA3 | **`clone-thirdparty.sh`** |
 | `cann-ntt/` | 外部 clone | https://openi.pcl.ac.cn/serial2007/cann-ntt.git | 默认分支（浅） | 第三方 AscendC 前向 NTT | **`clone-thirdparty.sh`** |
@@ -81,7 +85,7 @@ gh repo clone bigorange1024/ntt_onnx thirdparty/ntt_onnx
 | 仓 | 说明 |
 |----|------|
 | **tiny_sha3** | `sha3.c` / `sha3.h`；路径恒为 `thirdparty/tiny_sha3`。Host golden / 对照，**不进**默认设备生产路径。 |
-| **liboqs** | 须 **0.15.0**。clone 后还要本地 build，才能跑 `scripts/liboqs_*` / KAT。 |
+| **liboqs** | 须 **0.15.0**。`clone-thirdparty.sh` **默认**调用 [`scripts/build-liboqs.sh`](../../scripts/build-liboqs.sh)（`BUILD_SHARED_LIBS=ON`、`OQS_BUILD_ONLY_LIB=ON`，并编 `liboqs_kem_ref` / `liboqs_pke_ref`）。 |
 | **ascend-samples** | Gitee [ascend/samples](https://gitee.com/ascend/samples)。体积大；**勿**直接编译旧样例当 CANN 9.0 主路径。 |
 | **SHA3hp** | OpenI Keccak/SHA3 AscendC；仅调研/对照。 |
 | **cann-ntt** | OpenI 前向 `Ntt`；仅调研/对照。 |
@@ -89,16 +93,23 @@ gh repo clone bigorange1024/ntt_onnx thirdparty/ntt_onnx
 
 ### liboqs build
 
-clone（tag 0.15.0）后须配置并编译；历史说明见 `qa/2026-06/2026-06-08-Rule-Skill落地与FIPS203-204终极目标.md` §liboqs。
+```bash
+bash scripts/build-liboqs.sh
+# FORCE=1 bash scripts/build-liboqs.sh   # 强制重编
+# BUILD_LIBOQS_REFS=0 …                  # 只编 lib，不编 scripts/liboqs_*_ref
+```
+
+产出：`thirdparty/liboqs/build/lib/liboqs.so`（或 `.a`）+ `scripts/liboqs_kem_ref` / `liboqs_pke_ref`。  
+历史说明见 `qa/2026-06/2026-06-08-Rule-Skill落地与FIPS203-204终极目标.md` §liboqs。
 
 ---
 
 ## 新机器 checklist
 
 1. `git clone <本仓 URL>`
-2. `bash scripts/clone-thirdparty.sh`（含 **ntt_onnx**）
-3. （需要 KAT 时）build `thirdparty/liboqs`
-4. 再按 [环境复现与开发指南.md](环境复现与开发指南.md) 配 CANN / 跑 `verify-cann.sh`
+2. `bash scripts/clone-thirdparty.sh`（含 **ntt_onnx**；**默认编好 liboqs**）
+3. 再按 [环境复现与开发指南.md](环境复现与开发指南.md) 配 CANN / 跑 `verify-cann.sh`
+4. Cloud Agent：若缺 CANN / SIM 动态库符号异常，见 [`AGENTS.md`](../../AGENTS.md) §Cloud — **勿把 liboqs 问题与 CANN SIM 问题混为一谈**
 
 ---
 

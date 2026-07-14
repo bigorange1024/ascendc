@@ -3,7 +3,16 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)（硬门禁与文档地图；入口变更时同步刷新）。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（办公室：pull 同步 + **新增 AGENTS.md**；家里 KEM KeyGen incubating 有条件完成）
+> **最后刷新**：2026-07-14（办公室：`AGENTS.md` + **clone-thirdparty 默认 build liboqs**；Cloud SIM CANN 符号与 liboqs 分轨）
+
+---
+
+## ★ Cloud / 依赖备忘（办公室补充）
+
+| 项 | 说明 |
+|----|------|
+| thirdparty | `bash scripts/clone-thirdparty.sh` **默认**编 liboqs 0.15.0 + `liboqs_*_ref`；单独补编：`bash scripts/build-liboqs.sh` |
+| Cloud SIM | 若报 `libge_common_base.so … InternalSwap` → **CANN 镜像问题**，非 liboqs；标阻塞；本机 WSL SIM 仍为权威 |
 
 ---
 

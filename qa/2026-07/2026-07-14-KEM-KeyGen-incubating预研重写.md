@@ -39,6 +39,15 @@
 | 联动 | [`README.md`](../../README.md) 阅读顺序与顶层树、[`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)、[`backup-project.sh`](../../backup-project.sh) |
 | 维护 | 入口/硬门禁/文档地图变更 → 刷新 `AGENTS.md`；**每日真相**仍只写 `AGENT_HANDOFF.md` |
 
+## 办公室补充（同日稍后）— clone 后默认 build liboqs
+
+| 项 | 内容 |
+|----|------|
+| 背景 | Cloud Agent 跑 incubating KeyGen：CPU 先因缺 liboqs 挂，补编后 PASS；SIM 仍报 `libge_common_base.so … InternalSwap`（**CANN**，与 liboqs 无关） |
+| 改动 | 新增 [`scripts/build-liboqs.sh`](../../scripts/build-liboqs.sh)；[`clone-thirdparty.sh`](../../scripts/clone-thirdparty.sh) **默认**调用（`BUILD_LIBOQS=0` 可关） |
+| 文档 | [`AGENTS.md`](../../AGENTS.md) §换机/Cloud、[`thirdparty-本地依赖.md`](../../docs/engineering/thirdparty-本地依赖.md) |
+| 纪律 | Agent **须**先 `clone-thirdparty.sh`；SIM 符号错标阻塞，勿假装装 liboqs 可修 |
+
 ## 遗留
 
 - `#交付#` → stable（用户确认后）

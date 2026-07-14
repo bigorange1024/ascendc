@@ -12,7 +12,7 @@
 
 ### 2026-07-14 — [KEM KeyGen incubating【预研】重写 · SyncAll/软旗 · AGENTS.md](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
-关键字：`exp-fips203-mlkem-kem-keygen-k4` · SyncAll · CPU 软旗 · CPU×40 · SIM 707057 · vs correctness/liboqs · **有条件完成** · 办公室补 **根 `AGENTS.md`（Cloud agent）**
+关键字：`exp-fips203-mlkem-kem-keygen-k4` · SyncAll · **AGENTS.md** · **clone-thirdparty 默认 build liboqs** · Cloud SIM `InternalSwap` 标 CANN 阻塞 · 有条件完成
 
 ### 2026-07-13 — [thirdparty · KEM KeyGen 规格重置 · T21](2026-07/2026-07-13-thirdparty外部仓清单.md)
 

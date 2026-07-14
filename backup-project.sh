@@ -169,7 +169,7 @@ cat > "$DEST/BACKUP_README.txt" << EOF
 1. 将本目录内容复制回工程根（勿覆盖 backup/ 子目录）
 2. source ~/Ascend/cann/bin/setenv.bash（或 scripts/env.sh）
 3. 进入用例目录：bash run.sh -r cpu -v Ascend910B4
-4. 若缺 liboqs：仅 KAT 脚本需要，见 examples/.../scripts/build_liboqs_pke_ref.sh
+4. 若缺 liboqs：`bash scripts/clone-thirdparty.sh`（默认 build）或 `bash scripts/build-liboqs.sh`
 
 ## 生成
 

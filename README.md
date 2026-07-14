@@ -43,7 +43,7 @@
 ├── qa/                       # INDEX.md、TODO.md；日纪要仅在 YYYY-MM/YYYY-MM-DD-关键词.md
 ├── library/                  # 外部资料 + shared/（探针共用代码与 vendored 设备原语）
 ├── thirdparty/               # 外部依赖（不进 Git；见 docs/engineering/thirdparty-本地依赖.md）
-│                             # 换机：bash scripts/clone-thirdparty.sh
+│                             # 换机：bash scripts/clone-thirdparty.sh（默认 build liboqs）
 ├── ascendc-tests/            # 平台功能探针（无 exp- 前缀；见 INDEX.md）
 ├── examples/
 │   ├── incubating/exp-*/     # 研究中
