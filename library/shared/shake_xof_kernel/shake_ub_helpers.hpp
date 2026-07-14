@@ -26,7 +26,8 @@ __aicore__ inline void PipeAll()
 }
 
 
-constexpr uint32_t CeilAlign32(uint32_t n)
+/** UB 32B 对齐上取整；须 `__aicore__ inline`，否则 ccec 设备链可能出现 undefined CeilAlign32。 */
+__aicore__ inline uint32_t CeilAlign32(uint32_t n)
 {
     return (n + 31U) & ~31U;
 }

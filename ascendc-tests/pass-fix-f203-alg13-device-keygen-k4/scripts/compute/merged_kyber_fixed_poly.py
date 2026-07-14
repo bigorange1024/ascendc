@@ -16,8 +16,10 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/compute/merged_kyber_fixed_poly.py
 """
-"""固定 Kyber poly（seed=42），供 vec-k4-v2 探针 golden 与 NTT 对拍。"""
+
 from __future__ import annotations
+
+"""固定 Kyber poly（seed=42），供 vec-k4-v2 探针 golden 与 NTT 对拍。"""
 
 import numpy as np
 

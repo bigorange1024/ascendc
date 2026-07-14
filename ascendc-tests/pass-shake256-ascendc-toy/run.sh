@@ -47,6 +47,10 @@ done
 source "${REPO_ROOT}/scripts/runtime_env.sh"
 export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
 runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
+# Host golden 需要 tiny_sha3
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/ensure_thirdparty_dep.sh"
+ensure_thirdparty_dep tiny_sha3 sha3.c
 if [ -n "$ASCEND_INSTALL_PATH" ]; then
     _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH
 elif [ -n "$ASCEND_HOME_PATH" ]; then
@@ -102,6 +106,9 @@ cmake --build build -j
 
 if [ "${RUN_MODE}" = "sim" ]; then
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-120}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/sim_env.sh"
+    sim_env_export "${CURRENT_DIR}" "${REPO_ROOT}"
     # shellcheck source=/dev/null
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi

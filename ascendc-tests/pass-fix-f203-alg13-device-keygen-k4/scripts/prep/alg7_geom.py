@@ -15,6 +15,9 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/prep/alg7_geom.py
 """
+
+from __future__ import annotations
+
 """Alg.7 SampleNTT 几何常量（Python 侧单一真源，须与 f203_alg7_layout.h 逐行同步）。
 
 本模块定义 XOF 预 squeeze 长度、候选对数、交错流长度等**与实现无关**的算术关系。
@@ -28,7 +31,6 @@
   - 每 3 字节 (c0,c1,c2) 解出一个 (d1,d2) 候选对 → 672/3 = 224 对
   - rej 按规范顺序扫描 d1[0],d2[0],d1[1],d2[1],… → 448 个 stream lane
 """
-from __future__ import annotations
 
 import os
 

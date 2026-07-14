@@ -16,6 +16,9 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/prep/gen_alg7_deinterleave_rom.py
 """
+
+from __future__ import annotations
+
 """生成 Alg.7 xof[672] 三字节解交织 Gather 索引 ROM → f203_alg7_deinterleave_rom.h。
 
 设备侧将 xof 展开为 uint8 数组后，按每 3 字节一组解出 d1/d2 需要分别 Gather c0、c1、c2 列：
@@ -28,7 +31,6 @@
 供 f203_alg7_d12_vec.hpp 实验路径（F203_ALG7_D12_GATHER=1）使用；默认标量解交织不依赖此 ROM。
 须与 alg7_geom.XOF_BYTES、CAND_PAIRS 及 f203_alg7_layout.h 同步。
 """
-from __future__ import annotations
 
 from pathlib import Path
 

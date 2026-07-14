@@ -141,3 +141,18 @@
 | alg21 SIM 无条件编入未引用的 `vendor/.../main_encrypt_g5_run.cpp` | 默认不再编入；`KEM_COMPILE_ENCRYPT_G5_HOST=1` 可显式打开 |
 
 **状态**：六探针复验 **完成**；ntt_onnx PAT 路径 **可用**。
+
+## 办公室补充（同日晚）— Cloud 二次失败清单（统一本仓修）
+
+Cloud 反馈：polyvec8/compress/decompress 已双绿；仍挂 7 项。本仓处理：
+
+| 探针 | 根因 | 处理 |
+|------|------|------|
+| CBD SIM | `kCpuLaunchBlockDim` 仅 CPU 用 → Clang `-Wunused` | 常量移入 `#ifdef __CCE_KT_TEST__` |
+| byteencode12 | 缺 `data_utils.h` | 自 polyvec8 补回并改文件头 |
+| alg13 se-k4 / shake | 缺 `tiny_sha3`（只 clone 了 ntt_onnx） | `scripts/ensure_thirdparty_dep.sh` + run.sh 按需 clone |
+| device-keygen `SyntaxError` | `prepare` 自身 OK，但 import 的 `merged_kyber_fixed_poly` 等**双 docstring** 夹断 `__future__` | 批量把 `__future__` 挪到合法位置（9 文件） |
+| shake128/256 | 缺 `CMakeLists.txt`；补回后 CPU **AIC/AIV 竞态写 reserved2**；SIM 缺 `sim_env` 致 WSL FPE；`CeilAlign32` 缺 `__aicore__ inline` 致 SIM 链接失败 | 恢复 CMake；CPU `SetKernelMode(AIV_MODE)`；run.sh 接 `sim_env_export`；CeilAlign32 标设备内联 |
+| vec-k4-v2 CPU `ek_pke` | Cloud 报 diff@1272；本机 clean cpu **PASS** | **不做臆测改算法**；请 Cloud 干净重跑；若仍红贴 verify 全文 |
+
+说明：[`docs/notes/AscendC多环境运行纪要.md`](../../docs/notes/AscendC多环境运行纪要.md)

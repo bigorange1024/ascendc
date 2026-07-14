@@ -29,8 +29,6 @@ extern "C" __global__ __aicore__ void f203_cbd_eta2_batch8(GM_ADDR prf_gm, GM_AD
 namespace {
 constexpr size_t kPrfBytes = F203CbdEta2Host::PRF_TOTAL_BYTES;               // 输入总字节数：8*128=1024
 constexpr size_t kSrcBytes = static_cast<size_t>(F203CbdEta2Host::SRC_COEFFS) * sizeof(int32_t);  // 输出总字节数：8*256*4=8192
-/** CPU 孪生：910B 每 blockDim 会 fork 1 AIC+2 AIV；AIV_ONLY 探针固定 launch=1。 */
-constexpr uint32_t kCpuLaunchBlockDim = 1U;
 }  // namespace
 
 /**
@@ -54,6 +52,9 @@ int32_t main(int32_t argc, char *argv[])
               << " launch_blockDim=" << kHostBlockDim << " F203_CBD_BLOCK_DIM=" << F203_CBD_BLOCK_DIM << "\n";
 
 #ifdef __CCE_KT_TEST__
+    /* CPU 孪生：910B 每 blockDim 会 fork 1 AIC+2 AIV；AIV_ONLY 探针固定 launch=1。
+     * 背景：常量仅 CPU 分支使用；若放在共同命名空间，SIM/Clang -Werror=-Wunused-const-variable 会挂。 */
+    constexpr uint32_t kCpuLaunchBlockDim = 1U;
     /* CPU 孪生路径：固定 launch blockDim=1（AIV_ONLY 探针避免 tikicpu 按 launch
      * blockDim 误 fork 出多颗 AIC 进程）；核内若检测到 GetBlockNum()==1 会自动
      * 退化为单核串行 8 行，与 P2 双核结果语义一致。GM 缓冲用 AscendC::GmAlloc

@@ -16,8 +16,10 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/prep/fips203_se_sample/golden_se_sampling.py
 """
-"""Python golden for Alg.13 行 8–15 — 与 fips203_prf / fips203_se_sample.c 同语义。"""
+
 from __future__ import annotations
+
+"""Python golden for Alg.13 行 8–15 — 与 fips203_prf / fips203_se_sample.c 同语义。"""
 
 import hashlib
 import os

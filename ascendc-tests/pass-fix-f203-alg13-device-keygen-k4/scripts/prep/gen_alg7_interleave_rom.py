@@ -16,6 +16,9 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/prep/gen_alg7_interleave_rom.py
 """
+
+from __future__ import annotations
+
 """生成 Alg.7 rej 阶段 d1/d2 交错 Gather 字节索引 ROM → f203_alg7_interleave_rom.h。
 
 设备侧 rej 向量路径将 scratch 布局视为连续字节流：
@@ -29,7 +32,6 @@
 输出头文件供 f203_alg7_rej_vec.hpp / compact 路径在 UB 上做 AscendC::Gather 重排。
 须与 alg7_geom.CAND_PAIRS、STREAM_LEN 及 f203_alg7_layout.h 同步。
 """
-from __future__ import annotations
 
 from pathlib import Path
 

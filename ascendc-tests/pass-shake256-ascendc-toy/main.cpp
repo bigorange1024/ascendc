@@ -79,12 +79,15 @@ int32_t main(int32_t argc, char *argv[])
               << " (UB self-check, no GM x/y)\n";
 
 #ifdef __CCE_KT_TEST__
+    /* CPU 孪生：本核为 AIV 向量路径；不切 AIV_MODE 时 AIC/AIV 竞态写 reserved2。 */
+    AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    constexpr uint32_t kCpuLaunchBlockDim = 1U;
     /* CPU 孪生路径：tiling 分配在「GM 模拟」堆上，ICPU_RUN_KF 直接调用核函数，
      * 执行完毕后从同一块内存读回 reserved2。 */
     uint8_t *tiling = static_cast<uint8_t *>(AscendC::GmAlloc(tilingBytes));
     std::memcpy(tiling, &tilingHost, tilingBytes);
 
-    ICPU_RUN_KF(shake256_general, tilingHost.blockDim, tiling);
+    ICPU_RUN_KF(shake256_general, kCpuLaunchBlockDim, tiling);
 
     std::memcpy(&tilingHost, tiling, tilingBytes);
     const uint32_t pass = tilingHost.reserved2;

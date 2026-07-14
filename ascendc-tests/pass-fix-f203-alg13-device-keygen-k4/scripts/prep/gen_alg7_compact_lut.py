@@ -16,6 +16,9 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/prep/gen_alg7_compact_lut.py
 """
+
+from __future__ import annotations
+
 """生成 8-lane accept mask → Gather 字节偏移 LUT → f203_alg7_compact_lut.h。
 
 Alg.7 向量 rej compact 路径将 448 个 stream lane 按 8×int32 分块处理：
@@ -29,7 +32,6 @@ Alg.7 向量 rej compact 路径将 448 个 stream lane 按 8×int32 分块处理
 
 常量 kAlg7CompactStreamChunks = 448/8 与 f203_alg7_layout.h 中 kStreamLen 一致。
 """
-from __future__ import annotations
 
 from pathlib import Path
 

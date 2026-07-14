@@ -16,6 +16,9 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/prep/gen_data.py
 """
+
+from __future__ import annotations
+
 """Golden 生成器：Alg.7 单 poly SampleNTT — xof[672]、d1/d2[224]、â[256]。
 
 本脚本是探针 pass-fix-f203-alg7-sample-ntt-k4 的**黑盒 oracle**：
@@ -40,7 +43,6 @@
 
 自检：同一 (d1,d2) 上 spec（规范顺序 rej）与 bulk（全量掩码+过滤）必须一致。
 """
-from __future__ import annotations
 
 import hashlib
 import os

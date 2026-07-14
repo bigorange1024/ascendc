@@ -59,6 +59,10 @@ done
 source "${REPO_ROOT}/scripts/runtime_env.sh"
 export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
 runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
+# verify 编 C 参考需要 tiny_sha3（Cloud 若只 clone 了 ntt_onnx 会缺）
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/ensure_thirdparty_dep.sh"
+ensure_thirdparty_dep tiny_sha3 sha3.c
 if [ -n "$ASCEND_INSTALL_PATH" ]; then
     _ASCEND_INSTALL_PATH=$ASCEND_INSTALL_PATH
 elif [ -n "$ASCEND_HOME_PATH" ]; then

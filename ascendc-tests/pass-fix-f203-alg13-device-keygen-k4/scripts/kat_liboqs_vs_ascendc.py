@@ -16,6 +16,9 @@
 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。
 文件：scripts/kat_liboqs_vs_ascendc.py
 """
+
+from __future__ import annotations
+
 """liboqs PKE KeyGen ↔ 探针 AscendC 对拍（pass-fix-f203-alg13-device-keygen-k4）。
 
 种子契约（与 run.sh / 设备 DerandFromSeedD 一致）：
@@ -29,7 +32,6 @@
   KAT_SEEDS="20260619,123,456,..." bash kat_liboqs_vs_ascendc.sh  # 11 个整数，前 10 CPU、后 1 SIM
   KAT_VERBOSE=1 bash kat_liboqs_vs_ascendc.sh
 """
-from __future__ import annotations
 
 import os
 import secrets
