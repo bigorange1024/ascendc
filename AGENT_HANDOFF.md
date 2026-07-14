@@ -3,27 +3,17 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（办公室：runtime_env 扩到活跃探针；交 Cloud 跑测、本机不跑）
+> **最后刷新**：2026-07-14（办公室：`ntt_onnx` 公开；Cloud 先复验 clone）
 
 ---
 
 ## ★ Cloud 下一刀（优先）
 
-**任务**：`git pull` 最新 main 后，对 **ascendc-tests 活跃探针**（已接 `runtime_env`）跑 `cpu` + `sim`；**不要**跑两个 `NOT_IMPLEMENTED` device stub；**不要**跑 `frozen/`。
+1. **立刻**：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh`（仓已公开；须见到 `transpose_mlkem_luts_i8.h`）
+2. 再重跑原先因缺 LUT 挂的 Encrypt 探针（`alg14-*-encrypt-*`）cpu+sim
+3. 其余失败（Clang `-Werror` / rsync / 仓内破损）**先别一起改**——等用户下一口令
 
-建议入口（可写成循环）：
-
-```bash
-git pull origin main && git rev-parse --short HEAD
-# 冒烟短：
-cd ascendc-tests/add_custom && bash run.sh cpu 910B4 && SIM_DIRECT=1 bash run.sh sim 910B4
-cd ../pass-shake128-ops-math-toy && bash run.sh -r cpu -v Ascend910B4 && bash run.sh -r sim -v Ascend910B4
-# 再按需扫 INDEX「当前探针」+ correctness（fix-alg19/20/21-*-correctness-k4）
-```
-
-说明：[`docs/notes/AscendC多环境运行纪要.md`](docs/notes/AscendC多环境运行纪要.md) · [`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md)。
-
-已知陷阱：Cloud Clang + `-Werror` 会打未用常量（PKE keygen 已修）；SIM 符号错≠缺 liboqs。
+说明：[`docs/notes/AscendC多环境运行纪要.md`](docs/notes/AscendC多环境运行纪要.md) · [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)
 
 ---
 
@@ -32,7 +22,7 @@ cd ../pass-shake128-ops-math-toy && bash run.sh -r cpu -v Ascend910B4 && bash ru
 | 项 | 说明 |
 |----|------|
 | `runtime_env` | 四例 examples 试点 + **活跃探针 run.sh** 已接入；默认仍 **cpu** |
-| thirdparty | `clone-thirdparty.sh` 默认编 liboqs |
+| thirdparty | `clone-thirdparty.sh` 默认编 liboqs；**`ntt_onnx` 已公开**（HTTPS 匿名可拉） |
 | Cloud SIM dump | 非 WSL 不装 dump 桩（`sim_env.sh`） |
 
 ---

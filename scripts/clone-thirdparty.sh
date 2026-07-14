@@ -32,7 +32,7 @@ REPOS=(
   "ascend-samples|https://gitee.com/ascend/samples.git||1|昇腾官方样例（体积大；仅参考）"
   "SHA3hp|https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git||1|第三方 AscendC Keccak/SHA3"
   "cann-ntt|https://openi.pcl.ac.cn/serial2007/cann-ntt.git||1|第三方 AscendC 前向 NTT"
-  "ntt_onnx|https://github.com/bigorange1024/ntt_onnx.git||1|NTT/LUT golden（原 ntt_study；若私有仓 HTTPS 失败则用 gh/SSH）"
+  "ntt_onnx|https://github.com/bigorange1024/ntt_onnx.git||1|NTT/LUT golden（原 ntt_study；2026-07-14 起公开仓，HTTPS 可匿名浅克隆）"
 )
 
 should_process() {
@@ -88,8 +88,12 @@ clone_one() {
   if ! git "${args[@]}"; then
     if [[ "${name}" == "ntt_onnx" ]] && command -v gh >/dev/null 2>&1; then
       echo "  HTTPS clone failed; retry via gh repo clone…"
-      gh repo clone bigorange1024/ntt_onnx "${dest}"
+      if ! gh repo clone bigorange1024/ntt_onnx "${dest}"; then
+        echo "  ERROR: ntt_onnx clone failed (HTTPS + gh)。仓应为公开：https://github.com/bigorange1024/ntt_onnx" >&2
+        return 1
+      fi
     else
+      echo "  ERROR: git clone failed for ${name} (${url})" >&2
       return 1
     fi
   fi
@@ -116,8 +120,7 @@ done
 echo "[clone-thirdparty] done."
 echo
 echo "注意：原 thirdparty/merged_kyber 已迁至 ascendc-tests/pass-merged-kyber-mix-ntt256/（勿再 clone 到 thirdparty）"
-echo "注意：原 thirdparty/ntt_study 已改为 thirdparty/ntt_onnx（本脚本已拉取）"
-echo "若 ntt_onnx 为私有仓且 HTTPS 404：gh repo clone bigorange1024/ntt_onnx thirdparty/ntt_onnx"
+echo "注意：原 thirdparty/ntt_study 已改为 thirdparty/ntt_onnx（公开仓，HTTPS 浅克隆即可）"
 
 # 默认编译 liboqs（golden / KAT 依赖）；ONLY 排除 liboqs 或不想编时可 BUILD_LIBOQS=0
 BUILD_LIBOQS="${BUILD_LIBOQS:-1}"

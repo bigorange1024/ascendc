@@ -26,7 +26,7 @@ BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 | `ascend-samples/` | 外部 clone | https://gitee.com/ascend/samples.git | 默认分支（浅） | 昇腾官方样例，仅参考 | **`clone-thirdparty.sh`** |
 | `SHA3hp/` | 外部 clone | https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git | 默认分支（浅） | 第三方 AscendC Keccak/SHA3 | **`clone-thirdparty.sh`** |
 | `cann-ntt/` | 外部 clone | https://openi.pcl.ac.cn/serial2007/cann-ntt.git | 默认分支（浅） | 第三方 AscendC 前向 NTT | **`clone-thirdparty.sh`** |
-| `ntt_onnx/` | 外部 clone | https://github.com/bigorange1024/ntt_onnx.git | 默认分支（浅） | NTT/LUT golden（原 `ntt_study`） | **`clone-thirdparty.sh`** |
+| `ntt_onnx/` | 外部 clone | https://github.com/bigorange1024/ntt_onnx.git（**公开**，2026-07-14） | 默认分支（浅） | NTT/LUT golden（原 `ntt_study`） | **`clone-thirdparty.sh`** |
 
 **已迁出 / 更名（勿再装回旧路径）**：
 
@@ -73,7 +73,9 @@ git clone --depth 1 https://openi.pcl.ac.cn/serial2007/cann-ntt.git thirdparty/c
 git clone --depth 1 https://github.com/bigorange1024/ntt_onnx.git thirdparty/ntt_onnx
 ```
 
-若 `ntt_onnx` 为**私有仓**且 HTTPS 404：
+`ntt_onnx` 自 **2026-07-14** 起为**公开仓**；Cloud Agent / 无 GitHub 登录环境可直接 HTTPS 浅克隆。若仍 404，检查网络或 GitHub 是否短暂故障（勿再按「私有仓」配置 token，除非维护者再次改为 private）。
+
+若维护者再度改为 private，可用：
 
 ```bash
 gh repo clone bigorange1024/ntt_onnx thirdparty/ntt_onnx

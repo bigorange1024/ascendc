@@ -83,3 +83,12 @@
 | 笔记 | 新增 [`docs/notes/AscendC多环境运行纪要.md`](../../docs/notes/AscendC多环境运行纪要.md)（三环境不变量、Clang/`sim_env`/门禁） |
 | 二期落地 | **活跃 `ascendc-tests/*/run.sh`** 接入 `runtime_env`（32 个；2 个 T19 device stub 跳过）；**本机不跑测**，交 Cloud Agent 跑 cpu+sim |
 | 未改 | `frozen/`、默认仍 `cpu`、examples 其余非试点树 |
+
+## 办公室补充（同日稍后）— `ntt_onnx` 公开化（Cloud 可拉）
+
+| 项 | 内容 |
+|----|------|
+| 根因 | Cloud 矩阵 Encrypt 链缺 LUT：`ntt_onnx` 曾为 **private**，HTTPS 匿名 404 |
+| 处理 | `gh repo edit bigorange1024/ntt_onnx --visibility public`；匿名 `git ls-remote` 已通 |
+| 文档 | `thirdparty-本地依赖.md` · `clone-thirdparty.sh` · `Cursor-Cloud环境说明.md` |
+| Cloud 复验 | `FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 应有 `transpose_mlkem_luts_i8.h` |
