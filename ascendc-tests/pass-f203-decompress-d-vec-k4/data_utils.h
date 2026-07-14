@@ -6,7 +6,7 @@
  * @brief host 侧读写 bin 文件与打印调试数据的通用工具头（CANN 样例惯用组件）。
  *
  * 本文件在流水线中的位置：被 main.cpp include，仅用于 host 程序读取
- * input/*.bin（如 comp.bin）与写出 output/*.bin（如 poly.bin），不包含任何
+ * input 目录下各 .bin（如 comp.bin）与写出 output 下各 .bin（如 poly.bin），不包含任何
  * Compress_d/Decompress_d 算法逻辑，也不参与设备端编译；与 golden 的关系是纯粹的
  * I/O 搬运通道——golden 数据由 scripts/gen_data.py 生成、按同样的裸二进制格式落盘，
  * 本文件负责把这些字节原样搬进/搬出 host 内存供 kernel 使用。

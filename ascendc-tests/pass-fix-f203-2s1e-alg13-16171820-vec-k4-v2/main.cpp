@@ -3,7 +3,7 @@
  * @brief Host 驱动入口：读 input bin → launch `mmad_custom` → 写 output bin，供 run.sh + cmp 对拍。
  *
  * 流水线位置：探针最外层 Host；不实现密码学，只负责 GM 分配、H2D/D2H 与文件 I/O。
- * 与 golden 关系：写出的 output/*.bin 由 scripts/verify_result.py 与 gen_data 生成的 golden_* 比对。
+ * 与 golden 关系：写出的 output 下各 .bin 由 scripts/verify_result.py 与 gen_data 生成的 golden_* 比对。
  *
  * ## GM 参数顺序（与内核 mmad_custom 一致）
  *

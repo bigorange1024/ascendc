@@ -3,18 +3,18 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（`ntt_onnx` **保持私有**；Cloud 用 ASCENDC_GH_PAT）
+> **最后刷新**：2026-07-14（Clang comment/`cp_sync`；**ntt_onnx 仍要 ASCENDC_GH_PAT**）
 
 ---
 
 ## ★ Cloud 下一刀（优先）
 
-1. **用户先**：Cursor Dashboard → Secrets → **`ASCENDC_GH_PAT`**（详见 thirdparty 文档）  
-2. Agent：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh`  
-3. 仓内硬伤（`__future__` / emit_toy / `basic.hpp` / `fips203_prf.h`）已修：可重跑原失败子集  
-4. 仍待：Clang `-Werror`、rsync  
+1. **用户先**：Cursor Dashboard → Secrets → **`ASCENDC_GH_PAT`**（`ntt_onnx` 仍私有，无 PAT 则 Encrypt/LUT 仍挂）  
+2. Agent：`FORCE=1 ONLY=ntt_onnx BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh` → 须有 `transpose_mlkem_luts_i8.h`  
+3. 已修可重跑：`-Werror=comment`（vec-k4-v2 / polyvec8 / compress / decompress）、`scripts/cp_sync.sh`（alg19/20/21 等 vendor_sync）、P0 硬伤  
+4. CBD：本机 cpu+sim 已绿；Cloud 若仍挂请贴编译原文  
 
-说明：[`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)
+说明：[`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md) · [`docs/notes/AscendC多环境运行纪要.md`](docs/notes/AscendC多环境运行纪要.md)
 
 ---
 

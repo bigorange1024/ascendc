@@ -93,7 +93,17 @@
 | `pass-…-byteencode12` | 补提交缺失的 `basic.hpp` |
 | `library/shared/…/fips203_prf.h` | 从 backup 恢复（verify 编 C 参考需要） |
 
-其余：Clang `-Werror` / rsync 仍待下一刀。
+其余：Clang `-Werror` / rsync 已在同日下一刀处理（见下）。
+
+## 办公室补充（同日）— Cloud 失败清单修补（Clang + rsync）
+
+| 根因 | 处理 |
+|------|------|
+| `-Werror=comment`（`input/*.bin` 等含字面量 `/*`） | 改注释：vec-k4-v2、polyvec8、compress/decompress、byteencode12、exp-encrypt data_utils；本机 **cpu+sim PASS** |
+| Cloud 无 `rsync` | 新增 [`scripts/cp_sync.sh`](../../scripts/cp_sync.sh)；alg19/20/21 与若干 vendor_sync 改用（有 rsync 仍优先） |
+| examples encrypt vendor_sync `REPO` 少上一层 | 一并改为上溯 3 层到仓根 |
+| `ntt_onnx` | **仍依赖用户配 `ASCENDC_GH_PAT`**；本仓无法代授私钥仓读权限 |
+| CBD 被 Cloud 标 `-Werror` | 本机 clean **cpu+sim PASS**；若 Cloud 再挂需贴原文 |
 
 | 项 | 内容 |
 |----|------|

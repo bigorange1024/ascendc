@@ -2,7 +2,7 @@
  * @file main.cpp
  * @brief ByteEncode₁₂-only host：dst_preset + t_hat_preset → ek/sk。
  *
- * 流水线位置：host 入口；读 input/*.bin，启动 byte_encode12_custom，写 output/ek|sk_polyvec.bin。
+ * 流水线位置：host 入口；读 input 下各 .bin，启动 byte_encode12_custom，写 output/ek|sk_polyvec.bin。
  * 与 golden 关系：不计算 golden；verify_result.py 将本程序输出与 gen_data 的 golden_* 对拍。
  * 作用：CPU 孪生（ICPU_RUN_KF）与 NPU/SIM（ACL launch）两条路径共用同一 I/O 契约。
  */

@@ -36,6 +36,7 @@ Cloud/裸 Linux   → HOST=cloud|linux → 通常无卡；SIM 路径与 dump 策
 | 现象 | 环境 | 处理 |
 |------|------|------|
 | `-Wunused-const-variable` + `-Werror` 编译失败 | Cloud 常见 **Clang** | 删未用常量/变量；WSL **GCC 常不报** → 本机绿 ≠ Cloud 绿 |
+| `-Werror=comment`（`"/*" within comment`） | 同上；注释写 `input/*.bin` / `output/*.bin` | **禁止**块注释内出现字面量 `/*`；改写为「input 目录下各 .bin」 |
 | 其它 `-Werror` 告警升错误 | 同上 | 以 **Cloud 工具链** 为 host 编译权威之一 |
 
 ### 3.2 CANN / SIM 动态库

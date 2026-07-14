@@ -2,7 +2,7 @@
  * @file main.cpp
  * @brief 8-poly polyvec 三段式 NTT/INTT host 驱动（CPU 孪生 / ACL SIM·NPU）。
  *
- * 流水线位置：run.sh 编译后执行本程序；读 gen_data 生成的 input/*，写 output/dst.bin（及调试 dump）。
+ * 流水线位置：run.sh 编译后执行本程序；读 gen_data 生成的 input 下各文件，写 output/dst.bin（及调试 dump）。
  *
  * 作用：
  *   - 装载 tiling.bin、src.bin、lut_even/odd_stacked.bin 到 GM/workspace；
