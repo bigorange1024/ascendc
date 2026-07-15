@@ -39,3 +39,11 @@ bash run.sh -r sim -v Ascend910B4  → verify c/K max=0 PASS；Total tick 721010
 ## 4. 恢复 `docs/research/`
 
 用户要求新建（恢复）[`docs/research/`](../../docs/research/INDEX.md)：调研草稿区，与 `notes/` 定稿分离。已写 INDEX + T19a 要点摘要；同步 `docs/INDEX.md`、`README.md`、Rule 子目录表、`AGENT_HANDOFF.md`。
+
+## 5. 已验证能力 DAG 预研方法论（专题草稿）
+
+Cloud 同步至 `origin/main` @ `5a63ae4` 后，将此前关于「数学模型约束预研写码 / 降低幻觉」的讨论要点写入：
+
+- TeX / PDF：[`docs/research/2026-07-15-已验证能力DAG预研方法论要点.tex`](../../docs/research/2026-07-15-已验证能力DAG预研方法论要点.tex)（`xelatex-clean` 已编译）
+- 内容：节点/边/证书、Agent 门禁、形式语言与自动机草图、kem.keygen 校准、Encaps/Decaps 验证计划、M0–M5；**未**记题外保护策略
+- 后续数日专题讨论；可穿插测试与写码；结论稳定后再迁 `notes/`
