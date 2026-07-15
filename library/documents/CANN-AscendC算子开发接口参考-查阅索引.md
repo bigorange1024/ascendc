@@ -49,6 +49,7 @@
 
 按时间倒序追加（最新在上）。
 
+| 2026-07-15 | **Alg.20 Encaps device 头 SHA3** | shared `Sha3OneShot`（非矢量 API）；`GetBlockIdx` | [`fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)：prep 前段 `H=SHA3-256`/`G=SHA3-512`；仅 block0；Encrypt 余路径引用 stable |
 | 2026-07-13 | **SyncAll（硬同步，AIV-only）** | §2.3.7.2.3 p.1086–1088；`SyncAll<isAIVOnly=true>()` 硬同步无 GM workspace；A2 支持硬同步；`isAIVOnly=true` 仅汇合 Vector 核（MIX 下 AIC 已返回时可用） | KEM KeyGen Fuse/Tail 前双 AIV 汇合，避免 AIV0 拷未写完的 `sk_out` 末 poly |
 | 2026-07-13 | **Alg.19 KEM KeyGen customspec（exp）** | `DataCopy`/`GetSubBlockIdx`/`CrossCore*`/`ShiftRight`/`Muls`（复用 KeyGen 已查）；尾段 SHA3 走 shared Keccak 非矢量 API；NTT S1–S3 **禁 Gather** | [`exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.tex)：2 launch；ek\_kem 1568 / dk\_kem 3168；基线 `pass-fix-f203-alg19-kem-keygen-device-k4` |
 | 2026-07-10 | **统一整数 Compress limb 向量** | `Muls`/`Adds`/`Add`/`ShiftRight`；C=629·2^16+63213；carry 进位链 | [`f203_unified_compress_vec.hpp`](../../library/shared/f203_unified_round/f203_unified_compress_vec.hpp)：纯 int32 向量宽乘；`pass-f203-compress-unified-int-vec-k4` 全 d CPU+SIM PASS |

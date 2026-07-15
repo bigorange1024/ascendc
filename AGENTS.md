@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-14（`runtime_env` 多环境分流一期；clone-thirdparty / Cloud SIM 分轨）
+**最后刷新**：2026-07-15（T19a Encaps device PASS；`docs/research/` 恢复；下一 T19b/c）
 
 ---
 

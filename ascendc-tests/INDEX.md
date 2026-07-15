@@ -66,10 +66,10 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | [**fix-f203-alg19-kem-keygen-correctness-k4/**](fix-f203-alg19-kem-keygen-correctness-k4/) | **Alg.19 KEM KeyGen（correctness）✅** — vendor PKE + KeyGen_internal；CPU+SIM+liboqs max=0；SIM **742558** tick |
 | [**fix-f203-alg20-kem-encaps-correctness-k4/**](fix-f203-alg20-kem-encaps-correctness-k4/) | **Alg.20 KEM Encaps（correctness）** — vendor Encrypt **G5←frozen**；**CPU+SIM PASS** |
 | [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；SIM 默认 **2-session** PASS |
-| [**fix-f203-alg20-kem-encaps-device-k4/**](fix-f203-alg20-kem-encaps-device-k4/) | **Alg.20 KEM Encaps（device）** — **T19a**；**待开工** |
+| [**fix-f203-alg20-kem-encaps-device-k4/**](fix-f203-alg20-kem-encaps-device-k4/) | **Alg.20 KEM Encaps（device）✅** — **T19a PASS**：prep 前段 H/G + 编译期引用 stable Encrypt；`m` GM 输入；CPU+SIM `c`/`K` max=0；SIM tick **721010** |
 | [**fix-f203-alg21-kem-decaps-device-k4/**](fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — **T19b/c**；**待开工** |
 
-**命名（2026-07-10）**：`*-correctness-k4` = vendor oracle 对照（冻结不动）；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19 KeyGen device 已 PASS 并更名 `pass-fix-…`**。KEM `scripts/` KeyGen 默认 [`pass-fix-f203-alg19-kem-keygen-device-k4`](pass-fix-f203-alg19-kem-keygen-device-k4/)；Encaps/Decaps device（`fix-*-device-k4`）待 **T19a/b**。
+**命名（2026-07-10）**：`*-correctness-k4` = vendor oracle 对照（冻结不动）；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19 KeyGen device 已 PASS 并更名 `pass-fix-…`**；**Alg.20 Encaps device（T19a）已 PASS**（目录仍 `fix-…`，更名可选）。KEM `scripts/` KeyGen 默认 [`pass-fix-f203-alg19-kem-keygen-device-k4`](pass-fix-f203-alg19-kem-keygen-device-k4/)；Encaps 脚本默认可改指 device；Decaps device 待 **T19b/c**。
 
 **KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 2-session ~11min/段。
 

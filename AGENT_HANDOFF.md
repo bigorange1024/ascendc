@@ -2,16 +2,36 @@
 
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
-> **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-14（Cloud 第二波全绿；device-keygen tick~542k @ `995efdd`）
+> **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
+> **最后刷新**：2026-07-15（T19a Encaps device PASS；恢复 `docs/research/`）
 
 ---
 
-## ★ Cloud 下一刀（优先）
+## ★ 当前真相
 
-第二波失败子集在 `995efdd` **已全部 CPU+SIM 绿**（含 `pass-fix-f203-alg13-device-keygen-k4`）。无强制续跑。
+| 项 | 状态 |
+|----|------|
+| **T19a** Encaps device | [`fix-f203-alg20-kem-encaps-device-k4`](ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/) **CPU+SIM PASS**；`c`/`K` max=0；SIM tick **721010** |
+| PKE + KEM KeyGen stable | 已交付；tick 见 [`qa/active_sim_regress_summary.md`](qa/active_sim_regress_summary.md) |
+| `docs/research/` | **已恢复**（调研草稿区；定稿仍进 `notes/`） |
 
-可选：全活跃探针矩阵扫一遍；或回主线（T19 Encaps / KEM KeyGen incubating）。
+---
+
+## ★ 下一刀（P0）
+
+**T19b/c** — [`fix-f203-alg21-kem-decaps-device-k4`](ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)：Phase-E 接 stable Encrypt 布局、Phase-D 接 stable Decrypt；禁止 frozen G5/G4 抄码。
+
+可选收尾：Encaps 更名 `pass-fix-…`；仓库 `ENCAPS_DIR` / 分项 kat 改指 device。
+
+---
+
+## ★ Smoke
+
+```bash
+cd ascendc-tests/fix-f203-alg20-kem-encaps-device-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4
+```
 
 ---
 

@@ -32,7 +32,7 @@ alwaysApply: true
 | `.cursor/skills/INDEX.md` | 场景 Skill 列表与触发 |
 | `library/documents/CANN-AscendC算子开发接口参考-查阅索引.md` | CANN 9.0 AscendC API **查阅记录**（写码前必查；查 PDF 后必刷新） |
 
-- `docs/` 子目录：`specs/`（含 baseline-registry）、`engineering/`、`notes/`、`reports/` — 各有 `INDEX.md`（**无** `research/`）。
+- `docs/` 子目录：`research/`（调研草稿）、`specs/`（含 baseline-registry）、`engineering/`、`notes/`（定稿总结）、`reports/` — 各有 `INDEX.md`。
 - **`docs/notes/`**：定稿技术总结须 **原理优先**（数学/不变量/可复用模式），案例与标识符放附录；见 [docs-archiving.mdc](docs-archiving.mdc)「写作质量」。
 - **`qa/`**：讨论过程、决策要点；**非**完整踩坑教科书（详文链到 `docs/notes`）。
 - **`ascendc-tests/<探针>/`**：仅实现方案（`INTEGRATION_PLAN.md`）、`STATUS.md`；**禁止** `LESSONS_LEARNED.md` 等长篇总结 → 见 [docs-archiving.mdc](docs-archiving.mdc)。

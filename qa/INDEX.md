@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-15 — [TODO · T19a Encaps device PASS](2026-07/2026-07-15-TODO与T19a-Encaps-device-PASS.md)
+
+关键字：`TODO` · **T20 关闭** · [`active_sim_regress_summary.md`](active_sim_regress_summary.md) · **T19a PASS**（tick **721010**）· **`docs/research/` 恢复** · 下一 **T19b/c**
+
 ### 2026-07-14 — [KEM/PKE 默认哈希 RNG · `#交付#` · add_custom `-r/-v`](2026-07/2026-07-14-KEM-KeyGen-incubating预研重写.md)
 
 关键字：`fips203_host_rng` · **PKE/KEM 默认 SHA3/SHAKE**（`SEED_D=` 仍可定点）· KEM KeyGen `#交付#` · add_custom **`-r/-v`** · `runtime_env` · Cloud 二次绿
@@ -127,7 +131,7 @@ library/docs/qa 分工 · 仅根 README · 各目录 INDEX 侧重点
 | **路径** | `qa/YYYY-MM/YYYY-MM-DD-<中文关键词>.md` |
 | **每日一篇** | 同一自然日**只有一份**纪要；新讨论**刷新/追加**到当日文件，**禁止**同日新建第二个 `.md` |
 | **标题** | 文件名与文首标题含当日讨论**关键词**（可随当日追加话题更新文件名/标题，须同步 INDEX） |
-| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`** 与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
+| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`**、可选 **[`active_sim_regress_summary.md`](active_sim_regress_summary.md)**（活跃 SIM tick）与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
 
 ---
 

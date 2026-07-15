@@ -3,7 +3,7 @@
 **本目录唯一职责**：原理层技术总结与平台知识库（数学/不变量/可复用模式 + 可选案例附录）。  
 **写法**：[技术总结写作模板.md](技术总结写作模板.md)；归档约定见 Rule [`ascendc-development.mdc`](../../.cursor/rules/ascendc-development.mdc)（`docs/notes` 写作质量）  
 
-**讨论过程** → `qa/`；**实现方案** → 用例目录 `INTEGRATION_PLAN.md`。
+**讨论过程** → `qa/`；**实现方案** → 用例目录 `INTEGRATION_PLAN.md`；**未定稿调研** → [`docs/research/`](../research/INDEX.md)。
 
 ---
 
