@@ -69,3 +69,11 @@ Cloud 同步至 `origin/main` @ `5a63ae4` 后，将此前关于「数学模型�
 - 契约对齐 [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)：Alg.17；$m$ GM 入；$H$/$G$ 并入 prep；SIM 2 / CPU 5；$c$+$K$；incubating **vendored**（非 `STABLE_ENCRYPT_ROOT`）
 - 已登记 [`examples/incubating/INDEX.md`](../../examples/incubating/INDEX.md)、API 查阅索引
 - **下一步**：用户确认 customspec 后，明确【预研】/「可以写代码」再落地实现
+
+## 9. 【预研】Encaps incubating 写码 + CPU/SIM PASS
+
+- 目录：[`exp-fips203-mlkem-kem-encaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)（vendored Encrypt + `kem/`；变量用 FIPS `$m$`/`$r$`/`$K$`/`$c$`）
+- 验收：CPU `c`/`K` max=0（含随机 `m`×3）；SIM max=0，tick **721211** / **721033**（对标 device 721010）
+- 详情：[`STATUS.md`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/STATUS.md)
+- `qa/active_sim_regress_summary.md`：**保留** pass-fix device **721010**，**另加** incubating **721211**
+- 下一刀：Encaps `#交付#` → stable，或 T19b/c Decaps device
