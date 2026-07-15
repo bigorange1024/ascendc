@@ -110,5 +110,5 @@
 | [`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | 742558 | vendor+3 launch oracle | STATUS |
 | [`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | 1029406 | 早前 SIM PASS；STATUS 标待复验 | STATUS |
 | [`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | n/a | SIM 2-session PASS；未记 Total tick | STATUS |
-| [`fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a PASS（prep H/G + stable Encrypt；`SIM_DIRECT=1`） | STATUS 2026-07-15 |
+| [`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a PASS（prep H/G + stable Encrypt；`SIM_DIRECT=1`） | STATUS 2026-07-15 |
 | [`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) | n/a | T19b/c 待开工 | STATUS |

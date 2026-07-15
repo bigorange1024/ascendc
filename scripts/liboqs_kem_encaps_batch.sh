@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # liboqs_kem_encaps_batch.sh — KEM Encaps 分项 kat（固定 ek，随机 m，默认 quiet）
 #
-# 默认 ENCAPS_DIR = ascendc-tests/fix-f203-alg20-kem-encaps-device-k4
+# 默认 ENCAPS_DIR = ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4
 # 默认批测：CPU×10 + SIM×3（KEM_ENC_*_TRIALS 可覆盖）
 #
 # Usage:
@@ -17,7 +17,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ONLY_MODE=""
 SOC_VERSION="${SOC_VERSION:-Ascend910B4}"
 export SOC_VERSION
-export ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg20-kem-encaps-device-k4}"
+export ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4}"
 
 SHORT=r:,v:
 LONG=run-mode:,soc-version:

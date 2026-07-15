@@ -214,7 +214,7 @@ SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 |------|------|------|
 | **本目录** | Alg.19 KeyGen | `ek_kem` / `dk_kem` |
 | [`fix-f203-alg20-kem-encaps-correctness-k4`](../fix-f203-alg20-kem-encaps-correctness-k4/) | Alg.20 correctness | 消费 alg19 `ek_kem`；vendor frozen Encrypt |
-| [`fix-f203-alg20-kem-encaps-device-k4`](../fix-f203-alg20-kem-encaps-device-k4/) | Alg.20 device | **T19a**；无 vendor |
+| [`pass-fix-f203-alg20-kem-encaps-device-k4`](../pass-fix-f203-alg20-kem-encaps-device-k4/) | Alg.20 device | **T19a**；无 vendor |
 | [`fix-f203-alg21-kem-decaps-correctness-k4`](../fix-f203-alg21-kem-decaps-correctness-k4/) | Alg.21 correctness | 消费 `dk_kem`+`c`；vendor frozen |
 | [`fix-f203-alg21-kem-decaps-device-k4`](../fix-f203-alg21-kem-decaps-device-k4/) | Alg.21 device | **T19b/c**；无 vendor |
 

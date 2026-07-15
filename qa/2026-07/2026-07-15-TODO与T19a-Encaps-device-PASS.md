@@ -24,7 +24,7 @@
 - `m` 为 **GM 输入**（Alg.17）；SHA3 头 **并入** stable Encrypt prep 前段，不另 launch。
 - Encrypt **编译期引用** stable；禁止 frozen G5 vendor。
 
-落地：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/INTEGRATION_PLAN.md) + `kem/` + `main_kem_encaps.cpp` + `run.sh` / `gen_data` / `verify`。
+落地：[`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/INTEGRATION_PLAN.md) + `kem/` + `main_kem_encaps.cpp` + `run.sh` / `gen_data` / `verify`。
 
 **排障**：`run.sh` 不得在 `source env.sh/setenv` 前 `set -e`（`grep -q` 非零会静默退出）；二进制须在用例根 cwd 跑（`ReadFile("./input/…")`）。
 
@@ -51,6 +51,21 @@ Cloud 同步至 `origin/main` @ `5a63ae4` 后，将此前关于「数学模型�
 
 ## 6. liboqs Encaps 分项 KAT（device）
 
-- 脚本默认 `ENCAPS_DIR` → [`fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)；生产路径 `M_FILE` 喂随机 `m`（无需 `KEM_ENC_EXT_SEED`）。
+- 脚本默认 `ENCAPS_DIR` → [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)；生产路径 `M_FILE` 喂随机 `m`（无需 `KEM_ENC_EXT_SEED`）。
 - 验收：`bash scripts/liboqs_kem_encaps_batch.sh` → **CPU×10 + SIM×3 PASS**（固定 stash `ek`，每轮 `os.urandom` m ↔ liboqs `encaps_derand` 逐字节 `c`/`K`）。
 - 墙钟约 20min（SIM×3）；quiet log：`output/liboqs_kem_encaps/kat.log`。
+
+## 7. Encaps device 更名 `pass-fix-…` + scripts 默认切换
+
+- 目录：`fix-f203-alg20-kem-encaps-device-k4` → [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)
+- `ENCAPS_DIR` 默认改指新目录：`roundtrip_kem_encaps.sh`、`liboqs_kem_vs_ascendc.sh`、`roundtrip_kem_keygen_encaps_decaps.sh`、`liboqs_kem_encaps_batch.sh`、`kat_liboqs_kem_encaps.py`
+- INDEX：Encaps 从「规划中」挪入活跃 `pass-fix` 表；Decaps device 仍 T19b/c
+- **未** git commit / push（待用户指令）
+
+## 8. `$写规格$` — Alg.20 Encaps incubating customspec
+
+- 新建目录（**仅规格，无实现码**）：[`examples/incubating/exp-fips203-mlkem-kem-encaps-k4/`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)
+- 规格：[`exp-fips203-mlkem-kem-encaps-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/exp-fips203-mlkem-kem-encaps-k4-实现方案-customspec.tex) + PDF（`xelatex-clean` OK）
+- 契约对齐 [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)：Alg.17；$m$ GM 入；$H$/$G$ 并入 prep；SIM 2 / CPU 5；$c$+$K$；incubating **vendored**（非 `STABLE_ENCRYPT_ROOT`）
+- 已登记 [`examples/incubating/INDEX.md`](../../examples/incubating/INDEX.md)、API 查阅索引
+- **下一步**：用户确认 customspec 后，明确【预研】/「可以写代码」再落地实现

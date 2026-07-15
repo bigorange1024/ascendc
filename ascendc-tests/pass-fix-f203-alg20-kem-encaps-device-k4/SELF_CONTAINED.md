@@ -1,4 +1,4 @@
-# 自包含与设备全链约束 — fix-f203-alg20-kem-encaps-device-k4
+# 自包含与设备全链约束 — pass-fix-f203-alg20-kem-encaps-device-k4
 
 ## 密码学契约
 

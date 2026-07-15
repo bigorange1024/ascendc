@@ -27,10 +27,10 @@
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
-| **P0** | **T19a** | **[`fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)**：prep 前段 H/G + stable Encrypt | **PASS**（CPU+SIM；tick **721010**；liboqs KAT **10+3**） |
+| **P0** | **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：prep 前段 H/G + stable Encrypt | **PASS**（CPU+SIM；tick **721010**；liboqs KAT **10+3**） |
 | **P0** | **T19b/c** | **[`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)** Phase-E/D | **下一主线** |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps（correctness）：[`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | **CPU+SIM PASS**；device 待 T19 |
-| **P0** | **T7a** | ML-KEM **Alg.20** Encaps（correctness）：[`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | **PASS**；device **T19a 已 PASS** |
+| **P0** | **T7a** | ML-KEM **Alg.20** Encaps（correctness）：[`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | **PASS**；device **T19a 已 PASS** → [`pass-fix-…-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen（correctness）：[`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | **PASS**；device [`pass-fix-…-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) **PASS**（~**713k**）；**stable 交付**见上 |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
@@ -51,11 +51,11 @@
 
 | 子项 | 范围 | 验收 |
 |------|------|------|
-| **T19a** | **[`fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)**：改接 [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **PASS**（CPU+SIM max=0；tick **721010**）；liboqs KAT **CPU×10+SIM×3 PASS**；可选更名 pass-fix |
+| **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：改接 [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **PASS**（CPU+SIM max=0；tick **721010**）；liboqs KAT **CPU×10+SIM×3 PASS**；**已更名 pass-fix**；`scripts/` Encaps 默认已指本目录 |
 | **T19b** | **[`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) Phase-E**：同上 Encrypt 布局 | 与 T19a 同树；Phase-E + 全链 |
 | **T19c** | **同上 device-k4 Phase-D**：改接 [`stable-…-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) fused | CPU+SIM `K` max=0 |
 | **T19d** | **[`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)** | **PASS**（2026-07-10）；2 launch；P1 后 SIM tick 均值 **~713k** |
-| **T19e** | **`scripts/` KeyGen 默认 → `pass-fix-f203-alg19-kem-keygen-device-k4`**；correctness 标为 oracle 对照 | **KeyGen 段完成**（2026-07-10）；**Encaps 分项 kat 默认已指 device**（2026-07-15）；Decaps 仍 correctness 直至 T19b/c |
+| **T19e** | **`scripts/` KeyGen/Encaps 默认 → `pass-fix-*-device-k4`**；correctness 标为 oracle 对照 | **KeyGen 段完成**（2026-07-10）；**Encaps 已指 pass-fix device**（含 roundtrip / liboqs_vs / kat，2026-07-15）；Decaps 仍 correctness 直至 T19b/c |
 | **T19f** | incubating KeyGen 重写 → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **完成** → 已关闭表 |
 
 **禁止**：未改接线前把 `SRC` 指回 stable 强行 sync；从 frozen **抄码改写**冒充新实现（rsync 拼装快照除外，直至 T19e 关闭）。

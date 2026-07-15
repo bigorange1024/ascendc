@@ -131,7 +131,7 @@ Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_v
 | SIM tick | ~742k | ~713k（P1 后均值） |
 | 脚本默认 | 对照 / Encaps 过渡 | **KeyGen**（`roundtrip_kem_*` 等） |
 
-后继：**T19a** Alg.20 Encaps device [`fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/) · Alg.21 Decaps device。
+后继：**T19a** Alg.20 Encaps device [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) · Alg.21 Decaps device。
 
 ---
 

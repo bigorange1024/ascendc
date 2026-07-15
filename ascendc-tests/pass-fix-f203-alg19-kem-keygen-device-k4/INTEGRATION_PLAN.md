@@ -355,7 +355,7 @@ bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4
 
 | 探针 | 消费 |
 |------|------|
-| [`fix-f203-alg20-kem-encaps-device-k4`](../fix-f203-alg20-kem-encaps-device-k4/) | `output/ek_kem.bin` |
+| [`pass-fix-f203-alg20-kem-encaps-device-k4`](../pass-fix-f203-alg20-kem-encaps-device-k4/) | `output/ek_kem.bin` |
 | [`fix-f203-alg21-kem-decaps-device-k4`](../fix-f203-alg21-kem-decaps-device-k4/) | `output/dk_kem.bin` |
 
 device-k4 **G3 PASS** 前，round-trip 脚本仍默认 **correctness-k4**。

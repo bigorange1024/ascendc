@@ -1,4 +1,4 @@
-# STATUS — fix-f203-alg20-kem-encaps-device-k4
+# STATUS — pass-fix-f203-alg20-kem-encaps-device-k4
 
 FIPS 203 **Alg.20 / Alg.17 Encaps**（ml_kem_1024 / k=4）— **无 vendor** 设备主线（T19a）。
 
@@ -33,6 +33,6 @@ bash scripts/liboqs_kem_encaps_batch.sh
 
 ## 后续（非本轮）
 
-- 可选：更名 `pass-fix-f203-alg20-kem-encaps-device-k4`
-- ~~仓库脚本 `ENCAPS_DIR` / kat 批测改指本探针~~ → **已改**（`liboqs_kem_encaps_batch.sh` / `kat_liboqs_kem_encaps.py` 默认本目录；`CPU×10+SIM×3` PASS）
+- ~~更名 `pass-fix-…`~~ → **已更名**（2026-07-15）
+- ~~仓库脚本 `ENCAPS_DIR`~~ → **已改**：`liboqs_kem_encaps_batch.sh` / `kat_liboqs_kem_encaps.py` / `roundtrip_kem_encaps.sh` / `liboqs_kem_vs_ascendc.sh` / `roundtrip_kem_keygen_encaps_decaps.sh` 默认本目录（`CPU×10+SIM×3` KAT PASS）
 - T19b/c Decaps device

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fix-f203-alg20-kem-encaps-device-k4 — Alg.20 Encaps（prep 前段 H/G + stable Encrypt）
+# pass-fix-f203-alg20-kem-encaps-device-k4 — Alg.20 Encaps（prep 前段 H/G + stable Encrypt）
 #
 # 生产 I/O：input/{ek_kem,m,lut_*} → output/{c,K}.bin；coins 设备自产，不读 Host coins 为权威。
 # PKE：编译期引用 examples/stable/stable-fips203-mlkem-pke-encrypt-k4
@@ -161,5 +161,5 @@ elif [ "${KEM_ENCAPS_VERIFY}" = "1" ]; then
     python3 "${CURRENT_DIR}/scripts/verify_kem_encaps.py"
 fi
 if [ "${KEM_ENCAPS_KAT:-0}" != "1" ]; then
-    echo "[SUCCESS] fix-f203-alg20-kem-encaps-device-k4 (${RUN_MODE})"
+    echo "[SUCCESS] pass-fix-f203-alg20-kem-encaps-device-k4 (${RUN_MODE})"
 fi

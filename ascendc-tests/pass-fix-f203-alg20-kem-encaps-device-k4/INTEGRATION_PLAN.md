@@ -1,4 +1,4 @@
-# INTEGRATION_PLAN — fix-f203-alg20-kem-encaps-device-k4
+# INTEGRATION_PLAN — pass-fix-f203-alg20-kem-encaps-device-k4
 
 **定位**：`ascendc-tests/` **Alg.20 `ML-KEM.Encaps` 设备主线**（**ml_kem_1024 / k=4**）。经 **Alg.17 Encaps_internal** 调用 **stable 对齐**的 Alg.14 Encrypt；**无** `vendor/`、**不**抄 frozen G5。
 
@@ -99,10 +99,10 @@ CPU：沿用 stable **5 launch** 分叉；第一 launch 换为 `f203_kem_enc_pre
 ## 5. 验收命令（声称通过前）
 
 ```bash
-cd ascendc-tests/fix-f203-alg20-kem-encaps-device-k4
+cd ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
-# 可选：仓库 scripts/liboqs_kem_encaps_batch.sh（接线后改 ENCAPS_DIR）
+# 可选：仓库 scripts/liboqs_kem_encaps_batch.sh（默认 ENCAPS_DIR=本目录）
 ```
 
 防挂死预算：`KERNEL_COMPUTE_BUDGET_SEC` 默认与 Encrypt 全链同量级（≥600）。
