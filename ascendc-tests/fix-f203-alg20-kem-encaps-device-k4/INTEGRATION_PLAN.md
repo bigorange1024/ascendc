@@ -91,8 +91,8 @@ CPU：沿用 stable **5 launch** 分叉；第一 launch 换为 `f203_kem_enc_pre
 |------|------|------|
 | **G0** | CMake+run.sh 壳；kernel 结束 | **PASS** |
 | **G1** | 注入固定 `m`+`ek`；头后 `coins`/`K` vs host tiny_sha3 | 中间量（隐含于全链；VERIFY 全链绿） |
-| **G2** | 全链 `c`/`K` vs liboqs `encaps_derand` | **CPU PASS** max=0（2026-07-15） |
-| **G3** | SIM 同 G2；更新 tick 表 | **SIM PASS** max=0；tick **721010**（2026-07-15） |
+| **G2** | 全链 `c`/`K` vs liboqs `encaps_derand` | **CPU PASS**；分项 KAT **CPU×10 PASS**（2026-07-15） |
+| **G3** | SIM 同 G2；更新 tick 表 | **SIM PASS** tick **721010**；分项 KAT **SIM×3 PASS**（2026-07-15） |
 
 ---
 

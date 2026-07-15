@@ -14,6 +14,14 @@
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 _ORIG_ARGS=("$@")
+
+# KAT 批测 quiet：log → output/kat_liboqs_kem_encaps.log
+if [ "${KEM_ENCAPS_KAT:-0}" = "1" ]; then
+    mkdir -p "${CURRENT_DIR}/output"
+    export CI=1
+    exec >>"${CURRENT_DIR}/output/kat_liboqs_kem_encaps.log" 2>&1
+fi
+
 REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
 STABLE_ENCRYPT="${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4"
 
@@ -142,7 +150,16 @@ if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}" || true
 fi
 
-if [ "${KEM_ENCAPS_VERIFY}" = "1" ]; then
+if [ "${KEM_ENCAPS_KAT:-0}" = "1" ]; then
+    c_sz=$(wc -c <"${CURRENT_DIR}/output/c.bin")
+    k_sz=$(wc -c <"${CURRENT_DIR}/output/K.bin")
+    if [ "${c_sz}" -ne 1568 ] || [ "${k_sz}" -ne 32 ]; then
+        echo "[ERROR] output size c=${c_sz} K=${k_sz}"
+        exit 1
+    fi
+elif [ "${KEM_ENCAPS_VERIFY}" = "1" ]; then
     python3 "${CURRENT_DIR}/scripts/verify_kem_encaps.py"
 fi
-echo "[SUCCESS] fix-f203-alg20-kem-encaps-device-k4 (${RUN_MODE})"
+if [ "${KEM_ENCAPS_KAT:-0}" != "1" ]; then
+    echo "[SUCCESS] fix-f203-alg20-kem-encaps-device-k4 (${RUN_MODE})"
+fi

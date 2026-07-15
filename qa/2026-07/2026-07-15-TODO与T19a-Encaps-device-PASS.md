@@ -35,7 +35,8 @@ bash run.sh -r cpu -v Ascend910B4  → verify c/K max=0 PASS
 bash run.sh -r sim -v Ascend910B4  → verify c/K max=0 PASS；Total tick 721010
 ```
 
-后续可选：更名 `pass-fix-…`；仓库 `ENCAPS_DIR` / 分项 kat 改指本探针。
+后续可选：更名 `pass-fix-…`（Encaps 分项 kat 已默认指本探针）。
+
 ## 4. 恢复 `docs/research/`
 
 用户要求新建（恢复）[`docs/research/`](../../docs/research/INDEX.md)：调研草稿区，与 `notes/` 定稿分离。已写 INDEX + T19a 要点摘要；同步 `docs/INDEX.md`、`README.md`、Rule 子目录表、`AGENT_HANDOFF.md`。
@@ -47,3 +48,9 @@ Cloud 同步至 `origin/main` @ `5a63ae4` 后，将此前关于「数学模型�
 - TeX / PDF：[`docs/research/2026-07-15-已验证能力DAG预研方法论要点.tex`](../../docs/research/2026-07-15-已验证能力DAG预研方法论要点.tex)（`xelatex-clean` 已编译）
 - 内容：节点/边/证书、Agent 门禁、形式语言与自动机草图、kem.keygen 校准、Encaps/Decaps 验证计划、M0–M5；**未**记题外保护策略
 - 后续数日专题讨论；可穿插测试与写码；结论稳定后再迁 `notes/`
+
+## 6. liboqs Encaps 分项 KAT（device）
+
+- 脚本默认 `ENCAPS_DIR` → [`fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-device-k4/)；生产路径 `M_FILE` 喂随机 `m`（无需 `KEM_ENC_EXT_SEED`）。
+- 验收：`bash scripts/liboqs_kem_encaps_batch.sh` → **CPU×10 + SIM×3 PASS**（固定 stash `ek`，每轮 `os.urandom` m ↔ liboqs `encaps_derand` 逐字节 `c`/`K`）。
+- 墙钟约 20min（SIM×3）；quiet log：`output/liboqs_kem_encaps/kat.log`。

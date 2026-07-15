@@ -21,7 +21,7 @@
 
 **T19b/c** — [`fix-f203-alg21-kem-decaps-device-k4`](ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)：Phase-E 接 stable Encrypt 布局、Phase-D 接 stable Decrypt；禁止 frozen G5/G4 抄码。
 
-可选收尾：Encaps 更名 `pass-fix-…`；仓库 `ENCAPS_DIR` / 分项 kat 改指 device。
+可选收尾：Encaps 更名 `pass-fix-…`。liboqs Encaps 分项 kat 已默认指 device（**CPU×10+SIM×3 PASS**）。
 
 ---
 
