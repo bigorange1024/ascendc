@@ -2,11 +2,11 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-15（活跃 SIM tick 见 [`active_sim_regress_summary.md`](active_sim_regress_summary.md)；**T19a PASS**；下一主线 **T19b/c**）
+**最近刷新**：2026-07-15（活跃 SIM tick 见 [`active_sim_regress_summary.md`](active_sim_regress_summary.md)；**Encaps `#验收#` → stable**；下一主线 **T19b/c**）
 
 ---
 
-## 里程碑：PKE 三段 + KEM KeyGen 交付（已完成）
+## 里程碑：PKE 三段 + KEM KeyGen + Encaps 交付（已完成）
 
 | 算法 | stable 算子 | 关闭项 | SIM tick（登记） |
 |------|-------------|--------|------------------|
@@ -14,8 +14,9 @@
 | Alg.14 Encrypt | [`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | T14a | **627590** |
 | Alg.15 Decrypt | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | T15a | **283290** |
 | Alg.19 KEM KeyGen | [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | T19f | **706633** |
+| Alg.20 KEM Encaps | [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | T19g | **721119** |
 
-闭环默认：`scripts/roundtrip_pke_batch.sh` → PKE 三段 stable。KEM KeyGen KAT：`scripts/liboqs_kem_keygen_batch.sh`（`KEYGEN_DIR` 默认可指 stable）。预研副本仍在 `examples/incubating/exp-fips203-mlkem-*`。
+闭环默认：`scripts/roundtrip_pke_batch.sh` → PKE 三段 stable。KEM Encaps KAT：`scripts/liboqs_kem_encaps_batch.sh`（默认 `ENCAPS_DIR`→stable）。预研副本仍在 `examples/incubating/exp-fips203-mlkem-*`。
 
 **07-14 已落地（非打开项）**：PKE/KEM **默认哈希 RNG**（`library/shared/fips203_host_rng/`；`SEED_D=` 仍可定点）；`add_custom` **`-r/-v`**；PKE/KEM `-r sim` **默认 `SIM_DIRECT=1`**（勿手写）。
 
@@ -23,11 +24,12 @@
 
 ## 打开项（按优先级）
 
-主线 **ML-KEM Encaps/Decaps device**（Alg.20–21）。**T19a Encaps device 已 PASS**；Decaps device 仍 **T19b/c**。correctness 仍 vendor **frozen G5/G4**（oracle 对照，不改）。
+主线 **ML-KEM Decaps device**（Alg.21）。**T19a Encaps device + `#验收#` stable 已完成**；Decaps device 仍 **T19b/c**。correctness 仍 vendor **frozen G5/G4**（oracle 对照，不改）。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
 | **P0** | **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：prep 前段 H/G + stable Encrypt | **PASS**（CPU+SIM；tick **721010**；liboqs KAT **10+3**） |
+| **P0** | **T19g** | Encaps incubating → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **完成**（tick **721119**；KAT **10+3**；scripts 默认改指 stable） |
 | **P0** | **T19b/c** | **[`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)** Phase-E/D | **下一主线** |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps（correctness）：[`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | **CPU+SIM PASS**；device 待 T19 |
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps（correctness）：[`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | **PASS**；device **T19a 已 PASS** → [`pass-fix-…-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
@@ -38,7 +40,7 @@
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
-| — | **T2b / T5** | KeyGen 等通用 `fips203-baseline-registry`；Encrypt 已有 [`fips203-mlkem1024-pke-encrypt-baseline-registry.md`](../docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md)；KEM KeyGen 已有 [`fips203-mlkem1024-kem-keygen-baseline-registry.md`](../docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md) | Encrypt/KEM-KG 已补；PKE KeyGen/Decrypt 通用表仍待 |
+| — | **T2b / T5** | KeyGen 等通用 `fips203-baseline-registry`；Encrypt / KEM KeyGen / **KEM Encaps** 已有 registry | Encrypt/KEM-KG/Encaps 已补；PKE KeyGen/Decrypt 通用表仍待 |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
 | — | **T4** | 换机后可选重编 liboqs（OpenSSL） | 可选 |
@@ -51,12 +53,13 @@
 
 | 子项 | 范围 | 验收 |
 |------|------|------|
-| **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：改接 [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **PASS**（CPU+SIM max=0；tick **721010**）；liboqs KAT **CPU×10+SIM×3 PASS**；**已更名 pass-fix**；`scripts/` Encaps 默认已指本目录 |
+| **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：改接 [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **PASS**（CPU+SIM max=0；tick **721010**）；liboqs KAT **CPU×10+SIM×3 PASS**；**已更名 pass-fix**；交付树见 **T19g** |
 | **T19b** | **[`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) Phase-E**：同上 Encrypt 布局 | 与 T19a 同树；Phase-E + 全链 |
 | **T19c** | **同上 device-k4 Phase-D**：改接 [`stable-…-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) fused | CPU+SIM `K` max=0 |
 | **T19d** | **[`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)** | **PASS**（2026-07-10）；2 launch；P1 后 SIM tick 均值 **~713k** |
-| **T19e** | **`scripts/` KeyGen/Encaps 默认 → `pass-fix-*-device-k4`**；correctness 标为 oracle 对照 | **KeyGen 段完成**（2026-07-10）；**Encaps 已指 pass-fix device**（含 roundtrip / liboqs_vs / kat，2026-07-15）；Decaps 仍 correctness 直至 T19b/c |
+| **T19e** | **`scripts/` KeyGen/Encaps 默认** | **Encaps 默认改指 [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/)**（2026-07-15 `#验收#`）；KeyGen 段仍可指 pass-fix/device；Decaps 仍 correctness 直至 T19b/c |
 | **T19f** | incubating KeyGen 重写 → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **完成** → 已关闭表 |
+| **T19g** | incubating Encaps → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **完成** → 已关闭表 |
 
 **禁止**：未改接线前把 `SRC` 指回 stable 强行 sync；从 frozen **抄码改写**冒充新实现（rsync 拼装快照除外，直至 T19e 关闭）。
 
@@ -99,6 +102,7 @@
 |----|------|--------|
 | **T20** | 活跃用例详细中文注释补课 Wave1–5（跳过 `frozen/`/`add_custom/`/`vendor/`/`thirdparty/`） | 2026-07-15（Wave 2026-07-10 已齐；自打开项迁出） |
 | **T19f** | incubating KEM KeyGen → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) · SIM **706633** | 2026-07-14 |
+| **T19g** | incubating KEM Encaps → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) · SIM **721119** · KAT **10+3** | 2026-07-15 |
 | **T7b** | alg14 correctness `run.sh` 资源友好化 | 2026-07-10（correctness 探针已冻结；stable Encrypt 已有 SKIP_REBUILD） |
 | **T15c** | 冻结 [`fix-f203-alg14/15-*-correctness-k4`](../ascendc-tests/frozen/) → 引用改 stable Encrypt/Decrypt | 2026-07-10 |
 | **T15a** | Alg.15 Decrypt **`#交付#`**：[`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) · KAT×10+1 · roundtrip×10+1 · `DECRYPT_DIR` 默认 stable · **PKE 三段齐备** | 2026-07-10 |

@@ -19,6 +19,7 @@
 | [`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **627590** | Alg.14；SIM 主参考 | STATUS |
 | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | **283290** | Alg.15 | STATUS |
 | [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **706633** | Alg.19；2 launch；`#交付#` 2026-07-14 | STATUS |
+| [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **721119** | Alg.20；SIM 2；`#验收#` 2026-07-15 | STATUS |
 
 ---
 
@@ -30,6 +31,7 @@
 | [`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/) | 627614 | 已晋级；晋级前 SIM | STATUS |
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |
 | [`exp-fips203-mlkem-kem-keygen-k4`](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) | 707057 | 已晋级；复测 706657 | STATUS |
+| [`exp-fips203-mlkem-kem-encaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/) | **721211** | 已晋级 stable；副本 tick（非零 `m` **721033**） | STATUS 2026-07-15 |
 | [`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4`](../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) | ~77958 | 对齐 vec-k4-v2 prefetch | INDEX/customspec |
 | [`exp-sepolyvec8-ntt-k8`](../examples/incubating/exp-sepolyvec8-ntt-k8/) | n/a | CPU+SIM PASS；STATUS 未记 tick | INDEX |
 | [`exp-fips203-mlkem-pke-stage1-encode-vec`](../examples/incubating/exp-fips203-mlkem-pke-stage1-encode-vec/) | 8520 | 历史 aiv=1 剖面 | legacy-summary |
@@ -109,6 +111,6 @@
 | [`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) | **713227** | P1 后 3 次均值；scripts KeyGen 默认 | STATUS |
 | [`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | 742558 | vendor+3 launch oracle | STATUS |
 | [`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | 1029406 | 早前 SIM PASS；STATUS 标待复验 | STATUS |
+| [`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a pass-fix；`c`/`K` max=0；行为基线 | STATUS 2026-07-15 |
 | [`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | n/a | SIM 2-session PASS；未记 Total tick | STATUS |
-| [`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a PASS（prep H/G + stable Encrypt；`SIM_DIRECT=1`） | STATUS 2026-07-15 |
 | [`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) | n/a | T19b/c 待开工 | STATUS |

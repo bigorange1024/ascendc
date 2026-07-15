@@ -49,9 +49,9 @@ Encrypt 主体行为对齐
         + \texttt{input/m.bin}（32\,B，\textbf{GM 输入}）
         + 静态 NTT/INTT LUT（与消息无关）。
   \item \textbf{输出}：\textbf{仅} \texttt{c.bin}（1568\,B）与 \texttt{K.bin}（32\,B）。
-  \item $h=H(\mathrm{ek})$、$r$（$\equiv$\texttt{coins}，$G$ 后半）\textbf{仅} device
-        UB/workspace；\textbf{禁止} Host 预填 \texttt{coins.bin}；\textbf{禁止}将
-        $h$/$r$/$a\_hat$/$re$ 等中间态作为交付契约落盘。
+  \item $h=H(\mathrm{ek})$、$r\in\mathbb{B}^{32}$（$G$ 后半；Alg.14 随机性输入）\textbf{仅} device
+        UB/workspace；\textbf{禁止} Host 预填 $r$；\textbf{禁止}将
+        $h$/$r$/$y$/$e_1$/$e_2$/$\hat{A}$ 等中间态作为交付契约落盘。
 \end{itemize}
 
 \textbf{设备 Launch（强制）}：与 stable Encrypt / device Encaps \textbf{同拓扑} ——
@@ -97,10 +97,10 @@ CANN / tikicpulib & 工具链与仿真（非业务源码） \\
         \dirname{frozen/}、其它 \dirname{examples/*/}（一次性 vendor 除外）。
   \item 子进程调用 stable / 探针 \texttt{run.sh} 再拼 Encaps。
   \item Host \texttt{tiny\_sha3} / liboqs 参与\textbf{生产}路径的 $H$/$G$（KAT /
-        golden 脚本除外）；\textbf{禁止} Host 算 $H$/$G$/\texttt{coins} 冒充设备。
+        golden 脚本除外）；\textbf{禁止} Host 算 $H$/$G$/$r$/$K$ 冒充设备。
   \item 从 \dirname{ascendc-tests/frozen/} 或 correctness \texttt{vendor/}（G5）
         \textbf{抄实现} / \texttt{vendor\_sync}。
-  \item 为 KEM 头增加独立 launch；Host 预填 \texttt{coins.bin}；将 $h$/$r$ 落盘为交付物。
+  \item 为 KEM 头增加独立 launch；Host 预填 $r$；将 $h$/$r$ 落盘为交付物。
 \end{itemize}
 
 \subsection{相对 device 探针的落点差异}
@@ -126,9 +126,9 @@ SIM tick 参考 & \textbf{721010} & 写码目标同量级 \\
 \midrule
 KEM 头 & Launch-1 前段：\texttt{KemEncInitHead}
          （仅 block0）：$m_{\mathrm{GM}}\to H(\mathrm{ek})\to G\to K\Vert r$ \\
-Prep Â / CBD & 与 stable Encrypt：\texttt{F203\_AHAT16\_BLOCK\_DIM=2}；
-               双 AIV 分片 SampleNTT；PRF+CBD$_{\eta=2}$ 产 $r\Vert e_1\Vert e_2$
-               （$r$ 种子 $=\texttt{coins}$，$G$ 设备写出） \\
+Prep $\hat{A}$ / CBD & 与 stable Encrypt：\texttt{F203\_AHAT16\_BLOCK\_DIM=2}；
+               双 AIV 分片 SampleNTT；PRF($r,\cdot$)+CBD$_{\eta=2}$ 产 $y\Vert e_1\Vert e_2$
+               （$r$ 由设备 $G$ 写出，\textbf{非} Host 输入） \\
 Compute+pack & 与 stable Encrypt：SIM 内联 \texttt{f203\_encrypt\_l18\_l19}；
                NTT S1--S3 \textbf{禁 Gather}；Compress$_{11/5}$+ByteEncode$_{11/5}$ \\
 Host & SIM 2 / CPU 5；\texttt{ek\_kem}+$m$+LUT $\to$ \textbf{仅} $c$+$K$ \\
@@ -136,7 +136,7 @@ Host & SIM 2 / CPU 5；\texttt{ek\_kem}+$m$+LUT $\to$ \textbf{仅} $c$+$K$ \\
 \bottomrule
 \end{longtable}
 
-\textbf{禁止}将「Host 注入 coins」「关 ByteEncode」「分段只验 Encrypt」等作为默认
+\textbf{禁止}将「Host 注入 $r$」「关 ByteEncode」「分段只验 Encrypt」等作为默认
 \texttt{run.sh} 验收；调试对照须显式覆盖 env，并在头注释标「非默认」。
 
 \subsection{目录布局（计划；写码阶段落地）}
@@ -185,15 +185,15 @@ KEM 增量对照（\textbf{只读行为}，禁止编译依赖）
   (K\Vert r) &\leftarrow G(m\Vert h)=\mathrm{SHA3\textrm{-}512}(m\Vert h)
     && K,r\in\mathbb{B}^{32} \\
   c &\leftarrow \texttt{K-PKE.Encrypt}(\mathrm{ek},\,m,\,r)
-    && \text{Alg.14；$r\equiv\texttt{coins}$} \\
+    && \text{Alg.14：随机性输入即为 $r$} \\
   &\textbf{输出}\ (K,\,c)
 \end{align*}
 
 \begin{itemize}
   \item $m$：\textbf{GM 输入}（\texttt{input/m.bin}）。熵来源（Host CSPRNG /
         定点文件）属 harness，\textbf{不}改变核契约。
-  \item $r$/\texttt{coins}：\textbf{仅} device 写 workspace GM；Launch-2 与 prep CBD
-        消费；\textbf{不}落盘为交付物。
+  \item $r$：\textbf{仅} device 写 workspace GM；prep 以 $r$ 为种子做 PRF+CBD
+        （得 $y\Vert e_1\Vert e_2$）；\textbf{不}落盘为交付物。
   \item $h$：UB only，\textbf{不}落盘。
 \end{itemize}
 
@@ -203,9 +203,9 @@ KEM 增量对照（\textbf{只读行为}，禁止编译依赖）
 \toprule
 项 & PKE Encrypt（Alg.14） & \textbf{本 KEM Encaps} \\
 \midrule
-生产输入 & $\mathrm{ek}$+$m$+\texttt{coins} &
-  $\mathrm{ek}$+$m$（\textbf{无} Host \texttt{coins}） \\
-\texttt{coins}/$r$ & Host 预填 & 设备 $G$ 后半写出 \\
+生产输入 & $\mathrm{ek}$+$m$+$r$（Alg.14） &
+  $\mathrm{ek}$+$m$（$r$ \textbf{非} Host 输入） \\
+$r\in\mathbb{B}^{32}$ & Host 预填 & 设备 $G$ 后半写出 \\
 共享秘密 $K$ & 无 & $G$ 前半 $\to$ \texttt{K.bin} \\
 密文 $c$ & 1568\,B & \textbf{同} Encrypt \\
 Launch 数 & SIM 2 / CPU 5 & \textbf{同}（头并入 L1） \\
@@ -239,10 +239,10 @@ Golden / KAT \textbf{仅}验 I/O 等价；\textbf{禁止}以「与 device / corr
 \begin{verbatim}
 aclInit / CreateStream
   ├─ Launch-1: f203_kem_enc_prep      // AIV_ONLY, blockDim=2
-  │     block0: KemEncInitHead(ek,m → K_gm, coins_gm)   // H/G
-  │     dual AIV: BuildEncryptPrepSinglePipe             // Â + CBD(re)←coins
+  │     block0: KemEncInitHead(ek, m → K_gm, r_gm)   // H/G
+  │     dual AIV: BuildEncryptPrepSinglePipe             // A-hat + CBD(y||e1||e2) <- r
   ├─ Launch-2: f203_encrypt_l18_l19   // MIX_AIC_1_2, blockDim=1
-  │            m_gm + a_hat + re → c（内联 pack）
+  │            m_gm + A-hat + (y||e1||e2) -> c（内联 pack）
   ├─ aclrtSynchronizeStream           // 仅 L2 后一次
   ├─ D2H: c.bin (1568), K.bin (32)
   └─ aclFinalize
@@ -251,7 +251,7 @@ aclInit / CreateStream
 \subsection{CPU（tikicpu 分叉）}
 
 沿用 stable Encrypt \textbf{5 launch}：\#1 换为 \texttt{f203\_kem\_enc\_prep}
-（头+$a\_hat$+$re$）；\#2--\#5 同 Encrypt（NTT / 内积 / INTT / pack）。
+（头+$\hat{A}$+$y\Vert e_1\Vert e_2$）；\#2--\#5 同 Encrypt（NTT / 内积 / INTT / pack）。
 CPU 路径\textbf{不是}与 SIM 同构的完整设备 Encrypt；验收仍以 $c$+$K$ max$=$0 为准。
 须用 \texttt{ASCENDC\_BUILD\_CPU}/\texttt{ASCENDC\_BUILD\_SIM} +
 \texttt{ASCENDC\_SIM\_HOST\_MODE}，禁止 per-probe 宏分叉。
@@ -264,7 +264,7 @@ CPU 路径\textbf{不是}与 SIM 同构的完整设备 Encrypt；验收仍以 $c
 \midrule
 Encrypt & frozen G5 \texttt{vendor} & stable 对齐 / vendored \\
 KEM 头 & 常与 oracle 拼装 & 并入 prep；设备 SHA3 \\
-\texttt{coins} & 可能 Host/oracle & \textbf{仅} device $G$ \\
+$r$ & 可能 Host/oracle & \textbf{仅} device $G$ \\
 SIM tick & 历史 $\approx$1.0M（旧） & 目标 $\approx$device \textbf{721k} \\
 \bottomrule
 \end{longtable}
@@ -304,14 +304,14 @@ GM 缓冲 & 尺寸 & 用途 \\
 \texttt{ek\_kem\_gm} & 1568 & H2D；头读 + Encrypt 读 $\rho$/decode \\
 \texttt{m\_gm} & 32 & H2D；头读 + Launch-2 仍用（$\mu$） \\
 \texttt{K\_gm} & 32 & 头写；$= G$ 前半；\textbf{唯一新增}交付 GM \\
-\texttt{coins\_gm} & 32 & 头写；$= r$；prep CBD 读；\textbf{不}D2H \\
-\texttt{a\_hat} / \texttt{re} & 同 Encrypt & L1 写 / L2 读；禁落盘 \\
+\texttt{r\_gm} & 32 & 头写；$=r$；prep 以 $r$ 为种子做 PRF+CBD；\textbf{不}D2H \\
+$\hat{A}$ / $(y\Vert e_1\Vert e_2)$ & 同 Encrypt & L1 写 / L2 读；禁落盘 \\
 \texttt{ws}+LUT & 同 Encrypt & L2 \\
 \texttt{c\_gm} & 1568 & L2 写；D2H \\
 \bottomrule
 \end{longtable}
 
-\textbf{不新增}：\texttt{h\_gm}、独立 Host \texttt{coins.bin} 输入契约。
+\textbf{不新增}：\texttt{h\_gm}、Host 侧 $r$ 输入文件契约。
 
 \subsection{\texttt{KemEncInitHead}（仅 block0）}
 
@@ -319,7 +319,7 @@ GM 缓冲 & 尺寸 & 用途 \\
   \item 自 \texttt{m\_gm} 读 $m[32]$ UB。
   \item 自 \texttt{ek\_gm} 读 1568\,B UB $\to$ \texttt{Sha3OneShot}（mdlen$=$32）$\to h$。
   \item 拼 $m\Vert h$（64\,B）$\to$ \texttt{Sha3OneShot}（mdlen$=$64）$\to K\Vert r$。
-  \item 写 \texttt{K\_gm}、$r\to\texttt{coins\_gm}$（标量逐字节或小块 \texttt{DataCopy}）。
+  \item 写 \texttt{K\_gm}、$r\to\texttt{r\_gm}$（标量逐字节或小块 \texttt{DataCopy}）。
 \end{enumerate}
 
 \subsection{双 AIV 与头段次序（强制）}
@@ -327,12 +327,12 @@ GM 缓冲 & 尺寸 & 用途 \\
 \begin{itemize}
   \item SIM/NPU：\texttt{GetBlockIdx()==0} 先完成 \texttt{KemEncInitHead}，再与
         block1 并行跑 \texttt{BuildEncryptPrepSinglePipe}。
-        SampleNTT 只依赖 $\mathrm{ek}$ 尾 $\rho$，\textbf{不}依赖 \texttt{coins}；
-        CBD/PRF \textbf{仅} block0，故须保证 block0 在 CBD 前已写完 \texttt{coins\_gm}。
+        SampleNTT 只依赖 $\mathrm{ek}$ 尾 $\rho$，\textbf{不}依赖 $r$；
+        CBD/PRF \textbf{仅} block0，故须保证 block0 在 CBD 前已写完 \texttt{r\_gm}。
   \item CPU（\texttt{ASCENDC\_CPU\_DEBUG} 且 \texttt{blockDim=2}）：单入口串行两次
         Â 分片；头\textbf{只跑一次}（对齐 device 入口）。
   \item \textbf{不}要求 KeyGen 式 Encode 后 \texttt{SyncAll}（本用例无双 AIV 分片写
-        再由他核读完整 sk 的场景）；但本核写 \texttt{coins} 后、CBD 读前须
+        再由他核读完整 sk 的场景）；但本核写 $r$ 后、CBD 读前须
         \texttt{PipeBarrier}（若写路径与向量路径混用）。
 \end{itemize}
 
@@ -343,8 +343,8 @@ GM 缓冲 & 尺寸 & 用途 \\
 \toprule
 条款 & 要求 \\
 \midrule
-禁 Host 伪头 & 禁止 Host SHA3 写 \texttt{K}/\texttt{coins} 再 launch Encrypt 冒充 Encaps \\
-禁预填 coins & 生产 \texttt{gen\_data} \textbf{不得}写 \texttt{input/coins.bin} 契约 \\
+禁 Host 伪头 & 禁止 Host SHA3 写 $K$/$r$ 再 launch Encrypt 冒充 Encaps \\
+禁预填 $r$ & 生产 \texttt{gen\_data} \textbf{不得}提供 Host 侧 $r$ 输入契约 \\
 禁 G5 / frozen & 禁止 \texttt{vendor\_sync} frozen G5；禁抄 frozen 源码 \\
 禁第 3 launch & $H$/$G$ 必须并入 L1；否决 correctness 式独立 kem 头核 \\
 禁编译依赖探针 & device 只读行为；incubating 须 vendored 自包含 \\
@@ -383,7 +383,7 @@ API & 分类 & 在线 ID & A2 & 输入/输出（本用例） & 备注 \\
   头段可选；Encrypt 主路径 \\
 \apiname{DataCopyPad} & 2.3.1 & 07\_0265 & $\checkmark$ & 可选跨步 & 头主路径\textbf{不用} \\
 \apiname{PipeBarrier} & 同步 & 常用 & $\checkmark$ & 本核 MTE/V &
-  头写 \texttt{coins} 后可见性（若需） \\
+  头写 $r$ 后可见性（若需） \\
 \apiname{CrossCoreSetFlag} & 同步 & API 列表 & $\checkmark$ & AIC$\leftrightarrow$AIV & L2 FSM \\
 \apiname{CrossCoreWaitFlag} & 同步 & API 列表 & $\checkmark$ & 同上 & 与 Encrypt 同构 \\
 \apiname{ShiftRight}/\apiname{Muls}/\apiname{Adds}/\apiname{Add}/\apiname{Sub} &
@@ -419,7 +419,7 @@ Cube MMAD / \apiname{AicMmad} & 2.3.2 & 教程+封装 & $\checkmark$ & int8$\tim
 方案 & 结论 \\
 \midrule
 独立 launch 仅算 $H$/$G$ & 多 sync；device 已否决；\textbf{禁止} \\
-Host 预填 \texttt{coins} + 纯 Encrypt & 非 Alg.17 设备 Encaps；\textbf{禁止}作生产 \\
+Host 预填 $r$ + 纯 Encrypt & 非 Alg.17 设备 Encaps；\textbf{禁止}作生产 \\
 Host SHA3 写 $K$ 再只跑 Encrypt & 伪设备；\textbf{禁止} \\
 frozen / correctness G5 Encrypt & 路线关闭；\textbf{禁止}抄码 \\
 编译期长期 \texttt{STABLE\_ENCRYPT\_ROOT} & incubating 须自包含 vendor；探针例外 \\
@@ -436,7 +436,7 @@ NTT S1--S3 内 \texttt{Gather} & Tag5T 禁令；沿用 Encrypt \\
 数学步骤 & 主路径 & 覆盖 & 缺口/备注 \\
 \midrule
 $H(\mathrm{ek})$ & SHA3-256 共享库 & 标量 & 1568\,B 入 UB + one-shot \\
-$G(m\Vert h)\to K\Vert r$ & SHA3-512 共享库 & 标量 & 写 \texttt{K\_gm}/\texttt{coins} \\
+$G(m\Vert h)\to K\Vert r$ & SHA3-512 共享库 & 标量 & 写 \texttt{K\_gm}/\texttt{r\_gm} \\
 SampleNTT $\hat{A}$ & SHAKE + rej 向量 & 部分 & 与 stable Encrypt Prep 同 \\
 PRF+CBD$_{\eta=2}$ & 向量/标量混合 & 高 & $r$ 种子改自设备 $G$ \\
 NTT / 内积 / INTT & MIX 向量+Cube & 高 & S1--S3 无 Gather \\
@@ -481,7 +481,7 @@ bash run.sh -r sim -v Ascend910B4   # 默认全量；run.sh 内自动 SIM_DIRECT
 Gate & 验收 \\
 \midrule
 G0 & CMake+\texttt{run.sh} 壳；kernel 结束 \\
-G1 & 固定 \texttt{ek}/$m$：头后 \texttt{coins}/$K$ 可对照 host tiny\_sha3（调试） \\
+G1 & 固定 $\mathrm{ek}$/$m$：头后 $r$/$K$ 可对照 host tiny\_sha3（调试） \\
 G2 & 全链 $c$/$K$ vs liboqs \texttt{encaps\_derand}；\textbf{CPU} max$=$0 \\
 G3 & SIM 同 G2；更新 tick；根目录无 stray dump \\
 G4 & 默认 \texttt{run.sh} CPU+SIM PASS；建议 CPU 多轮清零 \texttt{output/} \\

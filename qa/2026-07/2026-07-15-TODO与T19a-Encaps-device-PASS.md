@@ -60,7 +60,7 @@ Cloud 同步至 `origin/main` @ `5a63ae4` 后，将此前关于「数学模型�
 - 目录：`fix-f203-alg20-kem-encaps-device-k4` → [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)
 - `ENCAPS_DIR` 默认改指新目录：`roundtrip_kem_encaps.sh`、`liboqs_kem_vs_ascendc.sh`、`roundtrip_kem_keygen_encaps_decaps.sh`、`liboqs_kem_encaps_batch.sh`、`kat_liboqs_kem_encaps.py`
 - INDEX：Encaps 从「规划中」挪入活跃 `pass-fix` 表；Decaps device 仍 T19b/c
-- **未** git commit / push（待用户指令）
+- 其后 `#验收#` 默认再改指 stable（见 §11）
 
 ## 8. `$写规格$` — Alg.20 Encaps incubating customspec
 
@@ -69,3 +69,45 @@ Cloud 同步至 `origin/main` @ `5a63ae4` 后，将此前关于「数学模型�
 - 契约对齐 [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)：Alg.17；$m$ GM 入；$H$/$G$ 并入 prep；SIM 2 / CPU 5；$c$+$K$；incubating **vendored**（非 `STABLE_ENCRYPT_ROOT`）
 - 已登记 [`examples/incubating/INDEX.md`](../../examples/incubating/INDEX.md)、API 查阅索引
 - **下一步**：用户确认 customspec 后，明确【预研】/「可以写代码」再落地实现
+
+## 9. 【预研】Encaps incubating 写码 + CPU/SIM PASS
+
+- 目录：[`exp-fips203-mlkem-kem-encaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)（vendored Encrypt + `kem/`；变量用 FIPS `$m$`/`$r$`/`$K$`/`$c$`）
+- 验收：CPU `c`/`K` max=0（含随机 `m`×3）；SIM max=0，tick **721211** / **721033**（对标 device 721010）
+- 详情：[`STATUS.md`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/STATUS.md)
+- `qa/active_sim_regress_summary.md`：**保留** pass-fix device **721010**，**另加** incubating **721211**
+- 下一刀：Encaps `#交付#` → stable，或 T19b/c Decaps device
+
+## 10. incubating Encaps liboqs 分项 KAT（对齐 device）
+
+同历史口径（`kat_liboqs_kem_encaps.py` / device STATUS）：
+
+1. KeyGen CPU 一次 → `kem_keypair_stash_bootstrap.sh`（固定 `ek`）
+2. `ENCAPS_DIR=…/exp-fips203-mlkem-kem-encaps-k4 bash scripts/liboqs_kem_encaps_batch.sh`
+
+**结果（2026-07-15）**：**CPU×10 + SIM×3 PASS**（每轮 `os.urandom` m ↔ liboqs `encaps_derand`，`c`/`K` 逐字节一致）。  
+quiet log：`output/liboqs_kem_encaps/exp_encaps_kat.log`。
+
+## 11. `#验收#` Encaps 晋级 stable
+
+- 复制来源：[`exp-fips203-mlkem-kem-encaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)
+- 目标：[`stable-fips203-mlkem-kem-encaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（customspec 更名 + PDF；registry；notes）
+- 注释：强化 `kem/`、`main`、`gen_data`/`verify` 中文说明
+- 验收：CPU **PASS**；SIM tick **721119**；liboqs KAT **CPU×10+SIM×3 PASS**（复跑；首轮 SIM 曾一次 exit 139 flake）
+- `scripts/` 默认 `ENCAPS_DIR` → stable；device 仍可 `ENCAPS_DIR=` 覆盖
+- 索引：`examples/{INDEX,stable,incubating}` · `README` · `AGENTS` · `AGENT_HANDOFF` · `qa/TODO` **T19g** · `active_sim_regress_summary`
+- 定稿笔记：[`docs/notes/F203-KEM-Alg20-Encaps设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg20-Encaps设备全链技术总结.md)
+- 提交推送：见本轮 commit（用户指令）
+
+## 12. Encaps `run.sh` WSL/三环境对齐
+
+用户要求：SIM 运行脚本须考虑 WSL。已改 stable + incubating Encaps `run.sh`：
+
+| 点 | 处理 |
+|----|------|
+| cwd | 脚本入口 `cd` 到用例根（Host `ReadFile("./input")` + `kernel-run-timeout` 绑 `$(pwd)`）；仓库根绝对路径调用也可 |
+| Usage | 与 Encrypt/KeyGen 对齐：` -r sim` 默认 `SIM_DIRECT=1`，**勿手写**；`-r auto/verify`；WSL 拒 `-r npu` |
+| SIM env | 先 `sim_env_export`（WSL dump 桩 / Cloud 不装桩）再 `camodel_sim_log` |
+| 二进制 | `cd` 后相对路径 `./ascendc_kem_encaps_bbit` |
+
+文档 Smoke 已去掉「手写 `SIM_DIRECT=1`」写法。
