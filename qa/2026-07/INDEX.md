@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-15 | [2026-07-15-TODO与T19a-Encaps-device-PASS.md](2026-07-15-TODO与T19a-Encaps-device-PASS.md) | **TODO** · **T19a PASS**（721010）· **Encaps → pass-fix** · **【预研】exp Encaps CPU/SIM≈721k** · scripts Encaps 默认 · **`docs/research/` 恢复** · **能力DAG方法论 TeX/PDF** · 活跃 SIM tick 表 · T20 关闭 |
+| 2026-07-15 | [2026-07-15-TODO与T19a-Encaps-device-PASS.md](2026-07-15-TODO与T19a-Encaps-device-PASS.md) | **TODO** · **T19a PASS** · **Encaps → pass-fix** · **【预研】exp** · **`#验收#` → stable（721119，KAT 10+3）** · scripts 默认 stable · notes/registry · T19g · 下一 T19b/c |
 | 2026-07-14 | [2026-07-14-KEM-KeyGen-incubating预研重写.md](2026-07-14-KEM-KeyGen-incubating预研重写.md) | **`#交付#` kem-keygen** · **PKE/KEM 默认哈希 RNG** · add_custom `-r/-v` · Cloud SIM 指引 |
 | 2026-07-13 | [2026-07-13-thirdparty外部仓清单.md](2026-07-13-thirdparty外部仓清单.md) | **六仓** · **KEM KeyGen 删实现只留规格** · **T21** |
 | 2026-07-10 | [2026-07-10-Decrypt交付stable.md](2026-07-10-Decrypt交付stable.md) | **Decrypt `#交付#`** · **统一整数 Compress/Decompress** · **§8 业界对比** · **KEM KeyGen pass-fix** · **T19a Encaps 下一** · PKE roundtrip |

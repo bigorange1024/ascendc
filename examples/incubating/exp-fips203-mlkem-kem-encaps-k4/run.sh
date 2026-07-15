@@ -7,16 +7,22 @@
 # SIM：2 launch（f203_kem_enc_prep → f203_encrypt_l18_l19）
 # CPU：5 launch（同 Encrypt 分叉；第 1 次为 kem prep）
 #
-# Usage（默认全量）:
+# Usage（默认 = 全量；无需手动 export SIM_DIRECT）：
+#   cd examples/incubating/exp-fips203-mlkem-kem-encaps-k4
 #   bash run.sh -r cpu -v Ascend910B4
-#   bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r sim -v Ascend910B4          # 内置 SIM_DIRECT=1；WSL/Cloud 勿再手写
+#   bash run.sh -r auto|-r verify …            # 见 runtime_env / NPU真机环境说明
 #
 # 调试（非默认）:
 #   KEM_ENCAPS_FORCE_REBUILD=1 …
 #   SIM_DIRECT=0 …（msprof）
 #   M_HEX=… / M_FILE=… / EK_KEM_SRC=… / M_RANDOM=1
+#   bash run.sh -r npu …                       # 仅真机；WSL 拒绝
+#
+# SIM：WSL dump 桩 / Cloud 不装桩 — scripts/sim_env.sh
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "${CURRENT_DIR}"
 _ORIG_ARGS=("$@")
 
 if [ "${KEM_ENCAPS_KAT:-0}" = "1" ]; then
@@ -25,12 +31,8 @@ if [ "${KEM_ENCAPS_KAT:-0}" = "1" ]; then
     exec >>"${CURRENT_DIR}/output/kat_liboqs_kem_encaps.log" 2>&1
 fi
 
-_REPO_CAND="$(cd "${CURRENT_DIR}/../.." && pwd)"
-if [ -d "${_REPO_CAND}/library/shared" ]; then
-    REPO_ROOT="${_REPO_CAND}"
-else
-    REPO_ROOT="$(cd "${CURRENT_DIR}/../../.." && pwd)"
-fi
+# exp-* → incubating → examples → repo
+REPO_ROOT="$(cd "${CURRENT_DIR}/../../.." && pwd)"
 
 export KEM_ENCAPS_VERIFY="${KEM_ENCAPS_VERIFY:-1}"
 export KEM_ENCAPS_SKIP_REBUILD="${KEM_ENCAPS_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-1}}"
@@ -93,16 +95,17 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 须在 source setenv 之后再 set -e
 set -euo pipefail
 
 if [ "${RUN_MODE}" = "sim" ]; then
     export SIM_DIRECT="${SIM_DIRECT:-1}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
 fi
 
-echo "[kem_encaps exp] RUN_MODE=${RUN_MODE} profile=${BUILD_PROFILE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"
+echo "[kem_encaps exp] RUN_MODE=${RUN_MODE} profile=${BUILD_PROFILE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC} SIM_DIRECT=${SIM_DIRECT:-n/a}"
 
 _build_stamp="${BUILD_DIR}/.kem_encaps_run_mode"
 _build_tag="${BUILD_PROFILE}:${RUN_MODE}"
@@ -139,6 +142,7 @@ else
     echo "[kem_encaps] skip rebuild (stamp=${_build_tag})"
 fi
 
+mkdir -p "${CURRENT_DIR}/input" "${CURRENT_DIR}/output" "${CURRENT_DIR}/golden"
 python3 "${CURRENT_DIR}/scripts/gen_data.py"
 
 export LD_LIBRARY_PATH="${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
@@ -151,9 +155,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
     sim_env_export "${CURRENT_DIR}" "${REPO_ROOT}"
     # shellcheck source=/dev/null
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
+    echo "[kem_encaps] SIM 2 launch；预算 ${KERNEL_COMPUTE_BUDGET_SEC}s SIM_DIRECT=${SIM_DIRECT}"
 fi
 
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" "${CURRENT_DIR}/ascendc_kem_encaps_bbit"
+bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kem_encaps_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}" || true

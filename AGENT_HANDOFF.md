@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-15（【预研】Encaps incubating CPU+SIM PASS）
+> **最后刷新**：2026-07-15（`#验收#` Encaps → stable；下一 T19b/c）
 
 ---
 
@@ -11,8 +11,8 @@
 
 | 项 | 状态 |
 |----|------|
-| **T19a** Encaps device | [`pass-fix-f203-alg20-kem-encaps-device-k4`](ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) pass-fix；tick **721010** |
-| **Encaps incubating** | [`exp-fips203-mlkem-kem-encaps-k4`](examples/incubating/exp-fips203-mlkem-kem-encaps-k4/) **CPU+SIM PASS**；tick **≈721k**；vendored Encrypt + kem 头 |
+| **KEM Encaps stable** | [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/) **定型**；tick **721119**；liboqs KAT **10+3 PASS** |
+| T19a Encaps device | [`pass-fix-…-encaps-device-k4`](ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) 行为基线；tick **721010** |
 | PKE + KEM KeyGen stable | 已交付 |
 | `docs/research/` | 已恢复 |
 
@@ -20,17 +20,16 @@
 
 ## ★ 下一刀（P0）
 
-1. Encaps `#交付#` → stable（可选，须压测绿后复制晋级）；或  
-2. **T19b/c** Decaps device。
+1. **T19b/c** Decaps device  
 
 ---
 
 ## ★ Smoke
 
 ```bash
-cd examples/incubating/exp-fips203-mlkem-kem-encaps-k4
+cd examples/stable/stable-fips203-mlkem-kem-encaps-k4
 bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4   # WSL/Cloud：勿再手写 SIM_DIRECT=1
 ```
 
 ---
@@ -42,3 +41,4 @@ bash run.sh -r sim -v Ascend910B4
 | `runtime_env` | 活跃探针 `run.sh` 已接入；默认仍 **cpu** |
 | thirdparty | `ntt_onnx` 靠 **`ASCENDC_GH_PAT`**；Encaps golden 用 `liboqs_kem_ref` |
 | Cloud SIM dump | 非 WSL 不装 dump 桩（`sim_env.sh`） |
+| git | 听用户指令再 commit/push；本轮已按指令推送 |
