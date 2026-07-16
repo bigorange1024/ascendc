@@ -20,6 +20,6 @@
 
 | 文件 | 说明 |
 |------|------|
-| [2026-07-16-形式语言DAG预研讨论纪要.md](2026-07-16-形式语言DAG预研讨论纪要.md) | **专题纪要**（类 qa）：特殊→一般路线、教材式提纲、correctness 对照、分支 `research/formal-lang-dag` 约定 |
+| [形式语言DAG预研讨论纪要.md](形式语言DAG预研讨论纪要.md) | **专题唯一纪要**（持续刷新，不按日拆文件）：特殊→一般路线、教材式提纲、correctness 对照、分支约定 |
 | [2026-07-15-已验证能力DAG预研方法论要点.tex](2026-07-15-已验证能力DAG预研方法论要点.tex) / [PDF](2026-07-15-已验证能力DAG预研方法论要点.pdf) | **专题**：已验证能力 DAG + 形式语言/自动机视角的预研方法论草案（v0）；以 kem.keygen 校准，Encaps/Decaps 验证；**非**定稿 |
 | [2026-07-15-T19a-KEM-Encaps-device要点.md](2026-07-15-T19a-KEM-Encaps-device要点.md) | Alg.20 Encaps device（T19a）锁定要点与验收；详案仍以探针 INTEGRATION_PLAN 为准 |
