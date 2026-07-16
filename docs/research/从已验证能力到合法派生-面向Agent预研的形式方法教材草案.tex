@@ -1,0 +1,427 @@
+% 从已验证能力到合法派生 — 面向 Agent 预研的形式方法教材草案
+% 编译：bash ../../scripts/xelatex-clean.sh 从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex
+% 维护：单文件持续改写（无日期后缀）；工作分支 research/formal-lang-dag
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{enumitem}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,frame=single,columns=fullflexible}
+\setlist[itemize]{leftmargin=1.6em}
+\setlist[enumerate]{leftmargin=1.8em}
+
+\title{从已验证能力到合法派生\\
+{\large 面向 Agent 的预研开发形式方法\\（教材式草案·持续修订）}}
+\author{ascendc 工程 · 专题分支 \texttt{research/formal-lang-dag}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\textbf{愿景}：把「层层递进、先验证底层再拼高层」的工程直觉，提升为一套可教学、可门禁、可对照实验的形式方法——
+使 Agent（以及人类协作者）在复杂预研任务中，\textbf{只沿已验证能力及其合法组合}生长实现，
+从机制上压缩跳层发明与幻觉空间；最终服务一般预研开发，而非仅服务某一密码标准的算子清单。
+
+\textbf{写法}：仿教材而非论文——先从特例讲故事，再抽象数学对象，再复盘与前瞻；
+证明与完备性后置，允许边做边补。\textbf{地位}：\texttt{docs/research/} 调研草稿，非定稿、非交付验收依据。
+
+\textbf{压力测试床}：ML-KEM-1024 链上的 \texttt{pke.keygen} / \texttt{kem.keygen} / \texttt{kem.encaps}，
+并以 \texttt{kem.decaps} 为理论前瞻试金石；\texttt{*-correctness-*} 作为「只求正确、不计优化」的对照组标本。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{愿景、读者与本文怎么读}
+
+\subsection{愿景（一句话）}
+预研不是「对着算法说明书自由发挥写核」，而是在\textbf{已证书能力}构成的语言上，
+搜索一条被配置自动机接受的\textbf{合法派生路径}；静态 DAG 只是引理库依赖的投影。
+
+\subsection{我们希望最终得到什么}
+\begin{enumerate}
+  \item 一套\textbf{教材式}叙述：新人 / 新 Agent 能从特例读懂「图从哪来、树怎么长」；
+  \item 一套\textbf{可操作门禁}：任务启动必须先交依赖闭包与缺项，再写码；
+  \item 一套\textbf{对照实验协议}：方法论指导下的实现 vs correctness 标本 vs 人工指导路径；
+  \item （成型后）可解释的接受/拒绝轨迹，以及必要的证明——\textbf{不}作为本稿前置条件。
+\end{enumerate}
+
+\subsection{研究路线：从特殊到一般}
+\begin{center}
+\begin{tabular}{@{}L{2.8cm}L{6.2cm}L{5cm}@{}}
+  \toprule
+  阶段 & 做什么 & 刻意后置 \\
+  \midrule
+  特例引出 & 工程故事 $\to$ 图与语法树 & 完备公式 \\
+  套公式 & 用数学\textbf{复述}已见现象 & 证明 \\
+  改公式 & 缺口反过来改理论 & 为漂亮删工程事实 \\
+  套别例 & Encaps 复盘；换域；Decaps 前瞻 & 一次塞太多缺口 \\
+  迭代方法论 & 门禁与流程收敛 & 急进 Rule/Skill \\
+  成型后 & 证明、可解释性 & 过早锁死抽象 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{阅读地图（教材顺序）}
+\begin{enumerate}
+  \item 第~\ref{sec:hook}--\ref{sec:peel}~章：\textbf{引子与剥洋葱}（特例）；
+  \item 第~\ref{sec:math}--\ref{sec:gates}~章：\textbf{抽象与门禁}（理论草案）；
+  \item 第~\ref{sec:replay}--\ref{sec:forward}~章：\textbf{复盘与前瞻}（用理论看实现）；
+  \item 第~\ref{sec:correctness}~章：\textbf{correctness 对照组}；
+  \item 第~\ref{sec:open}~章：未决议事项与维护约定。
+\end{enumerate}
+
+讨论过程的流水账见同目录 \texttt{形式语言DAG预研讨论纪要.md}（单文件持续刷新）。
+
+% ============================================================
+\section{引子：从 \texttt{pke.keygen} 到 \texttt{kem.keygen}}
+\label{sec:hook}
+
+\subsection{先给人一张「接缝图」}
+不必先定义 DAG。先问一个具体问题：
+
+\begin{quote}
+我们已经有一条\textbf{结果正确且可交付}的 PKE KeyGen（Alg.13）能力。\\
+要得到 KEM KeyGen（Alg.19），\textbf{多出来的不是「再写一遍 NTT」}，\\
+而是若干\textbf{接缝}与\textbf{生产 I/O 契约}。
+\end{quote}
+
+直观上多出来的部分包括（叙述级，细节以各目录 customspec / STATUS 为准）：
+\begin{itemize}
+  \item 从种子到 $(d,z)$ 的域分离与派生（及设备侧与 golden 的分工）；
+  \item 调用 / 内嵌已获证的 PKE KeyGen，得到 $(ek_{\mathrm{PKE}}, dk_{\mathrm{PKE}})$；
+  \item KEM 私钥展开：如 $dk_{\mathrm{KEM}} = dk_{\mathrm{PKE}}\Vert ek \Vert H(ek)\Vert z$ 一类布局；
+  \item 交付级黑盒 I/O（例如 \texttt{seed\_d} $\to$ \texttt{ek\_kem}/\texttt{dk\_kem}），中间态不落盘。
+\end{itemize}
+
+\subsection{为何这已经是「图」而不是「树」}
+\begin{itemize}
+  \item 从顶向下拆任务时，\texttt{kem.keygen} 像树根；
+  \item 从底向上看，NTT、哈希、PKE KeyGen 等节点会被\textbf{多个}上层任务共享
+        （Encrypt / Encaps / 未来 Decaps），故整体是\textbf{有向无环图}；
+  \item 引子这一刀只画「PKE.KeyGen $\to$ KEM.KeyGen」一条粗边，以及边上的接缝标签——
+        足够引出后文对象。
+\end{itemize}
+
+\subsection{引子要留下的问题}
+\begin{enumerate}
+  \item PKE.KeyGen 本身又依赖哪些已验证事实？
+  \item 「接上」是否免费？为什么 2-launch、workspace、同步壳往往单独翻车？
+  \item 若 Agent 直接从 FIPS 伪代码生成整段 AscendC，跳过已证节点，错在何处？
+\end{enumerate}
+
+下一章用\textbf{剥洋葱}回答第 1 问；第~\ref{sec:math}~章用接缝与证书回答第 2--3 问。
+
+% ============================================================
+\section{回溯：一层层剥开直到平台事实}
+\label{sec:peel}
+
+\subsection{分层语言（先约定叫法）}
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+  \toprule
+  层 & 含义（本仓库语境） \\
+  \midrule
+  P3 & 顶层算子 / 算法入口（如 KEM.KeyGen、KEM.Encaps） \\
+  P2 & 算法构件（如 PKE.KeyGen / Encrypt / Decrypt 全链） \\
+  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots） \\
+  P0 & 平台公理（DataCopy、向量算子、MMAD+tiling、TPipe/TQue 同步壳\ldots） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{注意}：P0--P3 是方法论分层，不等于目录树一一对应；一个目录可覆盖多层接缝。
+
+\subsection{剥洋葱示意（KeyGen 链，叙述级）}
+从引子向下，逻辑顺序大致是：
+
+\begin{lstlisting}
+kem.keygen (P3)
+  |- seam: seed->(d,z), dk expand, production I/O
+  `- pke.keygen (P2, Alg.13)
+       |- seam: prep || compute (e.g. 2-launch)
+       |- a_hat / SampleNTT 相关 (P1..)
+       |- s,e sample + CBD (P1..)
+       |- NTT + matmul/basemul + ByteEncode... (P1)
+       `- 以上一切最终落到 (P0):
+            DataCopy / UB 布局 / MMAD tiling / PIPE·TQue 同步
+\end{lstlisting}
+
+每一层在教材叙述里建议用同一模板四问（避免写成探针编年史）：
+\begin{enumerate}
+  \item \textbf{I/O}：黑盒输入输出是什么？
+  \item \textbf{依赖}：必须已经成立的下层能力是谁？
+  \item \textbf{证书}：CPU+SIM（及交付 KAT）锚在哪个目录 / 哪次验收？
+  \item \textbf{接缝}：本层相对下层多出来的组合点是什么？是否单独验收过？
+\end{enumerate}
+
+\subsection{为何必须剥到 P0}
+高层「NTT 已对」\textbf{并不蕴含}「在新的 launch 编排与同步壳下仍然对」。
+仓库历史反复表明：翻车常发生在\textbf{搬运与同步接缝}，而非代数公式本身。
+因此 P0 不是「太底层不必写进方法论」，而是\textbf{终端事实}的主要来源之一。
+
+\subsection{与现有仓库机制的对应（尚未形式化前的直觉）}
+\begin{itemize}
+  \item 活跃 \texttt{ascendc-tests/INDEX.md} / \texttt{examples/*/INDEX.md}：当前可引用的能力菜单；
+  \item \texttt{frozen/} + \texttt{FROZEN.md}：否定边（可读关闭原因，禁止抄实现）；
+  \item \texttt{baseline-registry}：golden 内核允许调用的已验证计算块；
+  \item \texttt{customspec}：examples 写码的规格门禁。
+\end{itemize}
+这些机制已经在强制「不要随便发明」；本稿要把它们收成\textbf{统一的图 + 派生语言}。
+
+% ============================================================
+\section{从故事到对象：DAG、语法树与过程}
+\label{sec:math}
+
+\subsection{三个容易混的东西，先拆开}
+\begin{center}
+\begin{tabular}{@{}L{3.2cm}L{5.5cm}L{5.3cm}@{}}
+  \toprule
+  概念 & 回答的问题 & 不回答的问题 \\
+  \midrule
+  能力 DAG & 引理库里谁依赖谁？ & 某次任务如何一步步展开？ \\
+  语法树 / 派生 & 这次任务的展开句子是什么？ & 全局所有共享边的全貌？ \\
+  配置自动机 & 证书如何增减？何时接受/拒绝？ & 代数是否符合 FIPS？ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+DAG 是\textbf{库}的投影；语法树是\textbf{一次作业}的展开；自动机是\textbf{作业过程}的状态演化。
+三者一起，才接近「预研怎么合法地做完」。
+
+\subsection{节点（已验证能力）}
+节点 $v$ 建议携带：
+\begin{itemize}
+  \item \texttt{id}：稳定名（如 \texttt{pke.keygen.k4}）；
+  \item \texttt{layer}：P0--P3；
+  \item \texttt{iface}：I/O、dtype、形状/布局、同步约定——\textbf{可复用的是 iface，不是源码}；
+  \item \texttt{cert}：路径 + CPU+SIM（+KAT）+ 版本锚点；
+  \item \texttt{forbid}：否定约束；
+  \item \texttt{repo}：权威目录锚点。
+\end{itemize}
+
+\subsection{边的三种类型}
+\begin{enumerate}
+  \item \textbf{语义依赖}：$u$ 的正确性需要 $v$ 的 iface（如 NTT $\to$ PKE.KeyGen）；
+  \item \textbf{接缝（compose）}：$A$、$B$ 各自有证，$A\!\circ\!B$ \textbf{仍须}单独成节点获证
+        （「组合不免费」）；
+  \item \textbf{否定边}：显式禁止（frozen 模板、未登记计算块、Host 默认密码路径等）。
+\end{enumerate}
+
+\subsection{证书状态（含非单调）}
+\[
+\mathsf{unproven}\to\mathsf{probe}\to\mathsf{lemma}\to\mathsf{deliverable},
+\quad\text{以及}\quad
+\mathsf{dirty}.
+\]
+\texttt{dirty} 表示上游 iface/tiling 变更后下游证书失效——引理库 $\Gamma$ \textbf{可收缩}。
+这与「证明只增不减」的古典图景不同，却符合工程真实。
+
+\subsection{形式语言视角（草案）}
+字母表 $\Sigma$：已认证叶子 iface 的「调用」+ 有限组合子（分核、分 launch、workspace、host 调度\ldots）。
+\begin{itemize}
+  \item 字 $w\in\Sigma^*$：一条实现计划 / 展开轨迹；
+  \item 语言 $L$：全体合法计划；
+  \item 产生式：目标改写 $T\Rightarrow u_1\cdots u_k$（当且仅当依赖与接缝已声明）；
+  \item 成员判定：对 Agent 提交的闭包表做合法派生检查；
+  \item 禁字：frozen / forbid / 未登记块。
+\end{itemize}
+$L$ 未必正则：嵌套与属性约束更接近上下文无关、属性文法，或判断式 $\Gamma\vdash T$。
+
+\subsection{自动机视角（草案）}
+配置 $q=(\Gamma,F,S)$：已证书集、前沿目标、接缝与约束。
+转移包括：
+$\mathsf{Expand}$、$\mathsf{Probe}$、$\mathsf{Certify}$、$\mathsf{Compose}$、$\mathsf{Dirty}$、$\mathsf{Freeze}$。
+\begin{itemize}
+  \item \textbf{接受}：目标 $T^*\in\Gamma$ 且生产 I/O 契约满足；
+  \item \textbf{拒绝}：未证书边、frozen 边、跳层发明终端。
+\end{itemize}
+
+\subsection{立论（工作定义）}
+\begin{quote}
+预研开发的合法性 $\approx$ 在已证书能力生成的语言 $L$ 上，
+由配置自动机搜索接受路径；\\
+\textbf{幻觉} $\approx$ 非法转移 / 无证书边。\\
+FIPS/liboqs 等仍是语义 oracle——形式方法管「从哪砌砖」，不管「砖的代数是否被重新发明」。
+\end{quote}
+
+% ============================================================
+\section{门禁与工作流：Agent 被允许做什么}
+\label{sec:gates}
+
+\subsection{合法性规则（v0）}
+接到目标 $T$ 时，只允许：
+\begin{enumerate}
+  \item 展开依赖闭包（语义边 + 接缝边）；
+  \item 分类：已有 lemma/deliverable；缺项；仅否定边；
+  \item 缺项 $\Rightarrow$ 先探针/exp 并获证，再引用；禁止在 $T$ 任务里顺便发明 P0/P1；
+  \item 新接缝 $=$ 新节点，须认证；
+  \item 验收看 I/O 与 golden/KAT，不看「与参考源码同构」；
+  \item 自包含：挂 iface，不跨目录偷源码（仓库既有例外除外）；图边 $\neq$ \texttt{\#include}。
+\end{enumerate}
+
+\subsection{四步工作流}
+\begin{lstlisting}
+1. 目标声明  T、I/O、验收级别（probe / lemma / deliverable）
+2. 闭包展开  P0--P3；ok / missing / dirty；接缝清单
+3. 最小补洞  只补 missing 与新接缝；forbid 写入否定边
+4. 闭环写回  新节点入图；失败则改规则或 Freeze，不默认可复用
+\end{lstlisting}
+\textbf{先交闭包表，再写码。} customspec / STATUS / registry 是文书形态，不是替代闭包表。
+
+\subsection{域无关性}
+抽出密码词之后，对象仍是：终端（axiom）、非终端（goal）、产生式（compose）、证书（judgment）。
+同一套问题适用于非密码 AscendC 预研；ML-KEM 只是 oracle 清晰、接缝丰富的\textbf{压力测试床}。
+
+% ============================================================
+\section{复盘：理论如何对照 \texttt{kem.keygen} 与 \texttt{kem.encaps}}
+\label{sec:replay}
+
+\subsection{复盘的目的}
+不是证明「我们早就在按理论做」（事后贴标签无价值），而是：
+\begin{enumerate}
+  \item 检查分层与接缝是否\textbf{可被理论语言说清}；
+  \item 找出偏离（例如曾依赖 correctness vendor / frozen 模板）并记为\textbf{方法论债}或\textbf{否定边}；
+  \item 总结「数学原理如何被具象化为目录、launch、证书」。
+\end{enumerate}
+
+\subsection{\texttt{kem.keygen} 校准问题单}
+\begin{itemize}
+  \item P3 是否只依赖已证书 P2，而非在 KeyGen 任务内重写 NTT？
+  \item 2-launch、Alg.16 尾、\texttt{dk} 展开等接缝是否显式？
+  \item baseline-registry 中的 golden 块是否都在图上有 lemma？
+  \item 否定边是否写入（Host 默认禁密码、禁把 liboqs 当 AscendC 规格）？
+\end{itemize}
+仓库锚点（查阅用）：
+\texttt{examples/stable/stable-fips203-mlkem-kem-keygen-k4/}，
+\texttt{docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md}，
+及相关 \texttt{pass-fix-*} device 探针。
+
+\subsection{\texttt{kem.encaps} 复盘要点（讨论共识）}
+\begin{itemize}
+  \item 合法路径应挂已证 \texttt{pke.encrypt} 与哈希/G 等 lemma，而不是以 correctness 内 vendor 为实现模板；
+  \item 与 stable Encrypt 的编译期/接缝关系必须写进闭包，而不是「觉得复用了」；
+  \item 若实现史存在混乱探索，复盘文应诚实记录——那是对照组与方法论的动机，不是羞耻。
+\end{itemize}
+
+\subsection{期望产出的「具象化对照表」（后续填空）}
+\begin{center}
+\begin{tabular}{@{}L{4cm}L{5cm}L{5cm}@{}}
+  \toprule
+  理论对象 & 工程具象 & 证书形态 \\
+  \midrule
+  节点 $v$ & 探针/exp/stable 目录 & STATUS + run.sh 对拍 \\
+  语义边 & 「必须先有某某能力」 & INDEX / customspec 引用 \\
+  接缝节点 & 多 launch / 融合边界 & 集成探针单独 PASS \\
+  否定边 & frozen / forbid 条文 & FROZEN.md、Rule \\
+  字 $w\in L$ & 一次任务的闭包表+计划 & 评审通过再写码 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section{前瞻：用理论指导尚未完成的 \texttt{kem.decaps}}
+\label{sec:forward}
+
+\subsection{为什么 Decaps 适合做试金石}
+Decaps 同时依赖 Encrypt、Decrypt、KeyGen I/O 与 FO 失败路径，是典型的\textbf{多父 DAG}；
+且若理论只能解释已完成故事、不能生成待做清单，则方法论停在修辞。
+
+\subsection{前瞻时 Agent（或人类）应交付的最小闭包}
+\begin{enumerate}
+  \item 目标 I/O 与验收级别；
+  \item 依赖节点清单（标 ok / missing / dirty）；
+  \item 接缝清单（含对称失败 / 重加密比对等是否独立成节点）；
+  \item 否定边（不可引用的 correctness vendor / frozen 实现）；
+  \item 最小补洞顺序（先探针哪条缝）。
+\end{enumerate}
+
+\subsection{成功标准（阶段性）}
+\begin{itemize}
+  \item \textbf{弱成功}：闭包表可执行；偏差归因到缺边/假边/脏证书，并回写本章理论；
+  \item \textbf{强成功}：在门禁下完成 device/stable 级实现，且过程指标优于 correctness 探索史
+        （见下一章比较轴）。
+\end{itemize}
+
+% ============================================================
+\section{对照组：\texttt{correctness} 标本的意义}
+\label{sec:correctness}
+
+\subsection{为何保留 correctness}
+\texttt{*-correctness-*} 在\textbf{完全不考虑优化}的前提下，只追求可执行性与结果正确：
+多 kernel launch、多搬运与同步——这是「一定能搭出正确积木」的保守拼法，
+性能不可用，也几乎吃不进后续 P0/P1 工程优化。
+
+它还记录了一段真实的 Agent 过程史：故意不给确定性拼装路线时，
+探索成本极高（失败、卡死、回退；曾短期内耗尽大量 token），最终仅得到「结果正确」的代码。
+
+\subsection{在方法论中的角色}
+\begin{center}
+\begin{tabular}{@{}L{3cm}L{11cm}@{}}
+  \toprule
+  角色 & 含义 \\
+  \midrule
+  正确性锚 & 下界存在性：积木可搭、I/O 可对 \\
+  结构反例 & 展示「只求对」会长成怎样的 launch/同步膨胀 \\
+  过程对照 & 无确定路线的搜索成本 \\
+  实验基线 & 与方法论 Agent、人工指导路径三方比较 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{纪律}：correctness 是\textbf{基线标本}，不是活跃实现模板；可读、可对拍、可对比，\textbf{禁止}当抄码来源（与 frozen 出门不带码一致）。
+
+\subsection{建议比较轴}
+\begin{enumerate}
+  \item \textbf{过程}：token / 轮次 / 回退；是否先交闭包表；非法边是否被拦截；
+  \item \textbf{结构}：launch 数、同步点、lemma 复用、接缝是否显式；
+  \item \textbf{结果}：CPU+SIM；SIM tick 相对 correctness 的倍数。
+\end{enumerate}
+三档：A 旧式无路线探索 $\sim$ correctness；B 新方法论 Agent；C 人工指导 device/stable。
+B 不必一次打赢 C；明显优于 A，即方法论第一关。
+
+% ============================================================
+\section{未决议事项、日程与维护}
+\label{sec:open}
+
+\subsection{刻意未决议}
+\begin{itemize}
+  \item 节点是否 $1$:$1$ 对应目录名；图的存储是 Markdown 表还是 YAML/JSON；
+  \item 主叙事选工作流网 / Petri 网 / 属性文法 / 判断式中的哪一种；
+  \item 何时写入 Rule/Skill；可判定性与复杂度是否单开理论线。
+\end{itemize}
+
+\subsection{近期填空顺序（与「特殊$\to$一般」一致）}
+\begin{enumerate}
+  \item 把第~\ref{sec:hook}--\ref{sec:peel}~章补成「带四问模板的具体洋葱图」（仍用特例语言）；
+  \item KeyGen 合法派生轨迹一页纸；
+  \item Encaps 理论轨迹 vs 实现轨迹对照表；
+  \item Decaps 前瞻闭包；
+  \item correctness 对照实验写成可执行协议；
+  \item 结论稳定后再考虑迁 \texttt{docs/notes/}。
+\end{enumerate}
+
+\subsection{文档与分支约定}
+\begin{itemize}
+  \item 本文件为专题\textbf{唯一} TeX/PDF 工作副本（无日期后缀），持续修订；
+  \item 讨论纪要：\texttt{形式语言DAG预研讨论纪要.md}（同样单文件刷新）；
+  \item 工作分支：\texttt{research/formal-lang-dag}；未经用户明确指令\textbf{不合入} \texttt{main}；
+  \item 不记录题外的知识产权保护策略讨论。
+\end{itemize}
+
+\subsection{编译}
+\begin{lstlisting}
+bash scripts/xelatex-clean.sh \
+  docs/research/从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex
+\end{lstlisting}
+
+\end{document}
