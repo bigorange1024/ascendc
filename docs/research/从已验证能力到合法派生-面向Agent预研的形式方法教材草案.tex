@@ -19,22 +19,31 @@
 \lstset{basicstyle=\ttfamily\small,breaklines=true,frame=none,columns=fullflexible}
 \setlist[itemize]{leftmargin=1.6em}
 \setlist[enumerate]{leftmargin=1.8em}
-% FIPS 算法框：对齐边框 + 与标准一致的步骤编号
+% FIPS 算法框：黑字可读 + 参数/Input/Output + 与标准一致的步骤编号
 \newenvironment{fipsalgo}[1]{%
   \begin{tcolorbox}[
     enhanced, breakable,
-    colback=gray!4, colframe=gray!55,
+    colback=gray!4, colframe=gray!55, coltext=black,
     boxrule=0.5pt, arc=2pt,
     left=6pt, right=6pt, top=4pt, bottom=4pt,
-    title={#1}, fonttitle=\bfseries,
+    title={#1},
+    fonttitle=\bfseries\color{black},
+    coltitle=black,
     attach boxed title to top left={yshift=-2mm,xshift=4mm},
-    boxed title style={colback=gray!12, colframe=gray!55, boxrule=0.4pt}
+    boxed title style={colback=white, colframe=gray!55, boxrule=0.4pt, coltitle=black}
   ]
-  \small
+  \small\color{black}
+}{%
+  \end{tcolorbox}
+}
+% 算法框内：参数集 / Input / Output 行（FIPS 原文措辞）
+\newcommand{\fipsioparam}[1]{\par\noindent\textbf{参数集}（\texttt{ml\_kem\_1024}）：#1\par\vspace{2pt}}
+\newcommand{\fipsioin}[1]{\noindent\textbf{Input：}#1\par}
+\newcommand{\fipsioout}[1]{\noindent\textbf{Output：}#1\par\vspace{4pt}}
+\newenvironment{fipssteps}{%
   \begin{enumerate}[leftmargin=2.2em, label=\textbf{\arabic*:}, itemsep=2pt, topsep=2pt]
 }{%
   \end{enumerate}
-  \end{tcolorbox}
 }
 
 \title{从已验证能力到合法派生\\
@@ -139,27 +148,46 @@
 \subsection{FIPS~203 原文：三层算法怎样套在一起}
 
 标准把 KEM 密钥生成拆成三层。
-下面给出\textbf{与 FIPS~203 一致的步骤编号}（ml\_kem\_1024：$k{=}4$，$\eta_1{=}\eta_2{=}2$）。
-正文引用 NIST FIPS~203 Algorithm~13 / 16 / 19。
+下面给出\textbf{与 FIPS~203 原文一致的参数、Input/Output 与步骤编号}。
+正文引用 NIST FIPS~203 Algorithm~13 / 16 / 19；本文实例固定为 \texttt{ml\_kem\_1024}（$k{=}4$ 时 $\lvert\mathit{ek}\rvert{=}1568$\,B，$\lvert\mathit{dk}\rvert{=}3168$\,B）。
 
 \begin{fipsalgo}{Algorithm 19 \texttt{ML-KEM.KeyGen()}（FIPS~203 §7.1）}
+\fipsioparam{$n{=}256$，$q{=}3329$，$k{=}4$，$\eta_1{=}\eta_2{=}2$，$d_u{=}11$，$d_v{=}5$。}
+\fipsioin{（无显式输入；$d$、$z$ 在算法内由 RBG 采样，见步骤 1--2。）}
+\fipsioout{封装密钥 $\mathit{ek} \in \mathbb{B}^{384k+32}$；\\
+           解封密钥 $\mathit{dk} \in \mathbb{B}^{768k+96}$。}
+\begin{fipssteps}
   \item $d \leftarrow\$ \mathbb{B}^{32}$
   \item $z \leftarrow\$ \mathbb{B}^{32}$
-  \item \textbf{if} $d = \mathrm{NULL}$ \textbf{or} $z = \mathrm{NULL}$ \textbf{then return} $\bot$
+  \item \textbf{if} $d = \mathrm{NULL}$ \textbf{or} $z = \mathrm{NULL}$ \textbf{then}
+  \item \quad\textbf{return} $\bot$ \hfill{\footnotesize RBG 失败指示}
+  \item \textbf{end if}
   \item $(\mathit{ek}, \mathit{dk}) \leftarrow \texttt{ML-KEM.KeyGen\_internal}(d, z)$
   \item \textbf{return} $(\mathit{ek}, \mathit{dk})$
+\end{fipssteps}
 \end{fipsalgo}
 
 \begin{fipsalgo}{Algorithm 16 \texttt{ML-KEM.KeyGen\_internal}$(d, z)$（FIPS~203 §6.1）}
+\fipsioparam{$n{=}256$，$q{=}3329$，$k{=}4$，$\eta_1{=}\eta_2{=}2$，$d_u{=}11$，$d_v{=}5$。}
+\fipsioin{随机种子 $d \in \mathbb{B}^{32}$；随机种子 $z \in \mathbb{B}^{32}$。}
+\fipsioout{封装密钥 $\mathit{ek} \in \mathbb{B}^{384k+32}$；\\
+           解封密钥 $\mathit{dk} \in \mathbb{B}^{768k+96}$。}
+\begin{fipssteps}
   \item $(\mathit{ek}_{\mathrm{PKE}}, \mathit{dk}_{\mathrm{PKE}}) \leftarrow \texttt{K-PKE.KeyGen}(d)$
   \item $\mathit{ek} \leftarrow \mathit{ek}_{\mathrm{PKE}}$
   \item $\mathit{dk} \leftarrow \mathit{dk}_{\mathrm{PKE}} \Vert \mathit{ek} \Vert H(\mathit{ek}) \Vert z$
   \item \textbf{return} $(\mathit{ek}, \mathit{dk})$
+\end{fipssteps}
 \end{fipsalgo}
 
 \noindent 其中 $H = \mathrm{SHA3\text{-}256}$（FIPS~203 记号 $H$）。
 
-\begin{fipsalgo}{Algorithm 13 \texttt{K-PKE.KeyGen}$(d)$（FIPS~203 §5.1；节选）}
+\begin{fipsalgo}{Algorithm 13 \texttt{K-PKE.KeyGen}$(d)$（FIPS~203 §5.1）}
+\fipsioparam{$n{=}256$，$q{=}3329$，$k{=}4$，$\eta_1{=}\eta_2{=}2$，$d_u{=}11$，$d_v{=}5$。}
+\fipsioin{随机种子 $d \in \mathbb{B}^{32}$。}
+\fipsioout{加密密钥 $\mathit{ek}_{\mathrm{PKE}} \in \mathbb{B}^{384k+32}$；\\
+           解密密钥 $\mathit{dk}_{\mathrm{PKE}} \in \mathbb{B}^{384k}$。}
+\begin{fipssteps}
   \item $(\rho, \sigma) \leftarrow G(d \Vert k)$ \hfill{\footnotesize 域分离：字节 33 为模块维 $k$}
   \item $N \leftarrow 0$
   \item \textbf{for} $i \leftarrow 0$ \textbf{to} $k-1$ \textbf{do}
@@ -179,6 +207,7 @@
   \item $\mathit{ek}_{\mathrm{PKE}} \leftarrow \texttt{ByteEncode}_{12}(\hat{t}) \Vert \rho$
   \item $\mathit{dk}_{\mathrm{PKE}} \leftarrow \texttt{ByteEncode}_{12}(\hat{s})$
   \item \textbf{return} $(\mathit{ek}_{\mathrm{PKE}}, \mathit{dk}_{\mathrm{PKE}})$
+\end{fipssteps}
 \end{fipsalgo}
 
 \textbf{读者只需抓住一条结构链}：
