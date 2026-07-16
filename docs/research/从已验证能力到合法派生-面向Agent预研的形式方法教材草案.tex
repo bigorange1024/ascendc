@@ -44,8 +44,9 @@
 \section{愿景、读者与本文怎么读}
 
 \subsection{愿景（一句话）}
-预研不是「对着算法说明书自由发挥写核」，而是在\textbf{已证书能力}构成的语言上，
-搜索一条被配置自动机接受的\textbf{合法派生路径}；静态 DAG 只是引理库依赖的投影。
+我们想表达的是：预研开发\textbf{不应当}变成「对着算法说明书自由发挥写核」。
+我们应当只在\textbf{已经拿到证书}的能力之上，按规则组合出更复杂的任务；
+静态 DAG 只是「引理库谁依赖谁」的一张投影图，真正的作业过程还要另说。
 
 \subsection{我们希望最终得到什么}
 \begin{enumerate}
@@ -73,7 +74,8 @@
 
 \subsection{阅读地图（教材顺序）}
 \begin{enumerate}
-  \item 第~\ref{sec:hook}--\ref{sec:peel}~章：\textbf{引子与剥洋葱}（特例）；
+  \item 第~\ref{sec:hook}~章：\textbf{完整例子}（KEM.KeyGen：算法原文、我们有什么、怎样做出来、引出课题）；
+  \item 第~\ref{sec:peel}~章：\textbf{剥洋葱}（从 PKE 继续往下到平台事实）；
   \item 第~\ref{sec:math}--\ref{sec:gates}~章：\textbf{抽象与门禁}（理论草案）；
   \item 第~\ref{sec:replay}--\ref{sec:forward}~章：\textbf{复盘与前瞻}（用理论看实现）；
   \item 第~\ref{sec:correctness}~章：\textbf{correctness 对照组}；
@@ -83,43 +85,232 @@
 讨论过程的流水账见同目录 \texttt{形式语言DAG预研讨论纪要.md}（单文件持续刷新）。
 
 % ============================================================
-\section{引子：从 \texttt{pke.keygen} 到 \texttt{kem.keygen}}
+\section{一个完整例子：我们怎样做出 ML-KEM-1024 的 KEM.KeyGen}
 \label{sec:hook}
 
-\subsection{先给人一张「接缝图」}
-不必先定义 DAG。先问一个具体问题：
+本章用一个\textbf{已经做完}的真实任务当例子。
+我们先说清楚「要算什么」，再贴 FIPS~203 里的算法原文，
+然后交代我们手里已经有什么、前期做过哪些实验、最后怎样拼出 KEM.KeyGen。
+例子讲完之后，我们再\textbf{提问}——这些问题应当能把读者自然带到后文的研究课题里。
 
-\begin{quote}
-我们已经有一条\textbf{结果正确且可交付}的 PKE KeyGen（Alg.13）能力。\\
-要得到 KEM KeyGen（Alg.19），\textbf{多出来的不是「再写一遍 NTT」}，\\
-而是若干\textbf{接缝}与\textbf{生产 I/O 契约}。
-\end{quote}
+\subsection{我们要交付什么}
 
-直观上多出来的部分包括（叙述级，细节以各目录 customspec / STATUS 为准）：
-\begin{itemize}
-  \item 从种子到 $(d,z)$ 的域分离与派生（及设备侧与 golden 的分工）；
-  \item 调用 / 内嵌已获证的 PKE KeyGen，得到 $(ek_{\mathrm{PKE}}, dk_{\mathrm{PKE}})$；
-  \item KEM 私钥展开：如 $dk_{\mathrm{KEM}} = dk_{\mathrm{PKE}}\Vert ek \Vert H(ek)\Vert z$ 一类布局；
-  \item 交付级黑盒 I/O（例如 \texttt{seed\_d} $\to$ \texttt{ek\_kem}/\texttt{dk\_kem}），中间态不落盘。
-\end{itemize}
+我们的目标是：在昇腾 AI Core 上用 AscendC 实现
+\textbf{FIPS~203 ML-KEM-1024 的密钥生成}（\texttt{ML-KEM.KeyGen}，即 Algorithm~19）。
 
-\subsection{为何这已经是「图」而不是「树」}
-\begin{itemize}
-  \item 从顶向下拆任务时，\texttt{kem.keygen} 像树根；
-  \item 从底向上看，NTT、哈希、PKE KeyGen 等节点会被\textbf{多个}上层任务共享
-        （Encrypt / Encaps / 未来 Decaps），故整体是\textbf{有向无环图}；
-  \item 引子这一刀只画「PKE.KeyGen $\to$ KEM.KeyGen」一条粗边，以及边上的接缝标签——
-        足够引出后文对象。
-\end{itemize}
+读者可以把交付物理解成下面这张黑盒表（细节以 stable 目录 customspec 为准）：
 
-\subsection{引子要留下的问题}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+  \toprule
+  方向 & 内容 & 说明 \\
+  \midrule
+  输入 & \texttt{seed\_d.bin}（4\,B） & Host 写入；设备侧派生 $d$、$z$ \\
+  输入 & NTT LUT（静态） & 与 PKE KeyGen 同表 \\
+  输出 & \texttt{ek\_kem.bin}（1568\,B） & 与 \texttt{ek\_PKE} 相同 \\
+  输出 & \texttt{dk\_kem.bin}（3168\,B） & 与 liboqs 展开布局一致 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+我们\textbf{不}把 $d$、$z$、中间 $\hat{A}$、$\hat{s}$ 等当作交付文件落盘。
+验收方式是：\texttt{run.sh} 跑 CPU 孪生 + SIM，输出与 golden / liboqs 对拍一致。
+
+\subsection{FIPS~203 原文：三层算法怎样套在一起}
+
+标准把 KEM 密钥生成拆成三层。
+下面给出\textbf{与标准同构的伪代码}（记号略作简化；$k{=}4$ 即 ml\_kem\_1024）。
+
+\paragraph{Algorithm~19 \texttt{ML-KEM.KeyGen()}（对外入口）}
+\begin{lstlisting}
+d <-$ {0,1}^256
+z <-$ {0,1}^256
+(ek, dk) <- ML-KEM.KeyGen_internal(d, z)
+return (ek, dk)
+\end{lstlisting}
+
+\paragraph{Algorithm~16 \texttt{ML-KEM.KeyGen\_internal}$(d, z)$}
+\begin{lstlisting}
+(ek_PKE, dk_PKE) <- K-PKE.KeyGen(d)    // Algorithm 13
+ek <- ek_PKE
+dk <- dk_PKE || H(ek) || z              // H = SHA3-256
+return (ek, dk)
+\end{lstlisting}
+
+\paragraph{Algorithm~13 \texttt{K-PKE.KeyGen}$(d)$（PKE 密钥生成，节选）}
+
+对 ML-KEM-1024：$k{=}4$，$\eta_1{=}\eta_2{=}2$，$N{=}256$，$q{=}3329$。
+
+\begin{lstlisting}
+// 输入：32 字节种子 d
+// 输出：ek_PKE (1568 B), dk_PKE (1536 B)
+
+(rho, sigma) <- G(d || k)               // G: SHAKE128 扩展
+
+// 行 3-7：构造 A_hat（16 个多项式，k x k 个 NTT 域样本）
+for i in 0..k-1:
+  for j in 0..k-1:
+    A_hat[i][j] <- SampleNTT(rho || j || i)
+
+// 行 8-15：采样 s, e（时域），再 NTT
+for i in 0..k-1:
+  s[i] <- SamplePolyCBD_eta1(PRF_eta1(sigma, N || i))
+for i in 0..k-1:
+  e[i] <- SamplePolyCBD_eta2(PRF_eta2(sigma, N || i + k))
+
+s_hat <- NTT(s)
+e_hat <- NTT(e)
+
+// 行 16-20：矩阵乘、加、编码
+t_hat <- A_hat * s_hat + e_hat           // 在 NTT 域做点乘+累加
+ek_polyvec <- ByteEncode_12(Decompress(t_hat))   // 简化记法
+dk_polyvec <- ByteEncode_12(s)
+
+// 行 21
+ek_PKE <- ek_polyvec || rho
+dk_PKE <- dk_polyvec
+return (ek_PKE, dk_PKE)
+\end{lstlisting}
+
+\textbf{读者只需抓住一条结构链}：
+\[
+\text{Alg.19} \Rightarrow \text{Alg.16} \Rightarrow \text{Alg.13}.
+\]
+Alg.19 比 Alg.13 \textbf{多出来的}主要是：再采一个 $z$、算 $H(\mathrm{ek})$、把 $\mathrm{dk}$ 接长——
+\textbf{并不是}把 NTT 或矩阵乘从头再写一遍。
+
+本仓与标准还有一点\textbf{工程差异}（验收已锁定）：
+可复现跑分时 Host 只给 4\,B \texttt{seed\_d}，$d$ 与 $z$ 在设备 UB 内派生；
+对拍 liboqs 时 $\mathrm{dk\_kem}$ 为 3168\,B 展开式
+（$\mathrm{dk\_pke}\Vert\mathrm{ek}\Vert H\Vert z$），而不是代数最小 1600\,B 形态。
+
+\subsection{动手之前，我们手里已经有什么}
+
+到做 KEM.KeyGen 之前，本仓库并不是从一张白纸开始。
+我们已经在 AscendC 上做过大量\textbf{单点}和\textbf{分段}实验，并且多数有 CPU+SIM 对拍记录。
+可以把当时「已经验过」的家底粗分为四类：
+
 \begin{enumerate}
-  \item PKE.KeyGen 本身又依赖哪些已验证事实？
-  \item 「接上」是否免费？为什么 2-launch、workspace、同步壳往往单独翻车？
-  \item 若 Agent 直接从 FIPS 伪代码生成整段 AscendC，跳过已证节点，错在何处？
+  \item \textbf{平台层（P0）}
+        我们验证过 DataCopy、TPipe/TQue 排队、MIX 核上 AIV 与 AIC 的同步、
+        多核 MMAD 的 tiling 闭合等——没有这些，后面的向量核跑不稳。
+  \item \textbf{密码原语层（P1）}
+        我们验证过 Tag5T 三段式 NTT（poly-batch）、basemul/内积、SHAKE/SHA3、
+        CBD $\eta{=}2$、ByteEncode$_{12}$、SampleNTT 等。
+  \item \textbf{PKE KeyGen 全链（P2）}
+        我们已有交付级 \texttt{stable-fips203-mlkem-pke-keygen-k4}：
+        2 次 launch（prep 行 3--15 + compute 行 16--21），SIM tick $\approx$542k，KAT 通过。
+  \item \textbf{对照标本}
+        我们保留 \texttt{*-correctness-*} 探针：它们往往用更多 launch、更保守的搬运，
+        只求「能拼对」，不追求吃到向量优化——后文专章再讲其用途。
 \end{enumerate}
 
-下一章用\textbf{剥洋葱}回答第 1 问；第~\ref{sec:math}~章用接缝与证书回答第 2--3 问。
+换句话说：当我们决定做 KEM.KeyGen 时，
+\textbf{我们并不是让 Agent 从 FIPS 伪代码一行行翻译成 AscendC}，
+而是心里已经有一张「哪些积木是绿的」的清单。
+
+\subsection{我们前期是怎样一步步探出来的（简述）}
+
+这张清单不是一天长出来的。
+以 PKE KeyGen（Alg.13）为例，我们的典型路径是：
+
+\begin{itemize}
+  \item 我们先把 NTT + 行 18 UB 融合等做成向量探针（如 \texttt{vec-k4-v2}）；
+  \item 我们再把 Alg.13 拆成「行 3--7 $\hat{A}$」「行 8--15 $s,e$」「device 全链 KeyGen」等分段探针，逐段 PASS；
+  \item 分段都绿之后，我们才做 \texttt{stable-fips203-mlkem-pke-keygen-k4} 的 2-launch 集成与晋级。
+\end{itemize}
+
+KEM.KeyGen 则站在 PKE 肩膀上，增量更小：
+
+\begin{itemize}
+  \item \textbf{语义上}，我们调用（或内嵌）已交付的 Alg.13，得到 $(\mathrm{ek\_PKE}, \mathrm{dk\_PKE})$；
+  \item \textbf{设备上}，我们在同一次 compute launch 的尾部追加 Alg.16 尾段：
+        派生 $z$、算 $H(\mathrm{ek})$、按 liboqs 布局写出 \texttt{dk\_kem}；
+  \item \textbf{编排上}，我们保持与 stable PKE 相同的 2-launch 预算（不是 correctness 常见的 3-launch）；
+  \item \textbf{验收上}，我们先有 \texttt{fix-...-correctness-k4} 作 oracle 对照，
+        再有 \texttt{pass-fix-...-device-k4} 去 vendor，最后晋级
+        \texttt{stable-fips203-mlkem-kem-keygen-k4}。
+\end{itemize}
+
+若用一句话概括这次成功：
+\textbf{我们把标准里的三层算法，映射成「已证 PKE 链 + 一条已单独想清楚的 KEM 尾缝」}，
+而不是在 KEM 任务里重写 NTT。
+
+\subsection{这个例子给我们留下的「图感」}
+
+只看 Alg.19$\to$16$\to$13，读者已经可以画出一张粗图：
+
+\begin{lstlisting}
+[d,z 采样] --+
+              v
+         K-PKE.KeyGen(d) -----> ek_PKE -----> ek_kem
+              |                    |
+              v                    +--> H(ek) --+
+         dk_PKE ------------------------------+--> dk_kem
+                                    z --------+
+\end{lstlisting}
+
+注意：NTT、CBD、MMAD 等节点并不只属于 KeyGen——
+Encrypt、Encaps 也会用到它们。
+所以这张图其实是\textbf{有向无环图里的一个汇点}，不是一棵只往下长的树。
+后文我们会把「库里的依赖」和「这一次任务怎么展开」分开写。
+
+\subsection{从这个例子出发，我们应当问什么？}
+
+例子讲完，真正重要的是\textbf{问题}。
+如果我们的研究课题是「怎样让 Agent 预研少幻觉、少撞墙」，
+那么面对 KEM.KeyGen 这个故事，我们至少应当认真问下面几组问题。
+（本稿先列出草案；专题讨论中可增删改。）
+
+\paragraph{第一组：标准与工程之间的缝隙}
+\begin{enumerate}
+  \item FIPS 只告诉我们\textbf{算什么}；它并没有告诉我们，在昇腾上应当\textbf{先验哪几块、按什么顺序拼}。
+        我们凭什么在动手前就说「可以直接站在 stable PKE 上」——凭的是目录名，还是某种可写的证书？
+  \item 探针列表（INDEX）像一张「能力菜单」。
+        \textbf{菜单本身}是否等于\textbf{合法拼装说明书}？若不等，缺的那一页应当长什么样？
+\end{enumerate}
+
+\paragraph{第二组：「单点都对」之后，组合还对吗}
+\begin{enumerate}
+  \setcounter{enumi}{2}
+  \item 当 NTT 探针 PASS、PKE KeyGen PASS 之后，\textbf{谁}来保证「2-launch 接缝」「Alg.16 尾拼 dk」也一定 PASS？
+        我们能否把这种「组合不免费」写进理论，而不是每次靠工程师的经验？
+  \item 若我们把 correctness 路线（更多 launch、更保守同步）与 device/stable 路线（更少 launch、吃到优化）
+        都称为「正确」，\textbf{我们究竟在验收什么}——仅仅是输出字节，还是也要验收「沿已证能力生长」？
+\end{enumerate}
+
+\paragraph{第三组：Agent 若只知道算法和菜单，会发生什么}
+\begin{enumerate}
+  \setcounter{enumi}{4}
+  \item 若我们只给 Agent 一段 Alg.19 伪代码 + INDEX 里有哪些探针 PASS，
+        \textbf{但不给}确定的拼装路线，搜索空间会有多大？
+        我们亲眼见过：过程高度混乱、大量回退、极耗 token，最后只留下「能跑对」的 correctness 标本。
+  \item 我们能否把搜索空间收束为「只允许沿已证书边生长」，同时又\textbf{不}把工程优化堵死？
+        收束的规则应当写在图里，还是写在某种「合法句子」里？
+\end{enumerate}
+
+\paragraph{第四组：怎样把一次成功变成可复用的方法}
+\begin{enumerate}
+  \setcounter{enumi}{6}
+  \item 这次 KEM.KeyGen 的成功，能否被复述成一张\textbf{闭包表}：
+        依赖谁、缺了谁、哪条边有证书、哪条边被禁止？
+        若下一个人（或 Agent）做 Encaps / Decaps，我们能否\textbf{先交这张表再写码}？
+  \item 当上游改了 tiling 或同步壳，下游哪些节点应当自动标「脏」？
+        我们是否需要一种比「记得上次 PASS」更可靠的失效传播？
+\end{enumerate}
+
+\paragraph{这些问题的共同指向}
+
+上面这些问题，表面上各不相同，但它们指向同一条研究主线：
+
+\begin{quote}
+我们能否把「已验证能力 + 合法组合 + 动态证书」整理成一套\textbf{可教、可检查、可对照实验}的形式方法——\\
+让 Agent 的工作从「在菜单里瞎拼」变成「在自动机上走合法派生」？
+\end{quote}
+
+后文将先继续\textbf{剥洋葱}（看清 PKE 之下还有哪些底层事实），
+再把这些直觉收成 DAG、形式语言与配置自动机的语言（第~\ref{sec:math}~章起），
+并用 Encaps 复盘、Decaps 前瞻来检验这套语言是否管用。
 
 % ============================================================
 \section{回溯：一层层剥开直到平台事实}
