@@ -267,11 +267,14 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
 \textbf{我们并不是让 Agent 从 FIPS 伪代码一行行翻译成 AscendC}，
 而是心里已经有上表这张「哪些积木是绿的」的清单。
 
-\subsection{我们前期是怎样一步步探出来的}
+\subsection{我们怎样探出来：工程路径与数据依赖}
 
 这张清单不是一天长出来的。
-我们用\textbf{图}把两条时间线画在一起：先长 PKE，再在 PKE 上接 KEM 尾段。
+本节用两张图把同一件事说清楚：
+\textbf{第一张}是仓库时间线（先长 PKE，再接 KEM 尾缝）；
+\textbf{第二张}是 FIPS Alg.19$\to$16$\to$13 的数据依赖（与 §2.2 步骤编号对照）。
 
+\paragraph{图一：工程探路（PKE 线 $\to$ KEM 线）}
 \begin{center}
 \begin{tikzpicture}[
   node distance=6mm and 8mm,
@@ -302,7 +305,6 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
 \end{tikzpicture}
 \end{center}
 
-\paragraph{文字说明（与上图对照）}
 \begin{itemize}
   \item \textbf{PKE 线}：我们先把 NTT、内积等做成向量探针；再把 Alg.13 拆成 $\hat{A}$、$s,e$、device 全链，逐段 PASS；最后集成晋级 stable。
   \item \textbf{KEM 线}：我们语义上调用 Alg.13（步骤 1 即 \texttt{K-PKE.KeyGen}）；设备上在 Launch-2 尾部追加 Alg.16 步骤 2--3（$H$、拼 $\mathit{dk}$）；编排上保持 2-launch；验收上 correctness 作 oracle，device 去 vendor 后晋级 stable。
@@ -327,41 +329,66 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
 \textbf{我们把 FIPS 的三层算法，映射成「已证 PKE 链 + 一条单独想清楚的 KEM 尾缝」}，
 而不是在 KEM 任务里重写 NTT。
 
-\subsection{这个例子给我们留下的「图感」}
-
-只看 Alg.19$\to$16$\to$13，数据流可以画成下面这样（与 §2.2 步骤编号对照）：
+\paragraph{图二：FIPS 三层的数据依赖（图感）}
+图一讲「仓库里怎样长出来」；图二只看标准数据流——
+\textbf{重计算在 Alg.13}，$z$ \textbf{不进} Alg.13，只进 Alg.16 的 $\mathit{dk}$ 拼接；
+$\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 
 \begin{center}
 \begin{tikzpicture}[
-  node distance=5mm and 10mm,
-  var/.style={draw, ellipse, minimum width=1.8cm, minimum height=0.7cm, font=\small},
+  x=1.85cm, y=1.12cm,
+  var/.style={draw, ellipse, minimum width=2.1cm, minimum height=0.76cm,
+              font=\small, inner sep=1pt},
   op/.style={draw, rectangle, rounded corners=2pt, align=center, font=\small,
-             minimum width=2.4cm, minimum height=0.75cm},
-  arr/.style={-{Stealth[length=2mm]}}
+             minimum width=2.85cm, minimum height=0.9cm},
+  arr/.style={-{Stealth[length=2.2mm]}, thick},
+  lbl/.style={font=\footnotesize, text=black}
 ]
-  \node[var] (d) {$d$};
-  \node[var, right=of d] (z) {$z$};
-  \node[op, below=8mm of d, xshift=8mm] (pke) {Alg.13\\K-PKE.KeyGen};
-  \node[var, below=of pke] (ekpke) {$\mathit{ek}_{\mathrm{PKE}}$};
-  \node[var, left=12mm of ekpke] (dkpke) {$\mathit{dk}_{\mathrm{PKE}}$};
-  \node[op, right=18mm of ekpke] (H) {$H(\mathit{ek})$};
-  \node[var, below=of dkpke] (dk) {$\mathit{dk}_{\mathrm{KEM}}$};
-  \node[var, right=of ekpke] (ek) {$\mathit{ek}_{\mathrm{KEM}}$};
+  % 节点
+  \node[op, fill=orange!10] (a19) at (1.8, 5.5) {Alg.19\\采样 $d$、$z$};
+  \node[var] (d) at (0.5, 4.2) {$d$};
+  \node[var] (z) at (3.9, 4.2) {$z$};
+  \node[op, fill=blue!10] (a13) at (0.5, 2.7) {Alg.13\\K-PKE.KeyGen};
+  \node[var] (dkpke) at (-0.7, 1.2) {$\mathit{dk}_{\mathrm{PKE}}$};
+  \node[var] (ekpke) at (1.8, 1.2) {$\mathit{ek}_{\mathrm{PKE}}$};
+  \node[op, fill=gray!12, minimum width=2.0cm] (H) at (1.8, -0.25) {$H(\mathit{ek})$};
+  \node[op, fill=orange!12, minimum width=5.0cm] (a16) at (1.5, -1.7)
+    {Alg.16 拼 $\mathit{dk}$\\（$\mathit{ek}{\equiv}\mathit{ek}_{\mathrm{PKE}}$）\\
+     $\mathit{dk}_{\mathrm{PKE}}\Vert\mathit{ek}\Vert H(\mathit{ek})\Vert z$};
+  \node[var, fill=green!10] (ek) at (-0.2, -3.35) {$\mathit{ek}_{\mathrm{KEM}}$};
+  \node[var, fill=green!10] (dk) at (2.9, -3.35) {$\mathit{dk}_{\mathrm{KEM}}$};
+  \node[lbl, align=left, anchor=west] at (4.4, 2.0) {
+    右泳道：$z$ 旁路\\
+    \textbf{不}进入 Alg.13\\
+    仅进 Alg.16
+  };
+  \node[lbl, align=center] at (1.4, -4.1) {底部绿色 $=$ KEM 交付输出};
 
-  \draw[arr] (d) -- (pke);
-  \draw[arr] (pke) -- (ekpke);
-  \draw[arr] (pke) -- (dkpke);
-  \draw[arr] (ekpke) -- (ek);
+  % 边：无交叉（左直通 / 中拼装 / 右旁路）
+  \draw[arr] (a19) -- (d);
+  \draw[arr] (a19) -- (z);
+  \draw[arr] (d) -- (a13);
+  \draw[arr] (a13) -- (dkpke);
+  \draw[arr] (a13) -- (ekpke);
   \draw[arr] (ekpke) -- (H);
-  \draw[arr] (dkpke) -- (dk);
-  \draw[arr] (H) -- (dk);
-  \draw[arr] (z) -- (dk);
-  \draw[arr, dashed] (z) to[bend left=15] (pke.south east);
+  \draw[arr] (dkpke) -- (a16);
+  \draw[arr] (H) -- (a16);
+  \draw[arr] (z.south) -- ++(0,-4.6) -| (a16.east);
+  % 直通：从 $\mathit{ek}_{\mathrm{PKE}}$ 左侧外绕至交付叶（拼装式中 $\mathit{ek}$ 已标注 ${\equiv}$）
+  \draw[arr] (ekpke.west) -- ++(-1.55,0) -- ++(0,-4.05)
+    -| node[lbl, left, pos=0.2]{直通} (ek);
+  \draw[arr] (a16) -- (dk);
 \end{tikzpicture}
 \end{center}
 
-注意：NTT、CBD、MMAD 等节点并不只属于 KeyGen——Encrypt、Encaps 也会用到它们。
-所以这张图其实是\textbf{有向无环图里的一个汇点}，不是一棵只往下长的树。
+读图时抓住三点：
+\begin{enumerate}
+  \item \textbf{PKE 主体}：几乎全部重计算落在 Alg.13；$d$ 进、$\mathit{ek}_{\mathrm{PKE}}$/$\mathit{dk}_{\mathrm{PKE}}$ 出。
+  \item \textbf{KEM 尾缝}：Alg.16 把已有片段拼成 $\mathit{dk}_{\mathrm{KEM}}$；
+        $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 直通（图底左侧绿叶），不重做 NTT。
+  \item \textbf{汇点而非树}：NTT、CBD、MMAD 等还不画进本图——它们也不专属于 KeyGen，Encrypt / Encaps 会复用；
+        因此本图只是更大有向无环图里的一个\textbf{汇点}，不是一棵只往下长的树。
+\end{enumerate}
 
 \subsection{从这个例子出发，我们应当问什么？}
 
