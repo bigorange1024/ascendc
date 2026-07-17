@@ -88,9 +88,9 @@ static int32_t RunSimAlt(...)    { /* 仅 SimHostModeIs("xxx") 时 */ }
 |------|------|----------|--------|
 | *(unset)* | encrypt-compute | 单 launch `f203_encrypt_l18_l19` | ✓ 生产 |
 | `phased_launch` | encrypt-compute | 3 launch 调试（同 CPU 拓扑） | 调试 |
-| *(unset)* | kem-decaps | 等价 `decaps_2session` | ✓ 生产 |
-| `decaps_2session` | kem-decaps | Phase-D 后 `aclFinalize` + fresh session + 设备 FO | 生产 |
-| `decaps_1session` | kem-decaps | 单 session（CAModel 易 c′ 污染，排障） | 调试 |
+| *(unset)* | kem-decaps | 等价 `decaps_1session`（T2 单库后） | ✓ 生产 |
+| `decaps_1session` | kem-decaps | 同 ACL session 连续 D→E + 设备 FO | 生产 |
+| `decaps_2session` | kem-decaps | Phase-D 后 `aclFinalize` + fresh session（对照/保底） | 调试 |
 
 **新增用例**：在本表追加行；`run.sh` 默认 export 生产取值（或 unset）；**禁止**新建 `MY_PROBE_SIM_XXX=1`。
 
@@ -147,16 +147,17 @@ static int32_t RunSimAlt(...)    { /* 仅 SimHostModeIs("xxx") 时 */ }
 
 ---
 
-## 附录 B — kem-decaps SIM 2-session
+## 附录 B — kem-decaps SIM session（T2 后）
 
 | 构建 | `ASCENDC_SIM_HOST_MODE` | 行为 |
 |------|-------------------------|------|
-| **SIM 默认**（unset 或 `decaps_2session`） | 生产 | Phase-D 后 `aclFinalize` + fresh session + 设备 FO |
-| **SIM `decaps_1session`** | 调试 | 单 session（CAModel `c′` 污染，排障） |
+| **SIM 默认**（unset 或 `decaps_1session`） | 生产 | 单设备库同 session D→E + 设备 FO |
+| **SIM `decaps_2session`** | 调试/对照 | Phase-D 后 `aclFinalize` + fresh session |
 | **CPU** | （不读） | 单 session，`K max=0` |
 
-Host 判断：`ascendc::SimHostDecapsUse2Session()`（`main_kem_dec_g5_run.cpp`）。  
-**已废弃**：`KEM_DECAPS_SIM_2SESSION`（`ascendc_build_mode.hpp` 临时兼容旧脚本）。
+Host 判断：`ascendc::SimHostDecapsUse2Session()`。  
+**已废弃**：`KEM_DECAPS_SIM_2SESSION`（`ascendc_build_mode.hpp` 临时兼容旧脚本）。  
+**历史**：双库时代默认 2-session；T2 合库后默认翻转为 1-session（见 Alg.21 notes）。
 
 ---
 

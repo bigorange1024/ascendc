@@ -30,8 +30,8 @@
 | **首版全链 launch** | **2**：Phase-D + Phase-E（各内部 = 对应 stable 的 launch 数）；**零额外独立 KEM AIV 核名** |
 | **最终目标** | 尽可能少 launch；**门禁不是**一上来 D+E 单核 |
 | **PKE 源** | 编译期引用 stable；**禁止** `#include` / rsync frozen |
-| **SIM session** | 首版允许 `ASCENDC_SIM_HOST_MODE=decaps_2session`（D 后 fresh session 跑 E）；单 session 真修属 T2 |
-| **单设备库** | **CPU：单** `libascendc_kernels_cpu.so`。**SIM：双库**（`…_dec_sim` + `…_sim`）+ **强制 2-session**——stable Decrypt/Encrypt 同名头（`aiv_func`/`ntt_vec` 等）在 ascendc precompile 无法 per-TU 隔离；合库单 session 属 **T2** |
+| **SIM session** | **默认 `decaps_1session`**（T2 单库后同 session D→E）；对照 `ASCENDC_SIM_HOST_MODE=decaps_2session` |
+| **单设备库** | **CPU/SIM 均为单** `libascendc_kernels_*.so`。SIM 用 `scripts/prepare_dec_shim.sh`（冲突头 `dec_*`）合库；见 §T2 |
 
 ---
 
@@ -129,8 +129,9 @@ Phase-D：`main_kem_decaps_phase_d_run.*` + stable `f203_decrypt_device_fused`�
 | **E2** | 同 E1 SIM | SIM `K` max=0；记 tick | **PASS**（tick **746221**） |
 | **E3** | 拒绝路径：随机假密文 → `K` vs liboqs Decaps≡`J(z‖c)` | CPU（+SIM）max=0 | **PASS**（2026-07-17；`KEM_DECAPS_REJECT=1`） |
 | **D0–D2** | Phase-D / 全链内 Decrypt | `m'` 可用；全链 `K` max=0 | **PASS**（并入 F1） |
-| **F1** | D→E 串联；SIM 默认 2-session | `K` max=0 | **PASS**（CPU；SIM D**283317**+E**745341**） |
+| **F1** | D→E 串联；SIM 默认 1-session（单库） | `K` max=0 | **PASS**（T2：D**286803**+E**745925**） |
 | **F2** | 分项 kat / roundtrip | 按 scripts 约定 | **PASS**（2026-07-17；默认已指本目录；CPU KAT×1） |
+| **T2** | SIM 单库 + 1-session | 无 `…_dec_sim`；`K` max=0；E3 仍绿 | **PASS**（2026-07-17 Cloud） |
 
 ---
 
@@ -139,10 +140,11 @@ Phase-D：`main_kem_decaps_phase_d_run.*` + stable `f203_decrypt_device_fused`�
 ```bash
 cd ascendc-tests/fix-f203-alg21-kem-decaps-device-k4
 bash run.sh -r cpu -v Ascend910B4          # 默认全链
-bash run.sh -r sim -v Ascend910B4          # 默认 decaps_2session
-# 调试 Phase-E-only / 拒绝（非默认）：
+bash run.sh -r sim -v Ascend910B4          # 默认单库 + decaps_1session
+# 调试 Phase-E-only / 拒绝 / 2-session 对照（非默认）：
 KEM_DECAPS_PHASEE_ONLY=1 bash run.sh -r cpu -v Ascend910B4
 KEM_DECAPS_REJECT=1 bash run.sh -r cpu -v Ascend910B4   # E3：假密文；K vs liboqs
+ASCENDC_SIM_HOST_MODE=decaps_2session bash run.sh -r sim -v Ascend910B4
 ```
 
 防挂死预算：`KERNEL_COMPUTE_BUDGET_SEC`≥600（全链默认 1200）。
@@ -153,15 +155,15 @@ KEM_DECAPS_REJECT=1 bash run.sh -r cpu -v Ascend910B4   # E3：假密文；K vs 
 
 | 项 | 归属 |
 |----|------|
-| **T2：SIM 单库合库 + 单 session** | **交 Cloud Agent**（见仓库根 `AGENT_HANDOFF.md`）；本机已推送双库+2-session 绿基线 |
-| D+E 单 launch 融合 | 更后；非 T2 必做 |
-| `#交付#` / `examples/stable` Decaps | T2 或 `pass-fix` 更名之后 |
+| **T2：SIM 单库合库 + 单 session** | **PASS**（2026-07-17 Cloud）：`prepare_dec_shim.sh` + 单 `ascendc_library`；默认 `decaps_1session` |
+| D+E 单 launch 融合 | 更后 |
+| `#交付#` / `examples/stable` Decaps | `pass-fix` 更名之后 |
 | 改 correctness 逻辑；从 frozen 抄 PKE | **禁止** |
-| `pass-fix` 更名 / KAT 扩量 | 可本机；非阻塞 T2 |
+| `pass-fix` 更名 / KAT 扩量 | 可本机；非阻塞 |
 
-### T2 实施要点（给 Cloud）
+### T2 落地要点（已完成）
 
-1. **问题**：SIM 现双库是因为 Decrypt/Encrypt 同名头在 ascendc precompile 无法 per-TU 隔离；双库同 session 历史上有 func_key 污染 → 强制 `decaps_2session`。
-2. **做法候选**：命名空间/路径隔离头、生成侧重命名、或拆 TU 后仍链进**一个** `ascendc_library`；合库后再试 `decaps_1session`。
-3. **验收**：CPU 仍绿；SIM 全链 `K` max=0；`KEM_DECAPS_REJECT=1` 仍绿；用例根无 stray dump。
+1. **问题**：stable Decrypt/Encrypt 同名头 → ascendc precompile 无法 per-TU 隔离 → 曾被迫 SIM 双库 + `decaps_2session`。
+2. **做法**：`scripts/prepare_dec_shim.sh` 自 stable Decrypt 复制可达子树，冲突 basename → `dec_*` 并改写 `#include`；SIM 单 `ascendc_library` 吃 shim + Encrypt + kem。
+3. **验收**：CPU 仍绿；SIM 全链 `K` max=0（D**286803**+E**745925**）；`KEM_DECAPS_REJECT=1` CPU+SIM 仍绿；仅 `libascendc_kernels_sim.so`；用例根无 stray dump。
 4. **勿**：改 golden 语义绕过；从 `frozen/` 抄码；擅自改已锁形状/`blockDim`。

@@ -55,3 +55,17 @@ Gate：**D / F1 PASS**。
 | **交接面** | [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) ★下一刀；[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md) |
 
 本机本轮：刷新文档并 **git push** 基线，供 Cloud 拉仓开工。
+
+## 8. T2 PASS（同日 Cloud 接替）
+
+Cloud Agent 落地 SIM **单库 + 默认 1-session**：
+
+| 项 | 说明 |
+|----|------|
+| **shim** | `scripts/prepare_dec_shim.sh` ← stable Decrypt；冲突头 → `dec_*`（`shim/` gitignore） |
+| **CMake** | SIM/NPU 单 `ascendc_library`；CPU 仍 per-source `-I` |
+| **默认** | `ASCENDC_SIM_HOST_MODE=decaps_1session`；`decaps_2session` 对照 |
+| **验收** | CPU/SIM 全链 `K` max=0；E3 REJECT CPU+SIM PASS；仅 `libascendc_kernels_sim.so` |
+| **tick** | D**286803** + E**745925** |
+
+Gate：**T2 PASS**。下一：`pass-fix` 更名 / KAT 扩量 / `#交付#`。

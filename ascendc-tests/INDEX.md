@@ -67,7 +67,7 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | [**fix-f203-alg19-kem-keygen-correctness-k4/**](fix-f203-alg19-kem-keygen-correctness-k4/) | **Alg.19 KEM KeyGen（correctness）✅** — vendor PKE + KeyGen_internal；CPU+SIM+liboqs max=0；SIM **742558** tick |
 | [**fix-f203-alg20-kem-encaps-correctness-k4/**](fix-f203-alg20-kem-encaps-correctness-k4/) | **Alg.20 KEM Encaps（correctness）** — vendor Encrypt **G5←frozen**；**CPU+SIM PASS** |
 | [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；SIM 默认 **2-session** PASS |
-| [**fix-f203-alg21-kem-decaps-device-k4/**](fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — **T19b/c 全链 + E3 PASS**（SIM 2-session；D**283k**+E**745k**）；`scripts/` 默认；`pass-fix` 待 |
+| [**fix-f203-alg21-kem-decaps-device-k4/**](fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — **T19b/c + T2 PASS**（单库+1-session；D**286k**+E**745k**）；`scripts/` 默认；`pass-fix` 待 |
 
 **命名（2026-07-10；Encaps 更名 2026-07-15）**：`*-correctness-k4` = vendor oracle 对照（冻结不动）；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19 KeyGen / Alg.20 Encaps device 均已 PASS 并更名 `pass-fix-…`**。KEM `scripts/` KeyGen 默认 [`pass-fix-f203-alg19-kem-keygen-device-k4`](pass-fix-f203-alg19-kem-keygen-device-k4/)；Encaps 默认 [`pass-fix-f203-alg20-kem-encaps-device-k4`](pass-fix-f203-alg20-kem-encaps-device-k4/)（roundtrip / liboqs_vs / kat）；Decaps 默认 [`fix-f203-alg21-kem-decaps-device-k4`](fix-f203-alg21-kem-decaps-device-k4/)；`pass-fix` 更名待定。
 

@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-17（**T19b/c 全链 + E3 PASS**；scripts→device；**T2 交 Cloud** 单库/单 session）
+**最近刷新**：2026-07-17（**T2 PASS**：Decaps SIM 单库 + 默认 1-session；D**286803**+E**745925**）
 
 ---
 
@@ -31,13 +31,13 @@
 | **P0** | **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：prep 前段 H/G + stable Encrypt | **PASS**（CPU+SIM；tick **721010**；liboqs KAT **10+3**） |
 | **P0** | **T19g** | Encaps incubating → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **完成**（tick **721119**；KAT **10+3**；scripts 默认改指 stable） |
 | **P0** | **T19b** | **[`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) Phase-E** | **PASS**（含 **E3 拒绝** CPU+SIM） |
-| **P0** | **T19c** | **同上 device-k4 Phase-D + D→E 全链** | **PASS**（CPU+SIM `K` max=0；SIM 2-session；D**283317**+E**745341**） |
-| **P0** | **T7c** | ML-KEM **Alg.21** Decaps（correctness）：[`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | **CPU+SIM PASS**；device **T19b/c 全链已 PASS** |
+| **P0** | **T19c** | **同上 device-k4 Phase-D + D→E 全链** | **PASS**（CPU+SIM `K` max=0；**T2 后** 单库+1-session；D**286803**+E**745925**） |
+| **P0** | **T7c** | ML-KEM **Alg.21** Decaps（correctness）：[`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | **CPU+SIM PASS**；device **T19b/c + T2 已 PASS** |
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps（correctness）：[`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | **PASS**；device **T19a 已 PASS** → [`pass-fix-…-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen（correctness）：[`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | **PASS**；device [`pass-fix-…-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) **PASS**（~**713k**）；**stable 交付**见上 |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
-| **P0** | **T2** | Decaps device：**SIM 单库合库 + 单 session 真修**（现双库+2-session 保底）；另 **NPU 实机**（PKE/KEM）属更后 | **交 Cloud Agent**（见 HANDOFF）；勿改 Alg.18 语义 |
+| **P0** | **T2** | Decaps device：**SIM 单库合库 + 单 session**；另 **NPU 实机**（PKE/KEM）属更后 | **PASS**（2026-07-17 Cloud；`prepare_dec_shim`；默认 1-session；E3 仍绿） |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
@@ -56,7 +56,7 @@
 |------|------|------|
 | **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：改接 [`stable-…-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **PASS**（CPU+SIM max=0；tick **721010**）；liboqs KAT **CPU×10+SIM×3 PASS**；**已更名 pass-fix**；交付树见 **T19g** |
 | **T19b** | **[`fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) Phase-E**：同上 Encrypt 布局 | **PASS**（2026-07-17；CPU+SIM `K` max=0；tick **746221**）；E3 可选 |
-| **T19c** | **同上 device-k4 Phase-D**：stable Decrypt fused + D→E | **PASS**（2026-07-17；CPU+SIM；SIM 双库+2-session）；scripts 默认已指 device；`pass-fix` 待；**合库/1-session → T2（Cloud）** |
+| **T19c** | **同上 device-k4 Phase-D**：stable Decrypt fused + D→E | **PASS**（2026-07-17；**T2** 单库+1-session；D**286803**+E**745925**）；scripts 默认已指 device；`pass-fix` 待 |
 | **T19d** | **[`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)** | **PASS**（2026-07-10）；2 launch；P1 后 SIM tick 均值 **~713k** |
 | **T19e** | **`scripts/` KeyGen/Encaps/Decaps 默认** | **Encaps 默认改指 stable**（2026-07-15）；**Decaps 默认改指 [`fix-…-decaps-device-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)**（2026-07-17）；KeyGen 段仍可指 pass-fix/device |
 | **T19f** | incubating KeyGen 重写 → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **完成** → 已关闭表 |
