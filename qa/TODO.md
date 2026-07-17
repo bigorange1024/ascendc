@@ -37,7 +37,7 @@
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen（correctness）：[`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | **PASS**；device [`pass-fix-…-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) **PASS**（~**713k**）；**stable 交付**见上 |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
-| **P0** | **T2** | Decaps device：**SIM 单库合库 + 单 session**；另 **NPU 实机**（PKE/KEM）属更后 | **PASS**（2026-07-17 Cloud；`prepare_dec_shim`；默认 1-session；E3 仍绿） |
+| **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境 |
 | **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
 | **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
@@ -101,6 +101,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T2** | Decaps device SIM **单库合库 + 默认 1-session**（`prepare_dec_shim`；D**286803**+E**745925**；E3 仍绿）；NPU 实机另见 **T2-npu** | 2026-07-17 |
 | **T20** | 活跃用例详细中文注释补课 Wave1–5（跳过 `frozen/`/`add_custom/`/`vendor/`/`thirdparty/`） | 2026-07-15（Wave 2026-07-10 已齐；自打开项迁出） |
 | **T19f** | incubating KEM KeyGen → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) · SIM **706633** | 2026-07-14 |
 | **T19g** | incubating KEM Encaps → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) · SIM **721119** · KAT **10+3** | 2026-07-15 |
