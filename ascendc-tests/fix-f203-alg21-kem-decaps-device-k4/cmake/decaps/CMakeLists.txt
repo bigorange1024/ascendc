@@ -1,9 +1,11 @@
 # Alg.21 KEM Decaps device-k4 — Phase-D+E 单库；编译期引用 stable Decrypt + Encrypt
 #
-# 工程策略（2026-07-17）：
+# 工程策略（2026-07-17 → T2 2026-07-17 Cloud）：
 #   1) 单 libascendc_kernels_*：Decrypt fused + Phase-E kem + Encrypt compute；
-#   2) Decrypt/Encrypt 同名头（aiv_func/basic/…）用 per-source INCLUDE 隔离；
-#   3) Host：main_kem_decaps（全链）+ 可选 phase_e-only。
+#   2) CPU：Decrypt/Encrypt 同名头用 per-source INCLUDE 隔离（tikicpu 认 SOURCE 属性）；
+#   3) SIM/NPU：ascendc precompile 只认 target-level -I → 用 shim/pke_decrypt
+#      （scripts/prepare_dec_shim.sh：冲突头改名 dec_*）后合进一个 ascendc_library；
+#   4) Host：main_kem_decaps（全链）+ 可选 phase_e-only。
 #
 cmake_minimum_required(VERSION 3.16)
 project(Ascend_c)
@@ -13,6 +15,7 @@ get_filename_component(REPO_ROOT "${KEM_ROOT}/../.." ABSOLUTE)
 
 set(STABLE_ENCRYPT_ROOT "${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4")
 set(STABLE_DECRYPT_ROOT "${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-decrypt-k4")
+set(DEC_SHIM_ROOT "${KEM_ROOT}/shim/pke_decrypt")
 set(TEST_ROOT "${STABLE_ENCRYPT_ROOT}")
 set(COMPUTE_DIR "${STABLE_ENCRYPT_ROOT}/compute")
 set(PREP_AHAT "${TEST_ROOT}/prep/ahat")
@@ -24,6 +27,7 @@ set(SHAKE_XOF_INC "${REPO_ROOT}/library/shared/shake_xof_kernel")
 set(KECCAK_INC "${REPO_ROOT}/library/shared/keccak_f1600_kernel")
 set(SHARED_INC "${REPO_ROOT}/library/shared")
 
+# Host / CPU twin：仍直接引用 stable Decrypt 树（per-TU -I）
 set(G4_FULL_INC "${STABLE_DECRYPT_ROOT}/compute/g4_full")
 set(UNPACK_INC "${STABLE_DECRYPT_ROOT}/unpack")
 set(PREP_DECODE_INC "${STABLE_DECRYPT_ROOT}/prep/decode_dk")
@@ -33,6 +37,15 @@ set(ALG11_DEC_INC "${STABLE_DECRYPT_ROOT}/compute/alg11")
 set(SU_DOT_INC "${STABLE_DECRYPT_ROOT}/compute/su_dot")
 set(FINAL_INC "${STABLE_DECRYPT_ROOT}/compute/final")
 set(TAIL_C1_INC "${STABLE_DECRYPT_ROOT}/compute/compress1_byteencode1")
+
+# SIM 合库：shim 内 fused entry + 已改名的 dec_* 头
+set(SHIM_G4_FULL "${DEC_SHIM_ROOT}/compute/g4_full")
+set(SHIM_UNPACK "${DEC_SHIM_ROOT}/unpack")
+set(SHIM_PREP_DECODE "${DEC_SHIM_ROOT}/prep/decode_dk")
+set(SHIM_NTT_U "${DEC_SHIM_ROOT}/compute/ntt_u")
+set(SHIM_ALG11 "${DEC_SHIM_ROOT}/compute/alg11")
+set(SHIM_SU_DOT "${DEC_SHIM_ROOT}/compute/su_dot")
+set(SHIM_TAIL_C1 "${DEC_SHIM_ROOT}/compute/compress1_byteencode1")
 
 set(RUN_MODE "npu" CACHE STRING "cpu/sim/npu")
 set(SOC_VERSION "Ascend910B4" CACHE STRING "system on chip type")
@@ -61,9 +74,6 @@ if(CMAKE_INSTALL_PREFIX STREQUAL /usr/local)
     set(CMAKE_INSTALL_PREFIX "${KEM_ROOT}/out" CACHE STRING "install prefix" FORCE)
 endif()
 
-set(DECRYPT_KERNEL_FILES
-    ${G4_FULL_INC}/f203_decrypt_device_fused_entry.cpp
-)
 set(ENCRYPT_KERNEL_FILES
     ${KEM_DIR}/f203_kem_dec_phase_e_prep_entry.cpp
     ${KEM_DIR}/f203_kem_dec_pack_fo_entry.cpp
@@ -72,12 +82,17 @@ set(ENCRYPT_KERNEL_FILES
     ${COMPUTE_DIR}/f203_encrypt_intt_e1_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_l18_l19_kernel.cpp
 )
-set(KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
+
 set(CUSTOM_ASCEND310P_LIST "Ascend310P1" "Ascend310P3")
 
-set(_DECRYPT_INCLUDES
+set(_DECRYPT_INCLUDES_STABLE
     ${STABLE_DECRYPT_ROOT} ${G4_FULL_INC} ${UNPACK_INC} ${PREP_DECODE_INC}
     ${NTT_U_INC} ${INTT_W_INC} ${ALG11_DEC_INC} ${SU_DOT_INC} ${FINAL_INC} ${TAIL_C1_INC}
+    ${KEM_DIR} ${KEM_ROOT} ${KECCAK_INC} ${SHARED_INC}
+)
+set(_DECRYPT_INCLUDES_SHIM
+    ${DEC_SHIM_ROOT} ${SHIM_G4_FULL} ${SHIM_UNPACK} ${SHIM_PREP_DECODE}
+    ${SHIM_NTT_U} ${SHIM_ALG11} ${SHIM_SU_DOT} ${SHIM_TAIL_C1}
     ${KEM_DIR} ${KEM_ROOT} ${KECCAK_INC} ${SHARED_INC}
 )
 set(_ENCRYPT_INCLUDES
@@ -118,22 +133,40 @@ function(_kem_set_src_includes srcs incs)
 endfunction()
 
 if("${RUN_MODE}" STREQUAL "cpu")
+    # CPU twin：stable Decrypt 入口 + per-source -I 隔离同名头
+    set(DECRYPT_KERNEL_FILES ${G4_FULL_INC}/f203_decrypt_device_fused_entry.cpp)
+    set(KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
+
     if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
         set(CMAKE_PREFIX_PATH ${ASCEND_CANN_PACKAGE_PATH}/tools/tikicpulib/lib/cmake)
     endif()
     find_package(tikicpulib REQUIRED)
     add_library(ascendc_kernels_${RUN_MODE} SHARED ${KERNEL_FILES})
-    _kem_set_src_includes("${DECRYPT_KERNEL_FILES}" "${_DECRYPT_INCLUDES}")
+    _kem_set_src_includes("${DECRYPT_KERNEL_FILES}" "${_DECRYPT_INCLUDES_STABLE}")
     _kem_set_src_includes("${ENCRYPT_KERNEL_FILES}" "${_ENCRYPT_INCLUDES}")
     target_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE ${_COMMON_KERNEL_DEFS})
     target_compile_options(ascendc_kernels_${RUN_MODE} PRIVATE -g -O0 -std=c++17)
     target_link_libraries(ascendc_kernels_${RUN_MODE} PUBLIC tikicpulib::${SOC_VERSION})
     install(TARGETS ascendc_kernels_${RUN_MODE} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+    set(_HOST_DECRYPT_INCS ${_DECRYPT_INCLUDES_STABLE})
 elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
-    # SIM/NPU：Decrypt 与 Encrypt 分两个 ascendc_library（stable 两侧 aiv_func/ntt_vec 等同名头冲突，
-    # ascendc precompile 只认 target-level include，无法 per-TU 隔离）。
-    # 生产 SIM 强制 decaps_2session：每 session 只 launch 一侧核，避开历史双库同 session 污染。
-    # CPU 已单库；SIM 单 session 真修（合库）属 T2。
+    # SIM/NPU 单库：须先跑 scripts/prepare_dec_shim.sh（run.sh 在 cmake 前调用）
+    if(NOT EXISTS "${SHIM_G4_FULL}/f203_decrypt_device_fused_entry.cpp")
+        message(FATAL_ERROR
+            "Decrypt shim missing: ${SHIM_G4_FULL}/f203_decrypt_device_fused_entry.cpp\n"
+            "Run: bash ${KEM_ROOT}/scripts/prepare_dec_shim.sh")
+    endif()
+    if(NOT EXISTS "${SHIM_NTT_U}/dec_aiv_func.hpp")
+        message(FATAL_ERROR
+            "Decrypt shim incomplete (need dec_aiv_func.hpp). Re-run prepare_dec_shim.sh")
+    endif()
+
+    set(DECRYPT_KERNEL_FILES ${SHIM_G4_FULL}/f203_decrypt_device_fused_entry.cpp)
+    set(KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
+
+    # 单设备库：shim Decrypt（dec_* 头）+ Encrypt + kem；单 func_key 空间，消除 R3 双库污染
+    # AIV-only 预算：phase_e_prep + pack_fo + fo_only + at_jp = 4（< R1 阈值 5）
     if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
         set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
     elseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)
@@ -143,15 +176,14 @@ elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
     endif()
     include(${ASCENDC_CMAKE_DIR}/ascendc.cmake)
 
-    ascendc_library(ascendc_kernels_dec_${RUN_MODE} SHARED ${DECRYPT_KERNEL_FILES})
-    ascendc_include_directories(ascendc_kernels_dec_${RUN_MODE} PRIVATE ${_DECRYPT_INCLUDES})
-    ascendc_compile_definitions(ascendc_kernels_dec_${RUN_MODE} PRIVATE ${_COMMON_KERNEL_DEFS})
+    # decrypt shim 在前、encrypt 在后：唯一剩余同名头应为无冲突或已改名
+    set(_ALL_INCLUDES ${_DECRYPT_INCLUDES_SHIM} ${_ENCRYPT_INCLUDES})
 
-    ascendc_library(ascendc_kernels_${RUN_MODE} SHARED ${ENCRYPT_KERNEL_FILES})
-    ascendc_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${_ENCRYPT_INCLUDES})
+    ascendc_library(ascendc_kernels_${RUN_MODE} SHARED ${KERNEL_FILES})
+    ascendc_include_directories(ascendc_kernels_${RUN_MODE} PRIVATE ${_ALL_INCLUDES})
     ascendc_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE ${_COMMON_KERNEL_DEFS})
 
-    set(_KEM_SIM_DUAL_LIBS TRUE)
+    set(_HOST_DECRYPT_INCS ${_DECRYPT_INCLUDES_STABLE})
 else()
     message(FATAL_ERROR "invalid RUN_MODE: ${RUN_MODE}")
 endif()
@@ -196,15 +228,8 @@ set(_HOST_COMMON_DEFS
     DECOMPRESS_D_VEC=${DECOMPRESS_D_VEC}
 )
 
-if(_KEM_SIM_DUAL_LIBS)
-    set(_HOST_KERNEL_LIBS ascendc_kernels_dec_${RUN_MODE} ascendc_kernels_${RUN_MODE})
-    set(_HOST_ACL_INCS
-        ${CMAKE_BINARY_DIR}/include/ascendc_kernels_dec_${RUN_MODE}
-        ${CMAKE_BINARY_DIR}/include/ascendc_kernels_${RUN_MODE})
-else()
-    set(_HOST_KERNEL_LIBS ascendc_kernels_${RUN_MODE})
-    set(_HOST_ACL_INCS ${CMAKE_BINARY_DIR}/include/ascendc_kernels_${RUN_MODE})
-endif()
+set(_HOST_KERNEL_LIBS ascendc_kernels_${RUN_MODE})
+set(_HOST_ACL_INCS ${CMAKE_BINARY_DIR}/include/ascendc_kernels_${RUN_MODE})
 
 set(_HOST_LINK
     $<BUILD_INTERFACE:$<$<OR:$<STREQUAL:${RUN_MODE},npu>,$<STREQUAL:${RUN_MODE},sim>>:host_intf_pub>>
@@ -214,7 +239,7 @@ set(_HOST_LINK
 )
 
 # phase_d_run：仅 Decrypt 树；phase_e_run / phase_e main：仅 Encrypt 树
-set_property(SOURCE ${KEM_ROOT}/main_kem_decaps_phase_d_run.cpp PROPERTY INCLUDE_DIRECTORIES "${_DECRYPT_INCLUDES}")
+set_property(SOURCE ${KEM_ROOT}/main_kem_decaps_phase_d_run.cpp PROPERTY INCLUDE_DIRECTORIES "${_HOST_DECRYPT_INCS}")
 set_property(SOURCE ${KEM_ROOT}/main_kem_decaps_phase_e_run.cpp PROPERTY INCLUDE_DIRECTORIES "${_ENCRYPT_INCLUDES}")
 set_property(SOURCE ${KEM_ROOT}/main_kem_decaps_phase_e.cpp PROPERTY INCLUDE_DIRECTORIES "${_ENCRYPT_INCLUDES}")
 set_property(SOURCE ${TEST_ROOT}/f203_encrypt_tiling.cpp PROPERTY INCLUDE_DIRECTORIES "${_ENCRYPT_INCLUDES}")

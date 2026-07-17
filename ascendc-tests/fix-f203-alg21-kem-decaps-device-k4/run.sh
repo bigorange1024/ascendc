@@ -6,12 +6,12 @@
 #
 # Usage（默认全链）:
 #   bash run.sh -r cpu -v Ascend910B4
-#   bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r sim -v Ascend910B4   # 默认单库 + decaps_1session（T2）
 #
 # 调试（非默认）:
 #   KEM_DECAPS_PHASEE_ONLY=1 …          # 仅 Phase-E（灌 m'）
 #   KEM_DECAPS_REJECT=1 …               # Gate E3：随机假密文；K vs liboqs Decaps≡J(z‖c)
-#   ASCENDC_SIM_HOST_MODE=decaps_1session …  # SIM 单 session 排障
+#   ASCENDC_SIM_HOST_MODE=decaps_2session …  # SIM 双 session 对照（非默认）
 #   KEM_DECAPS_FORCE_REBUILD=1 …
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -29,9 +29,9 @@ export KEM_DECAPS_PHASEE_ONLY="${KEM_DECAPS_PHASEE_ONLY:-0}"
 export KEM_DECAPS_REJECT="${KEM_DECAPS_REJECT:-0}"
 export CMAKE_BUILD_JOBS="${CMAKE_BUILD_JOBS:-2}"
 export KERNEL_COMPUTE_BUDGET_SEC="${KEM_DECAPS_KERNEL_BUDGET_SEC:-1200}"
-# SIM 全链默认 2-session（unset 亦为 2-session，见 ascendc_build_mode.hpp）
+# SIM 全链默认 1-session（T2 单库后）；对照可显式 decaps_2session
 if [ -z "${ASCENDC_SIM_HOST_MODE:-}" ]; then
-    export ASCENDC_SIM_HOST_MODE=decaps_2session
+    export ASCENDC_SIM_HOST_MODE=decaps_1session
 fi
 
 BUILD_TYPE="Debug"
@@ -116,7 +116,7 @@ if [ "${KEM_DECAPS_FORCE_REBUILD}" = "1" ]; then
     _need_build=1
 elif [ "${KEM_DECAPS_SKIP_REBUILD}" = "1" ] && [ -x "${INSTALL_PREFIX}/bin/${BIN_NAME}" ] && \
      [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_${RUN_MODE}.so" ] && \
-     { [ "${RUN_MODE}" = "cpu" ] || [ -f "${INSTALL_PREFIX}/lib/libascendc_kernels_dec_${RUN_MODE}.so" ]; } && \
+     [ ! -f "${INSTALL_PREFIX}/lib/libascendc_kernels_dec_${RUN_MODE}.so" ] && \
      [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" = "${_build_tag}" ]; then
     _need_build=0
 fi
@@ -125,6 +125,10 @@ _kem_build() {
     if [ "${KEM_DECAPS_FORCE_REBUILD}" = "1" ] || \
        { [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" != "${_build_tag}" ]; }; then
         rm -rf "${BUILD_DIR}" "${INSTALL_PREFIX}"
+    fi
+    # SIM/NPU：合库前生成 Decrypt 冲突头隔离 shim（幂等；不改 stable）
+    if [ "${RUN_MODE}" = "sim" ] || [ "${RUN_MODE}" = "npu" ]; then
+        bash "${CURRENT_DIR}/scripts/prepare_dec_shim.sh"
     fi
     mkdir -p "${BUILD_DIR}"
     cmake -B "${BUILD_DIR}" \
