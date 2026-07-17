@@ -587,6 +587,22 @@ R=\{(\text{高数},\text{概率}),\,(\text{线代},\text{机器学习}),\,(\text
 \]
 则 $(\text{高数},\text{概率})\in R$，但 $(\text{概率},\text{高数})\notin R$（有序性）。
 映射 $\mathrm{grade}:A\to\{A,B,C\}$ 若存在，则是函数：每门课恰一个成绩。
+\begin{center}
+\begin{tikzpicture}[
+  x=2.4cm, y=1.35cm,
+  every node/.style={font=\small},
+  c/.style={draw, circle, minimum size=1.15cm, align=center, inner sep=1pt},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[c] (calc) at (0,1) {高数};
+  \node[c] (lin) at (0,0) {线代};
+  \node[c] (prob) at (1.2,1) {概率};
+  \node[c] (ml) at (2.4,0.5) {机器\\学习};
+  \draw[arr] (calc) -- (prob);
+  \draw[arr] (prob) -- (ml);
+  \draw[arr] (lin) -- (ml);
+\end{tikzpicture}
+\end{center}
 \end{example}
 
 \begin{example}[工程：§2 数据依赖中的关系]
@@ -595,6 +611,35 @@ R=\{(\text{高数},\text{概率}),\,(\text{线代},\text{机器学习}),\,(\text
 $(d,\text{Alg.13})\in R_{\mathrm{KG}}$，$(z,\text{Alg.13})\notin R_{\mathrm{KG}}$。
 「把 $\mathit{ek}_{\mathrm{PKE}}$ 直通记为 $\mathit{ek}_{\mathrm{KEM}}$」可视为部分函数
 $\iota:\{\mathit{ek}_{\mathrm{PKE}}\}\to\{\mathit{ek}_{\mathrm{KEM}}\}$。
+下图为关系 $R_{\mathrm{KG}}$ 的示意（数据流语义；闭包节将改用依赖方向）。
+\begin{center}
+\begin{tikzpicture}[
+  x=1.55cm, y=1.05cm,
+  every node/.style={font=\footnotesize},
+  v/.style={draw, ellipse, minimum width=1.35cm, minimum height=0.55cm, inner sep=1pt},
+  op/.style={draw, rounded corners=2pt, align=center, minimum width=1.5cm, minimum height=0.55cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick}
+]
+  \node[v] (d) at (0,2) {$d$};
+  \node[v] (z) at (2.2,2) {$z$};
+  \node[op, fill=blue!8] (a13) at (0,1) {Alg.13};
+  \node[v] (dkp) at (-0.9,0) {$\mathit{dk}_{\mathrm{PKE}}$};
+  \node[v] (ekp) at (0.9,0) {$\mathit{ek}_{\mathrm{PKE}}$};
+  \node[op, fill=gray!12] (H) at (0.9,-1) {$H$};
+  \node[v, fill=green!10] (ek) at (-0.9,-2) {$\mathit{ek}_{\mathrm{KEM}}$};
+  \node[op, fill=orange!12] (a16) at (1.2,-2) {拼 $\mathit{dk}$};
+  \node[v, fill=green!10] (dk) at (1.2,-3.1) {$\mathit{dk}_{\mathrm{KEM}}$};
+  \draw[arr] (d) -- (a13);
+  \draw[arr] (a13) -- (dkp);
+  \draw[arr] (a13) -- (ekp);
+  \draw[arr] (ekp) -- (H);
+  \draw[arr] (ekp) -- (ek);
+  \draw[arr] (dkp) -- (a16);
+  \draw[arr] (H) -- (a16);
+  \draw[arr] (z) -- (a16);
+  \draw[arr] (a16) -- (dk);
+\end{tikzpicture}
+\end{center}
 \end{example}
 
 \subsection{有向图、路与环}
@@ -643,13 +688,31 @@ $|N^+(v)|$、$|N^-(v)|$ 称为出度、入度。
 则 $1\rightsquigarrow 4$，且存在两条不同路径 $1\to2\to4$ 与 $1\to3\to4$。
 $4$ 的入邻域为 $N^-(4)=\{2,3\}$，出邻域 $N^+(4)=\emptyset$。
 该图无环。
+\begin{center}
+\begin{tikzpicture}[
+  x=2.0cm, y=1.4cm,
+  every node/.style={font=\small},
+  c/.style={draw, circle, minimum size=0.7cm},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[c] (1) at (0,1) {$1$};
+  \node[c] (2) at (-0.8,0) {$2$};
+  \node[c] (3) at (0.8,0) {$3$};
+  \node[c] (4) at (0,-1) {$4$};
+  \draw[arr] (1) -- (2);
+  \draw[arr] (1) -- (3);
+  \draw[arr] (2) -- (4);
+  \draw[arr] (3) -- (4);
+  \node[font=\footnotesize, anchor=west] at (1.5,0) {$N^-(4)=\{2,3\}$};
+\end{tikzpicture}
+\end{center}
 \end{example}
 
 \begin{example}[工程：KeyGen 数据流图是有向图]
 §2 图二给出顶点（如 $d$、$z$、Alg.13、$\mathit{dk}_{\mathrm{KEM}}$）与有向边。
 $\mathit{dk}_{\mathrm{KEM}}$ 的入度大于 $1$（多源汇合）；
 $z\rightsquigarrow \mathit{dk}_{\mathrm{KEM}}$ 但 $z\not\rightsquigarrow \text{Alg.13}$。
-这与「树只有单父」不同：有向图允许\textbf{多父汇点}。
+这与「树只有单父」不同：有向图允许\textbf{多父汇点}（见上节工程例图中「拼 $\mathit{dk}$」结点）。
 \end{example}
 
 \subsection{有向无环图与拓扑序}
@@ -688,6 +751,25 @@ $z\rightsquigarrow \mathit{dk}_{\mathrm{KEM}}$ 但 $z\not\rightsquigarrow \text{
 \begin{example}[纯数学：给四点图写拓扑序]
 续前例 $E=\{(1,2),(1,3),(2,4),(3,4)\}$。
 $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向）。
+\begin{center}
+\begin{tikzpicture}[
+  x=1.35cm, y=0.9cm,
+  every node/.style={font=\small},
+  c/.style={draw, circle, minimum size=0.55cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick}
+]
+  \node[font=\footnotesize] at (-0.2,1.35) {合法：$1,2,3,4$};
+  \foreach \i/\x in {1/0,2/1,3/2,4/3} {\node[c, fill=blue!8] (\i) at (\x,0.7) {$\i$};}
+  \draw[arr] (1) -- (2); \draw[arr] (2) -- (3); \draw[arr] (3) -- (4);
+  \node[font=\footnotesize] at (-0.2,-0.15) {非法：$2,1,3,4$（$1\to2$ 逆向）};
+  \node[c, fill=red!10] (a) at (0,-0.8) {$2$};
+  \node[c, fill=red!10] (b) at (1,-0.8) {$1$};
+  \node[c] (c) at (2,-0.8) {$3$};
+  \node[c] (d) at (3,-0.8) {$4$};
+  \draw[arr, red!70!black] (b) -- (a);
+  \draw[arr] (b) -- (c); \draw[arr] (c) -- (d);
+\end{tikzpicture}
+\end{center}
 \end{example}
 
 \begin{example}[工程：能力依赖链]
@@ -716,114 +798,354 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
 
 \subsection{前驱、依赖闭包与缺项}
 
-以下固定有向图 $G=(V,E)$。方法论中常取 $G$ 为能力 DAG，并把边方向理解为
-「$u\to v$ 表示 $v$ 依赖 $u$」（$u$ 是先决，$v$ 是后继）。与 §2 图二「数据从左到右流动」的画法可能相反；
-\textbf{闭包计算时以本节定义为准}，画示意图时须注明边的语义。
+本节是后文「闭包表」的数学核心。
+以下固定有向图 $G=(V,E)$。方法论中取边语义为：
+\[
+u\to v \quad\text{表示}\quad\text{「$v$ \textbf{依赖} $u$」}
+\quad\text{（$u$ 为先决，$v$ 为后继）}.
+\]
+这与 §2 图二「数据从上游流到下游」的箭头方向\textbf{可能相反}；
+\textbf{凡计算 $\mathrm{Dep}^*$，一律以本节依赖语义为准}，示意图须注明。
 
-\begin{definition}[直接前驱]
-对 $v\in V$，定义其\textbf{直接前驱集}
+\subsubsection{边关系的幂、转置与传递闭包}
+
+\begin{definition}[边关系及其复合]
+把边集 $E$ 视为 $V$ 上的二元关系。
+对关系 $R,S\subseteq V\times V$，定义\textbf{复合}
+\[
+R\circ S \;=\; \{\,(u,w)\mid \exists v\in V,\; (u,v)\in R,\;(v,w)\in S\,\}.
+\]
+归纳定义 $E^{1}=E$，$E^{k+1}=E^{k}\circ E$（$k\ge 1$）。
+约定 $E^{0}=\Delta_V=\{(v,v)\mid v\in V\}$（恒等关系）。
+\end{definition}
+
+\begin{definition}[转置图（反图）]
+$G$ 的\textbf{转置图}为 $G^{\top}=(V,E^{\top})$，其中
+$E^{\top}=\{(v,u)\mid (u,v)\in E\}$。
+直观上：把每条箭头反向。
+\end{definition}
+
+\begin{definition}[自反传递闭包]
+关系 $E$ 的\textbf{自反传递闭包}为
+\[
+E^{*} \;=\; \bigcup_{k\ge 0} E^{k}.
+\]
+其\textbf{传递闭包}为 $E^{+}=\bigcup_{k\ge 1}E^{k}$。
+于是 $(u,v)\in E^{*}$ 当且仅当 $u\rightsquigarrow_G v$。
+\end{definition}
+
+\begin{proposition}[路径长度与关系幂]
+$(u,v)\in E^{k}$ 当且仅当存在长度为 $k$ 的有向途径从 $u$ 到 $v$。
+\end{proposition}
+
+\begin{remark}[为何先讲 $E^{*}$]
+「$u$ 是 $T$ 的（间接）依赖」精确地说就是 $(u,T)\in E^{*}$。
+依赖闭包不过是把该事实改写成集合语言。
+\end{remark}
+
+\subsubsection{直接依赖、祖先与依赖闭包}
+
+\begin{definition}[直接前驱 / 直接依赖]
+对 $v\in V$，定义
 \[
 \mathrm{Pred}_G(v) \;=\; N^-(v) \;=\; \{u\in V\mid (u,v)\in E\}.
 \]
+称 $\mathrm{Pred}_G(v)$ 为 $v$ 的\textbf{直接前驱集}（直接依赖集）。
 \end{definition}
 
-\begin{definition}[依赖闭包]
-对 $T\in V$，定义其\textbf{依赖闭包}
+\begin{definition}[直接后继]
+$\mathrm{Succ}_G(v)=N^+(v)=\{u\in V\mid (v,u)\in E\}$。
+\end{definition}
+
+\begin{definition}[祖先与后代]
+称 $u$ 为 $v$ 的\textbf{祖先}，若 $u\rightsquigarrow_G v$；
+称 $v$ 为 $u$ 的\textbf{后代}，若 $u\rightsquigarrow_G v$。
+（按约定，每个顶点是自己的祖先与后代。）
+\end{definition}
+
+\begin{definition}[单点依赖闭包]
+对目标 $T\in V$，定义其\textbf{依赖闭包}
 \[
 \mathrm{Dep}^*_G(T)
 \;=\;
-\{u\in V\mid u\rightsquigarrow_G T\}.
+\{u\in V\mid u\rightsquigarrow_G T\}
+\;=\;
+\{u\in V\mid (u,T)\in E^{*}\}.
 \]
-由定义，$T\in\mathrm{Dep}^*_G(T)$。
-在不致混淆时略去下标 $G$。
+由定义恒有 $T\in\mathrm{Dep}^*_G(T)$。不致混淆时略去下标 $G$。
 \end{definition}
 
-\begin{proposition}[闭包的等价刻画]
-$u\in\mathrm{Dep}^*(T)$ 当且仅当存在路径 $u\to\cdots\to T$
-（或 $u=T$）。
-因而 $\mathrm{Dep}^*(T)$ 是「所有能够通向 $T$ 的祖先（含自身）」。
+\begin{proposition}[三种等价说法]
+对任意 $u,T\in V$，下列命题等价：
+\begin{enumerate}
+  \item $u\in\mathrm{Dep}^*(T)$；
+  \item $(u,T)\in E^{*}$；
+  \item 存在路径 $u\to\cdots\to T$，或 $u=T$；
+  \item 在转置图 $G^{\top}$ 中 $T\rightsquigarrow_{G^{\top}} u$。
+\end{enumerate}
+因而 $\mathrm{Dep}^*(T)$ 就是 $T$ 在依赖语义下的\textbf{全体祖先（含自身）}。
 \end{proposition}
 
-\begin{lemma}[反向搜索计算闭包]
-在有限图上，从 $T$ 出发沿边的\textbf{反方向}做广度优先或深度优先遍历，
-访问到的顶点集合恰为 $\mathrm{Dep}^*(T)$。
-\end{lemma}
-\begin{proof}
-反边遍历到达 $u$ 当且仅当原图中存在 $u\rightsquigarrow T$。
-\end{proof}
+\subsubsection{迭代构造与算法}
 
-\begin{definition}[已证书集与缺项]
-设 $\Gamma\subseteq V$ 表示当前\textbf{已获得证书}的顶点集。
-对目标 $T\in V$，定义\textbf{缺项集}
-\[
-\mathrm{Missing}_\Gamma(T)
-\;=\;
-\mathrm{Dep}^*(T)\setminus\Gamma.
-\]
-若 $\mathrm{Missing}_\Gamma(T)=\emptyset$，称 $T$ 相对 $\Gamma$ \textbf{闭包已满}。
+\begin{definition}[依赖闭包的迭代序列]
+定义集合序列
+\begin{align*}
+D_0(T) &= \{T\}, \\
+D_{k+1}(T) &= D_k(T) \;\cup\; \bigcup_{v\in D_k(T)}\mathrm{Pred}(v)
+\quad (k\ge 0).
+\end{align*}
 \end{definition}
 
-\begin{property}[菜单与闭包]
-仅知道「哪些顶点曾单独标绿」不足以推出 $\mathrm{Missing}_\Gamma(T)=\emptyset$。
-菜单对应 $\Gamma$ 的候选来源；闭包回答「为完成 $T$ 必须具备谁」。
+\begin{theorem}[迭代收敛到依赖闭包]
+对有限图 $G$，序列 $\{D_k(T)\}_{k\ge 0}$ 在有限步内稳定，且
+\[
+\bigcup_{k\ge 0} D_k(T) \;=\; \mathrm{Dep}^*(T).
+\]
+更精确地：存在 $K\le |V|$ 使对所有 $k\ge K$ 有 $D_k(T)=\mathrm{Dep}^*(T)$。
+\end{theorem}
+\begin{proof}[证明梗概]
+$D_k(T)$ 单调递增且含于有限集 $V$，故稳定。
+稳定时集合对取 $\mathrm{Pred}$ 封闭，且含 $T$，故包含一切能走到 $T$ 的顶点；
+反之，任何通向 $T$ 的长度为 $\ell$ 的路径上的点在 $D_\ell(T)$ 中出现。
+\end{proof}
+
+\begin{lemma}[反向搜索算法]
+在有限图上执行：
+从 $T$ 出发，在 $G^{\top}$ 中做 BFS/DFS（等价于沿 $G$ 的边反向走），
+访问到的顶点集合恰为 $\mathrm{Dep}^*(T)$。
+时间复杂度 $O(|V|+|E|)$（邻接表）。
+\end{lemma}
+
+\begin{property}[闭包算子的基本代数性质]
+把 $\mathrm{Dep}^*$ 视为 $V\to 2^{V}$ 的算子时，有：
+\begin{enumerate}
+  \item \textbf{扩张性}：$T\in\mathrm{Dep}^*(T)$；
+  \item \textbf{单调性}：若从 $T$ 增加可达边使更多点通向 $T$，则闭包不缩小；
+        对目标集推广后（见下）亦有 $A\subseteq B\Rightarrow \mathrm{Dep}^*(A)\subseteq\mathrm{Dep}^*(B)$；
+  \item \textbf{幂等性}：$\mathrm{Dep}^*(\mathrm{Dep}^*(T))=\mathrm{Dep}^*(T)$
+        （祖先的祖先仍是祖先；形式表述见目标集版本）。
+\end{enumerate}
 \end{property}
 
-\begin{example}[纯数学：计算闭包与缺项]
-续四点图，$T=4$ 时 $\mathrm{Dep}^*(4)=\{1,2,3,4\}$，$\mathrm{Pred}(4)=\{2,3\}$。
-若 $\Gamma=\{1,2,4\}$，则 $\mathrm{Missing}_\Gamma(4)=\{3\}$。
+\subsubsection{目标集的闭包、基与缺项}
+
+\begin{definition}[有限目标集的依赖闭包]
+对非空有限集 $A\subseteq V$，定义
+\[
+\mathrm{Dep}^*_G(A) \;=\; \bigcup_{T\in A}\mathrm{Dep}^*_G(T).
+\]
+约定 $\mathrm{Dep}^*_G(\emptyset)=\emptyset$。
+\end{definition}
+
+\begin{proposition}[闭包算子公理]
+映射 $\mathrm{Cl}:2^{V}\to 2^{V}$，$\mathrm{Cl}(A)=\mathrm{Dep}^*(A)$ 满足：
+\begin{enumerate}
+  \item $A\subseteq \mathrm{Cl}(A)$（扩张）；
+  \item $A\subseteq B \Rightarrow \mathrm{Cl}(A)\subseteq\mathrm{Cl}(B)$（单调）；
+  \item $\mathrm{Cl}(\mathrm{Cl}(A))=\mathrm{Cl}(A)$（幂等）。
+\end{enumerate}
+因而 $\mathrm{Cl}$ 是集合上的一个\textbf{闭包算子}。
+\end{proposition}
+
+\begin{definition}[已证书集、缺项与闭包已满]
+设 $\Gamma\subseteq V$ 为当前\textbf{已证书}顶点集。对 $A\subseteq V$，定义
+\[
+\mathrm{Missing}_\Gamma(A) \;=\; \mathrm{Dep}^*(A)\setminus \Gamma.
+\]
+若 $\mathrm{Missing}_\Gamma(A)=\emptyset$，称 $A$ 相对 $\Gamma$ \textbf{闭包已满}。
+当 $A=\{T\}$ 时简记 $\mathrm{Missing}_\Gamma(T)$。
+\end{definition}
+
+\begin{definition}[相对基（直观）]
+若 $B\subseteq\mathrm{Dep}^*(T)$ 满足 $\mathrm{Dep}^*(B)=\mathrm{Dep}^*(T)$，称 $B$ 为 $\mathrm{Dep}^*(T)$ 的一个\textbf{生成集}。
+工程上常关心「最小还缺哪些叶子能力」，即在 $\mathrm{Missing}_\Gamma(T)$ 中寻找生成缺项的关键结点；
+精确极小基的算法后文门禁章再展开，此处只要求会算 $\mathrm{Dep}^*$ 与 $\mathrm{Missing}$。
+\end{definition}
+
+\begin{property}[菜单、$\Gamma$ 与闭包]
+INDEX 等「菜单」提供构造 $\Gamma$ 的证据来源，但
+\[
+\text{菜单上有许多绿项}
+\quad\not\Rightarrow\quad
+\mathrm{Missing}_\Gamma(T)=\emptyset.
+\]
+必须先算 $\mathrm{Dep}^*(T)$，再与 $\Gamma$ 做差。
+\end{property}
+
+\begin{example}[纯数学：四点图上的闭包与缺项]
+续 $V=\{1,2,3,4\}$，$E=\{(1,2),(1,3),(2,4),(3,4)\}$（依赖语义：箭头指向依赖者）。
+则 $\mathrm{Pred}(4)=\{2,3\}$，
+\[
+D_0(4)=\{4\},\;
+D_1(4)=\{4,2,3\},\;
+D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
+\]
+下图左侧为原图，右侧阴影标出 $\mathrm{Dep}^*(4)$；
+若 $\Gamma=\{1,2,4\}$（虚线圆为已证书），则缺项 $\mathrm{Missing}_\Gamma(4)=\{3\}$（叉号）。
+\begin{center}
+\begin{tikzpicture}[
+  x=1.7cm, y=1.25cm,
+  every node/.style={font=\small},
+  c/.style={draw, circle, minimum size=0.62cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick}
+]
+  \node[font=\footnotesize] at (0,1.55) {依赖图 $G$};
+  \node[c] (1) at (0,1) {$1$};
+  \node[c] (2) at (-0.7,0) {$2$};
+  \node[c] (3) at (0.7,0) {$3$};
+  \node[c] (4) at (0,-1) {$4$};
+  \draw[arr] (1) -- (2); \draw[arr] (1) -- (3);
+  \draw[arr] (2) -- (4); \draw[arr] (3) -- (4);
+
+  \begin{scope}[xshift=3.6cm]
+  \node[font=\footnotesize] at (0,1.55) {$\mathrm{Dep}^*(4)$ 与缺项};
+  \node[c, fill=blue!15] (1b) at (0,1) {$1$};
+  \node[c, fill=blue!15, densely dashed] (2b) at (-0.7,0) {$2$};
+  \node[c, fill=orange!25] (3b) at (0.7,0) {$3$};
+  \node[c, fill=blue!15, densely dashed] (4b) at (0,-1) {$4$};
+  \draw[arr] (1b) -- (2b); \draw[arr] (1b) -- (3b);
+  \draw[arr] (2b) -- (4b); \draw[arr] (3b) -- (4b);
+  \node[font=\footnotesize, red!70!black] at (0.7,-0.55) {缺};
+  \node[font=\footnotesize, anchor=west, align=left] at (1.3,0.2) {虚线边框$\in\Gamma$\\橙底$=$缺项};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
 \end{example}
 
-\begin{example}[工程：KEM.KeyGen 的闭包直觉]
-取 $T=\texttt{kem.keygen.k4}$。
-在能力依赖语义下，$\mathrm{Dep}^*(T)$ 应包含
-\texttt{pke.keygen.k4}、Alg.16 尾缝节点，以及它们继续向下的 P1/P0 依赖。
-§2 资产清单是 $\mathrm{Dep}^*(T)$ 与当时 $\Gamma$ 的工程对照表雏形；
-INDEX 绿项属于 $\Gamma$ 的证据来源，\textbf{不等于}已经算过 $\mathrm{Missing}_\Gamma(T)$。
+\begin{example}[工程：KEM.KeyGen 的依赖闭包示意]
+取依赖语义下的示意 DAG（结点名为能力，非数据）：
+边表示「箭头终点依赖箭头起点」。
+\begin{center}
+\begin{tikzpicture}[
+  x=2.15cm, y=1.15cm,
+  every node/.style={font=\footnotesize, align=center},
+  box/.style={draw, rounded corners=2pt, minimum width=1.85cm, minimum height=0.7cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick}
+]
+  \node[box, fill=blue!8] (p0) at (0,2) {P0 平台};
+  \node[box, fill=blue!8] (p1) at (0,1) {P1 原语};
+  \node[box, fill=blue!12] (p2) at (0,0) {P2 PKE};
+  \node[box, fill=orange!15] (tail) at (1.35,0) {Alg.16 尾缝};
+  \node[box, fill=orange!20] (kem) at (0.7,-1) {P3 KEM.KG};
+  \draw[arr] (p0) -- (p1);
+  \draw[arr] (p1) -- (p2);
+  \draw[arr] (p2) -- (kem);
+  \draw[arr] (p1) -- (tail);
+  \draw[arr] (tail) -- (kem);
+  \node[anchor=west, align=left] at (2.3,0.6) {
+    $\mathrm{Dep}^*(\mathrm{KEM})$ 含\\
+    全部阴影结点\\[2pt]
+    若 $\Gamma$ 已有 P0--P2\\
+    但无尾缝，则\\
+    $\mathrm{Missing}=\{\text{尾缝}\}$
+  };
+\end{tikzpicture}
+\end{center}
+§2 资产清单 $\approx$ 当时对 $\mathrm{Dep}^*(T)$ 与 $\Gamma$ 的手工对照；
+\textbf{未}显式计算 $\mathrm{Missing}_\Gamma(T)$ 就开工，正是「菜单$\neq$说明书」的来源。
 \end{example}
 
 \subsection{三层对象：库、一次派生、过程}
 
+进入形式语言之前，必须把三个层次从定义上分开；否则后文「DAG / 语法树 / 自动机」会混用。
+
 \begin{definition}[能力 DAG（库）]
-\textbf{能力 DAG} 是用于描述引理库静态依赖的 DAG $G_{\mathrm{lib}}=(V_{\mathrm{lib}},E_{\mathrm{lib}})$，
-其中顶点为可命名能力，边为「语义依赖」或「已声明的接缝依赖」（细分类见第~\ref{sec:math}~章）。
+\textbf{能力 DAG} 是 DAG $G_{\mathrm{lib}}=(V_{\mathrm{lib}},E_{\mathrm{lib}})$，
+顶点为可命名、可获证的能力，边为依赖（语义依赖或已声明接缝依赖）。
+它描述引理库的\textbf{静态}结构，不随单次任务进度改写边集
+（结点证书状态可变，见配置层）。
 \end{definition}
 
-\begin{definition}[一次任务的派生对象（预告）]
-给定目标 $T$ 与合法改写规则后，将 $T$ 逐步改写为符号串的过程称为\textbf{派生}；
-其树形记录称为\textbf{派生树}（语法树）。严格定义见后文「文法」一节。
+\begin{definition}[一次任务与派生对象]
+固定目标 $T\in V_{\mathrm{lib}}$ 与文法 $\mathcal{G}$（定义见后文）。
+\textbf{一次任务}指试图使 $T$ 获证的一次预研作业。
+该作业中，从开始符号出发按产生式改写所得的符号串序列称为\textbf{派生}；
+其树形记录称为\textbf{派生树}。派生树是 $G_{\mathrm{lib}}$ 上依赖信息的\textbf{一次使用痕迹}，不是整库拷贝。
 \end{definition}
 
-\begin{definition}[配置过程（预告）]
-预研执行中「已证书集 / 前沿目标 / 约束」随时间变化的轨迹，由\textbf{配置}与\textbf{转移}描述。
-严格定义见后文「迁移系统」一节。
+\begin{definition}[配置轨迹]
+预研过程中的状态序列 $q_0\to q_1\to\cdots\to q_m$，其中每个 $q_i$ 为配置
+$(\Gamma_i,F_i,S_i)$（定义见迁移系统一节），称为\textbf{配置轨迹}。
+它记录证书如何增减、前沿如何消解。
 \end{definition}
 
 \begin{proposition}[三层分工]
 \begin{center}
-\begin{tabular}{@{}L{2.8cm}L{5.5cm}L{5.3cm}@{}}
+\begin{tabular}{@{}L{2.6cm}L{5.4cm}L{5.4cm}@{}}
   \toprule
   对象 & 回答 & 不回答 \\
   \midrule
   能力 DAG & 库中谁依赖谁 & 某次任务如何逐步展开 \\
   派生树 & 该次任务的展开句子 / 树形 & 全局共享边的全貌 \\
-  配置转移 & 证书如何增减；接受/拒绝 & 输出是否符合 FIPS 字节 \\
+  配置轨迹 & 证书如何增减；接受/拒绝 & 输出是否符合 FIPS 字节 \\
   \bottomrule
 \end{tabular}
 \end{center}
 \noindent
-简言之：\textbf{DAG 是库；派生是一次作业；转移是作业过程。}
+\textbf{DAG 是库；派生是一次作业；轨迹是作业过程。}
 \end{proposition}
 
-\begin{example}[纯数学：家谱库 vs 一次证明树]
-「全体引理的引用关系」可画成一张大 DAG；
-「证明定理 $T$ 时实际用到的那棵推理树」是一次派生。
-同一引理结点可出现在许多不同证明树中。
+\begin{example}[纯数学：引理库 vs 一次证明树]
+左图：引理库 DAG（共享）。右图：证明 $T$ 时实际用到的派生树（一次作业）。
+结点 $L_2$ 可被许多证明共享，但右图只出现本次用到的边。
+\begin{center}
+\begin{tikzpicture}[
+  x=1.5cm, y=1.1cm,
+  every node/.style={font=\footnotesize},
+  c/.style={draw, circle, minimum size=0.6cm},
+  arr/.style={-{Stealth[length=1.6mm]}, thick}
+]
+  \node[font=\small] at (0.75,1.8) {库 DAG};
+  \node[c] (a) at (0,1) {$A$};
+  \node[c] (b) at (1.5,1) {$B$};
+  \node[c] (c) at (0.75,0) {$C$};
+  \node[c] (t1) at (0.75,-1) {$T_1$};
+  \node[c] (t2) at (2.2,-0.3) {$T_2$};
+  \draw[arr] (a) -- (c); \draw[arr] (b) -- (c);
+  \draw[arr] (c) -- (t1); \draw[arr] (b) -- (t2); \draw[arr] (c) -- (t2);
+
+  \begin{scope}[xshift=5.0cm]
+  \node[font=\small] at (0.6,1.8) {证明 $T_1$ 的树};
+  \node[c, fill=orange!15] (tt) at (0.6,1) {$T_1$};
+  \node[c, fill=blue!10] (cc) at (0.6,0) {$C$};
+  \node[c] (aa) at (0,-1) {$A$};
+  \node[c] (bb) at (1.2,-1) {$B$};
+  \draw[arr] (aa) -- (cc); \draw[arr] (bb) -- (cc);
+  \draw[arr] (cc) -- (tt);
+  \end{scope}
+\end{tikzpicture}
+\end{center}
 \end{example}
 
-\begin{example}[工程]
-仓库 INDEX 上的依赖直觉接近 $G_{\mathrm{lib}}$；
-某次实现 \texttt{kem.keygen} 时「PKE + Alg.16 尾缝」的展开是派生树；
-从缺项探针到 CPU+SIM 获证的状态变化是配置转移。
+\begin{example}[工程：三层对照图]
+\begin{center}
+\begin{tikzpicture}[
+  x=1cm, y=0.85cm,
+  every node/.style={font=\footnotesize, align=center},
+  box/.style={draw, rounded corners=2pt, minimum height=0.55cm},
+  arr/.style={-{Stealth[length=1.6mm]}, thick}
+]
+  \node[font=\small] at (1.2,3.3) {库（INDEX 依赖直觉）};
+  \node[box, fill=blue!8] (p1) at (0,2.4) {NTT\ldots};
+  \node[box, fill=blue!10] (p2) at (2.2,2.4) {PKE};
+  \node[box, fill=orange!12] (k) at (4.2,2.4) {KEM};
+  \draw[arr] (p1) -- (p2) -- (k);
+
+  \node[font=\small] at (1.2,1.5) {一次派生（本次 KeyGen）};
+  \node[box, fill=orange!15] (r) at (2.0,0.7) {KEM.KeyGen};
+  \node[box] (l) at (0.6,-0.3) {PKE};
+  \node[box] (s) at (3.4,-0.3) {尾缝};
+  \draw[arr] (l) -- (r); \draw[arr] (s) -- (r);
+
+  \node[font=\small] at (6.8,1.5) {配置轨迹（示意）};
+  \node[box] (q0) at (6.2,0.7) {$q_0$};
+  \node[box] (q1) at (7.5,0.7) {$q_1$};
+  \node[box, fill=green!12] (q2) at (8.8,0.7) {$q_{\mathrm{ok}}$};
+  \draw[arr] (q0) -- (q1) -- (q2);
+  \node[anchor=west, align=left] at (6.0,-0.5) {$\Gamma$ 增大 / $F$ 消解};
+\end{tikzpicture}
+\end{center}
 \end{example}
 
 \subsection{字母表、字与语言}
@@ -832,34 +1154,93 @@ INDEX 绿项属于 $\Gamma$ 的证据来源，\textbf{不等于}已经算过 $\m
 非空有限集 $\Sigma$ 称为\textbf{字母表}；其元素称为\textbf{字母}。
 $\Sigma$ 上的\textbf{字}是有限序列 $w=a_1a_2\cdots a_n$（$n\ge 0$，$a_i\in\Sigma$）；
 $n=0$ 时称为\textbf{空字}，记 $\varepsilon$。
-字 $w$ 的长度记 $|w|$。全体字之集记 $\Sigma^*$。
+称 $n=|w|$ 为字长。全体字之集记 $\Sigma^*$（Kleene 星）。
+又记 $\Sigma^+=\Sigma^*\setminus\{\varepsilon\}$。
+\end{definition}
+
+\begin{definition}[前缀、后缀与因子]
+设 $w,x\in\Sigma^*$。
+\begin{itemize}
+  \item 若存在 $y$ 使 $w=xy$，称 $x$ 为 $w$ 的\textbf{前缀}；
+  \item 若存在 $y$ 使 $w=yx$，称 $x$ 为 $w$ 的\textbf{后缀}；
+  \item 若存在 $y,z$ 使 $w=yxz$，称 $x$ 为 $w$ 的\textbf{因子}（子字）。
+\end{itemize}
 \end{definition}
 
 \begin{definition}[语言]
 若 $L\subseteq\Sigma^*$，则称 $L$ 为 $\Sigma$ 上的一个\textbf{语言}。
-称 $w$ 对 $L$ \textbf{合法}，若 $w\in L$。
+称 $w$ 对 $L$ \textbf{合法}（或 $w$ 属于 $L$），若 $w\in L$。
 \end{definition}
 
-\begin{definition}[连接]
-对 $x,y\in\Sigma^*$，其\textbf{连接} $xy$ 为把 $y$ 接在 $x$ 之后所得的字。
-对语言 $L,M$，定义 $LM=\{xy\mid x\in L,\,y\in M\}$。
+\begin{definition}[语言的连接与星闭包]
+对 $x,y\in\Sigma^*$，\textbf{连接} $xy$ 表示把 $y$ 接在 $x$ 后。
+对语言 $L,M\subseteq\Sigma^*$，定义
+\[
+LM=\{xy\mid x\in L,\,y\in M\},
+\quad
+L^{0}=\{\varepsilon\},\;
+L^{k+1}=L^{k}L,\;
+L^{*}=\bigcup_{k\ge 0}L^{k}.
+\]
 \end{definition}
 
-\begin{property}[连接对合法性不封闭]
-一般地，由 $x\in L$ 与 $y\in L$ \textbf{不能}推出 $xy\in L$。
+\begin{property}[连接对合法性不必封闭]
+一般地，$x\in L$ 且 $y\in L$ \textbf{不能}推出 $xy\in L$。
+（这是后文「组合不免费」的纯语言版本。）
 \end{property}
 
-\begin{example}[纯数学：偶数个 $0$ 的语言]
-取 $\Sigma=\{0,1\}$，令
+\begin{proposition}[$\Sigma^*$ 的通用性]
+任一语言都是 $\Sigma^*$ 的子集；讨论「合法计划」即指定某个 $L\subseteq\Sigma^*$。
+门禁的数学内核是：给定 $w$，判定 $w\in L$ 是否成立（成员判定，见后文）。
+\end{proposition}
+
+\begin{example}[纯数学：偶数个 $0$ 的语言（附图）]
+取 $\Sigma=\{0,1\}$，
 $L_{\mathrm{even0}}=\{w\in\Sigma^*\mid w\text{ 中 }0\text{ 的个数为偶数}\}$。
-则 $\varepsilon,1,11,1001\in L_{\mathrm{even0}}$，而 $0,10\notin L_{\mathrm{even0}}$。
-又 $0\notin L_{\mathrm{even0}}$ 但 $00\in L_{\mathrm{even0}}$，说明合法性不是「按位随便拼」。
+下图用两状态自动机识别该语言（$q_0$ 接受）：读 $0$ 翻转奇偶，读 $1$ 不动。
+\begin{center}
+\begin{tikzpicture}[
+  every node/.style={font=\small},
+  s/.style={draw, circle, minimum size=0.85cm},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[s, double, fill=green!10] (q0) at (0,0) {$q_0$};
+  \node[s] (q1) at (3.2,0) {$q_1$};
+  \draw[arr] (q0) edge[bend left=20] node[above] {$0$} (q1);
+  \draw[arr] (q1) edge[bend left=20] node[below] {$0$} (q0);
+  \draw[arr] (q0) edge[loop left] node[left] {$1$} (q0);
+  \draw[arr] (q1) edge[loop right] node[right] {$1$} (q1);
+  \node[font=\footnotesize, anchor=west] at (4.3,0.3) {$1001\in L$（偶）};
+  \node[font=\footnotesize, anchor=west] at (4.3,-0.3) {$10\notin L$（奇）};
+\end{tikzpicture}
+\end{center}
+注意：$0\notin L$ 但 $00\in L$，故不能把「每个字母合法」误当成「连接合法」。
 \end{example}
 
-\begin{example}[工程：实现计划当作字]
-将「调用已证书能力」「执行已声明接缝」等动作编码为字母，则一条实现计划对应 $w\in\Sigma^*$。
-「PKE.KeyGen；Alg.16 尾缝；写 ek/dk」可视为短字。
-「在 KEM 任务内插入未证书的同步壳发明」应判为 $w\notin L$，即使最终字节偶然正确。
+\begin{example}[工程：实现计划当作字（附图）]
+将原子动作编码为字母，例如
+$a=\texttt{RunPKE}$，$b=\texttt{Alg16Tail}$，$c=\texttt{WriteIO}$。
+合法短计划 $w=abc$ 画成动作序列；插入未证书动作 $x$ 得 $abxc\notin L$。
+\begin{center}
+\begin{tikzpicture}[
+  every node/.style={font=\footnotesize, align=center},
+  box/.style={draw, rounded corners=2pt, minimum width=1.55cm, minimum height=0.65cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick}
+]
+  \node[box, fill=green!10] (a) at (0,0.8) {$a$\\PKE};
+  \node[box, fill=green!10] (b) at (2.2,0.8) {$b$\\尾缝};
+  \node[box, fill=green!10] (c) at (4.4,0.8) {$c$\\写 I/O};
+  \draw[arr] (a) -- (b) -- (c);
+  \node[anchor=west] at (5.6,0.8) {$w=abc\in L$（示意）};
+
+  \node[box, fill=green!10] (a2) at (0,-0.9) {$a$};
+  \node[box, fill=green!10] (b2) at (1.8,-0.9) {$b$};
+  \node[box, fill=red!15] (x2) at (3.6,-0.9) {$x$\\未证书};
+  \node[box, fill=green!10] (c2) at (5.4,-0.9) {$c$};
+  \draw[arr] (a2) -- (b2) -- (x2) -- (c2);
+  \node[anchor=west] at (6.5,-0.9) {$abxc\notin L$};
+\end{tikzpicture}
+\end{center}
 \end{example}
 
 \subsection{文法、产生式、派生与派生树}
