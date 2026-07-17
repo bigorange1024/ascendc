@@ -17,7 +17,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-device-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
@@ -45,8 +45,9 @@ STASH_DIR="${ROUNDTRIP_KEM_STASH:-${REPO_ROOT}/output/roundtrip_kem/${RUN_MODE}}
 DK_STASH="${STASH_DIR}/dk_kem.bin"
 C_STASH="${STASH_DIR}/c.bin"
 K_ENC_STASH="${STASH_DIR}/K_enc.bin"
+M_STASH="${STASH_DIR}/m.bin"
 
-for f in "${DK_STASH}" "${C_STASH}" "${K_ENC_STASH}"; do
+for f in "${DK_STASH}" "${C_STASH}" "${K_ENC_STASH}" "${M_STASH}"; do
     if [ ! -f "${f}" ]; then
         echo "[roundtrip_kem_decaps] ERROR: 缺少 round-trip 中间态 ${f}" >&2
         echo "[roundtrip_kem_decaps] 请先按序跑 keygen → encaps（同 -r ${RUN_MODE}）" >&2
@@ -61,7 +62,8 @@ echo "[roundtrip_kem_decaps] SEED_D=${SEED_D} RUN_MODE=${RUN_MODE} STASH=${STASH
     DK_KEM_SRC="${DK_STASH}" \
     C_SRC="${C_STASH}" \
     K_ENC_SRC="${K_ENC_STASH}" \
-    KEM_DECAPS_VERIFY=0 KEM_DECAPS_TAMPER_C=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
+    M_FILE="${M_STASH}" \
+    KEM_DECAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
 
 K_DEC_OUT="${DECAPS_DIR}/output/K.bin"
 K_SZ=$(wc -c <"${K_DEC_OUT}")

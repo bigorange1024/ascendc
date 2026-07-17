@@ -49,6 +49,8 @@
 
 按时间倒序追加（最新在上）。
 
+| 2026-07-17 | **Alg.21 Decaps 全链（Phase-D+E）** | Decrypt fused：复用 07-09 已查 CrossCore/GATE/`DataCopy`；Encrypt/G/FO：复用 Encaps 记录；无新矢量 API | [`fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)：CPU 单库；SIM 双库+2-session；`K` max=0；D**283317**+E**745341** |
+| 2026-07-17 | **Alg.21 Decaps Phase-E（G + FO）** | `GetBlockIdx`（复用 Encaps）；头段 `Sha3OneShot` G；尾段 `Shake256OneShot` J；无新矢量 API；NTT S1–S3 **禁 Gather** | [`fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/)：prep 前段 G；CPU pack+FO / SIM `fo_only`；合法路径 tick **746221** |
 | 2026-07-15 | **Alg.20 KEM Encaps customspec（exp）** | `GetBlockIdx`/`DataCopy`/`PipeBarrier`/`CrossCore*`（复用 Encrypt 已查）；头段 SHA3 走 shared Keccak 非矢量 API；NTT S1–S3 **禁 Gather** | [`exp-fips203-mlkem-kem-encaps-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/exp-fips203-mlkem-kem-encaps-k4-实现方案-customspec.tex)：SIM 2/CPU 5；ek+m→c+K；基线 `pass-fix-f203-alg20-kem-encaps-device-k4`（tick 721010） |
 | 2026-07-15 | **Alg.20 Encaps device 头 SHA3** | shared `Sha3OneShot`（非矢量 API）；`GetBlockIdx` | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)：prep 前段 `H=SHA3-256`/`G=SHA3-512`；仅 block0；Encrypt 余路径引用 stable |
 | 2026-07-13 | **SyncAll（硬同步，AIV-only）** | §2.3.7.2.3 p.1086–1088；`SyncAll<isAIVOnly=true>()` 硬同步无 GM workspace；A2 支持硬同步；`isAIVOnly=true` 仅汇合 Vector 核（MIX 下 AIC 已返回时可用） | KEM KeyGen Fuse/Tail 前双 AIV 汇合，避免 AIV0 拷未写完的 `sk_out` 末 poly |

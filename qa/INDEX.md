@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-17 — [Decaps device 全链 PASS](2026-07/2026-07-17-Decaps-device-全链-PASS.md)
+
+关键字：`INTEGRATION_PLAN` 先E后D · **T19b/c 全链 + E3 PASS** · SIM 2-session · D**283k**+E**745k** · SIM 双库例外 · **scripts Decaps 默认改指 device** · **T2 交 Cloud**（单库/单 session）
+
 ### 2026-07-15 — [TODO · T19a · Encaps `#验收#` → stable · 能力DAG](2026-07/2026-07-15-TODO与T19a-Encaps-device-PASS.md)
 
 关键字：`TODO` · **T20 关闭** · [`active_sim_regress_summary.md`](active_sim_regress_summary.md) · **T19a PASS**（tick **721010**）· **Encaps → `pass-fix-…`** · scripts Encaps 默认 · **`$写规格$` +【预研】exp Encaps CPU/SIM PASS**（tick≈**721k**）· **`docs/research/` 恢复** · **已验证能力 DAG 预研方法论 TeX/PDF** · 下一 **T19b/c** 或 Encaps `#交付#`

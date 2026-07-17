@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DECAPS_DIR = Path(os.environ.get("DECAPS_DIR", REPO_ROOT / "ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4"))
+DECAPS_DIR = Path(os.environ.get("DECAPS_DIR", REPO_ROOT / "ascendc-tests/fix-f203-alg21-kem-decaps-device-k4"))
 STASH = Path(os.environ.get("KEM_KEYPAIR_STASH", REPO_ROOT / "output/kem_keypair_stash"))
 REF_BIN = REPO_ROOT / "scripts/liboqs_kem_ref"
 BUILD_REF = REPO_ROOT / "scripts/build_liboqs_kem_ref.sh"
@@ -86,15 +86,16 @@ def _liboqs_encaps_derand(ek: bytes, m: bytes) -> tuple[bytes, bytes]:
     return c, k
 
 
-def _run_ascendc_decaps(dk: bytes, c: bytes, run_mode: str) -> np.ndarray:
+def _run_ascendc_decaps(dk: bytes, c: bytes, m: bytes, run_mode: str) -> np.ndarray:
     fx_dir = DECAPS_DIR / "input"
     fx_dir.mkdir(parents=True, exist_ok=True)
 
     env = os.environ.copy()
     env["KEM_DECAPS_VERIFY"] = "0"
-    env["KEM_DECAPS_TAMPER_C"] = "0"
     env["KEM_DECAPS_KAT"] = "0" if VERBOSE else "1"
     env["DK_KEM_SRC"] = str(STASH / "dk_kem.bin")
+    # device-k4 的 CPU Decaps 全链需要合法 c 对应的 m 来生成 CPU 辅助 golden_v。
+    env["M_HEX"] = m.hex()
     with tempfile.NamedTemporaryFile(prefix="kat_c_", suffix=".bin", delete=False) as tf:
         c_tmp = Path(tf.name)
     c_tmp.write_bytes(c)
@@ -125,7 +126,7 @@ def _run_ascendc_decaps(dk: bytes, c: bytes, run_mode: str) -> np.ndarray:
 
 def _one_round(ek: bytes, dk: bytes, m: bytes, run_mode: str, label: str, round_no: int, total: int) -> None:
     c, k_ref = _liboqs_encaps_derand(ek, m)
-    k_dev = _run_ascendc_decaps(dk, c, run_mode)
+    k_dev = _run_ascendc_decaps(dk, c, m, run_mode)
     k_ref_arr = np.frombuffer(k_ref, dtype=np.uint8)
     if not np.array_equal(k_dev, k_ref_arr):
         idx = int(np.argmax(k_dev != k_ref_arr))

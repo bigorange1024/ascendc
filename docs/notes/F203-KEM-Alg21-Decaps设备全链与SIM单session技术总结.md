@@ -2,8 +2,13 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
-**案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 默认 **2-session** PASS + 设备 FO；liboqs 分项 kat `CPU×10+SIM×1 PASS`）  
+**案例锚点**：
 
+- **设备主线（2026-07-17）**：[`fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU **单库**；SIM **双库 + 2-session** 全链+E3 PASS；仓库 `scripts/` Decaps 默认指此目录。
+- **correctness oracle**：[`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) — vendor 拼装；**禁止抄码**进 device。
+
+> **2026-07-17 更新（device 主线 + T2）**：T19b/c 在 device 目录落地全链。SIM 因 stable Decrypt/Encrypt **同名头**无法合进单 `ascendc_library`，再退回 **双库 + `decaps_2session`** 保底（与 correctness 单库路径不同）。**T2**（交 Cloud）：合库隔离 + 复验单 session；见 `AGENT_HANDOFF.md`。
+>
 > **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
 >
 > **2026-07-10 更新（vendor 源与重构债）**：

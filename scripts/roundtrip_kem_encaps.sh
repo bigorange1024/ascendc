@@ -67,5 +67,6 @@ fi
 
 cp -f "${C_OUT}" "${STASH_DIR}/c.bin"
 cp -f "${K_OUT}" "${STASH_DIR}/K_enc.bin"
+cp -f "${ENCAPS_DIR}/input/m.bin" "${STASH_DIR}/m.bin"
 
-echo "[roundtrip_kem_encaps] OK stash: ${STASH_DIR}/c.bin (1568B) + K_enc.bin (32B)"
+echo "[roundtrip_kem_encaps] OK stash: c.bin (1568B) + K_enc.bin (32B) + m.bin (32B)"

@@ -27,7 +27,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4}"
 ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-encaps-k4}"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-device-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
@@ -75,7 +75,9 @@ echo "[liboqs_kem_vs] === Phase 3: device Decaps vs liboqs K (accept, agreement)
 (cd "${DECAPS_DIR}" && SEED_D="${SEED_D}" \
     DK_KEM_SRC="${KEYGEN_DIR}/output/dk_kem.bin" \
     C_SRC="${ENCAPS_DIR}/output/c.bin" \
-    KEM_DECAPS_VERIFY=0 KEM_DECAPS_TAMPER_C=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
+    M_FILE="${FIXTURE_DIR}/m.bin" \
+    K_ENC_SRC="${FIXTURE_DIR}/K_decaps.bin" \
+    KEM_DECAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
 _verify decaps "${DECAPS_DIR}/output"
 
 # --- Phase 4: Decaps 拒绝路径（喂 device dk + liboqs 篡改密文 c_bad）---
@@ -84,7 +86,7 @@ if [ "${LIBOQS_KEM_VS_SKIP_REJECT:-0}" != "1" ]; then
     (cd "${DECAPS_DIR}" && SEED_D="${SEED_D}" \
         DK_KEM_SRC="${KEYGEN_DIR}/output/dk_kem.bin" \
         C_SRC="${FIXTURE_DIR}/c_bad.bin" \
-        KEM_DECAPS_VERIFY=0 KEM_DECAPS_TAMPER_C=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
+        KEM_DECAPS_REJECT=1 KEM_DECAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
     _verify reject "${DECAPS_DIR}/output"
 else
     echo "[liboqs_kem_vs] Phase 4 拒绝路径已跳过（LIBOQS_KEM_VS_SKIP_REJECT=1）"
