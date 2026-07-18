@@ -137,7 +137,7 @@
 
 \subsection{我们要交付什么}
 
-我们的目标是：在昇腾 AI Core 上用 AscendC 实现
+我们的目标是：在 Ascend AI Core 上用 AscendC 实现
 \textbf{FIPS~203 ML-KEM-1024 的密钥生成}（\texttt{ML-KEM.KeyGen}，即 Algorithm~19）。
 
 读者可以把交付物理解成下面这张黑盒表（细节以 stable 目录 customspec 为准）：
@@ -411,7 +411,7 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 
 \paragraph{第一组：标准与工程之间的缝隙}
 \begin{enumerate}
-  \item FIPS 只告诉我们\textbf{算什么}；它并没有告诉我们，在昇腾上应当\textbf{先验哪几块、按什么顺序拼}。
+  \item FIPS 只告诉我们\textbf{算什么}；它并没有告诉我们，在 Ascend 上应当\textbf{先验哪几块、按什么顺序拼}。
         我们凭什么在动手前就说「可以直接站在 stable PKE 上」——凭的是目录名，还是某种可写的证书？
   \item 探针列表（INDEX）像一张「能力菜单」。
         \textbf{菜单本身}是否等于\textbf{合法拼装说明书}？若不等，缺的那一页应当长什么样？
