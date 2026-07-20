@@ -154,8 +154,6 @@ bash run.sh -r sim -v Ascend910B4
 
 ## 冻结 KEM Alg.19/20/21 correctness 三探针（同日续）
 
-用户指令：三用例作为正确性验证早期路标**任务已完成**；stable 已齐，**正式冻结**；清引用，确保 Agent **不再翻源码**。
-
 | 原活跃路径 | 冻结后 |
 |------------|--------|
 | `fix-f203-alg19-kem-keygen-correctness-k4` | [`frozen-fix-…-alg19-…-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/) |
@@ -165,17 +163,23 @@ bash run.sh -r sim -v Ascend910B4
 | 项 | 说明 |
 |----|------|
 | 原因 | 正确性路标完成；继任 **stable + pass-fix device** |
-| 判决 | 各目录 `FROZEN.md`；[`frozen/INDEX.md`](../../ascendc-tests/frozen/INDEX.md) |
 | 关闭 TODO | **T6 / T7a / T7c** |
-| 合入 | **main**（2026-07-20；不再另起分支） |
+| 合入 | **main**（2026-07-20；**不另起分支**） |
 
 ## stable KEM ↔ liboqs 一键回归（同日续；随机字节 · CPU+SIM 全绿）
 
 | 项 | 说明 |
 |----|------|
 | **入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](../../scripts/stable_kem_liboqs_roundtrip.sh) |
-| **语义** | **先** `liboqs_kem_fixture.py --random`（`urandom` 64B `kem_seed`+32B `m`）→ **再**同字节喂 AscendC |
+| **语义** | **先** `liboqs_kem_fixture.py --random`（`urandom` 64B `kem_seed=d‖z` + 32B `m`）→ **再**同字节喂 AscendC |
 | **AscendC 接线** | KeyGen `KEM_KG_EXT_SEED=1`；Encaps `M_FILE`；Decaps **`EK_KEM_SRC`+`DK_KEM_SRC`** |
-| **默认** | **CPU×1 + SIM×1** 都绿才算验收 |
+| **默认** | **CPU×1 + SIM×1** 都绿才算验收；定点 `KEM_SEED_HEX`/`M_HEX` |
 | **证据** | fixture `output/stable_kem_liboqs_rt/20260720_092533_195335/`；Decaps SIM D**286851**+E**746275** |
+
+### 踩坑（同日）
+
+| 现象 | 根因 | 修法 |
+|------|------|------|
+| Decaps `K` 假拒 | 未传 `EK_KEM_SRC` → stash ek 与本次 dk 不一致 | 全链脚本同步传 `EK_KEM_SRC` |
+| SIM `multiple definition` l18 | `build_prod_sim` 幽灵 `.o` | 脚本默认清 Decaps `build_prod_sim` |
 

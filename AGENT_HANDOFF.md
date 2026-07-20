@@ -34,7 +34,7 @@
 ## ★ Smoke
 
 ```bash
-# stable KEM ↔ liboqs（必跑；CPU+SIM 都绿才算数）
+# stable KEM ↔ liboqs（urandom→liboqs→同字节喂 AscendC；CPU+SIM 都绿才算数）
 bash scripts/stable_kem_liboqs_roundtrip.sh
 
 cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
