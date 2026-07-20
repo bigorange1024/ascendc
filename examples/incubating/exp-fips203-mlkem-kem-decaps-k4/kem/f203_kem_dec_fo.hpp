@@ -2,7 +2,7 @@
  * @file f203_kem_dec_fo.hpp
  * @brief Alg.18 行 8–12 设备 FO：c≟c' → K' 或 J(z‖c)=SHAKE256(z‖c,32)。
  *
- * 落点：pack 写完 c' 后同核调用（CPU：pack_fo 核；SIM 过渡：独立 FO 核，见 INTEGRATION_PLAN §2.2）。
+ * 落点：pack 写完 c' 后同核调用（CPU：pack_fo；SIM T19i：l18_l19 尾，见 customspec）。
  */
 #pragma once
 
