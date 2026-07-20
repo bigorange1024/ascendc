@@ -68,6 +68,7 @@ cp -f "${ENCAPS_DIR}/input/m.bin" "${STASH_DIR}/m.bin"
 # --- Phase 3: device Decaps(device dk + device c) 合法路径 → K_dec ---
 echo "[roundtrip_kem] === Phase 3: device Decaps (accept) ==="
 (cd "${DECAPS_DIR}" && SEED_D="${SEED_D}" \
+    EK_KEM_SRC="${KEYGEN_DIR}/output/ek_kem.bin" \
     DK_KEM_SRC="${KEYGEN_DIR}/output/dk_kem.bin" \
     C_SRC="${STASH_DIR}/c.bin" \
     M_FILE="${STASH_DIR}/m.bin" \
@@ -88,6 +89,7 @@ c[0] ^= 0x01
 Path(sys.argv[2]).write_bytes(bytes(c))
 PY
     (cd "${DECAPS_DIR}" && SEED_D="${SEED_D}" \
+        EK_KEM_SRC="${KEYGEN_DIR}/output/ek_kem.bin" \
         DK_KEM_SRC="${KEYGEN_DIR}/output/dk_kem.bin" \
         C_SRC="${STASH_DIR}/c_bad.bin" \
         KEM_DECAPS_REJECT=1 KEM_DECAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")

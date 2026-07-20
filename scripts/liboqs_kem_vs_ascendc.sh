@@ -15,17 +15,18 @@
 #   bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4
 #   SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 #
-# stable 三件套 CPU×1+SIM×1 一键入口（推荐办公室回归）：
+# stable 三件套一键（先 liboqs urandom 字节再喂 AscendC EXT_SEED/M_FILE）：
 #   bash scripts/stable_kem_liboqs_roundtrip.sh
 #
 # 环境（可选）：
-#   SEED_D                   默认 20260619（三阶段与 fixture 必须同种子）
+#   SEED_D                   默认 20260619（三阶段与 fixture 必须同种子；本脚本定点路径）
 #   LIBOQS_KEM_FIXTURE_DIR   默认 output/liboqs_kem_fixture/<SEED_D>/
 #   LIBOQS_KEM_VS_SKIP_REJECT=1  跳过 Phase 4 拒绝路径（只验合法链）
-#   KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR  覆盖探针路径（stable 一键脚本不开放覆盖）
+#   KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR  覆盖探针路径
 #
 # 注意：SIM 下 Decaps 默认 1-session；勿与其他 SIM 并行。默认 KeyGen=pass-fix、Encaps/Decaps=stable；
 # Phase 2 须喂 fixture m.bin（stable Encaps gen_data 默认定点 m=0）。
+# 随机字节 round-trip 请用 stable_kem_liboqs_roundtrip.sh（勿用本脚本的固定 SEED_D）。
 
 set -euo pipefail
 
@@ -76,9 +77,10 @@ echo "[liboqs_kem_vs] === Phase 2: device Encaps vs liboqs c/K ==="
     KEM_ENCAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
 _verify encaps "${ENCAPS_DIR}/output"
 
-# --- Phase 3: Decaps 合法路径（喂 device dk + device c）---
+# --- Phase 3: Decaps 合法路径（喂 device dk + device c；ek 须与同次 KeyGen 一致）---
 echo "[liboqs_kem_vs] === Phase 3: device Decaps vs liboqs K (accept, agreement) ==="
 (cd "${DECAPS_DIR}" && SEED_D="${SEED_D}" \
+    EK_KEM_SRC="${KEYGEN_DIR}/output/ek_kem.bin" \
     DK_KEM_SRC="${KEYGEN_DIR}/output/dk_kem.bin" \
     C_SRC="${ENCAPS_DIR}/output/c.bin" \
     M_FILE="${FIXTURE_DIR}/m.bin" \
@@ -90,6 +92,7 @@ _verify decaps "${DECAPS_DIR}/output"
 if [ "${LIBOQS_KEM_VS_SKIP_REJECT:-0}" != "1" ]; then
     echo "[liboqs_kem_vs] === Phase 4: device Decaps vs liboqs J(z||c_bad) (reject) ==="
     (cd "${DECAPS_DIR}" && SEED_D="${SEED_D}" \
+        EK_KEM_SRC="${KEYGEN_DIR}/output/ek_kem.bin" \
         DK_KEM_SRC="${KEYGEN_DIR}/output/dk_kem.bin" \
         C_SRC="${FIXTURE_DIR}/c_bad.bin" \
         KEM_DECAPS_REJECT=1 KEM_DECAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")

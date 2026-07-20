@@ -152,12 +152,12 @@ bash run.sh -r sim -v Ascend910B4
 | **禁名** | `fix-f203-alg21-kem-decaps-device-k4`（已更名）；`pass-probe-*`（误名，从未权威） |
 | **仍保留** | `fix-…-decaps-correctness-k4`（oracle，与 device 不同轨） |
 
-## stable KEM ↔ liboqs 一键回归（同日续）
+## stable KEM ↔ liboqs 一键回归（同日续；已按「随机字节」纠正）
 
 | 项 | 说明 |
 |----|------|
 | **入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](../../scripts/stable_kem_liboqs_roundtrip.sh) |
-| **内容** | 固定三件套 **stable** KeyGen/Encaps/Decaps；`SEED_D` 默认 `20260619`；底层 `liboqs_kem_vs_ascendc.sh` Phase 0–4；**CPU×1 + `SIM_DIRECT` sim×1** |
-| **接线** | Phase 2 补 `M_FILE=fixture/m.bin`（stable Encaps 默认定点 `m=0`，否则相对 fixture 假红） |
-| **SIM 清理** | 默认清 Decaps `build_prod_sim`（`kem/`→`compute/` 迁文件幽灵 `.o` → `multiple definition`）；`SKIP_CLEAN_SIM=1` 可关 |
-| **证据** | 同日已手跑 CPU+SIM 全绿（tick≈D **286k** + E **745k**）；一键脚本语法 `-n` 通过 |
+| **语义** | **先** `liboqs_kem_fixture.py --random`（`urandom` 64B `kem_seed=d‖z` + 32B `m` → liboqs derand 出向量），**再**把**同一批字节**喂 AscendC |
+| **AscendC 接线** | KeyGen：`KEM_KG_EXT_SEED=1` + `kem_seed.bin`；Encaps：`M_FILE=m.bin`；Decaps：同次 KeyGen 的 **`EK_KEM_SRC`+`DK_KEM_SRC`**（缺 ek 会回落 stash → FO 假拒） |
+| **默认** | 同一 fixture 下 **CPU×1 + `SIM_DIRECT` sim×1**；定点复现可 `KEM_SEED_HEX`/`M_HEX` |
+| **证据** | 同日 CPU 全绿（新 urandom）；SIM 清 `build_prod_sim` 后跑 |

@@ -34,6 +34,9 @@
 ## ★ Smoke
 
 ```bash
+# stable KEM 三件套 ↔ liboqs（每次 urandom→liboqs→同字节喂 AscendC；CPU×1+SIM×1）
+bash scripts/stable_kem_liboqs_roundtrip.sh
+
 cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
