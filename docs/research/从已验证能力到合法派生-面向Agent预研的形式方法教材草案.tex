@@ -981,6 +981,8 @@ $\mathrm{Cl}(A)$ 可以理解为：从 $A$ 出发，把所有被规则逼出来�
 R\circ S=\{\,(u,w)\mid \exists v,\;(u,v)\in R,\;(v,w)\in S\,\}.
 \]
 令 $R^{1}=R$，$R^{k+1}=R^{k}\circ R$，并令 $R^{0}=\Delta_V=\{(v,v)\mid v\in V\}$。
+注意：$R^{0}$ 是\textbf{单独约定}的恒等关系，表示长度为 $0$ 的途径；
+它\textbf{不是}把 $R$ 与自身复合得到的（复合从 $R^{1}$、$R^{2},\ldots$ 才开始）。
 \end{definition}
 
 \begin{definition}[传递闭包与自反传递闭包]
@@ -1004,24 +1006,46 @@ $(u,v)\in R^{k}$ 当且仅当存在长度恰为 $k$ 的 $R$-途径从 $u$ 到 $v
 \end{theorem}
 
 \begin{example}[纯数学：三点关系的传递闭包]
-令 $V=\{a,b,c\}$，$R=\{(a,b),(b,c)\}$。
-则 $R^{2}=\{(a,c)\}$，$R^{*}=\{(a,a),(b,b),(c,c),(a,b),(b,c),(a,c)\}$。
-图示：实线为原关系，虚线为闭包补上的对。
+令 $V=\{a,b,c\}$，$R=\{(a,b),(b,c)\}$。逐项按定义展开：
+\begin{align*}
+R^{0} &=\Delta_V=\{(a,a),(b,b),(c,c)
+\} && \text{（恒等关系；\textbf{不是}由 $R$ 复合得到）}, \\
+R^{1} &=R=\{(a,b),(b,c)\}, \\
+R^{2} &=R\circ R=\{(a,c)
+\} && \text{（复合：经中间点 $b$）}, \\
+R^{+} &=R^{1}\cup R^{2}=\{(a,b),(b,c),(a,c)
+\} && \text{（传递闭包：只含正长度路径）}, \\
+R^{*} &=R^{0}\cup R^{+}=\{(a,a),(b,b),(c,c),(a,b),(b,c),(a,c)\}.
+\end{align*}
+因此：$(a,a)$ 这类对角元来自 $R^{0}$（$0$ 步路径约定），
+\textbf{不是} $R\circ R$ 算出来的；本例中 $R$ 本身也没有自环。
+图中三种线分别对应三类来源：
 \begin{center}
 \begin{tikzpicture}[
   every node/.style={font=\small},
-  c/.style={draw, circle, minimum size=0.7cm},
+  c/.style={draw, circle, minimum size=0.75cm},
   arr/.style={-{Stealth[length=2mm]}, thick}
 ]
   \node[c] (a) at (0,0) {$a$};
-  \node[c] (b) at (2,0) {$b$};
-  \node[c] (c) at (4,0) {$c$};
+  \node[c] (b) at (2.2,0) {$b$};
+  \node[c] (c) at (4.4,0) {$c$};
+  % R
   \draw[arr] (a) -- (b);
   \draw[arr] (b) -- (c);
-  \draw[arr, dashed] (a) to[bend left=35] (c);
-  \node[font=\footnotesize] at (2,-1.0) {实线 $=R$；虚线 $=$ 闭包新增的 $(a,c)$};
+  % R^2 新增
+  \draw[arr, dashed] (a) to[bend left=32] (c);
+  % R^0 自环（恒等；与复合无关）
+  \draw[arr, densely dotted] (a) edge[loop above] node[above, font=\footnotesize] {$R^{0}$} (a);
+  \draw[arr, densely dotted] (b) edge[loop above] node[above, font=\footnotesize] {$R^{0}$} (b);
+  \draw[arr, densely dotted] (c) edge[loop above] node[above, font=\footnotesize] {$R^{0}$} (c);
+  \node[font=\footnotesize, align=left, anchor=west] at (5.3,0.15) {
+    实线 $=R=R^{1}$\\
+    虚线 $=R^{2}$ 新增 $(a,c)$\\
+    点线自环 $=R^{0}$（恒等）
+  };
 \end{tikzpicture}
 \end{center}
+若教材图只想强调「传递多出来的边」，可省略自环，但须在式子里保留 $R^{0}$，以免误以为 $(a,a)$ 来自复合。
 \end{example}
 
 \begin{example}[工程预告]
