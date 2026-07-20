@@ -12,7 +12,8 @@
 | **KEM** | `kem/`：`G` 并入 Phase-E prep；SIM FO 并入 `l18_l19` 尾（T19i） |
 | **Launch** | SIM **3** / CPU 6 |
 | **I/O** | `dk_kem`+`c`+LUT → **仅** `K` |
-| **SIM tick（T19i）** | **1050620**（D **286851** + E **763769**） |
+| **SIM tick（登记）** | **1041906**（D **286865** + E **755041**；Cloud roundtrip `20260720_102426`） |
+| **SIM tick（T19i 单算子验收）** | **1050620**（D **286851** + E **763769**） |
 | **预研副本** | [`exp-fips203-mlkem-kem-decaps-k4`](../../incubating/exp-fips203-mlkem-kem-decaps-k4/) |
 | **行为基线** | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) |
 | **原理总结** | [`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) |
@@ -32,6 +33,7 @@ CPU / SIM / KAT 10+3 / roundtrip（含拒绝）— **PASS**（历史）。
 | `KEM_DECAPS_REJECT=1` cpu+sim | **PASS** |
 | liboqs KAT CPU×10 + SIM×3 | **PASS** |
 | roundtrip cpu+sim（agreement + reject） | **PASS** |
+| `stable_kem_liboqs_roundtrip`（Cloud 复测） | **PASS** CPU+SIM；Decaps D**286865**+E**755041**（fixture `20260720_102426_216972`） |
 
 ```bash
 cd examples/stable/stable-fips203-mlkem-kem-decaps-k4

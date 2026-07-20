@@ -285,3 +285,16 @@ echo EXIT:$?
 ```
 
 若端到端 SIM Decaps 再遇 `tcache`：用同 fixture 对 Decaps 目录单独 `run.sh -r sim` 复验；绿则记环境偶发，勿当算法回归。
+
+
+## 性能登记刷新（同日续；T22）
+
+刷新 [`qa/active_sim_regress_summary.md`](../active_sim_regress_summary.md) + stable Decaps `STATUS`：
+
+| 来源 | Decaps SIM tick |
+|------|-----------------|
+| **登记（Cloud 端到端全绿）** | **1041906**（D**286865**+E**755041**；fixture `20260720_102426_216972`） |
+| T19i 单算子验收（保留对照） | 1050620（D286851+E763769） |
+| WSL 单独 Decaps（同脚本偶发后复验） | 1041521（D286698+E754823；fixture `20260720_185052_42894`） |
+
+KeyGen/Encaps 主登记仍用交付 STATUS；备注补 roundtrip 复测 tick（Cloud/WSL）。清除 incubating「stable 仍 4」过时备注。

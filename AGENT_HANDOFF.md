@@ -14,7 +14,7 @@
 | **KEM 三件套 stable** | KeyGen / Encaps / Decaps **均已定型**；六算子齐；**T19i SIM 3** |
 | **Alg.19/20/21 correctness** | **已冻结** → `ascendc-tests/frozen/frozen-probe-…-*-correctness-k4/`（只读 FROZEN.md；**禁翻源码**） |
 | **办公室回归入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)：**先** liboqs `urandom` → **再**同字节喂 AscendC；**CPU×1 + SIM×1** |
-| **证据** | Cloud 端到端全绿：`output/stable_kem_liboqs_rt/20260720_102426_216972/`；WSL 见下 Smoke 偶发说明 |
+| **证据** | Cloud 端到端全绿：fixture `20260720_102426_216972`（Decaps D**286865**+E**755041**）；WSL 见 Smoke 偶发说明 |
 | **T6 / T7a / T7c / T19i** | **关闭** |
 | **T23** | **打开**：多 AI Core∥stable |
 

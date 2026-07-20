@@ -15,7 +15,7 @@
 | Alg.15 Decrypt | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | T15a | **283290** |
 | Alg.19 KEM KeyGen | [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | T19f | **706633** |
 | Alg.20 KEM Encaps | [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | T19g | **721119** |
-| Alg.21 KEM Decaps | [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | T19h+T19i | **1050620** |
+| Alg.21 KEM Decaps | [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | T19h+T19i | **1041906** |
 
 闭环默认：`scripts/roundtrip_pke_batch.sh` → PKE 三段 stable；`scripts/roundtrip_kem_keygen_encaps_decaps.sh` → KEM 设备闭环（无 liboqs）。**办公室 KEM↔liboqs 交叉验证（推荐）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](../scripts/stable_kem_liboqs_roundtrip.sh)（三件套 **stable**；每次 `urandom`→liboqs→同字节喂 AscendC；**CPU×1+SIM×1 都绿才算数**；2026-07-20 全绿）。KAT：`liboqs_kem_encaps_batch.sh` / `liboqs_kem_decaps_batch.sh`（默认 stable）。预研副本仍在 `examples/incubating/exp-fips203-mlkem-*`。
 
