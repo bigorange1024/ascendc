@@ -12,12 +12,12 @@
 #   SEED_D=20260619
 #   ROUNDTRIP_KEM_STASH=<dir>   默认 output/roundtrip_kem/${RUN_MODE}
 #
-# 注意：SIM 默认 decaps_1session（单库）；Decaps 全链勿与其他 SIM 并行。默认 incubating exp；交付后改指 stable（DECAPS_DIR= 可覆盖）。
+# 注意：SIM 默认 decaps_1session（单库）；Decaps 全链勿与其他 SIM 并行。默认 stable Decaps；可用 DECAPS_DIR= 覆盖回 exp/probe（DECAPS_DIR= 可覆盖）。
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/incubating/exp-fips203-mlkem-kem-decaps-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-decaps-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

@@ -20,14 +20,14 @@
 #   LIBOQS_KEM_FIXTURE_DIR   默认 output/liboqs_kem_fixture/<SEED_D>/
 #   LIBOQS_KEM_VS_SKIP_REJECT=1  跳过 Phase 4 拒绝路径（只验合法链）
 #
-# 注意：SIM 下 Decaps 默认 1-session；勿与其他 SIM 并行。默认 incubating exp；交付后改指 stable（DECAPS_DIR= 可覆盖）。
+# 注意：SIM 下 Decaps 默认 1-session；勿与其他 SIM 并行。默认 stable Decaps；可用 DECAPS_DIR= 覆盖回 exp/probe（DECAPS_DIR= 可覆盖）。
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4}"
 ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-encaps-k4}"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/incubating/exp-fips203-mlkem-kem-decaps-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-decaps-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

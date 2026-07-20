@@ -116,7 +116,11 @@ customspec：<完整路径>
 
 ## 收敛 toward delivery
 
-用户确认方案定型后，交由 **ascendc-delivery**：**复制** `exp-*` → `stable-<名>-v1`（或首版 `stable-<名>/`），`exp-*` **保留不动**。
+用户确认方案定型、准备 **`#交付#` / `#验收#`** 前：须已定稿  
+[`docs/specs/<主题>-baseline-registry.md`](../../docs/specs/)（见 **ascendc-delivery**「baseline-registry 硬卡点」）。  
+【预研】阶段允许缺表或草稿；**不要**在未写 registry 时声称「可以晋级 stable」。
+
+交由 **ascendc-delivery**：**复制** `exp-*` → `stable-<名>-v1`（或首版 `stable-<名>/`），`exp-*` **保留不动**。
 
 ## 测试在本 Skill 下
 
