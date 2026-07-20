@@ -14,7 +14,7 @@
 | **I/O** | `dk_kem`+`c`+LUT → **仅** `K` |
 | **SIM tick（stable 复验）** | **1032762**（D **286896** + E **745866**）；roundtrip accept **1032754**=D**286736**+E**746018** |
 | **预研副本** | [`exp-fips203-mlkem-kem-decaps-k4`](../../incubating/exp-fips203-mlkem-kem-decaps-k4/) |
-| **行为基线** | [`pass-probe-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-probe-f203-alg21-kem-decaps-device-k4/) |
+| **行为基线** | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) |
 | **原理总结** | [`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) |
 
 ## 验收（晋级门禁 + stable 复验，2026-07-20）

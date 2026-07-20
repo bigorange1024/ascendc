@@ -13,4 +13,4 @@ customspec：[`stable-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex`](
 | 禁止 | 编译期长期依赖 `ascendc-tests/`、其它 `examples/`、`frozen/` |
 | 生产 I/O | `dk_kem`+`c`+LUT → **仅** `K` |
 
-行为基线（只读）：[`pass-probe-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-probe-f203-alg21-kem-decaps-device-k4/)。
+行为基线（只读）：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)。

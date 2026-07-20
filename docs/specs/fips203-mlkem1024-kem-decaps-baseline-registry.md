@@ -2,7 +2,7 @@
 
 **主题**：Alg.21 `ML-KEM.Decaps()`（经 Alg.18 → Alg.15 Decrypt + Alg.14 Encrypt + FO；k=4）交付侧 golden / KAT 计算块登记  
 **适用（当前）**：交付以 **`examples/stable/stable-fips203-mlkem-kem-decaps-k4`** 为准（2026-07-20 `#交付#` 自 incubating 复制晋级）；预研副本 `examples/incubating/exp-fips203-mlkem-kem-decaps-k4` 保留。  
-**行为基线（只读）**：`ascendc-tests/pass-probe-f203-alg21-kem-decaps-device-k4`（勿当 golden 计算源 / 编译依赖）。  
+**行为基线（只读）**：`ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4`（勿当 golden 计算源 / 编译依赖）。  
 **规则**：生成 `input/` / `golden/` 的计算内核**仅**可调用下表已验证来源；缺项须停下补登记。
 
 ---
@@ -54,7 +54,7 @@
 | `bash scripts/liboqs_kem_decaps_batch.sh` | CPU×10 + SIM×3（`KEM_DEC_*_TRIALS`） | 固定 stash `dk` + liboqs 造 `c` ↔ device `K` |
 | `bash scripts/roundtrip_kem_keygen_encaps_decaps.sh` | KeyGen device + Encaps stable + 本 Decaps | Encaps.`K` == Decaps.`K`；拒绝路径另验 |
 
-仓库默认 `DECAPS_DIR` 指向本 stable；可用 `DECAPS_DIR=` 覆盖回 incubating / pass-probe。
+仓库默认 `DECAPS_DIR` 指向本 stable；可用 `DECAPS_DIR=` 覆盖回 incubating / [`pass-fix-…-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)。
 
 ---
 

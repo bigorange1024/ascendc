@@ -4,7 +4,7 @@
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
 **案例锚点**：
 
-- **设备主线（2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**；仓库 `scripts/` Decaps 默认指此目录。
+- **设备主线（2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**。仓库 `scripts/` `DECAPS_DIR` 默认已指 **stable** Decaps（可用 env 覆盖回本探针）；**禁止**再建已更名的旧路径 `fix-…-decaps-device-k4` 或误名 `pass-probe-…`。
 - **correctness oracle**：[`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) — vendor 拼装；**禁止抄码**进 device。
 
 > **2026-07-18 更新（更名 pass-fix）**：`fix-…-decaps-device-k4` → `pass-fix-…-decaps-device-k4`；KAT/roundtrip 已绿；下一 `#交付#`。

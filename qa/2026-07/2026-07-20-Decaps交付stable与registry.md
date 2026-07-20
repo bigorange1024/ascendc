@@ -92,7 +92,7 @@ bash run.sh -r sim -v Ascend910B4
 | 项 | 说明 |
 |----|------|
 | 纪要 / 索引 | 本日文件更名关键词；`qa/INDEX` · `qa/2026-07/INDEX` · `qa/TODO` · `AGENT_HANDOFF` · `AGENTS` · `README` · 各 `examples/*/INDEX` |
-| 近期核对 | 07-15 Encaps `#验收#`、07-17 T2、07-18 pass-probe/`$规格$` 已有日纪要；本文件补齐当日【预研】→registry→`#交付#`全链；07-18「未提交」已标注闭合 |
+| 近期核对 | 07-15 Encaps `#验收#`、07-17 T2、07-18 pass-fix/`$规格$` 已有日纪要；本文件补齐当日【预研】→registry→`#交付#`全链；07-18「未提交」已标注闭合 |
 | 本地备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053001`**；收尾再刷一版见下 |
 | 合入 | feature `cursor/stable-kem-decaps-delivery-8244` → **`main`**（`42d4f24`）并推送 |
 | 里程碑 | PKE 三段 + KEM KeyGen/Encaps/**Decaps** **六算子 stable 齐** |
@@ -140,3 +140,14 @@ bash run.sh -r sim -v Ascend910B4
 | 备份 | `bash backup-project.sh` → **`backup/v0.1_20260720080557`**（4072 文件） |
 | 范围 | 关闭 T13b/T11 + 挂账 T23 + 当日纪要 / INDEX / HANDOFF |
 | 合入 | feature `cursor/close-t13b-t11-superseded-8244` → **`main`** 并推送 |
+
+
+## Decaps 更名幽灵目录 · 引用清理（同日续）
+
+| 项 | 说明 |
+|----|------|
+| **成因** | 2026-07-18 `git mv` `fix-…-decaps-device`→`pass-fix-…` **只搬跟踪文件**；旧路径留下 `build_*`/`input`/`output` 等未跟踪空壳 |
+| **会否再生** | **不会**被 `run.sh`/scripts 自动创建（默认已指 stable / pass-fix）；仅当有人 `mkdir` 旧名、或照错误文档链 `pass-probe-*` 误建 |
+| **已做** | 删空壳；全文纠 `pass-probe-…`→`pass-fix-…`（HANDOFF/AGENTS/README/registry/STATUS/INDEX 等）；[`ascendc-tests/INDEX.md`](../../ascendc-tests/INDEX.md) 加「更名防幽灵」；新增 [`scripts/cleanup-ascendc-test-ghosts.sh`](../../scripts/cleanup-ascendc-test-ghosts.sh) |
+| **禁名** | `fix-f203-alg21-kem-decaps-device-k4`（已更名）；`pass-probe-*`（误名，从未权威） |
+| **仍保留** | `fix-…-decaps-correctness-k4`（oracle，与 device 不同轨） |

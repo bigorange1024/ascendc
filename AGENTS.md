@@ -119,7 +119,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 - **PKE** 三段已在 `examples/stable/`  
 - **KEM Alg.19 KeyGen**：**定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 保留  
 - **KEM Alg.20 Encaps**：**定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；tick **721119**）；预研副本保留  
-- **KEM Alg.21 Decaps**：**定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；行为基线 [`pass-probe-…-decaps-device-k4`](ascendc-tests/pass-probe-f203-alg21-kem-decaps-device-k4/)（D**286803**+E**745925**）；`scripts/` `DECAPS_DIR`→**stable**  
+- **KEM Alg.21 Decaps**：**定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；行为基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（D**286803**+E**745925**）；`scripts/` `DECAPS_DIR`→**stable**  
 - **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
 - 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4` · `pass-fix-f203-alg21-kem-decaps-device-k4`（勿当 CMake 依赖）  
 - **下一刀**：Decaps `fo_only` 4→3 / NPU（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
