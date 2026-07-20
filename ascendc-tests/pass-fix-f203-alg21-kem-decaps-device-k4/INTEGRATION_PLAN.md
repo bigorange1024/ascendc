@@ -87,18 +87,19 @@ Host（Phase-E-only）：灌 m'/h/z/ek/c + LUT；分配 K'/coins/a_hat/re/c'/K w
   │     dual AIV: BuildEncryptPrepSinglePipe          // Â + CBD ← coins
   │
   ├─ Launch-E2…: 同 stable Encrypt compute
-  │     SIM: f203_encrypt_l18_l19（内联 pack → c'）
-  │     CPU: ntt / at_jp / intt / …
+  │     SIM: f203_encrypt_l18_l19（内联 pack → c'；**T19i 后同核 FO → K**）
+  │     CPU: ntt / at_jp / intt / pack_fo
   │
-  └─ FO：目标嵌在 pack 尾（与 c' 同核）
-        首版过渡（门禁允许）：CPU 用 probe-local pack+FO 核替代
-        `f203_encrypt_alg14_pack`；SIM 若尚未 fork l18_l19，
-        可在内联 pack 后 **同 Phase-E 内** 追加一次 AIV-only FO 核
-        （不另占「独立 KEM 功能产品名」；下一迭代收回为 l18_l19 尾内联）
+  └─ FO：
+        **目标（T19i）**：嵌在 SIM `l18_l19` pack 尾（与 c' 同核）→ 全链 SIM **3** launch
+        **过渡（已落地、待收回）**：SIM 追加 `f203_kem_dec_fo_only`（第 4 launch）
+        CPU：probe-local `f203_kem_dec_pack_fo`（pack+FO；保持 6 launch）
 Host：D2H K（Phase-E-only 亦可 dump c' 供诊断）
 ```
 
 **禁止**：为 G 或 FO 再开「与 Encrypt 无关」的第三套产品化 launch 拓扑；Host 算 G/J 写 `K.bin`。
+
+> **现行 SIM**：D + E1 prep + E2 `l18_l19` + E3 `fo_only` = **4**。见 §7 T19i。
 
 ---
 
@@ -156,10 +157,64 @@ ASCENDC_SIM_HOST_MODE=decaps_2session bash run.sh -r sim -v Ascend910B4
 | 项 | 归属 |
 |----|------|
 | **T2：SIM 单库合库 + 单 session** | **PASS**（2026-07-17 Cloud）：`prepare_dec_shim.sh` + 单 `ascendc_library`；默认 `decaps_1session` |
+| **T19i：SIM `fo_only` → `l18_l19` 尾（4→3）** | **本轮**（见 §7）；先本探针，再镜像 stable Decaps |
 | D+E 单 launch 融合 | 更后 |
-| `#交付#` / `examples/stable` Decaps | `pass-fix` 更名之后 |
+| `#交付#` / `examples/stable` Decaps | **已完成**（2026-07-20）；本探针仍作行为基线 |
 | 改 correctness 逻辑；从 frozen 抄 PKE | **禁止** |
-| `pass-fix` 更名 / KAT 扩量 | 可本机；非阻塞 |
+| 改共享 PKE Encrypt / Encaps 的 `l18_l19` 源 | **禁止**（见 §7.2） |
+
+---
+
+## 7. T19i — SIM `fo_only` 收回 `l18_l19` 尾（SIM 4→3）
+
+**背景**：当前全链 SIM 为 4 launch（D + prep + `l18_l19` + `fo_only`）。`l18_l19` 已内联 Encrypt pack 写出完整 `c'`；`f203_kem_dec_fo_only` 仅调 `KemDecFo`（过渡核）。目标与 INTEGRATION §0「行 8–12 并入 Encrypt pack 尾」对齐。
+
+### 7.1 目标拓扑
+
+```text
+SIM 全链（生产）：
+  Launch-D:  f203_decrypt_device_fused
+  Launch-E1: f203_kem_dec_phase_e_prep
+  Launch-E2: f203_encrypt_l18_l19   // pack → c' 后同核 KemDecFo → K
+  （删除 Launch-E3 fo_only）
+
+CPU（不变）：仍 6 launch；末核 f203_kem_dec_pack_fo（pack+FO）
+```
+
+### 7.2 隔离策略（强制，避免误伤 Encaps/Encrypt）
+
+本探针 CMake 现将 `COMPUTE_DIR` 指到 [`stable-…-pke-encrypt-k4/compute`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/compute/)。**禁止**在该共享树上改 `f203_encrypt_l18_l19_kernel.cpp` 签名或行为（Encaps pass-probe / PKE Encrypt 同编此文件）。
+
+| 做法 | 说明 |
+|------|------|
+| **采用** | 探针本地覆盖：`kem/f203_encrypt_l18_l19_kernel.cpp`（自 Encrypt 拷贝后仅本目录改）；CMake 对该 TU 改指本地路径 |
+| **禁止** | 直接改 `examples/stable/…-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp` |
+| **后续** | stable Decaps 自有 vendored `compute/`，镜像本改时只动 Decaps 树 |
+
+### 7.3 设备实现要点
+
+1. **签名**：在现有 `cGm`/`traceGm` 后追加可选 `cInGm,zGm,KprimeGm,KoutGm`；四指针**皆非空**才跑 FO（Encrypt 纯路径若误链本 TU 传空则跳过）。
+2. **落点**：`tail_pack_shard_gm(...)` 之后（AIV 分支末尾）。
+3. **同步**：双 AIV 均 `AscendC::SyncAll</*isAIVOnly=*/true>()`（pack 分片写完再 FO；API 查阅索引 2026-07-13）。AIC 已结束 INTT，不参与 SyncAll/FO。
+4. **FO**：`!aic && subBlockID==0` 调 `F203KemDec::KemDecFo(cIn,c',z,K',K)`（`kem/f203_kem_dec_fo.hpp`，无新矢量 API）。
+5. **Host**：`main_kem_decaps_phase_e_run.cpp` SIM 路径删 `ACLRT_LAUNCH_KERNEL(f203_kem_dec_fo_only)`；把四指针并入 `l18_l19` launch。
+6. **入口清理**：SIM 不再注册/launch `f203_kem_dec_fo_only`；CPU 仍编 `f203_kem_dec_pack_fo`。
+
+### 7.4 验收（本探针）
+
+| 门禁 | 命令 / 判据 |
+|------|-------------|
+| CPU 全链 | `bash run.sh -r cpu -v Ascend910B4` → `K` max=0；仍 6 launch |
+| SIM 全链 | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` → `K` max=0；**3** launch；根无 stray dump |
+| 拒绝 | `KEM_DECAPS_REJECT=1` cpu+sim → `K`≡`J(z‖c)` |
+| tick | 记 D+E；期望不劣于过渡期 D**286803**+E**745925** 同量级 |
+| 回归 | 可选：`liboqs_kem_decaps_batch` / roundtrip（`DECAPS_DIR` 指本目录时） |
+
+### 7.5 非本轮
+
+- 不改 examples stable/exp Decaps（待本探针绿后再 `$规格$`/`#修改#`）
+- 不改 Encaps / PKE Encrypt
+- 不做 D+E 单 launch
 
 ### T2 落地要点（已完成）
 

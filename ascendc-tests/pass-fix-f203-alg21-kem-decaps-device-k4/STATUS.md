@@ -24,6 +24,8 @@ bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```
 
-**实现要点**：行 1–4 指针偏移；SIM `prepare_dec_shim.sh`（冲突头 `dec_*`）合单库；SIM 4 launch（含过渡 `fo_only`）；CPU 6 launch。
+**实现要点**：行 1–4 指针偏移；SIM `prepare_dec_shim.sh`（冲突头 `dec_*`）合单库；SIM **过渡** 4 launch（含 `fo_only`）；CPU 6 launch。
 
-**未做（非 pass 门禁）**：`fo_only` 收回 `l18_l19` 尾；`#交付#` → stable。
+**进行中（T19i）**：`fo_only` 收回探针本地 `l18_l19` 尾 → SIM **3** launch；**禁止**改共享 PKE Encrypt 源（见 [`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) §7）。
+
+**已外置**：`#交付#` → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20）；本目录仍作行为基线。
