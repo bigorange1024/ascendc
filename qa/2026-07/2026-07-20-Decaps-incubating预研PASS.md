@@ -73,3 +73,17 @@ bash run.sh -r sim -v Ascend910B4
 | 晋级 | 复制 [`exp-…-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) |
 | 默认路径 | 仓库 `DECAPS_DIR` → stable；registry「适用」→ stable |
 | 复验 | stable CPU / SIM / KAT×10+3 / roundtrip（含拒绝）— 见 STATUS |
+
+
+## `#交付#` stable 复验证据（同日续）
+
+目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 结果 |
+|----|------|
+| `run.sh` CPU | **PASS**（`K` max=0） |
+| `run.sh` SIM | **PASS** tick **1032762**=D**286896**+E**745866**；无 stray dump |
+| liboqs KAT | **PASS** CPU×10 + SIM×3（CPU 曾一轮 flake，复测绿） |
+| roundtrip | **PASS** CPU+SIM（agreement + reject） |
+
+`DECAPS_DIR` 默认已指向 stable。
