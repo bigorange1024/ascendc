@@ -104,3 +104,17 @@ bash run.sh -r sim -v Ascend910B4
 | 补记 | `qa/TODO` 正式挂 **T19i**；07-18 纪要「未提交」→ 已合入说明；本文件验收/DECAPS 路径按时间线澄清 |
 | 二次备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053530`**（4035 文件） |
 | 推送 | 文档补丁直接落 **`main`** |
+
+
+## 关闭 T13b / T11（同日续；已取代）
+
+用户确认：两实验目标已被现有 stable KeyGen 覆盖，**不再单独维护 TODO**。
+
+| ID | 原目标 | 关闭理由 |
+|----|--------|----------|
+| **T13b** | fork `vec-k4-v2`→`vec-k4-v3`（V3 预采样 + 设备 `a_hat`） | [`stable-…-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) / KEM KeyGen 已是 Launch1 prep（设备 Â + V3 行 8–15）+ Launch2 2s1e；不必再做独立 v3 探针包装 |
+| **T11** | 2s1e 探针/exp → 单独 `examples/stable/` | 2s1e 已随 KeyGen `compute/` 定型交付；不另开裸 2s1e stable 算子 |
+
+**仍保留**：探针 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) 作 compute 对照（host 喂 `a_hat` / `KEYGEN_ORCHESTRATE`）；**不**再排 T13b/T11 晋级。
+
+打开项主线仍为 **T19i**（若未合入）· **T2-npu** · **T21**。

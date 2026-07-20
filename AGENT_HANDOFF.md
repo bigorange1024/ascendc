@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-20（Decaps `#交付#`；六算子齐；T19i 挂账；二次备份 `v0.1_20260720053530`）
+> **最后刷新**：2026-07-20（关闭 **T13b/T11**；Decaps `#交付#`；六算子齐；T19i 仍挂账）
 
 ---
 
@@ -15,6 +15,7 @@
 | **KEM Decaps stable** | [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/) **定型**（2026-07-20 `#交付#`）；`DECAPS_DIR` 默认已指 |
 | **Alg.21 Decaps device** | [`pass-probe-…-decaps-device-k4`](ascendc-tests/pass-probe-f203-alg21-kem-decaps-device-k4/) **PASS**（D**286803**+E**745925**） |
 | PKE + KEM KeyGen/Encaps/Decaps | **六算子 stable 齐** |
+| **T13b / T11** | **已关闭（已取代）**：设备 Â+V3+2s1e 已在 KeyGen stable；不另做 v3 探针 / 裸 2s1e stable |
 
 ---
 
@@ -24,6 +25,7 @@
 |--------|------|
 | **P1** | **T19i** Decaps SIM `fo_only`→`l18_l19` 尾（4→3 launch） |
 | **P1** | **T2-npu** NPU 实机压测 |
+| **P1** | **T21** SHA3hp 拍板 |
 
 ---
 

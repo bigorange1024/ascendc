@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-20（Decaps `#交付#` → stable；六算子齐；registry 六表齐；补挂 **T19i**）
+**最近刷新**：2026-07-20（关闭 **T13b** / **T11**：stable KeyGen 已覆盖，不单独维护）
 
 ---
 
@@ -40,8 +40,6 @@
 | **P1** | **T19i** | Decaps SIM 过渡 launch：`fo_only` **内联进** `l18_l19` 尾（SIM **4→3**；CPU 仍可 6） | **打开**；不挡 stable 交付；稳定 / pass-probe 均可改 |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
 | **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境 |
-| **P1** | **T13b** | fork [`vec-k4-v2`](../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) → **vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | **待开工** |
-| **P2** | **T11** | **2s1e** 探针/exp → [`examples/stable/`](../examples/stable/) 晋级 | 探针 **77958** tick PASS；**stable / NPU** 未做 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
 | — | **T2b / T5** | PKE/KEM 各算子 `*-baseline-registry` | **2026-07-20 关闭**：六表齐（补 PKE KeyGen/Decrypt + Decaps）；晋级硬卡点见 ascendc-delivery Skill |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
@@ -65,6 +63,7 @@
 | **T19g** | incubating Encaps → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **完成** → 已关闭表 |
 | **T19h** | incubating Decaps → `#交付#` [`stable-…-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | **完成**（tick **1032762**；KAT 10+3；roundtrip ✓）→ 已关闭表 |
 | **T19i** | Decaps `fo_only`→`l18_l19`（SIM 4→3） | **打开**（见上表 P1） |
+| **T13b / T11** | vec-k4-v3 探针包装 / 裸 2s1e stable 晋级 | **已关闭**（见已关闭表；能力已在 KeyGen stable） |
 
 **禁止**：未改接线前把 `SRC` 指回 stable 强行 sync；从 frozen **抄码改写**冒充新实现（rsync 拼装快照除外，直至 T19e 关闭）。
 
@@ -111,6 +110,8 @@
 | **T19g** | incubating KEM Encaps → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) · SIM **721119** · KAT **10+3** | 2026-07-15 |
 | **T19h** | incubating KEM Decaps → `#交付#` [`stable-…-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) · SIM **1032762** · KAT **10+3** · roundtrip ✓ | 2026-07-20 |
 | **T2b/T5** | PKE/KEM 六份 `*-baseline-registry` 齐；晋级硬卡点入 ascendc-delivery Skill | 2026-07-20 |
+| **T13b** | fork `vec-k4-v2`→**vec-k4-v3**（V3 预采样 + 设备 `a_hat`） | 2026-07-20（**已取代**：[`stable-…-pke-keygen-k4`](../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) / KEM KeyGen 已是 prep 设备 Â+V3 + compute 2s1e；无需再维护独立 v3 探针） |
+| **T11** | **2s1e** 探针/exp → `examples/stable/` 单独晋级 | 2026-07-20（**已取代**：2s1e 已随 KeyGen `compute/` 定型；不另开裸 2s1e stable） |
 | **T7b** | alg14 correctness `run.sh` 资源友好化 | 2026-07-10（correctness 探针已冻结；stable Encrypt 已有 SKIP_REBUILD） |
 | **T15c** | 冻结 [`fix-f203-alg14/15-*-correctness-k4`](../ascendc-tests/frozen/) → 引用改 stable Encrypt/Decrypt | 2026-07-10 |
 | **T15a** | Alg.15 Decrypt **`#交付#`**：[`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) · KAT×10+1 · roundtrip×10+1 · `DECRYPT_DIR` 默认 stable · **PKE 三段齐备** | 2026-07-10 |
