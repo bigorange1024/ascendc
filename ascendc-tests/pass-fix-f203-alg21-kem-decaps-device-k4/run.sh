@@ -6,7 +6,7 @@
 #
 # Usage（默认全链）:
 #   bash run.sh -r cpu -v Ascend910B4
-#   bash run.sh -r sim -v Ascend910B4   # 默认单库 + decaps_1session（T2）
+#   bash run.sh -r sim -v Ascend910B4   # 默认单库 + decaps_1session；T19i 后 SIM 3 launch（pack+FO 同核）
 #
 # 调试（非默认）:
 #   KEM_DECAPS_PHASEE_ONLY=1 …          # 仅 Phase-E（灌 m'）

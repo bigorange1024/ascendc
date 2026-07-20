@@ -74,13 +74,14 @@ if(CMAKE_INSTALL_PREFIX STREQUAL /usr/local)
     set(CMAKE_INSTALL_PREFIX "${KEM_ROOT}/out" CACHE STRING "install prefix" FORCE)
 endif()
 
+# T19i：l18_l19 用探针本地覆盖（kem/），勿编共享 Encrypt 树同名 TU（避免误伤 Encaps/Encrypt）
 set(ENCRYPT_KERNEL_FILES
     ${KEM_DIR}/f203_kem_dec_phase_e_prep_entry.cpp
     ${KEM_DIR}/f203_kem_dec_pack_fo_entry.cpp
     ${COMPUTE_DIR}/f203_encrypt_ntt_y_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_at_jp_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_intt_e1_kernel.cpp
-    ${COMPUTE_DIR}/f203_encrypt_l18_l19_kernel.cpp
+    ${KEM_DIR}/f203_encrypt_l18_l19_kernel.cpp
 )
 
 set(CUSTOM_ASCEND310P_LIST "Ascend310P1" "Ascend310P3")
@@ -166,7 +167,7 @@ elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
     set(KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
 
     # 单设备库：shim Decrypt（dec_* 头）+ Encrypt + kem；单 func_key 空间，消除 R3 双库污染
-    # AIV-only 预算：phase_e_prep + pack_fo + fo_only + at_jp = 4（< R1 阈值 5）
+    # AIV-only 预算：phase_e_prep + pack_fo + at_jp = 3（T19i 后不再注册 fo_only；< R1 阈值 5）
     if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
         set(ASCENDC_CMAKE_DIR ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)
     elseif(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/tools/tikcpp/ascendc_kernel_cmake)
