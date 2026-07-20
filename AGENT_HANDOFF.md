@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-20（T19i pass-fix + incubating exp SIM 3 PASS；stable 待 `$规格$`）
+> **最后刷新**：2026-07-20（T19i 全链齐：pass-fix + exp + **stable** SIM 3；KAT/roundtrip ✓）
 
 ---
 
@@ -12,7 +12,7 @@
 | 项 | 状态 |
 |----|------|
 | **KEM Encaps stable** | [`stable-…-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/) **定型**；tick **721119** |
-| **KEM Decaps stable** | [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/) **定型**（2026-07-20 `#交付#`）；`DECAPS_DIR` 默认已指 |
+| **KEM Decaps stable** | [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/) **定型**；**T19i SIM 3**（D**286851**+E**763769**）；`DECAPS_DIR` 默认已指 |
 | **Alg.21 Decaps device** | [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) **PASS**；**T19i** SIM **3** launch（D**287037**+E**763886**） |
 | PKE + KEM KeyGen/Encaps/Decaps | **六算子 stable 齐** |
 
@@ -22,8 +22,8 @@
 
 | 优先级 | 事项 |
 |--------|------|
-| **P1** | **T19i 镜像 stable Decaps**（须先 `$规格$`，再 `#修改#`） |
 | **P1** | **T2-npu** NPU 实机压测 |
+| **P1** | **T21** SHA3hp 拍板 |
 
 ---
 

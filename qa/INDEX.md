@@ -12,7 +12,7 @@
 
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
-关键字：**`#交付#` Decaps** · **T19i pass-fix+exp PASS**（SIM 3）· stable 待 `$规格$`
+关键字：**`#交付#` Decaps** · **T19i 全链齐**（pass-fix+exp+**stable** SIM 3；KAT/roundtrip ✓）
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 

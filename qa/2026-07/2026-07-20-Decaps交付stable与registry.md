@@ -147,3 +147,18 @@ bash run.sh -r sim -v Ascend910B4
 | SIM | **PASS** D**286846**+E**763935** |
 | 拒绝 | CPU+SIM **PASS** |
 | 未做 | stable Decaps 镜像 |
+
+
+## T19i stable `#修改#`（同日续）
+
+目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 结果 |
+|----|------|
+| customspec | SIM **3** 锁定；验收含 KAT + roundtrip |
+| 实现 | 镜像 exp：`kem/l18_l19` 覆盖；Host 删 `fo_only` |
+| CPU / SIM | **PASS**；D**286851**+E**763769** |
+| 拒绝 | CPU+SIM **PASS** |
+| liboqs KAT | **PASS** CPU×10 + SIM×3 |
+| roundtrip | **PASS** cpu+sim（agreement + reject） |
+| T19i | **关闭**（pass-fix + exp + stable 齐） |
