@@ -1,4 +1,4 @@
-# 2026-07-20 — Decaps incubating 【预研】CPU+SIM PASS
+# 2026-07-20 — Decaps `#交付#` stable · registry · 六算子齐
 
 ## 结论
 
@@ -30,10 +30,10 @@ bash run.sh -r sim -v Ascend910B4
 
 **证据**：`bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu|sim` → agreement + reject **PASS**（KeyGen device + Encaps stable + 本 Decaps）。
 
-## 下一刀
+## 下一刀（当日已完成交付后）
 
-- `#交付#` → stable（用户点名；交付后 `DECAPS_DIR` 默认再切 stable）
-- 可选：KAT 扩量、`fo_only` 内联
+- ✅ `#交付#` → stable（见下节）
+- 可选债：`fo_only` 内联（4→3）；NPU（T2-npu）
 
 ## 登记表
 
@@ -52,7 +52,7 @@ bash run.sh -r sim -v Ascend910B4
 
 ## baseline-registry（同日续）
 
-新增 [`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)：登记合法/拒绝路径 golden 块（liboqs encaps/decaps、`J`/`G` Host 对照、LUT、CPU `golden_v`）；适用当前 incubating exp，交付后改指 stable。
+新增 [`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)：登记合法/拒绝路径 golden 块（liboqs encaps/decaps、`J`/`G` Host 对照、LUT、CPU `golden_v`）；晋级后「适用」已改指 stable。
 
 ## Skill + 历史缺表补登记（同日续）
 
@@ -87,3 +87,13 @@ bash run.sh -r sim -v Ascend910B4
 | roundtrip | **PASS** CPU+SIM（agreement + reject） |
 
 `DECAPS_DIR` 默认已指向 stable。
+
+
+## 收尾：纪要刷新 · 备份 · 合入 main（同日续）
+
+| 项 | 说明 |
+|----|------|
+| 纪要 / 索引 | 本日文件更名关键词；`qa/INDEX` · `qa/2026-07/INDEX` · `qa/TODO` · `AGENT_HANDOFF` · `AGENTS` · `README` · 各 `examples/*/INDEX` |
+| 本地备份 | `bash backup-project.sh` → `backup/v0.1_*`（白名单；不含 build/IO） |
+| 合入 | feature `cursor/stable-kem-decaps-delivery-8244` → **`main`** 并推送 |
+| 里程碑 | PKE 三段 + KEM KeyGen/Encaps/**Decaps** **六算子 stable 齐** |

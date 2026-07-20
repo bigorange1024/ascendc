@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-20 — [Decaps `#交付#` stable · registry](2026-07/2026-07-20-Decaps-incubating预研PASS.md)
+### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
-关键字：**【预研】** PASS · registry→**Skill** · 补 PKE registry · **`#交付#` Decaps → stable** · KAT/roundtrip 复验
+关键字：**【预研】**→**`#交付#` stable Decaps** · registry→Skill · 补 PKE registry · KAT/roundtrip · **六算子齐** · 备份合入 main
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 
