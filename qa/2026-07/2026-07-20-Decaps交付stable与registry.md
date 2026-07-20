@@ -255,3 +255,33 @@ Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D�
 | liboqs KAT | **PASS** CPU×10 + SIM×3 |
 | roundtrip | **PASS** cpu+sim（agreement + reject） |
 | T19i | **关闭**（pass-fix + exp + stable 齐） |
+
+
+## WSL：`stable_kem_liboqs_roundtrip` 连续 SIM 偶发（同日续）
+
+来源：办公室 **WSL Agent** 跑 [`scripts/stable_kem_liboqs_roundtrip.sh`](../../scripts/stable_kem_liboqs_roundtrip.sh) 反馈（fixture `output/stable_kem_liboqs_rt/20260720_185052_42894/`）。
+
+| 段 | 结果 |
+|----|------|
+| Phase 0 liboqs fixture | OK |
+| CPU KeyGen / Encaps / Decaps accept / reject | 全 **PASS**（max=0） |
+| SIM KeyGen | **PASS**（tick **700879**） |
+| SIM Encaps | **PASS**（tick **719417**） |
+| SIM Decaps accept | **失败**：Phase-D ~130s 后 `tcache_thread_shutdown(): unaligned tcache chunk detected` → core dump / Aborted |
+| 同 fixture **单独**重跑 Decaps SIM | **PASS**（D**286698**+E**754823**；`K` max=0） |
+
+| 解读 | 说明 |
+|------|------|
+| 正确性 | CPU 全绿 + 同 fixture 单独 Decaps SIM 绿 → **非**稳定算法/接线错 |
+| 失败形态 | **连续 SIM**（KeyGen→Encaps→立刻 Decaps）时 CAModel/堆偶发；Cloud 同日端到端亦曾一次全绿（fixture `20260720_102426_216972`） |
+| `tee` 陷阱 | 脚本内已有 `set -euo pipefail`；外层 `bash script \| tee log` **未** `set -o pipefail` 时，外层可能仍 exit 0，**掩盖**脚本失败 |
+
+推荐调用：
+
+```bash
+set -o pipefail
+bash scripts/stable_kem_liboqs_roundtrip.sh 2>&1 | tee /tmp/stable_kem_rt.log
+echo EXIT:$?
+```
+
+若端到端 SIM Decaps 再遇 `tcache`：用同 fixture 对 Decaps 目录单独 `run.sh -r sim` 复验；绿则记环境偶发，勿当算法回归。
