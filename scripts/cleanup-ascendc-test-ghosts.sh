@@ -41,6 +41,9 @@ found=0
 # 1) 显式禁名（已退役 / 误名）
 BANNED=(
   "fix-f203-alg21-kem-decaps-device-k4"
+  "fix-f203-alg19-kem-keygen-correctness-k4"
+  "fix-f203-alg20-kem-encaps-correctness-k4"
+  "fix-f203-alg21-kem-decaps-correctness-k4"
 )
 shopt -s nullglob
 for d in "${TESTS}"/pass-probe-*; do

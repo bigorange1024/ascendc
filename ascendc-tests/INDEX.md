@@ -64,14 +64,13 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 
 | 目录 | 说明 |
 |------|------|
-| **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
-| [**fix-f203-alg19-kem-keygen-correctness-k4/**](fix-f203-alg19-kem-keygen-correctness-k4/) | **Alg.19 KEM KeyGen（correctness）✅** — vendor PKE + KeyGen_internal；CPU+SIM+liboqs max=0；SIM **742558** tick |
-| [**fix-f203-alg20-kem-encaps-correctness-k4/**](fix-f203-alg20-kem-encaps-correctness-k4/) | **Alg.20 KEM Encaps（correctness）** — vendor Encrypt **G5←frozen**；**CPU+SIM PASS** |
-| [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；oracle 对照（生产走 pass-fix device） |
+| **vec-k4-v3**（暂定） | **已关闭（T13b）**：stable KeyGen 已覆盖；勿再开 |
 
-**命名（2026-07-18：Decaps 更名）**：`*-correctness-k4` = vendor oracle；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19/20/21 device 均已 `pass-fix-…`**。KEM `scripts/`：KeyGen→`pass-fix-…-keygen-device-k4`；Encaps/Decaps→对应 **stable**（`DECAPS_DIR=`/`ENCAPS_DIR=` 可覆盖回 pass-fix）。
+~~`fix-f203-alg19/20/21-*-correctness-k4`~~ — **2026-07-20 冻结** → [`frozen/INDEX.md`](frozen/INDEX.md)（正确性路标任务完成；继任 stable + pass-fix device；**禁止翻源码**）。
 
-**更名防幽灵（强制）**：`git mv` / 目录晋级 `fix-`→`pass-fix-` **只搬已跟踪文件**；旧路径下 `build_*`/`input`/`output`/`sim_log` 等**未跟踪产物会留成空壳目录**。更名后须 `rm -rf` 旧目录残留，或跑 [`scripts/cleanup-ascendc-test-ghosts.sh`](../scripts/cleanup-ascendc-test-ghosts.sh)。**禁止**再建：`fix-f203-alg21-kem-decaps-device-k4`（已更名）、`pass-probe-*`（误名，从未权威）。正确路径仅 [`pass-fix-f203-alg21-kem-decaps-device-k4`](pass-fix-f203-alg21-kem-decaps-device-k4/)。
+**命名**：`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19/20/21 device 均已 `pass-fix-…`**。KEM `scripts/`：KeyGen→`pass-fix-…-keygen-device-k4`；Encaps/Decaps→对应 **stable**（`DECAPS_DIR=`/`ENCAPS_DIR=` 可覆盖回 pass-fix）。**禁止**默认或文档链指回已冻结的 `*-correctness-k4`。
+
+**更名防幽灵（强制）**：`git mv` / 目录晋级 `fix-`→`pass-fix-` **只搬已跟踪文件**；旧路径下 `build_*`/`input`/`output`/`sim_log` 等**未跟踪产物会留成空壳目录**。更名后须 `rm -rf` 旧目录残留，或跑 [`scripts/cleanup-ascendc-test-ghosts.sh`](../scripts/cleanup-ascendc-test-ghosts.sh)。**禁止**再建：`fix-f203-alg21-kem-decaps-device-k4`（已更名）、`pass-probe-*`（误名）、以及已冻结的 `fix-f203-alg{19,20,21}-*-correctness-k4` 活跃路径。正确 Decaps device 仅 [`pass-fix-f203-alg21-kem-decaps-device-k4`](pass-fix-f203-alg21-kem-decaps-device-k4/)。
 
 **KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 默认 1-session，全链约数分钟/段。
 

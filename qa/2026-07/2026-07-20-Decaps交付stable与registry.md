@@ -151,3 +151,23 @@ bash run.sh -r sim -v Ascend910B4
 | **已做** | 删空壳；全文纠 `pass-probe-…`→`pass-fix-…`（HANDOFF/AGENTS/README/registry/STATUS/INDEX 等）；[`ascendc-tests/INDEX.md`](../../ascendc-tests/INDEX.md) 加「更名防幽灵」；新增 [`scripts/cleanup-ascendc-test-ghosts.sh`](../../scripts/cleanup-ascendc-test-ghosts.sh) |
 | **禁名** | `fix-f203-alg21-kem-decaps-device-k4`（已更名）；`pass-probe-*`（误名，从未权威） |
 | **仍保留** | `fix-…-decaps-correctness-k4`（oracle，与 device 不同轨） |
+
+
+## 冻结 KEM Alg.19/20/21 correctness 三探针（同日续）
+
+用户指令：三用例作为正确性验证早期路标**任务已完成**；stable 已齐，**正式冻结**；清引用，确保 Agent **不再翻源码**。
+
+| 原活跃路径 | 冻结后 |
+|------------|--------|
+| `fix-f203-alg19-kem-keygen-correctness-k4` | [`frozen-fix-…-alg19-…-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/) |
+| `fix-f203-alg20-kem-encaps-correctness-k4` | [`frozen-fix-…-alg20-…-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4/) |
+| `fix-f203-alg21-kem-decaps-correctness-k4` | [`frozen-fix-…-alg21-…-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/) |
+
+| 项 | 说明 |
+|----|------|
+| 原因 | 正确性路标完成；继任 **stable + pass-fix device** |
+| 判决 | 各目录 `FROZEN.md`；[`frozen/INDEX.md`](../../ascendc-tests/frozen/INDEX.md) |
+| 关闭 TODO | **T6 / T7a / T7c** |
+| 活跃文档 | device STATUS/INTEGRATION、notes、INDEX、regress 表改为只链 **FROZEN.md**；**禁止** INTEGRATION_PLAN 作实现依据 |
+| 脚本 | 仓库默认本就不指这三目录；`cleanup-ascendc-test-ghosts.sh` 禁名补全 |
+| **未推送** | 仅本地分支 `cursor/freeze-kem-correctness-oracles-8244`；待用户指令再推 |

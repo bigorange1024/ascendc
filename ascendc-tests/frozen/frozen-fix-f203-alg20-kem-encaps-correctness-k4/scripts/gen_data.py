@@ -28,7 +28,7 @@ EK_BYTES = 1568
 CT_BYTES = 1568
 K_BYTES = 32
 SEED_D_DEFAULT = 20260619
-EK_KEM_DEFAULT = ROOT.parent / "fix-f203-alg19-kem-keygen-correctness-k4" / "output" / "ek_kem.bin"
+EK_KEM_DEFAULT = ROOT.parent / "frozen-fix-f203-alg19-kem-keygen-correctness-k4" / "output" / "ek_kem.bin"
 
 
 def derand_m_from_seed(seed_d: int) -> bytes:

@@ -24,9 +24,9 @@ ROOT = Path(__file__).resolve().parent.parent
 DK_BYTES = 3168
 CT_BYTES = 1568
 K_BYTES = 32
-DK_KEM_DEFAULT = ROOT.parent / "fix-f203-alg19-kem-keygen-correctness-k4" / "output" / "dk_kem.bin"
-C_DEFAULT = ROOT.parent / "fix-f203-alg20-kem-encaps-correctness-k4" / "output" / "c.bin"
-K_ENC_DEFAULT = ROOT.parent / "fix-f203-alg20-kem-encaps-correctness-k4" / "output" / "K.bin"
+DK_KEM_DEFAULT = ROOT.parent / "frozen-fix-f203-alg19-kem-keygen-correctness-k4" / "output" / "dk_kem.bin"
+C_DEFAULT = ROOT.parent / "frozen-fix-f203-alg20-kem-encaps-correctness-k4" / "output" / "c.bin"
+K_ENC_DEFAULT = ROOT.parent / "frozen-fix-f203-alg20-kem-encaps-correctness-k4" / "output" / "K.bin"
 HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 
 

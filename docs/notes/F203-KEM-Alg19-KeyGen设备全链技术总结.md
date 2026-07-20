@@ -4,11 +4,11 @@
 **目的**：说明 FIPS 203 **Algorithm 19** `ML-KEM.KeyGen()` 在 **ml_kem_1024（k=4）** 上的**随机性契约**、经 **Alg.16 `KeyGen_internal`** 的拼装增量、**I/O 契约**与**设备全链不变量**  
 **案例锚点**：
 
-- **correctness（vendor oracle）**：[`ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/)（CPU+SIM+liboqs PASS）
-- **device 主线（2 launch，无 vendor）**：[`ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)（CPU+SIM PASS；SIM ~713k tick）
+- **交付 / 设备主线**：[`stable-…-kem-keygen-k4`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) · [`pass-fix-f203-alg19-kem-keygen-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)（CPU+SIM PASS；SIM ~713k tick）
+- **历史 correctness oracle**：**已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/FROZEN.md)；**禁止**翻 frozen 源码
 
 **讨论**：[`qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md`](../../qa/2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)  
-**实现方案**：correctness [`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/INTEGRATION_PLAN.md) · device [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md)
+**实现方案**：device [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md)（correctness 计划书已随冻结归档，勿再作实现依据）
 
 ---
 
@@ -123,13 +123,13 @@ Host `tiny_sha3` **仅**用于 `scripts/host_golden/` 与仓库级 `liboqs_kem_v
 
 ## 6. 案例对照（附录）
 
-| 项 | correctness | device（主线） |
-|----|-------------|----------------|
-| 探针目录 | `ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4` | `ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4` |
-| Launch | 3（vendor PKE 拼装） | **2**（stable PKE + mmad 内嵌 Alg.16 尾） |
-| 状态 | **PASS**（oracle） | **PASS**（2026-07-10） |
-| SIM tick | ~742k | ~713k（P1 后均值） |
-| 脚本默认 | 对照 / Encaps 过渡 | **KeyGen**（`roundtrip_kem_*` 等） |
+| 项 | 历史 correctness（已冻结） | device（主线） |
+|----|---------------------------|----------------|
+| 探针目录 | 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/FROZEN.md) | `ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4` |
+| Launch | 3（vendor PKE 拼装；**勿再跑**） | **2**（stable PKE + mmad 内嵌 Alg.16 尾） |
+| 状态 | **已冻结**（2026-07-20） | **PASS**（2026-07-10） |
+| SIM tick | 历史 ~742k | ~713k（P1 后均值） |
+| 脚本默认 | **禁止** | **KeyGen**（`roundtrip_kem_*` 等） |
 
 后继：**T19a** Alg.20 Encaps device [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) · Alg.21 Decaps device。
 

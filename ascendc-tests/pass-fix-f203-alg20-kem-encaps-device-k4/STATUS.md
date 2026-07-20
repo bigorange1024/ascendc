@@ -29,7 +29,7 @@ bash scripts/kem_keypair_stash_bootstrap.sh   # 一次性
 bash scripts/liboqs_kem_encaps_batch.sh
 ```
 
-对照：[INTEGRATION_PLAN.md](INTEGRATION_PLAN.md) · oracle [`fix-f203-alg20-kem-encaps-correctness-k4`](../fix-f203-alg20-kem-encaps-correctness-k4/)
+对照：[INTEGRATION_PLAN.md](INTEGRATION_PLAN.md) · 历史 oracle **已冻结**（只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4/FROZEN.md)；禁翻源码）
 
 ## 后续（非本轮）
 

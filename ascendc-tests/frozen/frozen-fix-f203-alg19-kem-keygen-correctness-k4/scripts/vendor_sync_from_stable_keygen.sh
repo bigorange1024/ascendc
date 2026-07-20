@@ -4,8 +4,8 @@
 set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO="$(cd "${CASE_DIR}/../.." && pwd)"
-# shellcheck source=../../../scripts/cp_sync.sh
+REPO="$(cd "${CASE_DIR}/../../.." && pwd)"
+# shellcheck source=../../../../scripts/cp_sync.sh
 source "${REPO}/scripts/cp_sync.sh"
 
 STABLE="${REPO}/examples/stable/stable-fips203-mlkem-pke-keygen-k4"

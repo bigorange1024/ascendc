@@ -51,7 +51,7 @@ export CMAKE_BUILD_JOBS="${CMAKE_BUILD_JOBS:-2}"
 export KERNEL_COMPUTE_BUDGET_SEC="${KEM_ENCAPS_KERNEL_BUDGET_SEC:-900}"
 export KEM_ENC_EXT_SEED="${KEM_ENC_EXT_SEED:-0}"
 # kat 批测可设 KEM_ENC_EK_SRC / EK_KEM_SRC 指向 output/kem_keypair_stash/ek_kem.bin
-export EK_KEM_SRC="${EK_KEM_SRC:-${CURRENT_DIR}/../fix-f203-alg19-kem-keygen-correctness-k4/output/ek_kem.bin}"
+export EK_KEM_SRC="${EK_KEM_SRC:-${CURRENT_DIR}/../frozen-fix-f203-alg19-kem-keygen-correctness-k4/output/ek_kem.bin}"
 
 BUILD_TYPE="Debug"
 SOC_VERSION="Ascend910B4"

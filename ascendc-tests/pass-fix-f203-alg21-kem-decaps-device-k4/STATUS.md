@@ -5,7 +5,7 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**
 | 项 | 值 |
 |---|---|
 | **阶段** | **PASS**（2026-07-17 全链+E3+T2；2026-07-18 更名 `pass-fix`） |
-| **对照 oracle** | [`fix-f203-alg21-kem-decaps-correctness-k4`](../fix-f203-alg21-kem-decaps-correctness-k4/)（**禁止抄码**） |
+| **历史 oracle** | **已冻结** — 只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**禁止**翻 frozen 源码 |
 | **PKE** | 编译期引用 stable Decrypt fused + Encrypt |
 | **笔记** | [`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) |
 

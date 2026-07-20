@@ -5,7 +5,7 @@
 **案例锚点**：
 
 - **设备主线（2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**。仓库 `scripts/` `DECAPS_DIR` 默认已指 **stable** Decaps（可用 env 覆盖回本探针）；**禁止**再建已更名的旧路径 `fix-…-decaps-device-k4` 或误名 `pass-probe-…`。
-- **correctness oracle**：[`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) — vendor 拼装；**禁止抄码**进 device。
+- **历史 correctness oracle**：**已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**禁止**翻 frozen 源码 / 当实现模板。
 
 > **2026-07-18 更新（更名 pass-fix）**：`fix-…-decaps-device-k4` → `pass-fix-…-decaps-device-k4`；KAT/roundtrip 已绿；下一 `#交付#`。
 >
@@ -37,7 +37,7 @@
 > 3. **单 session 首错在 `at_r5`**（`KEM_DECAPS_SIM_2SESSION=0`，排障用）：Phase-D 后 `m'/coins max=0`，Phase-E `c' max=244`，而 **PhaseE-only 对照 `K max=0`** → 系 **Phase-D 已执行触发的 CAModel session 级状态残留**（非 GM 输入 / 同步 / LUT / 算法错）。单 session 真修仍 open，2-session 为可靠保底。
 > 4. **单库 SIM 构建坑**：`vendor/.../f203_alg7_rej_scalar.c` 是 CPU/参考语义文件，不参与设备热路径；若进 `ascendc_library`，AIC/AIV 合并阶段 `ld.lld -m aicorelinux` 报 `.c.o unknown file type`。修法：仅 CPU twin 库链入该 `.c`，SIM/NPU 设备库只保留 `.cpp` kernel 入口 + `.hpp` 内联逻辑（见 `cmake/decaps/CMakeLists.txt`）。
 **讨论**：[`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7  
-**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/INTEGRATION_PLAN.md)
+**实现方案**：device [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md)（历史 correctness 计划书已冻结，只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)）
 
 ---
 
@@ -207,7 +207,7 @@ K        max=216 ✗
 
 | 项 | 值 |
 |----|-----|
-| 探针 | `ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4` |
+| 探针 | `ascendc-tests/frozen-fix-f203-alg21-kem-decaps-correctness-k4` |
 | 输入 | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
 | CPU | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
 | SIM | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |

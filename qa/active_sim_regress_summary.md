@@ -106,13 +106,12 @@
 
 ---
 
-## KEM：correctness / device
+## KEM：device / stable（correctness 已冻结，不登记）
 
 | 目录 | SIM tick | 备注 | 来源 |
 |------|----------|------|------|
 | [`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) | **713227** | P1 后 3 次均值；scripts KeyGen 默认 | STATUS |
-| [`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | 742558 | vendor+3 launch oracle | STATUS |
-| [`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | 1029406 | 早前 SIM PASS；STATUS 标待复验 | STATUS |
 | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a pass-fix；`c`/`K` max=0；行为基线 | STATUS 2026-07-15 |
-| [`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | n/a | SIM 2-session PASS；未记 Total tick | STATUS |
-| [`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) | **1032728**（D**286803**+E**745925**） | pass-fix；单库+1-session；`K` max=0；行为基线（`scripts/` Decaps 默认已切 exp） | STATUS 2026-07-18 |
+| [`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) | **1032728**（D**286803**+E**745925**） | pass-fix；单库+1-session；`K` max=0；`DECAPS_DIR` 默认 stable | STATUS 2026-07-18 |
+
+> **2026-07-20**：`fix-f203-alg{19,20,21}-*-correctness-k4` **已冻结**（见 [`frozen/INDEX.md`](../ascendc-tests/frozen/INDEX.md)）；**勿**再跑 / 勿作回归默认。历史 tick 仅见各 `FROZEN.md`。

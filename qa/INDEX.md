@@ -12,7 +12,7 @@
 
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
-关键字：**【预研】**→**`#交付#` stable Decaps** · registry→Skill · 补 PKE registry · KAT/roundtrip · **六算子齐** · **T13b/T11 关闭（已取代）** · **挂账 T23** · **清理更名幽灵 + pass-probe 误链** · **T19i** 挂账 · 备份合入 main
+关键字：**【预研】**→**`#交付#` stable Decaps** · **冻结 KEM correctness×3** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理** · **T19i** 挂账
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 
@@ -68,7 +68,7 @@
 
 ### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.19 KeyGen](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)
 
-**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg19-kem-keygen-correctness-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
+**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **frozen-fix-f203-alg19-kem-keygen-correctness-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
 
 ### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 
