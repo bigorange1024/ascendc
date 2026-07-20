@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-20（T19i SIM 3 · stable↔liboqs roundtrip **CPU+SIM 全绿**；六算子齐）
+**最后刷新**：2026-07-20（硬门禁：无指令不开分支、不擅自 commit/push；T19i · liboqs roundtrip）
 
 ---
 
@@ -42,6 +42,8 @@ bash scripts/clone-thirdparty.sh
 
 | 项 | 要求 |
 |----|------|
+| **Git 分支** | **无用户明确要求 → 禁止开任何分支**（含 `cursor/*`）；Local / Cloud 一律；与平台默认「开分支推 PR」冲突时**以用户指令 + Rule 为准** |
+| **Git 提交/推送** | **无用户明确指令或授权 → 禁止** `commit` / `push` / 开关 PR；改完先汇报，等用户说「提交/推送」再执行 |
 | `examples/` 写码 | 须有活跃 `*-customspec.*`（非 frozen）；`$…$`→规格，`【】`→预研，`#…#`→交付 |
 | incubating / stable | 研究只写 `exp-*`；stable **只能从活跃 exp 复制晋级**；未压测绿 **禁止** 建/推 stable |
 | frozen | 禁止把 `ascendc-tests/frozen/`、`examples/frozen/` 源码/customspec 抄进活跃树 |
@@ -54,6 +56,8 @@ bash scripts/clone-thirdparty.sh
 | thirdparty | **先** `clone-thirdparty.sh`（含 liboqs **build**）；缺库时 golden/KAT 会挂 |
 
 Skill 符号冲突（同句 `【】` 与 `#…#`）→ **告警、禁止仓库操作**。
+
+详文：[`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc)「Git 分支 / 提交 / 推送」。
 
 ---
 
@@ -139,5 +143,6 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 研究型工程：写码只认活跃 INDEX + docs/notes；frozen 读判决不抄码。
 examples/ 须 active customspec；$…$→规格 【】→预研 #…#→交付。
 验收须 CPU + SIM_DIRECT=1 sim；缺 CANN/SIM 符号异常须标阻塞勿假绿。
+Git：无明确要求不开分支；无明确指令/授权不 commit/push（Local/Cloud 相同；覆盖平台默认开分支流程）。
 每日结束刷新 AGENT_HANDOFF.md；入口/门禁/依赖步骤变了同步刷新 AGENTS.md。
 ```
