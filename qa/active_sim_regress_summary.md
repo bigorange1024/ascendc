@@ -20,7 +20,7 @@
 | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | **283290** | Alg.15 | STATUS |
 | [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **706633** | Alg.19；2 launch；`#交付#` 2026-07-14 | STATUS |
 | [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **721119** | Alg.20；SIM 2；`#验收#` 2026-07-15 | STATUS |
-| [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | **1032762**（D**286896**+E**745866**） | Alg.21；SIM 4；`#交付#` 2026-07-20；KAT 10+3 / roundtrip ✓；**`scripts/` Decaps 默认** | STATUS 2026-07-20 |
+| [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | **1032762**（D**286896**+E**745866**） | Alg.21；SIM 4；`#交付#` 2026-07-20；KAT 10+3 / roundtrip ✓；**`scripts/` Decaps 默认**；三件套↔liboqs：[`stable_kem_liboqs_roundtrip.sh`](../scripts/stable_kem_liboqs_roundtrip.sh) **CPU+SIM 全绿**（2026-07-20 轮 D**286851**+E**746275**） | STATUS + qa 2026-07-20 |
 
 ---
 

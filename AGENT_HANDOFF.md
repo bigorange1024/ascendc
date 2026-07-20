@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-20（冻结 KEM correctness×3 · stable↔liboqs 随机字节 roundtrip CPU+SIM 全绿 · 合入 **main**）
+> **最后刷新**：2026-07-20（冻结 KEM correctness×3 · stable↔liboqs 随机字节 roundtrip CPU+SIM 全绿 · **main**）
 
 ---
 
@@ -14,7 +14,7 @@
 | **KEM 三件套 stable** | KeyGen / Encaps / Decaps **均已定型**；六算子齐 |
 | **Alg.19/20/21 correctness** | **已冻结** → `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`（只读 FROZEN.md；**禁翻源码**） |
 | **办公室回归入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)：**先** liboqs `urandom` → **再**同字节喂 AscendC；**CPU×1 + SIM×1** |
-| **证据（2026-07-20）** | CPU+SIM 全绿；fixture `output/stable_kem_liboqs_rt/20260720_092533_195335/` |
+| **证据（2026-07-20）** | CPU+SIM 全绿；fixture `output/stable_kem_liboqs_rt/20260720_092533_195335/`；Decaps SIM D**286851**+E**746275** |
 | **Alg.21 Decaps device** | [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) **PASS** |
 | **T6 / T7a / T7c** | **关闭**（随 correctness 冻结） |
 | **T23** | **打开**：多 AI Core∥stable |
@@ -41,6 +41,8 @@ cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```
+
+定点复现：`KEM_SEED_HEX=… M_HEX=… bash scripts/stable_kem_liboqs_roundtrip.sh`
 
 ---
 

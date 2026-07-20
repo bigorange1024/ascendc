@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-20（冻结 KEM Alg.19/20/21 **correctness** 三探针；关闭 T6/T7a/T7c）
+**最近刷新**：2026-07-20（冻结 KEM correctness×3 · `stable_kem_liboqs_roundtrip` CPU+SIM 全绿 · **main**）
 
 ---
 
@@ -17,7 +17,7 @@
 | Alg.20 KEM Encaps | [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | T19g | **721119** |
 | Alg.21 KEM Decaps | [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | T19h | **1032762** |
 
-闭环默认：`scripts/roundtrip_pke_batch.sh` → PKE 三段 stable；`scripts/roundtrip_kem_keygen_encaps_decaps.sh` → KEM（KeyGen device + Encaps/Decaps **stable**）。KAT：`liboqs_kem_encaps_batch.sh` / `liboqs_kem_decaps_batch.sh`（默认 stable）。预研副本仍在 `examples/incubating/exp-fips203-mlkem-*`。
+闭环默认：`scripts/roundtrip_pke_batch.sh` → PKE 三段 stable；`scripts/roundtrip_kem_keygen_encaps_decaps.sh` → KEM 设备闭环（无 liboqs）。**办公室 KEM↔liboqs 交叉验证（推荐）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](../scripts/stable_kem_liboqs_roundtrip.sh)（三件套 **stable**；每次 `urandom`→liboqs→同字节喂 AscendC；**CPU×1+SIM×1 都绿才算数**；2026-07-20 全绿）。KAT：`liboqs_kem_encaps_batch.sh` / `liboqs_kem_decaps_batch.sh`（默认 stable）。预研副本仍在 `examples/incubating/exp-fips203-mlkem-*`。
 
 **07-14 已落地（非打开项）**：PKE/KEM **默认哈希 RNG**（`library/shared/fips203_host_rng/`；`SEED_D=` 仍可定点）；`add_custom` **`-r/-v`**；PKE/KEM `-r sim` **默认 `SIM_DIRECT=1`**（勿手写）。
 
