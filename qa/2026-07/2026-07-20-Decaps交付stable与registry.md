@@ -118,3 +118,18 @@ bash run.sh -r sim -v Ascend910B4
 | SIM | **PASS** D**287037**+E**763886**；3 launch |
 | 拒绝 | CPU+SIM **PASS** |
 | 未做 | stable/exp Decaps 镜像（仍 SIM 4） |
+
+
+## T19i incubating customspec 修订（同日续；仅规格）
+
+路径：[`exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex/.pdf`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 内容 |
+|----|------|
+| 锁定 | 生产 SIM **3** launch；FO 并入 `l18_l19` 尾（`SyncAll` + AIV0 `KemDecFo`） |
+| CPU | 仍 6（`pack_fo`） |
+| 禁止 | 默认 `fo_only`；回写共享 PKE Encrypt `compute/` |
+| 基线 tick | pass-fix T19i D**287037**+E**763886** |
+| 未做 | 本目录【迭代】写码；stable customspec/实现 |
+
+本轮按 ascendc-impl-spec **只改规格**；待用户确认并说「可以写代码」/【迭代】后再改实现。
