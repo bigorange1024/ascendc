@@ -15,10 +15,11 @@
 | `AGENT_HANDOFF` / `AGENTS` / `README` | 下一刀改为 `#交付#` |
 | NPU 说明 | 取消「跳过 Decaps device」 |
 
-## 3. 未做
+## 3. 当时未做 / 后续闭合
 
-- 未提交（待用户指令）
-- `fo_only` 内联、`#交付#` stable 另开
+- 当日会话末曾写「未提交」；**2026-07-20** 已随 Decaps 交付链合入 `main`（`pass-probe` 更名 + incubating customspec 同批）
+- `fo_only` 内联 → 打开项 **T19i**（仍开）
+- `#交付#` stable → **2026-07-20 已完成**（见当日纪要）
 
 ## 4. incubating Decaps `$规格$`（ascendc-impl-spec）
 

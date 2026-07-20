@@ -11,7 +11,7 @@
 | tick | D **286999** + E **745790**（对标 pass-fix） |
 | vendor | `decrypt/` + `prep/`/`compute/` + `kem/`；`prepare_dec_shim.sh` |
 
-## 验收
+## 验收（预研阶段；同日上午）
 
 ```bash
 cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4
@@ -19,29 +19,27 @@ bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```
 
-## Round-trip（同日续）
+## Round-trip（同日续；中间态 → 终态）
 
-仓库 `scripts/` 默认 `DECAPS_DIR` 自 pass-probe 切到本 incubating exp（对齐 Encaps→stable 操作；交付后再切 stable）：
+| 阶段 | `DECAPS_DIR` 默认 | 证据 |
+|------|-------------------|------|
+| 预研绿后 | incubating `exp-…-kem-decaps-k4` | roundtrip CPU+SIM agreement+reject **PASS** |
+| `#交付#` 后 | **stable** `stable-…-kem-decaps-k4` | 同脚本复验 **PASS**（见下「复验证据」） |
 
-| 脚本 | 变更 |
-|------|------|
-| `roundtrip_kem_decaps.sh` / `roundtrip_kem_keygen_encaps_decaps.sh` | 默认 → exp |
-| `liboqs_kem_vs_ascendc.sh` / `kat_liboqs_kem_decaps.py` | 同上 |
+涉及脚本：`roundtrip_kem_decaps.sh` / `roundtrip_kem_keygen_encaps_decaps.sh` / `liboqs_kem_vs_ascendc.sh` / `kat_liboqs_kem_decaps.py`。
 
-**证据**：`bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu|sim` → agreement + reject **PASS**（KeyGen device + Encaps stable + 本 Decaps）。
-
-## 下一刀（当日已完成交付后）
+## 下一刀（交付后仍开）
 
 - ✅ `#交付#` → stable（见下节）
-- 可选债：`fo_only` 内联（4→3）；NPU（T2-npu）
+- **T19i**：`fo_only` 内联（SIM 4→3）；**T2-npu**：NPU 实机
 
 ## 登记表
 
-已刷新 [`qa/active_sim_regress_summary.md`](../active_sim_regress_summary.md)：incubating Decaps D**286999**+E**745790**；device 行注明 scripts 默认已切 exp。
+已刷新 [`qa/active_sim_regress_summary.md`](../active_sim_regress_summary.md)：stable Decaps **1032762**；incubating 同期 D**286999**+E**745790**；`scripts/` Decaps 默认终态 → **stable**。
 
 ## liboqs 分项 KAT（同日续）
 
-`KEM_DEC_CPU_TRIALS=10 KEM_DEC_SIM_TRIALS=3 bash scripts/liboqs_kem_decaps_batch.sh`（`DECAPS_DIR`→exp）：
+`KEM_DEC_CPU_TRIALS=10 KEM_DEC_SIM_TRIALS=3 bash scripts/liboqs_kem_decaps_batch.sh`（当时 `DECAPS_DIR`→exp；交付后默认同脚本指 stable 复验绿）：
 
 | 模式 | 结果 |
 |------|------|
@@ -94,6 +92,15 @@ bash run.sh -r sim -v Ascend910B4
 | 项 | 说明 |
 |----|------|
 | 纪要 / 索引 | 本日文件更名关键词；`qa/INDEX` · `qa/2026-07/INDEX` · `qa/TODO` · `AGENT_HANDOFF` · `AGENTS` · `README` · 各 `examples/*/INDEX` |
-| 本地备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053001`**（4035 文件；白名单；不含 build/IO） |
-| 合入 | feature `cursor/stable-kem-decaps-delivery-8244` → **`main`** 并推送 |
+| 近期核对 | 07-15 Encaps `#验收#`、07-17 T2、07-18 pass-probe/`$规格$` 已有日纪要；本文件补齐当日【预研】→registry→`#交付#`全链；07-18「未提交」已标注闭合 |
+| 本地备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053001`**；收尾再刷一版见下 |
+| 合入 | feature `cursor/stable-kem-decaps-delivery-8244` → **`main`**（`42d4f24`）并推送 |
 | 里程碑 | PKE 三段 + KEM KeyGen/Encaps/**Decaps** **六算子 stable 齐** |
+
+## 再收尾：缺口补记 · 二次备份 · 推 main（同日续）
+
+| 项 | 说明 |
+|----|------|
+| 补记 | `qa/TODO` 正式挂 **T19i**；07-18 纪要「未提交」→ 已合入说明；本文件验收/DECAPS 路径按时间线澄清 |
+| 二次备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053530`**（4035 文件） |
+| 推送 | 文档补丁直接落 **`main`** |
