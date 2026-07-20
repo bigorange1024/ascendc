@@ -63,10 +63,11 @@ echo "[liboqs_kem_vs] === Phase 1: device KeyGen vs liboqs ek/dk ==="
 (cd "${KEYGEN_DIR}" && SEED_D="${SEED_D}" KEM_KEYGEN_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
 _verify keygen "${KEYGEN_DIR}/output"
 
-# --- Phase 2: Encaps（喂 device ek；m 由 SEED_D 在 device 派生，与 fixture 同前缀）---
+# --- Phase 2: Encaps（喂 device ek + fixture m；stable gen_data 默认定点 0，须显式 M_FILE）---
 echo "[liboqs_kem_vs] === Phase 2: device Encaps vs liboqs c/K ==="
 (cd "${ENCAPS_DIR}" && SEED_D="${SEED_D}" \
     EK_KEM_SRC="${KEYGEN_DIR}/output/ek_kem.bin" \
+    M_FILE="${FIXTURE_DIR}/m.bin" \
     KEM_ENCAPS_VERIFY=0 bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}")
 _verify encaps "${ENCAPS_DIR}/output"
 
