@@ -1286,23 +1286,8 @@ $A$ 对「取直接前驱」封闭——若 $v\in A$ 则 $\mathrm{Pred}(v)\subse
 \end{itemize}
 口语「已经拿到证书 / 已获得证书」即指 $v\in\Gamma$。
 $\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；既有判决因上游变更不再被承认时可移出 $\Gamma$。
-本小节先把 $\Gamma$ 当作给定的集合参数；如何改写 $\Gamma$ 见下条预习与后文转移。
+本小节先把 $\Gamma$ 当作给定的集合参数；改写 $\Gamma$ 的转移名称在缺项集定义之后预习，完整转移见后文。
 \end{definition}
-
-\begin{remark}[三类转移名称的预习]
-完整转移关系在「迁移系统」一节定义。此处先约定三个名称的直觉，避免后文空降符号：
-\begin{center}
-\begin{tabular}{@{}L{2.4cm}L{11.2cm}@{}}
-  \toprule
-  名称 & 本小节所需的含义 \\
-  \midrule
-  $\mathsf{Certify}$ & 对未获证顶点 $v$：约定验收通过后执行 $\Gamma\leftarrow\Gamma\cup\{v\}$（$v$ 成为已证书项） \\
-  $\mathsf{Probe}$ & 对缺项启动探针/预研，收集可供 $\mathsf{Certify}$ 使用的证据（本身不自动改 $\Gamma$） \\
-  $\mathsf{Dirty}$ & 撤销部分既有证书：使某些 $v$ 不再属于 $\Gamma$（证书库非单调，详见后文） \\
-  \bottomrule
-\end{tabular}
-\end{center}
-\end{remark}
 
 \begin{definition}[缺项集]
 对目标集 $A\subseteq V$ 与已证书集 $\Gamma\subseteq V$，定义\textbf{缺项集}
@@ -1316,6 +1301,21 @@ $\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；�
 当 $A=\{T\}$ 时简记为 $\mathrm{Missing}_\Gamma(T)$。
 直观：$u$ 落在「完成 $A$ 理论上需要的闭包」里，但当前还\textbf{未获证}，故不能直接引用。
 \end{definition}
+
+\begin{remark}[三类转移名称的预习]
+完整转移关系在「迁移系统」一节定义。此处先约定三个名称的直觉，避免后文空降符号：
+\begin{center}
+\begin{tabular}{@{}L{2.4cm}L{11.2cm}@{}}
+  \toprule
+  名称 & 本小节所需的含义 \\
+  \midrule
+  $\mathsf{Certify}$ & 对未获证顶点 $v$：约定验收通过后执行 $\Gamma\leftarrow\Gamma\cup\{v\}$（$v$ 成为已证书项） \\
+  $\mathsf{Probe}$ & 对缺项（即 $\mathrm{Missing}_\Gamma(A)$ 中的点）启动探针/预研，收集可供 $\mathsf{Certify}$ 使用的证据（本身不自动改 $\Gamma$） \\
+  $\mathsf{Dirty}$ & 撤销部分既有证书：使某些 $v$ 不再属于 $\Gamma$（证书库非单调，详见后文） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\end{remark}
 
 \begin{definition}[闭包已满]
 若 $\mathrm{Missing}_\Gamma(A)=\emptyset$，称目标集 $A$ 相对 $\Gamma$ \textbf{闭包已满}
