@@ -1110,12 +1110,26 @@ $G^{\top}=(V,E^{\top})$，$E^{\top}=\{(v,u)\mid (u,v)\in E\}$（箭头反向）�
 \subsubsection{依赖闭包的迭代、算法与算子性质}
 
 \begin{definition}[依赖闭包的迭代序列]
-定义集合序列
+为计算 $\mathrm{Dep}^*(T)$，我们\textbf{新引入}一串辅助集合，记作
+\[
+D_0(T),\; D_1(T),\; D_2(T),\; \ldots
+\]
+（字母 $D$ 仅表示「Dependency 迭代的第几层近似」，下标 $k=0,1,2,\ldots$ 表示迭代步数；
+前文并未使用过该记号，本定义即其首次出现。）
+
+约定：
 \begin{align*}
-D_0(T) &= \{T\}, \\
+D_0(T) &= \{T\}
+&& \text{（第 $0$ 步：只有目标本身）}, \\
 D_{k+1}(T) &= D_k(T) \;\cup\; \bigcup_{v\in D_k(T)}\mathrm{Pred}(v)
-\quad (k\ge 0).
+&& \text{（第 $k{+}1$ 步：把当前集里每点的直接前驱都并进来）}.
 \end{align*}
+直观上：$D_k(T)$ 是「从 $T$ 沿依赖边反向走、最多 $k$ 步能摸到的点」所生成的集合
+（含更近的点）；随着 $k$ 增大，集合只增不减。
+
+这与前面「迭代构造（一般模板）」中的 $A_k$ 是同一类对象：
+取种子 $A=\{T\}$、一轮算子 $\Phi(X)=X\cup\bigcup_{v\in X}\mathrm{Pred}(v)$ 时，
+恰有 $D_k(T)=A_k$。
 \end{definition}
 
 \begin{theorem}[迭代收敛到依赖闭包]
@@ -1131,10 +1145,9 @@ $D_k(T)$ 单调递增且含于有限集 $V$，故稳定。
 反之，任何通向 $T$ 的长度为 $\ell$ 的路径上的点在 $D_\ell(T)$ 中出现。
 \end{proof}
 
-\begin{remark}[迭代即一般模板的特例]
-$D_k(T)$ 正是前面「由内向外」迭代构造中 $A_k$ 的特例：
-种子 $A=\{T\}$，一轮算子 $\Phi(X)=X\cup\bigcup_{v\in X}\mathrm{Pred}(v)$。
-定理「迭代收敛到依赖闭包」即一般闭包存在性在图上的具体化。
+\begin{remark}[与一般闭包模板的关系]
+因此「迭代收敛到依赖闭包」就是一般闭包「由内向外」构造在依赖图上的具体化：
+做够多步之后，$D_k(T)$ 不再变化，其稳定值就是 $\mathrm{Dep}^*(T)$。
 \end{remark}
 
 \begin{lemma}[反向搜索算法]
