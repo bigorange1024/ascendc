@@ -1159,45 +1159,158 @@ $D_k(T)$ 单调递增且含于有限集 $V$，故稳定。
 
 \subsubsection{目标集的闭包、基与缺项}
 
-\begin{definition}[有限目标集的依赖闭包]
-对非空有限集 $A\subseteq V$，定义
-\[
-\mathrm{Dep}^*_G(A) \;=\; \bigcup_{T\in A}\mathrm{Dep}^*_G(T).
-\]
-约定 $\mathrm{Dep}^*_G(\emptyset)=\emptyset$。
+前几小节处理的是\textbf{单个}目标 $T$。
+工程上一次任务往往同时盯住多个目标（或先把目标拆成若干子目标），
+并且手里已有一份「已经获证」的能力清单 $\Gamma$。
+本小节把 $\mathrm{Dep}^*$ 从单点推广到有限集合，再定义缺项与生成集。
+
+\paragraph{为何需要目标集}
+若只定义 $\mathrm{Dep}^*(T)$，则同时要完成 $T_1,T_2$ 时，需要的先决整体是
+$\mathrm{Dep}^*(T_1)\cup\mathrm{Dep}^*(T_2)$。
+把它写成 $\mathrm{Dep}^*(\{T_1,T_2\})$，可避免每次手写大并集，也便于后文「闭包表」一行写多个目标。
+
+\begin{definition}[有限目标集]
+称非空有限集 $A\subseteq V$ 为一次讨论中的\textbf{目标集}。
+其元素仍是顶点（能力/任务结点）；$A$ 只表示「当前要一起完成的那些目标」。
+单点情形是特例：$A=\{T\}$。
 \end{definition}
 
-\begin{proposition}[$\mathrm{Dep}^*$ 是闭包算子]
-映射 $\mathrm{Cl}:2^{V}\to 2^{V}$，$\mathrm{Cl}(A)=\mathrm{Dep}^*(A)$ 满足扩张、单调、幂等三条公理，
-因而是前文所定义的\textbf{闭包算子}；其闭集恰为「对取前驱已封闭」的顶点集。
+\begin{definition}[目标集的依赖闭包]
+对 $A\subseteq V$，定义
+\[
+\mathrm{Dep}^*_G(A)
+\;=\;
+\bigcup_{T\in A}\mathrm{Dep}^*_G(T).
+\]
+并约定 $\mathrm{Dep}^*_G(\emptyset)=\emptyset$。
+不致混淆时略去下标 $G$，写作 $\mathrm{Dep}^*(A)$。
+\end{definition}
+
+\begin{proposition}[目标集闭包的等价说法]
+对任意 $A\subseteq V$ 与 $u\in V$，下列等价：
+\begin{enumerate}
+  \item $u\in\mathrm{Dep}^*(A)$；
+  \item 存在某个 $T\in A$，使 $u\in\mathrm{Dep}^*(T)$（即 $u\rightsquigarrow T$ 或 $u=T$）；
+  \item 存在 $T\in A$，使 $(u,T)\in E^{*}$。
+\end{enumerate}
+因而 $\mathrm{Dep}^*(A)$ 是「能通向 $A$ 中至少一个目标的全部祖先（含这些目标自身）」。
+\end{proposition}
+
+\begin{proposition}[$\mathrm{Dep}^*$ 作为幂集上的闭包算子]
+定义 $\mathrm{Cl}:2^{V}\to 2^{V}$ 为 $\mathrm{Cl}(A)=\mathrm{Dep}^*(A)$。则 $\mathrm{Cl}$ 满足：
+\begin{enumerate}
+  \item \textbf{扩张}：$A\subseteq\mathrm{Cl}(A)$；
+  \item \textbf{单调}：$A\subseteq B\Rightarrow\mathrm{Cl}(A)\subseteq\mathrm{Cl}(B)$；
+  \item \textbf{幂等}：$\mathrm{Cl}(\mathrm{Cl}(A))=\mathrm{Cl}(A)$。
+\end{enumerate}
+因此 $\mathrm{Cl}$ 是前文意义下的\textbf{闭包算子}。
+进一步：$A$ 对该算子为闭集（即 $\mathrm{Cl}(A)=A$）当且仅当
+$A$ 对「取直接前驱」封闭——若 $v\in A$ 则 $\mathrm{Pred}(v)\subseteq A$。
 \end{proposition}
 \begin{proof}[证明梗概]
-扩张与单调由并与可达性立即得到；幂等因为祖先的祖先仍是祖先。
+（扩张）每个 $T\in A$ 满足 $T\in\mathrm{Dep}^*(T)$，故 $A\subseteq\mathrm{Dep}^*(A)$。\\
+（单调）并集对包含关系显然单调。\\
+（幂等）若 $u\in\mathrm{Dep}^*(\mathrm{Dep}^*(A))$，则 $u$ 能通向 $\mathrm{Dep}^*(A)$ 中某点 $v$，
+而 $v$ 又能通向 $A$ 中某点，故 $u$ 能通向 $A$ 中某点，即 $u\in\mathrm{Dep}^*(A)$。\\
+闭集刻画：对取前驱封闭 $\Leftrightarrow$ 含某点则含其直接前驱，归纳得含全部祖先。
 \end{proof}
 
-\begin{definition}[已证书集、缺项与闭包已满]
-设 $\Gamma\subseteq V$ 为当前\textbf{已证书}顶点集。对 $A\subseteq V$，定义
+\begin{property}[并与交的粗界]
+对任意 $A,B\subseteq V$，
 \[
-\mathrm{Missing}_\Gamma(A) \;=\; \mathrm{Dep}^*(A)\setminus \Gamma.
+\mathrm{Dep}^*(A\cup B)=\mathrm{Dep}^*(A)\cup\mathrm{Dep}^*(B),
+\qquad
+\mathrm{Dep}^*(A\cap B)\;\subseteq\;\mathrm{Dep}^*(A)\cap\mathrm{Dep}^*(B).
 \]
-若 $\mathrm{Missing}_\Gamma(A)=\emptyset$，称 $A$ 相对 $\Gamma$ \textbf{闭包已满}。
-当 $A=\{T\}$ 时简记 $\mathrm{Missing}_\Gamma(T)$。
+右式一般\textbf{不能}改成等号（「交的闭包」可以严格小于「闭包的交」）。
+\end{property}
+
+\paragraph{已证书集与缺项}
+闭包回答「理论上需要谁」；工程上还要问「其中哪些已经有证书、还缺哪些」。
+
+\begin{definition}[已证书集]
+固定讨论时刻，令 $\Gamma\subseteq V$ 表示当前\textbf{已获得证书}的顶点集合
+（方法论里：已通过约定验收、允许被引用的能力）。
+$\Gamma$ 随时间可变（获证则扩大；$\mathsf{Dirty}$ 则缩小），本小节先把它当作给定的集合参数。
 \end{definition}
 
-\begin{definition}[相对基（直观）]
-若 $B\subseteq\mathrm{Dep}^*(T)$ 满足 $\mathrm{Dep}^*(B)=\mathrm{Dep}^*(T)$，称 $B$ 为 $\mathrm{Dep}^*(T)$ 的一个\textbf{生成集}。
-工程上常关心「最小还缺哪些叶子能力」，即在 $\mathrm{Missing}_\Gamma(T)$ 中寻找生成缺项的关键结点；
-精确极小基的算法后文门禁章再展开，此处只要求会算 $\mathrm{Dep}^*$ 与 $\mathrm{Missing}$。
+\begin{definition}[缺项集]
+对目标集 $A\subseteq V$ 与已证书集 $\Gamma\subseteq V$，定义\textbf{缺项集}
+\[
+\mathrm{Missing}_\Gamma(A)
+\;=\;
+\mathrm{Dep}^*(A)\setminus\Gamma
+\;=\;
+\{\,u\in\mathrm{Dep}^*(A)\mid u\notin\Gamma\,\}.
+\]
+当 $A=\{T\}$ 时简记为 $\mathrm{Missing}_\Gamma(T)$。
+\end{definition}
+
+\begin{definition}[闭包已满]
+若 $\mathrm{Missing}_\Gamma(A)=\emptyset$，称目标集 $A$ 相对 $\Gamma$ \textbf{闭包已满}
+（亦称「依赖已齐备」）。
+此时 $\mathrm{Dep}^*(A)\subseteq\Gamma$：完成 $A$ 所需的全部先决都已在证书集中。
+\end{definition}
+
+\begin{proposition}[缺项的基本性质]
+对任意 $A\subseteq V$ 与 $\Gamma,\Gamma'\subseteq V$：
+\begin{enumerate}
+  \item $\mathrm{Missing}_\Gamma(A)\subseteq\mathrm{Dep}^*(A)$；
+  \item $\mathrm{Missing}_\Gamma(A)=\emptyset \iff \mathrm{Dep}^*(A)\subseteq\Gamma$；
+  \item 若 $\Gamma\subseteq\Gamma'$，则 $\mathrm{Missing}_{\Gamma'}(A)\subseteq\mathrm{Missing}_\Gamma(A)$
+        （证书只增时，缺项只减或不增）；
+  \item $\mathrm{Dep}^*(A)$ 可划分为
+        $\bigl(\mathrm{Dep}^*(A)\cap\Gamma\bigr)\;\dot{\cup}\;\mathrm{Missing}_\Gamma(A)$
+        （已证书部分与缺项部分不相交，并起来恰为闭包）。
+\end{enumerate}
+\end{proposition}
+
+\begin{remark}[闭包表在算什么]
+后文「先交闭包表」在数学上至少要能填写：
+目标集 $A$、当前 $\Gamma$、算出的 $\mathrm{Dep}^*(A)$，以及 $\mathrm{Missing}_\Gamma(A)$。
+若缺项非空，门禁应阻止「直接写顶层实现」，而要求先对缺项做 $\mathsf{Probe}/\mathsf{Certify}$。
+\end{remark}
+
+\paragraph{生成集与基（为「最小补洞」作准备）}
+$\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其闭包已能覆盖整个 $\mathrm{Dep}^*(T)$。
+
+\begin{definition}[生成集]
+设 $T\in V$。若 $B\subseteq V$ 满足
+\[
+\mathrm{Dep}^*(B)=\mathrm{Dep}^*(T),
+\]
+则称 $B$ 为 $\mathrm{Dep}^*(T)$ 的一个\textbf{生成集}
+（亦称「$B$ 生成 $\mathrm{Dep}^*(T)$」）。
+特别地，取 $B=\{T\}$ 时，由定义 $\mathrm{Dep}^*(\{T\})=\mathrm{Dep}^*(T)$，故 $\{T\}$ 总是生成集。
+\end{definition}
+
+\begin{definition}[极小生成集与基]
+若 $B$ 是 $\mathrm{Dep}^*(T)$ 的生成集，且 $B$ 的任何真子集都不再是生成集，
+则称 $B$ 为\textbf{极小生成集}。
+在有限图上极小生成集一定存在（从任意生成集不断删点直至不能再删）。
+本教材把「基」暂当作极小生成集的同义语；更细的唯一性/规范基问题留待门禁章。
+\end{definition}
+
+\begin{definition}[相对 $\Gamma$ 的缺项生成集]
+工程上更关心：在已经知道 $\Gamma$ 的前提下，还需要新获证的是哪些点。
+若 $B\subseteq\mathrm{Missing}_\Gamma(T)$ 满足
+\[
+\mathrm{Dep}^*\bigl((\mathrm{Dep}^*(T)\cap\Gamma)\cup B\bigr)=\mathrm{Dep}^*(T),
+\]
+则称 $B$ 为相对 $\Gamma$ 的一个\textbf{缺项生成集}：
+把「已有证书」与「还打算补证的 $B$」合在一起，闭包就能盖住整个 $\mathrm{Dep}^*(T)$。
+最小补洞问题即寻找尽可能小的缺项生成集（算法细节后置）。
 \end{definition}
 
 \begin{property}[菜单、$\Gamma$ 与闭包]
-INDEX 等「菜单」提供构造 $\Gamma$ 的证据来源，但
+INDEX 等「菜单」提供构造 $\Gamma$ 的\textbf{证据来源}，但
 \[
 \text{菜单上有许多绿项}
 \quad\not\Rightarrow\quad
 \mathrm{Missing}_\Gamma(T)=\emptyset.
 \]
-必须先算 $\mathrm{Dep}^*(T)$，再与 $\Gamma$ 做差。
+必须先算 $\mathrm{Dep}^*(T)$，再与当前 $\Gamma$ 做差得到缺项。
+菜单回答「可能有哪些能力」；闭包与缺项回答「为了 $T$ 必须有谁、还缺谁」。
 \end{property}
 
 \begin{example}[纯数学：四点图上的闭包与缺项]
@@ -1208,8 +1321,15 @@ D_0(4)=\{4\},\;
 D_1(4)=\{4,2,3\},\;
 D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
 \]
-下图左侧为原图，右侧阴影标出 $\mathrm{Dep}^*(4)$；
-若 $\Gamma=\{1,2,4\}$（虚线圆为已证书），则缺项 $\mathrm{Missing}_\Gamma(4)=\{3\}$（叉号）。
+取目标集 $A=\{4\}$。若 $\Gamma=\{1,2,4\}$，则
+\[
+\mathrm{Dep}^*(4)\cap\Gamma=\{1,2,4\},
+\qquad
+\mathrm{Missing}_\Gamma(4)=\{3\}.
+\]
+此时 $\{3\}$ 是一个缺项生成集：补证 $3$ 之后闭包已满。
+又 $\mathrm{Dep}^*(\{2,3\})=\mathrm{Dep}^*(4)$，故 $\{2,3\}$ 是 $\mathrm{Dep}^*(4)$ 的一个生成集
+（且为极小：去掉 $2$ 或 $3$ 任一，闭包都到不了 $4$ 的全部祖先）。
 \begin{center}
 \begin{tikzpicture}[
   x=1.7cm, y=1.25cm,
@@ -1243,6 +1363,12 @@ D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
 \begin{example}[工程：KEM.KeyGen 的依赖闭包示意]
 取依赖语义下的示意 DAG（结点名为能力，非数据）：
 边表示「箭头终点依赖箭头起点」。
+令 $T=\mathrm{KEM.KG}$。则
+\[
+\mathrm{Dep}^*(T)=\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{Tail},\mathrm{KEM.KG}\}.
+\]
+若当前 $\Gamma$ 已含 P0--P2，但尚未给尾缝发证，则
+$\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{未}闭包已满。
 \begin{center}
 \begin{tikzpicture}[
   x=2.15cm, y=1.15cm,
@@ -1261,11 +1387,10 @@ D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
   \draw[arr] (p1) -- (tail);
   \draw[arr] (tail) -- (kem);
   \node[anchor=west, align=left] at (2.3,0.6) {
-    $\mathrm{Dep}^*(\mathrm{KEM})$ 含\\
-    全部阴影结点\\[2pt]
-    若 $\Gamma$ 已有 P0--P2\\
-    但无尾缝，则\\
-    $\mathrm{Missing}=\{\text{尾缝}\}$
+    $\mathrm{Dep}^*(T)$ 含全部结点\\[2pt]
+    若 $\Gamma\supset\{\mathrm{P0},\mathrm{P1},\mathrm{P2}\}$\\
+    但 $\mathrm{Tail}\notin\Gamma$，则\\
+    $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$
   };
 \end{tikzpicture}
 \end{center}
