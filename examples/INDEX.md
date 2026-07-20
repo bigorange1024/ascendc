@@ -31,6 +31,7 @@
 | [stable-fips203-mlkem-pke-decrypt-k4/](stable/stable-fips203-mlkem-pke-decrypt-k4/) | FIPS 203 **Alg.15 ML-KEM-1024 PKE Decrypt**（k=4）：`dk`+`c`→**仅** `m` | 1 launch MIX；SIM **283290** tick（CPU/SIM/KAT×10+1/roundtrip×10+1 ✓） | **定型交付算子** |
 | [stable-fips203-mlkem-kem-keygen-k4/](stable/stable-fips203-mlkem-kem-keygen-k4/) | FIPS 203 **Alg.19 ML-KEM-1024 KEM KeyGen**（k=4）：`SEED_D`→`ek_kem`/`dk_kem` | 2 launch；SIM tick **≈707k**（CPU/SIM/liboqs KAT ✓） | **定型交付算子** |
 | [stable-fips203-mlkem-kem-encaps-k4/](stable/stable-fips203-mlkem-kem-encaps-k4/) | FIPS 203 **Alg.20 ML-KEM-1024 KEM Encaps**（k=4）：`ek`+`m`→**仅** `c`/`K`（设备 H/G） | SIM 2 / CPU 5；SIM tick **≈721k**（CPU/SIM/liboqs KAT ✓） | **定型交付算子** |
+| [stable-fips203-mlkem-kem-decaps-k4/](stable/stable-fips203-mlkem-kem-decaps-k4/) | FIPS 203 **Alg.21 ML-KEM-1024 KEM Decaps**（k=4）：`dk`+`c`→**仅** `K`（设备 G/FO） | SIM 4 / CPU 6；SIM tick **≈1033k**（CPU/SIM/KAT/roundtrip ✓） | **定型交付算子** |
 
 
 

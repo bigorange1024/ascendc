@@ -1,0 +1,121 @@
+/**
+ * @file stage3_mod_variants.hpp
+ * @brief Stage3 RouteA 合并后的 mod q 向量实现变体。
+ *
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt NTT/INTT Stage3。
+ * 与 golden：系数落在 [0,q)。
+ */
+#ifndef F203_STAGE3_MOD_VARIANTS_HPP
+#define F203_STAGE3_MOD_VARIANTS_HPP
+
+/* 由 ntt_vec.hpp 在 wrap_mod_vec_runtime / combine_limb6_horner_raw_vec 之后 include */
+
+/** Barrett 参数：q=3329，见 ntt_study mlkem_ntt_tables.h */
+constexpr int32_t kF203BarrettMu = 314;
+constexpr int32_t kF203BarrettK = 20;
+
+// ---------------------------------------------------------------------------
+// 方案 0：Barrett 三步 Horner（合并+约化融合，全程 int32 向量）
+// golden：与本 testcase 的 stage31_mod 数学等价（已 CPU/SIM 验证过）
+// SIM：~10.5s 全链路
+// ---------------------------------------------------------------------------
+
+__aicore__ inline void barrett_reduce_limb6_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
+                                                LocalTensor<int32_t> &t2, int32_t count)
+{
+    AscendC::Muls(t1, dst, kF203BarrettMu, count);
+    AscendC::ShiftRight(t1, t1, kF203BarrettK, count);
+    AscendC::Muls(t2, t1, q, count);
+    AscendC::Sub(dst, dst, t2, count);
+    wrap_mod_vec_runtime(dst, dst, q, t1, t2, count);
+}
+
+/** acc=hh; acc=acc*64+(hl+lh); acc=acc*64+ll，每步 Barrett。 */
+__aicore__ inline void combine_limb6_horner_barrett_vec(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
+                                                        LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
+                                                        LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,
+                                                        LocalTensor<int32_t> &t2, int32_t q, int32_t count)
+{
+    using AscendC::Add;
+    using AscendC::DataCopy;
+    using AscendC::ShiftLeft;
+    DataCopy(dst, hh, static_cast<uint32_t>(count));
+    barrett_reduce_limb6_vec(dst, q, t1, t2, count);
+    Add(t1, hl, lh, count);
+    ShiftLeft(dst, dst, kKyberMergeShift1, count);
+    Add(dst, dst, t1, count);
+    barrett_reduce_limb6_vec(dst, q, t1, t2, count);
+    ShiftLeft(dst, dst, kKyberMergeShift1, count);
+    Add(dst, dst, ll, count);
+    barrett_reduce_limb6_vec(dst, q, t1, t2, count);
+}
+
+// ---------------------------------------------------------------------------
+// 方案 1：Horner raw + 标量 int64 floor mod（Stage31ModI64）
+// golden：与 mlkem_ref.stage31_mod 一致
+// SIM：~16s（标量 GetValue/SetValue 在 PEM 很慢）；需 KERNEL_COMPUTE_BUDGET_SEC≥20
+// ---------------------------------------------------------------------------
+
+__aicore__ inline void stage31_mod_i64_scalar(LocalTensor<int32_t> &dst, int32_t q, int32_t count)
+{
+    const int64_t q64 = static_cast<int64_t>(q);
+    for (int32_t i = 0; i < count; i++) {
+        const int64_t raw = static_cast<int64_t>(dst.GetValue(i));
+        const int64_t t = (raw >= 0) ? (raw / q64) : (-((-raw) / q64));
+        dst.SetValue(i, static_cast<int32_t>(raw - q64 * t));
+    }
+}
+
+__aicore__ inline void combine_limb6_routea_mod_scalar_i64(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
+                                                           LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
+                                                           LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,
+                                                           int32_t q, int32_t count)
+{
+    combine_limb6_horner_raw_vec(dst, hh, lh, hl, ll, t1, count);
+    stage31_mod_i64_scalar(dst, q, count);
+}
+
+// ---------------------------------------------------------------------------
+// 方案 2：Horner raw + Cast→float Div→Cast 商→int32 Muls/Sub（ONNX Stage3.1）
+// golden：与本 testcase 一致（本数据上 float Div 与 int floor 商一致）
+// SIM：~10s；UB：scratch_t1 + calc_f(3×halfLen float)，勿再堆 VECIN TQue（上限 8）
+// ---------------------------------------------------------------------------
+
+__aicore__ inline void stage31_div_mod_vec(LocalTensor<int32_t> &dst, int32_t q, LocalTensor<int32_t> &t1,
+                                           LocalTensor<float> &fRaw, LocalTensor<float> &fTmp,
+                                           LocalTensor<float> &fQuot, int32_t count)
+{
+    using AscendC::Cast;
+    using AscendC::Div;
+    using AscendC::Duplicate;
+    using AscendC::Muls;
+    using AscendC::Sub;
+    const uint32_t n = static_cast<uint32_t>(count);
+
+    Cast(fRaw, dst, AscendC::RoundMode::CAST_NONE, n);
+    // KYBER_PIPE_ALL();
+    Duplicate(t1, q, count);
+    // KYBER_PIPE_ALL();
+    Cast(fTmp, t1, AscendC::RoundMode::CAST_NONE, n);
+    // KYBER_PIPE_ALL();
+    Div(fQuot, fRaw, fTmp, count);
+    // KYBER_PIPE_ALL();
+    Cast(t1, fQuot, AscendC::RoundMode::CAST_TRUNC, n);
+    // KYBER_PIPE_ALL();
+    Muls(t1, t1, q, count);
+    // KYBER_PIPE_ALL();
+    Sub(dst, dst, t1, count);
+    // KYBER_PIPE_ALL();
+}
+
+__aicore__ inline void combine_limb6_routea_mod_cast_div(LocalTensor<int32_t> &dst, LocalTensor<int32_t> &hh,
+                                                         LocalTensor<int32_t> &lh, LocalTensor<int32_t> &hl,
+                                                         LocalTensor<int32_t> &ll, LocalTensor<int32_t> &t1,
+                                                         LocalTensor<float> &fRaw, LocalTensor<float> &fTmp,
+                                                         LocalTensor<float> &fQuot, int32_t q, int32_t count)
+{
+    combine_limb6_horner_raw_vec(dst, hh, lh, hl, ll, t1, count);
+    stage31_div_mod_vec(dst, q, t1, fRaw, fTmp, fQuot, count);
+}
+
+#endif
