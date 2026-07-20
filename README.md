@@ -83,7 +83,7 @@
 | KEM Encaps | **定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；SIM **721119**）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)；行为基线 [`pass-fix-…-encaps-device-k4`](ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)（**721010**） |
 | Host 随机 | 已正确性 PKE/KEM：**默认** [`fips203_host_rng`](library/shared/fips203_host_rng/) SHA3/SHAKE 派生；`SEED_D=` 定点可覆盖 |
 | KEM Decaps | **定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20 `#交付#`；SIM **1032762**）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；行为基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) |
-| KEM 三分项 | **Alg.19/20/21** device+stable **均已绿**（Decaps `#交付#` 2026-07-20）；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) · [`qa/TODO.md`](qa/TODO.md) |
+| KEM 三分项 | **Alg.19/20/21** device+stable **均已绿**（Decaps `#交付#` 2026-07-20）；办公室↔liboqs：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（urandom→同字节喂 AscendC；**CPU+SIM 全绿**）；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) · [`qa/TODO.md`](qa/TODO.md) |
 | 统一整数 Compress/Decompress | exp [`exp-fips203-compress-unified-int-vec-k4`](examples/incubating/exp-fips203-compress-unified-int-vec-k4/) · [`exp-fips203-decompress-unified-int-vec-k4`](examples/incubating/exp-fips203-decompress-unified-int-vec-k4/)（customspec）；生产路径已迁入 stable PKE Encrypt/Decrypt；**PKE round-trip PASS** |
 | 官方样例 | `samples/` ← [gitee.com/ascend/samples](https://gitee.com/ascend/samples) `master`（`6511a5f`，2026-06 拉取）；AscendC Cube+Vector 融合参考：`samples/operator/ascendc/tutorials/MatmulLeakyReluCustomSample/` |
 

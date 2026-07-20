@@ -12,7 +12,7 @@
 
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
-关键字：**【预研】**→**`#交付#` stable Decaps** · registry→Skill · 补 PKE registry · KAT/roundtrip · **六算子齐** · **T13b/T11 关闭（已取代）** · **挂账 T23** · **清理更名幽灵 + pass-probe 误链** · **T19i** 挂账 · 备份合入 main · **`stable_kem_liboqs_roundtrip.sh` 一键 CPU+SIM**
+关键字：**【预研】**→**`#交付#` stable Decaps** · registry→Skill · 补 PKE registry · KAT/roundtrip · **六算子齐** · **T13b/T11 关闭（已取代）** · **挂账 T23** · **清理更名幽灵 + pass-probe 误链** · **T19i** 挂账 · 备份合入 main · **`stable_kem_liboqs_roundtrip.sh`（urandom→liboqs→AscendC；CPU+SIM 全绿）**
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 

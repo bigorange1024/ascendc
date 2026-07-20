@@ -152,12 +152,36 @@ bash run.sh -r sim -v Ascend910B4
 | **禁名** | `fix-f203-alg21-kem-decaps-device-k4`（已更名）；`pass-probe-*`（误名，从未权威） |
 | **仍保留** | `fix-…-decaps-correctness-k4`（oracle，与 device 不同轨） |
 
-## stable KEM ↔ liboqs 一键回归（同日续；已按「随机字节」纠正）
+## stable KEM ↔ liboqs 一键回归（同日续；随机字节 · CPU+SIM 全绿）
 
 | 项 | 说明 |
 |----|------|
 | **入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](../../scripts/stable_kem_liboqs_roundtrip.sh) |
 | **语义** | **先** `liboqs_kem_fixture.py --random`（`urandom` 64B `kem_seed=d‖z` + 32B `m` → liboqs derand 出向量），**再**把**同一批字节**喂 AscendC |
 | **AscendC 接线** | KeyGen：`KEM_KG_EXT_SEED=1` + `kem_seed.bin`；Encaps：`M_FILE=m.bin`；Decaps：同次 KeyGen 的 **`EK_KEM_SRC`+`DK_KEM_SRC`**（缺 ek 会回落 stash → FO 假拒） |
-| **默认** | 同一 fixture 下 **CPU×1 + `SIM_DIRECT` sim×1**；定点复现可 `KEM_SEED_HEX`/`M_HEX` |
-| **证据** | 同日 CPU 全绿（新 urandom）；SIM 清 `build_prod_sim` 后跑 |
+| **默认** | 同一 fixture 下 **CPU×1 + `SIM_DIRECT` sim×1**；二者都绿才算验收；定点复现可 `KEM_SEED_HEX`/`M_HEX` |
+| **非本脚本** | `liboqs_kem_vs_ascendc.sh` 仍是定点 `SEED_D` derand（生产自派生对照） |
+| **SIM 清理** | 默认清 Decaps `build_prod_sim`（`kem/`→`compute/` l18 幽灵 `.o` → `multiple definition`） |
+
+### 复验证据（2026-07-20）
+
+```bash
+bash scripts/stable_kem_liboqs_roundtrip.sh
+# → [SUCCESS] … fixture=output/stable_kem_liboqs_rt/20260720_092533_195335/
+```
+
+| 模式 | KeyGen | Encaps | Decaps accept | Decaps reject |
+|------|--------|--------|---------------|---------------|
+| CPU | max=0 | max=0 | max=0 + agreement | max=0 |
+| SIM | max=0 | max=0 | max=0 + agreement | max=0 |
+
+Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D≈286803 / E≈745925）。
+
+### 踩坑（同日）
+
+| 现象 | 根因 | 修法 |
+|------|------|------|
+| Encaps vs fixture 假红（定点路径） | stable Encaps 默认定点 `m=0`，fixture SHA3 派生 `m` | Phase 2 喂 `M_FILE=fixture/m.bin`；随机路径本就用同字节 |
+| Decaps `K` max≠0、Encaps 却绿 | gen_data 未设 `EK_KEM_SRC` → 读旧 `kem_keypair_stash` ek，与本次 `dk` 不一致 → FO 拒 | roundtrip / `liboqs_kem_vs` / `roundtrip_kem_*` 同步传 `EK_KEM_SRC` |
+| Decaps SIM `multiple definition` `f203_encrypt_l18_l19` | 源已迁 `compute/`，`build_prod_sim` 残留 `kem/` 幽灵 `.o` | 脚本默认 `rm -rf build_prod_sim`；同类幽灵仅 Decaps 族（stable/exp/pass-fix） |
+

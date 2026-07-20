@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-20（Decaps `#交付#` → stable；六算子齐）
+**最后刷新**：2026-07-20（stable KEM ↔ liboqs 随机字节 roundtrip **CPU+SIM 全绿**；六算子齐）
 
 ---
 
@@ -69,6 +69,9 @@ bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4          # 默认 SIM_DIRECT=1；WSL/Cloud 勿再手写
 # 调试（非默认）：SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4   # msprof
 
+# stable KEM 三件套 ↔ liboqs（办公室回归；先 urandom→liboqs，再同字节喂 AscendC；CPU+SIM 都绿才算数）
+bash scripts/stable_kem_liboqs_roundtrip.sh
+
 # 一期试点另支持（见 NPU真机环境说明 / runtime_env.sh）：
 # bash run.sh -r auto -v Ascend910B4     # 单档最优 npu>sim>cpu
 # bash run.sh -r verify -v Ascend910B4   # cpu → SIM_DIRECT sim [→ npu]
@@ -122,7 +125,8 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 - **KEM Alg.21 Decaps**：**定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；行为基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（D**286803**+E**745925**）；`scripts/` `DECAPS_DIR`→**stable**  
 - **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
 - 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4` · `pass-fix-f203-alg21-kem-decaps-device-k4`（勿当 CMake 依赖）  
-- **下一刀**：Decaps `fo_only` 4→3 / NPU（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
+- **下一刀**：多 AI Core（T23）/ Decaps `fo_only` 4→3 / NPU（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
+- **办公室 KEM 回归**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（urandom→liboqs→AscendC；**CPU+SIM**）
 
 ---
 
