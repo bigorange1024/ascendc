@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# fix-f203-alg21-kem-decaps-device-k4 — Alg.21 Decaps 全链（D+E）；可选 Phase-E-only
+# pass-fix-f203-alg21-kem-decaps-device-k4 — Alg.21 Decaps 全链（D+E）；可选 Phase-E-only
 #
 # 生产 I/O：input/{dk_kem,c,lut_*} → output/K.bin
 # PKE：编译期引用 stable Decrypt + Encrypt；见 INTEGRATION_PLAN.md
@@ -172,4 +172,4 @@ fi
 if [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
     python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py"
 fi
-echo "[SUCCESS] fix-f203-alg21-kem-decaps-device-k4 ${LABEL} (${RUN_MODE})"
+echo "[SUCCESS] pass-fix-f203-alg21-kem-decaps-device-k4 ${LABEL} (${RUN_MODE})"

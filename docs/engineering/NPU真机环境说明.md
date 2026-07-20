@@ -38,7 +38,7 @@
 
 **examples（4 试点）**：KEM KeyGen incubating + PKE keygen/encrypt/decrypt stable。
 
-**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）；**跳过** `fix-f203-alg21-kem-decaps-device-k4`（NOT_IMPLEMENTED / T19b/c）。Encaps device 已为 [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)。**不改** `frozen/`。
+**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）。KEM device：[`pass-fix-…-keygen-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) · [`…-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) · [`…-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)。**不改** `frozen/`。
 
 ### 明确不做
 

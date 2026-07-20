@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DECAPS_DIR = Path(os.environ.get("DECAPS_DIR", REPO_ROOT / "ascendc-tests/fix-f203-alg21-kem-decaps-device-k4"))
+DECAPS_DIR = Path(os.environ.get("DECAPS_DIR", REPO_ROOT / "ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4"))
 STASH = Path(os.environ.get("KEM_KEYPAIR_STASH", REPO_ROOT / "output/kem_keypair_stash"))
 REF_BIN = REPO_ROOT / "scripts/liboqs_kem_ref"
 BUILD_REF = REPO_ROOT / "scripts/build_liboqs_kem_ref.sh"

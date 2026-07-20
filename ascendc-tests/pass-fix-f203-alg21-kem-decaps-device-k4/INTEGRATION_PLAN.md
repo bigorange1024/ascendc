@@ -1,4 +1,4 @@
-# INTEGRATION_PLAN — fix-f203-alg21-kem-decaps-device-k4
+# INTEGRATION_PLAN — pass-fix-f203-alg21-kem-decaps-device-k4
 
 **定位**：`ascendc-tests/` **Alg.21 `ML-KEM.Decaps` 无 vendor 设备主线**（**ml_kem_1024 / k=4**）。内部 **Alg.18 `Decaps_internal`**；PKE 段 **编译期引用** stable Decrypt / Encrypt（或 Encaps 树），**禁止** frozen G4/G5 `vendor_sync`。
 
@@ -138,7 +138,7 @@ Phase-D：`main_kem_decaps_phase_d_run.*` + stable `f203_decrypt_device_fused`�
 ## 5. 验收命令
 
 ```bash
-cd ascendc-tests/fix-f203-alg21-kem-decaps-device-k4
+cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4
 bash run.sh -r cpu -v Ascend910B4          # 默认全链
 bash run.sh -r sim -v Ascend910B4          # 默认单库 + decaps_1session
 # 调试 Phase-E-only / 拒绝 / 2-session 对照（非默认）：

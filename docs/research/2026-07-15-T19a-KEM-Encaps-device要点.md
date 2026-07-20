@@ -24,5 +24,5 @@
 
 ## 下一刀
 
-- T19b/c：`fix-f203-alg21-kem-decaps-device-k4`（Phase-E / Phase-D）
+- T19b/c：`pass-fix-f203-alg21-kem-decaps-device-k4`（Phase-E / Phase-D）
 - 可选：本探针更名 `pass-fix-…`；仓库 `ENCAPS_DIR` / 分项 kat 改指 device

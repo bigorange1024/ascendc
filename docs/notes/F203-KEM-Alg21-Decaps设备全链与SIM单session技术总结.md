@@ -4,9 +4,11 @@
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
 **案例锚点**：
 
-- **设备主线（2026-07-17）**：[`fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`** 全链+E3 PASS（T2）；仓库 `scripts/` Decaps 默认指此目录。
+- **设备主线（2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**；仓库 `scripts/` Decaps 默认指此目录。
 - **correctness oracle**：[`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) — vendor 拼装；**禁止抄码**进 device。
 
+> **2026-07-18 更新（更名 pass-fix）**：`fix-…-decaps-device-k4` → `pass-fix-…-decaps-device-k4`；KAT/roundtrip 已绿；下一 `#交付#`。
+>
 > **2026-07-17 更新（T2 PASS · Cloud）**：device 主线 SIM **单库**（`prepare_dec_shim.sh`：stable Decrypt 冲突头 → `dec_*`）+ 默认 **`decaps_1session`** 全链+E3 PASS（D**286803**+E**745925**）。`decaps_2session` 仅对照。见 `STATUS.md` / `AGENT_HANDOFF.md`。
 >
 > **2026-07-17 早先（device 主线 + T2 交接）**：T19b/c 在 device 目录落地全链。SIM 曾因同名头退回 **双库 + `decaps_2session`** 保底；T2 交 Cloud 合库 — **已关闭**。

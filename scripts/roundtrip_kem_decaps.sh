@@ -17,7 +17,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/fix-f203-alg21-kem-decaps-device-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
