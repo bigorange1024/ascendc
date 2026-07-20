@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-20 — [Decaps incubating 预研 PASS](2026-07/2026-07-20-Decaps-incubating预研PASS.md)
+
+关键字：**【预研】** `exp-…-kem-decaps-k4` **CPU+SIM PASS** · D**286999**+E**745790** · 下一 `#交付#`
+
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 
 关键字：`probe` → **`pass-fix-…-decaps-device-k4`** · **`$规格$`** [`exp-…-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) customspec · 下一【预研】
