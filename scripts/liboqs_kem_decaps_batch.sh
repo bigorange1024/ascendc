@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # liboqs_kem_decaps_batch.sh — KEM Decaps 分项 kat（固定 dk，liboqs 造 c，默认 quiet）
 #
+# 默认 DECAPS_DIR = examples/incubating/exp-fips203-mlkem-kem-decaps-k4
+# （kat_liboqs_kem_decaps.py）；交付后改默认到 stable；可用 DECAPS_DIR= 覆盖。
+#
 # Usage:
 #   bash scripts/kem_keypair_stash_bootstrap.sh   # 一次性
 #   bash scripts/liboqs_kem_decaps_batch.sh

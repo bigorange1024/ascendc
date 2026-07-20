@@ -19,7 +19,18 @@ bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```
 
+## Round-trip（同日续）
+
+仓库 `scripts/` 默认 `DECAPS_DIR` 自 pass-probe 切到本 incubating exp（对齐 Encaps→stable 操作；交付后再切 stable）：
+
+| 脚本 | 变更 |
+|------|------|
+| `roundtrip_kem_decaps.sh` / `roundtrip_kem_keygen_encaps_decaps.sh` | 默认 → exp |
+| `liboqs_kem_vs_ascendc.sh` / `kat_liboqs_kem_decaps.py` | 同上 |
+
+**证据**：`bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu|sim` → agreement + reject **PASS**（KeyGen device + Encaps stable + 本 Decaps）。
+
 ## 下一刀
 
-- `#交付#` → stable（用户点名）
+- `#交付#` → stable（用户点名；交付后 `DECAPS_DIR` 默认再切 stable）
 - 可选：KAT 扩量、`fo_only` 内联

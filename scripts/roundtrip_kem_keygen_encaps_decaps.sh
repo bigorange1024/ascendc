@@ -21,14 +21,14 @@
 #   SEED_D                       默认 20260619（三阶段须同种子）
 #   ROUNDTRIP_KEM_SKIP_REJECT=1  跳过拒绝路径（只验合法闭环）
 #
-# 注意：SIM 下 Decaps 走 2-session（探针默认），合法 + 拒绝各 ~11min；勿与其他 SIM 并行。
+# 注意：SIM 下 Decaps 默认 1-session 单库；勿与其他 SIM 并行。默认 incubating exp；`#交付#` 后改指 stable（DECAPS_DIR= 可覆盖）。
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4}"
 ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-encaps-k4}"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/incubating/exp-fips203-mlkem-kem-decaps-k4}"
 STASH_DIR="${REPO_ROOT}/output/roundtrip_kem"
 
 RUN_MODE="cpu"

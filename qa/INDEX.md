@@ -12,7 +12,7 @@
 
 ### 2026-07-20 — [Decaps incubating 预研 PASS](2026-07/2026-07-20-Decaps-incubating预研PASS.md)
 
-关键字：**【预研】** `exp-…-kem-decaps-k4` **CPU+SIM PASS** · D**286999**+E**745790** · 下一 `#交付#`
+关键字：**【预研】** `exp-…-kem-decaps-k4` **CPU+SIM PASS** · **roundtrip CPU/SIM PASS** · `scripts/` Decaps 默认→exp · 下一 `#交付#`
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 

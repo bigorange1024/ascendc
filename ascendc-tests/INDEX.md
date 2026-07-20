@@ -52,7 +52,7 @@
 | [**pass-fix-f203-alg15-pke-decrypt-device-k4/**](pass-fix-f203-alg15-pke-decrypt-device-k4/) | **Alg.15 完整 K-PKE.Decrypt**（单 kernel；尾融合；生产 input **仅 dk+c+lut** → out **仅 m**；SIM **~283k**）；**`roundtrip_pke_*` / liboqs 默认 Decrypt**；注释+I/O 收紧 2026-07-09 | ✓ | ✓ |
 | [**pass-fix-f203-alg19-kem-keygen-device-k4/**](pass-fix-f203-alg19-kem-keygen-device-k4/) | **Alg.19 KEM KeyGen（device）** — **2 launch**（Alg.16 尾内嵌 stable mmad）；无 vendor；SIM **~713k**；**`scripts/` KeyGen 默认** | ✓ | ✓ |
 | [**pass-fix-f203-alg20-kem-encaps-device-k4/**](pass-fix-f203-alg20-kem-encaps-device-k4/) | **Alg.20 KEM Encaps（device）** — prep H/G + stable Encrypt；无 vendor；SIM **721010**；**`scripts/` Encaps 默认** | ✓ | ✓ |
-| [**pass-fix-f203-alg21-kem-decaps-device-k4/**](pass-fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — Decrypt fused + Encrypt + FO；无 vendor；单库+1-session；SIM D**286803**+E**745925**；**`scripts/` Decaps 默认** | ✓ | ✓ |
+| [**pass-fix-f203-alg21-kem-decaps-device-k4/**](pass-fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — Decrypt fused + Encrypt + FO；无 vendor；单库+1-session；SIM D**286803**+E**745925**；行为基线（`scripts/` Decaps 默认已切 [`exp-…-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)） | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 

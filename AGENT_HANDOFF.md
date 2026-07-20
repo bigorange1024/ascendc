@@ -14,7 +14,7 @@
 | **KEM Encaps stable** | [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/) **定型**；tick **721119** |
 | T19a Encaps device | [`pass-fix-…-encaps-device-k4`](ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)；tick **721010** |
 | **Alg.21 Decaps device** | [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) **PASS**（D**286803**+E**745925**） |
-| **Alg.21 Decaps incubating** | [`exp-fips203-mlkem-kem-decaps-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) **CPU+SIM PASS**（D**286999**+E**745790**） |
+| **Alg.21 Decaps incubating** | [`exp-fips203-mlkem-kem-decaps-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) **CPU+SIM PASS**；**roundtrip CPU/SIM PASS**（含拒绝）；`scripts/` `DECAPS_DIR` 默认已指 |
 | PKE + KEM KeyGen stable | 已交付 |
 
 ---
@@ -31,9 +31,9 @@
 ## ★ Smoke
 
 ```bash
-cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4
-bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
+bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu -v Ascend910B4
+# 或单用例：
+cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4 && bash run.sh -r cpu -v Ascend910B4
 ```
 
 ---

@@ -12,12 +12,12 @@
 #   SEED_D=20260619
 #   ROUNDTRIP_KEM_STASH=<dir>   默认 output/roundtrip_kem/${RUN_MODE}
 #
-# 注意：SIM 默认 2-session（探针 run.sh）；Decaps 单段 ~11min，勿并行多 SIM。
+# 注意：SIM 默认 decaps_1session（单库）；Decaps 全链勿与其他 SIM 并行。默认 incubating exp；交付后改指 stable（DECAPS_DIR= 可覆盖）。
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/incubating/exp-fips203-mlkem-kem-decaps-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

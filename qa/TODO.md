@@ -58,7 +58,7 @@
 | **T19b** | **[`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) Phase-E**：同上 Encrypt 布局 | **PASS**（2026-07-17；CPU+SIM `K` max=0；tick **746221**）；E3 可选 |
 | **T19c** | **同上 device-k4 Phase-D**：stable Decrypt fused + D→E | **PASS** → **`pass-fix-…-decaps-device-k4`**（2026-07-18）；scripts 默认已指；下一 `#交付#` |
 | **T19d** | **[`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)** | **PASS**（2026-07-10）；2 launch；P1 后 SIM tick 均值 **~713k** |
-| **T19e** | **`scripts/` KeyGen/Encaps/Decaps 默认** | Encaps→stable（07-15）；Decaps→[`pass-fix-…-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（07-18 更名后路径）；KeyGen→pass-fix device |
+| **T19e** | **`scripts/` KeyGen/Encaps/Decaps 默认** | Encaps→stable（07-15）；Decaps→[`exp-…-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)（07-20；交付后切 stable）；KeyGen→pass-fix device |
 | **T19f** | incubating KeyGen 重写 → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **完成** → 已关闭表 |
 | **T19g** | incubating Encaps → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **完成** → 已关闭表 |
 
