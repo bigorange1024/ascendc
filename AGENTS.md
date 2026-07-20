@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-20（stable KEM ↔ liboqs 随机字节 roundtrip **CPU+SIM 全绿**；六算子齐）
+**最后刷新**：2026-07-20（T19i SIM 3 · stable↔liboqs roundtrip **CPU+SIM 全绿**；六算子齐）
 
 ---
 
@@ -126,7 +126,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 - **KEM correctness×3**（alg19/20/21）：**已冻结**（2026-07-20）→ `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`；**只读 FROZEN.md**，禁止翻源码 / 跑 CI  
 - **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
 - 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4` · `pass-fix-f203-alg21-kem-decaps-device-k4`（勿当 CMake 依赖）  
-- **下一刀**：多 AI Core（T23）/ Decaps `fo_only` 4→3 / NPU（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
+- **下一刀**：多 AI Core（T23）/ NPU / SHA3hp（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
 - **办公室 KEM 回归**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（urandom→liboqs→AscendC；**CPU+SIM**）
 
 ---

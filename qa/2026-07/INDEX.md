@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-20 | [2026-07-20-Decaps交付stable与registry.md](2026-07-20-Decaps交付stable与registry.md) | **`#交付#` Decaps → stable** · **冻结 correctness×3** · registry · **六算子齐** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理** · **T19i** · **`stable_kem_liboqs_roundtrip`（随机字节·CPU+SIM 全绿）** |
+| 2026-07-20 | [2026-07-20-Decaps交付stable与registry.md](2026-07-20-Decaps交付stable与registry.md) | **`#交付#` Decaps → stable** · **T19i SIM 3 全链齐** · **冻结 correctness×3** · registry · **六算子齐** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理** · **`stable_kem_liboqs_roundtrip`（随机字节·CPU+SIM 全绿）** |
 | 2026-07-18 | [2026-07-18-Decaps-pass-fix与incubating-customspec.md](2026-07-18-Decaps-pass-fix与incubating-customspec.md) | **pass-fix 更名** · **`$规格$` exp-…-kem-decaps-k4** |
 | 2026-07-17 | [2026-07-17-Decaps-device-全链-PASS.md](2026-07-17-Decaps-device-全链-PASS.md) | **T19b/c 全链 + E3 PASS** · **T2 单库+1-session PASS**（D**286803**+E**745925**）· scripts→device |
 | 2026-07-15 | [2026-07-15-TODO与T19a-Encaps-device-PASS.md](2026-07-15-TODO与T19a-Encaps-device-PASS.md) | **TODO** · **T19a PASS** · **Encaps → pass-fix** · **【预研】exp** · **`#验收#` → stable（721119，KAT 10+3）** · scripts 默认 stable · notes/registry · T19g · 下一 T19b/c |

@@ -3,7 +3,7 @@
 #
 # customspec：exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex
 # 生产 I/O：input/{dk_kem,c,lut_*} → output/K.bin（仅 K；m'/c'/K' 默认不落盘为交付）
-# SIM：4 launch；CPU：6 launch；默认单库 + decaps_1session
+# SIM：3 launch（T19i：l18_l19 同核 FO）；CPU：6 launch；默认单库 + decaps_1session
 #
 # Usage（默认全链）:
 #   cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4

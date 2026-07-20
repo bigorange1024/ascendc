@@ -14,7 +14,7 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**
 | 范围 | 命令 | 结果 |
 |------|------|------|
 | **全链 CPU** | `bash run.sh -r cpu …` | `K` **max=0** |
-| **全链 SIM** | `bash run.sh -r sim …` | `K` **max=0**；单库 + 默认 `decaps_1session`；D**286803**+E**745925** |
+| **全链 SIM** | `bash run.sh -r sim …` | `K` **max=0**；单库 + 默认 `decaps_1session`；**T19i 后 3 launch**；D**287037**+E**763886** |
 | **E3 拒绝** | `KEM_DECAPS_REJECT=1 …` | device `K` == liboqs == `J(z‖c)` **PASS** |
 | liboqs 分项 KAT | `bash scripts/liboqs_kem_decaps_batch.sh` | **PASS** CPU×10+SIM×3（2026-07-17） |
 | device roundtrip | `bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu\|sim` | **PASS**（含拒绝） |
@@ -24,6 +24,8 @@ bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```
 
-**实现要点**：行 1–4 指针偏移；SIM `prepare_dec_shim.sh`（冲突头 `dec_*`）合单库；SIM 4 launch（含过渡 `fo_only`）；CPU 6 launch。
+**实现要点**：行 1–4 指针偏移；SIM `prepare_dec_shim.sh` 合单库；**T19i PASS**：探针本地 `l18_l19` pack 尾同核 FO → SIM **3** launch（CPU 仍 6）；**禁止**改共享 PKE Encrypt 源。
 
-**未做（非 pass 门禁）**：`fo_only` 收回 `l18_l19` 尾；`#交付#` → stable。
+**T19i 证据（2026-07-20）**：CPU/SIM `K` max=0；`KEM_DECAPS_REJECT=1` CPU+SIM PASS；SIM tick D**287037**+E**763886**；根无 stray dump。
+
+**已外置**：`#交付#` → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（仍为 SIM 4，待镜像 T19i）。

@@ -117,7 +117,7 @@ bash run.sh -r sim -v Ascend910B4
 
 **仍保留**：探针 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) 作 compute 对照（host 喂 `a_hat` / `KEYGEN_ORCHESTRATE`）；**不**再排 T13b/T11 晋级。
 
-打开项主线仍为 **T19i**（若未合入）· **T2-npu** · **T21**。
+打开项主线：**T23** · **T2-npu** · **T21**（**T19i 已关**）。
 
 
 ## 挂账 T23：多 AI Core 并行 stable（同日续）
@@ -199,3 +199,59 @@ Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D�
 | Decaps `K` max≠0、Encaps 却绿 | gen_data 未设 `EK_KEM_SRC` → 读旧 `kem_keypair_stash` ek，与本次 `dk` 不一致 → FO 拒 | roundtrip / `liboqs_kem_vs` / `roundtrip_kem_*` 同步传 `EK_KEM_SRC` |
 | Decaps SIM `multiple definition` `f203_encrypt_l18_l19` | 源已迁 `compute/`，`build_prod_sim` 残留 `kem/` 幽灵 `.o` | 脚本默认 `rm -rf build_prod_sim`；同类幽灵仅 Decaps 族（stable/exp/pass-fix） |
 
+## T19i pass-probe/`pass-fix`：`fo_only`→`l18_l19`（同日续）
+
+目录：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（用户口中的 pass-probe 已更名）。
+
+| 项 | 内容 |
+|----|------|
+| 方案 | `INTEGRATION_PLAN` §7：探针本地覆盖 `l18_l19`；禁止改共享 Encrypt |
+| 实现 | pack 后 `SyncAll<isAIVOnly>`；AIV0 `KemDecFo`；Host 删 `fo_only` |
+| CPU | **PASS** |
+| SIM | **PASS** D**287037**+E**763886**；3 launch |
+| 拒绝 | CPU+SIM **PASS** |
+| 未做 | stable/exp Decaps 镜像（仍 SIM 4） |
+
+
+## T19i incubating customspec 修订（同日续；仅规格）
+
+路径：[`exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex/.pdf`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 内容 |
+|----|------|
+| 锁定 | 生产 SIM **3** launch；FO 并入 `l18_l19` 尾（`SyncAll` + AIV0 `KemDecFo`） |
+| CPU | 仍 6（`pack_fo`） |
+| 禁止 | 默认 `fo_only`；回写共享 PKE Encrypt `compute/` |
+| 基线 tick | pass-fix T19i D**287037**+E**763886** |
+| 未做 | 本目录【迭代】写码；stable customspec/实现 |
+
+本轮按 ascendc-impl-spec **只改规格**；待用户确认并说「可以写代码」/【迭代】后再改实现。
+
+
+## T19i incubating【迭代】落地（同日续）
+
+目录：[`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 结果 |
+|----|------|
+| 规格 | 已确认 customspec SIM 3 |
+| 实现 | `kem/f203_encrypt_l18_l19_kernel.cpp` 覆盖；Host 删 `fo_only` |
+| CPU | **PASS** |
+| SIM | **PASS** D**286846**+E**763935** |
+| 拒绝 | CPU+SIM **PASS** |
+| 未做 | stable Decaps 镜像 |
+
+
+## T19i stable `#修改#`（同日续）
+
+目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 结果 |
+|----|------|
+| customspec | SIM **3** 锁定；验收含 KAT + roundtrip |
+| 实现 | 镜像 exp：`kem/l18_l19` 覆盖；Host 删 `fo_only` |
+| CPU / SIM | **PASS**；D**286851**+E**763769** |
+| 拒绝 | CPU+SIM **PASS** |
+| liboqs KAT | **PASS** CPU×10 + SIM×3 |
+| roundtrip | **PASS** cpu+sim（agreement + reject） |
+| T19i | **关闭**（pass-fix + exp + stable 齐） |
