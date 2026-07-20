@@ -1196,13 +1196,13 @@ $D_k(T)$ 单调递增且含于有限集 $V$，故稳定。
 
 前几小节处理的是\textbf{单个}目标 $T$。
 工程上一次任务往往同时盯住多个目标（或先把目标拆成若干子目标），
-并且手里已有一份「已经获证」的能力清单 $\Gamma$。
-本小节把 $\mathrm{Dep}^*$ 从单点推广到有限集合，再定义缺项与生成集。
+并且手里已有一份「哪些能力当前允许被引用」的清单——下文将把它形式化为已证书集 $\Gamma$。
+本小节先把 $\mathrm{Dep}^*$ 从单点推广到有限集合，再引入证书与缺项、生成集。
 
 \paragraph{为何需要目标集}
 若只定义 $\mathrm{Dep}^*(T)$，则同时要完成 $T_1,T_2$ 时，需要的先决整体是
 $\mathrm{Dep}^*(T_1)\cup\mathrm{Dep}^*(T_2)$。
-把它写成 $\mathrm{Dep}^*(\{T_1,T_2\})$，可避免每次手写大并集，也便于后文「闭包表」一行写多个目标。
+把它写成 $\mathrm{Dep}^*(\{T_1,T_2\})$，可避免每次手写大并集，也便于后文闭包表一行写多个目标。
 
 \begin{definition}[有限目标集]
 称非空有限集 $A\subseteq V$ 为一次讨论中的\textbf{目标集}。
@@ -1261,14 +1261,48 @@ $A$ 对「取直接前驱」封闭——若 $v\in A$ 则 $\mathrm{Pred}(v)\subse
 右式一般\textbf{不能}改成等号（「交的闭包」可以严格小于「闭包的交」）。
 \end{property}
 
-\paragraph{已证书集与缺项}
-闭包回答「理论上需要谁」；工程上还要问「其中哪些已经有证书、还缺哪些」。
+\paragraph{证书、已证书项与缺项}
+闭包回答「理论上需要谁」；工程上还要问「其中哪些已经允许引用、还缺哪些」。
+为此先钉死本教材中的\textbf{证书}一词（此前第~2~章资产清单、愿景段已口语出现，此处才给形式含义）。
 
-\begin{definition}[已证书集]
-固定讨论时刻，令 $\Gamma\subseteq V$ 表示当前\textbf{已获得证书}的顶点集合
-（方法论里：已通过约定验收、允许被引用的能力）。
-$\Gamma$ 随时间可变（获证则扩大；$\mathsf{Dirty}$ 则缩小），本小节先把它当作给定的集合参数。
+\begin{definition}[证书]
+方法论中的\textbf{证书}不是公钥基础设施里的数字证书，而是对某个顶点 $v\in V$（能力/任务结点）的\textbf{可引用判决}：
+在约定验收准则下已通过验证，因而允许被后续任务当作先决引用。
+\begin{itemize}
+  \item \textbf{主语}是顶点 $v$，不是 Agent、也不是操作者本人；
+  \item \textbf{工程载体}可以是探针 PASS 记录、stable 交付与 KAT、技术总结中的闭合条件等
+        （§2 资产清单「证书」列即此类证据形态）；
+  \item \textbf{数学抽象}先只关心「$v$ 当前是否被承认为已获证」，细节状态机见迁移系统一节与第~\ref{sec:math}~章。
+\end{itemize}
 \end{definition}
+
+\begin{definition}[已证书集与已证书项]
+固定讨论时刻，令 $\Gamma\subseteq V$ 表示当前被承认「持有有效证书」的顶点集合，称为\textbf{已证书集}
+（直觉上：该时刻引理库里「还有效」的那些能力）。
+对任意 $v\in V$：
+\begin{itemize}
+  \item 若 $v\in\Gamma$，称 $v$ \textbf{已获证}，并称 $v$ 为相对 $\Gamma$ 的一个\textbf{已证书项}；
+  \item 若 $v\notin\Gamma$，称 $v$ \textbf{未获证}。
+\end{itemize}
+口语「已经拿到证书 / 已获得证书」即指 $v\in\Gamma$。
+$\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；既有判决因上游变更不再被承认时可移出 $\Gamma$。
+本小节先把 $\Gamma$ 当作给定的集合参数；如何改写 $\Gamma$ 见下条预习与后文转移。
+\end{definition}
+
+\begin{remark}[三类转移名称的预习]
+完整转移关系在「迁移系统」一节定义。此处先约定三个名称的直觉，避免后文空降符号：
+\begin{center}
+\begin{tabular}{@{}L{2.4cm}L{11.2cm}@{}}
+  \toprule
+  名称 & 本小节所需的含义 \\
+  \midrule
+  $\mathsf{Certify}$ & 对未获证顶点 $v$：约定验收通过后执行 $\Gamma\leftarrow\Gamma\cup\{v\}$（$v$ 成为已证书项） \\
+  $\mathsf{Probe}$ & 对缺项启动探针/预研，收集可供 $\mathsf{Certify}$ 使用的证据（本身不自动改 $\Gamma$） \\
+  $\mathsf{Dirty}$ & 撤销部分既有证书：使某些 $v$ 不再属于 $\Gamma$（证书库非单调，详见后文） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\end{remark}
 
 \begin{definition}[缺项集]
 对目标集 $A\subseteq V$ 与已证书集 $\Gamma\subseteq V$，定义\textbf{缺项集}
@@ -1280,12 +1314,13 @@ $\Gamma$ 随时间可变（获证则扩大；$\mathsf{Dirty}$ 则缩小），本
 \{\,u\in\mathrm{Dep}^*(A)\mid u\notin\Gamma\,\}.
 \]
 当 $A=\{T\}$ 时简记为 $\mathrm{Missing}_\Gamma(T)$。
+直观：$u$ 落在「完成 $A$ 理论上需要的闭包」里，但当前还\textbf{未获证}，故不能直接引用。
 \end{definition}
 
 \begin{definition}[闭包已满]
 若 $\mathrm{Missing}_\Gamma(A)=\emptyset$，称目标集 $A$ 相对 $\Gamma$ \textbf{闭包已满}
 （亦称「依赖已齐备」）。
-此时 $\mathrm{Dep}^*(A)\subseteq\Gamma$：完成 $A$ 所需的全部先决都已在证书集中。
+此时 $\mathrm{Dep}^*(A)\subseteq\Gamma$：完成 $A$ 所需的全部先决都已是已证书项。
 \end{definition}
 
 \begin{proposition}[缺项的基本性质]
@@ -1294,21 +1329,41 @@ $\Gamma$ 随时间可变（获证则扩大；$\mathsf{Dirty}$ 则缩小），本
   \item $\mathrm{Missing}_\Gamma(A)\subseteq\mathrm{Dep}^*(A)$；
   \item $\mathrm{Missing}_\Gamma(A)=\emptyset \iff \mathrm{Dep}^*(A)\subseteq\Gamma$；
   \item 若 $\Gamma\subseteq\Gamma'$，则 $\mathrm{Missing}_{\Gamma'}(A)\subseteq\mathrm{Missing}_\Gamma(A)$
-        （证书只增时，缺项只减或不增）；
+        （已证书集只增时，缺项只减或不增）；
   \item $\mathrm{Dep}^*(A)$ 可划分为
         $\bigl(\mathrm{Dep}^*(A)\cap\Gamma\bigr)\;\dot{\cup}\;\mathrm{Missing}_\Gamma(A)$
         （已证书部分与缺项部分不相交，并起来恰为闭包）。
 \end{enumerate}
 \end{proposition}
 
-\begin{remark}[闭包表在算什么]
-后文「先交闭包表」在数学上至少要能填写：
-目标集 $A$、当前 $\Gamma$、算出的 $\mathrm{Dep}^*(A)$，以及 $\mathrm{Missing}_\Gamma(A)$。
-若缺项非空，门禁应阻止「直接写顶层实现」，而要求先对缺项做 $\mathsf{Probe}/\mathsf{Certify}$。
+\begin{definition}[闭包表（工作对象）]
+称一次任务启动时填写、供核对的检查表为\textbf{闭包表}。
+数学上它至少应能填写：目标集 $A$、当前已证书集 $\Gamma$、算出的 $\mathrm{Dep}^*(A)$，以及缺项集 $\mathrm{Missing}_\Gamma(A)$
+（后文还可附加禁字、接缝声明等）。
+「先交闭包表再写码」指：实现之前必须先交出可核对的上述四元组（及约定扩展栏）。
+\end{definition}
+
+\begin{definition}[门禁（工作含义）]
+\textbf{门禁}指预研工作流里「允许或拒绝某步动作」的检查规则
+（例如：缺项非空则禁止直接写顶层实现；引用未获证依赖则拒绝）。
+其数学内核后文用语言成员判定与配置转移表述；本小节只需把它当作「对着闭包表做的硬检查」。
+\end{definition}
+
+\begin{remark}[闭包表与门禁如何联动]
+若 $\mathrm{Missing}_\Gamma(A)\neq\emptyset$，门禁应阻止「直接写顶层实现」，
+并要求先对缺项做 $\mathsf{Probe}$，再在验收通过后 $\mathsf{Certify}$，直至相对 $\Gamma$ 闭包已满（或明确缩小目标）。
 \end{remark}
+
+\begin{definition}[能力菜单与绿项]
+\textbf{能力菜单}（简称\textbf{菜单}）指仓库中列出的可命名能力清单，典型来源是各活跃 \texttt{INDEX.md}。
+菜单上出现的项称为\textbf{可见能力}；若某可见能力当前属于 $\Gamma$，口语可称其为\textbf{绿项}
+（「绿」只表示「此刻已获证」，不是形式状态机字母）。
+菜单提供构造 $\Gamma$ 的\textbf{证据来源候选}，本身既不等于 $\Gamma$，也不蕴含 $\mathrm{Missing}_\Gamma(T)=\emptyset$。
+\end{definition}
 
 \paragraph{生成集与基（为「最小补洞」作准备）}
 $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其闭包已能覆盖整个 $\mathrm{Dep}^*(T)$。
+下面先定义生成集，再说明「补洞」指什么。
 
 \begin{definition}[生成集]
 设 $T\in V$。若 $B\subseteq V$ 满足
@@ -1327,6 +1382,12 @@ $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其
 本教材把「基」暂当作极小生成集的同义语；更细的唯一性/规范基问题留待门禁章。
 \end{definition}
 
+\begin{definition}[补洞与最小补洞]
+相对已证书集 $\Gamma$，把缺项逐步变成已证书项、从而使目标闭包已满的过程，称为\textbf{补洞}。
+形式上一轮补洞至少包含：选取某些 $u\in\mathrm{Missing}_\Gamma(T)$，经 $\mathsf{Probe}$ 取证后 $\mathsf{Certify}$，得到更大的 $\Gamma'$。
+若优先寻找尽可能小的缺项生成集（定义见下）作为补证对象，则称该选择问题为\textbf{最小补洞}（算法细节后置）。
+\end{definition}
+
 \begin{definition}[相对 $\Gamma$ 的缺项生成集]
 工程上更关心：在已经知道 $\Gamma$ 的前提下，还需要新获证的是哪些点。
 若 $B\subseteq\mathrm{Missing}_\Gamma(T)$ 满足
@@ -1334,12 +1395,12 @@ $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其
 \mathrm{Dep}^*\bigl((\mathrm{Dep}^*(T)\cap\Gamma)\cup B\bigr)=\mathrm{Dep}^*(T),
 \]
 则称 $B$ 为相对 $\Gamma$ 的一个\textbf{缺项生成集}：
-把「已有证书」与「还打算补证的 $B$」合在一起，闭包就能盖住整个 $\mathrm{Dep}^*(T)$。
-最小补洞问题即寻找尽可能小的缺项生成集（算法细节后置）。
+把「已证书部分」$\mathrm{Dep}^*(T)\cap\Gamma$ 与「还打算补证的 $B$」合在一起，闭包就能盖住整个 $\mathrm{Dep}^*(T)$。
+最小补洞即在缺项生成集中寻找尽可能小者。
 \end{definition}
 
 \begin{property}[菜单、$\Gamma$ 与闭包]
-INDEX 等「菜单」提供构造 $\Gamma$ 的\textbf{证据来源}，但
+由能力菜单的定义：菜单提供构造 $\Gamma$ 的证据来源候选，但
 \[
 \text{菜单上有许多绿项}
 \quad\not\Rightarrow\quad
@@ -1403,7 +1464,7 @@ D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
 \[
 \mathrm{Dep}^*(T)=\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{Tail},\mathrm{KEM.KG}\}.
 \]
-若当前 $\Gamma$ 已含 P0--P2，但尚未给尾缝发证，则
+若当前 $\Gamma$ 已含 P0--P2，但尾缝仍未获证（$\mathrm{Tail}\notin\Gamma$），则
 $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{未}闭包已满。
 \begin{center}
 \begin{tikzpicture}[
