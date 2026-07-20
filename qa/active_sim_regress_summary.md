@@ -33,7 +33,7 @@
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |
 | [`exp-fips203-mlkem-kem-keygen-k4`](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) | 707057 | 已晋级；复测 706657 | STATUS |
 | [`exp-fips203-mlkem-kem-encaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/) | **721211** | 已晋级 stable；副本 tick（非零 `m` **721033**） | STATUS 2026-07-15 |
-| [`exp-fips203-mlkem-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) | **1032789**（D**286999**+E**745790**） | Alg.21；SIM 4；单库+1session；已晋级 stable；副本 tick；roundtrip/KAT 晋级前 ✓ | STATUS 2026-07-20 |
+| [`exp-fips203-mlkem-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) | **1050781**（D**286846**+E**763935**） | Alg.21；**T19i** SIM **3**；单库+1session；拒绝绿；已晋级 stable（stable 仍 4） | STATUS 2026-07-20 |
 | [`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4`](../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) | ~77958 | 对齐 vec-k4-v2 prefetch | INDEX/customspec |
 | [`exp-sepolyvec8-ntt-k8`](../examples/incubating/exp-sepolyvec8-ntt-k8/) | n/a | CPU+SIM PASS；STATUS 未记 tick | INDEX |
 | [`exp-fips203-mlkem-pke-stage1-encode-vec`](../examples/incubating/exp-fips203-mlkem-pke-stage1-encode-vec/) | 8520 | 历史 aiv=1 剖面 | legacy-summary |

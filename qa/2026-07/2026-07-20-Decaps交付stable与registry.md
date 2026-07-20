@@ -133,3 +133,17 @@ bash run.sh -r sim -v Ascend910B4
 | 未做 | 本目录【迭代】写码；stable customspec/实现 |
 
 本轮按 ascendc-impl-spec **只改规格**；待用户确认并说「可以写代码」/【迭代】后再改实现。
+
+
+## T19i incubating【迭代】落地（同日续）
+
+目录：[`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)
+
+| 项 | 结果 |
+|----|------|
+| 规格 | 已确认 customspec SIM 3 |
+| 实现 | `kem/f203_encrypt_l18_l19_kernel.cpp` 覆盖；Host 删 `fo_only` |
+| CPU | **PASS** |
+| SIM | **PASS** D**286846**+E**763935** |
+| 拒绝 | CPU+SIM **PASS** |
+| 未做 | stable Decaps 镜像 |
