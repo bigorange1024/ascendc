@@ -33,6 +33,7 @@ backup/
 # 探针 / 算子 I/O 与构建产物
 **/input/
 **/output/
+**/golden/
 **/out/
 **/out_*/
 **/auto_gen/
