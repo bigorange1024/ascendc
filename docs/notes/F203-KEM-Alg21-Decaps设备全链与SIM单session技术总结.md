@@ -207,11 +207,12 @@ K        max=216 ✗
 
 | 项 | 值 |
 |----|-----|
-| 探针 | `ascendc-tests/frozen-fix-f203-alg21-kem-decaps-correctness-k4` |
-| 输入 | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
-| CPU | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
-| SIM | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |
-| SIM tick | Phase-D 约 534k + fresh Phase-E 约 899k |
+| 历史探针 | **已冻结** — 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**勿再跑** |
+| 现行设备主线 | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) |
+| 输入（历史） | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
+| CPU（历史） | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
+| SIM（历史） | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |
+| SIM tick（历史） | Phase-D 约 534k + fresh Phase-E 约 899k |
 | liboqs 分项 kat | `liboqs_kem_decaps_batch.sh` 逐轮换 `c` → `K max=0`，`CPU×10+SIM×1 PASS` |
 | 未完成 | 单 session SIM 真修（`at_r5` 首错）、`nm` func_key 审计、拒绝路径 SIM 长测、NPU 实机 |
 
