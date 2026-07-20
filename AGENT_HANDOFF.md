@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-20（清理 Decaps 更名幽灵 + `pass-probe` 误链；挂账 T23；关闭 T13b/T11）
+> **最后刷新**：2026-07-20（stable KEM ↔ liboqs 一键脚本；此前：幽灵清理 / T23 / T13b·T11）
 
 ---
 

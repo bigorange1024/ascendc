@@ -15,12 +15,17 @@
 #   bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4
 #   SIM_DIRECT=1 bash scripts/liboqs_kem_vs_ascendc.sh -r sim -v Ascend910B4
 #
+# stable 三件套 CPU×1+SIM×1 一键入口（推荐办公室回归）：
+#   bash scripts/stable_kem_liboqs_roundtrip.sh
+#
 # 环境（可选）：
 #   SEED_D                   默认 20260619（三阶段与 fixture 必须同种子）
 #   LIBOQS_KEM_FIXTURE_DIR   默认 output/liboqs_kem_fixture/<SEED_D>/
 #   LIBOQS_KEM_VS_SKIP_REJECT=1  跳过 Phase 4 拒绝路径（只验合法链）
+#   KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR  覆盖探针路径（stable 一键脚本不开放覆盖）
 #
-# 注意：SIM 下 Decaps 默认 1-session；勿与其他 SIM 并行。默认 stable Decaps；可用 DECAPS_DIR= 覆盖回 exp/probe（DECAPS_DIR= 可覆盖）。
+# 注意：SIM 下 Decaps 默认 1-session；勿与其他 SIM 并行。默认 KeyGen=pass-fix、Encaps/Decaps=stable；
+# Phase 2 须喂 fixture m.bin（stable Encaps gen_data 默认定点 m=0）。
 
 set -euo pipefail
 

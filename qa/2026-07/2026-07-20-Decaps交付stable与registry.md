@@ -151,3 +151,13 @@ bash run.sh -r sim -v Ascend910B4
 | **已做** | 删空壳；全文纠 `pass-probe-…`→`pass-fix-…`（HANDOFF/AGENTS/README/registry/STATUS/INDEX 等）；[`ascendc-tests/INDEX.md`](../../ascendc-tests/INDEX.md) 加「更名防幽灵」；新增 [`scripts/cleanup-ascendc-test-ghosts.sh`](../../scripts/cleanup-ascendc-test-ghosts.sh) |
 | **禁名** | `fix-f203-alg21-kem-decaps-device-k4`（已更名）；`pass-probe-*`（误名，从未权威） |
 | **仍保留** | `fix-…-decaps-correctness-k4`（oracle，与 device 不同轨） |
+
+## stable KEM ↔ liboqs 一键回归（同日续）
+
+| 项 | 说明 |
+|----|------|
+| **入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](../../scripts/stable_kem_liboqs_roundtrip.sh) |
+| **内容** | 固定三件套 **stable** KeyGen/Encaps/Decaps；`SEED_D` 默认 `20260619`；底层 `liboqs_kem_vs_ascendc.sh` Phase 0–4；**CPU×1 + `SIM_DIRECT` sim×1** |
+| **接线** | Phase 2 补 `M_FILE=fixture/m.bin`（stable Encaps 默认定点 `m=0`，否则相对 fixture 假红） |
+| **SIM 清理** | 默认清 Decaps `build_prod_sim`（`kem/`→`compute/` 迁文件幽灵 `.o` → `multiple definition`）；`SKIP_CLEAN_SIM=1` 可关 |
+| **证据** | 同日已手跑 CPU+SIM 全绿（tick≈D **286k** + E **745k**）；一键脚本语法 `-n` 通过 |
