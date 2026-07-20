@@ -11,7 +11,7 @@ FIPS 203 **Alg.21 / Alg.18 Decaps**（ml_kem_1024 / k=4）— incubating 自包�
 | **KEM** | `kem/`：`G` 并入 Phase-E prep；设备 FO（SIM 过渡 `fo_only`） |
 | **Launch** | SIM 4 / CPU 6 |
 | **I/O** | `dk_kem`+`c`+LUT → **仅** `K` |
-| **SIM tick** | D **286999** + E **745790**（全链合法；对标 pass-fix D**286803**+E**745925**） |
+| **SIM tick** | **1032789**（D **286999** + E **745790**；对标 pass-probe **1032728**=D**286803**+E**745925**） |
 
 ## 验收证据（2026-07-20）
 
