@@ -28,4 +28,4 @@ bash run.sh -r sim -v Ascend910B4
 
 **T19i 证据（2026-07-20）**：CPU/SIM `K` max=0；`KEM_DECAPS_REJECT=1` CPU+SIM PASS；SIM tick D**287037**+E**763886**；根无 stray dump。
 
-**已外置**：`#交付#` → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（仍为 SIM 4，待镜像 T19i）。
+**已外置**：`#交付#` → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i 已镜像**；SIM **3**）。
