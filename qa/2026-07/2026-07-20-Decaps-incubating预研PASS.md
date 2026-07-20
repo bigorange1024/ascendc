@@ -34,3 +34,7 @@ bash run.sh -r sim -v Ascend910B4
 
 - `#交付#` → stable（用户点名；交付后 `DECAPS_DIR` 默认再切 stable）
 - 可选：KAT 扩量、`fo_only` 内联
+
+## 登记表
+
+已刷新 [`qa/active_sim_regress_summary.md`](../active_sim_regress_summary.md)：incubating Decaps D**286999**+E**745790**；device 行注明 scripts 默认已切 exp。
