@@ -150,8 +150,7 @@ bash run.sh -r sim -v Ascend910B4
 | **会否再生** | **不会**被 `run.sh`/scripts 自动创建（默认已指 stable / pass-fix）；仅当有人 `mkdir` 旧名、或照错误文档链 `pass-probe-*` 误建 |
 | **已做** | 删空壳；全文纠 `pass-probe-…`→`pass-fix-…`（HANDOFF/AGENTS/README/registry/STATUS/INDEX 等）；[`ascendc-tests/INDEX.md`](../../ascendc-tests/INDEX.md) 加「更名防幽灵」；新增 [`scripts/cleanup-ascendc-test-ghosts.sh`](../../scripts/cleanup-ascendc-test-ghosts.sh) |
 | **禁名** | `fix-f203-alg21-kem-decaps-device-k4`（已更名）；`pass-probe-*`（误名，从未权威） |
-| **仍保留** | `fix-…-decaps-correctness-k4`（oracle，与 device 不同轨） |
-
+| **仍保留** | correctness 已迁入 `frozen/`（见下节） |
 
 ## 冻结 KEM Alg.19/20/21 correctness 三探针（同日续）
 
@@ -168,6 +167,15 @@ bash run.sh -r sim -v Ascend910B4
 | 原因 | 正确性路标完成；继任 **stable + pass-fix device** |
 | 判决 | 各目录 `FROZEN.md`；[`frozen/INDEX.md`](../../ascendc-tests/frozen/INDEX.md) |
 | 关闭 TODO | **T6 / T7a / T7c** |
-| 活跃文档 | device STATUS/INTEGRATION、notes、INDEX、regress 表改为只链 **FROZEN.md**；**禁止** INTEGRATION_PLAN 作实现依据 |
-| 脚本 | 仓库默认本就不指这三目录；`cleanup-ascendc-test-ghosts.sh` 禁名补全 |
-| **未推送** | 仅本地分支 `cursor/freeze-kem-correctness-oracles-8244`；待用户指令再推 |
+| 合入 | **main**（2026-07-20；不再另起分支） |
+
+## stable KEM ↔ liboqs 一键回归（同日续；随机字节 · CPU+SIM 全绿）
+
+| 项 | 说明 |
+|----|------|
+| **入口** | [`scripts/stable_kem_liboqs_roundtrip.sh`](../../scripts/stable_kem_liboqs_roundtrip.sh) |
+| **语义** | **先** `liboqs_kem_fixture.py --random`（`urandom` 64B `kem_seed`+32B `m`）→ **再**同字节喂 AscendC |
+| **AscendC 接线** | KeyGen `KEM_KG_EXT_SEED=1`；Encaps `M_FILE`；Decaps **`EK_KEM_SRC`+`DK_KEM_SRC`** |
+| **默认** | **CPU×1 + SIM×1** 都绿才算验收 |
+| **证据** | fixture `output/stable_kem_liboqs_rt/20260720_092533_195335/`；Decaps SIM D**286851**+E**746275** |
+

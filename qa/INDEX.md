@@ -12,7 +12,7 @@
 
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
-关键字：**【预研】**→**`#交付#` stable Decaps** · **冻结 KEM correctness×3** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理** · **T19i** 挂账
+关键字：**【预研】**→**`#交付#` stable Decaps** · **冻结 KEM correctness×3** · **`stable_kem_liboqs_roundtrip`（urandom·CPU+SIM 全绿）** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理** · **T19i**
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 
