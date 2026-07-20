@@ -104,3 +104,17 @@ bash run.sh -r sim -v Ascend910B4
 | 补记 | `qa/TODO` 正式挂 **T19i**；07-18 纪要「未提交」→ 已合入说明；本文件验收/DECAPS 路径按时间线澄清 |
 | 二次备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053530`**（4035 文件） |
 | 推送 | 文档补丁直接落 **`main`** |
+
+
+## T19i pass-probe/`pass-fix`：`fo_only`→`l18_l19`（同日续）
+
+目录：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（用户口中的 pass-probe 已更名）。
+
+| 项 | 内容 |
+|----|------|
+| 方案 | `INTEGRATION_PLAN` §7：探针本地覆盖 `l18_l19`；禁止改共享 Encrypt |
+| 实现 | pack 后 `SyncAll<isAIVOnly>`；AIV0 `KemDecFo`；Host 删 `fo_only` |
+| CPU | **PASS** |
+| SIM | **PASS** D**287037**+E**763886**；3 launch |
+| 拒绝 | CPU+SIM **PASS** |
+| 未做 | stable/exp Decaps 镜像（仍 SIM 4） |

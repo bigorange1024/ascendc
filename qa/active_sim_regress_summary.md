@@ -115,4 +115,4 @@
 | [`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | 1029406 | 早前 SIM PASS；STATUS 标待复验 | STATUS |
 | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a pass-fix；`c`/`K` max=0；行为基线 | STATUS 2026-07-15 |
 | [`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | n/a | SIM 2-session PASS；未记 Total tick | STATUS |
-| [`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) | **1032728**（D**286803**+E**745925**） | pass-fix；单库+1-session；`K` max=0；行为基线（`scripts/` Decaps 默认已切 exp） | STATUS 2026-07-18 |
+| [`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) | **1050923**（D**287037**+E**763886**） | Alg.21；**T19i** SIM **3** launch；单库+1session；拒绝绿 | STATUS 2026-07-20 |

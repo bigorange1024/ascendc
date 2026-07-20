@@ -157,7 +157,7 @@ ASCENDC_SIM_HOST_MODE=decaps_2session bash run.sh -r sim -v Ascend910B4
 | 项 | 归属 |
 |----|------|
 | **T2：SIM 单库合库 + 单 session** | **PASS**（2026-07-17 Cloud）：`prepare_dec_shim.sh` + 单 `ascendc_library`；默认 `decaps_1session` |
-| **T19i：SIM `fo_only` → `l18_l19` 尾（4→3）** | **本轮**（见 §7）；先本探针，再镜像 stable Decaps |
+| **T19i：SIM `fo_only` → `l18_l19` 尾（4→3）** | **本探针 PASS**（2026-07-20；D**287037**+E**763886**）；stable Decaps 待镜像 |
 | D+E 单 launch 融合 | 更后 |
 | `#交付#` / `examples/stable` Decaps | **已完成**（2026-07-20）；本探针仍作行为基线 |
 | 改 correctness 逻辑；从 frozen 抄 PKE | **禁止** |
@@ -215,6 +215,16 @@ CPU（不变）：仍 6 launch；末核 f203_kem_dec_pack_fo（pack+FO）
 - 不改 examples stable/exp Decaps（待本探针绿后再 `$规格$`/`#修改#`）
 - 不改 Encaps / PKE Encrypt
 - 不做 D+E 单 launch
+
+### 7.6 本探针落地证据（2026-07-20）
+
+| 项 | 结果 |
+|----|------|
+| 本地 TU | `kem/f203_encrypt_l18_l19_kernel.cpp`（CMake 改指；未改 Encrypt 共享树） |
+| Host | 删 `fo_only`；`l18_l19(..., cIn,z,K',K)` |
+| CPU 全链 | **PASS**（`K` max=0；仍 6 launch） |
+| SIM 全链 | **PASS**；tick D**287037**+E**763886**；3 launch |
+| E3 拒绝 | CPU+SIM **PASS** |
 
 ### T2 落地要点（已完成）
 
