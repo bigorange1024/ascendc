@@ -131,3 +131,12 @@ bash run.sh -r sim -v Ascend910B4
 | **理论** | **N 颗 AI Core ≈ N 路并行 stable**（实例级并行；≠ 单算子内双 AIV 分片） |
 | **状态** | 已写入 [`qa/TODO.md`](../TODO.md) §打开项 + §T23；**待开工** |
 | **非目标** | 不改现有 stable 默认单实例；见 TODO 验收草案 |
+
+
+## 本地备份 · 合入 main（同日续）
+
+| 项 | 说明 |
+|----|------|
+| 备份 | `bash backup-project.sh` → **`backup/v0.1_20260720080557`**（4072 文件） |
+| 范围 | 关闭 T13b/T11 + 挂账 T23 + 当日纪要 / INDEX / HANDOFF |
+| 合入 | feature `cursor/close-t13b-t11-superseded-8244` → **`main`** 并推送 |
