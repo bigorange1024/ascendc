@@ -94,6 +94,6 @@ bash run.sh -r sim -v Ascend910B4
 | 项 | 说明 |
 |----|------|
 | 纪要 / 索引 | 本日文件更名关键词；`qa/INDEX` · `qa/2026-07/INDEX` · `qa/TODO` · `AGENT_HANDOFF` · `AGENTS` · `README` · 各 `examples/*/INDEX` |
-| 本地备份 | `bash backup-project.sh` → `backup/v0.1_*`（白名单；不含 build/IO） |
+| 本地备份 | `bash backup-project.sh` → **`backup/v0.1_20260720053001`**（4035 文件；白名单；不含 build/IO） |
 | 合入 | feature `cursor/stable-kem-decaps-delivery-8244` → **`main`** 并推送 |
 | 里程碑 | PKE 三段 + KEM KeyGen/Encaps/**Decaps** **六算子 stable 齐** |
