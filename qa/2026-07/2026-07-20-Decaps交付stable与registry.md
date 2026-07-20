@@ -118,3 +118,16 @@ bash run.sh -r sim -v Ascend910B4
 **仍保留**：探针 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) 作 compute 对照（host 喂 `a_hat` / `KEYGEN_ORCHESTRATE`）；**不**再排 T13b/T11 晋级。
 
 打开项主线仍为 **T19i**（若未合入）· **T2-npu** · **T21**。
+
+
+## 挂账 T23：多 AI Core 并行 stable（同日续）
+
+用户指定下一实验：
+
+| 项 | 内容 |
+|----|------|
+| **ID** | **T23**（P1） |
+| **首刀** | **2 颗 AI Core**，每 Core 跑一份 **stable** 算子（乃至一轮 **round-trip**） |
+| **理论** | **N 颗 AI Core ≈ N 路并行 stable**（实例级并行；≠ 单算子内双 AIV 分片） |
+| **状态** | 已写入 [`qa/TODO.md`](../TODO.md) §打开项 + §T23；**待开工** |
+| **非目标** | 不改现有 stable 默认单实例；见 TODO 验收草案 |
