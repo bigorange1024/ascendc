@@ -547,6 +547,29 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 若 $A$ 的每个元素都属于 $B$，称 $A$ 为 $B$ 的\textbf{子集}，记 $A\subseteq B$。
 \end{definition}
 
+\begin{definition}[幂集]
+设 $V$ 为集合。由 $V$ 的\textbf{全部子集}组成的集合称为 $V$ 的\textbf{幂集}，记作 $2^{V}$
+（亦常记作 $\mathcal{P}(V)$）。用集合造集的写法即
+\[
+2^{V}
+\;=\;
+\{\,A\mid A\subseteq V\,\}.
+\]
+特别地：$\emptyset\in 2^{V}$，$V\in 2^{V}$；若 $V$ 有限且 $|V|=n$，则 $|2^{V}|=2^{n}$
+（这正是记号 $2^{V}$ 的来源）。
+
+映射 $f:2^{V}\to 2^{V}$ 表示：输入是 $V$ 的某个子集，输出仍是 $V$ 的某个子集。
+\end{definition}
+
+\begin{example}[纯数学：幂集]
+令 $V=\{a,b\}$。则
+\[
+2^{V}
+=\bigl\{\,\emptyset,\;\{a\},\;\{b\},\;\{a,b\}\,\bigr\},
+\qquad |2^{V}|=4=2^{2}.
+\]
+\end{example}
+
 \begin{definition}[笛卡尔积]
 设 $A,B$ 为集合。其\textbf{笛卡尔积}为
 \[
@@ -933,10 +956,12 @@ A_\infty=\bigcup_{k\ge 0}A_k.
 
 \subsubsection{闭包算子}
 
-不必每次都提运算 $\mathcal{R}$，也可以直接把「取闭包」看成作用在幂集上的函数。
+不必每次都提运算 $\mathcal{R}$，也可以直接把「取闭包」看成作用在幂集上的函数
+（幂集 $2^{U}$ 的定义见 §3.2）。
 
 \begin{definition}[闭包算子]
-设 $U$ 为集合。映射 $\mathrm{Cl}:2^{U}\to 2^{U}$ 称为\textbf{闭包算子}，若对任意 $A,B\subseteq U$：
+设 $U$ 为集合。映射 $\mathrm{Cl}:2^{U}\to 2^{U}$ 称为\textbf{闭包算子}，若对任意 $A,B\subseteq U$
+（即对任意 $A,B\in 2^{U}$）：
 \begin{enumerate}
   \item \textbf{扩张性}：$A\subseteq \mathrm{Cl}(A)$；
   \item \textbf{单调性}：$A\subseteq B\Rightarrow \mathrm{Cl}(A)\subseteq\mathrm{Cl}(B)$；
@@ -1197,7 +1222,8 @@ $\mathrm{Dep}^*(T_1)\cup\mathrm{Dep}^*(T_2)$。
 \end{proposition}
 
 \begin{proposition}[$\mathrm{Dep}^*$ 作为幂集上的闭包算子]
-定义 $\mathrm{Cl}:2^{V}\to 2^{V}$ 为 $\mathrm{Cl}(A)=\mathrm{Dep}^*(A)$。则 $\mathrm{Cl}$ 满足：
+定义 $\mathrm{Cl}:2^{V}\to 2^{V}$ 为 $\mathrm{Cl}(A)=\mathrm{Dep}^*(A)$
+（此处 $2^{V}$ 为 $V$ 的幂集，见 §3.2）。则 $\mathrm{Cl}$ 满足：
 \begin{enumerate}
   \item \textbf{扩张}：$A\subseteq\mathrm{Cl}(A)$；
   \item \textbf{单调}：$A\subseteq B\Rightarrow\mathrm{Cl}(A)\subseteq\mathrm{Cl}(B)$；
