@@ -1,6 +1,7 @@
 /**
  * @file main_kem_decaps_phase_e_run.cpp
- * @brief Phase-E Host 编排：G+Encrypt+FO（可被全链 / Phase-E-only 复用）。
+ * @brief Phase-E Host 编排：G+Encrypt+FO。
+ * SIM：prep → l18_l19（pack+FO）；CPU：分段 + pack_fo（T19i #修改#）。
  */
 #include "main_kem_decaps_phase_e_run.hpp"
 
@@ -24,7 +25,6 @@ extern void GenerateTiling(TilingData &data);
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
-#include "aclrtlaunch_f203_kem_dec_fo_only.h"
 #include "aclrtlaunch_f203_kem_dec_phase_e_prep.h"
 #else
 #include "tikicpulib.h"
@@ -286,14 +286,11 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     uint8_t *e1Dev = reDev + F203EncryptFull::kReE1ByteOff;
     uint8_t *e2Dev = reDev + F203EncryptFull::kReE2ByteOff;
 
-    std::fprintf(stderr, "[kem-dec-e] launch l18_l19 (inline pack -> c')\n");
+    // T19i：l18_l19 内联 pack + FO → K；不再单独 launch fo_only（SIM 3）
+    std::fprintf(stderr, "[kem-dec-e] launch l18_l19 (inline pack + FO -> K)\n");
     ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
                                               tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cPrimeDev,
-                                              nullptr);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
-
-    std::fprintf(stderr, "[kem-dec-e] launch fo_only (c vs c' -> K)\n");
-    ACLRT_LAUNCH_KERNEL(f203_kem_dec_fo_only)(1, stream, cPrimeDev, cInDev, zDev, kPrimeDev, kOutDev);
+                                              nullptr, cInDev, zDev, kPrimeDev, kOutDev);
     CHECK_ACL(aclrtSynchronizeStream(stream));
 
     CHECK_ACL(aclrtMemcpy(cPrimeHost, cBytes, cPrimeDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));

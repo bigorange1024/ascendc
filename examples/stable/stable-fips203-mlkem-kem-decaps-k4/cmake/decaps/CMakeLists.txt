@@ -70,13 +70,14 @@ if(CMAKE_INSTALL_PREFIX STREQUAL /usr/local)
     set(CMAKE_INSTALL_PREFIX "${KEM_ROOT}/out" CACHE STRING "install prefix" FORCE)
 endif()
 
+# T19i：l18_l19 用 kem/ 本地覆盖（pack 尾同核 FO）
 set(ENCRYPT_KERNEL_FILES
     ${KEM_DIR}/f203_kem_dec_phase_e_prep_entry.cpp
     ${KEM_DIR}/f203_kem_dec_pack_fo_entry.cpp
     ${COMPUTE_DIR}/f203_encrypt_ntt_y_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_at_jp_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_intt_e1_kernel.cpp
-    ${COMPUTE_DIR}/f203_encrypt_l18_l19_kernel.cpp
+    ${KEM_DIR}/f203_encrypt_l18_l19_kernel.cpp
 )
 
 set(CUSTOM_ASCEND310P_LIST "Ascend310P1" "Ascend310P3")
