@@ -2106,47 +2106,47 @@ INDEX 菜单上标绿的项，只是构造 $\Gamma$ 时可以去翻的证据来�
 \centering
 \begin{tikzpicture}[
   box/.style={draw, rounded corners=2.5pt, align=center, font=\small,
-              minimum width=2.7cm, minimum height=1.1cm, inner sep=4pt},
-  boxb/.style={box, minimum width=2.45cm},
+              minimum width=2.6cm, minimum height=1.1cm, inner sep=4pt},
+  boxb/.style={box, minimum width=2.2cm},
   arr/.style={-{Stealth[length=2.4mm]}, thick},
   title/.style={font=\small\bfseries, anchor=west},
   hint/.style={font=\footnotesize, text=gray!60!black, align=center}
 ]
-  % ---- 层 A ----
+  % ---- 层 A：三框拉开到近版心宽度 ----
   \node[title] at (0,0) {层 A：数据依赖（$\approx$ 图~\ref{fig:ch2-fips-dataflow}）};
-  \node[box, fill=orange!12] (a19) at (1.6,-1.45) {Alg.19};
-  \node[box, fill=blue!12]  (a13) at (5.2,-1.45) {Alg.13};
-  \node[box, fill=orange!14] (a16) at (8.8,-1.45) {Alg.16};
+  \node[box, fill=orange!12] (a19) at (2.0,-1.5) {Alg.19};
+  \node[box, fill=blue!12]  (a13) at (7.5,-1.5) {Alg.13};
+  \node[box, fill=orange!14] (a16) at (13.0,-1.5) {Alg.16};
   \draw[arr] (a19) -- (a13);
   \draw[arr] (a13) -- (a16);
-  \node[hint] at (5.2,-2.5)
+  \node[hint] at (7.5,-2.6)
     {回答：字节从哪来、到哪去；\textbf{不}回答谁已经获证};
 
-  % ---- 层 B（与层 A 拉开；四框等距） ----
-  \node[title] at (0,-3.9)
+  % ---- 层 B：四框等距，中心距加大，箭头可见 ----
+  \node[title] at (0,-4.1)
     {层 B：能力 DAG $+$ $\Gamma$（$\approx$ 表~\ref{tab:ch312-assets-math}）};
-  \node[boxb, fill=blue!14] (p0) at (1.25,-5.5)
+  \node[boxb, fill=blue!14] (p0) at (1.8,-5.8)
     {P0\\$\in\Gamma$};
-  \node[boxb, fill=blue!14] (p1) at (3.95,-5.5)
+  \node[boxb, fill=blue!14] (p1) at (5.6,-5.8)
     {P1\\$\in\Gamma$};
-  \node[boxb, fill=blue!14] (p2) at (6.65,-5.5)
+  \node[boxb, fill=blue!14] (p2) at (9.4,-5.8)
     {P2\\$\in\Gamma$};
-  \node[boxb, fill=orange!28, densely dashed, thick] (tl) at (9.35,-5.5)
+  \node[boxb, fill=orange!28, densely dashed, thick] (tl) at (13.2,-5.8)
     {Tail\\$\notin\Gamma$};
   \draw[arr] (p0) -- (p1);
   \draw[arr] (p1) -- (p2);
   \draw[arr] (p2) -- (tl);
-  \node[hint] at (5.3,-6.7)
+  \node[hint] at (7.5,-7.1)
     {回答：谁依赖谁、谁已获证；\textbf{不}回答这次具体怎么改};
 
-  % ---- 层 C ----
-  \node[title] at (0,-8.0) {层 C：一次配置轨迹（device$\to$stable）};
-  \node[box, fill=green!12] (q0) at (1.6,-9.45) {$(\Gamma_0,F_0)$};
-  \node[box, fill=green!12] (q1) at (5.2,-9.45) {$\mathsf{Probe}$};
-  \node[box, fill=green!16] (q2) at (8.8,-9.45) {$T\in\Gamma_m$};
+  % ---- 层 C：与层 A 同宽对齐 ----
+  \node[title] at (0,-8.5) {层 C：一次配置轨迹（device$\to$stable）};
+  \node[box, fill=green!12] (q0) at (2.0,-10.0) {$(\Gamma_0,F_0)$};
+  \node[box, fill=green!12] (q1) at (7.5,-10.0) {$\mathsf{Probe}$};
+  \node[box, fill=green!16] (q2) at (13.0,-10.0) {$T\in\Gamma_m$};
   \draw[arr] (q0) -- (q1);
   \draw[arr] (q1) -- (q2);
-  \node[hint] at (5.2,-10.5)
+  \node[hint] at (7.5,-11.15)
     {回答：这次作业怎么获证、何时接受；\textbf{不是}把整库拷一遍};
 \end{tikzpicture}
 \caption{三层对象完全体：数据流 / 能力库 $\Gamma$ / 配置轨迹}
