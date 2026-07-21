@@ -12,7 +12,7 @@
 
 ### 2026-07-21 — [连续 SIM tcache 对照矩阵](2026-07/2026-07-21-连续SIM-tcache对照矩阵.md)
 
-关键字：C0–C5 各×3 · **18/18 绿 tcache 0** · 归类 CAModel/glibc 宿主机偶发 · **不改** roundtrip/stable 算子
+关键字：公司 C0–C5×3 **18/18 绿** · 家里 EXP1–4b 全绿 · **两侧均未复现 tcache** · 归类 CAModel/glibc 偶发 · **不改** roundtrip/stable
 
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 

@@ -50,3 +50,19 @@ echo EXIT:$?
 ```
 
 再遇 `tcache`：同 fixture 单独 Decaps SIM；绿则记环境偶发，勿当算法回归。
+
+
+## 家里 WSL 对照（同日合入；另一 Agent）
+
+环境：WSL2，Mem **3.7 Gi**（available ≈2.6–2.8 Gi）。日志原路径 `/tmp/tcache_rt/`。
+
+| 组 | 条件 | EXIT | 结果 |
+|----|------|------|------|
+| EXP1 | 全链 CPU+SIM（pipefail+tee） | **0** | **PASS** |
+| EXP2 | `CAMODEL_SKIP_ADX_WORK_PATH=1` + `SKIP_CPU=1` | **0** | **PASS** |
+| EXP1b | 基线再跑 `SKIP_CPU=1` | **0** | **PASS** |
+| EXP3 | Phase 间 sleep **45s** | **0** | **PASS** |
+| EXP4a | 只 KeyGen→Decaps | **0** | **PASS** |
+| EXP4b | 只 Encaps→Decaps | **0** | **PASS** |
+
+全部无 `tcache`/`Aborted`；无 host core。ADX skip 与否均绿 → **不能**据此排除 dump 路径。与公司侧 C0–C5 **一致**：**本日两侧均未复现**；维持「CAModel/glibc 宿主机偶发、非算法回归、不改 roundtrip/stable」。
