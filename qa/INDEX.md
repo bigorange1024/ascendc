@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-21 — [连续 SIM tcache 对照矩阵](2026-07/2026-07-21-连续SIM-tcache对照矩阵.md)
+
+关键字：C0–C5 各×3 · **18/18 绿 tcache 0** · 归类 CAModel/glibc 宿主机偶发 · **不改** roundtrip/stable 算子
+
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
 关键字：**【预研】**→**`#交付#` stable Decaps** · **T19i SIM 3 全链齐** · **冻结 KEM correctness×3** · **`stable_kem_liboqs_roundtrip`** · **WSL 连续 SIM `tcache` 偶发** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理**

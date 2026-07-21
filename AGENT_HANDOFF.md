@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-20（WSL 连续 SIM 偶发记入 · roundtrip Smoke · **main**）
+> **最后刷新**：2026-07-21（tcache 对照矩阵 18/18 绿 · 归类偶发 · **不改** roundtrip）
 
 ---
 
@@ -41,7 +41,7 @@ echo EXIT:$?
 | 注意 | 说明 |
 |------|------|
 | **验收口径** | CPU 全绿 + SIM 全绿才算端到端通过 |
-| **WSL 偶发** | 连续 SIM（KeyGen→Encaps→立刻 Decaps）可能 Phase-D `tcache … unaligned` core dump；**同 fixture 单独** Decaps SIM 往往仍绿 → **CAModel/堆偶发**，非稳定算法错（见当日 qa） |
+| **WSL 偶发** | 连续 SIM 后 Decaps Phase-D 曾见 `tcache … unaligned` abort；**对照矩阵 C0–C5 各×3 = 18/18 绿、tcache 0** → 偶发率低，归类 **CAModel/glibc 宿主机堆损坏**（见 [`qa/2026-07/2026-07-21-连续SIM-tcache对照矩阵.md`](qa/2026-07/2026-07-21-连续SIM-tcache对照矩阵.md)）；**未**改 roundtrip/stable |
 | **复验** | 遇上述失败：对 Decaps 目录单独 `bash run.sh -r sim -v Ascend910B4`（同次 ek/dk/c）；绿则记环境偶发 |
 | **定点** | `KEM_SEED_HEX=… M_HEX=… bash scripts/stable_kem_liboqs_roundtrip.sh` |
 

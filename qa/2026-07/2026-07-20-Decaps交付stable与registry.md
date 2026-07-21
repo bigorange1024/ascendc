@@ -286,6 +286,8 @@ echo EXIT:$?
 
 若端到端 SIM Decaps 再遇 `tcache`：用同 fixture 对 Decaps 目录单独 `run.sh -r sim` 复验；绿则记环境偶发，勿当算法回归。
 
+> **2026-07-21 对照矩阵**：见 [2026-07-21-连续SIM-tcache对照矩阵.md](2026-07-21-连续SIM-tcache对照矩阵.md) — C0–C5 各×3，**18/18 绿、tcache 0**；未改脚本。
+
 
 ## 性能登记刷新（同日续；T22）
 

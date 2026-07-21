@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-20（T19i SIM 3 合入 · 冻结 KEM correctness×3 · `stable_kem_liboqs_roundtrip` CPU+SIM 全绿 · **main**）
+**最近刷新**：2026-07-21（连续 SIM `tcache` 对照矩阵 **18/18 绿 / 0 tcache** → 归类宿主机偶发；**不改** roundtrip）
 
 ---
 
