@@ -1973,39 +1973,40 @@ P1 某能力的 tiling/同步壳变更后，曾基于旧 iface 的 P2/P3 证书�
 \subsection{回扣第~\ref{sec:hook}~章：流程如何对应本章数学}
 \label{sec:mathbg-hookback}
 
-第~\ref{sec:hook}~章讲的是\textbf{已经发生}的工程故事；本章讲的是\textbf{用来描述故事的语言}。
-本节\textbf{不引入新定义}，只做对照。
-由于中间隔了许多页，下面把第~2~章里最关键的表/图\textbf{重新画一遍}，并直接标上本章符号
+第~\ref{sec:hook}~章讲的是\textbf{已经走过的}工程故事；本章给的是\textbf{用来把故事说清楚的一套语言}。
+本节\textbf{不再引入新定义}，只做对照。
+中间隔了不少页，第~2~章那些表和图容易对不上号。
+所以下面把最关键的几张\textbf{按本章符号重画一遍}
 （$\Gamma$、$\mathrm{Dep}^*$、$\mathrm{Missing}$、接缝、配置转移等），
-让读者看到「加上数学表达式之后的完全体」长什么样。
-第~2~章原件仍保留备查：表~\ref{tab:ch2-assets}、图~\ref{fig:ch2-explore}、图~\ref{fig:ch2-fips-dataflow}、表~\ref{tab:ch2-launch}。
+让读者一眼看出：加上数学记号之后，原先那张工程图长什么样。
+第~2~章里的原表、原图仍保留备查：表~\ref{tab:ch2-assets}、图~\ref{fig:ch2-explore}、图~\ref{fig:ch2-fips-dataflow}、表~\ref{tab:ch2-launch}。
 
 \paragraph{总对照表（先扫一眼）}
 \begin{table}[H]
 \centering\small
-\caption{第~2~章流程 / 物件与本章数学对象总对照}
+\caption{第~2~章里的流程 / 物件，与本章数学对象的总对照}
 \label{tab:ch312-overview}
 \begin{tabular}{@{}L{5.0cm}L{8.8cm}@{}}
   \toprule
-  第~\ref{sec:hook}~章中的流程 / 物件 & 本章对应的数学对象（节号直觉） \\
+  第~\ref{sec:hook}~章里的流程 / 物件 & 本章里对应什么（节号凭直觉即可） \\
   \midrule
-  表~\ref{tab:ch2-assets} 资产清单「绿积木」 & 已证书集 $\Gamma$；顶点获证（§3.5） \\
-  活跃 INDEX 探针列表 & 能力菜单（$\Sigma$ 的线索）；\textbf{不是} $L$，也\textbf{不必}等于 $\Gamma$ \\
+  表~\ref{tab:ch2-assets} 资产清单里的「绿积木」 & 已获证集合 $\Gamma$；顶点已经拿到证书（§3.5） \\
+  活跃 INDEX 上的探针列表 & 能力菜单（$\Sigma$ 的线索）；\textbf{不是}语言 $L$，也\textbf{不必}等于 $\Gamma$ \\
   图~\ref{fig:ch2-explore}：P0/P1$\to$分段$\to$stable PKE & 能力 DAG 上的生长路径；拓扑序（§3.4） \\
-  「做 KEM 前心里已有清单」 & 手工对照 $\mathrm{Dep}^*(T)$ 与 $\Gamma$；缺项当时未显式算出 \\
-  图~\ref{fig:ch2-fips-dataflow}：Alg.19/16/13 数据流 & \textbf{数据}依赖图（汇点）；与能力 DAG、派生树\textbf{分层}（§3.6） \\
-  Alg.16 尾缝、2-launch 接缝、拼 $\mathit{dk}$ & 接缝边 / $\mathsf{Compose}$；组合不免费（§3.9） \\
-  correctness 高成本探索 & 只有菜单与伪代码 $\approx$ 只有 $\Sigma$；缺少成员判定（§3.9） \\
-  device 去 vendor $\to$ stable 晋级 & $\mathsf{Probe}/\mathsf{Certify}$；配置轨迹走到接受（§3.10） \\
-  「上次 PASS 仍可能翻车」的担忧 & 证书非单调；$\mathsf{Dirty}$（§3.11） \\
+  「做 KEM 前心里大概有张清单」 & 手工把 $\mathrm{Dep}^*(T)$ 和 $\Gamma$ 对了一遍；缺项当时并没有显式算出来 \\
+  图~\ref{fig:ch2-fips-dataflow}：Alg.19/16/13 的数据流 & \textbf{数据}依赖图（往汇点汇）；要和能力 DAG、派生树\textbf{分开看}（§3.6） \\
+  Alg.16 尾缝、2-launch 接缝、拼 $\mathit{dk}$ & 接缝边 / $\mathsf{Compose}$；组合并不免费（§3.9） \\
+  correctness 那条高成本探索路 & 手里只有菜单和伪代码 $\approx$ 只有 $\Sigma$；缺成员判定（§3.9） \\
+  device 去掉 vendor $\to$ 再晋级 stable & $\mathsf{Probe}/\mathsf{Certify}$；配置轨迹一路走到接受（§3.10） \\
+  「上次 PASS 了，这次仍可能翻车」 & 证书可以往回缩；$\mathsf{Dirty}$（§3.11） \\
   \bottomrule
 \end{tabular}
 \end{table}
 
 \paragraph{流程一：资产清单的「数学完全体」}
-表~\ref{tab:ch2-assets}在第~2~章只回答「手里有什么、证书形态是什么」。
-表~\ref{tab:ch312-assets-math}把它重画成开任务时刻相对目标 $T=\texttt{kem.keygen.k4}$ 的闭包对照：
-增加「$\in\Gamma$？」「$\in\mathrm{Dep}^*(T)$？」「角色」三列。
+表~\ref{tab:ch2-assets}在第~2~章只回答两件事：手里有什么、证书长什么样。
+表~\ref{tab:ch312-assets-math}把它重画成开任务那一刻、相对目标 $T=\texttt{kem.keygen.k4}$ 的闭包对照，
+多加了三列：「在不在 $\Gamma$ 里？」「在不在 $\mathrm{Dep}^*(T)$ 里？」「扮演什么角色」。
 \begin{table}[H]
 \centering\footnotesize
 \caption{资产清单的数学完全体（相对 $T=\texttt{kem.keygen.k4}$ 的开任务快照）}
@@ -2014,31 +2015,33 @@ P1 某能力的 tiling/同步壳变更后，曾基于旧 iface 的 P2/P3 证书�
   \toprule
   层 & 能力（简述） & $\in\Gamma$？ & $\in\mathrm{Dep}^*(T)$？ & 角色（本章用语） \\
   \midrule
-  P0 & DataCopy / MMAD / TPipe 等 & 是 & 是 & 已证书祖先 \\
-  P1 & NTT / SampleNTT / CBD / \ldots & 是 & 是 & 已证书祖先 \\
-  P2 & Alg.13 分段与 device & 是 & 是 & 已证书祖先 \\
+  P0 & DataCopy / MMAD / TPipe 等 & 是 & 是 & 已获证的祖先 \\
+  P1 & NTT / SampleNTT / CBD / \ldots & 是 & 是 & 已获证的祖先 \\
+  P2 & Alg.13 分段与 device & 是 & 是 & 已获证的祖先 \\
   P2 & \textbf{stable PKE KeyGen} & \textbf{是} & \textbf{是} & 直接先决（$\in\Gamma\cap\mathrm{Dep}^*(T)$） \\
   --- & \textbf{Alg.16 尾缝 / 2-launch 接缝} & \textbf{否} & \textbf{是} & \textbf{缺项} $\mathrm{Missing}_\Gamma(T)$ \\
-  P3 & KEM KeyGen correctness & （标本） & --- & 语义 oracle；\textbf{非}合法派生证据 \\
-  P3 & KEM KeyGen device / stable & 开任务时否 & 是（目标侧） & 待 $\mathsf{Certify}$ 的 $T$ \\
+  P3 & KEM KeyGen correctness & （标本） & --- & 语义对照用；\textbf{不算}合法派生的证据 \\
+  P3 & KEM KeyGen device / stable & 开任务时否 & 是（目标侧） & 还等着 $\mathsf{Certify}$ 的 $T$ \\
   \bottomrule
 \end{tabular}\\[4pt]
 {\footnotesize
-开任务近似：$\Gamma\supseteq\{\mathrm{P0},\mathrm{P1},\mathrm{P2}\}$，
-$\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
-故相对 $\Gamma$ \textbf{未}闭包已满。
-菜单（INDEX）上的绿项只是构造 $\Gamma$ 的证据来源候选，\textbf{不能}代替本表。}
+开任务时可以粗略写成：$\Gamma\supseteq\{\mathrm{P0},\mathrm{P1},\mathrm{P2}\}$，
+且 $\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
+所以相对当时的 $\Gamma$，闭包\textbf{还没齐}。
+INDEX 菜单上标绿的项，只是构造 $\Gamma$ 时可以去翻的证据来源，\textbf{代替不了}本表。
+}
 \end{table}
 
-由此：
+由此可以看清两件事：
 \begin{itemize}
-  \item 「站在 stable PKE 上」数学上应写成 $\texttt{pke.keygen.k4}\in\Gamma$，而非仅目录名含 \texttt{stable}；
-  \item 菜单、$\Gamma$、$\mathrm{Missing}_\Gamma(T)$ 三者不可互相替代（第一组问题的落点）。
+  \item 「站在 stable PKE 上」在数学上应写成 $\texttt{pke.keygen.k4}\in\Gamma$，不能只看目录名里有没有 \texttt{stable}；
+  \item 菜单、$\Gamma$、$\mathrm{Missing}_\Gamma(T)$ 是三样东西，谁也替不了谁（这正是第一组问题的落点）。
 \end{itemize}
 
 \paragraph{流程二：探路图的「数学完全体」}
-图~\ref{fig:ch2-explore}是仓库时间线。
-图~\ref{fig:ch312-explore-math}在同一骨架上标出：拓扑序方向、已证书集染色、缺项、以及 correctness 旁路（$\notin L$ 的探索）。
+图~\ref{fig:ch2-explore}画的是仓库时间线。
+图~\ref{fig:ch312-explore-math}沿用同一骨架，标出拓扑序方向、哪些点已获证、哪里是缺项，
+以及 correctness 那条旁路（沿着它走，$\notin L$）。
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
@@ -2053,7 +2056,7 @@ $\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
   \node[box, fill=blue!12] (se) at (2.3,1.2) {$s,e$ 探针\\$\in\Gamma$};
   \node[box, fill=blue!18] (pke) at (3.5,1.2) {P2 PKE\\$\in\Gamma$};
   \draw[arr] (v2) -- (ahat) -- (se) -- (pke);
-  \node[note, blue!60!black] at (1.75,1.95) {拓扑序 $\longrightarrow$（先底层后上层）};
+  \node[note, blue!60!black] at (1.75,1.95) {拓扑序 $\longrightarrow$（先底层，后上层）};
 
   \node[box, fill=orange!35, densely dashed] (tail) at (3.5,0) {Alg.16 尾缝\\$\notin\Gamma$（缺项）};
   \node[box, fill=orange!20] (kem) at (3.5,-1.1) {P3 KEM.KG\\目标 $T$};
@@ -2066,8 +2069,8 @@ $\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
   \draw[arr, densely dotted] (corr) -- node[below, font=\scriptsize]{oracle$\neq L$} (kem);
 
   \node[note] at (0.2,-2.15) {
-    实线边 $\approx$ 能力 DAG 上可引用的依赖 / 接缝；\\
-    虚线框 $=$ 开任务时未获证缺项；灰框 $=$ 语义对照，不充当合法派生模板。
+    实线边 $\approx$ 能力 DAG 上可以引用的依赖 / 接缝；\\
+    虚线框 $=$ 开任务时还没拿到证书的缺项；灰框 $=$ 语义对照，不当合法派生的模板。
   };
 \end{tikzpicture}
 \caption{工程探路图的数学完全体（$\Gamma$、拓扑序、缺项、oracle 旁路）}
@@ -2075,13 +2078,13 @@ $\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
 \end{figure}
 
 \begin{itemize}
-  \item 蓝底结点：开任务时已在 $\Gamma$ 中；探路顺序与拓扑序一致；
-  \item 虚线橙框尾缝：$\in\mathrm{Dep}^*(T)$ 但 $\notin\Gamma$，即缺项；
-  \item correctness 灰框：可作字节 oracle，但\textbf{不}自动给出 $w\in L$。
+  \item 蓝底结点：开任务时已经在 $\Gamma$ 里；探路顺序和拓扑序一致；
+  \item 虚线橙框里的尾缝：落在 $\mathrm{Dep}^*(T)$ 里，却不在 $\Gamma$ 里，所以是缺项；
+  \item correctness 灰框：可以拿来当字节对照，但\textbf{不会}自动推出 $w\in L$。
 \end{itemize}
 
-\paragraph{流程三：目标、闭包与缺项（用完全体表直接读）}
-选定 $T=\texttt{kem.keygen.k4}$ 后，由表~\ref{tab:ch312-assets-math}与图~\ref{fig:ch312-explore-math}直接读出：
+\paragraph{流程三：目标、闭包与缺项（对着完全体表直接读）}
+一旦选定 $T=\texttt{kem.keygen.k4}$，表~\ref{tab:ch312-assets-math}和图~\ref{fig:ch312-explore-math}合在一起就能直接读出：
 \begin{align*}
 \mathrm{Dep}^*(T)
 &\;\supseteq\;
@@ -2093,62 +2096,78 @@ $\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
 &\;\ni\;
 \mathrm{Tail}.
 \end{align*}
-第~2~章当时\textbf{未}强制先交 $\mathrm{Missing}_\Gamma(T)$ 再写码——这正是闭包表门禁化的缺口。
+第~2~章当时\textbf{并没有}强制「先交出 $\mathrm{Missing}_\Gamma(T)$，再动手写码」——
+闭包表要变成门禁，缺口就在这里。
 
-\paragraph{流程四：两张图为何不能混读——三层对象完全体}
-图~\ref{fig:ch2-fips-dataflow}是\textbf{数据}依赖；图~\ref{fig:ch2-explore}更接近\textbf{能力}生长。
-图~\ref{fig:ch312-three-layers}把三层画在同一页，避免翻页后串层。
+\paragraph{流程四：两张图为什么不能混着读——三层对象画在一页}
+图~\ref{fig:ch2-fips-dataflow}讲的是\textbf{数据}怎么依赖；图~\ref{fig:ch2-explore}更接近\textbf{能力}怎么长出来。
+图~\ref{fig:ch312-three-layers}把三层画在同一页，免得翻来翻去串层。
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  x=1cm, y=1cm,
-  box/.style={draw, rounded corners=2pt, align=center, font=\scriptsize,
-              minimum width=2.4cm, minimum height=0.7cm},
-  arr/.style={-{Stealth[length=1.6mm]}, thick},
-  title/.style={font=\small\bfseries}
+  box/.style={draw, rounded corners=2.5pt, align=center, font=\small,
+              minimum width=2.7cm, minimum height=1.1cm, inner sep=4pt},
+  boxb/.style={box, minimum width=2.45cm},
+  arr/.style={-{Stealth[length=2.4mm]}, thick},
+  title/.style={font=\small\bfseries, anchor=west},
+  hint/.style={font=\footnotesize, text=gray!60!black, align=center}
 ]
-  % Layer A
-  \node[title] at (2.2,4.35) {层 A：数据依赖（$\approx$ 图~\ref{fig:ch2-fips-dataflow}）};
-  \node[box, fill=orange!10] (a19) at (0,3.5) {Alg.19};
-  \node[box, fill=blue!10] (a13) at (2.2,3.5) {Alg.13};
-  \node[box, fill=orange!12] (a16) at (4.4,3.5) {Alg.16};
-  \draw[arr] (a19) -- (a13); \draw[arr] (a13) -- (a16);
-  \node[font=\footnotesize, text=gray] at (2.2,2.95) {回答：字节从哪来到哪去；\textbf{不}回答谁已获证};
+  % ---- 层 A ----
+  \node[title] at (0,0) {层 A：数据依赖（$\approx$ 图~\ref{fig:ch2-fips-dataflow}）};
+  \node[box, fill=orange!12] (a19) at (1.6,-1.45) {Alg.19};
+  \node[box, fill=blue!12]  (a13) at (5.2,-1.45) {Alg.13};
+  \node[box, fill=orange!14] (a16) at (8.8,-1.45) {Alg.16};
+  \draw[arr] (a19) -- (a13);
+  \draw[arr] (a13) -- (a16);
+  \node[hint] at (5.2,-2.5)
+    {回答：字节从哪来、到哪去；\textbf{不}回答谁已经获证};
 
-  % Layer B
-  \node[title] at (2.2,2.35) {层 B：能力 DAG $+$ $\Gamma$（$\approx$ 表~\ref{tab:ch312-assets-math}）};
-  \node[box, fill=blue!12] (p0) at (0,1.5) {P0$\in\Gamma$};
-  \node[box, fill=blue!12] (p1) at (1.5,1.5) {P1$\in\Gamma$};
-  \node[box, fill=blue!12] (p2) at (3.0,1.5) {P2$\in\Gamma$};
-  \node[box, fill=orange!30, densely dashed] (tl) at (4.5,1.5) {Tail$\notin\Gamma$};
-  \draw[arr] (p0)--(p1)--(p2)--(tl);
-  \node[font=\footnotesize, text=gray] at (2.2,0.95) {回答：谁依赖谁、谁已获证；\textbf{不}回答本次改写步骤};
+  % ---- 层 B（与层 A 拉开；四框等距） ----
+  \node[title] at (0,-3.9)
+    {层 B：能力 DAG $+$ $\Gamma$（$\approx$ 表~\ref{tab:ch312-assets-math}）};
+  \node[boxb, fill=blue!14] (p0) at (1.25,-5.5)
+    {P0\\$\in\Gamma$};
+  \node[boxb, fill=blue!14] (p1) at (3.95,-5.5)
+    {P1\\$\in\Gamma$};
+  \node[boxb, fill=blue!14] (p2) at (6.65,-5.5)
+    {P2\\$\in\Gamma$};
+  \node[boxb, fill=orange!28, densely dashed, thick] (tl) at (9.35,-5.5)
+    {Tail\\$\notin\Gamma$};
+  \draw[arr] (p0) -- (p1);
+  \draw[arr] (p1) -- (p2);
+  \draw[arr] (p2) -- (tl);
+  \node[hint] at (5.3,-6.7)
+    {回答：谁依赖谁、谁已获证；\textbf{不}回答这次具体怎么改};
 
-  % Layer C
-  \node[title] at (2.2,0.35) {层 C：一次配置轨迹（device$\to$stable）};
-  \node[box, fill=green!10] (q0) at (0,-0.5) {$(\Gamma_0,F_0)$};
-  \node[box, fill=green!10] (q1) at (2.2,-0.5) {$\mathsf{Probe}$};
-  \node[box, fill=green!12] (q2) at (4.4,-0.5) {$T\in\Gamma_m$};
-  \draw[arr] (q0)--(q1)--(q2);
-  \node[font=\footnotesize, text=gray] at (2.2,-1.15) {回答：这次作业如何获证 / 接受；\textbf{不是}整库拷贝};
+  % ---- 层 C ----
+  \node[title] at (0,-8.0) {层 C：一次配置轨迹（device$\to$stable）};
+  \node[box, fill=green!12] (q0) at (1.6,-9.45) {$(\Gamma_0,F_0)$};
+  \node[box, fill=green!12] (q1) at (5.2,-9.45) {$\mathsf{Probe}$};
+  \node[box, fill=green!16] (q2) at (8.8,-9.45) {$T\in\Gamma_m$};
+  \draw[arr] (q0) -- (q1);
+  \draw[arr] (q1) -- (q2);
+  \node[hint] at (5.2,-10.5)
+    {回答：这次作业怎么获证、何时接受；\textbf{不是}把整库拷一遍};
 \end{tikzpicture}
-\caption{三层对象完全体：数据流 / 能力库$\Gamma$ / 配置轨迹}
+\caption{三层对象完全体：数据流 / 能力库 $\Gamma$ / 配置轨迹}
 \label{fig:ch312-three-layers}
 \end{figure}
-读图口诀：\textbf{数据流图看算对；能力 DAG 看准引用；派生/轨迹看这次怎么走。}
+读图可以记一句：\textbf{数据流图看算没算对；能力 DAG 看能不能引用；派生轨迹看这次具体怎么走。}
 
-\paragraph{流程五：尾缝与 2-launch $\leftrightarrow$ 组合不免费}
-对照表~\ref{tab:ch2-launch}与图~\ref{fig:ch312-explore-math}：
-「PKE$\in\Gamma$」与「哈希/拼装片段可对拍」\textbf{不蕴涵}「接好的 KEM.KeyGen 自动合法」。
-尾缝须作为新节点经 $\mathsf{Compose}/\mathsf{Probe}$ 再 $\mathsf{Certify}$——即存在 $x,y\in L$ 使 $xy\notin L$（§3.9）。
+\paragraph{流程五：尾缝与 2-launch——组合并不免费}
+对照表~\ref{tab:ch2-launch}和图~\ref{fig:ch312-explore-math}：
+「PKE 已经在 $\Gamma$ 里」加上「哈希、拼装片段也能对拍」，
+\textbf{推不出}「接好的 KEM.KeyGen 自动就合法」。
+尾缝必须当成新节点，先走 $\mathsf{Compose}/\mathsf{Probe}$，再 $\mathsf{Certify}$——
+也就是说，可以找到 $x,y\in L$ 使得 $xy\notin L$（§3.9）。
 
-\paragraph{流程六：correctness $\leftrightarrow$ 缺少成员判定}
-图~\ref{fig:ch312-explore-math}中灰框旁路标明 $\mathrm{oracle}\neq L$：
-伪代码+菜单至多提示 $\Sigma$；无成员判定时搜索空间接近 $\Sigma^*$。
-correctness 证明字节可对，\textbf{不}证明过程是合法派生。
+\paragraph{流程六：correctness——缺的是成员判定}
+图~\ref{fig:ch312-explore-math}里灰框旁路写着 $\mathrm{oracle}\neq L$：
+伪代码加菜单，最多提示一下 $\Sigma$；没有成员判定时，搜索空间几乎就是 $\Sigma^*$。
+correctness 能证明字节对得上，\textbf{证明不了}那条路是合法派生。
 
-\paragraph{流程七：晋级 $\leftrightarrow$ 配置转移}
-合法叙事对应配置轨迹（与图~\ref{fig:ch312-three-layers}层 C 一致）：
+\paragraph{流程七：晋级——就是一次配置转移}
+合法叙事对应一条配置轨迹（和图~\ref{fig:ch312-three-layers}的层 C 一致）：
 \[
 (\Gamma_0,F_0,S_0)
 \;\xrightarrow{\mathsf{Expand}}\;
@@ -2159,53 +2178,55 @@ correctness 证明字节可对，\textbf{不}证明过程是合法派生。
 (\Gamma_m,\emptyset,S_m),
 \quad T\in\Gamma_m.
 \]
-从 \texttt{frozen-exp-*} 抄实现应触发拒绝（$\mathsf{Freeze}$ / 禁字）。
+若有人从 \texttt{frozen-exp-*} 抄实现，应当直接拒绝（$\mathsf{Freeze}$ / 禁字）。
 
-\paragraph{流程八：上游变更 $\leftrightarrow$ $\mathsf{Dirty}$}
-P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自动留在 $\Gamma$；须走 $\mathsf{Dirty}$（§3.11）。
+\paragraph{流程八：上游一变——$\mathsf{Dirty}$}
+P1 的 iface 改过之后，原先挂在旧 iface 上的 P2/P3，不能因为「上次 PASS」就继续留在 $\Gamma$ 里；
+必须走 $\mathsf{Dirty}$（§3.11）。
 
-\paragraph{四组问题：用本章对象逐条重述}
+\paragraph{四组问题：换成本章用语再说一遍}
 \begin{table}[H]
 \centering\small
 \caption{§2.6 四组问题的本章重述（对照表~\ref{tab:ch2-four-q}）}
 \label{tab:ch312-four-q}
 \begin{tabular}{@{}L{1.6cm}L{6.0cm}L{6.2cm}@{}}
   \toprule
-  问题组 & 第~2~章里的具体疑惑（缩写） & 本章用本章对象怎样说 \\
+  问题组 & 第~2~章里的疑惑（缩写） & 用本章对象怎么说 \\
   \midrule
   第一组 &
-  凭目录名还是凭证书站在 PKE 上？菜单是否等于说明书？ &
-  站得住 $\Leftrightarrow$ 相关顶点 $\in\Gamma$；
+  凭目录名，还是凭证书，才算站在 PKE 上？菜单等于说明书吗？ &
+  站得住 $\Leftrightarrow$ 相关顶点落在 $\Gamma$ 里；
   菜单 $\neq\Gamma\neq L(\mathcal{G})$；见表~\ref{tab:ch312-assets-math}。 \\
   \midrule
   第二组 &
-  NTT/PKE 都 PASS，谁保证尾缝与 2-launch？ &
-  组合不免费：接缝须 $\mathsf{Compose}$ 获证；
-  语义 oracle $\neq$ 合法派生（$w\in L$）。 \\
+  NTT、PKE 都 PASS 了，谁来保证尾缝和 2-launch？ &
+  组合并不免费：接缝还得经 $\mathsf{Compose}$ 获证；
+  语义对照过关 $\neq$ 合法派生（$w\in L$）。 \\
   \midrule
   第三组 &
-  只给伪代码+菜单，搜索为何爆炸？ &
-  无成员判定则空间 $\sim\Sigma^*$；
-  收束 $=$ 只沿已证书边 / 合法字生长。 \\
+  只给伪代码和菜单，搜索为什么会炸？ &
+  没有成员判定，空间差不多是 $\Sigma^*$；
+  要收束，就只能沿着已获证的边 / 合法字往下长。 \\
   \midrule
   第四组 &
-  能否先交闭包表？上游变更如何失效？ &
-  闭包表至少含 $A,\Gamma,\mathrm{Dep}^*,\mathrm{Missing}$；
-  上游变更走 $\mathsf{Dirty}$。 \\
+  能不能先交闭包表？上游改了，证书怎么作废？ &
+  闭包表至少要写清 $A,\Gamma,\mathrm{Dep}^*,\mathrm{Missing}$；
+  上游一变，走 $\mathsf{Dirty}$。 \\
   \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{读完本节应带走的三句话}
+\paragraph{读完本节，带走三句话就够}
 \begin{enumerate}
-  \item 表~\ref{tab:ch312-assets-math}、图~\ref{fig:ch312-explore-math}、图~\ref{fig:ch312-three-layers}是第~2~章故事的\textbf{数学完全体}；原图表仍在第~2~章备查。
-  \item 最容易混的三层：数据流、能力库、一次派生——先分层，再提问。
-  \item 四组问题在本章已能\textbf{用词说清}；变成任务启动硬检查，是下一章起的工程化工作。
+  \item 表~\ref{tab:ch312-assets-math}、图~\ref{fig:ch312-explore-math}、图~\ref{fig:ch312-three-layers}
+        是第~2~章故事的\textbf{数学完全体}；原来的表和图仍在第~2~章备查。
+  \item 最容易搅在一起的三层是：数据流、能力库、一次派生——先分开，再提问。
+  \item 四组问题到本章已经能\textbf{把话说清楚}；真正变成任务启动时的硬检查，是下一章起的工程化工作。
 \end{enumerate}
 
 \subsection{本章小结与下一章预告}
 
-本章按教材体例建立了方法论数学底座，主链为：
+本章按教材体例搭好了方法论的数学底座，主线是：
 \[
 \text{关系/函数}
 \;\to\;
@@ -2221,39 +2242,39 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 \;\to\;
 \text{非单调证书}.
 \]
-每个关键定义均配有\textbf{纯数学例}与\textbf{工程例}。
-§3.12 用第~\ref{sec:hook}~章 KeyGen 流程逐条回扣本章对象，作为「数学$\to$应用」的第一站对照。
-刻意未完成的部分：产生式的仓库级形式化语法、闭包表文件格式、可判定性证明——留给后续章节迭代。
+每个关键定义都配了\textbf{纯数学例子}和\textbf{工程例子}。
+§3.12 用第~\ref{sec:hook}~章的 KeyGen 流程，把本章对象逐条对回去，算是「数学$\to$应用」的第一站。
+有意留白的部分：产生式在仓库里该怎么形式化、闭包表文件长什么样、可判定性怎么证——留给后面章节慢慢补。
 
-下一章（第~\ref{sec:math}~章）把上述对象\textbf{填写成工程字段}：节点属性、边的三类、证书状态命名等。
+下一章（第~\ref{sec:math}~章）要把这些对象\textbf{填成工程上可写的字段}：节点属性、三类边、证书状态怎么命名，等等。
 
 % ============================================================
 \section{从数学到工程对象：节点、边与证书}
 \label{sec:math}
 
-上一章给了一般语言；本章把它\textbf{具象化}成预研图上的可填写字段。
-若与第~\ref{sec:mathbg}~章用语冲突，以「工程可执行」优先，并回写修订记录。
+上一章给的是一般语言；本章把它\textbf{落到}预研图上，变成一张张能填的字段。
+若用语和第~\ref{sec:mathbg}~章打架，先以「工程上能不能执行」为准，再回头改数学章并记下修订。
 
 \subsection{三个层面（复习）}
 \begin{center}
 \begin{tabular}{@{}L{3.2cm}L{5.5cm}L{5.3cm}@{}}
   \toprule
-  概念 & 回答的问题 & 不回答的问题 \\
+  概念 & 它回答什么 & 它不回答什么 \\
   \midrule
-  能力 DAG & 引理库里谁依赖谁？ & 某次任务如何一步步展开？ \\
-  语法树 / 派生 & 这次任务的展开句子是什么？ & 全局所有共享边的全貌？ \\
-  配置自动机 & 证书如何增减？何时接受/拒绝？ & 代数是否符合 FIPS？ \\
+  能力 DAG & 引理库里谁依赖谁？ & 某次任务具体怎么一步步展开？ \\
+  语法树 / 派生 & 这次任务展开成了哪句话？ & 全局所有共享边长什么样？ \\
+  配置自动机 & 证书怎么增减？何时接受、何时拒绝？ & 代数算得合不合 FIPS？ \\
   \bottomrule
 \end{tabular}
 \end{center}
 
 \subsection{节点（已验证能力）}
-节点 $v$ 建议携带：
+节点 $v$ 建议带上这些字段：
 \begin{itemize}
-  \item \texttt{id}：稳定名（如 \texttt{pke.keygen.k4}）；
-  \item \texttt{layer}：P0--P3（方法论分层，不等于目录树一一对应）；
-  \item \texttt{iface}：I/O、dtype、形状/布局、同步约定——\textbf{可复用的是 iface，不是源码}；
-  \item \texttt{cert}：路径 + CPU+SIM（+KAT）+ 版本锚点；
+  \item \texttt{id}：稳定名字（如 \texttt{pke.keygen.k4}）；
+  \item \texttt{layer}：P0--P3（方法论分层，不必和目录树一一对应）；
+  \item \texttt{iface}：I/O、dtype、形状/布局、同步约定——\textbf{能复用的是 iface，不是源码}；
+  \item \texttt{cert}：路径 + CPU+SIM（必要时加 KAT）+ 版本锚点；
   \item \texttt{forbid}：否定约束；
   \item \texttt{repo}：权威目录锚点。
 \end{itemize}
@@ -2262,11 +2283,11 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 \begin{center}
 \begin{tabular}{@{}ll@{}}
   \toprule
-  层 & 含义（本仓库语境） \\
+  层 & 含义（放在本仓库语境里说） \\
   \midrule
   P3 & 顶层算子 / 算法入口（如 KEM.KeyGen、KEM.Encaps） \\
   P2 & 算法构件（如 PKE.KeyGen / Encrypt / Decrypt 全链） \\
-  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots）——\textbf{作能力名}，本章不讲其代数 \\
+  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots）——\textbf{当能力名用}，本章不讲它们的代数细节 \\
   P0 & 平台公理（DataCopy、向量算子、MMAD+tiling、TPipe/TQue 同步壳\ldots） \\
   \bottomrule
 \end{tabular}
@@ -2274,10 +2295,10 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 
 \subsection{边的三种类型}
 \begin{enumerate}
-  \item \textbf{语义依赖}：$u$ 的正确性需要 $v$ 的 iface（如「NTT 能力」$\to$ PKE.KeyGen）；
-  \item \textbf{接缝（compose）}：$A$、$B$ 各自有证，$A\!\circ\!B$ \textbf{仍须}单独成节点获证
-        （「组合不免费」）；
-  \item \textbf{否定边}：显式禁止（frozen 模板、未登记计算块、Host 默认密码路径等）。
+  \item \textbf{语义依赖}：$u$ 要对，离不开 $v$ 的 iface（例如「先有 NTT 能力」，才谈得上 PKE.KeyGen）；
+  \item \textbf{接缝（compose）}：$A$、$B$ 各自有证，$A\!\circ\!B$ \textbf{仍要}单独立成节点再获证
+        （「组合并不免费」）；
+  \item \textbf{否定边}：写明禁止什么（frozen 模板、未登记计算块、Host 默认走密码路径，等等）。
 \end{enumerate}
 
 \subsection{证书状态（含非单调）}
@@ -2286,22 +2307,22 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 \quad\text{以及}\quad
 \mathsf{dirty}.
 \]
-\texttt{dirty} 表示上游 iface/tiling 变更后下游证书失效——引理库 $\Gamma$ \textbf{可收缩}。
+\texttt{dirty} 的意思是：上游 iface/tiling 一改，下游证书作废——引理库 $\Gamma$ \textbf{是可以收缩的}。
 
-\subsection{仓库机制与数学对象的对照（直觉）}
+\subsection{仓库机制与数学对象的对照（凭直觉）}
 \begin{itemize}
-  \item 活跃 \texttt{INDEX.md}：当前可引用的能力菜单（$\Sigma$ 的工程投影，\textbf{还不是} $L$）；
+  \item 活跃 \texttt{INDEX.md}：眼下可以引用的能力菜单（$\Sigma$ 在工程上的投影，\textbf{还不是} $L$）；
   \item \texttt{frozen/} + \texttt{FROZEN.md}：否定边；
-  \item \texttt{baseline-registry}：golden 允许调用的已验证计算块；
-  \item \texttt{customspec}：examples 写码的规格门禁（派生计划的文书形态之一）。
+  \item \texttt{baseline-registry}：golden 允许调用的、已经验证过的计算块；
+  \item \texttt{customspec}：examples 写码前的规格门禁（派生计划的一种文书形态）。
 \end{itemize}
 
 \subsection{立论（承接第~\ref{sec:mathbg}~章）}
 \begin{quote}
-预研开发的合法性 $\approx$ 在已证书能力生成的语言 $L$ 上，
-由配置自动机搜索接受路径；\\
-\textbf{幻觉} $\approx$ 非法转移 / 无证书边。\\
-语义 oracle（FIPS/liboqs/golden）管「算对」；形式方法管「从哪砌砖」。
+预研算不算合法 $\approx$ 在已获证能力生成的语言 $L$ 上，
+用配置自动机去搜一条接受路径；\\
+\textbf{幻觉} $\approx$ 非法转移，或根本没有证书边。\\
+语义对照（FIPS/liboqs/golden）管「算对没算对」；形式方法管「砖是从哪块砌过来的」。
 \end{quote}
 
 % ============================================================
@@ -2309,14 +2330,14 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 \label{sec:gates}
 
 \subsection{合法性规则（v0）}
-接到目标 $T$ 时，只允许：
+接到目标 $T$ 时，只允许做这些事：
 \begin{enumerate}
-  \item 展开依赖闭包（语义边 + 接缝边）；
-  \item 分类：已有 lemma/deliverable；缺项；仅否定边；
-  \item 缺项 $\Rightarrow$ 先探针/exp 并获证，再引用；禁止在 $T$ 任务里顺便发明 P0/P1；
-  \item 新接缝 $=$ 新节点，须认证；
-  \item 验收看 I/O 与 golden/KAT，不看「与参考源码同构」；
-  \item 自包含：挂 iface，不跨目录偷源码（仓库既有例外除外）；图边 $\neq$ \texttt{\#include}。
+  \item 把依赖闭包展开清楚（语义边 + 接缝边）；
+  \item 分类：已经有 lemma/deliverable 的；还缺的；只有否定边能命中的；
+  \item 缺项 $\Rightarrow$ 先做探针/exp 并拿到证书，再引用；禁止在做 $T$ 的任务里顺手发明 P0/P1；
+  \item 新接缝 $=$ 新节点，必须单独认证；
+  \item 验收只看 I/O 是否对上 golden/KAT，不看「是不是和参考源码长得一样」；
+  \item 自包含：挂的是 iface，不要跨目录偷源码（仓库里已有的例外除外）；图上的边 $\neq$ \texttt{\#include}。
 \end{enumerate}
 
 \subsection{四步工作流}
@@ -2326,54 +2347,54 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 3. 最小补洞  只补 missing 与新接缝；forbid 写入否定边
 4. 闭环写回  新节点入图；失败则改规则或 Freeze，不默认可复用
 \end{lstlisting}
-\textbf{先交闭包表，再写码。} customspec / STATUS / registry 是文书形态，不是替代闭包表。
+\textbf{先交闭包表，再写码。} customspec / STATUS / registry 是文书形态，替代不了闭包表。
 
 \subsection{域无关性}
-抽出密码词之后，对象仍是：终端（axiom）、非终端（goal）、产生式（compose）、证书（judgment）。
-同一套问题适用于非密码 AscendC 预研；ML-KEM 只是 oracle 清晰、接缝丰富的\textbf{压力测试床}。
+把密码学专有名词抽掉之后，剩下的还是：终端（axiom）、非终端（goal）、产生式（compose）、证书（judgment）。
+同一套问题也适用于非密码的 AscendC 预研；ML-KEM 不过是对照清晰、接缝又多的一块\textbf{压力测试床}。
 
 % ============================================================
 \section{复盘：理论如何对照 \texttt{kem.keygen} 与 \texttt{kem.encaps}}
 \label{sec:replay}
 
 \subsection{复盘的目的}
-不是证明「我们早就在按理论做」（事后贴标签无价值），而是：
+不是要证明「我们其实早就在按理论做」（事后贴标签没什么价值），而是：
 \begin{enumerate}
-  \item 检查分层与接缝是否\textbf{可被理论语言说清}；
-  \item 找出偏离（例如曾依赖 correctness vendor / frozen 模板）并记为\textbf{方法论债}或\textbf{否定边}；
-  \item 总结「数学原理如何被具象化为目录、launch、证书」。
+  \item 检查分层和接缝能不能\textbf{用理论语言说清楚}；
+  \item 找出偏离（例如曾经靠 correctness 里的 vendor、或 frozen 模板）并记成\textbf{方法论上的欠债}或\textbf{否定边}；
+  \item 总结「数学原理是怎么落到目录、launch、证书上的」。
 \end{enumerate}
 
 \subsection{\texttt{kem.keygen} 校准问题单}
 \begin{itemize}
-  \item P3 是否只依赖已证书 P2，而非在 KeyGen 任务内重写 NTT？
-  \item 2-launch、Alg.16 尾、\texttt{dk} 展开等接缝是否显式？
-  \item baseline-registry 中的 golden 块是否都在图上有 lemma？
-  \item 否定边是否写入（Host 默认禁密码、禁把 liboqs 当 AscendC 规格）？
+  \item P3 是不是只依赖已经获证的 P2，而不是在 KeyGen 任务里重写一遍 NTT？
+  \item 2-launch、Alg.16 尾、\texttt{dk} 展开这类接缝，有没有写清楚？
+  \item baseline-registry 里的 golden 块，是不是都能在图上找到对应的 lemma？
+  \item 否定边有没有落笔（Host 默认禁止走密码路径、禁止把 liboqs 当 AscendC 规格）？
 \end{itemize}
 仓库锚点（查阅用）：
 \texttt{examples/stable/stable-fips203-mlkem-kem-keygen-k4/}，
 \texttt{docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md}，
-及相关 \texttt{pass-fix-*} device 探针。
+以及相关的 \texttt{pass-fix-*} device 探针。
 
 \subsection{\texttt{kem.encaps} 复盘要点（讨论共识）}
 \begin{itemize}
-  \item 合法路径应挂已证 \texttt{pke.encrypt} 与哈希/G 等 lemma，而不是以 correctness 内 vendor 为实现模板；
-  \item 与 stable Encrypt 的编译期/接缝关系必须写进闭包，而不是「觉得复用了」；
-  \item 若实现史存在混乱探索，复盘文应诚实记录——那是对照组与方法论的动机，不是羞耻。
+  \item 合法路径应挂在已获证的 \texttt{pke.encrypt} 和哈希/G 等 lemma 上，而不是拿 correctness 里的 vendor 当实现模板；
+  \item 和 stable Encrypt 的编译期关系、接缝关系，必须写进闭包，不能只是「觉得自己复用了」；
+  \item 若实现史上走过一段混乱探索，复盘文应如实写——那是对照组和方法论的动机，不是丢脸。
 \end{itemize}
 
 \subsection{期望产出的「具象化对照表」（后续填空）}
 \begin{center}
 \begin{tabular}{@{}L{4cm}L{5cm}L{5cm}@{}}
   \toprule
-  理论对象 & 工程具象 & 证书形态 \\
+  理论对象 & 工程上长什么样 & 证书形态 \\
   \midrule
   节点 $v$ & 探针/exp/stable 目录 & STATUS + run.sh 对拍 \\
   语义边 & 「必须先有某某能力」 & INDEX / customspec 引用 \\
   接缝节点 & 多 launch / 融合边界 & 集成探针单独 PASS \\
   否定边 & frozen / forbid 条文 & FROZEN.md、Rule \\
-  字 $w\in L$ & 一次任务的闭包表+计划 & 评审通过再写码 \\
+  字 $w\in L$ & 一次任务的闭包表+计划 & 评审通过后再写码 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -2383,23 +2404,23 @@ P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自�
 \label{sec:forward}
 
 \subsection{为什么 Decaps 适合做试金石}
-Decaps 同时依赖 Encrypt、Decrypt、KeyGen I/O 与 FO 失败路径，是典型的\textbf{多父 DAG}；
-且若理论只能解释已完成故事、不能生成待做清单，则方法论停在修辞。
+Decaps 同时依赖 Encrypt、Decrypt、KeyGen 的 I/O，还有 FO 失败路径，是典型的\textbf{多父 DAG}；
+而且，如果理论只能解释已经做完的故事、生不出待办清单，方法论就停在修辞层面了。
 
-\subsection{前瞻时 Agent（或人类）应交付的最小闭包}
+\subsection{前瞻时 Agent（或人）至少应交出的闭包}
 \begin{enumerate}
   \item 目标 I/O 与验收级别；
-  \item 依赖节点清单（标 ok / missing / dirty）；
-  \item 接缝清单（含对称失败 / 重加密比对等是否独立成节点）；
-  \item 否定边（不可引用的 correctness vendor / frozen 实现）；
+  \item 依赖节点清单（标好 ok / missing / dirty）；
+  \item 接缝清单（对称失败、重加密比对等，要不要单独成节点）；
+  \item 否定边（不能引用的 correctness vendor / frozen 实现）；
   \item 最小补洞顺序（先探针哪条缝）。
 \end{enumerate}
 
-\subsection{成功标准（阶段性）}
+\subsection{成功标准（分阶段）}
 \begin{itemize}
-  \item \textbf{弱成功}：闭包表可执行；偏差归因到缺边/假边/脏证书，并回写本章理论；
-  \item \textbf{强成功}：在门禁下完成 device/stable 级实现，且过程指标优于 correctness 探索史
-        （见下一章比较轴）。
+  \item \textbf{弱成功}：闭包表能拿去执行；偏差能归因到缺边、假边或脏证书，并回写进本章理论；
+  \item \textbf{强成功}：在门禁之下做完 device/stable 级实现，而且过程指标好过 correctness 那一段探索史
+        （比较轴见下一章）。
 \end{itemize}
 
 % ============================================================
@@ -2407,64 +2428,64 @@ Decaps 同时依赖 Encrypt、Decrypt、KeyGen I/O 与 FO 失败路径，是典�
 \label{sec:correctness}
 
 \subsection{为何保留 correctness}
-\texttt{*-correctness-*} 在\textbf{完全不考虑优化}的前提下，只追求可执行性与结果正确：
+\texttt{*-correctness-*} 在\textbf{完全不考虑优化}的前提下，只追求能跑、结果对：
 多 kernel launch、多搬运与同步——这是「一定能搭出正确积木」的保守拼法，
-性能不可用，也几乎吃不进后续 P0/P1 工程优化。
+性能谈不上，后续 P0/P1 的工程优化也几乎接不进去。
 
-它还记录了一段真实的 Agent 过程史：故意不给确定性拼装路线时，
-探索成本极高（失败、卡死、回退；曾短期内耗尽大量 token），最终仅得到「结果正确」的代码。
+它还记下了一段真实的 Agent 过程：故意不给确定的拼装路线时，
+探索成本极高（失败、卡死、回退；短时间内曾烧掉大量 token），最后只得到「结果正确」的代码。
 
-\subsection{在方法论中的角色}
+\subsection{在方法论里扮演什么角色}
 \begin{center}
 \begin{tabular}{@{}L{3cm}L{11cm}@{}}
   \toprule
   角色 & 含义 \\
   \midrule
-  正确性锚 & 下界存在性：积木可搭、I/O 可对 \\
+  正确性锚 & 下界存在性：积木搭得出来，I/O 也对得上 \\
   结构反例 & 展示「只求对」会长成怎样的 launch/同步膨胀 \\
-  过程对照 & 无确定路线的搜索成本 \\
-  实验基线 & 与方法论 Agent、人工指导路径三方比较 \\
+  过程对照 & 没有确定路线时，搜索要付多大代价 \\
+  实验基线 & 和方法论 Agent、人工指导路径三方比较 \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\textbf{纪律}：correctness 是\textbf{基线标本}，不是活跃实现模板；可读、可对拍、可对比，\textbf{禁止}当抄码来源（与 frozen 出门不带码一致）。
+\textbf{纪律}：correctness 是\textbf{基线标本}，不是活跃实现模板；可读、可对拍、可对比，\textbf{禁止}当抄码来源（和 frozen「出门不带码」同一条规矩）。
 
-\subsection{建议比较轴}
+\subsection{建议比较的几条轴}
 \begin{enumerate}
-  \item \textbf{过程}：token / 轮次 / 回退；是否先交闭包表；非法边是否被拦截；
-  \item \textbf{结构}：launch 数、同步点、lemma 复用、接缝是否显式；
-  \item \textbf{结果}：CPU+SIM；SIM tick 相对 correctness 的倍数。
+  \item \textbf{过程}：token / 轮次 / 回退；有没有先交闭包表；非法边有没有被拦住；
+  \item \textbf{结构}：launch 数、同步点、lemma 复用、接缝是否写清楚；
+  \item \textbf{结果}：CPU+SIM；SIM tick 相对 correctness 是几倍。
 \end{enumerate}
-三档：A 旧式无路线探索 $\sim$ correctness；B 新方法论 Agent；C 人工指导 device/stable。
-B 不必一次打赢 C；明显优于 A，即方法论第一关。
+三档：A 旧式无路线探索 $\sim$ correctness；B 新方法论下的 Agent；C 人工指导的 device/stable。
+B 不必一次就打赢 C；只要明显好过 A，方法论就过了第一关。
 
 % ============================================================
 \section{未决议事项、日程与维护}
 \label{sec:open}
 
-\subsection{刻意未决议}
+\subsection{刻意先不拍板的事}
 \begin{itemize}
-  \item 节点是否 $1$:$1$ 对应目录名；图的存储是 Markdown 表还是 YAML/JSON；
-  \item 主叙事选工作流网 / Petri 网 / 属性文法 / 判断式中的哪一种；
-  \item 何时写入 Rule/Skill；可判定性与复杂度是否单开理论线。
+  \item 节点要不要和目录名 $1$:$1$ 对应；图存在 Markdown 表里，还是 YAML/JSON 里；
+  \item 主叙事选工作流网、Petri 网、属性文法、判断式里的哪一种；
+  \item 什么时候写进 Rule/Skill；可判定性和复杂度要不要单开一条理论线。
 \end{itemize}
 
-\subsection{近期填空顺序（与「特殊$\to$一般」一致）}
+\subsection{近期填空顺序（仍然是「先特殊、后一般」）}
 \begin{enumerate}
-  \item 按复盘反馈修订第~\ref{sec:mathbg}~章（定义精度、例子密度）；把 KeyGen 合法派生轨迹写成一页纸；
-  \item 第~\ref{sec:math}~章字段表与仓库文书（闭包表 schema）对齐；
-  \item Encaps 理论轨迹 vs 实现轨迹对照表；
-  \item Decaps 前瞻闭包；
-  \item correctness 对照实验写成可执行协议；
-  \item 结论稳定后再考虑迁 \texttt{docs/notes/}。
+  \item 按复盘反馈改第~\ref{sec:mathbg}~章（定义写准一点、例子密一点）；把 KeyGen 合法派生轨迹压成一页纸；
+  \item 第~\ref{sec:math}~章的字段表，和仓库文书（闭包表 schema）对齐；
+  \item Encaps：理论轨迹对照实现轨迹；
+  \item Decaps：前瞻闭包；
+  \item correctness 对照实验写成可执行的协议；
+  \item 结论稳了之后，再考虑迁到 \texttt{docs/notes/}。
 \end{enumerate}
 
 \subsection{文档与分支约定}
 \begin{itemize}
-  \item 本文件为专题\textbf{唯一} TeX/PDF 工作副本（无日期后缀），持续修订；
+  \item 本文件是本专题\textbf{唯一}的 TeX/PDF 工作副本（不加日期后缀），持续修订；
   \item 讨论纪要：\texttt{形式语言DAG预研讨论纪要.md}（同样单文件刷新）；
-  \item 工作分支：\texttt{research/formal-lang-dag}；未经用户明确指令\textbf{不合入} \texttt{main}；
+  \item 工作分支：\texttt{research/formal-lang-dag}；未经用户明确指令，\textbf{不合入} \texttt{main}；
   \item 不记录题外的知识产权保护策略讨论。
 \end{itemize}
 
