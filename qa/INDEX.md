@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-21 — [WSL roundtrip tcache 对照矩阵](2026-07/2026-07-21-WSL-roundtrip-tcache对照.md)
+
+关键字：**`stable_kem_liboqs_roundtrip`** · **tcache 本日未复现** · ADX skip / sleep45 / 拆分全绿 · 假说仍偏 CAModel teardown 偶发 · 3.7 Gi WSL
+
 ### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
 
 关键字：**【预研】**→**`#交付#` stable Decaps** · **T19i SIM 3 全链齐** · **冻结 KEM correctness×3** · **`stable_kem_liboqs_roundtrip`** · **WSL 连续 SIM `tcache` 偶发** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理**

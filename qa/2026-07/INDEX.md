@@ -8,6 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
+| 2026-07-21 | [2026-07-21-WSL-roundtrip-tcache对照.md](2026-07-21-WSL-roundtrip-tcache对照.md) | **tcache 对照矩阵未复现** · EXP1/2/1b/3/4a/4b 全 EXIT=0 · 假说仍偏 CAModel teardown · 3.7 Gi |
 | 2026-07-20 | [2026-07-20-Decaps交付stable与registry.md](2026-07-20-Decaps交付stable与registry.md) | **`#交付#` Decaps → stable** · **T19i SIM 3** · **冻结 correctness×3** · **`stable_kem_liboqs_roundtrip`** · **WSL 连续 SIM `tcache` 偶发** · T13b/T11 · T23 · 幽灵清理 |
 | 2026-07-18 | [2026-07-18-Decaps-pass-fix与incubating-customspec.md](2026-07-18-Decaps-pass-fix与incubating-customspec.md) | **pass-fix 更名** · **`$规格$` exp-…-kem-decaps-k4** |
 | 2026-07-17 | [2026-07-17-Decaps-device-全链-PASS.md](2026-07-17-Decaps-device-全链-PASS.md) | **T19b/c 全链 + E3 PASS** · **T2 单库+1-session PASS**（D**286803**+E**745925**）· scripts→device |
