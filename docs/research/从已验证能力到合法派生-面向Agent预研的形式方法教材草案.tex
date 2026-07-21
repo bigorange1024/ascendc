@@ -1902,20 +1902,181 @@ P1 某能力的 tiling/同步壳变更后，曾基于旧 iface 的 P2/P3 证书�
 不得因「上次 PASS」而默认继续合法。
 \end{example}
 
-\subsection{回扣第~\ref{sec:hook}~章四组问题}
+\subsection{回扣第~\ref{sec:hook}~章：流程如何对应本章数学}
+\label{sec:mathbg-hookback}
 
+第~\ref{sec:hook}~章讲的是\textbf{已经发生}的工程故事；本章讲的是\textbf{用来描述故事的语言}。
+本节\textbf{不引入新定义}，只做对照：指出第~2~章里读者已经见过的流程，分别落在本章哪一类对象上。
+读完后应能回答：「原来资产清单 / 探路图 / 尾缝 / correctness 翻车，在数学里分别叫什么。」
+
+\paragraph{总对照表（先扫一眼）}
+{\small
 \begin{center}
-\begin{tabular}{@{}L{2.2cm}L{11.4cm}@{}}
+\begin{tabular}{@{}L{5.0cm}L{8.8cm}@{}}
   \toprule
-  问题组 & 用本章编号对象重述 \\
+  第~\ref{sec:hook}~章中的流程 / 物件 & 本章对应的数学对象（节号直觉） \\
   \midrule
-  第一组 & 语义 oracle $\neq L(\mathcal{G})$；合法砌法由 DAG、产生式与 $\mathrm{Forb}$ 给出。 \\
-  第二组 & 组合不免费：存在 $x,y\in L$ 使 $xy\notin L$；接缝靠 $\mathsf{Compose}$ 获证。 \\
-  第三组 & 伪代码 + 菜单至多给出 $\Sigma$ 的线索，缺少成员判定则搜索空间为 $\Sigma^*$ 量级。 \\
-  第四组 & 成功过程应沉淀 $\mathrm{Dep}^*(T)$、派生痕迹与 $\Gamma$ 更新；上游变更走 $\mathsf{Dirty}$。 \\
+  §2.3 资产清单「绿积木」、证书列 & 已证书集 $\Gamma$；顶点获证（§3.5） \\
+  活跃 INDEX 探针列表 & 能力菜单（$\Sigma$ 的线索）；\textbf{不是} $L$，也\textbf{不必}等于 $\Gamma$ \\
+  §2.4 图一：P0/P1$\to$分段$\to$stable PKE & 能力 DAG 上的一条生长路径；拓扑序（§3.4） \\
+  「做 KEM 前心里已有清单」 & 手工对照 $\mathrm{Dep}^*(T)$ 与 $\Gamma$；缺项当时未显式算出 \\
+  §2.4 图二：Alg.19/16/13 数据流 & \textbf{数据}依赖图（汇点）；与能力 DAG、派生树\textbf{分层}（§3.6） \\
+  Alg.16 尾缝、2-launch 接缝、拼 $\mathit{dk}$ & 接缝边 / $\mathsf{Compose}$；组合不免费（§3.9） \\
+  correctness 高成本探索 & 只有菜单与伪代码 $\approx$ 只有 $\Sigma$；缺少成员判定（§3.9） \\
+  device 去 vendor $\to$ stable 晋级 & $\mathsf{Probe}/\mathsf{Certify}$；配置轨迹走到接受（§3.10） \\
+  「上次 PASS 仍可能翻车」的担忧 & 证书非单调；$\mathsf{Dirty}$（§3.11） \\
   \bottomrule
 \end{tabular}
 \end{center}
+}
+
+\paragraph{流程一：动手前的资产清单 $\leftrightarrow$ 已证书集 $\Gamma$}
+第~2~章 §2.3 强调：做 KEM.KeyGen 之前，仓库里已有 P0--P2 的大量 PASS / 交付记录，
+并且用一张表把「当时手里有什么」写清。
+用本章语言重述：
+\begin{itemize}
+  \item 表中每一行能力对应顶点 $v\in V$；「证书」列对应获证证据的工程载体；
+  \item 当时被允许引用的那些绿行，合起来就是讨论时刻的 $\Gamma$（至少是 $\Gamma$ 的工程近似）；
+  \item 因此「我们可以站在 stable PKE 上」——若要数学上站得住，依据应是
+        $\texttt{pke.keygen.k4}\in\Gamma$，而\textbf{不仅仅}是目录名叫 \texttt{stable-*}。
+\end{itemize}
+同节还把 INDEX 比作「能力菜单」。本章已区分：
+菜单回答「可能看见哪些字母/能力」；$\Gamma$ 回答「此刻哪些已获证」；
+$\mathrm{Missing}_\Gamma(T)$ 回答「为了目标还缺谁」。
+三者\textbf{不可互相替代}——这正是第一组问题里「菜单$\neq$拼装说明书」的落点。
+
+\paragraph{流程二：PKE 线探路 $\leftrightarrow$ DAG 与拓扑序}
+§2.4 图一把仓库时间线画成：
+NTT 向量探针 $\to$ Alg.13 分段探针 $\to$ device 全链 $\to$ stable PKE。
+这不是随意的时间轴，而是能力依赖图上的一条\textbf{合法生长路径}：
+\begin{itemize}
+  \item 后一结点语义上依赖前一结点的 iface（语义依赖边）；
+  \item 探路顺序与拓扑序一致：先证底层，再证上层，避免「先写 P3、回头发明 P1」；
+  \item 整条线完成后，P2 进入 $\Gamma$，为后续 KEM 线提供已证书先决。
+\end{itemize}
+若把箭头反过来读（从目标往回找先决），就是依赖闭包的反向搜索（§3.5）：
+从「要做 PKE KeyGen」出发，会摸到 NTT、MMAD、同步壳等祖先。
+
+\paragraph{流程三：决定做 KEM.KeyGen $\leftrightarrow$ 目标、闭包与缺项}
+选定目标 $T=\texttt{kem.keygen.k4}$（§2.1 交付物）。
+当时工程叙事是：「语义调用 Alg.13（即已证 PKE），设备上补 Alg.16 尾缝」。
+用闭包语言写，应至少能填：
+\begin{align*}
+\mathrm{Dep}^*(T)
+&\;\supseteq\;
+\{\text{P0 平台},\;\text{P1 原语},\;\text{P2 PKE},\;\text{Alg.16 尾缝},\;T\},\\
+\Gamma_{\text{开任务}}
+&\;\supseteq\;
+\{\text{P0},\;\text{P1},\;\text{P2}\},\\
+\mathrm{Missing}_{\Gamma}(T)
+&\;\ni\;
+\text{Alg.16 尾缝（及 2-launch 接缝声明）}.
+\end{align*}
+§2 资产清单 $\approx$ 对 $\mathrm{Dep}^*(T)$ 与 $\Gamma$ 的\textbf{手工}对照；
+当时\textbf{未}强制先交 $\mathrm{Missing}_\Gamma(T)$ 再写码——这正是后文要门禁化的缺口
+（第四组问题：闭包表）。
+
+\paragraph{流程四：两张图为什么不能混读 $\leftrightarrow$ 三层对象}
+§2.4 同时给了「工程探路图」与「FIPS 数据流图」。
+读者容易把它们看成同一张图；本章 §3.6 要求拆开：
+\begin{center}
+\begin{tabular}{@{}L{3.2cm}L{5.5cm}L{5.0cm}@{}}
+  \toprule
+  第~2~章物件 & 更接近哪一层 & 它回答 / 不回答 \\
+  \midrule
+  资产清单 + PKE/KEM 探路 & 能力 DAG（库）+ $\Gamma$ 快照 & 谁依赖谁、谁已获证；不回答某次改写步骤 \\
+  Alg.19$\to$16$\to$13 数据流 & 算法数据依赖（汇点示意图） & 字节从哪来到哪去；不是能力证书图 \\
+  「先尾缝、再晋级 stable」叙事 & 一次任务的派生 / 配置轨迹 & 该次作业如何展开与获证；不是整库拷贝 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+读图口诀：\textbf{数据流图看算对；能力 DAG 看准引用；派生/轨迹看这次怎么走。}
+把 KEM 尾缝误当成「再算一遍 Alg.13」，或把数据流边当成「可以抄 frozen 源码的边」，都是层间混淆。
+
+\paragraph{流程五：尾缝与 2-launch $\leftrightarrow$ 组合不免费}
+KEM 线的关键工程动作是：复用已证 PKE，在 Launch-2 尾部追加 $H$、拼 $\mathit{dk}$（Alg.16），
+并保持与 PKE 相同的 2-launch 编排。
+本章对应：
+\begin{itemize}
+  \item 「PKE PASS」与「哈希/拼装片段各自可对拍」\textbf{不蕴涵}「接在一起的 KEM.KeyGen 自动合法」；
+  \item 尾缝必须作为\textbf{新节点}（或显式接缝边）进入图，经 $\mathsf{Compose}/\mathsf{Probe}$ 再 $\mathsf{Certify}$；
+  \item 这就是第二组问题的数学形态：存在 $x,y\in L$ 使 $xy\notin L$（§3.9）。
+\end{itemize}
+
+\paragraph{流程六：correctness 标本 $\leftrightarrow$ 缺少成员判定的搜索}
+§2.4 / 第二、三组问题提到：只给 Alg.19 伪代码 + INDEX 菜单、不给拼装路线时，
+Agent 曾陷入高成本 correctness 探索。
+用语言论重述：
+\begin{itemize}
+  \item 伪代码与菜单至多提示字母表 $\Sigma$ 的候选；
+  \item 没有「合法计划字」的成员判定（$w\in L$？）时，搜索空间接近 $\Sigma^*$；
+  \item correctness 路线证明的是语义 oracle（字节可对）可以在混乱过程后仍成立——
+        \textbf{它不证明}该过程是合法派生；标本可作对照，不可作抄码模板。
+\end{itemize}
+「幻觉」在本章工作定义下，正是画出无证书边 / 执行非法转移（§3.10）。
+
+\paragraph{流程七：device $\to$ stable 晋级 $\leftrightarrow$ 配置转移与接受}
+合法工程叙事可粗写成一条配置轨迹（符号与 §3.10 一致）：
+\[
+(\Gamma_0,F_0,S_0)
+\;\xrightarrow{\mathsf{Expand}}\;
+\cdots
+\;\xrightarrow{\mathsf{Probe}/\mathsf{Compose}}\;
+\cdots
+\;\xrightarrow{\mathsf{Certify}}\;
+(\Gamma_m,\emptyset,S_m),
+\]
+其中 $\Gamma_0$ 已含 stable PKE 等，$F_0=\{\texttt{kem.keygen}\}$，
+缺项消解后 $T\in\Gamma_m$，并满足生产 I/O 契约——即到达\textbf{接受配置}。
+若中途从 \texttt{frozen-exp-*} 抄实现，则应触发拒绝（禁字 / $\mathsf{Freeze}$）。
+第~2~章用「去 vendor、对拍、晋级」讲的是同一条轨迹的工程话。
+
+\paragraph{流程八：上游变更的担忧 $\leftrightarrow$ 非单调证书}
+第四组问题问：tiling / 同步壳一改，下游哪些节点该标脏？
+本章 §3.11：证书库非单调；$\mathsf{Dirty}$ 可使 $\Gamma$ 收缩。
+工程含义：P1 iface 变更后，曾基于旧 iface 的 P2/P3「上次 PASS」不得自动留在 $\Gamma$。
+
+\paragraph{四组问题：用本章对象逐条重述}
+下面把 §2.6 的四组问题，从「工程疑惑」改写成「已有编号对象能说清什么」。
+（能说清 $\neq$ 仓库门禁已自动执行；后者留给第~\ref{sec:gates}~章。）
+
+{\small
+\begin{center}
+\begin{tabular}{@{}L{1.6cm}L{6.0cm}L{6.2cm}@{}}
+  \toprule
+  问题组 & 第~2~章里的具体疑惑（缩写） & 本章用本章对象怎样说 \\
+  \midrule
+  第一组 &
+  凭目录名还是凭证书站在 PKE 上？菜单是否等于说明书？ &
+  站得住 $\Leftrightarrow$ 相关顶点 $\in\Gamma$；
+  菜单 $\neq\Gamma\neq L(\mathcal{G})$；合法砌法看 DAG、产生式与 $\mathrm{Forb}$。 \\
+  \midrule
+  第二组 &
+  NTT/PKE 都 PASS，谁保证尾缝与 2-launch？
+  验收只看字节还是也看生长路径？ &
+  组合不免费：接缝须 $\mathsf{Compose}$ 获证；
+  语义 oracle（KAT）$\neq$ 合法派生（$w\in L$）。 \\
+  \midrule
+  第三组 &
+  只给伪代码+菜单，搜索为何爆炸？如何收束又不堵优化？ &
+  无成员判定则空间 $\sim\Sigma^*$；
+  收束 $=$ 只允许沿已证书边 / 合法字生长（配置自动机），优化在合法类内做。 \\
+  \midrule
+  第四组 &
+  能否先交闭包表？上游变更如何失效传播？ &
+  闭包表至少含 $A,\Gamma,\mathrm{Dep}^*,\mathrm{Missing}$；
+  上游变更走 $\mathsf{Dirty}$，过期证书不可当永真公理。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+}
+
+\paragraph{读完本节应带走的三句话}
+\begin{enumerate}
+  \item 第~2~章的「绿清单 / 探路 / 尾缝 / 晋级 / 翻车」不是另一套理论，而是本章 DAG、闭包、语言、配置、非单调证书的\textbf{应用投影}。
+  \item 最容易混的三张图：数据流、能力库、一次派生——先分层，再提问。
+  \item 四组问题在本章已能\textbf{用词说清}；把它们变成任务启动时的硬检查，是下一章起的工程化工作。
+\end{enumerate}
 
 \subsection{本章小结与下一章预告}
 
@@ -1936,6 +2097,7 @@ P1 某能力的 tiling/同步壳变更后，曾基于旧 iface 的 P2/P3 证书�
 \text{非单调证书}.
 \]
 每个关键定义均配有\textbf{纯数学例}与\textbf{工程例}。
+§3.12 用第~\ref{sec:hook}~章 KeyGen 流程逐条回扣本章对象，作为「数学$\to$应用」的第一站对照。
 刻意未完成的部分：产生式的仓库级形式化语法、闭包表文件格式、可判定性证明——留给后续章节迭代。
 
 下一章（第~\ref{sec:math}~章）把上述对象\textbf{填写成工程字段}：节点属性、边的三类、证书状态命名等。
