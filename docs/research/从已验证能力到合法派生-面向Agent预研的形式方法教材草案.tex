@@ -19,8 +19,11 @@
 \renewcommand{\proofname}{证明}
 \usepackage{geometry}
 \usepackage{hyperref}
+\usepackage{xurl}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{caption}
+\usepackage{float}
 \usepackage{listings}
 \usepackage{enumitem}
 \usepackage[most]{tcolorbox}
@@ -32,6 +35,12 @@
 \lstset{basicstyle=\ttfamily\small,breaklines=true,frame=none,columns=fullflexible}
 \setlist[itemize]{leftmargin=1.6em}
 \setlist[enumerate]{leftmargin=1.8em}
+% 图/表按「节」编号：图 2.1、表 3.2 …
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\captionsetup{font=small, labelfont=bf, skip=6pt}
+% 仓库锚点：允许在 - _ / 处断行，避免撑进邻列造成叠字
+\newcommand{\repo}[1]{{\footnotesize\ttfamily\path{#1}}}
 % FIPS 算法框：黑字可读 + 参数/Input/Output + 与标准一致的步骤编号
 \newenvironment{fipsalgo}[1]{%
   \begin{tcolorbox}[
@@ -239,7 +248,7 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
 
 到做 KEM.KeyGen 之前，本仓库并不是从一张白纸开始。
 我们已经在 AscendC 上做过大量单点与分段实验，并且多数有 CPU+SIM 对拍记录。
-下面这张\textbf{资产清单}把「当时手里有什么」写清楚；文字说明与表格对照阅读。
+下面这张\textbf{资产清单}（表~\ref{tab:ch2-assets}）把「当时手里有什么」写清楚；文字说明与表格对照阅读。
 
 \paragraph{四类家底（文字）}
 \begin{enumerate}
@@ -249,32 +258,34 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
   \item \textbf{对照标本}：我们保留 \texttt{*-correctness-*}，只求可执行与字节正确，不计优化。
 \end{enumerate}
 
-\paragraph{资产清单（表格；锚点以活跃 INDEX 为准）}
-{\small
-\begin{longtable}{@{}L{1.1cm}L{3.6cm}L{4.8cm}L{2.2cm}L{2.0cm}@{}}
+\begin{table}[H]
+\centering\small
+\caption{资产清单（锚点以活跃 INDEX 为准）}
+\label{tab:ch2-assets}
+\begin{tabular}{@{}c L{3.1cm} L{5.4cm} L{2.6cm} L{2.3cm}@{}}
   \toprule
   层 & 能力（简述） & 仓库锚点（示例） & 证书 & 备注 \\
   \midrule
-  P0 & DataCopy / 搬运 & \texttt{docs/notes/ascendc-DataCopy…} & 文档+探针 & 平台知识库 \\
-  P0 & MMAD + tiling & \texttt{pass-int8-matmul-cube-…} 等 & CPU+SIM & 闭合条件见 notes \\
+  P0 & DataCopy / 搬运 & \repo{docs/notes/ascendc-DataCopy…} & 文档+探针 & 平台知识库 \\
+  P0 & MMAD + tiling & \repo{pass-int8-matmul-cube-…} 等 & CPU+SIM & 闭合条件见 notes \\
   P0 & TPipe / 细同步 & KeyGen prep 技术总结 & CPU+SIM & 翻车高发区 \\
   \midrule
-  P1 & NTT 三段式 poly-batch & \texttt{pass-fix-…-vec-k4-v2} & CPU+SIM & ML-KEM 活跃基线 \\
-  P1 & SampleNTT / Alg.7 & \texttt{pass-fix-f203-alg7-sample-ntt-k4} & CPU+SIM & \\
-  P1 & CBD $\eta{=}2$ & \texttt{pass-fix-f203-alg8-cbd-eta2-k4} & CPU+SIM & \\
-  P1 & ByteEncode$_{12}$ & \texttt{pass-fix-…-byteencode12-vec-k4} & CPU+SIM & \\
+  P1 & NTT 三段式 poly-batch & \repo{pass-fix-…-vec-k4-v2} & CPU+SIM & ML-KEM 活跃基线 \\
+  P1 & SampleNTT / Alg.7 & \repo{pass-fix-f203-alg7-sample-ntt-k4} & CPU+SIM & \\
+  P1 & CBD $\eta{=}2$ & \repo{pass-fix-f203-alg8-cbd-eta2-k4} & CPU+SIM & \\
+  P1 & ByteEncode$_{12}$ & \repo{pass-fix-…-byteencode12-vec-k4} & CPU+SIM & \\
   \midrule
-  P2 & Alg.13 行 3--7 $\hat{A}$ & \texttt{pass-fix-f203-alg13-lines3-7-a-hat-k4} & CPU+SIM & \\
-  P2 & Alg.13 行 8--15 $s,e$ & \texttt{pass-fix-f203-alg13-lines8-15-se-k4} & CPU+SIM & \\
-  P2 & Alg.13 device 全链 & \texttt{pass-fix-f203-alg13-device-keygen-k4} & CPU+SIM & $\approx$542k tick \\
-  P2 & \textbf{stable PKE KeyGen} & \texttt{stable-fips203-mlkem-pke-keygen-k4} & 交付+KAT & \textbf{KEM 直接依赖} \\
+  P2 & Alg.13 行 3--7 $\hat{A}$ & \repo{pass-fix-f203-alg13-lines3-7-a-hat-k4} & CPU+SIM & \\
+  P2 & Alg.13 行 8--15 $s,e$ & \repo{pass-fix-f203-alg13-lines8-15-se-k4} & CPU+SIM & \\
+  P2 & Alg.13 device 全链 & \repo{pass-fix-f203-alg13-device-keygen-k4} & CPU+SIM & $\approx$542k tick \\
+  P2 & \textbf{stable PKE KeyGen} & \repo{stable-fips203-mlkem-pke-keygen-k4} & 交付+KAT & \textbf{KEM 直接依赖} \\
   \midrule
-  P3 & KEM KeyGen correctness & \texttt{fix-f203-alg19-kem-keygen-correctness-k4} & CPU+SIM+liboqs & 对照标本 \\
-  P3 & KEM KeyGen device & \texttt{pass-fix-f203-alg19-kem-keygen-device-k4} & CPU+SIM & $\approx$713k tick \\
-  P3 & \textbf{stable KEM KeyGen} & \texttt{stable-fips203-mlkem-kem-keygen-k4} & 交付+KAT & 本例终点 \\
+  P3 & KEM KeyGen correctness & \repo{fix-f203-alg19-kem-keygen-correctness-k4} & CPU+SIM+liboqs & 对照标本 \\
+  P3 & KEM KeyGen device & \repo{pass-fix-f203-alg19-kem-keygen-device-k4} & CPU+SIM & $\approx$713k tick \\
+  P3 & \textbf{stable KEM KeyGen} & \repo{stable-fips203-mlkem-kem-keygen-k4} & 交付+KAT & 本例终点 \\
   \bottomrule
-\end{longtable}
-}
+\end{tabular}
+\end{table}
 
 当我们决定做 KEM.KeyGen 时，
 \textbf{我们并不是让 Agent 从 FIPS 伪代码一行行翻译成 AscendC}，
@@ -284,11 +295,11 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
 
 这张清单不是一天长出来的。
 本节用两张图把同一件事说清楚：
-\textbf{第一张}是仓库时间线（先长 PKE，再接 KEM 尾缝）；
-\textbf{第二张}是 FIPS Alg.19$\to$16$\to$13 的数据依赖（与 §2.2 步骤编号对照）。
+\textbf{图~\ref{fig:ch2-explore}}是仓库时间线（先长 PKE，再接 KEM 尾缝）；
+\textbf{图~\ref{fig:ch2-fips-dataflow}}是 FIPS Alg.19$\to$16$\to$13 的数据依赖（与 §2.2 步骤编号对照）。
 
-\paragraph{图一：工程探路（PKE 线 $\to$ KEM 线）}
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   node distance=6mm and 8mm,
   box/.style={draw, rounded corners=2pt, align=center, font=\small,
@@ -316,16 +327,19 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
     \textbf{KEM 线}：复用 PKE $\to$ Alg.16 尾缝 $\to$ 去 vendor 晋级
   };
 \end{tikzpicture}
-\end{center}
+\caption{工程探路：PKE 线到 KEM 线（仓库时间线）}
+\label{fig:ch2-explore}
+\end{figure}
 
 \begin{itemize}
   \item \textbf{PKE 线}：我们先把 NTT、内积等做成向量探针；再把 Alg.13 拆成 $\hat{A}$、$s,e$、device 全链，逐段 PASS；最后集成晋级 stable。
   \item \textbf{KEM 线}：我们语义上调用 Alg.13（步骤 1 即 \texttt{K-PKE.KeyGen}）；设备上在 Launch-2 尾部追加 Alg.16 步骤 2--3（$H$、拼 $\mathit{dk}$）；编排上保持 2-launch；验收上 correctness 作 oracle，device 去 vendor 后晋级 stable。
 \end{itemize}
 
-\paragraph{设备侧 Launch 与 FIPS 行的对应（本仓实现）}
-{\small
-\begin{center}
+\begin{table}[H]
+\centering\small
+\caption{设备侧 Launch 与 FIPS 行的对应（本仓实现）}
+\label{tab:ch2-launch}
 \begin{tabular}{@{}L{2.0cm}L{5.5cm}L{2.2cm}L{4.0cm}@{}}
   \toprule
   Launch & 设备段 & FIPS 行 & 要点 \\
@@ -335,19 +349,18 @@ Alg.19 比 Alg.13 \textbf{多出来的}主要是步骤 1--2 的 $z$、Alg.16 步
   L2 尾 & \texttt{KemKgTailFused} & Alg.16 步骤 2--3 & $z$、$H(\mathit{ek})$、写 $\mathit{dk}$ \\
   \bottomrule
 \end{tabular}
-\end{center}
-}
+\end{table}
 
 若用一句话概括这次成功：
 \textbf{我们把 FIPS 的三层算法，映射成「已证 PKE 链 + 一条单独想清楚的 KEM 尾缝」}，
 而不是在 KEM 任务里重写 NTT。
 
-\paragraph{图二：FIPS 三层的数据依赖（图感）}
-图一讲「仓库里怎样长出来」；图二只看标准数据流——
+图~\ref{fig:ch2-explore}讲「仓库里怎样长出来」；图~\ref{fig:ch2-fips-dataflow}只看标准数据流——
 \textbf{重计算在 Alg.13}，$z$ \textbf{不进} Alg.13，只进 Alg.16 的 $\mathit{dk}$ 拼接；
 $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=1.85cm, y=1.12cm,
   var/.style={draw, ellipse, minimum width=2.1cm, minimum height=0.76cm,
@@ -392,7 +405,9 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
     -| node[lbl, left, pos=0.2]{直通} (ek);
   \draw[arr] (a16) -- (dk);
 \end{tikzpicture}
-\end{center}
+\caption{FIPS 三层数据依赖示意（Alg.19 / 13 / 16）}
+\label{fig:ch2-fips-dataflow}
+\end{figure}
 
 读图时抓住三点：
 \begin{enumerate}
@@ -450,13 +465,21 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 
 四组问题都很好，但「能回答」要分层次：
 \textbf{工程实践里我们已有碎片}，\textbf{形式化方法论里我们尚未闭环}。
-下表诚实对照（2026-07 专题讨论时的判断）。
+表~\ref{tab:ch2-four-q}诚实对照（2026-07 专题讨论时的判断）。
 
 {\small
 \begin{longtable}{@{}L{2.4cm}L{4.2cm}L{4.8cm}L{3.2cm}@{}}
+  \caption{四组问题：本工程已能说明与仍缺项对照}\\
+  \label{tab:ch2-four-q}\\
   \toprule
   问题组 & 本工程\textbf{已能}说明的 & \textbf{仍缺}的 & 判断 \\
   \midrule
+  \endfirsthead
+  \caption[]{四组问题：本工程已能说明与仍缺项对照（续）}\\
+  \toprule
+  问题组 & 本工程\textbf{已能}说明的 & \textbf{仍缺}的 & 判断 \\
+  \midrule
+  \endhead
   第一组 &
   INDEX、customspec、baseline-registry 已在约束引用来源 &
   机器可读的「证书对象」；菜单$\neq$拼装说明书的显式规则 &
@@ -622,7 +645,8 @@ R=\{(\text{高数},\text{概率}),\,(\text{线代},\text{机器学习}),\,(\text
 \]
 则 $(\text{高数},\text{概率})\in R$，但 $(\text{概率},\text{高数})\notin R$（有序性）。
 映射 $\mathrm{grade}:A\to\{A,B,C\}$ 若存在，则是函数：每门课恰一个成绩。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=2.4cm, y=1.35cm,
   every node/.style={font=\small},
@@ -637,7 +661,9 @@ R=\{(\text{高数},\text{概率}),\,(\text{线代},\text{机器学习}),\,(\text
   \draw[arr] (prob) -- (ml);
   \draw[arr] (lin) -- (ml);
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：课程先修关系}
+\label{fig:auto-01}
+\end{figure}
 \end{example}
 
 \begin{example}[工程：§2 数据依赖中的关系]
@@ -647,7 +673,8 @@ $(d,\text{Alg.13})\in R_{\mathrm{KG}}$，$(z,\text{Alg.13})\notin R_{\mathrm{KG}
 「把 $\mathit{ek}_{\mathrm{PKE}}$ 直通记为 $\mathit{ek}_{\mathrm{KEM}}$」可视为部分函数
 $\iota:\{\mathit{ek}_{\mathrm{PKE}}\}\to\{\mathit{ek}_{\mathrm{KEM}}\}$。
 下图为关系 $R_{\mathrm{KG}}$ 的示意（数据流语义；闭包节将改用依赖方向）。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=1.55cm, y=1.05cm,
   every node/.style={font=\footnotesize},
@@ -674,7 +701,9 @@ $\iota:\{\mathit{ek}_{\mathrm{PKE}}\}\to\{\mathit{ek}_{\mathrm{KEM}}\}$。
   \draw[arr] (z) -- (a16);
   \draw[arr] (a16) -- (dk);
 \end{tikzpicture}
-\end{center}
+\caption{示意配图 2}
+\label{fig:auto-02}
+\end{figure}
 \end{example}
 
 \subsection{有向图、路与环}
@@ -723,7 +752,8 @@ $|N^+(v)|$、$|N^-(v)|$ 称为出度、入度。
 则 $1\rightsquigarrow 4$，且存在两条不同路径 $1\to2\to4$ 与 $1\to3\to4$。
 $4$ 的入邻域为 $N^-(4)=\{2,3\}$，出邻域 $N^+(4)=\emptyset$。
 该图无环。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=2.0cm, y=1.4cm,
   every node/.style={font=\small},
@@ -740,7 +770,9 @@ $4$ 的入邻域为 $N^-(4)=\{2,3\}$，出邻域 $N^+(4)=\emptyset$。
   \draw[arr] (3) -- (4);
   \node[font=\footnotesize, anchor=west] at (1.5,0) {$N^-(4)=\{2,3\}$};
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：四点有向图}
+\label{fig:auto-03}
+\end{figure}
 \end{example}
 
 \begin{example}[工程：KeyGen 数据流图是有向图]
@@ -786,7 +818,8 @@ $z\rightsquigarrow \mathit{dk}_{\mathrm{KEM}}$ 但 $z\not\rightsquigarrow \text{
 \begin{example}[纯数学：给四点图写拓扑序]
 续前例 $E=\{(1,2),(1,3),(2,4),(3,4)\}$。
 $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向）。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=1.35cm, y=0.9cm,
   every node/.style={font=\small},
@@ -804,13 +837,16 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
   \draw[arr, red!70!black] (b) -- (a);
   \draw[arr] (b) -- (c); \draw[arr] (c) -- (d);
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：给四点图写拓扑序}
+\label{fig:auto-04}
+\end{figure}
 \end{example}
 
 \begin{example}[工程：能力依赖链]
 将「P0 平台事实 $\to$ P1 原语 $\to$ P2 PKE.KeyGen $\to$ P3 KEM.KeyGen」视为一条链，则它是 DAG，
 且该顺序本身就是拓扑序。真实仓库图会有多父多子，但仍应保持无环。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=2.0cm, y=0.95cm,
   every node/.style={font=\small},
@@ -823,7 +859,9 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
   \node[box, fill=orange!12] (p3) at (3.6,1.5) {P3};
   \draw[arr] (p0) -- (p1) -- (p2) -- (p3);
 \end{tikzpicture}
-\end{center}
+\caption{配图：工程：能力依赖链}
+\label{fig:auto-05}
+\end{figure}
 \end{example}
 
 \begin{remark}[DAG 不回答的问题]
@@ -869,7 +907,8 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
   \item 奇数集对加法\textbf{不}封闭：$1+1=2$ 不是奇数。
   \item $\{0,1,2\}$ 对「加 $1$」这一元运算不封闭，因为 $\varphi(2)=3\notin\{0,1,2\}$。
 \end{itemize}
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\small},
   s/.style={draw, circle, minimum size=0.7cm},
@@ -883,7 +922,9 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
   \node[font=\footnotesize, anchor=west] at (5.1,0.15) {$\varphi(x)=x+1$};
   \node[font=\footnotesize, anchor=west] at (5.1,-0.35) {蓝集对 $\varphi$ 不封闭};
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：封闭与不封闭}
+\label{fig:auto-06}
+\end{figure}
 \end{example}
 
 \begin{example}[工程直觉（尚不形式化）]
@@ -946,7 +987,8 @@ A_\infty=\bigcup_{k\ge 0}A_k.
 取 $U=\{0,1,2,3,4\}$，$\varphi(x)=x+1$（约定 $\varphi(4)=4$ 以免越界），$A=\{2\}$。
 则迭代：$\{2\}\to\{2,3\}\to\{2,3,4\}\to\{2,3,4\}$。
 故 $\mathrm{Cl}(A)=\{2,3,4\}$——包含种子，并对 $\varphi$ 封闭的最小集。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\small},
   s/.style={draw, circle, minimum size=0.65cm},
@@ -961,7 +1003,9 @@ A_\infty=\bigcup_{k\ge 0}A_k.
   \node[font=\footnotesize, anchor=north] at (2.4,-0.55) {种子};
   \node[font=\footnotesize, anchor=north] at (4.2,-0.55) {闭包多出来的点};
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：对「加 $1$」的闭包}
+\label{fig:auto-07}
+\end{figure}
 \end{example}
 
 \subsubsection{闭包算子}
@@ -1055,7 +1099,8 @@ R^{*} &=R^{0}\cup R^{+}=\{(a,a),(b,b),(c,c),(a,b),(b,c),(a,c)\}.
 因此：$(a,a)$ 这类对角元来自 $R^{0}$（$0$ 步路径约定），
 \textbf{不是} $R\circ R$ 算出来的；本例中 $R$ 本身也没有自环。
 图中三种线分别对应三类来源：
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\small},
   c/.style={draw, circle, minimum size=0.75cm},
@@ -1079,7 +1124,9 @@ R^{*} &=R^{0}\cup R^{+}=\{(a,a),(b,b),(c,c),(a,b),(b,c),(a,c)\}.
     点线自环 $=R^{0}$（恒等）
   };
 \end{tikzpicture}
-\end{center}
+\caption{示意配图 8}
+\label{fig:auto-08}
+\end{figure}
 若教材图只想强调「传递多出来的边」，可省略自环，但须在式子里保留 $R^{0}$，以免误以为 $(a,a)$ 来自复合。
 \end{example}
 
@@ -1427,7 +1474,8 @@ D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
 此时 $\{3\}$ 是一个缺项生成集：补证 $3$ 之后闭包已满。
 又 $\mathrm{Dep}^*(\{2,3\})=\mathrm{Dep}^*(4)$，故 $\{2,3\}$ 是 $\mathrm{Dep}^*(4)$ 的一个生成集
 （且为极小：去掉 $2$ 或 $3$ 任一，闭包都到不了 $4$ 的全部祖先）。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=1.7cm, y=1.25cm,
   every node/.style={font=\small},
@@ -1454,7 +1502,9 @@ D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
   \node[font=\footnotesize, anchor=west, align=left] at (1.3,0.2) {虚线边框$\in\Gamma$\\橙底$=$缺项};
   \end{scope}
 \end{tikzpicture}
-\end{center}
+\caption{示意配图 9}
+\label{fig:auto-09}
+\end{figure}
 \end{example}
 
 \begin{example}[工程：KEM.KeyGen 的依赖闭包示意]
@@ -1466,7 +1516,8 @@ D_2(4)=\{4,2,3,1\}=\mathrm{Dep}^*(4).
 \]
 若当前 $\Gamma$ 已含 P0--P2，但尾缝仍未获证（$\mathrm{Tail}\notin\Gamma$），则
 $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{未}闭包已满。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=2.15cm, y=1.15cm,
   every node/.style={font=\footnotesize, align=center},
@@ -1490,7 +1541,9 @@ $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{�
     $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$
   };
 \end{tikzpicture}
-\end{center}
+\caption{配图：工程：KEM.KeyGen 的依赖闭包示意}
+\label{fig:auto-10}
+\end{figure}
 §2 资产清单 $\approx$ 当时对 $\mathrm{Dep}^*(T)$ 与 $\Gamma$ 的手工对照；
 \textbf{未}显式计算 $\mathrm{Missing}_\Gamma(T)$ 就开工，正是「菜单$\neq$说明书」的来源。
 \end{example}
@@ -1538,7 +1591,8 @@ $(\Gamma_i,F_i,S_i)$（定义见迁移系统一节），称为\textbf{配置轨�
 \begin{example}[纯数学：引理库 vs 一次证明树]
 左图：引理库 DAG（共享）。右图：证明 $T$ 时实际用到的派生树（一次作业）。
 结点 $L_2$ 可被许多证明共享，但右图只出现本次用到的边。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=1.5cm, y=1.1cm,
   every node/.style={font=\footnotesize},
@@ -1564,11 +1618,14 @@ $(\Gamma_i,F_i,S_i)$（定义见迁移系统一节），称为\textbf{配置轨�
   \draw[arr] (cc) -- (tt);
   \end{scope}
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：引理库 vs 一次证明树}
+\label{fig:auto-11}
+\end{figure}
 \end{example}
 
 \begin{example}[工程：三层对照图]
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   x=1cm, y=0.85cm,
   every node/.style={font=\footnotesize, align=center},
@@ -1594,7 +1651,9 @@ $(\Gamma_i,F_i,S_i)$（定义见迁移系统一节），称为\textbf{配置轨�
   \draw[arr] (q0) -- (q1) -- (q2);
   \node[anchor=west, align=left] at (6.0,-0.5) {$\Gamma$ 增大 / $F$ 消解};
 \end{tikzpicture}
-\end{center}
+\caption{配图：工程：三层对照图}
+\label{fig:auto-12}
+\end{figure}
 \end{example}
 
 \subsection{字母表、字与语言}
@@ -1647,7 +1706,8 @@ L^{*}=\bigcup_{k\ge 0}L^{k}.
 取 $\Sigma=\{0,1\}$，
 $L_{\mathrm{even0}}=\{w\in\Sigma^*\mid w\text{ 中 }0\text{ 的个数为偶数}\}$。
 下图用两状态自动机识别该语言（$q_0$ 接受）：读 $0$ 翻转奇偶，读 $1$ 不动。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\small},
   s/.style={draw, circle, minimum size=0.85cm},
@@ -1662,7 +1722,9 @@ $L_{\mathrm{even0}}=\{w\in\Sigma^*\mid w\text{ 中 }0\text{ 的个数为偶数}\
   \node[font=\footnotesize, anchor=west] at (4.3,0.3) {$1001\in L$（偶）};
   \node[font=\footnotesize, anchor=west] at (4.3,-0.3) {$10\notin L$（奇）};
 \end{tikzpicture}
-\end{center}
+\caption{配图：纯数学：偶数个 $0$ 的语言（附图）}
+\label{fig:auto-13}
+\end{figure}
 注意：$0\notin L$ 但 $00\in L$，故不能把「每个字母合法」误当成「连接合法」。
 \end{example}
 
@@ -1670,7 +1732,8 @@ $L_{\mathrm{even0}}=\{w\in\Sigma^*\mid w\text{ 中 }0\text{ 的个数为偶数}\
 将原子动作编码为字母，例如
 $a=\texttt{RunPKE}$，$b=\texttt{Alg16Tail}$，$c=\texttt{WriteIO}$。
 合法短计划 $w=abc$ 画成动作序列；插入未证书动作 $x$ 得 $abxc\notin L$。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\footnotesize, align=center},
   box/.style={draw, rounded corners=2pt, minimum width=1.55cm, minimum height=0.65cm},
@@ -1689,7 +1752,9 @@ $a=\texttt{RunPKE}$，$b=\texttt{Alg16Tail}$，$c=\texttt{WriteIO}$。
   \draw[arr] (a2) -- (b2) -- (x2) -- (c2);
   \node[anchor=west] at (6.5,-0.9) {$abxc\notin L$};
 \end{tikzpicture}
-\end{center}
+\caption{配图：工程：实现计划当作字（附图）}
+\label{fig:auto-14}
+\end{figure}
 \end{example}
 
 \subsection{文法、产生式、派生与派生树}
@@ -1746,7 +1811,8 @@ L(\mathcal{G}) \;=\; \{\,w\in\Sigma^*\mid S\Rightarrow^* w\,\}.
 \]
 若 $\texttt{PKE.KeyGen}$ 已是终结的已证书调用，而 $\texttt{Alg16Tail}$ 仍是非终结接缝，
 则派生树根为 KEM.KeyGen，一侧叶子为 PKE，另一侧继续展开尾缝直至获证动作。
-\begin{center}
+\begin{figure}[H]
+\centering
 \begin{tikzpicture}[
   every node/.style={font=\small, align=center},
   arr/.style={-{Stealth[length=2mm]}}
@@ -1757,7 +1823,9 @@ L(\mathcal{G}) \;=\; \{\,w\in\Sigma^*\mid S\Rightarrow^* w\,\}.
   \draw[arr] (T) -- (P);
   \draw[arr] (T) -- (S);
 \end{tikzpicture}
-\end{center}
+\caption{配图：工程：KEM.KeyGen 的改写}
+\label{fig:auto-15}
+\end{figure}
 \end{example}
 
 \subsection{成员判定、禁字与组合不免费}
@@ -1906,117 +1974,181 @@ P1 某能力的 tiling/同步壳变更后，曾基于旧 iface 的 P2/P3 证书�
 \label{sec:mathbg-hookback}
 
 第~\ref{sec:hook}~章讲的是\textbf{已经发生}的工程故事；本章讲的是\textbf{用来描述故事的语言}。
-本节\textbf{不引入新定义}，只做对照：指出第~2~章里读者已经见过的流程，分别落在本章哪一类对象上。
-读完后应能回答：「原来资产清单 / 探路图 / 尾缝 / correctness 翻车，在数学里分别叫什么。」
+本节\textbf{不引入新定义}，只做对照。
+由于中间隔了许多页，下面把第~2~章里最关键的表/图\textbf{重新画一遍}，并直接标上本章符号
+（$\Gamma$、$\mathrm{Dep}^*$、$\mathrm{Missing}$、接缝、配置转移等），
+让读者看到「加上数学表达式之后的完全体」长什么样。
+第~2~章原件仍保留备查：表~\ref{tab:ch2-assets}、图~\ref{fig:ch2-explore}、图~\ref{fig:ch2-fips-dataflow}、表~\ref{tab:ch2-launch}。
 
 \paragraph{总对照表（先扫一眼）}
-{\small
-\begin{center}
+\begin{table}[H]
+\centering\small
+\caption{第~2~章流程 / 物件与本章数学对象总对照}
+\label{tab:ch312-overview}
 \begin{tabular}{@{}L{5.0cm}L{8.8cm}@{}}
   \toprule
   第~\ref{sec:hook}~章中的流程 / 物件 & 本章对应的数学对象（节号直觉） \\
   \midrule
-  §2.3 资产清单「绿积木」、证书列 & 已证书集 $\Gamma$；顶点获证（§3.5） \\
+  表~\ref{tab:ch2-assets} 资产清单「绿积木」 & 已证书集 $\Gamma$；顶点获证（§3.5） \\
   活跃 INDEX 探针列表 & 能力菜单（$\Sigma$ 的线索）；\textbf{不是} $L$，也\textbf{不必}等于 $\Gamma$ \\
-  §2.4 图一：P0/P1$\to$分段$\to$stable PKE & 能力 DAG 上的一条生长路径；拓扑序（§3.4） \\
+  图~\ref{fig:ch2-explore}：P0/P1$\to$分段$\to$stable PKE & 能力 DAG 上的生长路径；拓扑序（§3.4） \\
   「做 KEM 前心里已有清单」 & 手工对照 $\mathrm{Dep}^*(T)$ 与 $\Gamma$；缺项当时未显式算出 \\
-  §2.4 图二：Alg.19/16/13 数据流 & \textbf{数据}依赖图（汇点）；与能力 DAG、派生树\textbf{分层}（§3.6） \\
+  图~\ref{fig:ch2-fips-dataflow}：Alg.19/16/13 数据流 & \textbf{数据}依赖图（汇点）；与能力 DAG、派生树\textbf{分层}（§3.6） \\
   Alg.16 尾缝、2-launch 接缝、拼 $\mathit{dk}$ & 接缝边 / $\mathsf{Compose}$；组合不免费（§3.9） \\
   correctness 高成本探索 & 只有菜单与伪代码 $\approx$ 只有 $\Sigma$；缺少成员判定（§3.9） \\
   device 去 vendor $\to$ stable 晋级 & $\mathsf{Probe}/\mathsf{Certify}$；配置轨迹走到接受（§3.10） \\
   「上次 PASS 仍可能翻车」的担忧 & 证书非单调；$\mathsf{Dirty}$（§3.11） \\
   \bottomrule
 \end{tabular}
-\end{center}
-}
+\end{table}
 
-\paragraph{流程一：动手前的资产清单 $\leftrightarrow$ 已证书集 $\Gamma$}
-第~2~章 §2.3 强调：做 KEM.KeyGen 之前，仓库里已有 P0--P2 的大量 PASS / 交付记录，
-并且用一张表把「当时手里有什么」写清。
-用本章语言重述：
+\paragraph{流程一：资产清单的「数学完全体」}
+表~\ref{tab:ch2-assets}在第~2~章只回答「手里有什么、证书形态是什么」。
+表~\ref{tab:ch312-assets-math}把它重画成开任务时刻相对目标 $T=\texttt{kem.keygen.k4}$ 的闭包对照：
+增加「$\in\Gamma$？」「$\in\mathrm{Dep}^*(T)$？」「角色」三列。
+\begin{table}[H]
+\centering\footnotesize
+\caption{资产清单的数学完全体（相对 $T=\texttt{kem.keygen.k4}$ 的开任务快照）}
+\label{tab:ch312-assets-math}
+\begin{tabular}{@{}c L{3.4cm} c c L{4.2cm}@{}}
+  \toprule
+  层 & 能力（简述） & $\in\Gamma$？ & $\in\mathrm{Dep}^*(T)$？ & 角色（本章用语） \\
+  \midrule
+  P0 & DataCopy / MMAD / TPipe 等 & 是 & 是 & 已证书祖先 \\
+  P1 & NTT / SampleNTT / CBD / \ldots & 是 & 是 & 已证书祖先 \\
+  P2 & Alg.13 分段与 device & 是 & 是 & 已证书祖先 \\
+  P2 & \textbf{stable PKE KeyGen} & \textbf{是} & \textbf{是} & 直接先决（$\in\Gamma\cap\mathrm{Dep}^*(T)$） \\
+  --- & \textbf{Alg.16 尾缝 / 2-launch 接缝} & \textbf{否} & \textbf{是} & \textbf{缺项} $\mathrm{Missing}_\Gamma(T)$ \\
+  P3 & KEM KeyGen correctness & （标本） & --- & 语义 oracle；\textbf{非}合法派生证据 \\
+  P3 & KEM KeyGen device / stable & 开任务时否 & 是（目标侧） & 待 $\mathsf{Certify}$ 的 $T$ \\
+  \bottomrule
+\end{tabular}\\[4pt]
+{\footnotesize
+开任务近似：$\Gamma\supseteq\{\mathrm{P0},\mathrm{P1},\mathrm{P2}\}$，
+$\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
+故相对 $\Gamma$ \textbf{未}闭包已满。
+菜单（INDEX）上的绿项只是构造 $\Gamma$ 的证据来源候选，\textbf{不能}代替本表。}
+\end{table}
+
+由此：
 \begin{itemize}
-  \item 表中每一行能力对应顶点 $v\in V$；「证书」列对应获证证据的工程载体；
-  \item 当时被允许引用的那些绿行，合起来就是讨论时刻的 $\Gamma$（至少是 $\Gamma$ 的工程近似）；
-  \item 因此「我们可以站在 stable PKE 上」——若要数学上站得住，依据应是
-        $\texttt{pke.keygen.k4}\in\Gamma$，而\textbf{不仅仅}是目录名叫 \texttt{stable-*}。
+  \item 「站在 stable PKE 上」数学上应写成 $\texttt{pke.keygen.k4}\in\Gamma$，而非仅目录名含 \texttt{stable}；
+  \item 菜单、$\Gamma$、$\mathrm{Missing}_\Gamma(T)$ 三者不可互相替代（第一组问题的落点）。
 \end{itemize}
-同节还把 INDEX 比作「能力菜单」。本章已区分：
-菜单回答「可能看见哪些字母/能力」；$\Gamma$ 回答「此刻哪些已获证」；
-$\mathrm{Missing}_\Gamma(T)$ 回答「为了目标还缺谁」。
-三者\textbf{不可互相替代}——这正是第一组问题里「菜单$\neq$拼装说明书」的落点。
 
-\paragraph{流程二：PKE 线探路 $\leftrightarrow$ DAG 与拓扑序}
-§2.4 图一把仓库时间线画成：
-NTT 向量探针 $\to$ Alg.13 分段探针 $\to$ device 全链 $\to$ stable PKE。
-这不是随意的时间轴，而是能力依赖图上的一条\textbf{合法生长路径}：
+\paragraph{流程二：探路图的「数学完全体」}
+图~\ref{fig:ch2-explore}是仓库时间线。
+图~\ref{fig:ch312-explore-math}在同一骨架上标出：拓扑序方向、已证书集染色、缺项、以及 correctness 旁路（$\notin L$ 的探索）。
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  x=2.05cm, y=1.15cm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\scriptsize,
+              minimum width=2.15cm, minimum height=0.78cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick},
+  note/.style={font=\footnotesize, align=left}
+]
+  \node[box, fill=blue!12] (v2) at (0,1.2) {P1 NTT\\$\in\Gamma$};
+  \node[box, fill=blue!12] (ahat) at (1.15,1.2) {$\hat{A}$ 探针\\$\in\Gamma$};
+  \node[box, fill=blue!12] (se) at (2.3,1.2) {$s,e$ 探针\\$\in\Gamma$};
+  \node[box, fill=blue!18] (pke) at (3.5,1.2) {P2 PKE\\$\in\Gamma$};
+  \draw[arr] (v2) -- (ahat) -- (se) -- (pke);
+  \node[note, blue!60!black] at (1.75,1.95) {拓扑序 $\longrightarrow$（先底层后上层）};
+
+  \node[box, fill=orange!35, densely dashed] (tail) at (3.5,0) {Alg.16 尾缝\\$\notin\Gamma$（缺项）};
+  \node[box, fill=orange!20] (kem) at (3.5,-1.1) {P3 KEM.KG\\目标 $T$};
+  \draw[arr] (pke) -- (tail);
+  \draw[arr] (tail) -- (kem);
+  \node[note, red!60!black] at (4.85,0) {$\mathrm{Missing}_\Gamma(T)$};
+
+  \node[box, fill=gray!15] (corr) at (1.4,-1.1) {correctness\\标本};
+  \draw[arr, densely dotted] (pke) -- (corr);
+  \draw[arr, densely dotted] (corr) -- node[below, font=\scriptsize]{oracle$\neq L$} (kem);
+
+  \node[note] at (0.2,-2.15) {
+    实线边 $\approx$ 能力 DAG 上可引用的依赖 / 接缝；\\
+    虚线框 $=$ 开任务时未获证缺项；灰框 $=$ 语义对照，不充当合法派生模板。
+  };
+\end{tikzpicture}
+\caption{工程探路图的数学完全体（$\Gamma$、拓扑序、缺项、oracle 旁路）}
+\label{fig:ch312-explore-math}
+\end{figure}
+
 \begin{itemize}
-  \item 后一结点语义上依赖前一结点的 iface（语义依赖边）；
-  \item 探路顺序与拓扑序一致：先证底层，再证上层，避免「先写 P3、回头发明 P1」；
-  \item 整条线完成后，P2 进入 $\Gamma$，为后续 KEM 线提供已证书先决。
+  \item 蓝底结点：开任务时已在 $\Gamma$ 中；探路顺序与拓扑序一致；
+  \item 虚线橙框尾缝：$\in\mathrm{Dep}^*(T)$ 但 $\notin\Gamma$，即缺项；
+  \item correctness 灰框：可作字节 oracle，但\textbf{不}自动给出 $w\in L$。
 \end{itemize}
-若把箭头反过来读（从目标往回找先决），就是依赖闭包的反向搜索（§3.5）：
-从「要做 PKE KeyGen」出发，会摸到 NTT、MMAD、同步壳等祖先。
 
-\paragraph{流程三：决定做 KEM.KeyGen $\leftrightarrow$ 目标、闭包与缺项}
-选定目标 $T=\texttt{kem.keygen.k4}$（§2.1 交付物）。
-当时工程叙事是：「语义调用 Alg.13（即已证 PKE），设备上补 Alg.16 尾缝」。
-用闭包语言写，应至少能填：
+\paragraph{流程三：目标、闭包与缺项（用完全体表直接读）}
+选定 $T=\texttt{kem.keygen.k4}$ 后，由表~\ref{tab:ch312-assets-math}与图~\ref{fig:ch312-explore-math}直接读出：
 \begin{align*}
 \mathrm{Dep}^*(T)
 &\;\supseteq\;
-\{\text{P0 平台},\;\text{P1 原语},\;\text{P2 PKE},\;\text{Alg.16 尾缝},\;T\},\\
+\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{Tail},T\},\\
 \Gamma_{\text{开任务}}
 &\;\supseteq\;
-\{\text{P0},\;\text{P1},\;\text{P2}\},\\
+\{\mathrm{P0},\mathrm{P1},\mathrm{P2}\},\\
 \mathrm{Missing}_{\Gamma}(T)
 &\;\ni\;
-\text{Alg.16 尾缝（及 2-launch 接缝声明）}.
+\mathrm{Tail}.
 \end{align*}
-§2 资产清单 $\approx$ 对 $\mathrm{Dep}^*(T)$ 与 $\Gamma$ 的\textbf{手工}对照；
-当时\textbf{未}强制先交 $\mathrm{Missing}_\Gamma(T)$ 再写码——这正是后文要门禁化的缺口
-（第四组问题：闭包表）。
+第~2~章当时\textbf{未}强制先交 $\mathrm{Missing}_\Gamma(T)$ 再写码——这正是闭包表门禁化的缺口。
 
-\paragraph{流程四：两张图为什么不能混读 $\leftrightarrow$ 三层对象}
-§2.4 同时给了「工程探路图」与「FIPS 数据流图」。
-读者容易把它们看成同一张图；本章 §3.6 要求拆开：
-\begin{center}
-\begin{tabular}{@{}L{3.2cm}L{5.5cm}L{5.0cm}@{}}
-  \toprule
-  第~2~章物件 & 更接近哪一层 & 它回答 / 不回答 \\
-  \midrule
-  资产清单 + PKE/KEM 探路 & 能力 DAG（库）+ $\Gamma$ 快照 & 谁依赖谁、谁已获证；不回答某次改写步骤 \\
-  Alg.19$\to$16$\to$13 数据流 & 算法数据依赖（汇点示意图） & 字节从哪来到哪去；不是能力证书图 \\
-  「先尾缝、再晋级 stable」叙事 & 一次任务的派生 / 配置轨迹 & 该次作业如何展开与获证；不是整库拷贝 \\
-  \bottomrule
-\end{tabular}
-\end{center}
+\paragraph{流程四：两张图为何不能混读——三层对象完全体}
+图~\ref{fig:ch2-fips-dataflow}是\textbf{数据}依赖；图~\ref{fig:ch2-explore}更接近\textbf{能力}生长。
+图~\ref{fig:ch312-three-layers}把三层画在同一页，避免翻页后串层。
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  x=1cm, y=1cm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\scriptsize,
+              minimum width=2.4cm, minimum height=0.7cm},
+  arr/.style={-{Stealth[length=1.6mm]}, thick},
+  title/.style={font=\small\bfseries}
+]
+  % Layer A
+  \node[title] at (2.2,4.35) {层 A：数据依赖（$\approx$ 图~\ref{fig:ch2-fips-dataflow}）};
+  \node[box, fill=orange!10] (a19) at (0,3.5) {Alg.19};
+  \node[box, fill=blue!10] (a13) at (2.2,3.5) {Alg.13};
+  \node[box, fill=orange!12] (a16) at (4.4,3.5) {Alg.16};
+  \draw[arr] (a19) -- (a13); \draw[arr] (a13) -- (a16);
+  \node[font=\footnotesize, text=gray] at (2.2,2.95) {回答：字节从哪来到哪去；\textbf{不}回答谁已获证};
+
+  % Layer B
+  \node[title] at (2.2,2.35) {层 B：能力 DAG $+$ $\Gamma$（$\approx$ 表~\ref{tab:ch312-assets-math}）};
+  \node[box, fill=blue!12] (p0) at (0,1.5) {P0$\in\Gamma$};
+  \node[box, fill=blue!12] (p1) at (1.5,1.5) {P1$\in\Gamma$};
+  \node[box, fill=blue!12] (p2) at (3.0,1.5) {P2$\in\Gamma$};
+  \node[box, fill=orange!30, densely dashed] (tl) at (4.5,1.5) {Tail$\notin\Gamma$};
+  \draw[arr] (p0)--(p1)--(p2)--(tl);
+  \node[font=\footnotesize, text=gray] at (2.2,0.95) {回答：谁依赖谁、谁已获证；\textbf{不}回答本次改写步骤};
+
+  % Layer C
+  \node[title] at (2.2,0.35) {层 C：一次配置轨迹（device$\to$stable）};
+  \node[box, fill=green!10] (q0) at (0,-0.5) {$(\Gamma_0,F_0)$};
+  \node[box, fill=green!10] (q1) at (2.2,-0.5) {$\mathsf{Probe}$};
+  \node[box, fill=green!12] (q2) at (4.4,-0.5) {$T\in\Gamma_m$};
+  \draw[arr] (q0)--(q1)--(q2);
+  \node[font=\footnotesize, text=gray] at (2.2,-1.15) {回答：这次作业如何获证 / 接受；\textbf{不是}整库拷贝};
+\end{tikzpicture}
+\caption{三层对象完全体：数据流 / 能力库$\Gamma$ / 配置轨迹}
+\label{fig:ch312-three-layers}
+\end{figure}
 读图口诀：\textbf{数据流图看算对；能力 DAG 看准引用；派生/轨迹看这次怎么走。}
-把 KEM 尾缝误当成「再算一遍 Alg.13」，或把数据流边当成「可以抄 frozen 源码的边」，都是层间混淆。
 
 \paragraph{流程五：尾缝与 2-launch $\leftrightarrow$ 组合不免费}
-KEM 线的关键工程动作是：复用已证 PKE，在 Launch-2 尾部追加 $H$、拼 $\mathit{dk}$（Alg.16），
-并保持与 PKE 相同的 2-launch 编排。
-本章对应：
-\begin{itemize}
-  \item 「PKE PASS」与「哈希/拼装片段各自可对拍」\textbf{不蕴涵}「接在一起的 KEM.KeyGen 自动合法」；
-  \item 尾缝必须作为\textbf{新节点}（或显式接缝边）进入图，经 $\mathsf{Compose}/\mathsf{Probe}$ 再 $\mathsf{Certify}$；
-  \item 这就是第二组问题的数学形态：存在 $x,y\in L$ 使 $xy\notin L$（§3.9）。
-\end{itemize}
+对照表~\ref{tab:ch2-launch}与图~\ref{fig:ch312-explore-math}：
+「PKE$\in\Gamma$」与「哈希/拼装片段可对拍」\textbf{不蕴涵}「接好的 KEM.KeyGen 自动合法」。
+尾缝须作为新节点经 $\mathsf{Compose}/\mathsf{Probe}$ 再 $\mathsf{Certify}$——即存在 $x,y\in L$ 使 $xy\notin L$（§3.9）。
 
-\paragraph{流程六：correctness 标本 $\leftrightarrow$ 缺少成员判定的搜索}
-§2.4 / 第二、三组问题提到：只给 Alg.19 伪代码 + INDEX 菜单、不给拼装路线时，
-Agent 曾陷入高成本 correctness 探索。
-用语言论重述：
-\begin{itemize}
-  \item 伪代码与菜单至多提示字母表 $\Sigma$ 的候选；
-  \item 没有「合法计划字」的成员判定（$w\in L$？）时，搜索空间接近 $\Sigma^*$；
-  \item correctness 路线证明的是语义 oracle（字节可对）可以在混乱过程后仍成立——
-        \textbf{它不证明}该过程是合法派生；标本可作对照，不可作抄码模板。
-\end{itemize}
-「幻觉」在本章工作定义下，正是画出无证书边 / 执行非法转移（§3.10）。
+\paragraph{流程六：correctness $\leftrightarrow$ 缺少成员判定}
+图~\ref{fig:ch312-explore-math}中灰框旁路标明 $\mathrm{oracle}\neq L$：
+伪代码+菜单至多提示 $\Sigma$；无成员判定时搜索空间接近 $\Sigma^*$。
+correctness 证明字节可对，\textbf{不}证明过程是合法派生。
 
-\paragraph{流程七：device $\to$ stable 晋级 $\leftrightarrow$ 配置转移与接受}
-合法工程叙事可粗写成一条配置轨迹（符号与 §3.10 一致）：
+\paragraph{流程七：晋级 $\leftrightarrow$ 配置转移}
+合法叙事对应配置轨迹（与图~\ref{fig:ch312-three-layers}层 C 一致）：
 \[
 (\Gamma_0,F_0,S_0)
 \;\xrightarrow{\mathsf{Expand}}\;
@@ -2025,23 +2157,18 @@ Agent 曾陷入高成本 correctness 探索。
 \cdots
 \;\xrightarrow{\mathsf{Certify}}\;
 (\Gamma_m,\emptyset,S_m),
+\quad T\in\Gamma_m.
 \]
-其中 $\Gamma_0$ 已含 stable PKE 等，$F_0=\{\texttt{kem.keygen}\}$，
-缺项消解后 $T\in\Gamma_m$，并满足生产 I/O 契约——即到达\textbf{接受配置}。
-若中途从 \texttt{frozen-exp-*} 抄实现，则应触发拒绝（禁字 / $\mathsf{Freeze}$）。
-第~2~章用「去 vendor、对拍、晋级」讲的是同一条轨迹的工程话。
+从 \texttt{frozen-exp-*} 抄实现应触发拒绝（$\mathsf{Freeze}$ / 禁字）。
 
-\paragraph{流程八：上游变更的担忧 $\leftrightarrow$ 非单调证书}
-第四组问题问：tiling / 同步壳一改，下游哪些节点该标脏？
-本章 §3.11：证书库非单调；$\mathsf{Dirty}$ 可使 $\Gamma$ 收缩。
-工程含义：P1 iface 变更后，曾基于旧 iface 的 P2/P3「上次 PASS」不得自动留在 $\Gamma$。
+\paragraph{流程八：上游变更 $\leftrightarrow$ $\mathsf{Dirty}$}
+P1 iface 变更后，曾基于旧 iface 的 P2/P3 不得因「上次 PASS」自动留在 $\Gamma$；须走 $\mathsf{Dirty}$（§3.11）。
 
 \paragraph{四组问题：用本章对象逐条重述}
-下面把 §2.6 的四组问题，从「工程疑惑」改写成「已有编号对象能说清什么」。
-（能说清 $\neq$ 仓库门禁已自动执行；后者留给第~\ref{sec:gates}~章。）
-
-{\small
-\begin{center}
+\begin{table}[H]
+\centering\small
+\caption{§2.6 四组问题的本章重述（对照表~\ref{tab:ch2-four-q}）}
+\label{tab:ch312-four-q}
 \begin{tabular}{@{}L{1.6cm}L{6.0cm}L{6.2cm}@{}}
   \toprule
   问题组 & 第~2~章里的具体疑惑（缩写） & 本章用本章对象怎样说 \\
@@ -2049,33 +2176,31 @@ Agent 曾陷入高成本 correctness 探索。
   第一组 &
   凭目录名还是凭证书站在 PKE 上？菜单是否等于说明书？ &
   站得住 $\Leftrightarrow$ 相关顶点 $\in\Gamma$；
-  菜单 $\neq\Gamma\neq L(\mathcal{G})$；合法砌法看 DAG、产生式与 $\mathrm{Forb}$。 \\
+  菜单 $\neq\Gamma\neq L(\mathcal{G})$；见表~\ref{tab:ch312-assets-math}。 \\
   \midrule
   第二组 &
-  NTT/PKE 都 PASS，谁保证尾缝与 2-launch？
-  验收只看字节还是也看生长路径？ &
+  NTT/PKE 都 PASS，谁保证尾缝与 2-launch？ &
   组合不免费：接缝须 $\mathsf{Compose}$ 获证；
-  语义 oracle（KAT）$\neq$ 合法派生（$w\in L$）。 \\
+  语义 oracle $\neq$ 合法派生（$w\in L$）。 \\
   \midrule
   第三组 &
-  只给伪代码+菜单，搜索为何爆炸？如何收束又不堵优化？ &
+  只给伪代码+菜单，搜索为何爆炸？ &
   无成员判定则空间 $\sim\Sigma^*$；
-  收束 $=$ 只允许沿已证书边 / 合法字生长（配置自动机），优化在合法类内做。 \\
+  收束 $=$ 只沿已证书边 / 合法字生长。 \\
   \midrule
   第四组 &
-  能否先交闭包表？上游变更如何失效传播？ &
+  能否先交闭包表？上游变更如何失效？ &
   闭包表至少含 $A,\Gamma,\mathrm{Dep}^*,\mathrm{Missing}$；
-  上游变更走 $\mathsf{Dirty}$，过期证书不可当永真公理。 \\
+  上游变更走 $\mathsf{Dirty}$。 \\
   \bottomrule
 \end{tabular}
-\end{center}
-}
+\end{table}
 
 \paragraph{读完本节应带走的三句话}
 \begin{enumerate}
-  \item 第~2~章的「绿清单 / 探路 / 尾缝 / 晋级 / 翻车」不是另一套理论，而是本章 DAG、闭包、语言、配置、非单调证书的\textbf{应用投影}。
-  \item 最容易混的三张图：数据流、能力库、一次派生——先分层，再提问。
-  \item 四组问题在本章已能\textbf{用词说清}；把它们变成任务启动时的硬检查，是下一章起的工程化工作。
+  \item 表~\ref{tab:ch312-assets-math}、图~\ref{fig:ch312-explore-math}、图~\ref{fig:ch312-three-layers}是第~2~章故事的\textbf{数学完全体}；原图表仍在第~2~章备查。
+  \item 最容易混的三层：数据流、能力库、一次派生——先分层，再提问。
+  \item 四组问题在本章已能\textbf{用词说清}；变成任务启动硬检查，是下一章起的工程化工作。
 \end{enumerate}
 
 \subsection{本章小结与下一章预告}
