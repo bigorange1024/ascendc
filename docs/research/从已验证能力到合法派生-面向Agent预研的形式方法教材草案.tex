@@ -126,7 +126,8 @@
 \subsection{阅读地图（教材顺序）}
 \begin{enumerate}
   \item 第~\ref{sec:hook}~章：\textbf{完整例子}（KEM.KeyGen：算法原文、我们有什么、怎样做出来、引出课题）；
-  \item 第~\ref{sec:mathbg}~章：\textbf{方法论数学背景}（图、闭包、形式语言、自动机直觉——\textbf{不含}密码/NTT 代数）；
+  \item 第~\ref{sec:mathbg}~章：\textbf{方法论数学背景}
+        （导论先讲为何学 DAG/形式语言/自动机及工程用法；再图、闭包、语言、配置转移——\textbf{不含}密码/NTT 代数）；
   \item 第~\ref{sec:math}--\ref{sec:gates}~章：\textbf{装进工程对象与门禁}（节点/边/证书；Agent 工作流）；
   \item 第~\ref{sec:replay}--\ref{sec:forward}~章：\textbf{复盘与前瞻}（用理论看实现）；
   \item 第~\ref{sec:correctness}~章：\textbf{correctness 对照组}；
@@ -541,11 +542,25 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 \label{sec:mathbg}
 
 第~\ref{sec:hook}~章给出了工程故事与问题感。
-本章先回答三个元问题——\textbf{为什么要学}、\textbf{学到什么算够}、\textbf{什么故意不学}——
-再沿一条主线，把「只沿已验证能力合法生长」逐步写成可检查的数学。
+本章\textbf{导论}（§~\ref{sec:mathbg-why}）先用三件工具说清读者为何要读本章：
+DAG、形式语言、自动机各自控制什么、在工程里落在何处；
+再说明最小集合与必须掌握清单；随后才进入六阶段主线与正式定义。
 
 \subsection{为何要学、最小集合与必须掌握什么}
 \label{sec:mathbg-why}
+
+读本章之前，先把导论读完：下面用三件工具说清——\textbf{为什么要学}、\textbf{学了在工程里怎么用}。
+细节定义从 §~\ref{sec:set-rel} 起展开；迷路时回到本小节的一句话与表~\ref{tab:ch3-three-tools}。
+
+\paragraph{一句话}
+\[
+\begin{array}{c}
+\text{DAG 管「能站在谁身上」；}\quad
+\text{形式语言管「怎样拼才算合法」；}\\[0.35em]
+\text{自动机（配置转移）管「这次作业走到哪、证书何时作废」。}
+\end{array}
+\]
+三者分别对应仓库里的\textbf{依赖图 / 拼装说明书 / 门禁过程}；缺一，第~\ref{sec:hook}~章里的失控会重新出现。
 
 \paragraph{为什么要学本章}
 第~\ref{sec:hook}~章末尾的四组问题，本质上都在问同一件事：
@@ -556,12 +571,81 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 \begin{itemize}
   \item \textbf{菜单当说明书}：看见探针 PASS，就默认「可以随便拼」；
   \item \textbf{单点当组合}：下层都对，上层接缝仍无证书；
-  \item \textbf{搜索空间爆炸}：只给算法伪代码与菜单，Agent 在 $\Sigma^*$ 里乱走；
+  \item \textbf{搜索空间爆炸}：只给算法伪代码与菜单，Agent 在任意拼接空间里乱走；
   \item \textbf{成功不可复用}：没有闭包表，下次 Encaps/Decaps 仍从零撞墙；
   \item \textbf{证书假永恒}：上游接口一变，下游仍拿「上次 PASS」当公理。
 \end{itemize}
 本章知识的直接用途，就是把上述现象写成可检查的对象与判定，
 从而让人（以及日后的门禁）能够\textbf{事前约束、事中检查、事后复盘}。
+
+\paragraph{三件工具：为何学、工程里怎么用}
+表~\ref{tab:ch3-three-tools} 是导论的核心对照；后文六阶段只是把这三件工具写细。
+
+\begin{table}[H]
+\centering\small
+\caption{DAG / 形式语言 / 自动机：导论级对照（为何学 $\leftrightarrow$ 工程用法）}
+\label{tab:ch3-three-tools}
+\begin{tabular}{@{}L{2.0cm} L{4.4cm} L{6.8cm}@{}}
+  \toprule
+  工具 & 为什么要学（控制什么） & 在工程里怎么用（落点） \\
+  \midrule
+  \textbf{DAG}
+  （及闭包） &
+  预研不是白手翻译 FIPS，而是「先有绿积木再往上长」。
+  没有图就说不清：谁依赖谁、先证谁、有没有环、动手前还缺谁。 &
+  顶点 $\approx$ INDEX/stable/接缝能力；
+  边 $\approx$「KEM 依赖 stable PKE」等；
+  拓扑序 $\approx$ P0${\to}$P1${\to}$P2${\to}$P3 探路顺序；
+  $\mathrm{Dep}^*/\mathrm{Missing}$ $\approx$ 资产清单与\textbf{闭包表}；
+  禁边直觉 $\approx$ \texttt{frozen/}。 \\
+  \midrule
+  \textbf{形式语言} &
+  INDEX 绿项是\textbf{菜单}，不是\textbf{拼装说明书}。
+  单点 PASS 推不出接缝合法（组合不免费）；
+  要把「合法拼法」写成可判定的 $w\in L$。 &
+  字母 $\approx$ 已证能力与接缝步骤；
+  字 $w$ $\approx$ 某次展开计划；
+  语言 $L$ $\approx$ 全体合法计划；
+  成员判定 $\approx$ 门禁查计划是否合法；
+  禁字 $\mathrm{Forb}$ $\approx$ 已关闭/禁止拼法（含 frozen 判决来源）。 \\
+  \midrule
+  \textbf{自动机}
+  （配置转移） &
+  DAG 是静态库，语言是合法计划集合；
+  真正干活是\textbf{过程}：补洞$\to$探针$\to$获证，有时还要作废。
+  没有转移规则，就无法说「走到接受」与「上次 PASS 为何作废」。 &
+  配置 $(\Gamma,F,S)$：$\Gamma$=已获证，$F$=前沿待办；
+  Expand/Probe/Certify $\approx$ 补洞 / 对拍 / 写入证书；
+  接受 $\approx$ 目标进 $\Gamma$；
+  Freeze $\approx$ 踩禁字关路线；
+  $\mathsf{Dirty}$ $\approx$ 上游约定变更后下游不得假绿。 \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\begin{example}[导论：用 KeyGen 故事对照三件工具]
+续第~\ref{sec:hook}~章。
+\begin{itemize}
+  \item \textbf{DAG}：不是「INDEX 里 NTT 绿了就直接写 KEM」，而是先画清
+        stable PKE $\to$ 尾缝 $\to$ KEM，再算 $\mathrm{Missing}$（当时资产清单是手工版闭包对照）。
+  \item \textbf{形式语言}：NTT PASS、PKE PASS \textbf{推不出}
+        「2-launch + Alg.16 尾拼 $\mathit{dk}$」自动合法——接缝须单独进入合法计划（或进入 $\mathrm{Forb}$）。
+  \item \textbf{自动机}：从「$\Gamma$ 已有 stable PKE」走到「\texttt{kem.keygen} 获证」是一条配置轨迹；
+        若 P1 的 I/O/布局/同步约定变更，P2/P3 应走 $\mathsf{Dirty}$，不能因「上次 PASS」假绿。
+\end{itemize}
+\end{example}
+
+\paragraph{工程检查顺序（三件工具如何串起来）}
+一次受控预研，导论级检查顺序就是：
+\[
+\underbrace{\text{DAG / 闭包}}_{\text{还缺谁？先交闭包表}}
+\;\longrightarrow\;
+\underbrace{\text{形式语言}}_{\text{这计划合法吗？}~w\in L}
+\;\longrightarrow\;
+\underbrace{\text{自动机}}_{\text{按转移往前走；获证或 Dirty}}.
+\]
+\textbf{学了不代替什么}：不代替 NTT / AscendC「核怎么写、算得对不对」——那是另一条知识栈；
+本章三件工具只回答「长得是否合法、过程是否可控」。
 
 \paragraph{「整个工程」这里指什么}
 这里说的「理解和控制整个工程」，\textbf{不是}指：
@@ -581,7 +665,8 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 若再往本章塞进密码代数或可判定性专论，则对「合法生长」的控制\textbf{并不增加一等必要句柄}，只增加另一条知识栈。
 \end{quote}
 
-表~\ref{tab:ch3-minimal} 给出必要性对照：每一站对应一类不可互相替代的控制问题。
+表~\ref{tab:ch3-minimal} 把「三件工具」细化成六站：每一站对应一类不可互相替代的控制问题
+（I--II 细写 DAG/闭包，III 防混读，IV 细写语言，V 细写自动机，VI 钉回故事）。
 
 \begin{table}[H]
 \centering\small
@@ -2527,7 +2612,8 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \subsection{本章小结与下一章预告}
 \label{sec:mathbg-summary}
 
-本章先在 §~\ref{sec:mathbg-why} 主张：对「理解并控制合法生长」而言，六站是\textbf{最小数学集合}；
+导论（§~\ref{sec:mathbg-why}）先给出读者为何要读本章的答案：
+表~\ref{tab:ch3-three-tools} 的三件工具分工，以及「合法生长控制」的最小集合主张；
 再沿图~\ref{fig:ch3-spine} 把该集合写成可检查对象：
 \[
 \underbrace{\text{图 / DAG}}_{\text{I}}
@@ -2542,7 +2628,7 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \;\xrightarrow{\;\text{回扣}\;}
 \underbrace{\text{KeyGen 故事}}_{\text{VI}}.
 \]
-每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}；迷路时先回 §~\ref{sec:mathbg-why} 与图~\ref{fig:ch3-spine}，再下钻细节。
+每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}；迷路时先回导论表~\ref{tab:ch3-three-tools} 与图~\ref{fig:ch3-spine}，再下钻细节。
 有意留白：产生式在仓库里如何形式化、闭包表文件长什么样、可判定性如何证——留给后文。
 
 下一章（第~\ref{sec:math}~章）要把这些对象\textbf{填成工程上可写的字段}：节点属性、三类边、证书状态怎么命名，等等。
