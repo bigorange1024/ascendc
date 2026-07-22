@@ -541,14 +541,102 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 \label{sec:mathbg}
 
 第~\ref{sec:hook}~章给出了工程故事与问题感。
-本章的任务是：把后续方法论要用到的数学，按教材体例\textbf{由浅入深}写清楚——
-给出编号的定义、命题、定理、推论与引理，并固定双例节奏：
-\textbf{先举一个纯数学小例子，再举第~\ref{sec:hook}~章 KEM.KeyGen 的工程例子}。
-讲述顺序上：集合与关系 $\to$ 图与 DAG 之后，\textbf{先建立一般闭包}（封闭性、最小封闭扩张、闭包算子），
-再讲关系的传递闭包，最后才是依赖闭包与闭包表。
+本章的任务不是罗列名词，而是沿一条\textbf{主线}，把「只沿已验证能力合法生长」逐步写成可检查的数学。
+
+\subsection{本章主线与阶段性目标}
+\label{sec:mathbg-spine}
+
+\paragraph{一句话主线}
+先能\textbf{画出谁依赖谁}，再能\textbf{算出还缺谁}，再能\textbf{写出怎样拼才算合法}，最后能\textbf{描述一次作业如何走到接受（以及证书为何会失效）}。
+写成符号链即：
+\[
+\underbrace{\text{图 / DAG}}_{\text{依赖世界}}
+\;\xrightarrow{\;\mathrm{Dep}^*\;}
+\underbrace{\Gamma,\;\mathrm{Missing}}_{\text{齐备与缺项}}
+\;\xrightarrow{\;L(\mathcal{G})\;}
+\underbrace{w\in L}_{\text{合法计划}}
+\;\xrightarrow{\;\to\;}
+\underbrace{(\Gamma,F,S)}_{\text{配置轨迹}}
+\;\ni\;
+\mathsf{Dirty}.
+\]
+
+这与「生成元$\to$本原单位根$\to$DFT$\to$FFT$\to$NTT」同类：\textbf{每一站都在回答上一站留下的问题}，而不是平行堆砌。
 本章\textbf{不}讨论格、MLWE、NTT 等密码代数。
 
+\paragraph{六个阶段目标（读章地图）}
+{\small
+\begin{center}
+\begin{tabular}{@{}c L{3.1cm} L{3.8cm} L{5.9cm}@{}}
+  \toprule
+  阶段 & 对应小节 & 学会什么（目标） & 解决什么问题 \\
+  \midrule
+  I &
+  §~\ref{sec:set-rel}--\ref{sec:dag-topo} &
+  用集合、关系、有向图、DAG、拓扑序\textbf{描述依赖世界} &
+  「谁依赖谁？先证谁后证谁？」 \\
+  \midrule
+  II &
+  §~\ref{sec:closure} &
+  用闭包从目标算出 $\mathrm{Dep}^*$，再对照 $\Gamma$ 得到缺项 &
+  「动手前必须齐谁？还缺谁？」 \\
+  \midrule
+  III &
+  §~\ref{sec:three-layers} &
+  分清库 / 一次派生 / 过程三层，不再混读三张图 &
+  「数据流、能力图、作业轨迹各回答什么？」 \\
+  \midrule
+  IV &
+  §~\ref{sec:words-lang}--\ref{sec:membership} &
+  把拼装计划看成字；合法拼法看成语言；会说成员判定与组合不免费 &
+  「怎样拼才算合法？为何单点 PASS 不够？」 \\
+  \midrule
+  V &
+  §~\ref{sec:transition}--\ref{sec:dirty} &
+  用配置转移描述 Expand/Probe/Certify；理解证书可脏 &
+  「一次作业如何走到接受？上次 PASS 为何会作废？」 \\
+  \midrule
+  VI &
+  §~\ref{sec:mathbg-hookback} &
+  用同一条主线回扣第~\ref{sec:hook}~章 KeyGen 流程 &
+  「这些符号在真实故事里分别落在何处？」 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners=2pt, align=center, font=\small,
+              minimum width=2.15cm, minimum height=1.0cm, inner sep=3pt},
+  arr/.style={-{Stealth[length=2.2mm]}, very thick},
+  lab/.style={font=\scriptsize, text=gray!45!black}
+]
+  \node[box, fill=blue!8] (s1) at (0,0) {I\\依赖世界};
+  \node[box, fill=blue!12] (s2) at (2.7,0) {II\\闭包缺项};
+  \node[box, fill=blue!10] (s3) at (5.4,0) {III\\三层对象};
+  \node[box, fill=orange!12] (s4) at (8.1,0) {IV\\合法语言};
+  \node[box, fill=green!12] (s5) at (10.8,0) {V\\配置脏证};
+  \draw[arr] (s1) -- node[lab, above]{Dep$^*$} (s2);
+  \draw[arr] (s2) -- node[lab, above]{分层} (s3);
+  \draw[arr] (s3) -- node[lab, above]{$L$} (s4);
+  \draw[arr] (s4) -- node[lab, above]{轨迹} (s5);
+  \node[box, fill=violet!10, minimum width=5.2cm] (s6) at (5.4,-1.85)
+    {VI\quad 回扣第~2~章 KeyGen（整条链落地）};
+  \draw[arr, gray!60] (s5.south) |- (s6.east);
+  \draw[arr, gray!60] (s1.south) |- (s6.west);
+\end{tikzpicture}
+\caption{第~3~章数学主线：六个阶段目标（箭头表示「下一站回答上一站留下的问题」）}
+\label{fig:ch3-spine}
+\end{figure}
+
+讲述体例仍是：编号的定义 / 命题 / 定理，并固定双例节奏——
+\textbf{先纯数学小例子，再第~\ref{sec:hook}~章 KEM.KeyGen 工程例子}。
+下文各阶段开头会用「本阶段目标」回指本图；读到细节时若迷路，先回到图~\ref{fig:ch3-spine}。
+
 \subsection{本章范围、记号与阅读约定}
+\label{sec:mathbg-scope}
 
 \begin{center}
 \begin{tabular}{@{}L{2.8cm}L{5.8cm}L{5.2cm}@{}}
@@ -562,14 +650,23 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 \end{tabular}
 \end{center}
 
-\begin{remark}[阅读目标]
-读完本章后，应能严格区分并陈述：
-（i）能力 DAG 回答什么；
-（ii）一次派生 / 语法树回答什么；
-（iii）配置转移如何描述接受与拒绝。
+\begin{remark}[阅读验收（对齐六个阶段）]
+读完本章，应能按主线依次回答：
+（I）如何用 DAG/拓扑序描述依赖；
+（II）如何由 $T$ 与 $\Gamma$ 写出 $\mathrm{Missing}_\Gamma(T)$；
+（III）库、派生、轨迹各不回答什么；
+（IV）为何 $x,y\in L$ 推不出 $xy\in L$，以及成员判定在门禁里的位置；
+（V）接受配置是什么，$\mathsf{Dirty}$ 为何使 $\Gamma$ 可收缩；
+（VI）第~2~章 KeyGen 故事如何落回 I--V。
 \end{remark}
 
 \subsection{集合、笛卡尔积、关系与函数}
+\label{sec:set-rel}
+
+\paragraph{本阶段目标（阶段 I，至 §~\ref{sec:dag-topo}）}
+对照图~\ref{fig:ch3-spine}：先建立\textbf{依赖世界}的语言——集合与关系$\to$有向图$\to$DAG 与拓扑序。
+学完应能画出「谁依赖谁」，并回答「若无环，是否存在合法的先证后证顺序」。
+下一站（阶段 II）问：给定目标与已获证库，\textbf{还缺谁}。
 
 \begin{definition}[集合与属于关系]
 称由确定对象组成的汇集为\textbf{集合}。
@@ -715,6 +812,7 @@ $\iota:\{\mathit{ek}_{\mathrm{PKE}}\}\to\{\mathit{ek}_{\mathrm{KEM}}\}$。
 \end{example}
 
 \subsection{有向图、路与环}
+\label{sec:digraph}
 
 \begin{definition}[有向图]
 \textbf{有向图}是一个有序对 $G=(V,E)$，其中 $V$ 为非空有限集（称为\textbf{顶点集}），
@@ -791,6 +889,7 @@ $z\rightsquigarrow \mathit{dk}_{\mathrm{KEM}}$ 但 $z\not\rightsquigarrow \text{
 \end{example}
 
 \subsection{有向无环图与拓扑序}
+\label{sec:dag-topo}
 
 \begin{definition}[DAG]
 若有向图 $G$ 不含有向环，则称 $G$ 为\textbf{有向无环图}（Directed Acyclic Graph，DAG）。
@@ -878,6 +977,12 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
 \end{remark}
 
 \subsection{闭包：从一般概念到依赖闭包}
+\label{sec:closure}
+
+\paragraph{本阶段目标（阶段 II）}
+对照图~\ref{fig:ch3-spine}：在依赖世界之上引入\textbf{闭包}，从目标算出 $\mathrm{Dep}^*$，再对照证书库 $\Gamma$ 得到 $\mathrm{Missing}_\Gamma$。
+学完应能写出「动手前必须齐谁 / 还缺谁」，并分清「闭包已满」与「菜单上有绿项」。
+下一站（阶段 III）问：静态库、一次派生、作业轨迹是否在\textbf{同一张图}里混读。
 
 前几节已有集合、关系、有向图。本节先回答一个更基本的问题：
 \textbf{数学里说的「闭包」究竟是什么？}
@@ -1557,6 +1662,12 @@ $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{�
 \end{example}
 
 \subsection{三层对象：库、一次派生、过程}
+\label{sec:three-layers}
+
+\paragraph{本阶段目标（阶段 III）}
+对照图~\ref{fig:ch3-spine}：把前两阶段得到的依赖与闭包，放到\textbf{三层对象}里——库（能力 DAG）、一次派生、配置轨迹。
+学完应能指出：数据流图、能力图、作业轨迹\textbf{各回答什么、不回答什么}。
+下一站（阶段 IV）问：在库允许的前提下，\textbf{怎样拼}才算合法计划。
 
 进入形式语言之前，必须把三个层次从定义上分开；否则后文「DAG / 语法树 / 自动机」会混用。
 
@@ -1665,6 +1776,12 @@ $(\Gamma_i,F_i,S_i)$（定义见迁移系统一节），称为\textbf{配置轨�
 \end{example}
 
 \subsection{字母表、字与语言}
+\label{sec:words-lang}
+
+\paragraph{本阶段目标（阶段 IV，至 §~\ref{sec:membership}）}
+对照图~\ref{fig:ch3-spine}：把「拼装计划」写成\textbf{字}，把「合法拼法」写成\textbf{语言} $L(\mathcal{G})$；学会成员判定、禁字与「组合不免费」。
+学完应能说明：单点 PASS 为何推不出拼接仍合法，以及门禁为何要查 $w\in L$。
+下一站（阶段 V）问：一次作业如何在配置上\textbf{走到接受}，以及证书为何会失效。
 
 \begin{definition}[字母表与字]
 非空有限集 $\Sigma$ 称为\textbf{字母表}；其元素称为\textbf{字母}。
@@ -1766,6 +1883,7 @@ $a=\texttt{RunPKE}$，$b=\texttt{Alg16Tail}$，$c=\texttt{WriteIO}$。
 \end{example}
 
 \subsection{文法、产生式、派生与派生树}
+\label{sec:grammar}
 
 \begin{definition}[上下文无关文法（本教材用法）]
 \textbf{上下文无关文法}是四元组 $\mathcal{G}=(N,\Sigma,P,S)$，其中：
@@ -1837,6 +1955,7 @@ L(\mathcal{G}) \;=\; \{\,w\in\Sigma^*\mid S\Rightarrow^* w\,\}.
 \end{example}
 
 \subsection{成员判定、禁字与组合不免费}
+\label{sec:membership}
 
 \begin{definition}[成员判定问题]
 给定语言 $L\subseteq\Sigma^*$ 与字 $w\in\Sigma^*$，判断是否 $w\in L$，称为 $L$ 的\textbf{成员判定}。
@@ -1881,6 +2000,12 @@ $\mathrm{Missing}_\Gamma(T)=\emptyset$（全依赖已覆盖）且存在派生表
 \end{remark}
 
 \subsection{迁移系统、配置与接受}
+\label{sec:transition}
+
+\paragraph{本阶段目标（阶段 V，至 §~\ref{sec:dirty}）}
+对照图~\ref{fig:ch3-spine}：用\textbf{配置} $(\Gamma,F,S)$ 与转移关系描述 Expand / Probe / Certify；再引入非单调的 $\mathsf{Dirty}$。
+学完应能说出接受配置是什么，以及「上次 PASS」为何不能当永真公理。
+下一站（阶段 VI）把 I--V 整条链\textbf{对照回}第~\ref{sec:hook}~章 KeyGen 故事。
 
 \begin{definition}[迁移系统]
 \textbf{迁移系统}是三元组 $\mathcal{T}=(Q,\to,Q_0)$，其中 $Q$ 为配置集，
@@ -1949,6 +2074,7 @@ $q_0\xrightarrow{a}q_0$，$q_0\xrightarrow{b}q_{\mathrm{ok}}$，其余进 $q_{\m
 \end{example}
 
 \subsection{证书的非单调更新}
+\label{sec:dirty}
 
 \begin{definition}[单调与非单调证书库]
 称证书更新机制为\textbf{单调}的，若任意转移满足 $\Gamma\subseteq\Gamma'$（证书集只增不减）。
@@ -1981,6 +2107,10 @@ P1 某能力的 I/O、布局或同步约定变更后，曾基于旧约定的 P2/
 
 \subsection{回扣第~\ref{sec:hook}~章：流程如何对应本章数学}
 \label{sec:mathbg-hookback}
+
+\paragraph{本阶段目标（阶段 VI）}
+对照图~\ref{fig:ch3-spine}：\textbf{不再引入新定义}，只用 I--V 的符号，把第~\ref{sec:hook}~章 KeyGen 流程逐条落回依赖世界、闭包缺项、三层对象、合法语言与配置轨迹。
+学完应能指着第~2~章的故事说清：哪一段是 $\mathrm{Dep}^*$ / $\mathrm{Missing}$，哪一段是 $w\in L$，哪一段是 $\mathsf{Dirty}$。
 
 第~\ref{sec:hook}~章讲的是\textbf{已经走过的}工程故事；本章给的是\textbf{用来把故事说清楚的一套语言}。
 本节\textbf{不再引入新定义}，只做对照。
@@ -2281,26 +2411,24 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \end{enumerate}
 
 \subsection{本章小结与下一章预告}
+\label{sec:mathbg-summary}
 
-本章按教材体例搭好了方法论的数学底座，主线是：
+本章沿图~\ref{fig:ch3-spine} 的六阶段主线，把「只沿已验证能力合法生长」写成可检查的数学：
 \[
-\text{关系/函数}
-\;\to\;
-\text{有向图}
-\;\to\;
-\text{DAG/拓扑序}
-\;\to\;
-\text{一般闭包}\;\to\;\text{传递闭包}\;\to\;\text{依赖闭包}
-\;\to\;
-\text{语言与文法}
-\;\to\;
-\text{迁移系统}
-\;\to\;
-\text{非单调证书}.
+\underbrace{\text{图 / DAG}}_{\text{I}}
+\;\xrightarrow{\;\mathrm{Dep}^*\;}
+\underbrace{\Gamma,\;\mathrm{Missing}}_{\text{II}}
+\;\xrightarrow{\;\text{分层}\;}
+\underbrace{\text{库 / 派生 / 轨迹}}_{\text{III}}
+\;\xrightarrow{\;L\;}
+\underbrace{w\in L}_{\text{IV}}
+\;\xrightarrow{\;\to\;}
+\underbrace{(\Gamma,F,S),\;\mathsf{Dirty}}_{\text{V}}
+\;\xrightarrow{\;\text{回扣}\;}
+\underbrace{\text{KeyGen 故事}}_{\text{VI}}.
 \]
-每个关键定义都配了\textbf{纯数学例子}和\textbf{工程例子}。
-§3.12 用第~\ref{sec:hook}~章的 KeyGen 流程，把本章对象逐条对回去，算是「数学$\to$应用」的第一站。
-有意留白的部分：产生式在仓库里该怎么形式化、闭包表文件长什么样、可判定性怎么证——留给后面章节慢慢补。
+每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}；迷路时先回到阶段目标与图~\ref{fig:ch3-spine}，再下钻细节。
+有意留白：产生式在仓库里如何形式化、闭包表文件长什么样、可判定性如何证——留给后文。
 
 下一章（第~\ref{sec:math}~章）要把这些对象\textbf{填成工程上可写的字段}：节点属性、三类边、证书状态怎么命名，等等。
 
