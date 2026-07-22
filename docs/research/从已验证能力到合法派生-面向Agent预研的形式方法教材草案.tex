@@ -370,45 +370,47 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
   lbl/.style={font=\scriptsize},
   framelbl/.style={font=\small\bfseries, anchor=north west, inner sep=2pt}
 ]
-  \node[draw, rounded corners=3pt, fill=orange!5, minimum width=13.6cm, minimum height=8.6cm,
-        anchor=north west] (a19) at (0,8.2) {};
+  % Alg.19 外框：顶部采样带放 d,z
+  \node[draw, rounded corners=3pt, fill=orange!5, minimum width=13.6cm, minimum height=9.0cm,
+        anchor=north west] (a19) at (0,8.4) {};
   \node[framelbl] at ([xshift=8pt,yshift=-6pt]a19.north west)
-    {Alg.19 ML-KEM.KeyGen（外层调用）};
+    {Alg.19 ML-KEM.KeyGen（外层：采样并调用 16）};
 
-  \node[draw, rounded corners=3pt, fill=orange!12, minimum width=12.0cm, minimum height=6.8cm,
-        anchor=north west] (a16) at (0.8,6.9) {};
+  \node[var] (d) at (8.8,7.35) {$d$};
+  \node[var] (z) at (11.8,7.35) {$z$};
+  \node[lbl, text=gray!55!black] at (10.3,7.85) {由 Alg.19 生成};
+
+  % Alg.16：在采样带下方，不包住 d,z
+  \node[draw, rounded corners=3pt, fill=orange!12, minimum width=12.0cm, minimum height=6.4cm,
+        anchor=north west] (a16) at (0.8,6.55) {};
   \node[framelbl] at ([xshift=8pt,yshift=-6pt]a16.north west)
     {Alg.16 KeyGen\_internal（被 19 调用）};
 
-  % 左：Alg.13
-  \node[draw, rounded corners=3pt, fill=blue!14, minimum width=4.8cm, minimum height=2.6cm,
-        anchor=north west, align=center, font=\small\bfseries] (a13) at (1.4,5.4)
+  \node[draw, rounded corners=3pt, fill=blue!14, minimum width=4.8cm, minimum height=2.4cm,
+        anchor=north west, align=center, font=\small\bfseries] (a13) at (1.4,5.15)
     {Alg.13 K-PKE.KeyGen\\[3pt]（被 16 调用）\\[2pt]{\normalfont\footnotesize 重计算在此}};
 
-  % 右：数据列，行距加大
-  \node[var] (d) at (9.0,5.5) {$d$};
-  \node[var] (z) at (12.0,5.5) {$z$};
-  \node[var] (ekpke) at (9.0,3.6) {$\mathit{ek}_{\mathrm{PKE}}$};
-  \node[var] (dkpke) at (12.0,3.6) {$\mathit{dk}_{\mathrm{PKE}}$};
-  \node[var] (H) at (9.0,2.1) {$H(\mathit{ek})$};
-  \node[var, fill=green!18] (ek) at (9.0,0.6) {$\mathit{ek}_{\mathrm{KEM}}$};
-  \node[var, fill=green!18] (dk) at (12.0,0.6) {$\mathit{dk}_{\mathrm{KEM}}$};
+  \node[var] (ekpke) at (8.8,3.7) {$\mathit{ek}_{\mathrm{PKE}}$};
+  \node[var] (dkpke) at (11.8,3.7) {$\mathit{dk}_{\mathrm{PKE}}$};
+  \node[var] (H) at (8.8,2.2) {$H(\mathit{ek})$};
+  \node[var, fill=green!18] (ek) at (8.8,0.7) {$\mathit{ek}_{\mathrm{KEM}}$};
+  \node[var, fill=green!18] (dk) at (11.8,0.7) {$\mathit{dk}_{\mathrm{KEM}}$};
 
-  \draw[arr] (d.west) -- ++(-1.2,0) |- (a13.north east);
-  \node[lbl] at (7.2,5.75) {$d$ 入};
-  \draw[arr] (a13.south east) -- ++(1.3,0) |- (ekpke.west);
-  \node[lbl] at (7.2,3.2) {13 出};
-  \draw[arr] (a13.south east) -- ++(1.3,0) |- (dkpke.west);
+  \draw[arr] (d) -- ++(0,-0.45) -| (a13.north);
+  \node[lbl] at (6.8,6.35) {$d$ 入 13};
+  \draw[arr] (a13.south east) -- ++(1.2,0) |- (ekpke.west);
+  \node[lbl] at (6.8,3.3) {13 出};
+  \draw[arr] (a13.south east) -- ++(1.2,0) |- (dkpke.west);
   \draw[arr] (ekpke) -- (H);
   \draw[arr] (ekpke) -- (ek);
-  \node[lbl, anchor=east] at (8.55,1.35) {直通 ${\equiv}$};
+  \node[lbl, anchor=east] at (8.35,1.45) {直通 ${\equiv}$};
   \draw[arr] (dkpke) -- (dk);
   \draw[arr] (H) -- ++(1.6,0) |- (dk);
   \draw[arr] (z) -- (dk);
-  \node[lbl, align=left, anchor=west] at (12.9,3.0) {$z$ 旁路\\不进 Alg.13};
+  \node[lbl, align=left, anchor=west] at (12.7,4.0) {$z$ 旁路\\不进 Alg.13};
 
-  \node[lbl, align=left, anchor=north west] at (0.2,-0.35) {
-    左栏空框嵌套 $=$ 调用；右栏椭圆 $=$ 数据；箭头 $=$ 流向（标注写在空白处）
+  \node[lbl, align=left, anchor=north west] at (0.2,-0.45) {
+    $d,z$ 在 19 内、16 外（19 生成）；16 内才是调 13 与拼装
   };
 \end{tikzpicture}
 \caption{FIPS 调用嵌套与数据依赖（Alg.19 调 16，16 调 13；$d/z/\mathit{ek}/\mathit{dk}$）}
@@ -1942,7 +1944,8 @@ $q_0\xrightarrow{a}q_0$，$q_0\xrightarrow{b}q_{\mathrm{ok}}$，其余进 $q_{\m
 \begin{example}[工程]
 初始 $\Gamma$ 含 stable PKE 等；$F=\{\texttt{kem.keygen}\}$。
 经 $\mathsf{Expand}$ 得到尾缝缺项 $\to$ $\mathsf{Compose}/\mathsf{Probe}$ $\to$ $\mathsf{Certify}$ 后 $T\in\Gamma$，到达接受。
-若中途从 \texttt{frozen-exp-*} 抄实现，则触发拒绝（$\mathsf{Freeze}$ 已写入 $\mathrm{Forb}$）。
+若中途使用了禁字集 $\mathrm{Forb}$ 中的因子（已关闭或明确禁止的路线），
+则触发拒绝（$\mathsf{Freeze}$ 已写入 $\mathrm{Forb}$）。
 \end{example}
 
 \subsection{证书的非单调更新}
@@ -1972,7 +1975,7 @@ $q_0\xrightarrow{a}q_0$，$q_0\xrightarrow{b}q_{\mathrm{ok}}$，其余进 $q_{\m
 \end{example}
 
 \begin{example}[工程]
-P1 某能力的 tiling/同步壳变更后，曾基于旧 iface 的 P2/P3 证书应标 $\mathsf{dirty}$，
+P1 某能力的 I/O、布局或同步约定变更后，曾基于旧约定的 P2/P3 证书应标 $\mathsf{dirty}$，
 不得因「上次 PASS」而默认继续合法。
 \end{example}
 
@@ -2128,68 +2131,71 @@ INDEX 菜单上标绿的项，只是构造 $\Gamma$ 时可以去翻的证据来�
   dep/.style={-{Stealth[length=2.2mm]}, very thick, blue!55!black},
   tarr/.style={-{Stealth[length=2mm]}, thick, densely dashed, green!40!black}
 ]
-  % ---- 层 A：左栏调用嵌套 / 右栏数据流水，互不压字 ----
+  % ---- 层 A：d,z 属 Alg.19 生成；Alg.16 只含被调用体与拼装结果 ----
   \node[title] at (0,0) {层 A：调用嵌套 $+$ 数据依赖（$\approx$ 图~\ref{fig:ch2-fips-dataflow}）};
 
-  % 外框 Alg.19
-  \node[draw, rounded corners=3pt, fill=orange!5, minimum width=15.6cm, minimum height=6.4cm,
+  % 外框 Alg.19（顶部留出「采样带」给 d,z）
+  \node[draw, rounded corners=3pt, fill=orange!5, minimum width=15.6cm, minimum height=7.0cm,
         anchor=north west] (A19) at (0.0,-0.35) {};
-  \node[framelbl] at ([xshift=8pt,yshift=-5pt]A19.north west) {Alg.19（外层调用）};
+  \node[framelbl] at ([xshift=8pt,yshift=-5pt]A19.north west) {Alg.19（外层：采样并调用 16）};
 
-  % 中框 Alg.16（顶部标签带约 0.85cm，其下左右分栏）
-  \node[draw, rounded corners=3pt, fill=orange!12, minimum width=14.2cm, minimum height=5.0cm,
-        anchor=north west] (A16) at (0.7,-1.25) {};
-  \node[framelbl] at ([xshift=8pt,yshift=-5pt]A16.north west) {Alg.16（被 19 调用）};
+  % d,z：画在 Alg.19 内、Alg.16 外（由 19 生成）
+  \node[var] (dA) at (9.5,-1.35) {$d$};
+  \node[var] (zA) at (12.8,-1.35) {$z$};
+  \node[font=\scriptsize, text=gray!55!black] at (11.15,-0.85) {由 Alg.19 生成};
 
-  % 左栏：Alg.13（远离标签带与右侧数据）
-  \node[draw, rounded corners=3pt, fill=blue!16, minimum width=4.4cm, minimum height=2.2cm,
-        anchor=north west, align=center, font=\small\bfseries] (A13) at (1.3,-2.45)
+  % 中框 Alg.16：整体下移，不包住 d,z
+  \node[draw, rounded corners=3pt, fill=orange!12, minimum width=14.2cm, minimum height=4.55cm,
+        anchor=north west] (A16) at (0.7,-1.95) {};
+  \node[framelbl] at ([xshift=8pt,yshift=-5pt]A16.north west) {Alg.16（被 19 调用：调 13 $+$ 拼装）};
+
+  % Alg.13 在 16 内左侧
+  \node[draw, rounded corners=3pt, fill=blue!16, minimum width=4.4cm, minimum height=2.0cm,
+        anchor=north west, align=center, font=\small\bfseries] (A13) at (1.3,-3.15)
     {Alg.13\\[2pt]（被 16 调用）\\[1pt]{\normalfont\scriptsize 重计算}};
 
-  % 右栏：数据自上而下；与左栏之间留出标注通道
-  \node[var] (dA) at (10.0,-2.15) {$d$};
-  \node[var] (zA) at (13.2,-2.15) {$z$};
-  \node[var] (ekA) at (10.0,-4.55) {$\mathit{ek}$};
-  \node[var, fill=green!18] (dkA) at (13.2,-4.55) {$\mathit{dk}$};
+  % ek,dk：在 16 内右侧（拼装结果）
+  \node[var] (ekA) at (9.5,-4.55) {$\mathit{ek}$};
+  \node[var, fill=green!18] (dkA) at (12.8,-4.55) {$\mathit{dk}$};
 
-  % 线与字分离
-  \draw[darr] (dA.west) -- ++(-2.0,0) |- (A13.north east);
-  \node[font=\scriptsize] at (7.55,-1.95) {$d$ 入};
-  \draw[darr] (A13.south east) -- ++(1.8,0) |- (ekA.west);
-  \node[font=\scriptsize] at (7.55,-5.05) {13 出};
+  % 数据边：d/z 从 19 采样带进入 16 的计算
+  \draw[darr] (dA) -- ++(0,-0.55) -| (A13.north);
+  \node[font=\scriptsize] at (7.6,-2.55) {$d$ 入 13};
+  \draw[darr] (A13.south east) -- ++(1.6,0) |- (ekA.west);
+  \node[font=\scriptsize] at (7.6,-5.05) {13 出};
   \draw[darr] (ekA) -- (dkA);
-  \node[font=\scriptsize] at (11.6,-4.15) {拼装};
+  \node[font=\scriptsize] at (11.15,-4.15) {拼装};
   \draw[darr] (zA) -- (dkA);
-  \node[font=\scriptsize, align=left, anchor=west] at (13.9,-3.3) {$z$ 旁路\\不进 13};
+  \node[font=\scriptsize, align=left, anchor=west] at (13.55,-2.9) {$z$ 旁路\\不进 13};
 
-  \node[note] at (7.5,-6.95)
-    {左：空框套空框$=$谁调用谁（标签只在框顶条带）。右：椭圆$=$字节，箭头$=$流向。\textbf{不}回答谁已获证。};
+  \node[note] at (7.5,-7.55)
+    {$d,z$ 画在 19 内、16 外（19 生成）；16 内才是调用 13 与拼装。椭圆$=$字节；箭头$=$流向。\textbf{不}回答谁已获证。};
 
   % ---- 层 B ----
-  \node[title] at (0,-7.85)
+  \node[title] at (0,-8.45)
     {层 B：能力 DAG $+$ $\Gamma$（$\approx$ 表~\ref{tab:ch312-assets-math}）};
-  \node[ability, fill=blue!18] (p0) at (1.5,-9.55) {P0\\$\in\Gamma$};
-  \node[ability, fill=blue!18] (p1) at (4.8,-9.55) {P1\\$\in\Gamma$};
-  \node[ability, fill=blue!18] (p2) at (8.1,-9.55) {P2\\$\in\Gamma$};
-  \node[ability, fill=orange!28, densely dashed, thick] (tl) at (11.4,-9.55) {Tail\\$\notin\Gamma$};
-  \node[ability, fill=orange!15, densely dashed] (Tb) at (14.0,-9.55) {$T$};
+  \node[ability, fill=blue!18] (p0) at (1.5,-10.15) {P0\\$\in\Gamma$};
+  \node[ability, fill=blue!18] (p1) at (4.8,-10.15) {P1\\$\in\Gamma$};
+  \node[ability, fill=blue!18] (p2) at (8.1,-10.15) {P2\\$\in\Gamma$};
+  \node[ability, fill=orange!28, densely dashed, thick] (tl) at (11.4,-10.15) {Tail\\$\notin\Gamma$};
+  \node[ability, fill=orange!15, densely dashed] (Tb) at (14.0,-10.15) {$T$};
   \draw[dep] (p0) -- node[above, font=\scriptsize]{依赖} (p1);
   \draw[dep] (p1) -- node[above, font=\scriptsize]{依赖} (p2);
   \draw[dep] (p2) -- node[above, font=\scriptsize]{依赖} (tl);
   \draw[dep] (tl) -- node[above, font=\scriptsize]{接缝} (Tb);
-  \node[note] at (7.5,-11.0)
+  \node[note] at (7.5,-11.6)
     {图元：菱形$=$能力；实心$\in\Gamma$、虚边$=$缺项；粗蓝箭头$=$依赖/接缝。\textbf{不}回答字节路径。};
 
   % ---- 层 C ----
-  \node[title] at (0,-11.85) {层 C：一次配置轨迹（device$\to$stable）};
-  \node[st, fill=green!12] (q0) at (1.8,-13.55) {$\Gamma_0$\\$F{=}\{T\}$};
-  \node[st, fill=green!12] (q1) at (5.5,-13.55) {缺项\\前沿};
-  \node[st, fill=green!12] (q2) at (9.2,-13.55) {$\mathsf{Probe}$};
-  \node[st, double, fill=green!22] (q3) at (12.9,-13.55) {$T{\in}\Gamma_m$\\接受};
+  \node[title] at (0,-12.45) {层 C：一次配置轨迹（device$\to$stable）};
+  \node[st, fill=green!12] (q0) at (1.8,-14.15) {$\Gamma_0$\\$F{=}\{T\}$};
+  \node[st, fill=green!12] (q1) at (5.5,-14.15) {缺项\\前沿};
+  \node[st, fill=green!12] (q2) at (9.2,-14.15) {$\mathsf{Probe}$};
+  \node[st, double, fill=green!22] (q3) at (12.9,-14.15) {$T{\in}\Gamma_m$\\接受};
   \draw[tarr] (q0) -- node[above, font=\scriptsize]{$\mathsf{Expand}$} (q1);
   \draw[tarr] (q1) -- node[above, font=\scriptsize]{$\mathsf{Compose}$} (q2);
   \draw[tarr] (q2) -- node[above, font=\scriptsize]{$\mathsf{Certify}$} (q3);
-  \node[note] at (7.5,-15.0)
+  \node[note] at (7.5,-15.6)
     {图元：圆$=$配置；虚线箭头$=$转移名；双圆$=$接受。回答「这次怎么走」；\textbf{不是}整库拷贝。};
 \end{tikzpicture}
 \caption{三层对象完全体（图元不同）：嵌套数据流 / 菱形能力 DAG / 圆形配置轨迹}
@@ -2222,10 +2228,12 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 (\Gamma_m,\emptyset,S_m),
 \quad T\in\Gamma_m.
 \]
-若有人从 \texttt{frozen-exp-*} 抄实现，应当直接拒绝（$\mathsf{Freeze}$ / 禁字）。
+若中途引用了禁字集 $\mathrm{Forb}$ 中的因子（已关闭或明确禁止的路线），
+应直接拒绝（$\mathsf{Freeze}$ / 沉入拒绝阱）。
 
 \paragraph{流程八：上游一变——$\mathsf{Dirty}$}
-P1 的 iface 改过之后，原先挂在旧 iface 上的 P2/P3，不能因为「上次 PASS」就继续留在 $\Gamma$ 里；
+若某已获证的上游能力（例如 P1）对外约定变更——I/O、布局或同步约定不再与获证时一致——
+则原先依赖该约定的下游（P2/P3）不能因为「上次 PASS」就继续留在 $\Gamma$ 里；
 必须走 $\mathsf{Dirty}$（§3.11）。
 
 \paragraph{四组问题：换成本章用语再说一遍}
