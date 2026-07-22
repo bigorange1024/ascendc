@@ -743,7 +743,7 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 \begin{enumerate}
   \item \textbf{画依赖并调度}：把目标任务画成依赖图片段，并给出一种合法探路顺序（阶段 I）。
   \item \textbf{算齐备与缺项}：给定目标与当时已获证能力清单，写出依赖闭包与缺项（阶段 II）。
-  \item \textbf{弄清三件事}：面对能力库、一次任务展开、作业过程，能指出各自回答什么（阶段 III）。
+  \item \textbf{分清三件不同的事}：能说明能力依赖、任务展开、作业进度各回答什么（阶段 III）。
   \item \textbf{判定合法拼法}：说明为何「单点 PASS」推不出「拼接 PASS」；能说明门禁如何检查拼装计划、如何避开禁止拼法（阶段 IV）。
   \item \textbf{描述过程与失效}：用预研配置说出「展开 $\to$ 探针取证 $\to$ 写入证书」到接受的大意，并解释脏标记为何使已获证清单可收缩（阶段 V）。
   \item \textbf{落回故事}：能指着 KeyGen 流程说清：哪一段是缺项，哪一段是拼装计划合法性，哪一段该打脏标记（阶段 VI）。
@@ -812,8 +812,8 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
   \midrule
   III &
   §~\ref{sec:three-layers} &
-  弄清三件事各回答什么：能力库、一次任务怎么展开、作业过程走到哪 &
-  「库里谁依赖谁？这次任务怎么展开？过程走到哪？」 \\
+  分清依赖、展开与进度是三件不同的事 &
+  「静态能力依赖、这次任务怎么展开、作业做到哪一步，别当成同一张图」 \\
   \midrule
   IV &
   §~\ref{sec:words-lang}--\ref{sec:membership} &
@@ -837,31 +837,30 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
-              minimum width=2.35cm, minimum height=1.55cm, inner sep=2.5pt},
-  arr/.style={-{Stealth[length=2.2mm]}, very thick},
-  lab/.style={font=\scriptsize, text=gray!45!black, align=center}
+  box/.style={draw, rounded corners=2pt, align=left, font=\small,
+              text width=9.2cm, inner sep=5pt},
+  arr/.style={-{Stealth[length=2.4mm]}, very thick},
+  lab/.style={font=\scriptsize, text=gray!45!black}
 ]
-  \node[box, fill=blue!8] (s1) at (0,0)
-    {I\\[1pt]谁依赖谁？\\先证谁？};
-  \node[box, fill=blue!12] (s2) at (2.85,0)
-    {II\\[1pt]动手前\\还缺谁？};
-  \node[box, fill=blue!10] (s3) at (5.7,0)
-    {III\\[1pt]弄清三件事：\\库 / 这次任务 / 过程};
-  \node[box, fill=orange!12] (s4) at (8.55,0)
-    {IV\\[1pt]怎样拼\\才算合法？};
-  \node[box, fill=green!12] (s5) at (11.4,0)
-    {V\\[1pt]作业怎么走完？\\证书何时作废？};
-  \draw[arr] (s1) -- node[lab, above]{算齐备} (s2);
-  \draw[arr] (s2) -- node[lab, above]{对上号} (s3);
-  \draw[arr] (s3) -- node[lab, above]{查拼法} (s4);
-  \draw[arr] (s4) -- node[lab, above]{走流程} (s5);
-  \node[box, fill=violet!10, minimum width=7.2cm, minimum height=0.95cm] (s6) at (5.7,-2.15)
-    {VI\quad 整条链对照回第~2~章 KeyGen 故事};
-  \draw[arr, gray!60] (s5.south) |- (s6.east);
-  \draw[arr, gray!60] (s1.south) |- (s6.west);
+  \node[box, fill=blue!8] (s1)
+    {\textbf{I}\quad 谁依赖谁？先证谁？};
+  \node[box, fill=blue!12, below=7mm of s1] (s2)
+    {\textbf{II}\quad 动手前还缺谁？};
+  \node[box, fill=blue!10, below=7mm of s2] (s3)
+    {\textbf{III}\quad 分清依赖、展开与进度是三件不同的事};
+  \node[box, fill=orange!12, below=7mm of s3] (s4)
+    {\textbf{IV}\quad 怎样拼才算合法？};
+  \node[box, fill=green!12, below=7mm of s4] (s5)
+    {\textbf{V}\quad 作业怎么走完？证书何时作废？};
+  \node[box, fill=violet!10, below=7mm of s5] (s6)
+    {\textbf{VI}\quad 整条链对照回第~2~章 KeyGen 故事};
+  \draw[arr] (s1) -- node[lab, right]{算齐备} (s2);
+  \draw[arr] (s2) -- node[lab, right]{落到对象} (s3);
+  \draw[arr] (s3) -- node[lab, right]{查拼法} (s4);
+  \draw[arr] (s4) -- node[lab, right]{走流程} (s5);
+  \draw[arr] (s5) -- node[lab, right]{对照故事} (s6);
 \end{tikzpicture}
-\caption{第~3~章主线：六个阶段各自在问什么（箭头表示「下一站回答上一站留下的问题」）}
+\caption{第~3~章主线：六个阶段各自要完成什么（箭头表示「下一站回答上一站留下的问题」；竖排避免横轴挤字）}
 \label{fig:ch3-spine}
 \end{figure}
 
@@ -890,7 +889,7 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 再按主线依次回答：
 （I）如何用依赖图/拓扑序描述依赖；
 （II）如何由目标与已获证清单写出缺项；
-（III）库、派生、轨迹各不回答什么；
+（III）依赖、展开与进度为何是三件不同的事；
 （IV）为何「单点合法」推不出「拼接合法」，以及成员检查在门禁里的位置；
 （V）接受配置是什么，脏标记为何使已获证清单可收缩；
 （VI）第~2~章 KeyGen 故事如何落回 I--V。
@@ -1220,7 +1219,7 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
 对照图~\ref{fig:ch3-spine}：在「谁依赖谁」之上引入\textbf{闭包}，从目标算出\textbf{依赖闭包}，再对照\textbf{已获证能力清单}得到\textbf{缺项}。
 学完应能写出「动手前必须齐谁 / 还缺谁」，并分清「闭包已满」与「菜单上有绿项」。
 （本阶段末尾才把上述工程对象记成 $\mathrm{Dep}^*$、$\Gamma$、$\mathrm{Missing}$，见表~\ref{tab:ch3-term-bridge}。）
-下一站（阶段 III）问：能力库、一次任务怎么展开、作业过程走到哪——\textbf{各自回答什么}。
+下一站（阶段 III）问：依赖、展开与进度是否被当成\textbf{同一件事}；本站结论是——它们是三件不同的事。
 
 前几节已有集合、关系、有向图。本节先回答一个更基本的问题：
 \textbf{数学里说的「闭包」究竟是什么？}
@@ -1912,16 +1911,20 @@ $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{�
 \textbf{未}显式计算缺项 $\mathrm{Missing}_\Gamma(T)$ 就开工，正是「菜单$\neq$说明书」的来源。
 \end{example}
 
-\subsection{能力库、一次任务、作业过程：各回答什么}
+\subsection{分清依赖、展开与进度是三件不同的事}
 \label{sec:three-layers}
 
 \paragraph{本阶段目标（阶段 III）}
-对照图~\ref{fig:ch3-spine}：把前两阶段得到的依赖与闭包，分别落到三件工程对象上——
-\textbf{能力库}（谁可以依赖谁）、\textbf{一次任务}（这次怎么展开）、\textbf{作业过程}（证书与前沿如何变化）。
-学完应能指出：这三件事\textbf{各自回答什么}；需要时再说明它们\textbf{不回答什么}。
-下一站（阶段 IV）问：在库允许的前提下，\textbf{怎样拼}才算合法计划。
+对照图~\ref{fig:ch3-spine}：本阶段只完成一句结论——
+\textbf{分清依赖、展开与进度是三件不同的事}。
+具体地：把前两阶段得到的「谁依赖谁 / 还缺谁」，分别对到
+\textbf{能力依赖}（库里谁可以依赖谁）、
+\textbf{任务展开}（这次 KeyGen 怎么一步步展开）、
+\textbf{作业进度}（证书与前沿变到哪一步）。
+学完应能指着工程故事说：这三句问的不是同一个对象。
+下一站（阶段 IV）问：在依赖允许的前提下，\textbf{怎样拼}才算合法计划。
 
-进入形式语言之前，必须把三个层次从定义上分开；否则后文「DAG / 语法树 / 自动机」会混用。
+进入形式语言之前，必须先把这三件事从定义上分开；否则后文「依赖图 / 展开树 / 进度轨迹」会混用。
 
 \begin{definition}[能力 DAG（库）]
 \textbf{能力 DAG} 是 DAG $G_{\mathrm{lib}}=(V_{\mathrm{lib}},E_{\mathrm{lib}})$，
@@ -2505,7 +2508,7 @@ INDEX 菜单上标绿的项，只是构造已获证清单时可以去翻的证�
 第~2~章当时\textbf{并没有}强制「先交出 $\mathrm{Missing}_\Gamma(T)$，再动手写码」——
 闭包表要变成门禁，缺口就在这里。
 
-\paragraph{流程四：能力库、一次任务、作业过程——三件事画在一页}
+\paragraph{流程四：依赖、展开与进度——三件不同的事画在一页}
 图~\ref{fig:ch2-fips-dataflow}画的是\textbf{调用嵌套 $+$ 数据字节}；图~\ref{fig:ch2-explore}更接近\textbf{能力}怎么长出来。
 图~\ref{fig:ch312-three-layers}把三层画在同一页，并用\textbf{三种不同图元}区分（别只看颜色）：
 \begin{itemize}
@@ -2599,7 +2602,7 @@ INDEX 菜单上标绿的项，只是构造已获证清单时可以去翻的证�
   \node[note] at (7.5,-16.0)
     {图元：圆$=$配置；虚线箭头$=$转移名；双圆$=$接受。回答「这次怎么走」；\textbf{不是}整库拷贝。};
 \end{tikzpicture}
-\caption{能力库、一次任务、作业过程（图元不同）：嵌套数据流 / 菱形能力库 / 圆形作业过程}
+\caption{依赖、展开与进度（图元不同）：嵌套数据流 / 菱形能力依赖 / 圆形作业进度}
 \label{fig:ch312-three-layers}
 \end{figure}
 读图可以记一句：\textbf{层 A 看字节与调用；层 B 看能不能引用；层 C 看这次怎么获证。}
@@ -2688,7 +2691,7 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \;\longrightarrow\;
 \underbrace{\text{还缺谁}}_{\text{II}}
 \;\longrightarrow\;
-\underbrace{\text{库 / 这次任务 / 过程}}_{\text{III}}
+\underbrace{\text{分清依赖、展开与进度}}_{\text{III}}
 \;\longrightarrow\;
 \underbrace{\text{怎样拼才合法}}_{\text{IV}}
 \;\longrightarrow\;
