@@ -2134,18 +2134,25 @@ INDEX 菜单上标绿的项，只是构造 $\Gamma$ 时可以去翻的证据来�
   % ---- 层 A：d,z 属 Alg.19 生成；Alg.16 只含被调用体与拼装结果 ----
   \node[title] at (0,0) {层 A：调用嵌套 $+$ 数据依赖（$\approx$ 图~\ref{fig:ch2-fips-dataflow}）};
 
-  % 外框 Alg.19（顶部采样带加宽，专放 d,z）
-  \node[draw, rounded corners=3pt, fill=orange!5, minimum width=15.6cm, minimum height=7.4cm,
+  % 外框 Alg.19：浅底；顶部采样带与 16 之间加分隔线
+  \node[draw, rounded corners=3pt, fill=gray!3, minimum width=15.6cm, minimum height=7.4cm,
         anchor=north west] (A19) at (0.0,-0.35) {};
   \node[framelbl] at ([xshift=8pt,yshift=-5pt]A19.north west) {Alg.19（外层：采样并调用 16）};
 
-  % d,z：明确落在 19 采样带（16 顶边之上）
-  \node[var] (dA) at (9.5,-1.25) {$d$};
-  \node[var] (zA) at (12.8,-1.25) {$z$};
-  \node[font=\scriptsize, text=gray!55!black] at (11.15,-0.78) {由 Alg.19 生成（16 外）};
+  % 采样带底色条（仅 19 区域）
+  \fill[yellow!12, rounded corners=2pt]
+    (0.25,-0.95) rectangle (15.35,-1.85);
+  \node[var] (dA) at (9.5,-1.40) {$d$};
+  \node[var] (zA) at (12.8,-1.40) {$z$};
+  \node[font=\scriptsize] at (5.5,-1.40) {采样带（属 19，\textbf{不}属 16）};
 
-  % 中框 Alg.16：顶边明显低于 d,z
-  \node[draw, rounded corners=3pt, fill=orange!12, minimum width=14.2cm, minimum height=4.35cm,
+  % 分隔：采样带 / Alg.16
+  \draw[thick, densely dashed, gray!50]
+    (0.7,-2.05) -- (14.9,-2.05);
+  \node[font=\scriptsize, text=gray!55!black] at (3.2,-2.05) {以下进入 Alg.16};
+
+  % 中框 Alg.16：更深底色，顶边在分隔线之下
+  \node[draw, rounded corners=3pt, fill=orange!18, minimum width=14.2cm, minimum height=4.2cm,
         anchor=north west] (A16) at (0.7,-2.25) {};
   \node[framelbl] at ([xshift=8pt,yshift=-5pt]A16.north west) {Alg.16（被 19 调用：调 13 $+$ 拼装）};
 
