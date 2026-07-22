@@ -541,7 +541,119 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 \label{sec:mathbg}
 
 第~\ref{sec:hook}~章给出了工程故事与问题感。
-本章的任务不是罗列名词，而是沿一条\textbf{主线}，把「只沿已验证能力合法生长」逐步写成可检查的数学。
+本章先回答三个元问题——\textbf{为什么要学}、\textbf{学到什么算够}、\textbf{什么故意不学}——
+再沿一条主线，把「只沿已验证能力合法生长」逐步写成可检查的数学。
+
+\subsection{为何要学、最小集合与必须掌握什么}
+\label{sec:mathbg-why}
+
+\paragraph{为什么要学本章}
+第~\ref{sec:hook}~章末尾的四组问题，本质上都在问同一件事：
+我们能否\textbf{理解并控制}「从已有能力长出新能力」的过程——
+而不是只会复述 FIPS 步骤、只会看 INDEX 绿项、只会在事后说「这次碰巧 PASS 了」。
+
+没有本章这套语言时，工程里常见的失控形态是：
+\begin{itemize}
+  \item \textbf{菜单当说明书}：看见探针 PASS，就默认「可以随便拼」；
+  \item \textbf{单点当组合}：下层都对，上层接缝仍无证书；
+  \item \textbf{搜索空间爆炸}：只给算法伪代码与菜单，Agent 在 $\Sigma^*$ 里乱走；
+  \item \textbf{成功不可复用}：没有闭包表，下次 Encaps/Decaps 仍从零撞墙；
+  \item \textbf{证书假永恒}：上游接口一变，下游仍拿「上次 PASS」当公理。
+\end{itemize}
+本章知识的直接用途，就是把上述现象写成可检查的对象与判定，
+从而让人（以及日后的门禁）能够\textbf{事前约束、事中检查、事后复盘}。
+
+\paragraph{「整个工程」这里指什么}
+这里说的「理解和控制整个工程」，\textbf{不是}指：
+「掌握本仓库写 AscendC、跑 CANN、证 ML-KEM 正确性所需的全部知识」。
+那是另一条（更大的）知识栈：平台工程、算子实现、密码代数与标准符合性等。
+
+本章所说的「整个工程」，特指本专题的控制对象：
+\textbf{预研过程是否沿已验证能力合法生长}——
+包括依赖是否说清、缺项是否交齐、拼装计划是否合法、证书如何增减与作废。
+KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\textbf{同一套控制语言}。
+
+\paragraph{主张：本章六站是该控制问题的最小数学集合}
+我们对「最小」取工程判定，而非数学百科判定：
+\begin{quote}
+\noindent
+若删去某一站，第~\ref{sec:hook}~章四组问题里至少有一类会\textbf{重新失去可写的控制句柄}；
+若再往本章塞进密码代数或可判定性专论，则对「合法生长」的控制\textbf{并不增加一等必要句柄}，只增加另一条知识栈。
+\end{quote}
+
+表~\ref{tab:ch3-minimal} 给出必要性对照：每一站对应一类不可互相替代的控制问题。
+
+\begin{table}[H]
+\centering\small
+\caption{本章六站为何构成「合法生长」控制的最小集合}
+\label{tab:ch3-minimal}
+\begin{tabular}{@{}c L{2.4cm} L{5.0cm} L{5.4cm}@{}}
+  \toprule
+  站 & 核心对象 & 删掉它会失去什么控制 & 能否用其它站顶替 \\
+  \midrule
+  I & 图 / DAG / 拓扑序 &
+  无法稳定回答「谁依赖谁、先证谁」 &
+  否：闭包与语言都\textbf{预设}依赖世界已画清 \\
+  \midrule
+  II & $\mathrm{Dep}^*$ / $\Gamma$ / Missing &
+  无法在动手前交「还缺谁」 &
+  否：语言成员判定不自动生成缺项清单 \\
+  \midrule
+  III & 库 / 派生 / 轨迹 &
+  三张图混读，门禁问错对象 &
+  否：分层是\textbf{阅读纪律}，不是多学一个公式 \\
+  \midrule
+  IV & 字 / $L$ / 成员判定 / Forb &
+  无法区分「菜单绿」与「拼法合法」 &
+  否：闭包齐备 $\neq$ 计划字 $w\in L$ \\
+  \midrule
+  V & 配置转移 / Dirty &
+  无法描述作业如何接受，也无法作废过期证 &
+  否：静态 DAG 不谈过程与非单调 \\
+  \midrule
+  VI & 回扣 KeyGen &
+  符号落不回故事，学完仍不会用 &
+  （练习站）可缩短叙述，但\textbf{不可}从学习路径删掉落地 \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+因此：对「理解并控制合法生长」这一目的，I--V 是\textbf{必要}的数学骨架，VI 是把骨架钉回工程故事的\textbf{必要练习}；
+它们合在一起，构成本章主张的最小集合。
+
+\paragraph{必须掌握什么（验收清单）}
+读完本章，若目标是「能理解并参与控制本专题意义上的工程过程」，至少应能\textbf{独立完成}下列事项
+（与第~\ref{sec:hook}~章四组问题一一对应）：
+\begin{enumerate}
+  \item \textbf{画依赖并调度}：把目标任务画成 DAG 片段，并给出一种合法拓扑序（阶段 I）。
+  \item \textbf{算齐备与缺项}：给定目标 $T$ 与当时证书库 $\Gamma$，写出 $\mathrm{Dep}^*(T)$ 与 $\mathrm{Missing}_\Gamma(T)$（阶段 II）。
+  \item \textbf{分清三层}：面对数据流、能力库、一次作业轨迹，能指出各自回答 / 不回答什么（阶段 III）。
+  \item \textbf{判定合法拼法}：说明为何「单点 PASS」推不出「拼接 PASS」；能陈述成员判定与禁字 $\mathrm{Forb}$ 在门禁中的位置（阶段 IV）。
+  \item \textbf{描述过程与失效}：用配置 $(\Gamma,F,S)$ 说出 Expand/Probe/Certify 到接受的大意，并解释 $\mathsf{Dirty}$ 为何使 $\Gamma$ 可收缩（阶段 V）。
+  \item \textbf{落回故事}：能指着 KeyGen 流程说清：哪一段是缺项，哪一段是 $w\in L$，哪一段该标脏（阶段 VI）。
+\end{enumerate}
+做不到其中任一条，就还不能声称「已经掌握控制该工程过程所需的最小数学」。
+
+\paragraph{刻意不纳入本章的（以免假最小）}
+下列知识对写算子 / 证密码正确性往往重要，但对\textbf{合法生长的过程控制}不是同一最小集的成员：
+\begin{center}
+\begin{tabular}{@{}L{4.2cm}L{9.0cm}@{}}
+  \toprule
+  不纳入本章 & 原因（一句话） \\
+  \midrule
+  格、MLWE、NTT 等代数 & 回答「算得对不对」，不回答「沿哪条已证边长」 \\
+  AscendC API / tiling 细则 & 回答「核怎么写」，由平台工程笔记与探针承担 \\
+  可判定性、复杂度专论 & 后置；门禁 v0 先要对象与规则可写 \\
+  仓库字段 / 工作流细节 & 第~\ref{sec:math}--\ref{sec:gates}~章工程化，不在本章展开 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}[最小集合的可修订性]
+「最小」是相对当前控制目标的主张。
+若日后发现新的失控形态（例如必须单独公理化的接缝类型），可以\textbf{增站}；
+若某站被证明可被更短公理完全吸收，可以\textbf{合并}——但须在纪要里写清：删掉后哪类控制句柄仍在。
+\end{remark}
 
 \subsection{本章主线与阶段性目标}
 \label{sec:mathbg-spine}
@@ -646,12 +758,14 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
   对象 & 依赖、闭包、合法语言、配置转移、证书演化 & 密码方案正确性证明 \\
   体例 & 定义 / 命题 / 定理 / 引理 / 推论 + 双例 & 百科式堆砌无证明的名词 \\
   深度 & 以「后文门禁够用」为准；标准结果给证明梗概 & 可判定性、复杂度专论（后置） \\
+  动机 & §~\ref{sec:mathbg-why}：为何要学、最小集合、必须掌握清单 & 把「整仓工程知识」误当成本章范围 \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\begin{remark}[阅读验收（对齐六个阶段）]
-读完本章，应能按主线依次回答：
+\begin{remark}[阅读验收（对齐最小集合与六个阶段）]
+读完本章，应先能按 §~\ref{sec:mathbg-why} 的「必须掌握」六条自检；
+再按主线依次回答：
 （I）如何用 DAG/拓扑序描述依赖；
 （II）如何由 $T$ 与 $\Gamma$ 写出 $\mathrm{Missing}_\Gamma(T)$；
 （III）库、派生、轨迹各不回答什么；
@@ -2413,7 +2527,8 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \subsection{本章小结与下一章预告}
 \label{sec:mathbg-summary}
 
-本章沿图~\ref{fig:ch3-spine} 的六阶段主线，把「只沿已验证能力合法生长」写成可检查的数学：
+本章先在 §~\ref{sec:mathbg-why} 主张：对「理解并控制合法生长」而言，六站是\textbf{最小数学集合}；
+再沿图~\ref{fig:ch3-spine} 把该集合写成可检查对象：
 \[
 \underbrace{\text{图 / DAG}}_{\text{I}}
 \;\xrightarrow{\;\mathrm{Dep}^*\;}
@@ -2427,7 +2542,7 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \;\xrightarrow{\;\text{回扣}\;}
 \underbrace{\text{KeyGen 故事}}_{\text{VI}}.
 \]
-每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}；迷路时先回到阶段目标与图~\ref{fig:ch3-spine}，再下钻细节。
+每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}；迷路时先回 §~\ref{sec:mathbg-why} 与图~\ref{fig:ch3-spine}，再下钻细节。
 有意留白：产生式在仓库里如何形式化、闭包表文件长什么样、可判定性如何证——留给后文。
 
 下一章（第~\ref{sec:math}~章）要把这些对象\textbf{填成工程上可写的字段}：节点属性、三类边、证书状态怎么命名，等等。
