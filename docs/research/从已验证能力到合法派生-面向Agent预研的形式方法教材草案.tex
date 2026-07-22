@@ -550,14 +550,42 @@ DAG、形式语言、自动机各自控制什么、在工程里落在何处；
 \label{sec:mathbg-why}
 
 读本章之前，先把导论读完：下面用三件工具说清——\textbf{为什么要学}、\textbf{学了在工程里怎么用}。
-细节定义从 §~\ref{sec:set-rel} 起展开；迷路时回到本小节的一句话与表~\ref{tab:ch3-three-tools}。
+
+\begin{remark}[导论用词纪律]
+导论与读章地图\textbf{只使用工程术语}（依赖图、依赖闭包、已获证能力、缺项、合法拼装计划、禁止拼法、预研配置、脏标记等）。
+数学记号（如 $\mathrm{Dep}^*$、$\Gamma$、$\mathrm{Missing}$、$L$、$\mathsf{Dirty}$）\textbf{不在此处充当名称}；
+它们要到后文相应\textbf{定义}出现时才引入，并立刻写明「工程术语 $\leftrightarrow$ 数学记号」。
+表~\ref{tab:ch3-term-bridge} 是预告对照，便于往后查，\textbf{不是}要求现在就用符号阅读。
+\end{remark}
+
+\begin{table}[H]
+\centering\small
+\caption{工程术语 $\to$ 后文数学记号（预告；定义处才启用符号）}
+\label{tab:ch3-term-bridge}
+\begin{tabular}{@{}L{3.2cm} L{3.6cm} L{6.4cm}@{}}
+  \toprule
+  工程术语（导论用语） & 后文记号（定义后） & 一句话 \\
+  \midrule
+  依赖图 / 能力 DAG & 有向无环图 $G$ & 谁依赖谁、先证谁 \\
+  依赖闭包 & $\mathrm{Dep}^{*}(\cdot)$ & 完成目标理论上必须齐的全部先决 \\
+  已获证能力集 & $\Gamma$ & 当前允许被引用的能力集合 \\
+  缺项 & $\mathrm{Missing}_{\Gamma}(\cdot)$ & 依赖闭包里尚未获证的那部分 \\
+  闭包表 & （工作对象） & 目标 / 已获证 / 依赖闭包 / 缺项的核对表 \\
+  拼装计划 / 合法计划 & 字 $w$；语言 $L$ & 一次任务怎么拼；全体合法拼法 \\
+  禁止拼法 & $\mathrm{Forb}$ & 不得采用的子串或关闭路线 \\
+  预研配置 & $(\Gamma,F,S)$ & 作业过程状态：已获证、前沿、辅助 \\
+  展开 / 探针取证 / 写入证书 & $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}$ & 过程三步的转移名 \\
+  脏标记（证书作废） & $\mathsf{Dirty}$ & 上游变更后撤回下游证书 \\
+  \bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{一句话}
 \[
 \begin{array}{c}
-\text{DAG 管「能站在谁身上」；}\quad
-\text{形式语言管「怎样拼才算合法」；}\\[0.35em]
-\text{自动机（配置转移）管「这次作业走到哪、证书何时作废」。}
+\text{依赖图管「能站在谁身上」；}\quad
+\text{合法拼装计划管「怎样拼才算合法」；}\\[0.35em]
+\text{预研过程（配置转移）管「这次作业走到哪、证书何时作废」。}
 \end{array}
 \]
 三者分别对应仓库里的\textbf{依赖图 / 拼装说明书 / 门禁过程}；缺一，第~\ref{sec:hook}~章里的失控会重新出现。
@@ -580,69 +608,73 @@ DAG、形式语言、自动机各自控制什么、在工程里落在何处；
 
 \paragraph{三件工具：为何学、工程里怎么用}
 表~\ref{tab:ch3-three-tools} 是导论的核心对照；后文六阶段只是把这三件工具写细。
+表中\textbf{一律用工程落点}，不提前抛数学记号。
 
 \begin{table}[H]
 \centering\small
-\caption{DAG / 形式语言 / 自动机：导论级对照（为何学 $\leftrightarrow$ 工程用法）}
+\caption{依赖图 / 合法拼装 / 预研过程：导论级对照（为何学 $\leftrightarrow$ 工程用法）}
 \label{tab:ch3-three-tools}
-\begin{tabular}{@{}L{2.0cm} L{4.4cm} L{6.8cm}@{}}
+\begin{tabular}{@{}L{2.2cm} L{4.4cm} L{6.6cm}@{}}
   \toprule
   工具 & 为什么要学（控制什么） & 在工程里怎么用（落点） \\
   \midrule
-  \textbf{DAG}
-  （及闭包） &
+  \textbf{依赖图}
+  （及依赖闭包） &
   预研不是白手翻译 FIPS，而是「先有绿积木再往上长」。
   没有图就说不清：谁依赖谁、先证谁、有没有环、动手前还缺谁。 &
   顶点 $\approx$ INDEX/stable/接缝能力；
   边 $\approx$「KEM 依赖 stable PKE」等；
   拓扑序 $\approx$ P0${\to}$P1${\to}$P2${\to}$P3 探路顺序；
-  $\mathrm{Dep}^*/\mathrm{Missing}$ $\approx$ 资产清单与\textbf{闭包表}；
-  禁边直觉 $\approx$ \texttt{frozen/}。 \\
+  依赖闭包与缺项 $\approx$ 资产清单与\textbf{闭包表}要核的两栏；
+  禁止再走的边 $\approx$ \texttt{frozen/}。 \\
   \midrule
-  \textbf{形式语言} &
+  \textbf{合法拼装}
+  （形式语言） &
   INDEX 绿项是\textbf{菜单}，不是\textbf{拼装说明书}。
   单点 PASS 推不出接缝合法（组合不免费）；
-  要把「合法拼法」写成可判定的 $w\in L$。 &
-  字母 $\approx$ 已证能力与接缝步骤；
-  字 $w$ $\approx$ 某次展开计划；
-  语言 $L$ $\approx$ 全体合法计划；
-  成员判定 $\approx$ 门禁查计划是否合法；
-  禁字 $\mathrm{Forb}$ $\approx$ 已关闭/禁止拼法（含 frozen 判决来源）。 \\
+  要把「合法拼法」写成可检查的计划。 &
+  可用步骤 $\approx$ 已证能力与接缝动作；
+  一次\textbf{拼装计划} $\approx$ 某次任务的展开顺序；
+  \textbf{合法计划集合} $\approx$ 门禁承认的全部拼法；
+  成员检查 $\approx$ 门禁查「这份计划是否合法」；
+  \textbf{禁止拼法} $\approx$ 已关闭/禁止路线（含 frozen 判决来源）。 \\
   \midrule
-  \textbf{自动机}
+  \textbf{预研过程}
   （配置转移） &
-  DAG 是静态库，语言是合法计划集合；
-  真正干活是\textbf{过程}：补洞$\to$探针$\to$获证，有时还要作废。
-  没有转移规则，就无法说「走到接受」与「上次 PASS 为何作废」。 &
-  配置 $(\Gamma,F,S)$：$\Gamma$=已获证，$F$=前沿待办；
-  Expand/Probe/Certify $\approx$ 补洞 / 对拍 / 写入证书；
-  接受 $\approx$ 目标进 $\Gamma$；
-  Freeze $\approx$ 踩禁字关路线；
-  $\mathsf{Dirty}$ $\approx$ 上游约定变更后下游不得假绿。 \\
+  依赖图是静态库，合法计划是说明书；
+  真正干活是\textbf{过程}：补洞$\to$探针$\to$写入证书，有时还要作废。
+  没有过程规则，就无法说「走到接受」与「上次 PASS 为何作废」。 &
+  \textbf{预研配置}记下：哪些已获证、前沿还欠什么；
+  展开 / 探针取证 / 写入证书 $\approx$ 补洞 / 对拍 / 更新已获证清单；
+  接受 $\approx$ 目标已获证且前沿清空；
+  冻结路线 $\approx$ 踩了禁止拼法；
+  \textbf{脏标记} $\approx$ 上游约定变更后下游不得假绿。 \\
   \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{example}[导论：用 KeyGen 故事对照三件工具]
-续第~\ref{sec:hook}~章。
+续第~\ref{sec:hook}~章（此处仍只用工程词）。
 \begin{itemize}
-  \item \textbf{DAG}：不是「INDEX 里 NTT 绿了就直接写 KEM」，而是先画清
-        stable PKE $\to$ 尾缝 $\to$ KEM，再算 $\mathrm{Missing}$（当时资产清单是手工版闭包对照）。
-  \item \textbf{形式语言}：NTT PASS、PKE PASS \textbf{推不出}
-        「2-launch + Alg.16 尾拼 $\mathit{dk}$」自动合法——接缝须单独进入合法计划（或进入 $\mathrm{Forb}$）。
-  \item \textbf{自动机}：从「$\Gamma$ 已有 stable PKE」走到「\texttt{kem.keygen} 获证」是一条配置轨迹；
-        若 P1 的 I/O/布局/同步约定变更，P2/P3 应走 $\mathsf{Dirty}$，不能因「上次 PASS」假绿。
+  \item \textbf{依赖图}：不是「INDEX 里 NTT 绿了就直接写 KEM」，而是先画清
+        stable PKE $\to$ 尾缝 $\to$ KEM，再核对\textbf{缺项}
+        （当时资产清单是手工版「依赖闭包 $\leftrightarrow$ 已获证」对照）。
+  \item \textbf{合法拼装}：NTT PASS、PKE PASS \textbf{推不出}
+        「2-launch + Alg.16 尾拼 $\mathit{dk}$」自动合法——接缝须单独写进合法拼装计划
+        （或明确列入禁止拼法）。
+  \item \textbf{预研过程}：从「已获证清单里已有 stable PKE」走到「\texttt{kem.keygen} 获证」是一条作业轨迹；
+        若 P1 的 I/O/布局/同步约定变更，P2/P3 应打\textbf{脏标记}作废证书，不能因「上次 PASS」假绿。
 \end{itemize}
 \end{example}
 
 \paragraph{工程检查顺序（三件工具如何串起来）}
 一次受控预研，导论级检查顺序就是：
 \[
-\underbrace{\text{DAG / 闭包}}_{\text{还缺谁？先交闭包表}}
+\underbrace{\text{依赖图 / 闭包表}}_{\text{还缺谁？}}
 \;\longrightarrow\;
-\underbrace{\text{形式语言}}_{\text{这计划合法吗？}~w\in L}
+\underbrace{\text{合法拼装计划}}_{\text{这计划合法吗？}}
 \;\longrightarrow\;
-\underbrace{\text{自动机}}_{\text{按转移往前走；获证或 Dirty}}.
+\underbrace{\text{预研过程}}_{\text{展开$\to$取证$\to$写入证书；或脏标记}}.
 \]
 \textbf{学了不代替什么}：不代替 NTT / AscendC「核怎么写、算得对不对」——那是另一条知识栈；
 本章三件工具只回答「长得是否合法、过程是否可控」。
@@ -665,57 +697,56 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 若再往本章塞进密码代数或可判定性专论，则对「合法生长」的控制\textbf{并不增加一等必要句柄}，只增加另一条知识栈。
 \end{quote}
 
-表~\ref{tab:ch3-minimal} 把「三件工具」细化成六站：每一站对应一类不可互相替代的控制问题
-（I--II 细写 DAG/闭包，III 防混读，IV 细写语言，V 细写自动机，VI 钉回故事）。
+表~\ref{tab:ch3-minimal} 把「三件工具」细化成六站（仍用工程对象名；数学记号见后文定义）。
 
 \begin{table}[H]
 \centering\small
 \caption{本章六站为何构成「合法生长」控制的最小集合}
 \label{tab:ch3-minimal}
-\begin{tabular}{@{}c L{2.4cm} L{5.0cm} L{5.4cm}@{}}
+\begin{tabular}{@{}c L{2.8cm} L{4.8cm} L{5.2cm}@{}}
   \toprule
-  站 & 核心对象 & 删掉它会失去什么控制 & 能否用其它站顶替 \\
+  站 & 工程对象 & 删掉它会失去什么控制 & 能否用其它站顶替 \\
   \midrule
-  I & 图 / DAG / 拓扑序 &
+  I & 依赖图 / 拓扑序 &
   无法稳定回答「谁依赖谁、先证谁」 &
-  否：闭包与语言都\textbf{预设}依赖世界已画清 \\
+  否：闭包与合法计划都\textbf{预设}依赖世界已画清 \\
   \midrule
-  II & $\mathrm{Dep}^*$ / $\Gamma$ / Missing &
+  II & 依赖闭包 / 已获证 / 缺项 &
   无法在动手前交「还缺谁」 &
-  否：语言成员判定不自动生成缺项清单 \\
+  否：计划是否合法，不自动生成缺项清单 \\
   \midrule
-  III & 库 / 派生 / 轨迹 &
+  III & 库 / 一次派生 / 作业轨迹 &
   三张图混读，门禁问错对象 &
   否：分层是\textbf{阅读纪律}，不是多学一个公式 \\
   \midrule
-  IV & 字 / $L$ / 成员判定 / Forb &
+  IV & 拼装计划 / 合法计划集合 / 禁止拼法 &
   无法区分「菜单绿」与「拼法合法」 &
-  否：闭包齐备 $\neq$ 计划字 $w\in L$ \\
+  否：依赖齐备 $\neq$ 拼装计划合法 \\
   \midrule
-  V & 配置转移 / Dirty &
+  V & 预研配置 / 脏标记 &
   无法描述作业如何接受，也无法作废过期证 &
-  否：静态 DAG 不谈过程与非单调 \\
+  否：静态依赖图不谈过程与证书撤回 \\
   \midrule
   VI & 回扣 KeyGen &
-  符号落不回故事，学完仍不会用 &
+  术语落不回故事，学完仍不会用 &
   （练习站）可缩短叙述，但\textbf{不可}从学习路径删掉落地 \\
   \bottomrule
 \end{tabular}
 \end{table}
 
-因此：对「理解并控制合法生长」这一目的，I--V 是\textbf{必要}的数学骨架，VI 是把骨架钉回工程故事的\textbf{必要练习}；
+因此：对「理解并控制合法生长」这一目的，I--V 是\textbf{必要}的骨架，VI 是把骨架钉回工程故事的\textbf{必要练习}；
 它们合在一起，构成本章主张的最小集合。
 
 \paragraph{必须掌握什么（验收清单）}
 读完本章，若目标是「能理解并参与控制本专题意义上的工程过程」，至少应能\textbf{独立完成}下列事项
-（与第~\ref{sec:hook}~章四组问题一一对应）：
+（与第~\ref{sec:hook}~章四组问题一一对应；此处仍写工程动作，符号到定义后再用）：
 \begin{enumerate}
-  \item \textbf{画依赖并调度}：把目标任务画成 DAG 片段，并给出一种合法拓扑序（阶段 I）。
-  \item \textbf{算齐备与缺项}：给定目标 $T$ 与当时证书库 $\Gamma$，写出 $\mathrm{Dep}^*(T)$ 与 $\mathrm{Missing}_\Gamma(T)$（阶段 II）。
+  \item \textbf{画依赖并调度}：把目标任务画成依赖图片段，并给出一种合法探路顺序（阶段 I）。
+  \item \textbf{算齐备与缺项}：给定目标与当时已获证能力清单，写出依赖闭包与缺项（阶段 II）。
   \item \textbf{分清三层}：面对数据流、能力库、一次作业轨迹，能指出各自回答 / 不回答什么（阶段 III）。
-  \item \textbf{判定合法拼法}：说明为何「单点 PASS」推不出「拼接 PASS」；能陈述成员判定与禁字 $\mathrm{Forb}$ 在门禁中的位置（阶段 IV）。
-  \item \textbf{描述过程与失效}：用配置 $(\Gamma,F,S)$ 说出 Expand/Probe/Certify 到接受的大意，并解释 $\mathsf{Dirty}$ 为何使 $\Gamma$ 可收缩（阶段 V）。
-  \item \textbf{落回故事}：能指着 KeyGen 流程说清：哪一段是缺项，哪一段是 $w\in L$，哪一段该标脏（阶段 VI）。
+  \item \textbf{判定合法拼法}：说明为何「单点 PASS」推不出「拼接 PASS」；能说明门禁如何检查拼装计划、如何避开禁止拼法（阶段 IV）。
+  \item \textbf{描述过程与失效}：用预研配置说出「展开 $\to$ 探针取证 $\to$ 写入证书」到接受的大意，并解释脏标记为何使已获证清单可收缩（阶段 V）。
+  \item \textbf{落回故事}：能指着 KeyGen 流程说清：哪一段是缺项，哪一段是拼装计划合法性，哪一段该打脏标记（阶段 VI）。
 \end{enumerate}
 做不到其中任一条，就还不能声称「已经掌握控制该工程过程所需的最小数学」。
 
@@ -745,18 +776,19 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 
 \paragraph{一句话主线}
 先能\textbf{画出谁依赖谁}，再能\textbf{算出还缺谁}，再能\textbf{写出怎样拼才算合法}，最后能\textbf{描述一次作业如何走到接受（以及证书为何会失效）}。
-写成符号链即：
+写成工程词链即：
 \[
-\underbrace{\text{图 / DAG}}_{\text{依赖世界}}
-\;\xrightarrow{\;\mathrm{Dep}^*\;}
-\underbrace{\Gamma,\;\mathrm{Missing}}_{\text{齐备与缺项}}
-\;\xrightarrow{\;L(\mathcal{G})\;}
-\underbrace{w\in L}_{\text{合法计划}}
-\;\xrightarrow{\;\to\;}
-\underbrace{(\Gamma,F,S)}_{\text{配置轨迹}}
+\underbrace{\text{依赖图}}_{\text{依赖世界}}
+\;\longrightarrow\;
+\underbrace{\text{依赖闭包 / 已获证 / 缺项}}_{\text{齐备与缺项}}
+\;\longrightarrow\;
+\underbrace{\text{合法拼装计划}}_{\text{计划是否合法}}
+\;\longrightarrow\;
+\underbrace{\text{预研配置轨迹}}_{\text{作业过程}}
 \;\ni\;
-\mathsf{Dirty}.
+\text{脏标记}.
 \]
+（对应数学记号见表~\ref{tab:ch3-term-bridge}；\textbf{到定义处再启用符号}。）
 
 这与「生成元$\to$本原单位根$\to$DFT$\to$FFT$\to$NTT」同类：\textbf{每一站都在回答上一站留下的问题}，而不是平行堆砌。
 本章\textbf{不}讨论格、MLWE、NTT 等密码代数。
@@ -770,12 +802,12 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
   \midrule
   I &
   §~\ref{sec:set-rel}--\ref{sec:dag-topo} &
-  用集合、关系、有向图、DAG、拓扑序\textbf{描述依赖世界} &
+  用集合、关系、有向图、依赖图、拓扑序\textbf{描述依赖世界} &
   「谁依赖谁？先证谁后证谁？」 \\
   \midrule
   II &
   §~\ref{sec:closure} &
-  用闭包从目标算出 $\mathrm{Dep}^*$，再对照 $\Gamma$ 得到缺项 &
+  用依赖闭包从目标算出全部先决，再对照已获证清单得到缺项 &
   「动手前必须齐谁？还缺谁？」 \\
   \midrule
   III &
@@ -785,18 +817,18 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
   \midrule
   IV &
   §~\ref{sec:words-lang}--\ref{sec:membership} &
-  把拼装计划看成字；合法拼法看成语言；会说成员判定与组合不免费 &
+  把拼装计划看成可检查对象；学会成员检查与组合不免费 &
   「怎样拼才算合法？为何单点 PASS 不够？」 \\
   \midrule
   V &
   §~\ref{sec:transition}--\ref{sec:dirty} &
-  用配置转移描述 Expand/Probe/Certify；理解证书可脏 &
+  用预研配置描述展开/探针取证/写入证书；理解证书可脏 &
   「一次作业如何走到接受？上次 PASS 为何会作废？」 \\
   \midrule
   VI &
   §~\ref{sec:mathbg-hookback} &
   用同一条主线回扣第~\ref{sec:hook}~章 KeyGen 流程 &
-  「这些符号在真实故事里分别落在何处？」 \\
+  「这些术语在真实故事里分别落在何处？」 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -815,10 +847,10 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
   \node[box, fill=blue!10] (s3) at (5.4,0) {III\\三层对象};
   \node[box, fill=orange!12] (s4) at (8.1,0) {IV\\合法语言};
   \node[box, fill=green!12] (s5) at (10.8,0) {V\\配置脏证};
-  \draw[arr] (s1) -- node[lab, above]{Dep$^*$} (s2);
+  \draw[arr] (s1) -- node[lab, above]{闭包} (s2);
   \draw[arr] (s2) -- node[lab, above]{分层} (s3);
-  \draw[arr] (s3) -- node[lab, above]{$L$} (s4);
-  \draw[arr] (s4) -- node[lab, above]{轨迹} (s5);
+  \draw[arr] (s3) -- node[lab, above]{计划} (s4);
+  \draw[arr] (s4) -- node[lab, above]{过程} (s5);
   \node[box, fill=violet!10, minimum width=5.2cm] (s6) at (5.4,-1.85)
     {VI\quad 回扣第~2~章 KeyGen（整条链落地）};
   \draw[arr, gray!60] (s5.south) |- (s6.east);
@@ -851,12 +883,13 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 \begin{remark}[阅读验收（对齐最小集合与六个阶段）]
 读完本章，应先能按 §~\ref{sec:mathbg-why} 的「必须掌握」六条自检；
 再按主线依次回答：
-（I）如何用 DAG/拓扑序描述依赖；
-（II）如何由 $T$ 与 $\Gamma$ 写出 $\mathrm{Missing}_\Gamma(T)$；
+（I）如何用依赖图/拓扑序描述依赖；
+（II）如何由目标与已获证清单写出缺项；
 （III）库、派生、轨迹各不回答什么；
-（IV）为何 $x,y\in L$ 推不出 $xy\in L$，以及成员判定在门禁里的位置；
-（V）接受配置是什么，$\mathsf{Dirty}$ 为何使 $\Gamma$ 可收缩；
+（IV）为何「单点合法」推不出「拼接合法」，以及成员检查在门禁里的位置；
+（V）接受配置是什么，脏标记为何使已获证清单可收缩；
 （VI）第~2~章 KeyGen 故事如何落回 I--V。
+（自检通过后，应能对照表~\ref{tab:ch3-term-bridge} 说出各工程术语对应的数学记号。）
 \end{remark}
 
 \subsection{集合、笛卡尔积、关系与函数}
@@ -1179,8 +1212,9 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
 \label{sec:closure}
 
 \paragraph{本阶段目标（阶段 II）}
-对照图~\ref{fig:ch3-spine}：在依赖世界之上引入\textbf{闭包}，从目标算出 $\mathrm{Dep}^*$，再对照证书库 $\Gamma$ 得到 $\mathrm{Missing}_\Gamma$。
+对照图~\ref{fig:ch3-spine}：在依赖世界之上引入\textbf{闭包}，从目标算出\textbf{依赖闭包}，再对照\textbf{已获证能力清单}得到\textbf{缺项}。
 学完应能写出「动手前必须齐谁 / 还缺谁」，并分清「闭包已满」与「菜单上有绿项」。
+（本阶段末尾才把上述工程对象记成 $\mathrm{Dep}^*$、$\Gamma$、$\mathrm{Missing}$，见表~\ref{tab:ch3-term-bridge}。）
 下一站（阶段 III）问：静态库、一次派生、作业轨迹是否在\textbf{同一张图}里混读。
 
 前几节已有集合、关系、有向图。本节先回答一个更基本的问题：
@@ -1241,7 +1275,7 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
 
 \begin{example}[工程直觉（尚不形式化）]
 若「已具备的能力集合」$\Gamma$ 在「取直接依赖」这一操作下不封闭，
-就意味着：你以为齐了，但某个绿结点还缺未列入的先决——这正是后文 $\mathrm{Missing}$ 要抓的现象。
+就意味着：你以为齐了，但某个绿结点还缺未列入的先决——这正是后文要引入的工程对象「\textbf{缺项}」所要抓的现象。
 \end{example}
 
 \subsubsection{闭包：最小的封闭扩张}
@@ -1445,7 +1479,7 @@ R^{*} &=R^{0}\cup R^{+}=\{(a,a),(b,b),(c,c),(a,b),(b,c),(a,c)\}.
 \begin{example}[工程预告]
 若把「$u$ 是 $v$ 的直接先决」看成关系 $R$，
 则「$u$ 是 $v$ 的直接或间接先决」就是 $(u,v)\in R^{*}$。
-下一小节把它改写成顶点集合 $\mathrm{Dep}^*(T)$。
+下一小节把「目标 $T$ 的全部先决」整理成工程对象\textbf{依赖闭包}，并引入记号 $\mathrm{Dep}^*(T)$。
 \end{example}
 
 \subsubsection{有向图上的依赖闭包}
@@ -1474,7 +1508,9 @@ $G^{\top}=(V,E^{\top})$，$E^{\top}=\{(v,u)\mid (u,v)\in E\}$（箭头反向）�
 \end{definition}
 
 \begin{definition}[单点依赖闭包]
-对目标 $T\in V$，定义
+\label{def:dep-star}
+\textbf{工程术语}：目标 $T$ 的\textbf{依赖闭包}——完成 $T$ 理论上必须齐备的全部先决能力（含 $T$ 自身）。\\
+\textbf{数学记号}：固定依赖图 $G=(V,E)$，对目标 $T\in V$ 定义
 \[
 \mathrm{Dep}^*_G(T)
 \;=\;
@@ -1483,6 +1519,7 @@ $G^{\top}=(V,E^{\top})$，$E^{\top}=\{(v,u)\mid (u,v)\in E\}$（箭头反向）�
 \{u\in V\mid (u,T)\in E^{*}\}.
 \]
 恒有 $T\in\mathrm{Dep}^*_G(T)$。略下标时写作 $\mathrm{Dep}^*(T)$。
+此后正文若写 $\mathrm{Dep}^*(T)$，一律读作「$T$ 的依赖闭包」。
 \end{definition}
 
 \begin{remark}[与一般闭包的对接]
@@ -1555,13 +1592,13 @@ $D_k(T)$ 单调递增且含于有限集 $V$，故稳定。
 
 前几小节处理的是\textbf{单个}目标 $T$。
 工程上一次任务往往同时盯住多个目标（或先把目标拆成若干子目标），
-并且手里已有一份「哪些能力当前允许被引用」的清单——下文将把它形式化为已证书集 $\Gamma$。
-本小节先把 $\mathrm{Dep}^*$ 从单点推广到有限集合，再引入证书与缺项、生成集。
+并且手里已有一份「哪些能力当前允许被引用」的清单——下文形式化为\textbf{已获证能力集}（数学记号 $\Gamma$）。
+本小节先把依赖闭包从单点推广到有限目标集，再引入证书与缺项、生成集。
 
 \paragraph{为何需要目标集}
-若只定义 $\mathrm{Dep}^*(T)$，则同时要完成 $T_1,T_2$ 时，需要的先决整体是
+若只定义单目标的依赖闭包 $\mathrm{Dep}^*(T)$，则同时要完成 $T_1,T_2$ 时，需要的先决整体是
 $\mathrm{Dep}^*(T_1)\cup\mathrm{Dep}^*(T_2)$。
-把它写成 $\mathrm{Dep}^*(\{T_1,T_2\})$，可避免每次手写大并集，也便于后文闭包表一行写多个目标。
+把它写成目标集的依赖闭包 $\mathrm{Dep}^*(\{T_1,T_2\})$，可避免每次手写大并集，也便于后文闭包表一行写多个目标。
 
 \begin{definition}[有限目标集]
 称非空有限集 $A\subseteq V$ 为一次讨论中的\textbf{目标集}。
@@ -1570,7 +1607,9 @@ $\mathrm{Dep}^*(T_1)\cup\mathrm{Dep}^*(T_2)$。
 \end{definition}
 
 \begin{definition}[目标集的依赖闭包]
-对 $A\subseteq V$，定义
+\label{def:dep-star-set}
+\textbf{工程术语}：目标集 $A$ 的\textbf{依赖闭包}——完成 $A$ 中全部目标所需先决的并集。\\
+\textbf{数学记号}：对 $A\subseteq V$，定义
 \[
 \mathrm{Dep}^*_G(A)
 \;=\;
@@ -1636,8 +1675,9 @@ $A$ 对「取直接前驱」封闭——若 $v\in A$ 则 $\mathrm{Pred}(v)\subse
 \end{definition}
 
 \begin{definition}[已证书集与已证书项]
-固定讨论时刻，令 $\Gamma\subseteq V$ 表示当前被承认「持有有效证书」的顶点集合，称为\textbf{已证书集}
-（直觉上：该时刻引理库里「还有效」的那些能力）。
+\label{def:gamma}
+\textbf{工程术语}：\textbf{已获证能力集}（亦称已证书集）——当前允许被后续任务引用的能力集合。\\
+\textbf{数学记号}：固定讨论时刻，令 $\Gamma\subseteq V$ 表示该集合。
 对任意 $v\in V$：
 \begin{itemize}
   \item 若 $v\in\Gamma$，称 $v$ \textbf{已获证}，并称 $v$ 为相对 $\Gamma$ 的一个\textbf{已证书项}；
@@ -1646,10 +1686,13 @@ $A$ 对「取直接前驱」封闭——若 $v\in A$ 则 $\mathrm{Pred}(v)\subse
 口语「已经拿到证书 / 已获得证书」即指 $v\in\Gamma$。
 $\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；既有判决因上游变更不再被承认时可移出 $\Gamma$。
 本小节先把 $\Gamma$ 当作给定的集合参数；改写 $\Gamma$ 的转移名称在缺项集定义之后预习，完整转移见后文。
+此后正文若写 $\Gamma$，一律读作「当前已获证能力集」。
 \end{definition}
 
 \begin{definition}[缺项集]
-对目标集 $A\subseteq V$ 与已证书集 $\Gamma\subseteq V$，定义\textbf{缺项集}
+\label{def:missing}
+\textbf{工程术语}：相对已获证清单的\textbf{缺项}——依赖闭包里还不允许引用的那些先决。\\
+\textbf{数学记号}：对目标集 $A\subseteq V$ 与已获证能力集 $\Gamma\subseteq V$，定义\textbf{缺项集}
 \[
 \mathrm{Missing}_\Gamma(A)
 \;=\;
@@ -1658,19 +1701,23 @@ $\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；�
 \{\,u\in\mathrm{Dep}^*(A)\mid u\notin\Gamma\,\}.
 \]
 当 $A=\{T\}$ 时简记为 $\mathrm{Missing}_\Gamma(T)$。
-直观：$u$ 落在「完成 $A$ 理论上需要的闭包」里，但当前还\textbf{未获证}，故不能直接引用。
+直观：$u$ 落在「完成 $A$ 的依赖闭包」里，但当前还\textbf{未获证}，故不能直接引用。
+此后正文若写 $\mathrm{Missing}_\Gamma(A)$，一律读作「相对 $\Gamma$ 的缺项」。
 \end{definition}
 
 \begin{remark}[三类转移名称的预习]
-完整转移关系在「迁移系统」一节定义。此处先约定三个名称的直觉，避免后文空降符号：
+完整转移关系在「迁移系统」一节定义。此处先约定三个\textbf{工程动作}的名称，并预告后文数学记号：
 \begin{center}
-\begin{tabular}{@{}L{2.4cm}L{11.2cm}@{}}
+\begin{tabular}{@{}L{3.2cm}L{2.6cm}L{7.6cm}@{}}
   \toprule
-  名称 & 本小节所需的含义 \\
+  工程动作 & 后文记号 & 本小节所需的含义 \\
   \midrule
-  $\mathsf{Certify}$ & 对未获证顶点 $v$：约定验收通过后执行 $\Gamma\leftarrow\Gamma\cup\{v\}$（$v$ 成为已证书项） \\
-  $\mathsf{Probe}$ & 对缺项（即 $\mathrm{Missing}_\Gamma(A)$ 中的点）启动探针/预研，收集可供 $\mathsf{Certify}$ 使用的证据（本身不自动改 $\Gamma$） \\
-  $\mathsf{Dirty}$ & 撤销部分既有证书：使某些 $v$ 不再属于 $\Gamma$（证书库非单调，详见后文） \\
+  写入证书 & $\mathsf{Certify}$ &
+  对未获证顶点 $v$：验收通过后执行 $\Gamma\leftarrow\Gamma\cup\{v\}$ \\
+  探针取证 & $\mathsf{Probe}$ &
+  对缺项启动探针/预研，收集可供写入证书使用的证据（本身不自动改 $\Gamma$） \\
+  脏标记（作废） & $\mathsf{Dirty}$ &
+  撤销部分既有证书：使某些 $v$ 不再属于 $\Gamma$（证书库非单调，详见后文） \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -1710,7 +1757,7 @@ $\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；�
 
 \begin{remark}[闭包表与门禁如何联动]
 若 $\mathrm{Missing}_\Gamma(A)\neq\emptyset$，门禁应阻止「直接写顶层实现」，
-并要求先对缺项做 $\mathsf{Probe}$，再在验收通过后 $\mathsf{Certify}$，直至相对 $\Gamma$ 闭包已满（或明确缩小目标）。
+并要求先对缺项做探针取证（$\mathsf{Probe}$），再在验收通过后写入证书（$\mathsf{Certify}$），直至相对 $\Gamma$ 闭包已满（或明确缩小目标）。
 \end{remark}
 
 \begin{definition}[能力菜单与绿项]
@@ -1743,7 +1790,7 @@ $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其
 
 \begin{definition}[补洞与最小补洞]
 相对已证书集 $\Gamma$，把缺项逐步变成已证书项、从而使目标闭包已满的过程，称为\textbf{补洞}。
-形式上一轮补洞至少包含：选取某些 $u\in\mathrm{Missing}_\Gamma(T)$，经 $\mathsf{Probe}$ 取证后 $\mathsf{Certify}$，得到更大的 $\Gamma'$。
+形式上一轮补洞至少包含：选取某些缺项 $u\in\mathrm{Missing}_\Gamma(T)$，经探针取证后写入证书，得到更大的已获证集合 $\Gamma'$。
 若优先寻找尽可能小的缺项生成集（定义见下）作为补证对象，则称该选择问题为\textbf{最小补洞}（算法细节后置）。
 \end{definition}
 
@@ -1856,8 +1903,8 @@ $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{�
 \caption{配图：工程：KEM.KeyGen 的依赖闭包示意}
 \label{fig:auto-10}
 \end{figure}
-§2 资产清单 $\approx$ 当时对 $\mathrm{Dep}^*(T)$ 与 $\Gamma$ 的手工对照；
-\textbf{未}显式计算 $\mathrm{Missing}_\Gamma(T)$ 就开工，正是「菜单$\neq$说明书」的来源。
+§2 资产清单 $\approx$ 当时对依赖闭包 $\mathrm{Dep}^*(T)$ 与已获证清单 $\Gamma$ 的手工对照；
+\textbf{未}显式计算缺项 $\mathrm{Missing}_\Gamma(T)$ 就开工，正是「菜单$\neq$说明书」的来源。
 \end{example}
 
 \subsection{三层对象：库、一次派生、过程}
@@ -1978,16 +2025,19 @@ $(\Gamma_i,F_i,S_i)$（定义见迁移系统一节），称为\textbf{配置轨�
 \label{sec:words-lang}
 
 \paragraph{本阶段目标（阶段 IV，至 §~\ref{sec:membership}）}
-对照图~\ref{fig:ch3-spine}：把「拼装计划」写成\textbf{字}，把「合法拼法」写成\textbf{语言} $L(\mathcal{G})$；学会成员判定、禁字与「组合不免费」。
-学完应能说明：单点 PASS 为何推不出拼接仍合法，以及门禁为何要查 $w\in L$。
-下一站（阶段 V）问：一次作业如何在配置上\textbf{走到接受}，以及证书为何会失效。
+对照图~\ref{fig:ch3-spine}：把「拼装计划」写成可检查对象，把「合法拼法」写成合法计划集合；学会成员检查、禁止拼法与「组合不免费」。
+学完应能说明：单点 PASS 为何推不出拼接仍合法，以及门禁为何要查拼装计划是否合法。
+下一站（阶段 V）问：一次作业如何在预研配置上\textbf{走到接受}，以及证书为何会失效。
 
 \begin{definition}[字母表与字]
-非空有限集 $\Sigma$ 称为\textbf{字母表}；其元素称为\textbf{字母}。
+\label{def:alphabet-word}
+\textbf{工程术语}：\textbf{可用步骤}组成的字母表；一次\textbf{拼装计划}是步骤的有限序列。\\
+\textbf{数学记号}：非空有限集 $\Sigma$ 称为\textbf{字母表}；其元素称为\textbf{字母}。
 $\Sigma$ 上的\textbf{字}是有限序列 $w=a_1a_2\cdots a_n$（$n\ge 0$，$a_i\in\Sigma$）；
 $n=0$ 时称为\textbf{空字}，记 $\varepsilon$。
 称 $n=|w|$ 为字长。全体字之集记 $\Sigma^*$（Kleene 星）。
 又记 $\Sigma^+=\Sigma^*\setminus\{\varepsilon\}$。
+在本方法论中：字母 $\approx$ 已证能力或接缝动作；字 $w$ $\approx$ 某次拼装计划。
 \end{definition}
 
 \begin{definition}[前缀、后缀与因子]
@@ -2000,8 +2050,11 @@ $n=0$ 时称为\textbf{空字}，记 $\varepsilon$。
 \end{definition}
 
 \begin{definition}[语言]
-若 $L\subseteq\Sigma^*$，则称 $L$ 为 $\Sigma$ 上的一个\textbf{语言}。
+\label{def:language}
+\textbf{工程术语}：\textbf{合法计划集合}——门禁承认的全部拼装计划。\\
+\textbf{数学记号}：若 $L\subseteq\Sigma^*$，则称 $L$ 为 $\Sigma$ 上的一个\textbf{语言}。
 称 $w$ 对 $L$ \textbf{合法}（或 $w$ 属于 $L$），若 $w\in L$。
+此后若写 $w\in L$，一律读作「拼装计划 $w$ 合法」。
 \end{definition}
 
 \begin{definition}[语言的连接与星闭包]
@@ -2157,15 +2210,19 @@ L(\mathcal{G}) \;=\; \{\,w\in\Sigma^*\mid S\Rightarrow^* w\,\}.
 \label{sec:membership}
 
 \begin{definition}[成员判定问题]
-给定语言 $L\subseteq\Sigma^*$ 与字 $w\in\Sigma^*$，判断是否 $w\in L$，称为 $L$ 的\textbf{成员判定}。
+\textbf{工程术语}：检查一份拼装计划是否合法（门禁里的成员检查）。\\
+\textbf{数学记号}：给定语言 $L\subseteq\Sigma^*$ 与字 $w\in\Sigma^*$，判断是否 $w\in L$，称为 $L$ 的\textbf{成员判定}。
 \end{definition}
 
 \begin{definition}[禁字集]
-设 $\mathrm{Forb}\subseteq\Sigma^*$。称语言 $L$ \textbf{避开} $\mathrm{Forb}$，若
+\label{def:forb}
+\textbf{工程术语}：\textbf{禁止拼法}——不得出现在合法计划中的子串或关闭路线。\\
+\textbf{数学记号}：设 $\mathrm{Forb}\subseteq\Sigma^*$。称语言 $L$ \textbf{避开} $\mathrm{Forb}$，若
 \[
 L \;\subseteq\; \{w\in\Sigma^*\mid \text{不存在 }f\in\mathrm{Forb}\text{ 作为 }w\text{ 的因子}\}.
 \]
 其中「因子」指存在 $x,y$ 使 $w=xfy$。
+此后若写 $\mathrm{Forb}$，一律读作「禁止拼法集合」（工程来源含 \texttt{frozen/} 判决等）。
 \end{definition}
 
 \begin{definition}[组合不免费（方法论公理图式）]
@@ -2202,7 +2259,7 @@ $\mathrm{Missing}_\Gamma(T)=\emptyset$（全依赖已覆盖）且存在派生表
 \label{sec:transition}
 
 \paragraph{本阶段目标（阶段 V，至 §~\ref{sec:dirty}）}
-对照图~\ref{fig:ch3-spine}：用\textbf{配置} $(\Gamma,F,S)$ 与转移关系描述 Expand / Probe / Certify；再引入非单调的 $\mathsf{Dirty}$。
+对照图~\ref{fig:ch3-spine}：用\textbf{预研配置}描述展开 / 探针取证 / 写入证书；再引入非单调的\textbf{脏标记}。
 学完应能说出接受配置是什么，以及「上次 PASS」为何不能当永真公理。
 下一站（阶段 VI）把 I--V 整条链\textbf{对照回}第~\ref{sec:hook}~章 KeyGen 故事。
 
@@ -2213,27 +2270,30 @@ $\to\subseteq Q\times Q$ 为转移关系，$Q_0\subseteq Q$ 为初始配置集�
 \end{definition}
 
 \begin{definition}[预研配置]
-\textbf{预研配置}是三元组 $q=(\Gamma,F,S)$，其中
+\label{def:config}
+\textbf{工程术语}：一次作业的\textbf{预研配置}——记下已获证能力、前沿还欠什么、以及约束。\\
+\textbf{数学记号}：预研配置是三元组 $q=(\Gamma,F,S)$，其中
 \begin{itemize}
-  \item $\Gamma\subseteq V_{\mathrm{lib}}$ 为已证书能力集；
+  \item $\Gamma\subseteq V_{\mathrm{lib}}$ 为已获证能力集；
   \item $F$ 为前沿目标的有限多重集（待展开或待获证的目标）；
-  \item $S$ 为约束库（含 I/O 契约、接缝声明、禁字集等）。
+  \item $S$ 为约束库（含 I/O 契约、接缝声明、禁止拼法等）。
 \end{itemize}
 \end{definition}
 
 \begin{definition}[基本转移（名称可修订）]
-在约束 $S$ 允许的前提下，定义以下几类转移（均为 $\to$ 的子集）：
+在约束 $S$ 允许的前提下，定义以下几类转移（均为 $\to$ 的子集）。
+表中先给\textbf{工程动作名}，再给后文沿用的数学记号：
 \begin{center}
-\begin{tabular}{@{}L{2.4cm}L{11.2cm}@{}}
+\begin{tabular}{@{}L{3.0cm}L{2.6cm}L{8.0cm}@{}}
   \toprule
-  名称 & 作用 \\
+  工程动作 & 记号 & 作用 \\
   \midrule
-  $\mathsf{Expand}$ & 按产生式展开 $F$ 中某目标，更新缺项 \\
-  $\mathsf{Probe}$ & 对缺项启动探针/预研以寻求证据 \\
-  $\mathsf{Certify}$ & 验收通过后将结点写入 $\Gamma$ \\
-  $\mathsf{Compose}$ & 声明并认证接缝（落实组合不免费） \\
-  $\mathsf{Dirty}$ & 使部分证书失效（见下一节） \\
-  $\mathsf{Freeze}$ & 将某路线写入禁字 / 否定约束 \\
+  展开 & $\mathsf{Expand}$ & 按产生式展开 $F$ 中某目标，更新缺项 \\
+  探针取证 & $\mathsf{Probe}$ & 对缺项启动探针/预研以寻求证据 \\
+  写入证书 & $\mathsf{Certify}$ & 验收通过后将结点写入 $\Gamma$ \\
+  声明接缝 & $\mathsf{Compose}$ & 声明并认证接缝（落实组合不免费） \\
+  脏标记 & $\mathsf{Dirty}$ & 使部分证书失效（见下一节） \\
+  冻结路线 & $\mathsf{Freeze}$ & 将某路线写入禁止拼法 / 否定约束 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -2266,10 +2326,10 @@ $q_0\xrightarrow{a}q_0$，$q_0\xrightarrow{b}q_{\mathrm{ok}}$，其余进 $q_{\m
 \end{example}
 
 \begin{example}[工程]
-初始 $\Gamma$ 含 stable PKE 等；$F=\{\texttt{kem.keygen}\}$。
-经 $\mathsf{Expand}$ 得到尾缝缺项 $\to$ $\mathsf{Compose}/\mathsf{Probe}$ $\to$ $\mathsf{Certify}$ 后 $T\in\Gamma$，到达接受。
-若中途使用了禁字集 $\mathrm{Forb}$ 中的因子（已关闭或明确禁止的路线），
-则触发拒绝（$\mathsf{Freeze}$ 已写入 $\mathrm{Forb}$）。
+初始已获证清单含 stable PKE 等；前沿含 \texttt{kem.keygen}。
+经\textbf{展开}得到尾缝缺项 $\to$ \textbf{声明接缝/探针取证} $\to$ \textbf{写入证书}后目标获证，到达接受。
+若中途使用了\textbf{禁止拼法}中的因子（已关闭或明确禁止的路线），
+则触发拒绝（\textbf{冻结路线}已写入禁止拼法集合）。
 \end{example}
 
 \subsection{证书的非单调更新}
@@ -2281,9 +2341,12 @@ $q_0\xrightarrow{a}q_0$，$q_0\xrightarrow{b}q_{\mathrm{ok}}$，其余进 $q_{\m
 \end{definition}
 
 \begin{definition}[脏标记]
-对 $v\in\Gamma$，若因上游接口、布局或同步约定变更，使 $v$ 的既有证书不再被承认，
+\label{def:dirty}
+\textbf{工程术语}：\textbf{脏标记}（证书作废）——因上游约定变更，下游既有证书不再被承认。\\
+\textbf{数学记号}：对 $v\in\Gamma$，若因上游接口、布局或同步约定变更，使 $v$ 的既有证书不再被承认，
 则称 $v$ 被标记为 $\mathsf{dirty}$，并在转移 $\mathsf{Dirty}$ 下将 $v$ 移出 $\Gamma$
 （或移入「待重证」区）。具体存储格式后文工程化。
+此后若写 $\mathsf{Dirty}$，一律读作「脏标记 / 证书作废」动作。
 \end{definition}
 
 \begin{proposition}[工程引理库非单调]
@@ -2308,35 +2371,35 @@ P1 某能力的 I/O、布局或同步约定变更后，曾基于旧约定的 P2/
 \label{sec:mathbg-hookback}
 
 \paragraph{本阶段目标（阶段 VI）}
-对照图~\ref{fig:ch3-spine}：\textbf{不再引入新定义}，只用 I--V 的符号，把第~\ref{sec:hook}~章 KeyGen 流程逐条落回依赖世界、闭包缺项、三层对象、合法语言与配置轨迹。
-学完应能指着第~2~章的故事说清：哪一段是 $\mathrm{Dep}^*$ / $\mathrm{Missing}$，哪一段是 $w\in L$，哪一段是 $\mathsf{Dirty}$。
+对照图~\ref{fig:ch3-spine}：\textbf{不再引入新定义}，只用 I--V 已挂钩的工程术语（需要时括号附数学记号），把第~\ref{sec:hook}~章 KeyGen 流程逐条落回依赖世界、闭包缺项、三层对象、合法拼装与预研过程。
+学完应能指着第~2~章的故事说清：哪一段是依赖闭包/缺项，哪一段是拼装计划合法性，哪一段该打脏标记。
 
 第~\ref{sec:hook}~章讲的是\textbf{已经走过的}工程故事；本章给的是\textbf{用来把故事说清楚的一套语言}。
 本节\textbf{不再引入新定义}，只做对照。
 中间隔了不少页，第~2~章那些表和图容易对不上号。
-所以下面把最关键的几张\textbf{按本章符号重画一遍}
-（$\Gamma$、$\mathrm{Dep}^*$、$\mathrm{Missing}$、接缝、配置转移等），
-让读者一眼看出：加上数学记号之后，原先那张工程图长什么样。
+所以下面把最关键的几张\textbf{按本章已挂钩对象重画一遍}
+（已获证清单、依赖闭包、缺项、接缝、预研配置等；需要时括号附记号），
+让读者一眼看出：挂上数学记号之后，原先那张工程图长什么样。
 第~2~章里的原表、原图仍保留备查：表~\ref{tab:ch2-assets}、图~\ref{fig:ch2-explore}、图~\ref{fig:ch2-fips-dataflow}、表~\ref{tab:ch2-launch}。
 
 \paragraph{总对照表（先扫一眼）}
 \begin{table}[H]
 \centering\small
-\caption{第~2~章里的流程 / 物件，与本章数学对象的总对照}
+\caption{第~2~章里的流程 / 物件，与本章对象的总对照（工程词为主）}
 \label{tab:ch312-overview}
 \begin{tabular}{@{}L{5.0cm}L{8.8cm}@{}}
   \toprule
   第~\ref{sec:hook}~章里的流程 / 物件 & 本章里对应什么（节号凭直觉即可） \\
   \midrule
-  表~\ref{tab:ch2-assets} 资产清单里的「绿积木」 & 已获证集合 $\Gamma$；顶点已经拿到证书（§3.5） \\
-  活跃 INDEX 上的探针列表 & 能力菜单（$\Sigma$ 的线索）；\textbf{不是}语言 $L$，也\textbf{不必}等于 $\Gamma$ \\
-  图~\ref{fig:ch2-explore}：P0/P1$\to$分段$\to$stable PKE & 能力 DAG 上的生长路径；拓扑序（§3.4） \\
-  「做 KEM 前心里大概有张清单」 & 手工把 $\mathrm{Dep}^*(T)$ 和 $\Gamma$ 对了一遍；缺项当时并没有显式算出来 \\
-  图~\ref{fig:ch2-fips-dataflow}：19 调 16 调 13 $+$ 数据 & \textbf{调用嵌套与数据}依赖；要和能力 DAG、派生树\textbf{分开看}（§3.6） \\
-  Alg.16 尾缝、2-launch 接缝、拼 $\mathit{dk}$ & 接缝边 / $\mathsf{Compose}$；组合并不免费（§3.9） \\
-  correctness 那条高成本探索路 & 手里只有菜单和伪代码 $\approx$ 只有 $\Sigma$；缺成员判定（§3.9） \\
-  device 去掉 vendor $\to$ 再晋级 stable & $\mathsf{Probe}/\mathsf{Certify}$；配置轨迹一路走到接受（§3.10） \\
-  「上次 PASS 了，这次仍可能翻车」 & 证书可以往回缩；$\mathsf{Dirty}$（§3.11） \\
+  表~\ref{tab:ch2-assets} 资产清单里的「绿积木」 & 已获证能力集 $\Gamma$；顶点已经拿到证书（§3.5） \\
+  活跃 INDEX 上的探针列表 & 能力菜单（可用步骤的线索）；\textbf{不是}合法计划集合，也\textbf{不必}等于已获证清单 \\
+  图~\ref{fig:ch2-explore}：P0/P1$\to$分段$\to$stable PKE & 能力依赖图上的生长路径；拓扑序（§3.4） \\
+  「做 KEM 前心里大概有张清单」 & 手工把依赖闭包与已获证清单对了一遍；缺项当时并没有显式算出来 \\
+  图~\ref{fig:ch2-fips-dataflow}：19 调 16 调 13 $+$ 数据 & \textbf{调用嵌套与数据}依赖；要和能力依赖图、派生树\textbf{分开看}（§3.6） \\
+  Alg.16 尾缝、2-launch 接缝、拼 $\mathit{dk}$ & 接缝 / 声明接缝；组合并不免费（§3.9） \\
+  correctness 那条高成本探索路 & 手里只有菜单和伪代码；缺「拼装计划是否合法」的成员检查（§3.9） \\
+  device 去掉 vendor $\to$ 再晋级 stable & 探针取证 / 写入证书；预研配置轨迹一路走到接受（§3.10） \\
+  「上次 PASS 了，这次仍可能翻车」 & 证书可以往回缩；脏标记（§3.11） \\
   \bottomrule
 \end{tabular}
 \end{table}
@@ -2344,36 +2407,35 @@ P1 某能力的 I/O、布局或同步约定变更后，曾基于旧约定的 P2/
 \paragraph{流程一：资产清单的「数学完全体」}
 表~\ref{tab:ch2-assets}在第~2~章只回答两件事：手里有什么、证书长什么样。
 表~\ref{tab:ch312-assets-math}把它重画成开任务那一刻、相对目标 $T=\texttt{kem.keygen.k4}$ 的闭包对照，
-多加了三列：「在不在 $\Gamma$ 里？」「在不在 $\mathrm{Dep}^*(T)$ 里？」「扮演什么角色」。
+多加了三列：「是否已获证？」「是否落在依赖闭包里？」「扮演什么角色」。
 \begin{table}[H]
 \centering\footnotesize
 \caption{资产清单的数学完全体（相对 $T=\texttt{kem.keygen.k4}$ 的开任务快照）}
 \label{tab:ch312-assets-math}
 \begin{tabular}{@{}c L{3.4cm} c c L{4.2cm}@{}}
   \toprule
-  层 & 能力（简述） & $\in\Gamma$？ & $\in\mathrm{Dep}^*(T)$？ & 角色（本章用语） \\
+  层 & 能力（简述） & 已获证？ & 在依赖闭包？ & 角色（本章用语） \\
   \midrule
   P0 & DataCopy / MMAD / TPipe 等 & 是 & 是 & 已获证的祖先 \\
   P1 & NTT / SampleNTT / CBD / \ldots & 是 & 是 & 已获证的祖先 \\
   P2 & Alg.13 分段与 device & 是 & 是 & 已获证的祖先 \\
-  P2 & \textbf{stable PKE KeyGen} & \textbf{是} & \textbf{是} & 直接先决（$\in\Gamma\cap\mathrm{Dep}^*(T)$） \\
-  --- & \textbf{Alg.16 尾缝 / 2-launch 接缝} & \textbf{否} & \textbf{是} & \textbf{缺项} $\mathrm{Missing}_\Gamma(T)$ \\
+  P2 & \textbf{stable PKE KeyGen} & \textbf{是} & \textbf{是} & 直接先决（已获证 $\cap$ 依赖闭包） \\
+  --- & \textbf{Alg.16 尾缝 / 2-launch 接缝} & \textbf{否} & \textbf{是} & \textbf{缺项} \\
   P3 & KEM KeyGen correctness & （标本） & --- & 语义对照用；\textbf{不算}合法派生的证据 \\
-  P3 & KEM KeyGen device / stable & 开任务时否 & 是（目标侧） & 还等着 $\mathsf{Certify}$ 的 $T$ \\
+  P3 & KEM KeyGen device / stable & 开任务时否 & 是（目标侧） & 还等着写入证书的目标 \\
   \bottomrule
 \end{tabular}\\[4pt]
 {\footnotesize
-开任务时可以粗略写成：$\Gamma\supseteq\{\mathrm{P0},\mathrm{P1},\mathrm{P2}\}$，
-且 $\mathrm{Missing}_\Gamma(T)\ni\mathrm{Tail}$，
-所以相对当时的 $\Gamma$，闭包\textbf{还没齐}。
-INDEX 菜单上标绿的项，只是构造 $\Gamma$ 时可以去翻的证据来源，\textbf{代替不了}本表。
+开任务时可以粗略写成：已获证清单已覆盖 P0/P1/P2，
+但缺项仍含尾缝，所以依赖闭包\textbf{还没齐}。
+INDEX 菜单上标绿的项，只是构造已获证清单时可以去翻的证据来源，\textbf{代替不了}本表。
 }
 \end{table}
 
 由此可以看清两件事：
 \begin{itemize}
-  \item 「站在 stable PKE 上」在数学上应写成 $\texttt{pke.keygen.k4}\in\Gamma$，不能只看目录名里有没有 \texttt{stable}；
-  \item 菜单、$\Gamma$、$\mathrm{Missing}_\Gamma(T)$ 是三样东西，谁也替不了谁（这正是第一组问题的落点）。
+  \item 「站在 stable PKE 上」应写成「该能力已获证」，不能只看目录名里有没有 \texttt{stable}；
+  \item 菜单、已获证清单、缺项是三样东西，谁也替不了谁（这正是第一组问题的落点）。
 \end{itemize}
 
 \paragraph{流程二：探路图的「数学完全体」}
@@ -2572,7 +2634,7 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \paragraph{四组问题：换成本章用语再说一遍}
 \begin{table}[H]
 \centering\small
-\caption{§2.6 四组问题的本章重述（对照表~\ref{tab:ch2-four-q}）}
+\caption{§2.6 四组问题的本章重述（对照表~\ref{tab:ch2-four-q}；工程词为主，括号附已挂钩记号）}
 \label{tab:ch312-four-q}
 \begin{tabular}{@{}L{1.6cm}L{6.0cm}L{6.2cm}@{}}
   \toprule
@@ -2580,23 +2642,23 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
   \midrule
   第一组 &
   凭目录名，还是凭证书，才算站在 PKE 上？菜单等于说明书吗？ &
-  站得住 $\Leftrightarrow$ 相关顶点落在 $\Gamma$ 里；
-  菜单 $\neq\Gamma\neq L(\mathcal{G})$；见表~\ref{tab:ch312-assets-math}。 \\
+  站得住 $\Leftrightarrow$ 相关能力已获证（$\in\Gamma$）；
+  菜单 $\neq$ 已获证清单 $\neq$ 合法计划集合。 \\
   \midrule
   第二组 &
   NTT、PKE 都 PASS 了，谁来保证尾缝和 2-launch？ &
-  组合并不免费：接缝还得经 $\mathsf{Compose}$ 获证；
-  语义对照过关 $\neq$ 合法派生（$w\in L$）。 \\
+  组合并不免费：接缝还得经声明接缝并获证；
+  语义对照过关 $\neq$ 拼装计划合法。 \\
   \midrule
   第三组 &
   只给伪代码和菜单，搜索为什么会炸？ &
-  没有成员判定，空间差不多是 $\Sigma^*$；
-  要收束，就只能沿着已获证的边 / 合法字往下长。 \\
+  没有成员检查，搜索空间接近任意拼接；
+  要收束，就只能沿着已获证边 / 合法计划往下长。 \\
   \midrule
   第四组 &
   能不能先交闭包表？上游改了，证书怎么作废？ &
-  闭包表至少要写清 $A,\Gamma,\mathrm{Dep}^*,\mathrm{Missing}$；
-  上游一变，走 $\mathsf{Dirty}$。 \\
+  闭包表至少写清：目标、已获证、依赖闭包、缺项；
+  上游一变，打脏标记。 \\
   \bottomrule
 \end{tabular}
 \end{table}
@@ -2613,22 +2675,23 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \label{sec:mathbg-summary}
 
 导论（§~\ref{sec:mathbg-why}）先给出读者为何要读本章的答案：
-表~\ref{tab:ch3-three-tools} 的三件工具分工，以及「合法生长控制」的最小集合主张；
-再沿图~\ref{fig:ch3-spine} 把该集合写成可检查对象：
+表~\ref{tab:ch3-three-tools} 的三件工具分工、表~\ref{tab:ch3-term-bridge} 的术语预告，以及最小集合主张；
+再沿图~\ref{fig:ch3-spine} 把该集合写成可检查对象（先工程词，后挂钩符号）：
 \[
-\underbrace{\text{图 / DAG}}_{\text{I}}
-\;\xrightarrow{\;\mathrm{Dep}^*\;}
-\underbrace{\Gamma,\;\mathrm{Missing}}_{\text{II}}
-\;\xrightarrow{\;\text{分层}\;}
+\underbrace{\text{依赖图}}_{\text{I}}
+\;\longrightarrow\;
+\underbrace{\text{依赖闭包 / 已获证 / 缺项}}_{\text{II}}
+\;\longrightarrow\;
 \underbrace{\text{库 / 派生 / 轨迹}}_{\text{III}}
-\;\xrightarrow{\;L\;}
-\underbrace{w\in L}_{\text{IV}}
-\;\xrightarrow{\;\to\;}
-\underbrace{(\Gamma,F,S),\;\mathsf{Dirty}}_{\text{V}}
-\;\xrightarrow{\;\text{回扣}\;}
+\;\longrightarrow\;
+\underbrace{\text{合法拼装计划}}_{\text{IV}}
+\;\longrightarrow\;
+\underbrace{\text{预研配置 / 脏标记}}_{\text{V}}
+\;\longrightarrow\;
 \underbrace{\text{KeyGen 故事}}_{\text{VI}}.
 \]
-每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}；迷路时先回导论表~\ref{tab:ch3-three-tools} 与图~\ref{fig:ch3-spine}，再下钻细节。
+每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}，并在定义处写明「工程术语 $\leftrightarrow$ 数学记号」；
+迷路时先回导论表~\ref{tab:ch3-three-tools}、\ref{tab:ch3-term-bridge} 与图~\ref{fig:ch3-spine}，再下钻细节。
 有意留白：产生式在仓库里如何形式化、闭包表文件长什么样、可判定性如何证——留给后文。
 
 下一章（第~\ref{sec:math}~章）要把这些对象\textbf{填成工程上可写的字段}：节点属性、三类边、证书状态怎么命名，等等。
