@@ -709,7 +709,7 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
   \midrule
   I & 依赖图 / 拓扑序 &
   无法稳定回答「谁依赖谁、先证谁」 &
-  否：闭包与合法计划都\textbf{预设}依赖世界已画清 \\
+  否：闭包与合法计划都\textbf{预设}「谁依赖谁」已画清 \\
   \midrule
   II & 依赖闭包 / 已获证 / 缺项 &
   无法在动手前交「还缺谁」 &
@@ -778,15 +778,15 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 先能\textbf{画出谁依赖谁}，再能\textbf{算出还缺谁}，再能\textbf{写出怎样拼才算合法}，最后能\textbf{描述一次作业如何走到接受（以及证书为何会失效）}。
 写成工程词链即：
 \[
-\underbrace{\text{依赖图}}_{\text{依赖世界}}
+\underbrace{\text{谁依赖谁}}_{\text{依赖图}}
 \;\longrightarrow\;
-\underbrace{\text{依赖闭包 / 已获证 / 缺项}}_{\text{齐备与缺项}}
+\underbrace{\text{还缺谁}}_{\text{依赖闭包 / 已获证 / 缺项}}
 \;\longrightarrow\;
-\underbrace{\text{合法拼装计划}}_{\text{计划是否合法}}
+\underbrace{\text{怎样拼才合法}}_{\text{合法拼装计划}}
 \;\longrightarrow\;
-\underbrace{\text{预研配置轨迹}}_{\text{作业过程}}
+\underbrace{\text{作业怎么走完}}_{\text{预研配置}}
 \;\ni\;
-\text{脏标记}.
+\text{证书何时作废}.
 \]
 （对应数学记号见表~\ref{tab:ch3-term-bridge}；\textbf{到定义处再启用符号}。）
 
@@ -796,13 +796,13 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 \paragraph{六个阶段目标（读章地图）}
 {\small
 \begin{center}
-\begin{tabular}{@{}c L{3.1cm} L{3.8cm} L{5.9cm}@{}}
+\begin{tabular}{@{}c L{3.4cm} L{3.6cm} L{5.7cm}@{}}
   \toprule
   阶段 & 对应小节 & 学会什么（目标） & 解决什么问题 \\
   \midrule
   I &
   §~\ref{sec:set-rel}--\ref{sec:dag-topo} &
-  用集合、关系、有向图、依赖图、拓扑序\textbf{描述依赖世界} &
+  用集合、关系、有向图、依赖图、拓扑序说清「谁依赖谁」 &
   「谁依赖谁？先证谁后证谁？」 \\
   \midrule
   II &
@@ -812,23 +812,23 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
   \midrule
   III &
   §~\ref{sec:three-layers} &
-  分清库 / 一次派生 / 过程三层，不再混读三张图 &
+  分清「能力库 / 一次任务怎么展开 / 作业过程」三张图，别混着读 &
   「数据流、能力图、作业轨迹各回答什么？」 \\
   \midrule
   IV &
   §~\ref{sec:words-lang}--\ref{sec:membership} &
-  把拼装计划看成可检查对象；学会成员检查与组合不免费 &
+  把拼装计划写成可检查对象；学会成员检查与组合不免费 &
   「怎样拼才算合法？为何单点 PASS 不够？」 \\
   \midrule
   V &
   §~\ref{sec:transition}--\ref{sec:dirty} &
-  用预研配置描述展开/探针取证/写入证书；理解证书可脏 &
+  用预研配置描述展开/探针取证/写入证书；理解证书会作废 &
   「一次作业如何走到接受？上次 PASS 为何会作废？」 \\
   \midrule
   VI &
   §~\ref{sec:mathbg-hookback} &
-  用同一条主线回扣第~\ref{sec:hook}~章 KeyGen 流程 &
-  「这些术语在真实故事里分别落在何处？」 \\
+  用同一条主线对照回第~\ref{sec:hook}~章 KeyGen 流程 &
+  「这些说法在真实故事里分别落在何处？」 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -837,26 +837,31 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  box/.style={draw, rounded corners=2pt, align=center, font=\small,
-              minimum width=2.15cm, minimum height=1.0cm, inner sep=3pt},
+  box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
+              minimum width=2.35cm, minimum height=1.55cm, inner sep=2.5pt},
   arr/.style={-{Stealth[length=2.2mm]}, very thick},
-  lab/.style={font=\scriptsize, text=gray!45!black}
+  lab/.style={font=\scriptsize, text=gray!45!black, align=center}
 ]
-  \node[box, fill=blue!8] (s1) at (0,0) {I\\依赖世界};
-  \node[box, fill=blue!12] (s2) at (2.7,0) {II\\闭包缺项};
-  \node[box, fill=blue!10] (s3) at (5.4,0) {III\\三层对象};
-  \node[box, fill=orange!12] (s4) at (8.1,0) {IV\\合法语言};
-  \node[box, fill=green!12] (s5) at (10.8,0) {V\\配置脏证};
-  \draw[arr] (s1) -- node[lab, above]{闭包} (s2);
-  \draw[arr] (s2) -- node[lab, above]{分层} (s3);
-  \draw[arr] (s3) -- node[lab, above]{计划} (s4);
-  \draw[arr] (s4) -- node[lab, above]{过程} (s5);
-  \node[box, fill=violet!10, minimum width=5.2cm] (s6) at (5.4,-1.85)
-    {VI\quad 回扣第~2~章 KeyGen（整条链落地）};
+  \node[box, fill=blue!8] (s1) at (0,0)
+    {I\\[1pt]谁依赖谁？\\先证谁？};
+  \node[box, fill=blue!12] (s2) at (2.85,0)
+    {II\\[1pt]动手前\\还缺谁？};
+  \node[box, fill=blue!10] (s3) at (5.7,0)
+    {III\\[1pt]别把三张图\\混着读};
+  \node[box, fill=orange!12] (s4) at (8.55,0)
+    {IV\\[1pt]怎样拼\\才算合法？};
+  \node[box, fill=green!12] (s5) at (11.4,0)
+    {V\\[1pt]作业怎么走完？\\证书何时作废？};
+  \draw[arr] (s1) -- node[lab, above]{算齐备} (s2);
+  \draw[arr] (s2) -- node[lab, above]{先分清} (s3);
+  \draw[arr] (s3) -- node[lab, above]{查拼法} (s4);
+  \draw[arr] (s4) -- node[lab, above]{走流程} (s5);
+  \node[box, fill=violet!10, minimum width=7.2cm, minimum height=0.95cm] (s6) at (5.7,-2.15)
+    {VI\quad 整条链对照回第~2~章 KeyGen 故事};
   \draw[arr, gray!60] (s5.south) |- (s6.east);
   \draw[arr, gray!60] (s1.south) |- (s6.west);
 \end{tikzpicture}
-\caption{第~3~章数学主线：六个阶段目标（箭头表示「下一站回答上一站留下的问题」）}
+\caption{第~3~章主线：六个阶段各自在问什么（箭头表示「下一站回答上一站留下的问题」）}
 \label{fig:ch3-spine}
 \end{figure}
 
@@ -896,9 +901,9 @@ KeyGen 故事是压力测试床；Encaps/Decaps 与换域预研复用的是\text
 \label{sec:set-rel}
 
 \paragraph{本阶段目标（阶段 I，至 §~\ref{sec:dag-topo}）}
-对照图~\ref{fig:ch3-spine}：先建立\textbf{依赖世界}的语言——集合与关系$\to$有向图$\to$DAG 与拓扑序。
-学完应能画出「谁依赖谁」，并回答「若无环，是否存在合法的先证后证顺序」。
-下一站（阶段 II）问：给定目标与已获证库，\textbf{还缺谁}。
+对照图~\ref{fig:ch3-spine}：先学会说清「\textbf{谁依赖谁、先证谁}」——集合与关系$\to$有向图$\to$依赖图与拓扑序。
+学完应能画出依赖关系，并回答「若无环，是否存在合法的先证后证顺序」。
+下一站（阶段 II）问：给定目标与已获证清单，\textbf{动手前还缺谁}。
 
 \begin{definition}[集合与属于关系]
 称由确定对象组成的汇集为\textbf{集合}。
@@ -1212,10 +1217,10 @@ $1,2,3,4$ 与 $1,3,2,4$ 都是拓扑序；$2,1,3,4$ 不是（边 $1\to2$ 逆向�
 \label{sec:closure}
 
 \paragraph{本阶段目标（阶段 II）}
-对照图~\ref{fig:ch3-spine}：在依赖世界之上引入\textbf{闭包}，从目标算出\textbf{依赖闭包}，再对照\textbf{已获证能力清单}得到\textbf{缺项}。
+对照图~\ref{fig:ch3-spine}：在「谁依赖谁」之上引入\textbf{闭包}，从目标算出\textbf{依赖闭包}，再对照\textbf{已获证能力清单}得到\textbf{缺项}。
 学完应能写出「动手前必须齐谁 / 还缺谁」，并分清「闭包已满」与「菜单上有绿项」。
 （本阶段末尾才把上述工程对象记成 $\mathrm{Dep}^*$、$\Gamma$、$\mathrm{Missing}$，见表~\ref{tab:ch3-term-bridge}。）
-下一站（阶段 III）问：静态库、一次派生、作业轨迹是否在\textbf{同一张图}里混读。
+下一站（阶段 III）问：能力库、一次任务展开、作业过程是否被\textbf{混在同一张图}里读。
 
 前几节已有集合、关系、有向图。本节先回答一个更基本的问题：
 \textbf{数学里说的「闭包」究竟是什么？}
@@ -1907,11 +1912,11 @@ $\mathrm{Missing}_\Gamma(T)=\{\mathrm{Tail}\}$，目标相对 $\Gamma$ \textbf{�
 \textbf{未}显式计算缺项 $\mathrm{Missing}_\Gamma(T)$ 就开工，正是「菜单$\neq$说明书」的来源。
 \end{example}
 
-\subsection{三层对象：库、一次派生、过程}
+\subsection{别把三张图混着读：能力库、一次任务、作业过程}
 \label{sec:three-layers}
 
 \paragraph{本阶段目标（阶段 III）}
-对照图~\ref{fig:ch3-spine}：把前两阶段得到的依赖与闭包，放到\textbf{三层对象}里——库（能力 DAG）、一次派生、配置轨迹。
+对照图~\ref{fig:ch3-spine}：把前两阶段得到的依赖与闭包，放到三张\textbf{不要混读}的图里——能力库、一次任务怎么展开、作业过程走到哪。
 学完应能指出：数据流图、能力图、作业轨迹\textbf{各回答什么、不回答什么}。
 下一站（阶段 IV）问：在库允许的前提下，\textbf{怎样拼}才算合法计划。
 
@@ -2371,8 +2376,8 @@ P1 某能力的 I/O、布局或同步约定变更后，曾基于旧约定的 P2/
 \label{sec:mathbg-hookback}
 
 \paragraph{本阶段目标（阶段 VI）}
-对照图~\ref{fig:ch3-spine}：\textbf{不再引入新定义}，只用 I--V 已挂钩的工程术语（需要时括号附数学记号），把第~\ref{sec:hook}~章 KeyGen 流程逐条落回依赖世界、闭包缺项、三层对象、合法拼装与预研过程。
-学完应能指着第~2~章的故事说清：哪一段是依赖闭包/缺项，哪一段是拼装计划合法性，哪一段该打脏标记。
+对照图~\ref{fig:ch3-spine}：\textbf{不再引入新定义}，只用 I--V 已挂钩的工程术语（需要时括号附数学记号），把第~\ref{sec:hook}~章 KeyGen 流程逐条对照回去。
+学完应能指着第~2~章的故事说清：哪一段是「还缺谁」，哪一段是「拼装计划是否合法」，哪一段该打脏标记作废证书。
 
 第~\ref{sec:hook}~章讲的是\textbf{已经走过的}工程故事；本章给的是\textbf{用来把故事说清楚的一套语言}。
 本节\textbf{不再引入新定义}，只做对照。
@@ -2499,7 +2504,7 @@ INDEX 菜单上标绿的项，只是构造已获证清单时可以去翻的证�
 第~2~章当时\textbf{并没有}强制「先交出 $\mathrm{Missing}_\Gamma(T)$，再动手写码」——
 闭包表要变成门禁，缺口就在这里。
 
-\paragraph{流程四：两张图为什么不能混着读——三层对象画在一页}
+\paragraph{流程四：两张图为什么不能混着读——三张图画在一页}
 图~\ref{fig:ch2-fips-dataflow}画的是\textbf{调用嵌套 $+$ 数据字节}；图~\ref{fig:ch2-explore}更接近\textbf{能力}怎么长出来。
 图~\ref{fig:ch312-three-layers}把三层画在同一页，并用\textbf{三种不同图元}区分（别只看颜色）：
 \begin{itemize}
@@ -2678,17 +2683,17 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 表~\ref{tab:ch3-three-tools} 的三件工具分工、表~\ref{tab:ch3-term-bridge} 的术语预告，以及最小集合主张；
 再沿图~\ref{fig:ch3-spine} 把该集合写成可检查对象（先工程词，后挂钩符号）：
 \[
-\underbrace{\text{依赖图}}_{\text{I}}
+\underbrace{\text{谁依赖谁}}_{\text{I}}
 \;\longrightarrow\;
-\underbrace{\text{依赖闭包 / 已获证 / 缺项}}_{\text{II}}
+\underbrace{\text{还缺谁}}_{\text{II}}
 \;\longrightarrow\;
-\underbrace{\text{库 / 派生 / 轨迹}}_{\text{III}}
+\underbrace{\text{三张图分开看}}_{\text{III}}
 \;\longrightarrow\;
-\underbrace{\text{合法拼装计划}}_{\text{IV}}
+\underbrace{\text{怎样拼才合法}}_{\text{IV}}
 \;\longrightarrow\;
-\underbrace{\text{预研配置 / 脏标记}}_{\text{V}}
+\underbrace{\text{作业怎么走完 / 证书何时作废}}_{\text{V}}
 \;\longrightarrow\;
-\underbrace{\text{KeyGen 故事}}_{\text{VI}}.
+\underbrace{\text{对照回 KeyGen}}_{\text{VI}}.
 \]
 每个关键定义仍配\textbf{纯数学例子}与\textbf{工程例子}，并在定义处写明「工程术语 $\leftrightarrow$ 数学记号」；
 迷路时先回导论表~\ref{tab:ch3-three-tools}、\ref{tab:ch3-term-bridge} 与图~\ref{fig:ch3-spine}，再下钻细节。
