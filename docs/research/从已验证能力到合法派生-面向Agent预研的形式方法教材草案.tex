@@ -3067,29 +3067,279 @@ INDEX 绿项告诉你「库里有哪些候选砖」；
 上一章把节点、边与证书填成了可写字段；本章规定：接到目标 $T$ 时，Agent \textbf{被允许}做什么。
 字段不够，还要有转移规则——否则表单填满了，开放生成仍会从门缝钻回来。
 
-\subsection{合法性规则（v0）}
-接到目标 $T$ 时，只允许做这些事：
+\begin{quote}
+\noindent
+\textbf{门禁的一句话：}\\
+先交闭包表，再写码；只沿已获证能力与允许接缝推进；缺的先补洞获证，禁止项不得当模板。
+\end{quote}
+
+读完本章，应能：列出 Agent 的合法/非法动作；按四步走完一次任务启动；
+说清闭包表与 customspec / STATUS 各管什么。
+\textbf{不}在本章做 KeyGen/Encaps 长复盘，也不设计 correctness 三档对照实验——那些是后文。
+
+\subsection{本章在故事里的位置}
+\label{sec:gates-place}
+
+\begin{center}
+\begin{tabular}{@{}L{3.4cm}L{5.4cm}L{5.0cm}@{}}
+  \toprule
+  已经有的 & 本章补上的 & 故意留给后文 \\
+  \midrule
+  第~3~章：为何要收成受控搜索 &
+  任务启动时的硬动作清单 &
+  复盘轨迹是否真的守门 \\
+  第~4~章：节点/边/证书字段 &
+  字段如何填进闭包表与四步流 &
+  闭包表文件的最终 SCHEMA \\
+  仓库里已有 Rule/Skill/INDEX &
+  把纪律升成可检查工作流 &
+  立刻改 Rule 文本（须另议） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+第~3~章引子里的 Encaps/Decaps 放飞，缺的正是本章这扇门：
+提示很轻、菜单又在，Agent 就会在无限空间里为 correctness 付账。
+
+\subsection{门禁管的是转移，不是文采}
+\label{sec:gates-what}
+
+门禁对应作业过程自动机上的\textbf{合法转移}：哪些配置变化被承认，哪些直接拒绝或冻结。
+它\textbf{不}管：
+
+\begin{itemize}
+  \item 文笔好不好、注释炫不炫；
+  \item 某次对拍是否「碰巧」绿了（那是证据的一部分，不是放行全部条件）；
+  \item 密码公式本身对不对（仍归 FIPS / golden / liboqs）。
+\end{itemize}
+
+它\textbf{管}：
+
+\begin{itemize}
+  \item 写码前有没有交齐闭包表；
+  \item 引用的节点是否已获证且未脏、未踩否定边；
+  \item 新接缝有没有单独立项；
+  \item 缺项是不是被「在做 $T$ 的同一任务里顺手发明」混过去了。
+\end{itemize}
+
+\subsection{合法性规则（v0）：允许与禁止}
+\label{sec:gates-rules}
+
+接到目标 $T$ 时，\textbf{只允许}做下列事（v0；后续可加细，不可默许删减）：
+
 \begin{enumerate}
-  \item 把依赖闭包展开清楚（语义边 + 接缝边）；
-  \item 分类：已经有 lemma/deliverable 的；还缺的；只有否定边能命中的；
-  \item 缺项 $\Rightarrow$ 先做探针/exp 并拿到证书，再引用；禁止在做 $T$ 的任务里顺手发明 P0/P1；
-  \item 新接缝 $=$ 新节点，必须单独认证；
-  \item 验收只看 I/O 是否对上 golden/KAT，不看「是不是和参考源码长得一样」；
-  \item 自包含：挂的是 iface，不要跨目录偷源码（仓库里已有的例外除外）；图上的边 $\neq$ \texttt{\#include}。
+  \item \textbf{展开依赖闭包}：沿语义边与已声明接缝边，写出 $\mathrm{Dep}^{*}(T)$（工程上：闭包表里的依赖闭包栏）；
+  \item \textbf{分类节点}：已有 \texttt{lemma}/\texttt{deliverable} 的；缺的（\texttt{missing}）；已脏（\texttt{dirty}）；
+        只能被否定边命中的（直接禁止路径）；
+  \item \textbf{最小补洞}：对 \texttt{missing} / 新接缝，先开探针或 incubating 任务拿到证书，\textbf{再}在做 $T$ 的任务里引用；
+        禁止在做 $T$ 的同一任务里顺手发明未获证的 P0/P1 并当作已可引用；
+  \item \textbf{接缝单独认证}：新接缝 $=$ 新节点或显式接缝项，必须单独验收；两块各绿推不出拼在一起也绿；
+  \item \textbf{验收口径}：I/O 与 golden/KAT 一致即可；禁止以「和参考源码长得像」为验收；
+  \item \textbf{自包含}：对外挂的是 iface；不要跨目录偷源码（仓库已声明的共享库例外须写明）；
+        图上的边 $\neq$ \texttt{\#include}。
 \end{enumerate}
 
+\textbf{明确禁止}（与允许清单对称，便于 Agent 自检）：
+
+\begin{enumerate}
+  \item 跳过闭包表直接写 examples / 探针实现；
+  \item 把 INDEX 绿名、局部测通、correctness 标本、frozen 源码当作可引用模板；
+  \item 用「先把结果对上再说」为极端低效调度或跳层发明辩护；
+  \item 上游 iface 已变仍宣称下游证书有效（拒绝承认 \texttt{dirty}）；
+  \item 把 customspec / STATUS 写成了，就声称闭包表可以省略。
+\end{enumerate}
+
+\begin{remark}[门禁自动机（别称）]
+本章「门禁」与第~3~章\textbf{作业过程自动机}是同一类对象的工程叫法：
+自动机管进度与合法转移；门禁是任务启动与推进时对人/Agent 的操作面。
+\end{remark}
+
+\subsection{闭包表：写码前的入场券}
+\label{sec:gates-closure-table}
+
+闭包表是一次任务的\textbf{最小可检查文书}。建议至少四栏（名称可本地化）：
+
+\begin{center}
+\begin{tabular}{@{}L{2.8cm}L{11.0cm}@{}}
+  \toprule
+  栏 & 填什么 \\
+  \midrule
+  目标 $T$ &
+  id、I/O 黑盒、声明的验收级别（\texttt{probe} / \texttt{lemma} / \texttt{deliverable}） \\
+  已获证 &
+  闭包里已经是 \texttt{lemma}/\texttt{deliverable} 且未脏的节点（附 \texttt{repo}/版本锚点） \\
+  依赖闭包 &
+  $\mathrm{Dep}^{*}(T)$ 的工程列出：语义依赖 + 已知接缝项 \\
+  缺项 &
+  $\mathrm{Missing}$：尚未获证、已脏、或接缝未单独立项者；每项写「拟补洞手段」 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+可选第五栏：\textbf{否定边 / forbid}——本次明确不得引用的路径。
+
+\begin{quote}
+\noindent
+\textbf{先交闭包表，再写码。}\\
+customspec、STATUS、baseline-registry 是重要文书，但\textbf{替代不了}闭包表：
+前者多半描述「打算怎么实现 / 实现结果如何」，
+闭包表回答「凭什么现在允许开始实现」。
+\end{quote}
+
+\begin{example}[闭包表示意（KEM.KeyGen，极简）]
+\begin{center}
+\begin{tabular}{@{}L{2.4cm}L{11.4cm}@{}}
+  \toprule
+  栏 & 示例 \\
+  \midrule
+  目标 &
+  \texttt{kem.keygen.k4}；ek/dk 字节；验收 \texttt{deliverable}（CPU+SIM，必要时 KAT） \\
+  已获证 &
+  \texttt{pke.keygen.k4}（stable）；相关 P1（NTT 等）在 PKE 获证时已闭合 \\
+  依赖闭包 &
+  PKE.KeyGen + KEM 相对 PKE 的尾缝（2-launch / Alg.16 / $\mathit{dk}$ 展开等） \\
+  缺项 &
+  若尾缝尚未单独获证 $\Rightarrow$ 先探针/集成项；不得在「写 KEM」任务里顺便重写 NTT \\
+  否定 &
+  不得以 frozen / correctness vendor 为模板；不得把 liboqs C 当 AscendC 规格 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\end{example}
+
 \subsection{四步工作流}
+\label{sec:gates-workflow}
+
+把合法性规则收成可执行的四步。任一步未完成，不得进入「大规模写码 / 开放试错」。
+
+\begin{center}
+\begin{tabular}{@{}L{0.8cm}L{2.6cm}L{10.4cm}@{}}
+  \toprule
+  步 & 名称 & 做什么 / 完成标准 \\
+  \midrule
+  1 & 目标声明 &
+  写清 $T$、I/O、验收级别；没有级别声明 $=$ 未声明任务。 \\
+  2 & 闭包展开 &
+  填闭包表；标 ok / missing / dirty；列出接缝清单与否定边。
+  缺栏不得用「大概齐了」代替。 \\
+  3 & 最小补洞 &
+  只补 missing 与新接缝；补洞任务本身也要有自己的小闭包（禁止无限大包大揽）。
+  forbid 写入否定边。 \\
+  4 & 闭环写回 &
+  新节点入能力库（INDEX/STATUS/证书状态）；失败则改规则或 Freeze，\textbf{不}默认可复用。
+  上游变更触发下游 \texttt{dirty}。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+与自动机转移的直觉对应（便于回看第~3~章）：
+
+\begin{center}
+\begin{tabular}{@{}L{3.2cm}L{10.6cm}@{}}
+  \toprule
+  工作流动作 & 大致对应 \\
+  \midrule
+  闭包展开 & $\mathsf{Expand}$：前沿 $S$ 与缺项暴露出来 \\
+  探针 / 补洞取证 & $\mathsf{Probe}$：为缺项跑通约定级别的证据 \\
+  写入证书 / 晋级 & $\mathsf{Certify}$：节点进入 $\Gamma$（lemma/deliverable） \\
+  上游变更作废 & $\mathsf{Dirty}$：$\Gamma$ 收缩，假绿不得继续 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
 \begin{lstlisting}
+# 门禁四步（备忘；以正文表格为准）
 1. 目标声明  T、I/O、验收级别（probe / lemma / deliverable）
-2. 闭包展开  P0--P3；ok / missing / dirty；接缝清单
-3. 最小补洞  只补 missing 与新接缝；forbid 写入否定边
-4. 闭环写回  新节点入图；失败则改规则或 Freeze，不默认可复用
+2. 闭包展开  P0--P3；ok / missing / dirty；接缝清单；否定边
+3. 最小补洞  只补 missing 与新接缝；forbid 落笔
+4. 闭环写回  新节点入图；失败则改规则或 Freeze；该脏则脏
 \end{lstlisting}
-\textbf{先交闭包表，再写码。} customspec / STATUS / registry 是文书形态，替代不了闭包表。
+
+\subsection{文书分工：谁也不能冒充闭包表}
+\label{sec:gates-docs}
+
+\begin{center}
+\begin{tabular}{@{}L{3.2cm}L{5.2cm}L{5.4cm}@{}}
+  \toprule
+  文书 & 主责 & 不能冒充的 \\
+  \midrule
+  闭包表 &
+  这次为何允许开工；缺谁 &
+  实现细节说明书 \\
+  customspec &
+  examples 写码前的规格/计划 &
+  「可以不交闭包表」的通行证 \\
+  STATUS &
+  当前证据与已知限制 &
+  永久执照（无视 dirty） \\
+  baseline-registry &
+  golden 允许的计算块 &
+  AscendC 实现必须同构的规格 \\
+  INDEX &
+  活跃菜单 &
+  合法拼装说明书 $L$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{反面教材：门禁关掉时会发生什么}
+\label{sec:gates-anti}
+
+把第~3~章引子对照本章规则，缺口一一对应：
+
+\begin{center}
+\begin{tabular}{@{}L{5.5cm}L{8.3cm}@{}}
+  \toprule
+  放飞时的现象 & 触犯的门禁 \\
+  \midrule
+  提示很轻，「自己读 FIPS 拼出来」 &
+  无目标级别声明 + 无闭包表 \\
+  底层菜单在，却仍无限试错 &
+  把 INDEX 当说明书；合法转移未约束 \\
+  只保 correctness、形态粗暴 &
+  用结果对替换「派生合法」；跳过接缝单独认证的工程形态要求 \\
+  极端调度、错误经验沉淀 &
+  无 \texttt{dirty}/否定回写；失败未 Freeze 却当可复用经验 \\
+  token 短时间耗尽 &
+  搜索空间未收成证书闭包上的受控搜索 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+门禁不是为了「让 Agent 更听话」本身，而是为了把代价拦在写码之前：
+闭包表上的争论，通常比烧完配额再复盘便宜。
 
 \subsection{域无关性}
-把密码学专有名词抽掉之后，剩下的还是：终端（axiom）、非终端（goal）、产生式（compose）、证书（judgment）。
-同一套问题也适用于非密码的 AscendC 预研；ML-KEM 不过是对照清晰、接缝又多的一块\textbf{压力测试床}。
+\label{sec:gates-domain}
+
+把密码学专有名词抽掉之后，剩下的仍是：
+
+\begin{itemize}
+  \item 终端 / 已获证能力（axiom、lemma）；
+  \item 非终端 / 目标（goal）；
+  \item 产生式 / 合法拼装与接缝（compose）；
+  \item 证书与作废（judgment + dirty）。
+\end{itemize}
+
+同一套门禁适用于非密码的 AscendC 预研；ML-KEM 只是对照清晰、接缝又多的一块\textbf{压力测试床}。
+换域时要改的是节点卡与否定边的领域内容，不是四步流的骨架。
+
+\subsection{下一章预告}
+\label{sec:gates-next}
+
+规则写清之后，要用已经做过的 \texttt{kem.keygen} / \texttt{kem.encaps} \textbf{复盘}：
+当时哪些步骤守了门、哪些是事后贴标签、哪些应记成否定边或欠债。
+再往后，用尚未收完的 \texttt{kem.decaps} 做\textbf{前瞻}：理论能不能生出待办清单，而不只是解释旧故事。
+
+\subsection{本章小结}
+\label{sec:gates-summary}
+
+\begin{enumerate}
+  \item 门禁管合法转移：先交闭包表，再写码；缺项先补洞；接缝单独认证；禁止项不得当模板。
+  \item 四步流（声明 $\to$ 展开 $\to$ 补洞 $\to$ 写回）是自动机进度的操作面；\texttt{dirty} 使 $\Gamma$ 可收缩。
+  \item customspec / STATUS / INDEX 不能冒充闭包表；菜单不是说明书。
+  \item 引子里的伪完成，是门禁关闭时的标准后果；下一章用复盘检验这些规则是否说得清历史。
+\end{enumerate}
 
 % ============================================================
 \section{复盘：理论如何对照 \texttt{kem.keygen} 与 \texttt{kem.encaps}}
