@@ -2822,13 +2822,14 @@ $(\Gamma_i,F_i,S_i)$（见作业过程自动机一节），称为\textbf{配置�
 第~\ref{sec:mathbg}~章已经给出依赖闭包 $\mathrm{Dep}^*$、已获证集 $\Gamma$、缺项
 $\mathrm{Missing}_\Gamma$、禁止拼法 $\mathrm{Forb}$，以及转移
 $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
-本章\textbf{不}再堆工程口诀，而是把这些对象当作算法的参数与子程序，
-一步步\textbf{构造}节点卡、边分类与证书状态，并推出可检查的结论。
+本章\textbf{不}再只堆工程口诀，而是把第~3~章对象当作算法的参数与子程序来构造；
+同时把算法的\textbf{输出长什么样}用表格钉死——推导与表单缺一不可。
 
 \begin{quote}
 \noindent
 写法约定：每个算法固定四要素——\textbf{参数、输入、输出、步骤}；\\
-参数里显式挂第~3~章的数学对象；步骤之后用命题/推论给出「推出了什么」。
+参数挂第~3~章数学对象；步骤后给出命题/推论；\\
+凡输出是「卡 / 表 / 栏」，正文必须给出\textbf{字段表}与至少一张\textbf{填满的实例表}。
 \end{quote}
 
 门禁四步流与「先交闭包表再写码」的完整操作面在第~\ref{sec:gates}~章，
@@ -2887,6 +2888,51 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 \end{algosteps}
 \end{methodalgo}
 
+\paragraph{输出长什么样：节点卡字段表}
+算法~\ref{alg:encode-node} 的输出不是抽象六元组口号，而是下面这张可填字段卡
+（名字可本地化，语义不要丢）：
+
+\begin{center}
+\begin{tabular}{@{}L{2.2cm}L{11.6cm}@{}}
+  \toprule
+  字段 & 含义与填写纪律 \\
+  \midrule
+  \texttt{id} &
+  稳定名字，跨任务可引用（如 \texttt{pke.keygen.k4}、\texttt{kem.keygen.k4}）。
+  不要用「这次 PR 的临时文件夹名」当 id。 \\
+  \texttt{layer} &
+  方法论分层 P0--P3（见表~\ref{tab:p0p3}）。分层描述能力角色，\textbf{不必}与磁盘目录一一对应。 \\
+  \texttt{iface} &
+  I/O、dtype、形状/布局、同步与 launch 约定中，\textbf{对外可复用}的那部分。
+  能挂到边上的是 iface，不是「把源码拷过来」。 \\
+  \texttt{cert} &
+  证书证据：权威路径 + 验收级别（CPU+SIM，必要时 KAT）+ 版本锚点（commit / tag / STATUS 日期）；
+  未获证时填 $\bot$ 或「未获证」。 \\
+  \texttt{forbid} &
+  与本节点相关的否定约束（例如「不得以某某 frozen 为模板」）。可空，但有则必须可检查。 \\
+  \texttt{repo} &
+  权威目录锚点（活跃 \texttt{stable-*} / \texttt{pass-*} / 登记表条目等）。
+  frozen 目录可以出现在否定说明里，\textbf{不得}充当正向 \texttt{repo}。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{table}[H]
+\centering\small
+\caption{分层语言 P0--P3（$\lambda$ 的建议取值）}
+\label{tab:p0p3}
+\begin{tabular}{@{}L{1.2cm}L{12.6cm}@{}}
+  \toprule
+  层 & 含义（放在本仓库语境里说） \\
+  \midrule
+  P3 & 顶层算子 / 算法入口（如 KEM.KeyGen、KEM.Encaps、KEM.Decaps） \\
+  P2 & 算法构件（如 PKE.KeyGen / Encrypt / Decrypt 全链） \\
+  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots）——\textbf{当能力名用}；本章不讲其代数细节 \\
+  P0 & 平台公理（DataCopy、向量算子、MMAD+tiling、TPipe/TQue 同步壳\ldots） \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
 \begin{proposition}[节点卡是门禁检查的充分记录]
 \label{prop:card-sufficient}
 固定 $G,\Gamma,S$。对任意 $v\in V$，由算法~\ref{alg:encode-node} 得到的 $\mathrm{Card}(v)$ 足以判定：
@@ -2902,23 +2948,33 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 $\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法引用在定义上只依赖证书资格与 $S$ 中接口/禁止约束。
 \end{proof}
 
-\paragraph{分层语言（P0--P3）}
-$\lambda$ 的建议取值：P3 顶层入口；P2 算法构件；P1 领域原语（当能力名，不讲代数）；P0 平台公理。
-
 \begin{corollary}[禁止同任务发明未获证底层]
 若目标 $T$ 满足 $\lambda(T)=\mathrm{P3}$，且存在 $u\in\mathrm{Missing}_\Gamma(T)$ 使 $\lambda(u)\in\{\mathrm{P0},\mathrm{P1}\}$，
 则任何声称「在做 $T$ 的同一任务里顺便实现 $u$ 并立刻引用」的计划，都与
 「先 $\mathsf{Probe}/\mathsf{Certify}$ 再引用」的合法转移相悖（见第~3~章基本转移）。
 \end{corollary}
 
-\begin{example}[对 $v=\texttt{pke.keygen.k4}$ 跑 $\mathrm{EncodeNode}$]
-续第~\ref{sec:hook}~章。取 $\lambda(v)=\mathrm{P2}$，$v\in\Gamma$，则算法~\ref{alg:encode-node} 可输出：
-\texttt{id}=\texttt{pke.keygen.k4}；
-\texttt{iface}=stable PKE KeyGen 的对外 I/O 与布局约定；
-\texttt{cert}=``\texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}+CPU+SIM''；
-\texttt{forbid}=不得以 liboqs C / \texttt{frozen/} 为 AscendC 规格；
-\texttt{repo}=上述 stable 路径。
-KEM.KeyGen 引用的是这张卡，不是「目录里有个绿名」。
+\begin{example}[填满的节点卡：\texttt{pke.keygen.k4}]
+续第~\ref{sec:hook}~章。对 $v=\texttt{pke.keygen.k4}$ 跑算法~\ref{alg:encode-node}
+（$\lambda(v)=\mathrm{P2}$，$v\in\Gamma$），输出应能填成下表（非正式 SCHEMA，演示「填得满」）：
+\begin{center}
+\begin{tabular}{@{}L{2.2cm}L{11.6cm}@{}}
+  \toprule
+  字段 & 示例填写 \\
+  \midrule
+  \texttt{id} & \texttt{pke.keygen.k4} \\
+  \texttt{layer} & P2 \\
+  \texttt{iface} &
+  与 stable PKE KeyGen 交付 I/O 一致；NTT LUT 静态约定；设备侧布局与后续 KEM 尾拼兼容的那部分写清 \\
+  \texttt{cert} &
+  \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}；CPU+SIM 对拍；STATUS / 交付纪要作版本锚点 \\
+  \texttt{forbid} &
+  不得把 liboqs C 源码当作 AscendC 实现规格；不得从 \texttt{frozen/} 抄实现 \\
+  \texttt{repo} & 上述 stable 目录（及对应 baseline-registry 条目，若有） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+当 KEM.KeyGen 引用它时，引用的是这张卡上的 \texttt{iface}+\texttt{cert}，不是「目录里好像有个绿名」。
 \end{example}
 
 \subsection{由边关系导出三类边}
@@ -2947,6 +3003,25 @@ KEM.KeyGen 引用的是这张卡，不是「目录里有个绿名」。
 \end{algosteps}
 \end{methodalgo}
 
+\paragraph{输出长什么样：三类边含义表}
+\begin{center}
+\begin{tabular}{@{}L{2.4cm}L{5.4cm}L{5.8cm}@{}}
+  \toprule
+  标签 $\tau$ & 含义 & 写入何处 / 后果 \\
+  \midrule
+  $\mathsf{sem}$ &
+  $v$ 要对，离不开 $u$ 的 iface &
+  进入 $E$；参与 $\mathrm{Dep}^*$ \\
+  $\mathsf{compose}$ &
+  $A,B$ 各有证，$A\!\circ\!B$ 仍须单独认证 &
+  接缝顶点 $s$；\textbf{不}因 $A,B\in\Gamma$ 自动获证 \\
+  $\mathsf{forb}$ &
+  明确禁止的路线/模板 &
+  进入 $\mathrm{Forb}$ 或节点 \texttt{forbid} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
 \begin{proposition}[组合不免费的算法表述]
 \label{prop:compose-not-free}
 设 $A,B\in\Gamma$ 且 $\mathrm{compose}(A,B)$ 被算法~\ref{alg:classify-rel} 标为 $\mathsf{compose}$，
@@ -2966,10 +3041,24 @@ $\mathsf{sem}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编
 自包含原则写进 $\texttt{iface}$：对外挂接口；共享库例外必须进入 $S$，不能默许 Agent 自由翻抄。
 \end{remark}
 
-\begin{example}[KeyGen 上跑分类]
-$\texttt{kem.keygen.k4}\leftarrow\texttt{pke.keygen.k4}$ 为 $\mathsf{sem}$；
-Alg.16 尾 / $\mathit{dk}$ 展开为 $\mathsf{compose}$；
-「禁止 frozen/correctness vendor 模板」为 $\mathsf{forb}$。
+\begin{example}[KeyGen 上的三类边（填表示意）]
+\begin{center}
+\begin{tabular}{@{}L{2.2cm}L{6.0cm}L{5.4cm}@{}}
+  \toprule
+  标签 & 实例 & 说明 \\
+  \midrule
+  $\mathsf{sem}$ &
+  $\texttt{kem.keygen.k4}\leftarrow\texttt{pke.keygen.k4}$ &
+  P3 语义依赖已获证 P2 \\
+  $\mathsf{compose}$ &
+  Alg.16 尾拼 / $\mathit{dk}$ 展开 &
+  PKE 证书覆盖不了，须单独验收 \\
+  $\mathsf{forb}$ &
+  禁止 frozen / correctness vendor 模板 &
+  写入 $\mathrm{Forb}$ 或 \texttt{forbid} \\
+  \bottomrule
+\end{tabular}
+\end{center}
 \end{example}
 
 \subsection{由闭包定义导出缺项算法}
@@ -3025,6 +3114,41 @@ $(\mathrm{Dep}^*(T)\cap\Gamma)\dot{\cup}M$ 的左部单独成立。
   \item 令 $\Gamma'=\Gamma\setminus\Delta$，返回 $(\Gamma',\Delta)$。
 \end{algosteps}
 \end{methodalgo}
+
+\paragraph{输出长什么样：证书状态表}
+工程交接时，对每个顶点除「是否在 $\Gamma$」外，再贴粗标签 $\sigma$（不改变 $\mathrm{Missing}$ 的集合定义）：
+
+\begin{center}
+\begin{tabular}{@{}L{2.6cm}L{11.2cm}@{}}
+  \toprule
+  状态 $\sigma$ & 工程含义 \\
+  \midrule
+  \texttt{unproven} &
+  只有名字或愿望，尚无按约定跑通的证据（$v\notin\Gamma$）。 \\
+  \texttt{probe} &
+  探针级：平台/接缝行为已用 CPU+SIM（或任务声明级别）跑通；$v\in\Gamma$，弱证书。 \\
+  \texttt{lemma} &
+  可稳定引用；iface 写清，可进入依赖闭包的「已获证」栏。 \\
+  \texttt{deliverable} &
+  交付级（如 stable）：在 lemma 之上还有交付目录、登记表与交接文书。 \\
+  \texttt{dirty} &
+  \textbf{作废标记}：落入算法~\ref{alg:dirty} 的 $\Delta$ 后，$v\notin\Gamma'$；旧对拍不得再充当有效 \texttt{cert}。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+阶梯关系可记为：
+\[
+\mathsf{unproven}
+\;\longrightarrow\;
+\mathsf{probe}
+\;\longrightarrow\;
+\mathsf{lemma}
+\;\longrightarrow\;
+\mathsf{deliverable},
+\qquad\text{以及回退}\qquad
+\mathsf{dirty}.
+\]
 
 \begin{proposition}[证书阶梯与 $\Gamma$ 的关系]
 \label{prop:cert-ladder}
@@ -3124,6 +3248,38 @@ $\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit})$，
 \end{algosteps}
 \end{methodalgo}
 
+\paragraph{输出长什么样：闭包表栏位}
+算法~\ref{alg:closure-table} 输出的 $\mathrm{CT}$ 在工程上至少填成下表各栏
+（第~3~章四元组 $+$ 接缝/否定扩展）：
+
+\begin{center}
+\begin{tabular}{@{}L{2.8cm}L{11.0cm}@{}}
+  \toprule
+  栏 & 填什么 \\
+  \midrule
+  目标 $T$ &
+  id、I/O 黑盒 $\mathcal{C}$、声明验收级别 $\ell\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$ \\
+  已获证 &
+  $D\cap\Gamma$ 中节点（附节点卡 \texttt{repo}/版本锚点）；须未脏 \\
+  依赖闭包 $D$ &
+  $\mathrm{Dep}^*(T)$：语义依赖 + 已知接缝项所覆盖的先决 \\
+  缺项 $M$ &
+  $\mathrm{Missing}_\Gamma(T)$；每项可附「拟补洞手段」 \\
+  接缝 $\mathrm{Seams}$ &
+  须单独认证的接缝顶点；未获证者门禁必须看见 \\
+  否定 $\mathrm{ForbHit}$ &
+  本次计划与 $\mathrm{Forb}$ 的相交；非空则硬冲突 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{quote}
+\noindent
+\textbf{先交闭包表，再写码。}\\
+customspec、STATUS、baseline-registry 是重要文书，但\textbf{替代不了} $\mathrm{CT}$：
+前者多半描述「打算怎么实现 / 实现结果如何」，$\mathrm{CT}$ 回答「凭什么现在允许开始实现」。
+\end{quote}
+
 \begin{theorem}[写码许可的充分必要条件（v0）]
 \label{thm:coding-permit}
 固定 $G,\Gamma,S$ 与目标 $T$。在算法~\ref{alg:closure-table} 输出的 $\mathrm{CT}$ 上，定义谓词
@@ -3153,9 +3309,27 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
 未获证引用与命中 $\mathrm{Forb}$ 均为非法转移。
 \end{proof}
 
-\begin{example}[KEM.KeyGen 的 $\mathrm{CT}$ 示意]
-$T=\texttt{kem.keygen.k4}$，$\ell=\mathsf{deliverable}$。
-若 $\texttt{pke.keygen.k4}\in\Gamma$ 且尾缝已单独获证，则 $M=\emptyset$，$\mathrm{PermitCode}$ 可为真；
+\begin{example}[填满的闭包表示意：KEM.KeyGen]
+\begin{center}
+\begin{tabular}{@{}L{2.4cm}L{11.4cm}@{}}
+  \toprule
+  栏 & 示例 \\
+  \midrule
+  目标 &
+  \texttt{kem.keygen.k4}；ek/dk 字节；验收 $\ell=\mathsf{deliverable}$（CPU+SIM，必要时 KAT） \\
+  已获证 &
+  \texttt{pke.keygen.k4}（stable 节点卡）；相关 P1 在 PKE 获证时已闭合 \\
+  依赖闭包 &
+  PKE.KeyGen + KEM 相对 PKE 的尾缝（2-launch / Alg.16 / $\mathit{dk}$ 展开等） \\
+  缺项 &
+  若尾缝尚未单独获证 $\Rightarrow$ 非空；不得在「写 KEM」任务里顺便重写 NTT \\
+  接缝 &
+  Alg.16 / $\mathit{dk}$ 等接缝顶点；未获证则 $\mathrm{PermitCode}=\mathrm{false}$ \\
+  否定 &
+  不得以 frozen / correctness vendor 为模板；不得把 liboqs C 当 AscendC 规格 \\
+  \bottomrule
+\end{tabular}
+\end{center}
 若尾缝尚在 $\mathrm{Seams}\setminus\Gamma$，则许可为假——即使 PKE 已绿。
 \end{example}
 
@@ -3219,6 +3393,41 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
 \end{algosteps}
 \end{methodalgo}
 
+\paragraph{输出长什么样：四步一览}
+把算法~\ref{alg:task-workflow} 收成可扫读的表（任一步未完成，不得进入「大规模写码 / 开放试错」）：
+
+\begin{center}
+\begin{tabular}{@{}L{0.8cm}L{2.6cm}L{10.4cm}@{}}
+  \toprule
+  步 & 名称 & 做什么 / 完成标准 \\
+  \midrule
+  1 & 目标声明 &
+  写清 $T$、I/O、验收级别；没有级别声明 $=$ 未声明任务。 \\
+  2 & 闭包展开 &
+  跑 $\mathrm{BuildClosureTable}$；标 ok / missing / dirty；接缝与否定栏齐。 \\
+  3 & 最小补洞 &
+  对 $\mathsf{BLOCK}$ 中的缺项跑 $\mathrm{MinimalFillRound}$；forbid 落笔。 \\
+  4 & 闭环写回 &
+  $\mathsf{Certify}(T)$ 入 INDEX/STATUS/节点卡；失败则 Freeze；该脏则 $\mathrm{DirtyPropagate}$。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+与第~3~章转移的对照：
+
+\begin{center}
+\begin{tabular}{@{}L{3.2cm}L{10.6cm}@{}}
+  \toprule
+  工作流动作 & 大致对应 \\
+  \midrule
+  闭包展开 & $\mathsf{Expand}$：前沿与缺项暴露出来 \\
+  探针 / 补洞取证 & $\mathsf{Probe}$：为缺项跑通约定级别的证据 \\
+  写入证书 / 晋级 & $\mathsf{Certify}$：节点进入 $\Gamma$ \\
+  上游变更作废 & $\mathsf{Dirty}$：$\Gamma$ 收缩，假绿不得继续 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
 \begin{proposition}[工作流轨迹是自动机路径的投影]
 \label{prop:workflow-automaton}
 算法~\ref{alg:task-workflow} 的每一步成功更新，都对应第~3~章作业过程自动机上的有限转移序列片段：
@@ -3226,6 +3435,32 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
 作废 $\sim\mathsf{Dirty}$，冻结 $\sim\mathsf{Freeze}$。
 因此「守门禁」不是额外口号，而是要求 Agent 的轨迹落在合法转移集合内。
 \end{proposition}
+
+\subsection{合法性规则（v0）清单}
+\label{sec:gates-rules}
+
+由定理~\ref{thm:coding-permit} 与算法~\ref{alg:gate-check}，Agent 侧可收成对照清单：
+
+\begin{center}
+\begin{tabular}{@{}L{6.6cm}L{7.2cm}@{}}
+  \toprule
+  只允许 & 明确禁止 \\
+  \midrule
+  先交完整 $\mathrm{CT}$ 再写码 &
+  跳过闭包表直接写 examples/探针 \\
+  引用 $v\in\Gamma$ 且未脏、未踩 $\mathrm{Forb}$ &
+  把 INDEX 绿名 / 局部测通 / frozen / correctness 当模板 \\
+  缺项先 $\mathsf{Probe}/\mathsf{Certify}$ 再引用 &
+  同任务顺手发明未获证 P0/P1 并立刻引用 \\
+  新接缝单独认证 &
+  两块各绿就宣称拼装已合法 \\
+  验收看 I/O$\leftrightarrow$golden/KAT &
+  以「和参考源码长得像」为验收 \\
+  上游变更后跑 $\mathrm{DirtyPropagate}$ &
+  用旧 PASS 假绿下游 \\
+  \bottomrule
+\end{tabular}
+\end{center}
 
 \subsection{文书分工（由算法接口推出）}
 \label{sec:gates-docs}
