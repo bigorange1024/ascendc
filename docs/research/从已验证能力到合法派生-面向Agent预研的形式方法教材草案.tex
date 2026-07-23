@@ -2681,69 +2681,89 @@ $(\Gamma_i,F_i,S_i)$（见作业过程自动机一节），称为\textbf{配置�
 \end{proposition}
 
 \begin{example}[纯数学：引理库 vs 一次证明树]
-左图：引理库 DAG（共享）。右图：证明 $T$ 时实际用到的派生树（一次作业）。
-结点 $L_2$ 可被许多证明共享，但右图只出现本次用到的边。
+下面用\textbf{左右对照}两幅子图（同排并置，不是上下叠放）：
+左边是共享的引理库 DAG；右边是证明 $T_1$ 时实际用到的派生树。
+库中的 $C$ 可被许多证明共享，但右图只出现本次用到的边。
+（子图内部依赖边仍自上而下画，勿把「左右对照」误读成「整图是上下结构」。）
 \begin{figure}[H]
 \centering
+\begin{minipage}[t]{0.46\textwidth}
+\centering
+{\small 左：库 DAG（共享）}\\[0.4em]
 \begin{tikzpicture}[
-  x=1.5cm, y=1.1cm,
+  x=1.35cm, y=1.05cm,
   every node/.style={font=\footnotesize},
-  c/.style={draw, circle, minimum size=0.6cm},
+  c/.style={draw, circle, minimum size=0.58cm},
   arr/.style={-{Stealth[length=1.6mm]}, thick}
 ]
-  \node[font=\small] at (0.75,1.8) {库 DAG};
   \node[c] (a) at (0,1) {$A$};
   \node[c] (b) at (1.5,1) {$B$};
   \node[c] (c) at (0.75,0) {$C$};
   \node[c] (t1) at (0.75,-1) {$T_1$};
-  \node[c] (t2) at (2.2,-0.3) {$T_2$};
+  \node[c] (t2) at (2.15,-0.35) {$T_2$};
   \draw[arr] (a) -- (c); \draw[arr] (b) -- (c);
   \draw[arr] (c) -- (t1); \draw[arr] (b) -- (t2); \draw[arr] (c) -- (t2);
-
-  \begin{scope}[xshift=5.0cm]
-  \node[font=\small] at (0.6,1.8) {证明 $T_1$ 的树};
-  \node[c, fill=orange!15] (tt) at (0.6,1) {$T_1$};
-  \node[c, fill=blue!10] (cc) at (0.6,0) {$C$};
-  \node[c] (aa) at (0,-1) {$A$};
-  \node[c] (bb) at (1.2,-1) {$B$};
+\end{tikzpicture}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.46\textwidth}
+\centering
+{\small 右：证明 $T_1$ 的树（一次）}\\[0.4em]
+\begin{tikzpicture}[
+  x=1.35cm, y=1.05cm,
+  every node/.style={font=\footnotesize},
+  c/.style={draw, circle, minimum size=0.58cm},
+  arr/.style={-{Stealth[length=1.6mm]}, thick}
+]
+  \node[c] (aa) at (0,1) {$A$};
+  \node[c] (bb) at (1.5,1) {$B$};
+  \node[c, fill=blue!10] (cc) at (0.75,0) {$C$};
+  \node[c, fill=orange!15] (tt) at (0.75,-1) {$T_1$};
   \draw[arr] (aa) -- (cc); \draw[arr] (bb) -- (cc);
   \draw[arr] (cc) -- (tt);
-  \end{scope}
 \end{tikzpicture}
-\caption{配图：纯数学：引理库 vs 一次证明树}
+\end{minipage}
+\caption{配图：纯数学：引理库 vs 一次证明树（左右并置）}
 \label{fig:auto-11}
 \end{figure}
 \end{example}
 
 \begin{example}[工程：三层对照图]
+下面这张是\textbf{上下结构}（不是左右两分）：
+\textbf{上}栏画能力库的依赖直觉；\textbf{下}栏再左右分开——下左是本次 KeyGen 的一次派生，下右是配置轨迹示意。
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  x=1cm, y=0.85cm,
+  x=1cm, y=0.9cm,
   every node/.style={font=\footnotesize, align=center},
-  box/.style={draw, rounded corners=2pt, minimum height=0.55cm},
+  box/.style={draw, rounded corners=2pt, minimum height=0.55cm, inner sep=2pt},
   arr/.style={-{Stealth[length=1.6mm]}, thick}
 ]
-  \node[font=\small] at (1.2,3.3) {库（INDEX 依赖直觉）};
-  \node[box, fill=blue!8] (p1) at (0,2.4) {NTT\ldots};
-  \node[box, fill=blue!10] (p2) at (2.2,2.4) {PKE};
-  \node[box, fill=orange!12] (k) at (4.2,2.4) {KEM};
+  % 上层：库
+  \node[font=\small, anchor=west] at (-0.2,3.55) {上：库（INDEX 依赖直觉）};
+  \node[box, fill=blue!8] (p1) at (1.0,2.7) {NTT\ldots};
+  \node[box, fill=blue!10] (p2) at (3.2,2.7) {PKE};
+  \node[box, fill=orange!12] (k) at (5.4,2.7) {KEM};
   \draw[arr] (p1) -- (p2) -- (k);
 
-  \node[font=\small] at (1.2,1.5) {一次派生（本次 KeyGen）};
-  \node[box, fill=orange!15] (r) at (2.0,0.7) {KEM.KeyGen};
-  \node[box] (l) at (0.6,-0.3) {PKE};
-  \node[box] (s) at (3.4,-0.3) {尾缝};
+  % 分隔虚线
+  \draw[dashed, gray] (-0.3,1.95) -- (9.2,1.95);
+
+  % 下左：一次派生
+  \node[font=\small, anchor=west] at (-0.2,1.55) {下左：一次派生（本次 KeyGen）};
+  \node[box] (l) at (1.0,0.55) {PKE};
+  \node[box] (s) at (3.0,0.55) {尾缝};
+  \node[box, fill=orange!15] (r) at (2.0,-0.45) {KEM.KeyGen};
   \draw[arr] (l) -- (r); \draw[arr] (s) -- (r);
 
-  \node[font=\small] at (6.8,1.5) {配置轨迹（示意）};
-  \node[box] (q0) at (6.2,0.7) {$q_0$};
-  \node[box] (q1) at (7.5,0.7) {$q_1$};
-  \node[box, fill=green!12] (q2) at (8.8,0.7) {$q_{\mathrm{ok}}$};
+  % 下右：配置轨迹
+  \node[font=\small, anchor=west] at (5.0,1.55) {下右：配置轨迹（示意）};
+  \node[box] (q0) at (5.6,0.35) {$q_0$};
+  \node[box] (q1) at (7.0,0.35) {$q_1$};
+  \node[box, fill=green!12] (q2) at (8.4,0.35) {$q_{\mathrm{ok}}$};
   \draw[arr] (q0) -- (q1) -- (q2);
-  \node[anchor=west, align=left] at (6.0,-0.5) {$\Gamma$ 增大 / $F$ 消解};
+  \node[anchor=west, align=left, font=\scriptsize] at (5.4,-0.55) {$\Gamma$ 增大 / $F$ 消解};
 \end{tikzpicture}
-\caption{配图：工程：三层对照图}
+\caption{配图：工程：三层对照图（上：库；下左：派生；下右：轨迹）}
 \label{fig:auto-12}
 \end{figure}
 \end{example}
