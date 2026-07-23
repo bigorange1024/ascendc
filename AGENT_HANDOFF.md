@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-15（`#验收#` Encaps → stable；下一 T19b/c）
+> **最后刷新**：2026-07-23（形式方法教材第3章导论冻结；工程主线仍见下）
 
 ---
 
@@ -15,12 +15,14 @@
 | T19a Encaps device | [`pass-fix-…-encaps-device-k4`](ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) 行为基线；tick **721010** |
 | PKE + KEM KeyGen stable | 已交付 |
 | `docs/research/` | 已恢复 |
+| **形式方法教材第3章** | 分支 [`research/formal-lang-dag`](docs/research/)；导论故事线已定（引子→问题→方法→工具）；**整体先保持**，汇报时再从此底稿删减 |
 
 ---
 
 ## ★ 下一刀（P0）
 
 1. **T19b/c** Decaps device  
+2. （并行文档）形式方法教材：第3章暂冻；有汇报需求再砍篇幅
 
 ---
 

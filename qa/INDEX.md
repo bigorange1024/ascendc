@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-23 — [形式方法教材导论实质 · 第3章冻结](2026-07/2026-07-23-形式方法教材导论实质与第3章冻结.md)
+
+关键字：`correctness 引子` · **开放生成≠合法派生** · **证书闭包受控搜索** · 第3章**先保持**、汇报再删 · `research/formal-lang-dag`
+
 ### 2026-07-15 — [TODO · T19a · Encaps `#验收#` → stable · 能力DAG](2026-07/2026-07-15-TODO与T19a-Encaps-device-PASS.md)
 
 关键字：`TODO` · **T20 关闭** · [`active_sim_regress_summary.md`](active_sim_regress_summary.md) · **T19a PASS**（tick **721010**）· **Encaps → `pass-fix-…`** · scripts Encaps 默认 · **`$写规格$` +【预研】exp Encaps CPU/SIM PASS**（tick≈**721k**）· **`docs/research/` 恢复** · **已验证能力 DAG 预研方法论 TeX/PDF** · 下一 **T19b/c** 或 Encaps `#交付#`
