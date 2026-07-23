@@ -67,6 +67,34 @@
 }{%
   \end{enumerate}
 }
+% 方法论算法框：参数 / 输入 / 输出 / 步骤（承接第3章数学对象做推导）
+\newcounter{methodalg}[section]
+\renewcommand{\themethodalg}{\thesection.\arabic{methodalg}}
+\newenvironment{methodalgo}[1]{%
+  \refstepcounter{methodalg}%
+  \begin{tcolorbox}[
+    enhanced, breakable,
+    colback=blue!2, colframe=blue!35, coltext=black,
+    boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    title={算法~\themethodalg：#1},
+    fonttitle=\bfseries\color{black},
+    coltitle=black,
+    attach boxed title to top left={yshift=-2mm,xshift=4mm},
+    boxed title style={colback=white, colframe=blue!35, boxrule=0.4pt, coltitle=black}
+  ]
+  \small\color{black}
+}{%
+  \end{tcolorbox}
+}
+\newcommand{\algoparam}[1]{\par\noindent\textbf{参数：}#1\par\vspace{2pt}}
+\newcommand{\algoin}[1]{\noindent\textbf{输入：}#1\par}
+\newcommand{\algoout}[1]{\noindent\textbf{输出：}#1\par\vspace{4pt}}
+\newenvironment{algosteps}{%
+  \begin{enumerate}[leftmargin=2.2em, label=\textbf{\arabic*:}, itemsep=2pt, topsep=2pt]
+}{%
+  \end{enumerate}
+}
 
 \title{从已验证能力到合法派生\\
 {\large 面向 Agent 的预研开发形式方法\\（教材式草案·持续修订）}}
@@ -129,7 +157,8 @@
   \item 第~\ref{sec:hook}~章：\textbf{完整例子}（KEM.KeyGen：算法原文、我们有什么、怎样做出来、引出课题）；
   \item 第~\ref{sec:mathbg}~章：\textbf{方法论数学背景}
         （§3.1 导论；§3.2--§3.4 各用一大节写一件工具的数学；再工程体现、回扣、枢纽与总结——\textbf{不含}密码/NTT 代数）；
-  \item 第~\ref{sec:math}--\ref{sec:gates}~章：\textbf{装进工程对象与门禁}（节点/边/证书；Agent 工作流）；
+  \item 第~\ref{sec:math}--\ref{sec:gates}~章：\textbf{装进工程对象与门禁}
+        （用第~3~章数学对象作算法参数，逐步推出节点/边/证书与写码许可判定）；
   \item 第~\ref{sec:replay}--\ref{sec:forward}~章：\textbf{复盘与前瞻}（用理论看实现）；
   \item 第~\ref{sec:correctness}~章：\textbf{correctness 对照组}；
   \item 第~\ref{sec:open}~章：未决议事项与维护约定。
@@ -2790,575 +2819,485 @@ $(\Gamma_i,F_i,S_i)$（见作业过程自动机一节），称为\textbf{配置�
 \section{从数学到工程对象：节点、边与证书}
 \label{sec:math}
 
-第~\ref{sec:mathbg}~章把方法论收成三件工具，并钉死实质：
-把 Agent 的开放生成，收成「沿已认证能力的可检查闭包做受控搜索」。
-本章不再加新的数学工具，只做一件事：
+第~\ref{sec:mathbg}~章已经给出依赖闭包 $\mathrm{Dep}^*$、已获证集 $\Gamma$、缺项
+$\mathrm{Missing}_\Gamma$、禁止拼法 $\mathrm{Forb}$，以及转移
+$\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
+本章\textbf{不}再堆工程口诀，而是把这些对象当作算法的参数与子程序，
+一步步\textbf{构造}节点卡、边分类与证书状态，并推出可检查的结论。
 
 \begin{quote}
 \noindent
-\textbf{把上一章的对象，填成仓库里能写、能查、能交接的字段。}\\
-第~3~章定语义，第~4~章定表单。
+写法约定：每个算法固定四要素——\textbf{参数、输入、输出、步骤}；\\
+参数里显式挂第~3~章的数学对象；步骤之后用命题/推论给出「推出了什么」。
 \end{quote}
 
-读完本章，应能：给一个能力\textbf{填一张节点卡}；指着仓库说某条关系大致是\textbf{哪类边}；
-说清证书处在哪一态、何时必须打成 \texttt{dirty}。
-\textbf{不}在本章展开「Agent 四步工作流」与「先交闭包表再写码」的完整门禁——那是第~\ref{sec:gates}~章。
+门禁四步流与「先交闭包表再写码」的完整操作面在第~\ref{sec:gates}~章，
+那里会继续调用本章算法作为子程序。
 
-若本章用语与第~\ref{sec:mathbg}~章打架，先以「工程上能不能执行、能不能交接」为准，
-再回头改数学章并记下修订。
+\subsection{推导用到的第~3~章工具箱}
+\label{sec:math-toolbox}
 
-\subsection{本章在故事里的位置}
-\label{sec:math-place}
-
-回顾第~3~章导论的三条线，本章各自落地半步：
+下文算法默认携带下列参数（均已在第~\ref{sec:mathbg}~章定义；此处只列接口）：
 
 \begin{center}
-\begin{tabular}{@{}L{3.6cm}L{5.2cm}L{5.0cm}@{}}
+\begin{tabular}{@{}L{3.4cm}L{10.4cm}@{}}
   \toprule
-  第~3~章已说清的 & 本章要填成什么 & 故意留给后文 \\
+  数学对象 & 本章用法 \\
   \midrule
-  开放生成 $\neq$ 合法派生 &
-  「合法」对应哪些可检查字段 &
-  任务启动时如何硬拦 Agent \\
-  已验证 / 禁止 / 合法拼装 &
-  节点卡、三类边、证书状态名 &
-  闭包表文件格式、产生式形式化 \\
-  作业过程可检查、可作废 &
-  \texttt{dirty} 与证书阶梯 &
-  四步工作流与门禁清单 \\
+  能力 DAG $G=(V,E)$ &
+  顶点 $=$ 可命名能力；边 $=$ 依赖/接缝关系的载体 \\
+  $\mathrm{Dep}^*_G(T)$、迭代 $D_k(T)$ &
+  算「完成 $T$ 理论上要齐谁」；步骤直接调用第~3~章迭代 \\
+  $\Gamma\subseteq V$ &
+  当前已获证集；证书状态是 $\Gamma$ 的精细标签 \\
+  $\mathrm{Missing}_\Gamma(T)=\mathrm{Dep}^*(T)\setminus\Gamma$ &
+  缺项；闭包表与补洞的核心输出 \\
+  $\mathrm{Forb}$、约束库 $S$ &
+  否定边 / 禁止拼法的来源 \\
+  配置 $q=(\Gamma,F,S)$ 与基本转移 &
+  解释「写回 / 打脏」在改哪一分量 \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-第~\ref{sec:hook}~章的 KeyGen 仍是主例子；Encaps / Decaps 只作对照提示，长复盘在后文。
-
-\subsection{三个层面：库、一次展开、进度}
-\label{sec:math-three-layers}
-
-枢纽节已定义能力 DAG、派生树、配置轨迹。落到工程填写时，先分清三层各管什么：
-
-\begin{center}
-\begin{tabular}{@{}L{2.6cm}L{2.4cm}L{4.4cm}L{4.2cm}@{}}
-  \toprule
-  工程说法 & 数学归属 & 它回答什么 & 它不回答什么 \\
-  \midrule
-  能力库 / 依赖图 &
-  依赖图与闭包 &
-  引理库里谁依赖谁、先证谁 &
-  某次任务具体怎么一步步展开 \\
-  拼装计划 / 派生 &
-  形式语言 &
-  这次任务展开成了哪句「合法话」 &
-  全局所有共享边长什么样 \\
-  证书怎么变 &
-  作业过程自动机 &
-  证书增减、接受/拒绝、何时作废 &
-  字节算得合不合 FIPS \\
-  \bottomrule
-\end{tabular}
-\end{center}
-
-\textbf{依赖归图；展开归语言；进度归自动机。}
-FIPS / liboqs / golden 仍只回答「算对没有」——与「砖从哪块合法砌过来」是两层事。
-引子里那种「只有 correctness」的伪完成，往往是：第二层（算对）过了，第一层与第三层（合法派生与可交接进度）并没有过。
-
-\subsection{节点：已验证能力的字段卡}
+\subsection{由顶点导出节点卡}
 \label{sec:math-node}
 
-节点 $v$ 是证书的\textbf{主语}：谈「谁已获证、谁还能被引用」时，指的是节点，不是某个临时目录名。
-建议每张节点卡至少能填下表字段（名字可本地化，语义不要丢）：
+第~3~章把证书主语定为顶点 $v\in V$，但未规定工程上如何记录 $v$。
+下面的算法把「$v$ 可被引用」所需的检查信息，编码成一张有限字段卡。
 
-\begin{center}
-\begin{tabular}{@{}L{2.2cm}L{11.6cm}@{}}
-  \toprule
-  字段 & 含义与填写纪律 \\
-  \midrule
-  \texttt{id} &
-  稳定名字，跨任务可引用（如 \texttt{pke.keygen.k4}、\texttt{kem.keygen.k4}）。
-  不要用「这次 PR 的临时文件夹名」当 id。 \\
-  \texttt{layer} &
-  方法论分层 P0--P3（见下）。分层描述能力角色，\textbf{不必}与磁盘目录一一对应。 \\
-  \texttt{iface} &
-  I/O、dtype、形状/布局、同步与 launch 约定中，\textbf{对外可复用}的那部分。
-  能挂到边上的是 iface，不是「把源码拷过来」。 \\
-  \texttt{cert} &
-  证书证据：权威路径 + 验收级别（CPU+SIM，必要时 KAT）+ 版本锚点（commit / tag / STATUS 日期）。 \\
-  \texttt{forbid} &
-  与本节点相关的否定约束（例如「不得以某某 frozen 为模板」）。可空，但有则必须可检查。 \\
-  \texttt{repo} &
-  权威目录锚点（活跃 \texttt{stable-*} / \texttt{pass-*} / 登记表条目等）。
-  frozen 目录可以出现在否定说明里，\textbf{不得}充当正向 \texttt{repo}。 \\
-  \bottomrule
-\end{tabular}
-\end{center}
+\begin{methodalgo}{编码节点卡 $\mathrm{EncodeNode}$}
+\label{alg:encode-node}
+\algoparam{能力 DAG $G=(V,E)$；分层映射 $\lambda:V\to\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{P3}\}$；
+当前已获证集 $\Gamma$；约束库 $S$（含与各顶点相关的 $\mathrm{Forb}$ 片段）；
+仓库锚点映射 $\rho:V\to\mathrm{Paths}$（活跃权威路径，禁止指向 \texttt{frozen/} 正向源码）。}
+\algoin{顶点 $v\in V$。}
+\algoout{节点卡 $\mathrm{Card}(v)=(\texttt{id},\texttt{layer},\texttt{iface},\texttt{cert},\texttt{forbid},\texttt{repo})$。}
+\begin{algosteps}
+  \item 令 $\texttt{id}(v)$ 为 $v$ 的稳定名字（跨任务可引用；不得用临时目录名冒充）。
+  \item 令 $\texttt{layer}(v)=\lambda(v)$（P0--P3 只描述能力角色，不要求与磁盘树同构）。
+  \item 从 $S$ 中抽取 $v$ 对外可复用的 I/O、dtype、布局与同步约定，写入 $\texttt{iface}(v)$。
+        约定：后续边与引用只允许挂 $\texttt{iface}$，不允许默许「拷源码」。
+  \item 若 $v\in\Gamma$，令 $\texttt{cert}(v)$ 记录获证证据指针（路径、CPU+SIM/KAT、版本锚点）；
+        若 $v\notin\Gamma$，令 $\texttt{cert}(v)=\bot$。
+  \item 令 $\texttt{forbid}(v)$ 为 $S$ 中与 $v$ 相关的否定约束（可空）。
+  \item 令 $\texttt{repo}(v)=\rho(v)$；若 $\rho(v)$ 落在 \texttt{frozen/} 正向实现路径，则拒绝输出并报错
+        （否定说明可引用 frozen 判决，正向 \texttt{repo} 不可）。
+  \item 返回六元组 $\mathrm{Card}(v)$。
+\end{algosteps}
+\end{methodalgo}
+
+\begin{proposition}[节点卡是门禁检查的充分记录]
+\label{prop:card-sufficient}
+固定 $G,\Gamma,S$。对任意 $v\in V$，由算法~\ref{alg:encode-node} 得到的 $\mathrm{Card}(v)$ 足以判定：
+\begin{enumerate}
+  \item $v$ 当前是否已获证（看 $\texttt{cert}(v)\neq\bot$，等价于 $v\in\Gamma$）；
+  \item 引用 $v$ 时对外应遵守的接口（$\texttt{iface}$）；
+  \item 是否触碰与 $v$ 相关的禁止项（$\texttt{forbid}$）。
+\end{enumerate}
+换言之：门禁若只关心「能否引用 $v$」，不必再翻开 $v$ 的实现源码。
+\end{proposition}
+\begin{proof}[证明梗概]
+第~3~章定义「已获证」为 $v\in\Gamma$，算法步骤~4 正是该隶属关系的工程编码；
+$\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法引用在定义上只依赖证书资格与 $S$ 中接口/禁止约束。
+\end{proof}
 
 \paragraph{分层语言（P0--P3）}
-\begin{center}
-\begin{tabular}{@{}L{1.2cm}L{12.6cm}@{}}
-  \toprule
-  层 & 含义（放在本仓库语境里说） \\
-  \midrule
-  P3 & 顶层算子 / 算法入口（如 KEM.KeyGen、KEM.Encaps、KEM.Decaps） \\
-  P2 & 算法构件（如 PKE.KeyGen / Encrypt / Decrypt 全链） \\
-  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots）——\textbf{当能力名用}；本章不讲其代数细节 \\
-  P0 & 平台公理（DataCopy、向量算子、MMAD+tiling、TPipe/TQue 同步壳\ldots） \\
-  \bottomrule
-\end{tabular}
-\end{center}
+$\lambda$ 的建议取值：P3 顶层入口；P2 算法构件；P1 领域原语（当能力名，不讲代数）；P0 平台公理。
 
-纪律：做 P3 任务时，\textbf{禁止}在同一任务里顺手「发明」未获证的 P0/P1 并当作已可引用能力。
-缺 P0/P1，应先单独探针获证，再写进库、再被引用——这正是「受控搜索」在节点层的含义。
+\begin{corollary}[禁止同任务发明未获证底层]
+若目标 $T$ 满足 $\lambda(T)=\mathrm{P3}$，且存在 $u\in\mathrm{Missing}_\Gamma(T)$ 使 $\lambda(u)\in\{\mathrm{P0},\mathrm{P1}\}$，
+则任何声称「在做 $T$ 的同一任务里顺便实现 $u$ 并立刻引用」的计划，都与
+「先 $\mathsf{Probe}/\mathsf{Certify}$ 再引用」的合法转移相悖（见第~3~章基本转移）。
+\end{corollary}
 
-\begin{example}[节点卡示例：\texttt{pke.keygen.k4}]
-续第~\ref{sec:hook}~章。下面不是正式 SCHEMA，只演示「填得满」长什么样：
-\begin{center}
-\begin{tabular}{@{}L{2.2cm}L{11.6cm}@{}}
-  \toprule
-  字段 & 示例填写 \\
-  \midrule
-  \texttt{id} & \texttt{pke.keygen.k4} \\
-  \texttt{layer} & P2 \\
-  \texttt{iface} &
-  与 stable PKE KeyGen 交付 I/O 一致；NTT LUT 静态约定；设备侧布局与后续 KEM 尾拼兼容的那部分写清 \\
-  \texttt{cert} &
-  \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}（路径以仓库现状为准）；
-  CPU+SIM 对拍；STATUS / 交付纪要作版本锚点 \\
-  \texttt{forbid} &
-  不得把 liboqs C 源码当作 AscendC 实现规格；不得从 \texttt{frozen/} 抄实现 \\
-  \texttt{repo} & 上述 stable 目录（及对应 baseline-registry 条目，若有） \\
-  \bottomrule
-\end{tabular}
-\end{center}
-当 KEM.KeyGen 引用它时，引用的是这张卡上的 \texttt{iface}+\texttt{cert}，不是「目录里好像有个绿名」。
+\begin{example}[对 $v=\texttt{pke.keygen.k4}$ 跑 $\mathrm{EncodeNode}$]
+续第~\ref{sec:hook}~章。取 $\lambda(v)=\mathrm{P2}$，$v\in\Gamma$，则算法~\ref{alg:encode-node} 可输出：
+\texttt{id}=\texttt{pke.keygen.k4}；
+\texttt{iface}=stable PKE KeyGen 的对外 I/O 与布局约定；
+\texttt{cert}=``\texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}+CPU+SIM''；
+\texttt{forbid}=不得以 liboqs C / \texttt{frozen/} 为 AscendC 规格；
+\texttt{repo}=上述 stable 路径。
+KEM.KeyGen 引用的是这张卡，不是「目录里有个绿名」。
 \end{example}
 
-\subsection{边的三种类型}
+\subsection{由边关系导出三类边}
 \label{sec:math-edges}
 
-边回答「节点之间允许怎样发生关系」。建议只维护三类——再多容易和目录树、\texttt{\#include} 搅在一起。
+第~3~章的依赖边与接缝、禁止拼法在工程上常混称「关系」。
+下面算法把一次「关系声明」分类，便于写入 $E$ 或 $\mathrm{Forb}$。
 
-\begin{enumerate}
-  \item \textbf{语义依赖}\\
-        $u$ 要对，离不开 $v$ 的 iface。
-        例：没有已获证的 NTT（P1），就谈不上完整的 PKE.KeyGen（P2）；
-        没有已获证的 PKE.KeyGen，就谈不上合法的 KEM.KeyGen（P3）主链。
-  \item \textbf{接缝（compose）}\\
-        $A$、$B$ 各自有证，$A\!\circ\!B$ \textbf{仍要}单独立成节点（或显式接缝项）再获证。
-        「组合并不免费」：两块都绿，推不出拼在一起也绿。
-        例：KEM.KeyGen 相对 PKE.KeyGen 多出的 2-launch 衔接、Alg.16 尾、$\mathit{dk}$ 展开等，
-        都是接缝，不是「PKE 绿了就自动有 KEM」。
-  \item \textbf{否定边}\\
-        写明禁止什么：frozen 模板、未登记计算块、把 correctness 标本当实现来源、
-        Host 默认走密码学 RNG 路径，等等。
-        否定边的工程投影通常是 \texttt{FROZEN.md}、Rule 禁令、节点卡上的 \texttt{forbid}。
-\end{enumerate}
+\begin{methodalgo}{边分类 $\mathrm{ClassifyRel}$}
+\label{alg:classify-rel}
+\algoparam{能力 DAG $G=(V,E)$；禁止拼法族 $\mathrm{Forb}$；接缝声明集 $\mathcal{C}_{\mathrm{seam}}\subseteq V\times V$
+（由约束库 $S$ 维护：哪些「$A$ 与 $B$ 已各自获证仍须单独认证」）。}
+\algoin{关系请求 $r$，形态为以下之一：
+（i）有序对 $(u,v)$ 表示「$v$ 语义依赖 $u$」；
+（ii）接缝请求 $\mathrm{compose}(A,B)$；
+（iii）禁止请求 $\mathrm{forbid}(x)$（关闭路线、禁模板等）。}
+\algoout{标签 $\tau(r)\in\{\mathsf{sem},\mathsf{compose},\mathsf{forb}\}$，以及应写入的载体
+（$E$ 的一条边、接缝节点候选、或 $\mathrm{Forb}$ 的一条）。}
+\begin{algosteps}
+  \item 若 $r=\mathrm{forbid}(x)$，令 $\tau=\mathsf{forb}$，把 $x$ 并入 $\mathrm{Forb}$（或写入对应 \texttt{forbid} 字段），返回。
+  \item 若 $r=\mathrm{compose}(A,B)$，或 $(A,B)\in\mathcal{C}_{\mathrm{seam}}$，令 $\tau=\mathsf{compose}$：
+        新建或引用接缝顶点 $s_{A\!\circ\!B}$（若尚无），要求日后单独 $\mathsf{Probe}/\mathsf{Certify}$；
+        \textbf{不}把「$A\in\Gamma$ 且 $B\in\Gamma$」推成 $s_{A\!\circ\!B}\in\Gamma$。
+  \item 否则若 $r=(u,v)$ 且任务语义为「$v$ 的正确性依赖 $u$ 的 iface」，令 $\tau=\mathsf{sem}$，确保 $(u,v)\in E$。
+  \item 返回 $\tau(r)$ 与载体。
+\end{algosteps}
+\end{methodalgo}
+
+\begin{proposition}[组合不免费的算法表述]
+\label{prop:compose-not-free}
+设 $A,B\in\Gamma$ 且 $\mathrm{compose}(A,B)$ 被算法~\ref{alg:classify-rel} 标为 $\mathsf{compose}$，
+接缝顶点为 $s$。则
+\[
+A\in\Gamma \;\land\; B\in\Gamma \quad\not\Rightarrow\quad s\in\Gamma.
+\]
+要使 $s\in\Gamma$，必须另经合法的 $\mathsf{Probe}/\mathsf{Certify}$（或等价验收）写入证书。
+\end{proposition}
+\begin{proof}
+由算法步骤~2：$A,B$ 获证只保证接缝请求可被提出，不修改 $\Gamma$ 对 $s$ 的隶属；
+第~3~章 $\mathsf{Certify}$ 才是唯一把顶点写入 $\Gamma$ 的基本转移（在约束允许时）。
+\end{proof}
 
 \begin{remark}[边 $\neq$ \texttt{\#include}]
-图上的边说的是\textbf{能力与证书关系}，不是编译依赖。
-允许「逻辑上依赖某 iface、工程上通过 launch/数据约定衔接」，
-也禁止「为了省事跨目录偷源码却不在图上露脸」。
-自包含原则：对外挂的是 iface；仓库已有的共享库例外须写明，不能默许 Agent 自由翻抄。
+$\mathsf{sem}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编译依赖。
+自包含原则写进 $\texttt{iface}$：对外挂接口；共享库例外必须进入 $S$，不能默许 Agent 自由翻抄。
 \end{remark}
 
-\begin{example}[KeyGen 上的三类边（示意）]
-\begin{itemize}
-  \item 语义依赖：\texttt{kem.keygen.k4} $\leftarrow$ \texttt{pke.keygen.k4}；
-        \texttt{pke.keygen.k4} $\leftarrow$ NTT 等 P1 能力（在 PKE 获证时已闭合）。
-  \item 接缝：Alg.16 尾拼 / $\mathit{dk}$ 展开等——PKE 证书\textbf{覆盖不了}，须在 KEM 路径上单独说清并验收。
-  \item 否定边：禁止以 \texttt{frozen-*} 或 correctness 里的 vendor 拼法为 KEM 实现模板。
-\end{itemize}
+\begin{example}[KeyGen 上跑分类]
+$\texttt{kem.keygen.k4}\leftarrow\texttt{pke.keygen.k4}$ 为 $\mathsf{sem}$；
+Alg.16 尾 / $\mathit{dk}$ 展开为 $\mathsf{compose}$；
+「禁止 frozen/correctness vendor 模板」为 $\mathsf{forb}$。
 \end{example}
 
-\subsection{证书状态：阶梯与非单调}
+\subsection{由闭包定义导出缺项算法}
+\label{sec:math-missing}
+
+第~3~章已有 $\mathrm{Dep}^*$ 的迭代收敛定理与 $\mathrm{Missing}_\Gamma$ 定义。
+这里把它们写成可调用子程序，供第~5~章闭包表算法使用。
+
+\begin{methodalgo}{依赖闭包 $\mathrm{DepStar}$}
+\label{alg:depstar}
+\algoparam{有限依赖图 $G=(V,E)$（第~3~章）。}
+\algoin{目标 $T\in V$（或目标集 $A\subseteq V$，逐点并）。}
+\algoout{$D=\mathrm{Dep}^*_G(T)$。}
+\begin{algosteps}
+  \item 令 $D_0=\{T\}$。
+  \item 对 $k=0,1,2,\ldots$，令 $D_{k+1}=D_k\cup\bigcup_{v\in D_k}\mathrm{Pred}(v)$，直至 $D_{k+1}=D_k$。
+  \item 返回 $D_k$（第~3~章已证：稳定值等于 $\mathrm{Dep}^*(T)$，且步数 $\le|V|$）。
+\end{algosteps}
+\end{methodalgo}
+
+\begin{methodalgo}{缺项 $\mathrm{MissingOf}$}
+\label{alg:missing}
+\algoparam{$G$；当前已获证集 $\Gamma$。}
+\algoin{目标 $T\in V$。}
+\algoout{$M=\mathrm{Missing}_\Gamma(T)$。}
+\begin{algosteps}
+  \item 调用算法~\ref{alg:depstar} 得 $D=\mathrm{Dep}^*(T)$。
+  \item 返回 $M=D\setminus\Gamma$。
+\end{algosteps}
+\end{methodalgo}
+
+\begin{proposition}[缺项判定的直接推论]
+\label{prop:missing-iff}
+算法~\ref{alg:missing} 输出 $M=\emptyset$ 当且仅当 $\mathrm{Dep}^*(T)\subseteq\Gamma$
+（即第~3~章「闭包已满」）。此时 $\mathrm{Dep}^*(T)$ 可划分为
+$(\mathrm{Dep}^*(T)\cap\Gamma)\dot{\cup}M$ 的左部单独成立。
+\end{proposition}
+
+\subsection{由非单调证书导出脏标记传播}
 \label{sec:math-cert}
 
-证书状态描述节点在引理库 $\Gamma$ 中的资格，建议采用下面的阶梯，并显式允许\textbf{回退}：
+第~3~章指出 $\Gamma$ 可因 $\mathsf{Dirty}$ 收缩。工程上需要可计算的作废范围。
 
-\[
-\mathsf{unproven}
-\;\longrightarrow\;
-\mathsf{probe}
-\;\longrightarrow\;
-\mathsf{lemma}
-\;\longrightarrow\;
-\mathsf{deliverable},
-\qquad\text{以及}\qquad
-\mathsf{dirty}.
-\]
+\begin{methodalgo}{脏标记传播 $\mathrm{DirtyPropagate}$}
+\label{alg:dirty}
+\algoparam{能力 DAG $G=(V,E)$；当前 $\Gamma$。}
+\algoin{接口/约定发生变更的顶点集合 $U\subseteq V$。}
+\algoout{新的已获证集 $\Gamma'$，以及被打脏的集合 $\Delta$。}
+\begin{algosteps}
+  \item 令 $\Delta_0=U$。
+  \item 迭代：把所有在 $G$ 中依赖 $\Delta_k$ 内顶点的后继并入，直到稳定，得 $\Delta$（变更锥）。
+        形式上下一节可用「以 $U$ 为种子、沿出边可达」的闭包描述。
+  \item 令 $\Gamma'=\Gamma\setminus\Delta$，返回 $(\Gamma',\Delta)$。
+\end{algosteps}
+\end{methodalgo}
 
-\begin{center}
-\begin{tabular}{@{}L{2.6cm}L{11.2cm}@{}}
-  \toprule
-  状态 & 工程含义 \\
-  \midrule
-  \texttt{unproven} &
-  只有名字或愿望，尚无按约定跑通的证据。 \\
-  \texttt{probe} &
-  探针级：平台/接缝行为已用 CPU+SIM（或任务声明的级别）跑通，可作后续引用的弱证书。 \\
-  \texttt{lemma} &
-  可稳定引用的能力；iface 写清，可进入依赖闭包的「已获证」栏。 \\
-  \texttt{deliverable} &
-  交付级（如 stable）：在 lemma 之上还有交付目录、登记表与交接文书。 \\
-  \texttt{dirty} &
-  \textbf{作废标记}：上游 iface / tiling / 同步约定变更后，下游不得继续宣称证书有效。 \\
-  \bottomrule
-\end{tabular}
-\end{center}
+\begin{proposition}[证书阶梯与 $\Gamma$ 的关系]
+\label{prop:cert-ladder}
+为工程交接，对 $v\in\Gamma$ 可再贴标签
+$\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证则 $\sigma(v)=\mathsf{unproven}$）。
+则：
+\begin{enumerate}
+  \item 门禁「可引用」的初级判定只依赖 $v\in\Gamma$，与 $\sigma(v)$ 的粗细无关；
+  \item $\sigma$ 只影响验收级别与交付文书，不改变 $\mathrm{Missing}_\Gamma$ 的集合定义；
+  \item 一经算法~\ref{alg:dirty}，$v\in\Delta\Rightarrow v\notin\Gamma'$，此时对拍旧日志不得再充当有效 $\texttt{cert}$。
+\end{enumerate}
+\end{proposition}
 
-\texttt{dirty} 说明引理库 $\Gamma$ \textbf{可以收缩}：合法派生不是「绿过一次就永远可引用」。
-这直接对应第~3~章方法实质里的过程约束——下层一改，上层哪些「曾经通过」必须可检查地作废。
-引子里沉淀出的错误经验，若不当场打脏或否定，就会在后续任务里假绿复活。
-
-\begin{remark}[证书与对拍]
-对拍通过是证书的\textbf{必要证据之一}，不是证书的全部。
-对拍回答 correctness；证书还要求：引用关系合法、接缝已单独立项（若需要）、否定边未被踩中、状态未被标脏。
+\begin{remark}[对拍 $\neq$ 证书全部]
+对拍通过是 $\mathsf{Certify}$ 的必要证据之一，不是充分条件：
+仍须引用合法、接缝已认证、未命中 $\mathrm{Forb}$、未落入 $\Delta$。
 \end{remark}
 
-\subsection{仓库机制：数学对象的投影（凭直觉）}
+\subsection{由投影关系导出「菜单 $\neq$ 说明书」}
 \label{sec:math-repo}
 
-现有仓库机制，大多可看成上述对象的\textbf{投影}——先会认，再谈要不要另做一张「真图数据库」。
+\begin{proposition}[菜单不蕴含闭包已满]
+\label{prop:menu-not-L}
+令 $\mathrm{Menu}$ 为活跃 INDEX 绿项对应的顶点集。则即使 $\mathrm{Menu}$ 很大，
+一般\textbf{不能}推出 $\mathrm{Missing}_\Gamma(T)=\emptyset$。
+必须先跑算法~\ref{alg:depstar}--\ref{alg:missing}。
+（此即第~3~章「菜单、$\Gamma$ 与闭包」性质的算法版。）
+\end{proposition}
+
+仓库机制与数学对象的对照，由此成为\textbf{推论式读法}而非平行口号：
 
 \begin{center}
-\begin{tabular}{@{}L{3.4cm}L{5.0cm}L{5.4cm}@{}}
+\begin{tabular}{@{}L{3.2cm}L{5.2cm}L{5.4cm}@{}}
   \toprule
-  仓库机制 & 大致投影到 & 常见误读 \\
+  仓库机制 & 对应数学 / 算法输出 & 误读 \\
   \midrule
-  活跃 \texttt{INDEX.md} &
-  能力菜单；$\Sigma$ / 候选引用集的工程投影 &
-  当成合法拼装说明书 $L$ 本身 \\
-  \texttt{frozen/}+\texttt{FROZEN.md} &
-  否定边与关闭判决 &
-  当成可抄的实现参考库 \\
-  \texttt{baseline-registry} &
-  golden 允许调用的已验证计算块 &
-  当成 AscendC 必须同构的实现规格 \\
-  \texttt{*-customspec.*} &
-  一次任务的计划/规格文书（派生计划的一种形态） &
-  当成可以跳过闭包表的替代品 \\
-  \texttt{STATUS.md} / 对拍日志 &
-  证书证据的一部分 &
-  当成「永不作废」的永久执照 \\
+  活跃 INDEX & $\mathrm{Menu}$；构造 $\Gamma$ 的候选 & 当成语言 $L$ 本身 \\
+  \texttt{frozen/}+判决 & $\mathrm{Forb}$ 的来源（算法~\ref{alg:classify-rel} 的 $\mathsf{forb}$） & 当成可抄实现库 \\
+  baseline-registry & golden 允许块 $\subseteq$ 已验证计算证据 & AscendC 必须同构的规格 \\
+  customspec & 计划文书，待第~5~章与闭包表分工 & 可跳过 $\mathrm{MissingOf}$ \\
+  STATUS / 对拍 & $\texttt{cert}$ 证据片段 & 永久执照（无视 $\mathsf{Dirty}$） \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\begin{quote}
-\noindent
-\textbf{菜单 $\neq$ 说明书。}\\
-INDEX 绿项告诉你「库里有哪些候选砖」；
-合法拼装计划才告诉你「这次允许怎样砌」。
-把菜单当说明书，是开放生成重新混进来的快车道。
-\end{quote}
-
-\subsection{立论收束与下一章}
-\label{sec:math-thesis}
-
-把第~\ref{sec:mathbg}~章的实质，用本章字段再说一遍：
-
-\begin{quote}
-\noindent
-预研/实现算不算合法 $\approx$
-在已获证能力（节点卡 + 证书状态）生成的语言 $L$ 上，
-用作业过程自动机去搜一条\textbf{接受路径}；\\[0.35em]
-工程语境的幻觉 / 无效派生 $\approx$
-非法转移，或引用了无证书边、已脏、已否定的节点；\\[0.35em]
-语义对照（FIPS / liboqs / golden）管「算对没算对」；
-形式方法管「砖是从哪块合法砌过来的」。
-\end{quote}
-
-因此：第~\ref{sec:gates}~章将规定——接到目标 $T$ 时，Agent \textbf{被允许}做哪些动作、
-如何先交闭包表再写码；本章的节点、边与证书，就是那张表上要填的格子。
-
-\subsection{本章小结}
+\subsection{本章小结：本章推出了什么}
 \label{sec:math-summary}
 
 \begin{enumerate}
-  \item 本章把三件工具落到可填字段：\textbf{节点卡}、\textbf{三类边}、\textbf{证书阶梯（含 dirty）}。
-  \item 可复用的是 \texttt{iface}+证书，不是源码拷贝；组合不免费，接缝要单独成事。
-  \item 仓库 INDEX / frozen / registry / customspec 是投影，不是数学对象的替代品；菜单不是说明书。
-  \item 下一章进入门禁：在这些字段之上，规定 Agent 的合法动作与四步工作流。
+  \item 算法~\ref{alg:encode-node}--\ref{alg:dirty} 把第~3~章的 $V,E,\Gamma,\mathrm{Dep}^*,\mathrm{Missing},\mathrm{Forb},\mathsf{Dirty}$
+        变成可执行构造；命题~\ref{prop:card-sufficient}--\ref{prop:menu-not-L} 是对应结论。
+  \item 关键结论：节点卡是引用检查的充分记录；组合不免费；缺项空 $\Leftrightarrow$ 闭包已满；
+        脏传播使 $\Gamma$ 非单调；菜单不蕴含 $L$ 成员。
+  \item 下一章把这些算法嵌进门禁：闭包表 $=$ 目标声明 $+$ $\mathrm{DepStar}$ $+$ $\mathrm{MissingOf}$ $+$ 边分类，
+        再导出「何时允许写码」。
 \end{enumerate}
 
 % ============================================================
 \section{门禁与工作流：Agent 被允许做什么}
 \label{sec:gates}
 
-上一章把节点、边与证书填成了可写字段；本章规定：接到目标 $T$ 时，Agent \textbf{被允许}做什么。
-字段不够，还要有转移规则——否则表单填满了，开放生成仍会从门缝钻回来。
+第~\ref{sec:math}~章给出了从数学对象到节点/边/证书的构造算法。
+本章继续推导：把第~3~章的作业过程自动机转移，写成 Agent 可执行的门禁算法，
+并推出「何时允许写码」的判定式。
 
 \begin{quote}
 \noindent
-\textbf{门禁的一句话：}\\
-先交闭包表，再写码；只沿已获证能力与允许接缝推进；缺的先补洞获证，禁止项不得当模板。
+\textbf{门禁的数学含义}：只允许作业过程自动机上的合法转移；\\
+\textbf{门禁的操作面}：先交闭包表，再写码；缺项先补洞；禁止项不得当模板。
 \end{quote}
 
-读完本章，应能：列出 Agent 的合法/非法动作；按四步走完一次任务启动；
-说清闭包表与 customspec / STATUS 各管什么。
-\textbf{不}在本章做 KeyGen/Encaps 长复盘，也不设计 correctness 三档对照实验——那些是后文。
+\subsection{闭包表算法}
+\label{sec:gates-closure-algo}
 
-\subsection{本章在故事里的位置}
-\label{sec:gates-place}
+第~3~章定义闭包表至少含 $A,\Gamma,\mathrm{Dep}^*(A),\mathrm{Missing}_\Gamma(A)$。
+下面把它变成算法输出，并加上接缝与否定栏（仍由第~3~章对象生成）。
 
-\begin{center}
-\begin{tabular}{@{}L{3.4cm}L{5.4cm}L{5.0cm}@{}}
-  \toprule
-  已经有的 & 本章补上的 & 故意留给后文 \\
-  \midrule
-  第~3~章：为何要收成受控搜索 &
-  任务启动时的硬动作清单 &
-  复盘轨迹是否真的守门 \\
-  第~4~章：节点/边/证书字段 &
-  字段如何填进闭包表与四步流 &
-  闭包表文件的最终 SCHEMA \\
-  仓库里已有 Rule/Skill/INDEX &
-  把纪律升成可检查工作流 &
-  立刻改 Rule 文本（须另议） \\
-  \bottomrule
-\end{tabular}
-\end{center}
+\begin{methodalgo}{填写闭包表 $\mathrm{BuildClosureTable}$}
+\label{alg:closure-table}
+\algoparam{能力 DAG $G$；当前 $\Gamma$；约束库 $S$（含 $\mathrm{Forb}$、接缝声明 $\mathcal{C}_{\mathrm{seam}}$）；
+分层 $\lambda$；状态标签 $\sigma$（命题~\ref{prop:cert-ladder}）。
+子程序：算法~\ref{alg:depstar}、\ref{alg:missing}、\ref{alg:classify-rel}、\ref{alg:encode-node}。}
+\algoin{目标 $T\in V$；I/O 契约 $\mathcal{C}$；声明验收级别 $\ell\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$。}
+\algoout{闭包表
+$\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit})$，
+其中 $D=\mathrm{Dep}^*(T)$，$M=\mathrm{Missing}_\Gamma(T)$。}
+\begin{algosteps}
+  \item \textbf{目标声明}：写入 $(T,\mathcal{C},\ell)$；若任一项缺失，拒绝输出（任务未声明）。
+  \item 调用 $\mathrm{DepStar}(T)$ 得 $D$；调用 $\mathrm{MissingOf}(T)$ 得 $M$。
+  \item 对每张需要引用的 $v\in D\cap\Gamma$，调用 $\mathrm{EncodeNode}(v)$ 核对 $\texttt{cert}\neq\bot$ 且未被打脏。
+  \item \textbf{接缝栏}：对所有与 $T$ 相关的 $\mathrm{compose}$ 请求跑 $\mathrm{ClassifyRel}$，
+        收集尚未获证的接缝顶点集 $\mathrm{Seams}$；把 $\mathrm{Seams}\setminus\Gamma$ 并入缺项视角
+        （实现上可并入 $M$ 或单列，但门禁必须看见它们）。
+  \item \textbf{否定栏}：计算 $\mathrm{ForbHit}=\{x\in\mathrm{Forb}\mid x\text{ 与本次计划相交}\}$；
+        若计划显式引用 $\mathrm{ForbHit}$ 中模板，标记为硬冲突。
+  \item 返回 $\mathrm{CT}$。
+\end{algosteps}
+\end{methodalgo}
 
-第~3~章引子里的 Encaps/Decaps 放飞，缺的正是本章这扇门：
-提示很轻、菜单又在，Agent 就会在无限空间里为 correctness 付账。
-
-\subsection{门禁管的是转移，不是文采}
-\label{sec:gates-what}
-
-门禁对应作业过程自动机上的\textbf{合法转移}：哪些配置变化被承认，哪些直接拒绝或冻结。
-它\textbf{不}管：
-
-\begin{itemize}
-  \item 文笔好不好、注释炫不炫；
-  \item 某次对拍是否「碰巧」绿了（那是证据的一部分，不是放行全部条件）；
-  \item 密码公式本身对不对（仍归 FIPS / golden / liboqs）。
-\end{itemize}
-
-它\textbf{管}：
-
-\begin{itemize}
-  \item 写码前有没有交齐闭包表；
-  \item 引用的节点是否已获证且未脏、未踩否定边；
-  \item 新接缝有没有单独立项；
-  \item 缺项是不是被「在做 $T$ 的同一任务里顺手发明」混过去了。
-\end{itemize}
-
-\subsection{合法性规则（v0）：允许与禁止}
-\label{sec:gates-rules}
-
-接到目标 $T$ 时，\textbf{只允许}做下列事（v0；后续可加细，不可默许删减）：
-
+\begin{theorem}[写码许可的充分必要条件（v0）]
+\label{thm:coding-permit}
+固定 $G,\Gamma,S$ 与目标 $T$。在算法~\ref{alg:closure-table} 输出的 $\mathrm{CT}$ 上，定义谓词
+\[
+\mathrm{PermitCode}(\mathrm{CT})
+\;:\iff\;
+M=\emptyset
+\;\land\;
+\mathrm{Seams}\subseteq\Gamma
+\;\land\;
+\mathrm{ForbHit}=\emptyset
+\;\land\;
+\mathcal{C}\text{ 已声明}.
+\]
+则：
 \begin{enumerate}
-  \item \textbf{展开依赖闭包}：沿语义边与已声明接缝边，写出 $\mathrm{Dep}^{*}(T)$（工程上：闭包表里的依赖闭包栏）；
-  \item \textbf{分类节点}：已有 \texttt{lemma}/\texttt{deliverable} 的；缺的（\texttt{missing}）；已脏（\texttt{dirty}）；
-        只能被否定边命中的（直接禁止路径）；
-  \item \textbf{最小补洞}：对 \texttt{missing} / 新接缝，先开探针或 incubating 任务拿到证书，\textbf{再}在做 $T$ 的任务里引用；
-        禁止在做 $T$ 的同一任务里顺手发明未获证的 P0/P1 并当作已可引用；
-  \item \textbf{接缝单独认证}：新接缝 $=$ 新节点或显式接缝项，必须单独验收；两块各绿推不出拼在一起也绿；
-  \item \textbf{验收口径}：I/O 与 golden/KAT 一致即可；禁止以「和参考源码长得像」为验收；
-  \item \textbf{自包含}：对外挂的是 iface；不要跨目录偷源码（仓库已声明的共享库例外须写明）；
-        图上的边 $\neq$ \texttt{\#include}。
+  \item 若 $\mathrm{PermitCode}(\mathrm{CT})$ 为真，则相对 $\Gamma$ 目标闭包已满、接缝已获证、未踩禁止拼法，
+        此时进入「按 $\ell$ 实现 $T$」与第~3~章「闭包已满后方可冲击顶层」一致；
+  \item 若 $M\neq\emptyset$ 或 $\mathrm{Seams}\not\subseteq\Gamma$，则任何跳过 $\mathsf{Probe}/\mathsf{Certify}$、
+        直接写 $T$ 顶层实现的动作，都不是合法转移（应被门禁拒绝）；
+  \item 若 $\mathrm{ForbHit}\neq\emptyset$，则计划字触碰 $\mathrm{Forb}$，属于第~3~章工作定义下的幻觉/拒绝类行为。
 \end{enumerate}
+\end{theorem}
+\begin{proof}[证明梗概]
+（1）$M=\emptyset\Leftrightarrow\mathrm{Dep}^*(T)\subseteq\Gamma$ 为第~3~章命题；接缝与 $\mathrm{Forb}$ 条件分别对应
+$\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接对照第~3~章基本转移与合法性定义：
+未获证引用与命中 $\mathrm{Forb}$ 均为非法转移。
+\end{proof}
 
-\textbf{明确禁止}（与允许清单对称，便于 Agent 自检）：
-
-\begin{enumerate}
-  \item 跳过闭包表直接写 examples / 探针实现；
-  \item 把 INDEX 绿名、局部测通、correctness 标本、frozen 源码当作可引用模板；
-  \item 用「先把结果对上再说」为极端低效调度或跳层发明辩护；
-  \item 上游 iface 已变仍宣称下游证书有效（拒绝承认 \texttt{dirty}）；
-  \item 把 customspec / STATUS 写成了，就声称闭包表可以省略。
-\end{enumerate}
-
-\begin{remark}[门禁自动机（别称）]
-本章「门禁」与第~3~章\textbf{作业过程自动机}是同一类对象的工程叫法：
-自动机管进度与合法转移；门禁是任务启动与推进时对人/Agent 的操作面。
-\end{remark}
-
-\subsection{闭包表：写码前的入场券}
-\label{sec:gates-closure-table}
-
-闭包表是一次任务的\textbf{最小可检查文书}。建议至少四栏（名称可本地化）：
-
-\begin{center}
-\begin{tabular}{@{}L{2.8cm}L{11.0cm}@{}}
-  \toprule
-  栏 & 填什么 \\
-  \midrule
-  目标 $T$ &
-  id、I/O 黑盒、声明的验收级别（\texttt{probe} / \texttt{lemma} / \texttt{deliverable}） \\
-  已获证 &
-  闭包里已经是 \texttt{lemma}/\texttt{deliverable} 且未脏的节点（附 \texttt{repo}/版本锚点） \\
-  依赖闭包 &
-  $\mathrm{Dep}^{*}(T)$ 的工程列出：语义依赖 + 已知接缝项 \\
-  缺项 &
-  $\mathrm{Missing}$：尚未获证、已脏、或接缝未单独立项者；每项写「拟补洞手段」 \\
-  \bottomrule
-\end{tabular}
-\end{center}
-
-可选第五栏：\textbf{否定边 / forbid}——本次明确不得引用的路径。
-
-\begin{quote}
-\noindent
-\textbf{先交闭包表，再写码。}\\
-customspec、STATUS、baseline-registry 是重要文书，但\textbf{替代不了}闭包表：
-前者多半描述「打算怎么实现 / 实现结果如何」，
-闭包表回答「凭什么现在允许开始实现」。
-\end{quote}
-
-\begin{example}[闭包表示意（KEM.KeyGen，极简）]
-\begin{center}
-\begin{tabular}{@{}L{2.4cm}L{11.4cm}@{}}
-  \toprule
-  栏 & 示例 \\
-  \midrule
-  目标 &
-  \texttt{kem.keygen.k4}；ek/dk 字节；验收 \texttt{deliverable}（CPU+SIM，必要时 KAT） \\
-  已获证 &
-  \texttt{pke.keygen.k4}（stable）；相关 P1（NTT 等）在 PKE 获证时已闭合 \\
-  依赖闭包 &
-  PKE.KeyGen + KEM 相对 PKE 的尾缝（2-launch / Alg.16 / $\mathit{dk}$ 展开等） \\
-  缺项 &
-  若尾缝尚未单独获证 $\Rightarrow$ 先探针/集成项；不得在「写 KEM」任务里顺便重写 NTT \\
-  否定 &
-  不得以 frozen / correctness vendor 为模板；不得把 liboqs C 当 AscendC 规格 \\
-  \bottomrule
-\end{tabular}
-\end{center}
+\begin{example}[KEM.KeyGen 的 $\mathrm{CT}$ 示意]
+$T=\texttt{kem.keygen.k4}$，$\ell=\mathsf{deliverable}$。
+若 $\texttt{pke.keygen.k4}\in\Gamma$ 且尾缝已单独获证，则 $M=\emptyset$，$\mathrm{PermitCode}$ 可为真；
+若尾缝尚在 $\mathrm{Seams}\setminus\Gamma$，则许可为假——即使 PKE 已绿。
 \end{example}
 
-\subsection{四步工作流}
+\subsection{门禁判定与最小补洞}
+\label{sec:gates-decide}
+
+\begin{methodalgo}{门禁判定 $\mathrm{GateCheck}$}
+\label{alg:gate-check}
+\algoparam{同算法~\ref{alg:closure-table}。}
+\algoin{闭包表 $\mathrm{CT}$（或先输入 $T,\mathcal{C},\ell$ 再内生调用 $\mathrm{BuildClosureTable}$）。}
+\algoout{$\mathsf{ALLOW}$（允许按 $\ell$ 写 $T$）或 $\mathsf{BLOCK}(R)$（拒绝原因袋 $R$）。}
+\begin{algosteps}
+  \item 若 $\mathrm{CT}$ 未完整，返回 $\mathsf{BLOCK}(\{\mathsf{no\_table}\})$。
+  \item 若 $\mathrm{ForbHit}\neq\emptyset$，返回 $\mathsf{BLOCK}(\{\mathsf{forb}\}\cup\mathrm{ForbHit})$。
+  \item 若 $M\neq\emptyset$ 或 $\mathrm{Seams}\not\subseteq\Gamma$，返回
+        $\mathsf{BLOCK}(\{\mathsf{missing}\}\cup M\cup(\mathrm{Seams}\setminus\Gamma))$。
+  \item 否则返回 $\mathsf{ALLOW}$。
+\end{algosteps}
+\end{methodalgo}
+
+\begin{methodalgo}{最小补洞一轮 $\mathrm{MinimalFillRound}$}
+\label{alg:min-fill}
+\algoparam{$G,\Gamma$；第~3~章「相对 $\Gamma$ 的缺项生成集」概念。}
+\algoin{目标 $T$；当前 $M=\mathrm{Missing}_\Gamma(T)$（可含未获证接缝）。}
+\algoout{本轮补证对象集合 $B\subseteq M$，以及建议的动作序列（对每个 $u\in B$：$\mathsf{Probe}$ 然后条件性 $\mathsf{Certify}$）。}
+\begin{algosteps}
+  \item 若 $M=\emptyset$，返回 $B=\emptyset$。
+  \item 在 $M$ 中选取一个缺项生成集 $B$（优先较小者；存在性见第~3~章有限图上极小生成集）。
+  \item 对每个 $u\in B$：输出动作「$\mathsf{Probe}(u)$；验收通过则 $\mathsf{Certify}(u)$ 使 $\Gamma\leftarrow\Gamma\cup\{u\}$」。
+  \item 禁止把 $B$ 选成「整份 $T$ 顶层实现」来冒充补洞——补洞对象应是缺项，不是跳过闭包。
+\end{algosteps}
+\end{methodalgo}
+
+\begin{corollary}[补洞单调消缺项]
+若一轮补洞成功得到 $\Gamma'\supseteq\Gamma$ 且 $B\subseteq\Gamma'$，则
+$\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章缺项基本性质~3）。
+反复执行算法~\ref{alg:min-fill} 直至 $M=\emptyset$，在有限 $V$ 上必终止。
+\end{corollary}
+
+\subsection{四步工作流＝外层算法}
 \label{sec:gates-workflow}
 
-把合法性规则收成可执行的四步。任一步未完成，不得进入「大规模写码 / 开放试错」。
+把「声明—展开—补洞—写回」写成调用上述子程序的外层算法。
 
-\begin{center}
-\begin{tabular}{@{}L{0.8cm}L{2.6cm}L{10.4cm}@{}}
-  \toprule
-  步 & 名称 & 做什么 / 完成标准 \\
-  \midrule
-  1 & 目标声明 &
-  写清 $T$、I/O、验收级别；没有级别声明 $=$ 未声明任务。 \\
-  2 & 闭包展开 &
-  填闭包表；标 ok / missing / dirty；列出接缝清单与否定边。
-  缺栏不得用「大概齐了」代替。 \\
-  3 & 最小补洞 &
-  只补 missing 与新接缝；补洞任务本身也要有自己的小闭包（禁止无限大包大揽）。
-  forbid 写入否定边。 \\
-  4 & 闭环写回 &
-  新节点入能力库（INDEX/STATUS/证书状态）；失败则改规则或 Freeze，\textbf{不}默认可复用。
-  上游变更触发下游 \texttt{dirty}。 \\
-  \bottomrule
-\end{tabular}
-\end{center}
+\begin{methodalgo}{任务工作流 $\mathrm{TaskWorkflow}$}
+\label{alg:task-workflow}
+\algoparam{作业过程自动机的合法转移集（第~3~章）；本章算法~\ref{alg:closure-table}--\ref{alg:min-fill}；
+脏传播算法~\ref{alg:dirty}。}
+\algoin{目标 $T$；I/O 契约 $\mathcal{C}$；级别 $\ell$。}
+\algoout{接受（$T\in\Gamma$ 且前沿清空）或拒绝/冻结；以及写回后的 $\Gamma$。}
+\begin{algosteps}
+  \item \textbf{目标声明}：固定 $(T,\mathcal{C},\ell)$。
+  \item \textbf{闭包展开}：$\mathrm{CT}\leftarrow\mathrm{BuildClosureTable}(T,\mathcal{C},\ell)$。
+  \item \textbf{门禁}：若 $\mathrm{GateCheck}(\mathrm{CT})=\mathsf{BLOCK}(R)$，则
+        对 $R$ 中缺项跑 $\mathrm{MinimalFillRound}$，每成功一次更新 $\Gamma$ 并回到步骤~2；
+        若命中 $\mathsf{forb}$，执行 $\mathsf{Freeze}$ / 拒绝，停止。
+  \item \textbf{允许写码}：当 $\mathrm{GateCheck}=\mathsf{ALLOW}$ 后，按 $\ell$ 实现 $T$；
+        验收通过则 $\mathsf{Certify}(T)$，写回 INDEX/STATUS/节点卡。
+  \item \textbf{非单调维护}：若随后某 $u$ 的 iface 变更，调用 $\mathrm{DirtyPropagate}(\{u\})$ 更新 $\Gamma$，
+        并要求依赖锥内任务重新进入步骤~2。
+\end{algosteps}
+\end{methodalgo}
 
-与自动机转移的直觉对应（便于回看第~3~章）：
+\begin{proposition}[工作流轨迹是自动机路径的投影]
+\label{prop:workflow-automaton}
+算法~\ref{alg:task-workflow} 的每一步成功更新，都对应第~3~章作业过程自动机上的有限转移序列片段：
+展开 $\sim\mathsf{Expand}$，补洞 $\sim\mathsf{Probe};\mathsf{Certify}$，写回 $\sim\mathsf{Certify}(T)$，
+作废 $\sim\mathsf{Dirty}$，冻结 $\sim\mathsf{Freeze}$。
+因此「守门禁」不是额外口号，而是要求 Agent 的轨迹落在合法转移集合内。
+\end{proposition}
 
-\begin{center}
-\begin{tabular}{@{}L{3.2cm}L{10.6cm}@{}}
-  \toprule
-  工作流动作 & 大致对应 \\
-  \midrule
-  闭包展开 & $\mathsf{Expand}$：前沿 $S$ 与缺项暴露出来 \\
-  探针 / 补洞取证 & $\mathsf{Probe}$：为缺项跑通约定级别的证据 \\
-  写入证书 / 晋级 & $\mathsf{Certify}$：节点进入 $\Gamma$（lemma/deliverable） \\
-  上游变更作废 & $\mathsf{Dirty}$：$\Gamma$ 收缩，假绿不得继续 \\
-  \bottomrule
-\end{tabular}
-\end{center}
-
-\begin{lstlisting}
-# 门禁四步（备忘；以正文表格为准）
-1. 目标声明  T、I/O、验收级别（probe / lemma / deliverable）
-2. 闭包展开  P0--P3；ok / missing / dirty；接缝清单；否定边
-3. 最小补洞  只补 missing 与新接缝；forbid 落笔
-4. 闭环写回  新节点入图；失败则改规则或 Freeze；该脏则脏
-\end{lstlisting}
-
-\subsection{文书分工：谁也不能冒充闭包表}
+\subsection{文书分工（由算法接口推出）}
 \label{sec:gates-docs}
 
+由算法~\ref{alg:closure-table} 与~\ref{alg:gate-check} 的输入输出，立刻得到：
+
 \begin{center}
-\begin{tabular}{@{}L{3.2cm}L{5.2cm}L{5.4cm}@{}}
+\begin{tabular}{@{}L{3.0cm}L{5.4cm}L{5.4cm}@{}}
   \toprule
-  文书 & 主责 & 不能冒充的 \\
+  文书 & 在算法中的角色 & 不能冒充 \\
   \midrule
-  闭包表 &
-  这次为何允许开工；缺谁 &
+  闭包表 $\mathrm{CT}$ &
+  $\mathrm{GateCheck}$ 的主输入 &
   实现细节说明书 \\
   customspec &
-  examples 写码前的规格/计划 &
-  「可以不交闭包表」的通行证 \\
-  STATUS &
-  当前证据与已知限制 &
-  永久执照（无视 dirty） \\
-  baseline-registry &
-  golden 允许的计算块 &
-  AscendC 实现必须同构的规格 \\
+  $\mathsf{ALLOW}$ 之后的实现规格文书 &
+  「可不跑 $\mathrm{BuildClosureTable}$」 \\
+  STATUS / 对拍 &
+  $\mathsf{Certify}$ 的证据 &
+  无视 $\mathrm{DirtyPropagate}$ 的执照 \\
   INDEX &
-  活跃菜单 &
-  合法拼装说明书 $L$ \\
+  $\mathrm{Menu}$ / $\rho$ 的候选 &
+  $L$ 的成员证书 \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\subsection{反面教材：门禁关掉时会发生什么}
+\subsection{反面教材：放飞＝算法前置条件失败}
 \label{sec:gates-anti}
 
-把第~3~章引子对照本章规则，缺口一一对应：
+第~3~章引子中的 Encaps/Decaps 放飞，可用本章谓词改写：
 
 \begin{center}
-\begin{tabular}{@{}L{5.5cm}L{8.3cm}@{}}
+\begin{tabular}{@{}L{5.2cm}L{8.6cm}@{}}
   \toprule
-  放飞时的现象 & 触犯的门禁 \\
+  现象 & 失败的算法条件 \\
   \midrule
-  提示很轻，「自己读 FIPS 拼出来」 &
-  无目标级别声明 + 无闭包表 \\
-  底层菜单在，却仍无限试错 &
-  把 INDEX 当说明书；合法转移未约束 \\
+  提示很轻、无闭包表 &
+  算法~\ref{alg:closure-table} 步骤~1 拒绝；无 $\mathrm{CT}$ 则 $\mathrm{GateCheck}$ 必 $\mathsf{BLOCK}$ \\
+  菜单在仍无限试错 &
+  命题~\ref{prop:menu-not-L}：未跑 $\mathrm{MissingOf}$ \\
   只保 correctness、形态粗暴 &
-  用结果对替换「派生合法」；跳过接缝单独认证的工程形态要求 \\
-  极端调度、错误经验沉淀 &
-  无 \texttt{dirty}/否定回写；失败未 Freeze 却当可复用经验 \\
-  token 短时间耗尽 &
-  搜索空间未收成证书闭包上的受控搜索 \\
+  用对拍冒充 $\mathrm{PermitCode}$；接缝/工程形态未进 $\mathrm{Seams}$ 认证 \\
+  错误经验沉淀 &
+  未调用 $\mathrm{DirtyPropagate}$ / $\mathsf{Freeze}$，失败轨迹仍当可复用 \\
+  token 耗尽 &
+  搜索未限制在 $\mathrm{TaskWorkflow}$ 的合法转移内 \\
   \bottomrule
 \end{tabular}
 \end{center}
-
-门禁不是为了「让 Agent 更听话」本身，而是为了把代价拦在写码之前：
-闭包表上的争论，通常比烧完配额再复盘便宜。
 
 \subsection{域无关性}
 \label{sec:gates-domain}
 
-把密码学专有名词抽掉之后，剩下的仍是：
-
-\begin{itemize}
-  \item 终端 / 已获证能力（axiom、lemma）；
-  \item 非终端 / 目标（goal）；
-  \item 产生式 / 合法拼装与接缝（compose）；
-  \item 证书与作废（judgment + dirty）。
-\end{itemize}
-
-同一套门禁适用于非密码的 AscendC 预研；ML-KEM 只是对照清晰、接缝又多的一块\textbf{压力测试床}。
-换域时要改的是节点卡与否定边的领域内容，不是四步流的骨架。
+算法~\ref{alg:closure-table}--\ref{alg:task-workflow} 的参数是 $G,\Gamma,\mathrm{Forb}$ 与转移名，
+不含密码代数。换域只需重填节点卡与 $\mathrm{Forb}$ 内容；骨架不变。
+ML-KEM 仍是接缝多、对照清的压力测试床。
 
 \subsection{下一章预告}
-\label{sec:gates-next}
+规则与算法齐备后，用 \texttt{kem.keygen}/\texttt{kem.encaps} 复盘：
+历史轨迹是否可写成算法~\ref{alg:task-workflow} 的实例；偏离记为欠债或 $\mathsf{forb}$。
+再用 \texttt{kem.decaps} 前瞻：能否先输出一张真 $\mathrm{CT}$。
 
-规则写清之后，要用已经做过的 \texttt{kem.keygen} / \texttt{kem.encaps} \textbf{复盘}：
-当时哪些步骤守了门、哪些是事后贴标签、哪些应记成否定边或欠债。
-再往后，用尚未收完的 \texttt{kem.decaps} 做\textbf{前瞻}：理论能不能生出待办清单，而不只是解释旧故事。
-
-\subsection{本章小结}
+\subsection{本章小结：本章推出了什么}
 \label{sec:gates-summary}
 
 \begin{enumerate}
-  \item 门禁管合法转移：先交闭包表，再写码；缺项先补洞；接缝单独认证；禁止项不得当模板。
-  \item 四步流（声明 $\to$ 展开 $\to$ 补洞 $\to$ 写回）是自动机进度的操作面；\texttt{dirty} 使 $\Gamma$ 可收缩。
-  \item customspec / STATUS / INDEX 不能冒充闭包表；菜单不是说明书。
-  \item 引子里的伪完成，是门禁关闭时的标准后果；下一章用复盘检验这些规则是否说得清历史。
+  \item 算法~\ref{alg:closure-table} 由 $\mathrm{Dep}^*$、$\mathrm{Missing}_\Gamma$、$\mathrm{Forb}$ 构造闭包表；
+        定理~\ref{thm:coding-permit} 给出写码许可的 v0 判定。
+  \item 算法~\ref{alg:gate-check}--\ref{alg:task-workflow} 把自动机转移落成 Agent 工作流；
+        命题~\ref{prop:workflow-automaton} 说明二者同轨。
+  \item 文书分工与引子反面，都是这些算法前置条件的推论，不再是平行经验列表。
 \end{enumerate}
 
 % ============================================================
