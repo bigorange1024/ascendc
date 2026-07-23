@@ -546,7 +546,7 @@ $\mathit{ek}_{\mathrm{KEM}}$ 对 $\mathit{ek}_{\mathrm{PKE}}$ 是直通。
 \begin{itemize}
   \item §~\ref{sec:mathbg-intro}：\textbf{导论}——从第~2~章抽流程策略、说明数学工具落在何处、抬到原则问题；
   \item §~\ref{sec:tool-dep}--\ref{sec:tool-auto}：\textbf{三件工具各一大节}写数学
-        （依赖图与闭包从集合讲起；形式语言；预研过程自动机）；
+        （依赖图与闭包从集合讲起；形式语言；作业过程自动机）；
   \item 然后统一写\textbf{工程体现}、\textbf{回扣}第~2~章、\textbf{枢纽}对照，最后本章小结。
 \end{itemize}
 每个关键定义仍配双例：\textbf{先纯数学小例子，再回到第~\ref{sec:hook}~章的 KEM.KeyGen}。
@@ -645,7 +645,7 @@ Encaps / Decaps 则是检验它能否前瞻，而不只是事后贴标签。
   闭包表 & （工作对象） & 目标 / 已获证 / 依赖闭包 / 缺项的核对表 \\
   拼装计划 / 合法计划 & 字 $w$；语言 $L$ & 一次任务怎么拼；全体合法拼法 \\
   禁止拼法 & $\mathrm{Forb}$ & 不得采用的子串或关闭路线 \\
-  预研过程自动机 & 以配置为状态的迁移系统 & 第三件工具的专名 \\
+  作业过程自动机 & 以配置为状态的迁移系统 & 第三件工具的专名 \\
   作业状态（已获证、还欠什么） & 配置 $(\Gamma,F,S)$ & 自动机的状态 \\
   展开 / 探针取证 / 写入证书 & $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}$ & 自动机上的转移 \\
   脏标记（证书作废） & $\mathsf{Dirty}$ & 上游变更后撤回下游证书 \\
@@ -786,7 +786,7 @@ Encaps / Decaps 则是检验它能否前瞻，而不只是事后贴标签。
   无法区分「菜单绿」与「拼法合法」 &
   否：依赖齐备 $\neq$ 拼装计划合法 \\
   \midrule
-  三 & 预研过程自动机 &
+  三 & 作业过程自动机 &
   无法描述作业如何接受，也无法作废过期证 &
   否：静态依赖图与语言都不谈过程转移 \\
   \midrule
@@ -802,9 +802,9 @@ Encaps / Decaps 则是检验它能否前瞻，而不只是事后贴标签。
 \begin{enumerate}
   \item \textbf{依赖图与依赖闭包}：画出依赖图片段与探路顺序；写出依赖闭包与缺项；说明闭包表核什么。
   \item \textbf{形式语言（合法拼装）}：说明为何「单点 PASS」推不出「拼接 PASS」；说明门禁如何检查拼装计划。
-  \item \textbf{预研过程自动机}：说出「展开 $\to$ 探针取证 $\to$ 写入证书」到接受的大意；解释脏标记为何使已获证清单可收缩。
-  \item \textbf{枢纽}：能指出依赖、展开、进度分别由\textbf{依赖图与闭包}、\textbf{形式语言}、\textbf{预研过程自动机}哪一件管。
-  \item \textbf{落地}：指着 KeyGen 故事说清：哪一段落在依赖图与闭包、哪一段落在形式语言、哪一段落在预研过程自动机。
+  \item \textbf{作业过程自动机}：说出「展开 $\to$ 探针取证 $\to$ 写入证书」到接受的大意；解释脏标记为何使已获证清单可收缩。
+  \item \textbf{枢纽}：能指出依赖、展开、进度分别由\textbf{依赖图与闭包}、\textbf{形式语言}、\textbf{作业过程自动机}哪一件管。
+  \item \textbf{落地}：指着 KeyGen 故事说清：哪一段落在依赖图与闭包、哪一段落在形式语言、哪一段落在作业过程自动机。
 \end{enumerate}
 
 \paragraph{刻意不纳入本章的}
@@ -825,7 +825,7 @@ Encaps / Decaps 则是检验它能否前瞻，而不只是事后贴标签。
 \label{sec:mathbg-spine}
 
 正文按三件数学工具分成三大段；每一大段内部都是：\textbf{先写该工具的数学}，再写\textbf{它在工程过程中的体现}。
-从下一节起，用一整大节写依赖图与依赖闭包（从集合讲到闭包）；随后两大节分别写形式语言与预研过程自动机。
+从下一节起，用一整大节写依赖图与依赖闭包（从集合讲到闭包）；随后两大节分别写形式语言与作业过程自动机。
 
 \begin{figure}[H]
 \centering
@@ -844,7 +844,7 @@ Encaps / Decaps 则是检验它能否前瞻，而不只是事后贴标签。
      数学：字母表 / 字 / 语言 / 文法 / 成员判定\\[1pt]
      工程：拼装计划是否合法？禁止拼法？};
   \node[box, fill=green!12, below=8mm of t2] (t3)
-    {\textbf{工具三：预研过程自动机}\\[2pt]
+    {\textbf{工具三：作业过程自动机}\\[2pt]
      数学：状态（配置）/ 转移 / 接受与拒绝 / 脏标记\\[1pt]
      工程：作业怎么走完？证书何时作废？};
   \node[box, fill=violet!10, below=8mm of t3] (t4)
@@ -2127,11 +2127,11 @@ $\mathrm{Missing}_\Gamma(T)=\emptyset$（全依赖已覆盖）且存在派生表
 \end{remark}
 
 
-\subsection{预研过程自动机}
+\subsection{作业过程自动机}
 \label{sec:tool-auto}
 \label{sec:transition}
 
-本大节专门写第三件数学工具：\textbf{自动机}；在本方法论中的专名是\textbf{预研过程自动机}（亦称门禁自动机）。
+本大节专门写第三件数学工具：\textbf{自动机}；在本方法论中的专名是\textbf{作业过程自动机}（亦称门禁自动机）。
 目标一句话：描述一次作业如何按合法转移走到接受，以及证书何时因脏标记作废。
 它接管「进度」：状态怎么变、何时接受/拒绝。
 工程落点留到后文「工程体现」。
@@ -2141,21 +2141,21 @@ $\mathrm{Missing}_\Gamma(T)=\emptyset$（全依赖已覆盖）且存在派生表
 \textbf{迁移系统}是三元组 $\mathcal{T}=(Q,\to,Q_0)$，其中 $Q$ 为配置集，
 $\to\subseteq Q\times Q$ 为转移关系，$Q_0\subseteq Q$ 为初始配置集。
 若 $(q,q')\in{\to}$，记 $q\to q'$。
-它是定义自动机时常用的底料；下一款定义把它特化成预研过程自动机。
+它是定义自动机时常用的底料；下一款定义把它特化成作业过程自动机。
 \end{definition}
 
-\begin{definition}[预研过程自动机]
-\label{def:pre-research-automaton}
+\begin{definition}[作业过程自动机]
+\label{def:job-process-automaton}
 \textbf{数学工具名}：\textbf{自动机}。\\
-\textbf{本方法论中的专名}：\textbf{预研过程自动机}（门禁自动机）。\\
-固定能力库顶点集与约束库后，预研过程自动机是一个迁移系统，其
+\textbf{本方法论中的专名}：\textbf{作业过程自动机}（门禁自动机）。\\
+固定能力库顶点集与约束库后，作业过程自动机是一个迁移系统，其
 \begin{itemize}
   \item \textbf{状态}取为预研配置 $q=(\Gamma,F,S)$（定义见下）；
   \item \textbf{转移}取为展开 / 探针取证 / 写入证书 / 声明接缝 / 脏标记 / 冻结路线等合法动作；
   \item \textbf{初始状态}由开任务时的已获证清单与前沿给出；
   \item \textbf{接受}见后文「接受配置」。
 \end{itemize}
-此后若只说「自动机」，在本章默认指预研过程自动机。
+此后若只说「自动机」，在本章默认指作业过程自动机。
 \end{definition}
 
 \begin{definition}[预研配置（自动机的状态）]
@@ -2199,7 +2199,7 @@ $\to\subseteq Q\times Q$ 为转移关系，$Q_0\subseteq Q$ 为初始配置集�
 
 \begin{definition}[合法性与幻觉（工作定义）]
 \begin{enumerate}
-  \item 称一次预研过程\textbf{合法}，若它对应预研过程自动机中从某初始配置到接受配置的有限转移序列，
+  \item 称一次作业过程\textbf{合法}，若它对应作业过程自动机中从某初始配置到接受配置的有限转移序列，
         且每一步都符合产生式与 $S$ 中约束。
   \item 称行为构成\textbf{幻觉}，若它执行了非法转移，或在图上使用了无证书边
         （等价地：计划字 $w\notin L$ 或未避开 $\mathrm{Forb}$）。
@@ -2208,7 +2208,7 @@ $\to\subseteq Q\times Q$ 为转移关系，$Q_0\subseteq Q$ 为初始配置集�
 本定义判定「砖是否允许那样砌」。
 \end{definition}
 
-\begin{example}[纯数学：门禁自动机小品]
+\begin{example}[纯数学：作业过程自动机小品]
 状态 $\{q_0,q_{\mathrm{ok}},q_{\mathrm{bad}}\}$，字母 $\{a,b\}$。
 $q_0\xrightarrow{a}q_0$，$q_0\xrightarrow{b}q_{\mathrm{ok}}$，其余进 $q_{\mathrm{bad}}$。
 则字 $aab$ 被接受，$ba$ 被拒绝。这与「先合法前缀、再结束符」的门禁同构。
@@ -2285,23 +2285,23 @@ P1 某能力的 I/O、布局或同步约定变更后，曾基于旧约定的 P2/
 没有形式语言，就会把「菜单上有这些绿项」误当成「任意拼接都合法」。
 
 
-\subsubsection{预研过程自动机 $\to$ 作业怎么走完、证书何时作废}
+\subsubsection{作业过程自动机 $\to$ 作业怎么走完、证书何时作废}
 \label{sec:tool-auto-eng}
 
-预研过程自动机在工程里主要落成：
+作业过程自动机在工程里主要落成：
 \begin{enumerate}
   \item \textbf{作业轨迹}：从开任务配置走到「目标获证、前沿清空」的接受配置；
   \item \textbf{过程动作}：展开缺项、探针取证、写入证书、声明接缝；
   \item \textbf{脏标记}：上游 I/O、布局或同步约定变更后，下游不得继续假绿。
 \end{enumerate}
-没有预研过程自动机，就只能事后说「这次碰巧 PASS」，无法描述过程是否合法、证书为何作废。
+没有作业过程自动机，就只能事后说「这次碰巧 PASS」，无法描述过程是否合法、证书为何作废。
 
 \subsection{回扣第~\ref{sec:hook}~章：流程如何对应本章数学}
 \label{sec:mathbg-hookback}
 
 \paragraph{本段目标}
 对照图~\ref{fig:ch3-spine}：\textbf{不再引入新定义}，按三件工具把第~\ref{sec:hook}~章 KeyGen 流程对照回去。
-学完应能指着故事说清：哪一段是依赖图与闭包（还缺谁），哪一段是形式语言（拼装是否合法），哪一段是预研过程自动机（怎么走完 / 脏标记）。
+学完应能指着故事说清：哪一段是依赖图与闭包（还缺谁），哪一段是形式语言（拼装是否合法），哪一段是作业过程自动机（怎么走完 / 脏标记）。
 
 第~\ref{sec:hook}~章讲的是\textbf{已经走过的}工程故事；本章给的是\textbf{用来把故事说清楚的一套语言}。
 本节\textbf{不再引入新定义}，只做对照。
@@ -2607,7 +2607,7 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \textbf{依赖、展开与进度是三件不同的事}，并分别由三件工具接管——
 \textbf{依赖}归依赖图与依赖闭包，
 \textbf{展开}归形式语言，
-\textbf{进度}归预研过程自动机。
+\textbf{进度}归作业过程自动机。
 下面用三个定义把对象名钉死，并对照它们各回答什么、不回答什么。
 
 \begin{definition}[能力 DAG（库）]
@@ -2625,8 +2625,8 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 \end{definition}
 
 \begin{definition}[配置轨迹]
-预研过程自动机上的状态序列 $q_0\to q_1\to\cdots\to q_m$，其中每个 $q_i$ 为配置
-$(\Gamma_i,F_i,S_i)$（见预研过程自动机一节），称为\textbf{配置轨迹}。
+作业过程自动机上的状态序列 $q_0\to q_1\to\cdots\to q_m$，其中每个 $q_i$ 为配置
+$(\Gamma_i,F_i,S_i)$（见作业过程自动机一节），称为\textbf{配置轨迹}。
 它记录证书如何增减、前沿如何消解——即「进度」。
 \end{definition}
 
@@ -2638,12 +2638,12 @@ $(\Gamma_i,F_i,S_i)$（见预研过程自动机一节），称为\textbf{配置�
   \midrule
   能力 DAG & 依赖图与闭包 & 库中谁依赖谁 & 某次任务如何逐步展开 \\
   派生树 & 形式语言 & 该次任务的展开句子 / 树形 & 全局共享边的全貌 \\
-  配置轨迹 & 预研过程自动机 & 证书如何增减；接受/拒绝 & 输出是否符合 FIPS 字节 \\
+  配置轨迹 & 作业过程自动机 & 证书如何增减；接受/拒绝 & 输出是否符合 FIPS 字节 \\
   \bottomrule
 \end{tabular}
 \end{center}
 \noindent
-\textbf{依赖归依赖图；展开归形式语言；进度归预研过程自动机。}
+\textbf{依赖归依赖图；展开归形式语言；进度归作业过程自动机。}
 \end{proposition}
 
 \begin{example}[纯数学：引理库 vs 一次证明树]
@@ -2724,7 +2724,7 @@ $(\Gamma_i,F_i,S_i)$（见预研过程自动机一节），称为\textbf{配置�
 \;\longrightarrow\;
 \underbrace{\text{形式语言（合法拼装）}}_{\S\ref{sec:tool-lang}}
 \;\longrightarrow\;
-\underbrace{\text{预研过程自动机}}_{\S\ref{sec:tool-auto}},
+\underbrace{\text{作业过程自动机}}_{\S\ref{sec:tool-auto}},
 \]
 再写工程体现、回扣 KeyGen，并以枢纽节收束「依赖 / 展开 / 进度」的分工。
 迷路时先回表~\ref{tab:ch3-three-tools} 与图~\ref{fig:ch3-spine}。
