@@ -2770,82 +2770,302 @@ $(\Gamma_i,F_i,S_i)$（见作业过程自动机一节），称为\textbf{配置�
 \section{从数学到工程对象：节点、边与证书}
 \label{sec:math}
 
-上一章给的是一般语言；本章把它\textbf{落到}预研图上，变成一张张能填的字段。
-若用语和第~\ref{sec:mathbg}~章打架，先以「工程上能不能执行」为准，再回头改数学章并记下修订。
+第~\ref{sec:mathbg}~章把方法论收成三件工具，并钉死实质：
+把 Agent 的开放生成，收成「沿已认证能力的可检查闭包做受控搜索」。
+本章不再加新的数学工具，只做一件事：
 
-\subsection{三个层面（复习）}
+\begin{quote}
+\noindent
+\textbf{把上一章的对象，填成仓库里能写、能查、能交接的字段。}\\
+第~3~章定语义，第~4~章定表单。
+\end{quote}
+
+读完本章，应能：给一个能力\textbf{填一张节点卡}；指着仓库说某条关系大致是\textbf{哪类边}；
+说清证书处在哪一态、何时必须打成 \texttt{dirty}。
+\textbf{不}在本章展开「Agent 四步工作流」与「先交闭包表再写码」的完整门禁——那是第~\ref{sec:gates}~章。
+
+若本章用语与第~\ref{sec:mathbg}~章打架，先以「工程上能不能执行、能不能交接」为准，
+再回头改数学章并记下修订。
+
+\subsection{本章在故事里的位置}
+\label{sec:math-place}
+
+回顾第~3~章导论的三条线，本章各自落地半步：
+
 \begin{center}
-\begin{tabular}{@{}L{3.2cm}L{5.5cm}L{5.3cm}@{}}
+\begin{tabular}{@{}L{3.6cm}L{5.2cm}L{5.0cm}@{}}
   \toprule
-  概念 & 它回答什么 & 它不回答什么 \\
+  第~3~章已说清的 & 本章要填成什么 & 故意留给后文 \\
   \midrule
-  能力 DAG & 引理库里谁依赖谁？ & 某次任务具体怎么一步步展开？ \\
-  语法树 / 派生 & 这次任务展开成了哪句话？ & 全局所有共享边长什么样？ \\
-  配置自动机 & 证书怎么增减？何时接受、何时拒绝？ & 代数算得合不合 FIPS？ \\
+  开放生成 $\neq$ 合法派生 &
+  「合法」对应哪些可检查字段 &
+  任务启动时如何硬拦 Agent \\
+  已验证 / 禁止 / 合法拼装 &
+  节点卡、三类边、证书状态名 &
+  闭包表文件格式、产生式形式化 \\
+  作业过程可检查、可作废 &
+  \texttt{dirty} 与证书阶梯 &
+  四步工作流与门禁清单 \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\subsection{节点（已验证能力）}
-节点 $v$ 建议带上这些字段：
-\begin{itemize}
-  \item \texttt{id}：稳定名字（如 \texttt{pke.keygen.k4}）；
-  \item \texttt{layer}：P0--P3（方法论分层，不必和目录树一一对应）；
-  \item \texttt{iface}：I/O、dtype、形状/布局、同步约定——\textbf{能复用的是 iface，不是源码}；
-  \item \texttt{cert}：路径 + CPU+SIM（必要时加 KAT）+ 版本锚点；
-  \item \texttt{forbid}：否定约束；
-  \item \texttt{repo}：权威目录锚点。
-\end{itemize}
+第~\ref{sec:hook}~章的 KeyGen 仍是主例子；Encaps / Decaps 只作对照提示，长复盘在后文。
+
+\subsection{三个层面：库、一次展开、进度}
+\label{sec:math-three-layers}
+
+枢纽节已定义能力 DAG、派生树、配置轨迹。落到工程填写时，先分清三层各管什么：
+
+\begin{center}
+\begin{tabular}{@{}L{2.6cm}L{2.4cm}L{4.4cm}L{4.2cm}@{}}
+  \toprule
+  工程说法 & 数学归属 & 它回答什么 & 它不回答什么 \\
+  \midrule
+  能力库 / 依赖图 &
+  依赖图与闭包 &
+  引理库里谁依赖谁、先证谁 &
+  某次任务具体怎么一步步展开 \\
+  拼装计划 / 派生 &
+  形式语言 &
+  这次任务展开成了哪句「合法话」 &
+  全局所有共享边长什么样 \\
+  证书怎么变 &
+  作业过程自动机 &
+  证书增减、接受/拒绝、何时作废 &
+  字节算得合不合 FIPS \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{依赖归图；展开归语言；进度归自动机。}
+FIPS / liboqs / golden 仍只回答「算对没有」——与「砖从哪块合法砌过来」是两层事。
+引子里那种「只有 correctness」的伪完成，往往是：第二层（算对）过了，第一层与第三层（合法派生与可交接进度）并没有过。
+
+\subsection{节点：已验证能力的字段卡}
+\label{sec:math-node}
+
+节点 $v$ 是证书的\textbf{主语}：谈「谁已获证、谁还能被引用」时，指的是节点，不是某个临时目录名。
+建议每张节点卡至少能填下表字段（名字可本地化，语义不要丢）：
+
+\begin{center}
+\begin{tabular}{@{}L{2.2cm}L{11.6cm}@{}}
+  \toprule
+  字段 & 含义与填写纪律 \\
+  \midrule
+  \texttt{id} &
+  稳定名字，跨任务可引用（如 \texttt{pke.keygen.k4}、\texttt{kem.keygen.k4}）。
+  不要用「这次 PR 的临时文件夹名」当 id。 \\
+  \texttt{layer} &
+  方法论分层 P0--P3（见下）。分层描述能力角色，\textbf{不必}与磁盘目录一一对应。 \\
+  \texttt{iface} &
+  I/O、dtype、形状/布局、同步与 launch 约定中，\textbf{对外可复用}的那部分。
+  能挂到边上的是 iface，不是「把源码拷过来」。 \\
+  \texttt{cert} &
+  证书证据：权威路径 + 验收级别（CPU+SIM，必要时 KAT）+ 版本锚点（commit / tag / STATUS 日期）。 \\
+  \texttt{forbid} &
+  与本节点相关的否定约束（例如「不得以某某 frozen 为模板」）。可空，但有则必须可检查。 \\
+  \texttt{repo} &
+  权威目录锚点（活跃 \texttt{stable-*} / \texttt{pass-*} / 登记表条目等）。
+  frozen 目录可以出现在否定说明里，\textbf{不得}充当正向 \texttt{repo}。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
 
 \paragraph{分层语言（P0--P3）}
 \begin{center}
-\begin{tabular}{@{}ll@{}}
+\begin{tabular}{@{}L{1.2cm}L{12.6cm}@{}}
   \toprule
   层 & 含义（放在本仓库语境里说） \\
   \midrule
-  P3 & 顶层算子 / 算法入口（如 KEM.KeyGen、KEM.Encaps） \\
+  P3 & 顶层算子 / 算法入口（如 KEM.KeyGen、KEM.Encaps、KEM.Decaps） \\
   P2 & 算法构件（如 PKE.KeyGen / Encrypt / Decrypt 全链） \\
-  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots）——\textbf{当能力名用}，本章不讲它们的代数细节 \\
+  P1 & 领域原语（NTT、basemul、CBD、ByteEncode、SHAKE\ldots）——\textbf{当能力名用}；本章不讲其代数细节 \\
   P0 & 平台公理（DataCopy、向量算子、MMAD+tiling、TPipe/TQue 同步壳\ldots） \\
   \bottomrule
 \end{tabular}
 \end{center}
 
+纪律：做 P3 任务时，\textbf{禁止}在同一任务里顺手「发明」未获证的 P0/P1 并当作已可引用能力。
+缺 P0/P1，应先单独探针获证，再写进库、再被引用——这正是「受控搜索」在节点层的含义。
+
+\begin{example}[节点卡示例：\texttt{pke.keygen.k4}]
+续第~\ref{sec:hook}~章。下面不是正式 SCHEMA，只演示「填得满」长什么样：
+\begin{center}
+\begin{tabular}{@{}L{2.2cm}L{11.6cm}@{}}
+  \toprule
+  字段 & 示例填写 \\
+  \midrule
+  \texttt{id} & \texttt{pke.keygen.k4} \\
+  \texttt{layer} & P2 \\
+  \texttt{iface} &
+  与 stable PKE KeyGen 交付 I/O 一致；NTT LUT 静态约定；设备侧布局与后续 KEM 尾拼兼容的那部分写清 \\
+  \texttt{cert} &
+  \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}（路径以仓库现状为准）；
+  CPU+SIM 对拍；STATUS / 交付纪要作版本锚点 \\
+  \texttt{forbid} &
+  不得把 liboqs C 源码当作 AscendC 实现规格；不得从 \texttt{frozen/} 抄实现 \\
+  \texttt{repo} & 上述 stable 目录（及对应 baseline-registry 条目，若有） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+当 KEM.KeyGen 引用它时，引用的是这张卡上的 \texttt{iface}+\texttt{cert}，不是「目录里好像有个绿名」。
+\end{example}
+
 \subsection{边的三种类型}
+\label{sec:math-edges}
+
+边回答「节点之间允许怎样发生关系」。建议只维护三类——再多容易和目录树、\texttt{\#include} 搅在一起。
+
 \begin{enumerate}
-  \item \textbf{语义依赖}：$u$ 要对，离不开 $v$ 的 iface（例如「先有 NTT 能力」，才谈得上 PKE.KeyGen）；
-  \item \textbf{接缝（compose）}：$A$、$B$ 各自有证，$A\!\circ\!B$ \textbf{仍要}单独立成节点再获证
-        （「组合并不免费」）；
-  \item \textbf{否定边}：写明禁止什么（frozen 模板、未登记计算块、Host 默认走密码路径，等等）。
+  \item \textbf{语义依赖}\\
+        $u$ 要对，离不开 $v$ 的 iface。
+        例：没有已获证的 NTT（P1），就谈不上完整的 PKE.KeyGen（P2）；
+        没有已获证的 PKE.KeyGen，就谈不上合法的 KEM.KeyGen（P3）主链。
+  \item \textbf{接缝（compose）}\\
+        $A$、$B$ 各自有证，$A\!\circ\!B$ \textbf{仍要}单独立成节点（或显式接缝项）再获证。
+        「组合并不免费」：两块都绿，推不出拼在一起也绿。
+        例：KEM.KeyGen 相对 PKE.KeyGen 多出的 2-launch 衔接、Alg.16 尾、$\mathit{dk}$ 展开等，
+        都是接缝，不是「PKE 绿了就自动有 KEM」。
+  \item \textbf{否定边}\\
+        写明禁止什么：frozen 模板、未登记计算块、把 correctness 标本当实现来源、
+        Host 默认走密码学 RNG 路径，等等。
+        否定边的工程投影通常是 \texttt{FROZEN.md}、Rule 禁令、节点卡上的 \texttt{forbid}。
 \end{enumerate}
 
-\subsection{证书状态（含非单调）}
+\begin{remark}[边 $\neq$ \texttt{\#include}]
+图上的边说的是\textbf{能力与证书关系}，不是编译依赖。
+允许「逻辑上依赖某 iface、工程上通过 launch/数据约定衔接」，
+也禁止「为了省事跨目录偷源码却不在图上露脸」。
+自包含原则：对外挂的是 iface；仓库已有的共享库例外须写明，不能默许 Agent 自由翻抄。
+\end{remark}
+
+\begin{example}[KeyGen 上的三类边（示意）]
+\begin{itemize}
+  \item 语义依赖：\texttt{kem.keygen.k4} $\leftarrow$ \texttt{pke.keygen.k4}；
+        \texttt{pke.keygen.k4} $\leftarrow$ NTT 等 P1 能力（在 PKE 获证时已闭合）。
+  \item 接缝：Alg.16 尾拼 / $\mathit{dk}$ 展开等——PKE 证书\textbf{覆盖不了}，须在 KEM 路径上单独说清并验收。
+  \item 否定边：禁止以 \texttt{frozen-*} 或 correctness 里的 vendor 拼法为 KEM 实现模板。
+\end{itemize}
+\end{example}
+
+\subsection{证书状态：阶梯与非单调}
+\label{sec:math-cert}
+
+证书状态描述节点在引理库 $\Gamma$ 中的资格，建议采用下面的阶梯，并显式允许\textbf{回退}：
+
 \[
-\mathsf{unproven}\to\mathsf{probe}\to\mathsf{lemma}\to\mathsf{deliverable},
-\quad\text{以及}\quad
+\mathsf{unproven}
+\;\longrightarrow\;
+\mathsf{probe}
+\;\longrightarrow\;
+\mathsf{lemma}
+\;\longrightarrow\;
+\mathsf{deliverable},
+\qquad\text{以及}\qquad
 \mathsf{dirty}.
 \]
-\texttt{dirty} 的意思是：上游 iface/tiling 一改，下游证书作废——引理库 $\Gamma$ \textbf{是可以收缩的}。
 
-\subsection{仓库机制与数学对象的对照（凭直觉）}
-\begin{itemize}
-  \item 活跃 \texttt{INDEX.md}：眼下可以引用的能力菜单（$\Sigma$ 在工程上的投影，\textbf{还不是} $L$）；
-  \item \texttt{frozen/} + \texttt{FROZEN.md}：否定边；
-  \item \texttt{baseline-registry}：golden 允许调用的、已经验证过的计算块；
-  \item \texttt{customspec}：examples 写码前的规格门禁（派生计划的一种文书形态）。
-\end{itemize}
+\begin{center}
+\begin{tabular}{@{}L{2.6cm}L{11.2cm}@{}}
+  \toprule
+  状态 & 工程含义 \\
+  \midrule
+  \texttt{unproven} &
+  只有名字或愿望，尚无按约定跑通的证据。 \\
+  \texttt{probe} &
+  探针级：平台/接缝行为已用 CPU+SIM（或任务声明的级别）跑通，可作后续引用的弱证书。 \\
+  \texttt{lemma} &
+  可稳定引用的能力；iface 写清，可进入依赖闭包的「已获证」栏。 \\
+  \texttt{deliverable} &
+  交付级（如 stable）：在 lemma 之上还有交付目录、登记表与交接文书。 \\
+  \texttt{dirty} &
+  \textbf{作废标记}：上游 iface / tiling / 同步约定变更后，下游不得继续宣称证书有效。 \\
+  \bottomrule
+\end{tabular}
+\end{center}
 
-\subsection{立论（承接第~\ref{sec:mathbg}~章）}
+\texttt{dirty} 说明引理库 $\Gamma$ \textbf{可以收缩}：合法派生不是「绿过一次就永远可引用」。
+这直接对应第~3~章方法实质里的过程约束——下层一改，上层哪些「曾经通过」必须可检查地作废。
+引子里沉淀出的错误经验，若不当场打脏或否定，就会在后续任务里假绿复活。
+
+\begin{remark}[证书与对拍]
+对拍通过是证书的\textbf{必要证据之一}，不是证书的全部。
+对拍回答 correctness；证书还要求：引用关系合法、接缝已单独立项（若需要）、否定边未被踩中、状态未被标脏。
+\end{remark}
+
+\subsection{仓库机制：数学对象的投影（凭直觉）}
+\label{sec:math-repo}
+
+现有仓库机制，大多可看成上述对象的\textbf{投影}——先会认，再谈要不要另做一张「真图数据库」。
+
+\begin{center}
+\begin{tabular}{@{}L{3.4cm}L{5.0cm}L{5.4cm}@{}}
+  \toprule
+  仓库机制 & 大致投影到 & 常见误读 \\
+  \midrule
+  活跃 \texttt{INDEX.md} &
+  能力菜单；$\Sigma$ / 候选引用集的工程投影 &
+  当成合法拼装说明书 $L$ 本身 \\
+  \texttt{frozen/}+\texttt{FROZEN.md} &
+  否定边与关闭判决 &
+  当成可抄的实现参考库 \\
+  \texttt{baseline-registry} &
+  golden 允许调用的已验证计算块 &
+  当成 AscendC 必须同构的实现规格 \\
+  \texttt{*-customspec.*} &
+  一次任务的计划/规格文书（派生计划的一种形态） &
+  当成可以跳过闭包表的替代品 \\
+  \texttt{STATUS.md} / 对拍日志 &
+  证书证据的一部分 &
+  当成「永不作废」的永久执照 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
 \begin{quote}
-预研算不算合法 $\approx$ 在已获证能力生成的语言 $L$ 上，
-用配置自动机去搜一条接受路径；\\
-\textbf{幻觉} $\approx$ 非法转移，或根本没有证书边。\\
-语义对照（FIPS/liboqs/golden）管「算对没算对」；形式方法管「砖是从哪块砌过来的」。
+\noindent
+\textbf{菜单 $\neq$ 说明书。}\\
+INDEX 绿项告诉你「库里有哪些候选砖」；
+合法拼装计划才告诉你「这次允许怎样砌」。
+把菜单当说明书，是开放生成重新混进来的快车道。
 \end{quote}
+
+\subsection{立论收束与下一章}
+\label{sec:math-thesis}
+
+把第~\ref{sec:mathbg}~章的实质，用本章字段再说一遍：
+
+\begin{quote}
+\noindent
+预研/实现算不算合法 $\approx$
+在已获证能力（节点卡 + 证书状态）生成的语言 $L$ 上，
+用作业过程自动机去搜一条\textbf{接受路径}；\\[0.35em]
+工程语境的幻觉 / 无效派生 $\approx$
+非法转移，或引用了无证书边、已脏、已否定的节点；\\[0.35em]
+语义对照（FIPS / liboqs / golden）管「算对没算对」；
+形式方法管「砖是从哪块合法砌过来的」。
+\end{quote}
+
+因此：第~\ref{sec:gates}~章将规定——接到目标 $T$ 时，Agent \textbf{被允许}做哪些动作、
+如何先交闭包表再写码；本章的节点、边与证书，就是那张表上要填的格子。
+
+\subsection{本章小结}
+\label{sec:math-summary}
+
+\begin{enumerate}
+  \item 本章把三件工具落到可填字段：\textbf{节点卡}、\textbf{三类边}、\textbf{证书阶梯（含 dirty）}。
+  \item 可复用的是 \texttt{iface}+证书，不是源码拷贝；组合不免费，接缝要单独成事。
+  \item 仓库 INDEX / frozen / registry / customspec 是投影，不是数学对象的替代品；菜单不是说明书。
+  \item 下一章进入门禁：在这些字段之上，规定 Agent 的合法动作与四步工作流。
+\end{enumerate}
 
 % ============================================================
 \section{门禁与工作流：Agent 被允许做什么}
 \label{sec:gates}
+
+上一章把节点、边与证书填成了可写字段；本章规定：接到目标 $T$ 时，Agent \textbf{被允许}做什么。
+字段不够，还要有转移规则——否则表单填满了，开放生成仍会从门缝钻回来。
 
 \subsection{合法性规则（v0）}
 接到目标 $T$ 时，只允许做这些事：
