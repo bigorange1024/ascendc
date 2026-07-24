@@ -8,6 +8,7 @@
 | [fips203-mlkem1024-pke-encrypt-baseline-registry.md](fips203-mlkem1024-pke-encrypt-baseline-registry.md) | Alg.14 Encrypt 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem1024-kem-keygen-baseline-registry.md](fips203-mlkem1024-kem-keygen-baseline-registry.md) | Alg.19 KEM KeyGen 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem1024-kem-encaps-baseline-registry.md](fips203-mlkem1024-kem-encaps-baseline-registry.md) | Alg.20 KEM Encaps 交付 golden / KAT 计算块登记 |
+| [fips203-mlkem1024-kem-decaps-baseline-registry.md](fips203-mlkem1024-kem-decaps-baseline-registry.md) | Alg.21 KEM Decaps 交付 golden / KAT 计算块登记 |
 
 ---
 
