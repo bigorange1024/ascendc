@@ -2842,6 +2842,14 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 第三列标明它属于第~3~章哪一件数学工具——
 \textbf{依赖图 / 依赖闭包}、\textbf{形式语言}、或\textbf{作业过程自动机}。
 
+\paragraph{算法参数体例（强制）}
+\textbf{参数}栏里写出的每个数学对象，必须在\textbf{步骤}中被读取或改写；
+禁止「参数写了 $G=(V,E)$，步骤却只用 $V$」这类无效输入。
+若某子程序确实不消费边，则参数只声明顶点集 $V$（或其它真实用到的对象），
+完整图留给调用闭包/边分类的算法。
+记法 $G=(V,E)$ 表示参数是整图 $G$；此时步骤须用到 $G$，或显式用到其分量 $V$ 与 $E$。
+若步骤只经子程序传入整图 $G$，则参数栏写 $G$ 即可，不必再把未直接点名的 $V,E$ 拆成独立参数。
+
 \begin{center}
 \small
 \begin{tabular}{@{}L{3.6cm}L{2.8cm}L{7.0cm}@{}}
@@ -2884,14 +2892,21 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 第~3~章把证书主语定为顶点 $v\in V$，但未规定工程上如何记录 $v$。
 下面的算法把「$v$ 可被引用」所需的检查信息，编码成一张有限字段卡。
 
+下面把「顶点 $\mapsto$ 节点卡」写成可执行手续。
+体例上：本算法\textbf{只}吃顶点集与约束，\textbf{不}吃边集——边的分类见算法~\ref{alg:classify-rel}，闭包沿边展开见算法~\ref{alg:depstar}；
+调用方若持有完整 DAG，此处只传入其顶点部。
+
 \begin{methodalgo}{编码节点卡 $\mathrm{EncodeNode}$}
 \label{alg:encode-node}
-\algoparam{能力 DAG $G=(V,E)$；分层映射 $\lambda:V\to\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{P3}\}$；
-当前已获证集 $\Gamma$；约束库 $S$（含与各顶点相关的 $\mathrm{Forb}$ 片段）；
+\algoparam{能力顶点集 $V$；
+分层映射 $\lambda:V\to\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{P3}\}$；
+当前已获证集 $\Gamma\subseteq V$；约束库 $S$（含与各顶点相关的 $\mathrm{Forb}$ 片段）；
 仓库锚点映射 $\rho:V\to\mathrm{Paths}$（活跃权威路径，禁止指向 \texttt{frozen/} 正向源码）。}
-\algoin{顶点 $v\in V$。}
-\algoout{节点卡 $\mathrm{Card}(v)=(\texttt{id},\texttt{layer},\texttt{interface},\texttt{cert},\texttt{forbid},\texttt{repo})$。}
+\algoin{顶点 $v$。}
+\algoout{节点卡 $\mathrm{Card}(v)=(\texttt{id},\texttt{layer},\texttt{interface},\texttt{cert},\texttt{forbid},\texttt{repo})$；
+若前置检查失败则拒绝输出。}
 \begin{algosteps}
+  \item \textbf{前置（用到 $V$）}：若 $v\notin V$，拒绝并报错「未知能力顶点」。
   \item 令 $\texttt{id}(v)$ 为 $v$ 的稳定名字（跨任务可引用；不得用临时目录名冒充）。
   \item 令 $\texttt{layer}(v)=\lambda(v)$（P0--P3 只描述能力角色，不要求与磁盘树同构）。
   \item 从 $S$ 中抽取 $v$ 对外可复用的 I/O、dtype、布局与同步约定，写入 $\texttt{interface}(v)$。
@@ -2961,7 +2976,7 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 换言之：门禁若只关心「能否引用 $v$」，不必再翻开 $v$ 的实现源码。
 \end{proposition}
 \begin{proof}[证明梗概]
-第~3~章定义「已获证」为 $v\in\Gamma$，算法步骤~4 正是该隶属关系的工程编码；
+第~3~章定义「已获证」为 $v\in\Gamma$，算法~\ref{alg:encode-node} 中写入 $\texttt{cert}$ 的步骤正是该隶属关系的工程编码；
 $\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法引用在定义上只依赖证书资格与 $S$ 中接口/禁止约束。
 \end{proof}
 
@@ -3002,21 +3017,28 @@ $\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合
 
 \begin{methodalgo}{边分类 $\mathrm{ClassifyRel}$}
 \label{alg:classify-rel}
-\algoparam{能力 DAG $G=(V,E)$；禁止拼法族 $\mathrm{Forb}$；接缝声明集 $\mathcal{C}_{\mathrm{seam}}\subseteq V\times V$
-（由约束库 $S$ 维护：哪些「$A$ 与 $B$ 已各自获证仍须单独认证」）。}
+\algoparam{能力 DAG $G=(V,E)$（本算法可读 $V$、写 $E$，从而更新 $G$）；
+禁止拼法族 $\mathrm{Forb}$；接缝声明集 $\mathcal{C}_{\mathrm{seam}}\subseteq V\times V$
+（由约束库维护：哪些「$A$ 与 $B$ 已各自获证仍须单独认证」）。}
 \algoin{关系请求 $r$，形态为以下之一：
 （i）有序对 $(u,v)$ 表示「$v$ 语义依赖 $u$」；
 （ii）接缝请求 $\mathrm{compose}(A,B)$；
 （iii）禁止请求 $\mathrm{forbid}(x)$（关闭路线、禁模板等）。}
 \algoout{标签 $\tau(r)\in\{\mathsf{sem},\mathsf{compose},\mathsf{forb}\}$，以及应写入的载体
-（$E$ 的一条边、接缝节点候选、或 $\mathrm{Forb}$ 的一条）。}
+（$G$ 的一条边、接缝节点候选、或 $\mathrm{Forb}$ 的一条）；失败则拒绝。
+成功后调用方持有的图为更新后的 $G$。}
 \begin{algosteps}
   \item 若 $r=\mathrm{forbid}(x)$，令 $\tau=\mathsf{forb}$，把 $x$ 并入 $\mathrm{Forb}$（或写入对应 \texttt{forbid} 字段），返回。
-  \item 若 $r=\mathrm{compose}(A,B)$，或 $(A,B)\in\mathcal{C}_{\mathrm{seam}}$，令 $\tau=\mathsf{compose}$：
-        新建或引用接缝顶点 $s_{A\!\circ\!B}$（若尚无），要求日后单独 $\mathsf{Probe}/\mathsf{Certify}$；
-        \textbf{不}把「$A\in\Gamma$ 且 $B\in\Gamma$」推成 $s_{A\!\circ\!B}\in\Gamma$。
-  \item 否则若 $r=(u,v)$ 且任务语义为「$v$ 的正确性依赖 $u$ 的 interface」，令 $\tau=\mathsf{sem}$，确保 $(u,v)\in E$。
-  \item 返回 $\tau(r)$ 与载体。
+  \item 若 $r=\mathrm{compose}(A,B)$，或 $(A,B)\in\mathcal{C}_{\mathrm{seam}}$：
+        若 $A\notin V$ 或 $B\notin V$，拒绝；
+        否则令 $\tau=\mathsf{compose}$：新建或引用接缝顶点 $s_{A\!\circ\!B}$；
+        若 $s_{A\!\circ\!B}\notin V$，则更新图 $G$：令 $V\leftarrow V\cup\{s_{A\!\circ\!B}\}$；
+        要求日后单独 $\mathsf{Probe}/\mathsf{Certify}$；
+        \textbf{不}把「$A$ 与 $B$ 均已获证」推成 $s_{A\!\circ\!B}$ 已获证。
+  \item 否则若 $r=(u,v)$：若 $u\notin V$ 或 $v\notin V$，拒绝；
+        若任务语义为「$v$ 的正确性依赖 $u$ 的 interface」，令 $\tau=\mathsf{sem}$，
+        并更新图 $G$：令 $E\leftarrow E\cup\{(u,v)\}$（若尚无该边）。
+  \item 返回 $\tau(r)$ 与载体（及更新后的 $G$，若本步改写了 $V$ 或 $E$）。
 \end{algosteps}
 \end{methodalgo}
 
@@ -3086,23 +3108,26 @@ $\mathsf{sem}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编
 
 \begin{methodalgo}{依赖闭包 $\mathrm{DepStar}$}
 \label{alg:depstar}
-\algoparam{有限依赖图 $G=(V,E)$（第~3~章）。}
-\algoin{目标 $T\in V$（或目标集 $A\subseteq V$，逐点并）。}
-\algoout{$D=\mathrm{Dep}^*_G(T)$。}
+\algoparam{有限依赖图 $G=(V,E)$（第~3~章：$V$ 为顶点集，$E$ 为依赖边集）。}
+\algoin{目标 $T$（或目标集 $A$，逐点并）。}
+\algoout{$D=\mathrm{Dep}^*_G(T)$；若 $T\notin V$ 则拒绝。}
 \begin{algosteps}
-  \item 令 $D_0=\{T\}$。
-  \item 对 $k=0,1,2,\ldots$，令 $D_{k+1}=D_k\cup\bigcup_{v\in D_k}\mathrm{Pred}(v)$，直至 $D_{k+1}=D_k$。
-  \item 返回 $D_k$（第~3~章已证：稳定值等于 $\mathrm{Dep}^*(T)$，且步数 $\le|V|$）。
+  \item 在输入图 $G=(V,E)$ 上检查：若 $T\notin V$，拒绝。
+  \item 令 $D_0=\{T\}$。对任意 $v\in V$，记前驱
+        $\mathrm{Pred}_G(v)=\{u\in V\mid (u,v)\in E\}$（显式读取边集 $E$）。
+  \item 对 $k=0,1,2,\ldots$，令 $D_{k+1}=D_k\cup\bigcup_{v\in D_k}\mathrm{Pred}_G(v)$，直至 $D_{k+1}=D_k$。
+  \item 返回 $D_k$（第~3~章已证：稳定值等于 $\mathrm{Dep}^*_G(T)$，且步数 $\le|V|$）。
 \end{algosteps}
 \end{methodalgo}
 
 \begin{methodalgo}{缺项 $\mathrm{MissingOf}$}
 \label{alg:missing}
-\algoparam{$G$；当前已获证集 $\Gamma$。}
-\algoin{目标 $T\in V$。}
+\algoparam{有限依赖图 $G$；当前已获证集 $\Gamma$。}
+\algoin{目标 $T$。}
 \algoout{$M=\mathrm{Missing}_\Gamma(T)$。}
 \begin{algosteps}
-  \item 调用算法~\ref{alg:depstar} 得 $D=\mathrm{Dep}^*(T)$。
+  \item 将同一图 $G$ 作为参数调用算法~\ref{alg:depstar}，得 $D=\mathrm{Dep}^*_G(T)$
+        （若 $T$ 不是 $G$ 的顶点，则随 $\mathrm{DepStar}$ 拒绝）。
   \item 返回 $M=D\setminus\Gamma$。
 \end{algosteps}
 \end{methodalgo}
@@ -3121,13 +3146,15 @@ $(\mathrm{Dep}^*(T)\cap\Gamma)\dot{\cup}M$ 的左部单独成立。
 
 \begin{methodalgo}{脏标记传播 $\mathrm{DirtyPropagate}$}
 \label{alg:dirty}
-\algoparam{能力 DAG $G=(V,E)$；当前 $\Gamma$。}
-\algoin{接口/约定发生变更的顶点集合 $U\subseteq V$。}
-\algoout{新的已获证集 $\Gamma'$，以及被打脏的集合 $\Delta$。}
+\algoparam{能力 DAG $G=(V,E)$；当前已获证集 $\Gamma\subseteq V$。}
+\algoin{接口/约定发生变更的顶点集合 $U$。}
+\algoout{新的已获证集 $\Gamma'$，以及被打脏的集合 $\Delta$；若 $U\not\subseteq V$ 则拒绝。}
 \begin{algosteps}
-  \item 令 $\Delta_0=U$。
-  \item 迭代：把所有在 $G$ 中依赖 $\Delta_k$ 内顶点的后继并入，直到稳定，得 $\Delta$（变更锥）。
-        形式上下一节可用「以 $U$ 为种子、沿出边可达」的闭包描述。
+  \item 在输入图 $G=(V,E)$ 上检查：若 $U\not\subseteq V$，拒绝。
+  \item 令 $\Delta_0=U$。对任意 $u\in V$，记后继
+        $\mathrm{Succ}_G(u)=\{w\in V\mid (u,w)\in E\}$（显式读取边集 $E$ 的出邻）。
+  \item 迭代：令 $\Delta_{k+1}=\Delta_k\cup\bigcup_{u\in\Delta_k}\mathrm{Succ}_G(u)$，直至稳定，得 $\Delta$（变更锥：
+        以 $U$ 为种子、沿出边在 $G$ 上可达的全部顶点）。
   \item 令 $\Gamma'=\Gamma\setminus\Delta$，返回 $(\Gamma',\Delta)$。
 \end{algosteps}
 \end{methodalgo}
@@ -3245,20 +3272,27 @@ $\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证
 
 \begin{methodalgo}{填写闭包表 $\mathrm{BuildClosureTable}$}
 \label{alg:closure-table}
-\algoparam{能力 DAG $G$；当前 $\Gamma$；约束库 $S$（含 $\mathrm{Forb}$、接缝声明 $\mathcal{C}_{\mathrm{seam}}$）；
-分层 $\lambda$；状态标签 $\sigma$（命题~\ref{prop:cert-ladder}）。
+\algoparam{能力 DAG $G=(V,E)$；当前已获证集 $\Gamma\subseteq V$；约束库 $S$（含 $\mathrm{Forb}$、接缝声明 $\mathcal{C}_{\mathrm{seam}}$）；
+分层 $\lambda:V\to\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{P3}\}$；
+状态标签 $\sigma$（命题~\ref{prop:cert-ladder}；用于识别已打脏但仍可能误留在文书里的点）。
 子程序：算法~\ref{alg:depstar}、\ref{alg:missing}、\ref{alg:classify-rel}、\ref{alg:encode-node}。}
-\algoin{目标 $T\in V$；I/O 契约 $\mathcal{C}$；声明验收级别 $\ell\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$。}
+\algoin{目标 $T$；I/O 契约 $\mathcal{C}$；声明验收级别 $\ell\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$。}
 \algoout{闭包表
-$\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit})$，
-其中 $D=\mathrm{Dep}^*(T)$，$M=\mathrm{Missing}_\Gamma(T)$。}
+$\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit},\mathrm{Warn})$，
+其中 $D=\mathrm{Dep}^*_G(T)$，$M=\mathrm{Missing}_\Gamma(T)$；$\mathrm{Warn}$ 为警告袋（可空）。}
 \begin{algosteps}
-  \item \textbf{目标声明}：写入 $(T,\mathcal{C},\ell)$；若任一项缺失，拒绝输出（任务未声明）。
-  \item 调用 $\mathrm{DepStar}(T)$ 得 $D$；调用 $\mathrm{MissingOf}(T)$ 得 $M$。
-  \item 对每张需要引用的 $v\in D\cap\Gamma$，调用 $\mathrm{EncodeNode}(v)$ 核对 $\texttt{cert}\neq\bot$ 且未被打脏。
-  \item \textbf{接缝栏}：对所有与 $T$ 相关的 $\mathrm{compose}$ 请求跑 $\mathrm{ClassifyRel}$，
+  \item \textbf{目标声明}：在图 $G=(V,E)$ 上，若 $T\notin V$ 或 $(T,\mathcal{C},\ell)$ 任一项缺失，拒绝输出（任务未声明）。
+        否则写入 $(T,\mathcal{C},\ell)$。
+  \item 从约束库 $S$ 取出本任务可见的 $\mathrm{Forb}$ 与 $\mathcal{C}_{\mathrm{seam}}$（后续接缝栏与否定栏只读这两份摘录，
+        但仍以 $S$ 为唯一来源——禁止另起一份未登记的禁止表）。
+  \item 以参数 $G$ 调用 $\mathrm{DepStar}(T)$ 得 $D$（该子程序沿 $E$ 取前驱）；以参数 $G,\Gamma$ 调用 $\mathrm{MissingOf}(T)$ 得 $M$。
+  \item 对每张需要引用的 $v\in D\cap\Gamma$：以 $G$ 的顶点集 $V$ 等参数调用 $\mathrm{EncodeNode}(v)$，
+        核对 $\texttt{cert}\neq\bot$；若维护了 $\sigma$ 且 $\sigma(v)=\mathsf{dirty}$，则把 $v$ 移出「可引用已获证」视角并记入 $\mathrm{Warn}$。
+  \item \textbf{接缝栏}：对所有与 $T$ 相关的 $\mathrm{compose}$ 请求，以参数 $G,\mathrm{Forb},\mathcal{C}_{\mathrm{seam}}$ 跑 $\mathrm{ClassifyRel}$，
         收集尚未获证的接缝顶点集 $\mathrm{Seams}$；把 $\mathrm{Seams}\setminus\Gamma$ 并入缺项视角
         （实现上可并入 $M$ 或单列，但门禁必须看见它们）。
+  \item \textbf{分层警告（用到 $\lambda$）}：若存在 $u\in M$ 使 $\lambda(u)\in\{\mathrm{P0},\mathrm{P1}\}$，
+        将「禁止在做 $T$ 的同一任务里顺便发明该底层」写入 $\mathrm{Warn}$（对照推论「禁止同任务发明未获证底层」）。
   \item \textbf{否定栏}：计算 $\mathrm{ForbHit}=\{x\in\mathrm{Forb}\mid x\text{ 与本次计划相交}\}$；
         若计划显式引用 $\mathrm{ForbHit}$ 中模板，标记为硬冲突。
   \item 返回 $\mathrm{CT}$。
@@ -3286,6 +3320,8 @@ $\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit})$，
   须单独认证的接缝顶点；未获证者门禁必须看见 \\
   否定 $\mathrm{ForbHit}$ &
   本次计划与 $\mathrm{Forb}$ 的相交；非空则硬冲突 \\
+  警告 $\mathrm{Warn}$ &
+  可空；含脏证书误留、同任务发明 P0/P1 缺项等非硬冲突提示 \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -3355,10 +3391,13 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
 
 \begin{methodalgo}{门禁判定 $\mathrm{GateCheck}$}
 \label{alg:gate-check}
-\algoparam{同算法~\ref{alg:closure-table}。}
+\algoparam{本算法\textbf{只读}闭包表 $\mathrm{CT}$ 的各栏（不另取 $G$）。
+若输入尚不是表，则携带与算法~\ref{alg:closure-table} \textbf{相同}的参数，先调用之得到 $\mathrm{CT}$。}
 \algoin{闭包表 $\mathrm{CT}$（或先输入 $T,\mathcal{C},\ell$ 再内生调用 $\mathrm{BuildClosureTable}$）。}
 \algoout{$\mathsf{ALLOW}$（允许按 $\ell$ 写 $T$）或 $\mathsf{BLOCK}(R)$（拒绝原因袋 $R$）。}
 \begin{algosteps}
+  \item 若输入不是完整 $\mathrm{CT}$，则用本算法参数调用算法~\ref{alg:closure-table} 生成 $\mathrm{CT}$；失败则
+        $\mathsf{BLOCK}(\{\mathsf{no\_table}\})$。
   \item 若 $\mathrm{CT}$ 未完整，返回 $\mathsf{BLOCK}(\{\mathsf{no\_table}\})$。
   \item 若 $\mathrm{ForbHit}\neq\emptyset$，返回 $\mathsf{BLOCK}(\{\mathsf{forb}\}\cup\mathrm{ForbHit})$。
   \item 若 $M\neq\emptyset$ 或 $\mathrm{Seams}\not\subseteq\Gamma$，返回
@@ -3369,12 +3408,16 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
 
 \begin{methodalgo}{最小补洞一轮 $\mathrm{MinimalFillRound}$}
 \label{alg:min-fill}
-\algoparam{$G,\Gamma$；第~3~章「相对 $\Gamma$ 的缺项生成集」概念。}
+\algoparam{有限依赖图 $G$；当前已获证集 $\Gamma$
+（选取缺项生成集时必须相对 $G$ 上的 $\mathrm{Dep}^*_G$ 判定）。}
 \algoin{目标 $T$；当前 $M=\mathrm{Missing}_\Gamma(T)$（可含未获证接缝）。}
 \algoout{本轮补证对象集合 $B\subseteq M$，以及建议的动作序列（对每个 $u\in B$：$\mathsf{Probe}$ 然后条件性 $\mathsf{Certify}$）。}
 \begin{algosteps}
   \item 若 $M=\emptyset$，返回 $B=\emptyset$。
-  \item 在 $M$ 中选取一个缺项生成集 $B$（优先较小者；存在性见第~3~章有限图上极小生成集）。
+  \item 以参数 $G$ 调用 $\mathrm{DepStar}(T)$ 得 $D=\mathrm{Dep}^*_G(T)$。
+  \item 在 $M$ 中选取 $B\subseteq M$，使
+        $\mathrm{Dep}^*_G\bigl((D\cap\Gamma)\cup B\bigr)=\mathrm{Dep}^*_G(T)$
+        （即第~3~章「相对 $\Gamma$ 的缺项生成集」；优先较小者；有限图 $G$ 上极小生成集存在）。
   \item 对每个 $u\in B$：输出动作「$\mathsf{Probe}(u)$；验收通过则 $\mathsf{Certify}(u)$ 使 $\Gamma\leftarrow\Gamma\cup\{u\}$」。
   \item 禁止把 $B$ 选成「整份 $T$ 顶层实现」来冒充补洞——补洞对象应是缺项，不是跳过闭包。
 \end{algosteps}
