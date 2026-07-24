@@ -2838,25 +2838,42 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 \subsection{推导用到的第~3~章工具箱}
 \label{sec:math-toolbox}
 
-下文算法默认携带下列参数（均已在第~\ref{sec:mathbg}~章定义；此处只列接口）：
+下文算法默认携带下列参数（均已在第~\ref{sec:mathbg}~章定义；此处只列接口）。
+第三列标明它属于第~3~章哪一件数学工具——
+\textbf{依赖图 / 依赖闭包}、\textbf{形式语言}、或\textbf{作业过程自动机}。
 
 \begin{center}
-\begin{tabular}{@{}L{3.4cm}L{10.4cm}@{}}
+\small
+\begin{tabular}{@{}L{3.6cm}L{2.8cm}L{7.0cm}@{}}
   \toprule
-  数学对象 & 本章用法 \\
+  数学对象 & 第~3~章工具 & 本章用法 \\
   \midrule
   能力 DAG $G=(V,E)$ &
+  \textbf{依赖图} &
   顶点 $=$ 可命名能力；边 $=$ 依赖/接缝关系的载体 \\
+  \midrule
   $\mathrm{Dep}^*_G(T)$、迭代 $D_k(T)$ &
+  \textbf{依赖闭包} &
   算「完成 $T$ 理论上要齐谁」；步骤直接调用第~3~章迭代 \\
+  \midrule
   $\Gamma\subseteq V$ &
-  当前已获证集；证书状态是 $\Gamma$ 的精细标签 \\
+  \textbf{依赖闭包}
+  （已获证） &
+  当前已获证集；证书状态是 $\Gamma$ 的精细标签；
+  亦作为作业过程自动机配置的一分量 \\
+  \midrule
   $\mathrm{Missing}_\Gamma(T)=\mathrm{Dep}^*(T)\setminus\Gamma$ &
+  \textbf{依赖闭包}
+  （缺项） &
   缺项；闭包表与补洞的核心输出 \\
-  $\mathrm{Forb}$、约束库 $S$ &
-  否定边 / 禁止拼法的来源 \\
+  \midrule
+  $\mathrm{Forb}$、约束库 $S$ 中的禁拼片段 &
+  \textbf{形式语言} &
+  否定边 / 禁止拼法的来源；成员检查时避开 $\mathrm{Forb}$ \\
+  \midrule
   配置 $q=(\Gamma,F,S)$ 与基本转移 &
-  解释「写回 / 打脏」在改哪一分量 \\
+  \textbf{作业过程自动机} &
+  解释「写回 / 打脏」在改哪一分量；接受/拒绝由转移给出 \\
   \bottomrule
 \end{tabular}
 \end{center}
