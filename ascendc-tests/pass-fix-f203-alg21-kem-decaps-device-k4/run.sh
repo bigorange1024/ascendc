@@ -175,6 +175,7 @@ if [ "${RUN_MODE}" = "sim" ]; then
 fi
 
 if [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
-    python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py"
+    # 对拍失败须非零退出，禁止假 SUCCESS
+    python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py" || exit $?
 fi
 echo "[SUCCESS] pass-fix-f203-alg21-kem-decaps-device-k4 ${LABEL} (${RUN_MODE})"

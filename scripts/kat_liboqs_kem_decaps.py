@@ -91,19 +91,30 @@ def _liboqs_encaps_derand(ek: bytes, m: bytes) -> tuple[bytes, bytes]:
     return c, k
 
 
-def _run_ascendc_decaps(dk: bytes, c: bytes, run_mode: str) -> np.ndarray:
+def _run_ascendc_decaps(dk: bytes, c: bytes, m: bytes, k_ref: bytes, run_mode: str) -> np.ndarray:
     fx_dir = DECAPS_DIR / "input"
     fx_dir.mkdir(parents=True, exist_ok=True)
 
     env = os.environ.copy()
     env["KEM_DECAPS_VERIFY"] = "0"
     env["KEM_DECAPS_TAMPER_C"] = "0"
+    env["KEM_DECAPS_REJECT"] = "0"
     env["KEM_DECAPS_KAT"] = "0" if VERBOSE else "1"
     env["DK_KEM_SRC"] = str(STASH / "dk_kem.bin")
+    # CPU twin Phase-E 仍读 input/golden_v.bin（由 gen_data 按 m 生成）；
+    # 必须传入与 liboqs encaps 相同的 m，否则 c' 错 → FO 走拒绝支路。
     with tempfile.NamedTemporaryFile(prefix="kat_c_", suffix=".bin", delete=False) as tf:
         c_tmp = Path(tf.name)
+    with tempfile.NamedTemporaryFile(prefix="kat_m_", suffix=".bin", delete=False) as tf:
+        m_tmp = Path(tf.name)
+    with tempfile.NamedTemporaryFile(prefix="kat_k_", suffix=".bin", delete=False) as tf:
+        k_tmp = Path(tf.name)
     c_tmp.write_bytes(c)
+    m_tmp.write_bytes(m)
+    k_tmp.write_bytes(k_ref)
     env["C_SRC"] = str(c_tmp)
+    env["M_FILE"] = str(m_tmp)
+    env["K_ENC_SRC"] = str(k_tmp)
     cmd = ["bash", "run.sh", "-r", run_mode, "-v", SOC_VERSION]
     try:
         if VERBOSE:
@@ -118,6 +129,8 @@ def _run_ascendc_decaps(dk: bytes, c: bytes, run_mode: str) -> np.ndarray:
             ).returncode
     finally:
         c_tmp.unlink(missing_ok=True)
+        m_tmp.unlink(missing_ok=True)
+        k_tmp.unlink(missing_ok=True)
 
     if rc != 0:
         raise SystemExit(f"decaps run.sh({run_mode}) exit={rc} — see {LOG_PATH}")
@@ -130,7 +143,7 @@ def _run_ascendc_decaps(dk: bytes, c: bytes, run_mode: str) -> np.ndarray:
 
 def _one_round(ek: bytes, dk: bytes, m: bytes, run_mode: str, label: str, round_no: int, total: int) -> None:
     c, k_ref = _liboqs_encaps_derand(ek, m)
-    k_dev = _run_ascendc_decaps(dk, c, run_mode)
+    k_dev = _run_ascendc_decaps(dk, c, m, k_ref, run_mode)
     k_ref_arr = np.frombuffer(k_ref, dtype=np.uint8)
     if not np.array_equal(k_dev, k_ref_arr):
         idx = int(np.argmax(k_dev != k_ref_arr))
@@ -139,7 +152,7 @@ def _one_round(ek: bytes, dk: bytes, m: bytes, run_mode: str, label: str, round_
 
 def main() -> int:
     cpu_count = int(os.environ.get("KEM_DEC_CPU_TRIALS", "10"))
-    sim_count = int(os.environ.get("KEM_DEC_SIM_TRIALS", "1"))
+    sim_count = int(os.environ.get("KEM_DEC_SIM_TRIALS", "3"))
     only_mode = os.environ.get("KEM_DEC_ONLY_MODE", "").strip()
     if only_mode == "cpu":
         sim_count = 0

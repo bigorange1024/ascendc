@@ -67,5 +67,12 @@ fi
 
 cp -f "${C_OUT}" "${STASH_DIR}/c.bin"
 cp -f "${K_OUT}" "${STASH_DIR}/K_enc.bin"
+# Decaps CPU twin 需要与 c 匹配的 m 以生成 golden_v
+if [ -f "${ENCAPS_DIR}/input/m.bin" ]; then
+    cp -f "${ENCAPS_DIR}/input/m.bin" "${STASH_DIR}/m.bin"
+else
+    echo "[roundtrip_kem_encaps] ERROR: missing ${ENCAPS_DIR}/input/m.bin（Decaps CPU 需要）" >&2
+    exit 1
+fi
 
-echo "[roundtrip_kem_encaps] OK stash: ${STASH_DIR}/c.bin (1568B) + K_enc.bin (32B)"
+echo "[roundtrip_kem_encaps] OK stash: ${STASH_DIR}/c.bin + K_enc.bin + m.bin"
