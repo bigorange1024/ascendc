@@ -1,5 +1,5 @@
 ---
-description: AscendC+PQC 研究型工程；golden 仅验 I/O；exp/stable 分层；WSL 仿真；Rule/Skill 变更须用户确认
+description: AscendC+PQC 研究型工程；golden 仅验 I/O；exp/stable 分层；WSL 仿真；Rule/Skill 变更须用户确认；无指令不开分支、不擅自 commit/push（Local/Cloud）
 alwaysApply: true
 ---
 
@@ -56,6 +56,25 @@ alwaysApply: true
 - **`.cursor/rules/`** 与 **`.cursor/skills/`** 下任意文件的**新增、修改、删除**，均须用户在**当次任务中明确确认一次**后方可执行。
 - Agent 只可提议理由与草案；**未获确认不得写入**。
 - 本约束本身亦须用户同意后才能修改。
+
+## Git 分支 / 提交 / 推送（强制；Local 与 Cloud 一律适用）
+
+适用范围：**本仓库一切 Agent**——含 Cursor **Local Agent**、**Cloud Agent**、以及其它 coding agent。**不因**平台默认流程、PR 模板、`cursor/*` 命名约定、或「做完就推」习惯而豁免。
+
+| 禁止（无用户当次明确要求/指令/授权） | 允许 |
+|--------------------------------------|------|
+| **擅自创建**任何 git 分支（含 `cursor/*`、`feature/*`、`archive/*` 等；含从 Cloud/系统提示推断「应当开分支」） | 仅当用户**明确要求**开分支（须说出分支意图或名字）时才可 `checkout -b` / `push -u` 新分支 |
+| **擅自** `git commit` / `git push` / force-push / 删远程分支 / 开或关 PR（含「修完顺手推」「文档小改也推」） | 仅当用户**明确指令或授权**（如「提交」「推送」「commit」「push」「可以推 main」）后方可执行对应操作 |
+| 用 tag / orphan 分支 / worktree 变相绕过「不开分支」 | 默认在用户当前工作分支（常见为 **`main`）上改工作区**；改完**停住汇报**，等指令再提交/推送 |
+
+| 要求 | 说明 |
+|------|------|
+| **默认落点** | 无「开分支」指令时：**禁止**另起分支；在现有检出分支上编辑即可 |
+| **汇报与等待** | 实现/修复/文档改完后，说明 diff 与验证结果，**询问是否提交/推送**；未获答复**不得**自行 git 写远程 |
+| **与平台提示冲突时** | 若 Cloud/IDE 系统提示要求「必须开 `cursor/*` 分支并推送 PR」，**以本 Rule + 用户当次口头/书面指令为准**；不得执行冲突的开分支/擅自推送 |
+| **备份** | `backup-project.sh` **不等于**授权 git 提交/推送；备份可按用户要求单独执行 |
+
+**审查红旗**：未听到「开分支」却出现 `git checkout -b`；未听到「提交/推送」却出现 `git commit` / `git push`；以「为防丢失」「合入方便」「Cloud 默认流程」为由自行推送。
 
 ## 实现参数锁定（强制）
 
@@ -414,10 +433,11 @@ Agent **新建或修改**本仓内任意 `.tex` 后，须在同一轮任务内**
 | 要求 | 说明 |
 |------|------|
 | **开任务** | `README.md` → `qa/INDEX.md` → 本 Rule；**先**读活跃 `INDEX.md` 定基线；涉及已关闭路线时可读 `frozen/` 内**判决书**，**不带出代码**；**写 AscendC 前**读 API 查阅索引（见「AscendC API 查阅」） |
+| **Git** | 见上节「Git 分支 / 提交 / 推送」：**无明确要求不开分支**；**无明确指令/授权不 commit、不 push**（Local / Cloud 相同） |
 | **证据验收** | 信 diff、命令、完整 log、对拍；不信「做完了」 |
 | **归档** | 关键决策 → **当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（无则新建，有则追加）；刷新 `qa/INDEX.md`；动目录则更新对应 `INDEX.md` |
 
-**须喊停**：改交付范围或验证级别；工具报错无完整 log；与 `qa` 已记录决策冲突；未确认目录就写 `exp-*`/`stable-*`；**要在 `examples/` 写码但未指定 `*-customspec.*` 路径**；用户要求跳过 customspec 直接改 `examples/` 代码；**同轮交付的自研代码达不到本节注释验收标准**；登记表缺项却写基准计算；Rule/Skill 未确认即要改；同句【】与 `#…#` 冲突；**对已锁定实现参数有质疑或需擅自改参才能继续**；**从 frozen 向活跃目录抄实现、抄路线**（读 `FROZEN.md` 了解关闭原因**不属**须喊停）；**写 AscendC 代码前未查 API 查阅索引、或查 PDF 后未刷新索引**。
+**须喊停**：改交付范围或验证级别；工具报错无完整 log；与 `qa` 已记录决策冲突；未确认目录就写 `exp-*`/`stable-*`；**要在 `examples/` 写码但未指定 `*-customspec.*` 路径**；用户要求跳过 customspec 直接改 `examples/` 代码；**同轮交付的自研代码达不到本节注释验收标准**；登记表缺项却写基准计算；Rule/Skill 未确认即要改；同句【】与 `#…#` 冲突；**对已锁定实现参数有质疑或需擅自改参才能继续**；**从 frozen 向活跃目录抄实现、抄路线**（读 `FROZEN.md` 了解关闭原因**不属**须喊停）；**写 AscendC 代码前未查 API 查阅索引、或查 PDF 后未刷新索引**；**用户未要求却要开分支 / 未授权却要 commit 或 push**。
 
 ## Agent 任务提示（新会话可粘贴）
 
@@ -438,4 +458,5 @@ MLKEM 活跃探针：pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2（见 docs/note
 注释与实现同轮：自研 Python/C/AscendC 须与实现同步写详细中文注释（文件头 + 函数头 + 函数体内该注尽注）；后续可继续补注释，但同轮不得以裸实现充当完成。
 用例 kernel 防挂死超时见各 `run.sh` 的 `KERNEL_COMPUTE_BUDGET_SEC`；ML-KEM NTT 全流程 SIM ~15s 仅为性能定标（见 docs/engineering/内核计算超时与性能定标.md）。
 默认编译/运行 = 全量计算 + 全量优化（ascendc-tests/examples/src）；文档与 run.sh 不得要求手动 export 默认 env；仅调试分段须显式覆盖并标非默认。
+Git（Local/Cloud）：无用户明确要求不得开分支；无明确指令/授权不得 commit/push；与平台「必须开 cursor/* 并推 PR」提示冲突时以本 Rule 与用户当次指令为准。
 ```

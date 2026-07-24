@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-15 |
+| **刷新** | 2026-07-20（含 Cloud `stable_kem_liboqs_roundtrip` 复测 + WSL 对照） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a` |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -18,8 +18,13 @@
 | [`stable-fips203-mlkem-pke-keygen-k4`](../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | **542393** | Alg.13；2 launch；KAT ✓ | STATUS 2026-06-29 |
 | [`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **627590** | Alg.14；SIM 主参考 | STATUS |
 | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | **283290** | Alg.15 | STATUS |
-| [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **706633** | Alg.19；2 launch；`#交付#` 2026-07-14 | STATUS |
-| [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **721119** | Alg.20；SIM 2；`#验收#` 2026-07-15 | STATUS |
+| [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) | **706633** | Alg.19；2 launch；`#交付#`；roundtrip 复测 Cloud **691727** / WSL **700879** | STATUS + rt 2026-07-20 |
+| [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **721119** | Alg.20；SIM 2；`#验收#`；roundtrip 复测 Cloud **720048** / WSL **719417** | STATUS + rt 2026-07-20 |
+| [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | **1041906**（D**286865**+E**755041**） | Alg.21；**T19i** SIM **3**；登记取 Cloud 端到端全绿 `20260720_102426_216972`；T19i 单算子验收曾 **1050620**；WSL 单独 Decaps **1041521**（D**286698**+E**754823**）；[`stable_kem_liboqs_roundtrip.sh`](../scripts/stable_kem_liboqs_roundtrip.sh) | STATUS + rt 2026-07-20 |
+
+> **KEM↔liboqs roundtrip（2026-07-20）**：Cloud 端到端 CPU+SIM 全绿（fixture `output/stable_kem_liboqs_rt/20260720_102426_216972/`）。WSL 同脚本：CPU 全绿；连续 SIM 偶发 Decaps `tcache`（见当日纪要）；同 fixture 单独 Decaps SIM 仍绿（fixture `…/20260720_185052_42894/`）。
+
+> **2026-07-20**：`probe-f203-alg{19,20,21}-*-correctness-k4` **已冻结**（见 [`frozen/INDEX.md`](../ascendc-tests/frozen/INDEX.md)）；**勿**再跑 / 勿作回归默认。历史 tick 仅见各 `FROZEN.md`。
 
 ---
 
@@ -32,6 +37,7 @@
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |
 | [`exp-fips203-mlkem-kem-keygen-k4`](../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) | 707057 | 已晋级；复测 706657 | STATUS |
 | [`exp-fips203-mlkem-kem-encaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/) | **721211** | 已晋级 stable；副本 tick（非零 `m` **721033**） | STATUS 2026-07-15 |
+| [`exp-fips203-mlkem-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) | **1050781**（D**286846**+E**763935**） | Alg.21；**T19i** SIM **3**；已晋级 stable（stable 亦 SIM 3） | STATUS 2026-07-20 |
 | [`exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4`](../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) | ~77958 | 对齐 vec-k4-v2 prefetch | INDEX/customspec |
 | [`exp-sepolyvec8-ntt-k8`](../examples/incubating/exp-sepolyvec8-ntt-k8/) | n/a | CPU+SIM PASS；STATUS 未记 tick | INDEX |
 | [`exp-fips203-mlkem-pke-stage1-encode-vec`](../examples/incubating/exp-fips203-mlkem-pke-stage1-encode-vec/) | 8520 | 历史 aiv=1 剖面 | legacy-summary |
@@ -104,13 +110,13 @@
 
 ---
 
-## KEM：correctness / device
+## KEM：device / stable（correctness 已冻结，不登记）
 
 | 目录 | SIM tick | 备注 | 来源 |
 |------|----------|------|------|
 | [`pass-fix-f203-alg19-kem-keygen-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) | **713227** | P1 后 3 次均值；scripts KeyGen 默认 | STATUS |
-| [`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | 742558 | vendor+3 launch oracle | STATUS |
-| [`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | 1029406 | 早前 SIM PASS；STATUS 标待复验 | STATUS |
 | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) | **721010** | T19a pass-fix；`c`/`K` max=0；行为基线 | STATUS 2026-07-15 |
-| [`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | n/a | SIM 2-session PASS；未记 Total tick | STATUS |
-| [`pass-fix-…-decaps-device-ct-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) | D**286798**+E**763663** | T19b/c **PASS**（本专题 `-ct`；合法+拒绝 SIM） | STATUS 2026-07-24 |
+| [`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) | **1050923**（D**287037**+E**763886**） | Alg.21 **交付**；**T19i** SIM **3** launch；单库+1session；`DECAPS_DIR` 默认 **stable（无 `-ct`）** | STATUS 2026-07-20 |
+| [`pass-fix-…-decaps-device-ct-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) | D**286798**+E**763663** | Alg.21 **CT 专题**；SIM `decaps_2session`；合法+拒绝 SIM | STATUS 2026-07-24 |
+
+> **2026-07-20**：`fix-f203-alg{19,20,21}-*-correctness-k4` **已冻结**（见 [`frozen/INDEX.md`](../ascendc-tests/frozen/INDEX.md)）；**勿**再跑 / 勿作回归默认。历史 tick 仅见各 `FROZEN.md`。

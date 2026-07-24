@@ -26,4 +26,4 @@ FIPS 203 **Alg.14 K-PKE.Encrypt**（ml_kem_1024 / k=4）**正确性拼装探针*
 
 - **可进入**读本 `FROZEN.md`、`STATUS.md`、历史 `G3_SIM_AUDIT.md` 等关闭说明
 - **禁止**作 `ENCRYPT_DIR` / KAT / roundtrip 默认；**禁止**跑本目录 CI 验收；**禁止**把本树当新实现模板改写后「复活」
-- **例外（KEM vendor 快照）**：[`fix-f203-alg20-kem-encaps-correctness-k4`](../../fix-f203-alg20-kem-encaps-correctness-k4/) / [`fix-f203-alg21-kem-decaps-correctness-k4`](../../fix-f203-alg21-kem-decaps-correctness-k4/) 的 `vendor_sync_from_alg14_encrypt.sh` **允许** rsync 本树到各自 `vendor/pke_encrypt/`（G5 布局；stable Encrypt 不兼容）。这是拼装快照，不是活跃交付路径。
+- **例外（历史）**：曾允许已冻结的 KEM correctness（现 [`frozen-fix-…-alg20/21-*-correctness-k4`](../frozen-fix-f203-alg20-kem-encaps-correctness-k4/)）`vendor_sync` rsync 本树。**2026-07-20 起 KEM correctness 亦已冻结**；**禁止**为新工作复活 sync / 抄本树。

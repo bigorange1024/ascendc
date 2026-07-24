@@ -15,12 +15,20 @@
 
 
 
+## 2026-07-20 — KEM Alg.19/20/21 正确性 oracle 归档（任务完成）
+
+| 目录 | 原角色 | 关闭原因（摘要） | 继任 |
+|------|--------|------------------|------|
+| [frozen-fix-f203-alg19-kem-keygen-correctness-k4/](frozen-fix-f203-alg19-kem-keygen-correctness-k4/) | Alg.19 KeyGen correctness / oracle | **正确性路标任务完成**；stable + pass-fix device 已齐；禁再作实现参考 | [`stable-…-kem-keygen-k4`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) · [`pass-fix-…-keygen-device-k4`](../pass-fix-f203-alg19-kem-keygen-device-k4/) |
+| [frozen-fix-f203-alg20-kem-encaps-correctness-k4/](frozen-fix-f203-alg20-kem-encaps-correctness-k4/) | Alg.20 Encaps correctness / oracle | 同上 | [`stable-…-kem-encaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) · [`pass-fix-…-encaps-device-k4`](../pass-fix-f203-alg20-kem-encaps-device-k4/) |
+| [frozen-fix-f203-alg21-kem-decaps-correctness-k4/](frozen-fix-f203-alg21-kem-decaps-correctness-k4/) | Alg.21 Decaps correctness / oracle | 同上 | [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) · [`pass-fix-…-decaps-device-k4`](../pass-fix-f203-alg21-kem-decaps-device-k4/) |
+
 ## 2026-07-10 — PKE Encrypt/Decrypt 正确性探针归档（任务完成）
 
 | 目录 | 原角色 | 关闭原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg14-pke-encrypt-correctness-k4/](frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) | Alg.14 Encrypt G5 正确性拼装 | **正确性任务完成**；交付已晋级 stable；**仍作** alg20/21 `vendor_sync` G5 源（stable 布局不兼容） | 交付：[`stable-…-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)；KEM vendor：本目录 |
-| [frozen-fix-f203-alg15-pke-decrypt-correctness-k4/](frozen-fix-f203-alg15-pke-decrypt-correctness-k4/) | Alg.15 Decrypt G4（2 launch）正确性 | **正确性任务完成**；交付已晋级 stable（1-kernel）；**仍作** alg21 `vendor_sync` G4 源 | 交付：[`stable-…-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/)；KEM vendor：本目录 |
+| [frozen-fix-f203-alg14-pke-encrypt-correctness-k4/](frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) | Alg.14 Encrypt G5 正确性拼装 | **正确性任务完成**；交付已晋级 stable | 交付：[`stable-…-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
+| [frozen-fix-f203-alg15-pke-decrypt-correctness-k4/](frozen-fix-f203-alg15-pke-decrypt-correctness-k4/) | Alg.15 Decrypt G4（2 launch）正确性 | **正确性任务完成**；交付已晋级 stable（1-kernel） | 交付：[`stable-…-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) |
 
 ## 2026-06-30 — Encrypt 家里分叉探针关闭（办公室未复验）
 

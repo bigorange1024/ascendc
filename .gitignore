@@ -33,6 +33,7 @@ backup/
 # 探针 / 算子 I/O 与构建产物
 **/input/
 **/output/
+**/golden/
 **/out/
 **/out_*/
 **/auto_gen/
@@ -46,6 +47,7 @@ backup/
 **/ascendc_kem_keygen_bbit
 **/ascendc_kem_encaps_bbit
 **/ascendc_kem_decaps_bbit
+**/ascendc_kem_decaps_phase_e_bbit
 **/liboqs_pke_keygen_ref
 !ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/fixtures/
 !ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/fixtures/**

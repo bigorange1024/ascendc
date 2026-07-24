@@ -127,9 +127,9 @@
 | `pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4` | PASS | PASS | 123180 |
 | `pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4` | PASS | PASS | 154538 |
 | `pass-fix-f203-alg14-pke-encrypt-device-k4` | PASS | PASS | 626765 |
-| `fix-f203-alg19-kem-keygen-correctness-k4` | PASS | PASS | 742486 |
-| `fix-f203-alg20-kem-encaps-correctness-k4` | PASS | PASS | 1029501 |
-| `fix-f203-alg21-kem-decaps-correctness-k4` | PASS | PASS | 985313 |
+| `frozen-fix-f203-alg19-kem-keygen-correctness-k4` | PASS | PASS | 742486 |
+| `frozen-fix-f203-alg20-kem-encaps-correctness-k4` | PASS | PASS | 1029501 |
+| `frozen-fix-f203-alg21-kem-decaps-correctness-k4` | PASS | PASS | 985313 |
 
 ### Cloud 再修（同 PR `cursor/ntt-onnx-pat-retry-5334`）
 

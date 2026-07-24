@@ -2,7 +2,7 @@
 
 ## 结论
 
-- `fix-f203-alg21-kem-decaps-correctness-k4` 单库后，CPU 单 session 合法 `c` 仍 `K max=0`。
+- `frozen-fix-f203-alg21-kem-decaps-correctness-k4` 单库后，CPU 单 session 合法 `c` 仍 `K max=0`。
 - SIM 完整单 session（`KEM_DECAPS_SIM_2SESSION=0`）可跑完但 `K max=216`，不是死锁。
 - 逐级 dump 对拍显示：`a_hat/re/t_hat/r_hat` 全部 max=0，首个出错级是 `at_r5` 输出 `u_hat/tr_hat`。
 - PhaseE-only 对照（`KEM_DECAPS_PHASEE_ONLY=1`，跳过 Phase-D，复用已验证 `m'/K'/coins`）在同一 decaps binary/session 中 `K max=0`，且 `u_hat/tr_hat` max=0。

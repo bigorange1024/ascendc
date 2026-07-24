@@ -4,6 +4,8 @@
 
 **实现方案**：[`stable-fips203-mlkem-pke-keygen-k4-实现方案-customspec.pdf`](stable-fips203-mlkem-pke-keygen-k4-实现方案-customspec.pdf)
 
+**baseline-registry**：[`docs/specs/fips203-mlkem1024-pke-keygen-baseline-registry.md`](../../../docs/specs/fips203-mlkem1024-pke-keygen-baseline-registry.md)（2026-07-20 补登记）
+
 ## 唯一交付路径
 
 | 项 | 内容 |

@@ -6,7 +6,7 @@
 
 | 探针 | 角色 |
 |------|------|
-| [`fix-f203-alg19-kem-keygen-correctness-k4`](../fix-f203-alg19-kem-keygen-correctness-k4/) | 密码学 oracle（3 launch，已 CPU+SIM+liboqs PASS） |
+| 历史 correctness oracle | **已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/FROZEN.md)；**禁止**抄码 / 跑 CI |
 | [`stable-fips203-mlkem-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) | **Alg.13 PKE KeyGen** 权威实现（2 launch，SIM ~542k tick） |
 
 **定稿原理**：[`docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md`](../../docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md)
@@ -331,7 +331,7 @@ bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 # 与 correctness 对照
-diff <(xxd output/ek_kem.bin) <(xxd ../fix-f203-alg19-kem-keygen-correctness-k4/output/ek_kem.bin)
+# 历史 correctness 已冻结；勿再对拍其 output（见 frozen/.../FROZEN.md）
 
 # L2 liboqs（仓库根；device 验收通过后改 KEYGEN_DIR 默认）
 bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4
@@ -356,7 +356,8 @@ bash scripts/liboqs_kem_vs_ascendc.sh -r cpu -v Ascend910B4
 | 探针 | 消费 |
 |------|------|
 | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../pass-fix-f203-alg20-kem-encaps-device-k4/) | `output/ek_kem.bin` |
-| [`pass-fix-f203-alg21-kem-decaps-device-ct-k4`](../pass-fix-f203-alg21-kem-decaps-device-ct-k4/) | `output/dk_kem.bin` |
+| [`pass-fix-f203-alg21-kem-decaps-device-k4`](../pass-fix-f203-alg21-kem-decaps-device-k4/) | `output/dk_kem.bin`（交付） |
+| [`pass-fix-f203-alg21-kem-decaps-device-ct-k4`](../pass-fix-f203-alg21-kem-decaps-device-ct-k4/) | `output/dk_kem.bin`（CT 专题） |
 
 device-k4 **G3 PASS** 前，round-trip 脚本仍默认 **correctness-k4**。
 

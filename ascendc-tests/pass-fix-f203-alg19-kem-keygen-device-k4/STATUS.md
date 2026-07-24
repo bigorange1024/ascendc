@@ -39,7 +39,7 @@ KEM 尾段仅两处 **SHA3-256**（当前 `F203SeDeviceKeccak::Sha3OneShot`）�
 |------|------|------|
 | CPU | `bash run.sh -r cpu -v Ascend910B4` | **PASS** ek/dk max=0 |
 | SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | **PASS**；tick 均值 **713227**（3 次） |
-| vs correctness | `cmp output/*.bin ../fix-f203-alg19-kem-keygen-correctness-k4/output/` | **一致** |
+| vs 历史 correctness | **已冻结** — 勿再 cmp；见 [`FROZEN.md`](../frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/FROZEN.md) | — |
 | stable PKE 回归 | `F203_KEM_KEYGEN_TAIL=0`（默认） | CPU **PASS** |
 
 方案：[`INTEGRATION_PLAN.md`](INTEGRATION_PLAN.md) · 约束：[`SELF_CONTAINED.md`](SELF_CONTAINED.md)

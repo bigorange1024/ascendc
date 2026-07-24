@@ -2,7 +2,7 @@
 
 ## 密码学契约
 
-与 [`fix-f203-alg19-kem-keygen-correctness-k4`](../fix-f203-alg19-kem-keygen-correctness-k4/SELF_CONTAINED.md) **相同**：Alg.19 `d`/`z` device UB、3168B `dk_kem` liboqs 布局、Host 仅 `seed_d` + LUT。
+Alg.19 `d`/`z` device UB、3168B `dk_kem` liboqs 布局、Host 仅 `seed_d` + LUT。历史 correctness oracle **已冻结**（只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/FROZEN.md)；禁翻源码）。
 
 ## 工程差异（相对 correctness）
 

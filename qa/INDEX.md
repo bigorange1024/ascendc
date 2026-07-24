@@ -10,13 +10,29 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-24 — [第7章 CT → Decaps device PASS · `#交付#` · 非 NPU 压测收尾](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
+### 2026-07-24 — [第7章 CT → Decaps device PASS · 非 NPU 压测收尾](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
 
-关键字：`CT_decaps` · **T19b/c** · **`#交付#`** stable Decaps · **拒绝 SIM** · KAT **CPU×10+SIM×3** · **roundtrip CPU+SIM** · `M_FILE` 修复 · 未跑 NPU · **`-ct` 改名**避 main · 引用审计 · 中文注释
+关键字：`CT_decaps` · **T19b/c** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **CPU×10+SIM×3** · **roundtrip CPU+SIM** · `M_FILE` 修复 · 未跑 NPU · 引用审计 · 中文注释 · 五指标对照
 
 ### 2026-07-23 — [形式方法教材导论实质 · 第3章冻结](2026-07/2026-07-23-形式方法教材导论实质与第3章冻结.md)
 
 关键字：`correctness 引子` · **开放生成≠合法派生** · **证书闭包受控搜索** · 第3章**先保持**、汇报再删 · `research/formal-lang-dag`
+
+### 2026-07-21 — [连续 SIM tcache 对照矩阵](2026-07/2026-07-21-连续SIM-tcache对照矩阵.md)
+
+关键字：公司 C0–C5×3 **18/18 绿** · 家里 EXP1–4b 全绿 · **两侧均未复现 tcache** · 归类 CAModel/glibc 偶发 · **不改** roundtrip/stable
+
+### 2026-07-20 — [Decaps `#交付#` stable · registry · 六算子齐](2026-07/2026-07-20-Decaps交付stable与registry.md)
+
+关键字：**【预研】**→**`#交付#` stable Decaps（无 `-ct`）** · **T19i SIM 3 全链齐** · **冻结 KEM correctness×3** · **`stable_kem_liboqs_roundtrip`** · **WSL 连续 SIM `tcache` 偶发** · **T13b/T11 关闭** · **挂账 T23** · **幽灵清理**
+
+### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
+
+关键字：`probe` → **`pass-fix-…-decaps-device-k4`** · **`$规格$`** [`exp-…-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) customspec · 下一【预研】
+
+### 2026-07-17 — [Decaps device 全链 PASS · T2 单库](2026-07/2026-07-17-Decaps-device-全链-PASS.md)
+
+关键字：`INTEGRATION_PLAN` 先E后D · **T19b/c 全链 + E3 PASS** · **T2 单库+1-session PASS**（D**286k**+E**745k**）· `prepare_dec_shim` · scripts Decaps→device
 
 ### 2026-07-15 — [TODO · T19a · Encaps `#验收#` → stable · 能力DAG](2026-07/2026-07-15-TODO与T19a-Encaps-device-PASS.md)
 
@@ -64,7 +80,7 @@
 
 ### 2026-07-01 — [liboqs 三阶段验证、Compress_5 修复与 KEM Alg.19 KeyGen](2026-07/2026-07-01-liboqs验证与KEM-Alg19-KeyGen规划.md)
 
-**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **fix-f203-alg19-kem-keygen-correctness-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
+**liboqs_pke_vs_ascendc** · **`Compress_5` `(1<<26)`** · **frozen-fix-f203-alg19-kem-keygen-correctness-k4 规划** · 设备全链 KEM · T14b 关闭 · **T6 进行中**
 
 ### 2026-06-30 — [funckey ≥ 5 → 507000 + Encrypt G5 + Decrypt G4 + PKE round-trip](2026-06/2026-06-30-funckey-507000本地独立验证.md)
 

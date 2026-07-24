@@ -38,7 +38,7 @@
 
 **examples（4 试点）**：KEM KeyGen incubating + PKE keygen/encrypt/decrypt stable。
 
-**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）；~~跳过 stub `fix-…-decaps-device`~~ 已废；活跃：[`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（本专题）/ main 上无 `-ct` 交付树。Encaps device 已为 [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)。**不改** `frozen/`。
+**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）。KEM Decaps device：**交付** [`pass-fix-…-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · **CT 专题** [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)。另：KeyGen [`pass-fix-…-keygen-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) · Encaps [`…-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)。**不改** `frozen/`。
 
 ### 明确不做
 

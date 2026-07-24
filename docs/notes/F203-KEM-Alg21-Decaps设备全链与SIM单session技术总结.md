@@ -2,15 +2,24 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
-**案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 默认 **2-session** PASS + 设备 FO；liboqs 分项 kat `CPU×10+SIM×1 PASS`）  
+**案例锚点**：
 
-> **2026-07-24 更新（本专题 CT 实验树，与 main 交付区分）**：
+> **2026-07-24 更新（CT 专题树，与 main 交付区分）**：
 > - 形式方法第7章 CT→实现落点在专题分支 `research/formal-lang-dag`，目录统一加 **`-ct`**：
 >   [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) ·
 >   [`exp-…-decaps-ct-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) ·
 >   [`stable-…-decaps-ct-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)。
-> - **main** 上无 `-ct` 的同名树为办公室交付主线；二者勿混引用。
-> - 本文仍以 **correctness** 作 SIM 单 session / 双库诊断的案例锚点；device CT 树为无 vendor 行为基线（编译期引用 stable PKE）。
+> - **交付主线（无 `-ct`）**：[`pass-fix-…-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)；`scripts/` `DECAPS_DIR` 默认指后者。
+> - 本文 SIM 单 session / 双库诊断以 **frozen correctness** 为历史案例锚点；device 交付树为无 vendor 行为基线（编译期引用 stable PKE）。
+
+- **设备主线（交付，2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**。仓库 `scripts/` `DECAPS_DIR` 默认已指 **stable（无 `-ct`）** Decaps（可用 env 覆盖回本探针）；**禁止**再建已更名的旧路径 `fix-…-decaps-device-k4` 或误名 `pass-probe-…`。
+- **历史 correctness oracle**：**已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**禁止**翻 frozen 源码 / 当实现模板。
+
+> **2026-07-18 更新（更名 pass-fix）**：`fix-…-decaps-device-k4` → `pass-fix-…-decaps-device-k4`；KAT/roundtrip 已绿；下一 `#交付#`。
+>
+> **2026-07-17 更新（T2 PASS · Cloud）**：device 主线 SIM **单库**（`prepare_dec_shim.sh`：stable Decrypt 冲突头 → `dec_*`）+ 默认 **`decaps_1session`** 全链+E3 PASS（D**286803**+E**745925**）。`decaps_2session` 仅对照。见 `STATUS.md` / `AGENT_HANDOFF.md`。
+>
+> **2026-07-17 早先（device 主线 + T2 交接）**：T19b/c 在 device 目录落地全链。SIM 曾因同名头退回 **双库 + `decaps_2session`** 保底；T2 交 Cloud 合库 — **已关闭**。
 >
 > **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
 >
@@ -21,9 +30,13 @@
 > - **原因**：stable Encrypt 无 G5 `pack/`+`main_encrypt_g5_run`；stable Decrypt 为 **1-kernel fused**，与本探针 host 编排不兼容。  
 > - **待办**：[qa/TODO.md](../../qa/TODO.md) **T19**（T19a–e）重构接线后，vendor 改吃 stable，并撤销 frozen 作 KEM sync 源的例外。
 >
-> **2026-07-08 更新（SIM host 选项统一）**：
-> - SIM 生产默认改为 **`ASCENDC_SIM_HOST_MODE=decaps_2session`**（`run.sh` export；unset 等价）；排障 **`decaps_1session`**。
-> - Host 判断：`ascendc::SimHostDecapsUse2Session()`（`ascendc_build_mode.hpp`）；**废弃**在新代码使用 `KEM_DECAPS_SIM_2SESSION`（头文件内临时兼容旧脚本）。
+> **2026-07-17 更新（SIM host 默认翻转 · T2）**：
+> - device 生产默认改为 **`ASCENDC_SIM_HOST_MODE=decaps_1session`**（单库后）；对照 **`decaps_2session`**。
+> - Host 判断：`ascendc::SimHostDecapsUse2Session()`（`ascendc_build_mode.hpp`）；unset 亦为 1-session。
+>
+> **2026-07-08 更新（SIM host 选项统一 · 历史）**：
+> - 当时 SIM 生产默认曾为 **`decaps_2session`**（双库保底）；排障 **`decaps_1session`**。
+> - Host 判断：`ascendc::SimHostDecapsUse2Session()`；**废弃**在新代码使用 `KEM_DECAPS_SIM_2SESSION`。
 > - 全仓强制写法：[AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) §4.1。
 >
 > **2026-07-03 更新（SIM 定论，纠正“死锁”误判）**：
@@ -32,7 +45,7 @@
 > 3. **单 session 首错在 `at_r5`**（`KEM_DECAPS_SIM_2SESSION=0`，排障用）：Phase-D 后 `m'/coins max=0`，Phase-E `c' max=244`，而 **PhaseE-only 对照 `K max=0`** → 系 **Phase-D 已执行触发的 CAModel session 级状态残留**（非 GM 输入 / 同步 / LUT / 算法错）。单 session 真修仍 open，2-session 为可靠保底。
 > 4. **单库 SIM 构建坑**：`vendor/.../f203_alg7_rej_scalar.c` 是 CPU/参考语义文件，不参与设备热路径；若进 `ascendc_library`，AIC/AIV 合并阶段 `ld.lld -m aicorelinux` 报 `.c.o unknown file type`。修法：仅 CPU twin 库链入该 `.c`，SIM/NPU 设备库只保留 `.cpp` kernel 入口 + `.hpp` 内联逻辑（见 `cmake/decaps/CMakeLists.txt`）。
 **讨论**：[`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7  
-**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/INTEGRATION_PLAN.md)
+**实现方案**：device [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md)（历史 correctness 计划书已冻结，只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)）
 
 ---
 
@@ -202,11 +215,12 @@ K        max=216 ✗
 
 | 项 | 值 |
 |----|-----|
-| 探针 | `ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4` |
-| 输入 | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
-| CPU | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
-| SIM | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |
-| SIM tick | Phase-D 约 534k + fresh Phase-E 约 899k |
+| 历史探针 | **已冻结** — 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**勿再跑** |
+| 现行设备主线 | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) |
+| 输入（历史） | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
+| CPU（历史） | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
+| SIM（历史） | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |
+| SIM tick（历史） | Phase-D 约 534k + fresh Phase-E 约 899k |
 | liboqs 分项 kat | `liboqs_kem_decaps_batch.sh` 逐轮换 `c` → `K max=0`，`CPU×10+SIM×1 PASS` |
 | 未完成 | 单 session SIM 真修（`at_r5` 首错）、`nm` func_key 审计、拒绝路径 SIM 长测、NPU 实机 |
 

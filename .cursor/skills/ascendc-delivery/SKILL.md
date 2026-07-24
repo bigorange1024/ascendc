@@ -41,7 +41,11 @@
 
 1. 存在用户指定的 **`*-customspec.*`**，且 Agent 已读（**主规格**；实现不得偏离）。
 2. 存在对应 **`exp-*`**，或用户明确指定复制来源；**不得在 stable 空写首版**。
-3. 存在 **`docs/specs/<主题>-baseline-registry.md`**（或任务范围内的登记表）；计算块均有**已验证**来源。
+3. **baseline-registry 硬卡点（强制）**：在用户准备执行 **`#交付#` / `#验收#`**（即将 `exp-*` **复制晋级** `stable-*`）**之前**，必须已定稿  
+   **`docs/specs/<主题>-baseline-registry.md`**，并已登记进 [`docs/specs/INDEX.md`](../../docs/specs/INDEX.md)。  
+   - **此前**（`$规格$`、【预研】写码、CPU/SIM/KAT）允许缺表或仅草稿。  
+   - **一到晋级**：无定稿 registry → **禁止**复制进 `stable/`；停下补表或请用户确认豁免。  
+   - 表内计算块均须有**已验证**来源；golden / KAT **仅**可调用表内 API/LUT。
 4. **缺项 → 停**，提示用户补来源或回 **pre-research** / **ascendc-impl-spec**。
 5. 基准侧：**仅**调用登记表 API/LUT 生成 I/O；**禁止**重造 NTT 等核心。
 6. AscendC 侧：按 **customspec + specs / 讨论 / 标准** 实现；**禁止**把基准源码当实现模板。
@@ -71,11 +75,13 @@
 
 ## 结束检查清单
 
+- [ ] **`docs/specs/<主题>-baseline-registry.md` 已定稿**且已进 `docs/specs/INDEX.md`（晋级前硬卡点；见上「门禁」§3）
 - [ ] `RUN.md` 与 `run.sh` 可复现
 - [ ] **CPU + `SIM_DIRECT=1` sim 均已通过**；SIM dump 仅在 `OPPROF_*/dump/`，用例根无 stray `core*.dump` / `profile_*_log*.toml`（Rule「Agent 跑用例验收」）
 - [ ] 自研代码中文注释（Rule「自研代码：中文注释」）：AscendC/Python/C 文件头 + 函数头 + 函数体内该注尽注；含 `scripts/gen_data.py`、`verify_result.py`
 - [ ] 红旗自查：无「移植自」措辞、无逐步对应参考实现
 - [ ] 更新 `examples/stable/INDEX.md`、`examples/INDEX.md`
+- [ ] stable `STATUS.md` **链到**对应 baseline-registry
 - [ ] 若变更基准来源，更新 `docs/specs/*-baseline-registry.md`
 - [ ] 关键决策写入**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`；同步 `qa/INDEX.md`、`qa/TODO.md`
 

@@ -14,7 +14,7 @@
 
 **自包含与设备全链**（2026-06-29）：活跃探针/example **不得**跨目录引用源码（`library/shared` 与仓库 `scripts/` CANN 壳除外）；KeyGen 生产路径禁止 Host 辅助密码计算。见 [用例自包含与设备全链约束.md](../docs/engineering/用例自包含与设备全链约束.md)；KeyGen 实例 [`pass-fix-f203-alg13-device-keygen-k4/SELF_CONTAINED.md`](pass-fix-f203-alg13-device-keygen-k4/SELF_CONTAINED.md)。
 
-**多环境 `run.sh`**（2026-07-14）：活跃探针已 `source` [`scripts/runtime_env.sh`](../scripts/runtime_env.sh)（`-r auto|verify`、WSL 禁 npu）；见 [NPU真机环境说明.md](../docs/engineering/NPU真机环境说明.md) · [AscendC多环境运行纪要.md](../docs/notes/AscendC多环境运行纪要.md)。`frozen/` 与 T19 device stub **不接入**。
+**多环境 `run.sh`**（2026-07-14）：活跃探针已 `source` [`scripts/runtime_env.sh`](../scripts/runtime_env.sh)（`-r auto|verify`、WSL 禁 npu）；见 [NPU真机环境说明.md](../docs/engineering/NPU真机环境说明.md) · [AscendC多环境运行纪要.md](../docs/notes/AscendC多环境运行纪要.md)。`frozen/` **不接入**；Decaps device（Phase-E）已接入。
 
 ---
 
@@ -52,6 +52,8 @@
 | [**pass-fix-f203-alg15-pke-decrypt-device-k4/**](pass-fix-f203-alg15-pke-decrypt-device-k4/) | **Alg.15 完整 K-PKE.Decrypt**（单 kernel；尾融合；生产 input **仅 dk+c+lut** → out **仅 m**；SIM **~283k**）；**`roundtrip_pke_*` / liboqs 默认 Decrypt**；注释+I/O 收紧 2026-07-09 | ✓ | ✓ |
 | [**pass-fix-f203-alg19-kem-keygen-device-k4/**](pass-fix-f203-alg19-kem-keygen-device-k4/) | **Alg.19 KEM KeyGen（device）** — **2 launch**（Alg.16 尾内嵌 stable mmad）；无 vendor；SIM **~713k**；**`scripts/` KeyGen 默认** | ✓ | ✓ |
 | [**pass-fix-f203-alg20-kem-encaps-device-k4/**](pass-fix-f203-alg20-kem-encaps-device-k4/) | **Alg.20 KEM Encaps（device）** — prep H/G + stable Encrypt；无 vendor；SIM **721010**；**`scripts/` Encaps 默认** | ✓ | ✓ |
+| [**pass-fix-f203-alg21-kem-decaps-device-k4/**](pass-fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device / 交付）** — Decrypt fused + Encrypt + FO；无 vendor；单库+1-session；SIM D**286803**+E**745925**；`scripts/` `DECAPS_DIR` 默认 **stable（无 `-ct`）**；可覆盖回本探针 | ✓ | ✓ |
+| [**pass-fix-f203-alg21-kem-decaps-device-ct-k4/**](pass-fix-f203-alg21-kem-decaps-device-ct-k4/) | **Alg.21 KEM Decaps（device / CT 专题）** — 同上架构；SIM 默认 **`decaps_2session`**；仅 `research/formal-lang-dag`；对应 [`stable-…-decaps-ct-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/) | ✓ | ✓ |
 
 Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](frozen/frozen-f203-ntt-phase-a-fsm/)（2026-06-19，任务完成非路线否决）。
 
@@ -63,15 +65,15 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 
 | 目录 | 说明 |
 |------|------|
-| **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
-| [**fix-f203-alg19-kem-keygen-correctness-k4/**](fix-f203-alg19-kem-keygen-correctness-k4/) | **Alg.19 KEM KeyGen（correctness）✅** — vendor PKE + KeyGen_internal；CPU+SIM+liboqs max=0；SIM **742558** tick |
-| [**fix-f203-alg20-kem-encaps-correctness-k4/**](fix-f203-alg20-kem-encaps-correctness-k4/) | **Alg.20 KEM Encaps（correctness）** — vendor Encrypt **G5←frozen**；**CPU+SIM PASS** |
-| [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；SIM 默认 **2-session** PASS（oracle；**禁止抄码**） |
-| [**pass-fix-f203-alg21-kem-decaps-device-ct-k4/**](pass-fix-f203-alg21-kem-decaps-device-ct-k4/) | **Alg.21 KEM Decaps（device / T19b/c 行为基线）** — stable Decrypt+Encrypt 编译期引用；无 vendor；SIM 默认 **`decaps_2session`**；**交付**已晋级 [`stable-…-kem-decaps-ct-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（2026-07-24 `#交付#`） |
+| **vec-k4-v3**（暂定） | **已关闭（T13b）**：stable KeyGen 已覆盖；勿再开 |
 
-**命名（2026-07-10；Encaps 更名 2026-07-15；Decaps device 2026-07-24）**：`*-correctness-k4` = vendor oracle 对照；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19/20/21 device 均 `pass-fix-…`**。~~`fix-f203-alg21-kem-decaps-device-k4`~~ 已废（空壳 stub 删除）。KEM `scripts/` KeyGen/Encaps 默认见各 pass-fix；Decaps device 见本行。
+~~`fix-f203-alg19/20/21-*-correctness-k4`~~ — **2026-07-20 冻结** → [`frozen/INDEX.md`](frozen/INDEX.md)（正确性路标任务完成；继任 stable + pass-fix device；**禁止翻源码**）。
 
-**KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 2-session ~11min/段。
+**命名**：`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19/20/21 device 均已 `pass-fix-…`**。KEM `scripts/`：KeyGen→`pass-fix-…-keygen-device-k4`；Encaps/Decaps→对应 **stable**（`DECAPS_DIR=`/`ENCAPS_DIR=` 可覆盖回 pass-fix）。**禁止**默认或文档链指回已冻结的 `*-correctness-k4`。
+
+**更名防幽灵（强制）**：`git mv` / 目录晋级 `fix-`→`pass-fix-` **只搬已跟踪文件**；旧路径下 `build_*`/`input`/`output`/`sim_log` 等**未跟踪产物会留成空壳目录**。更名后须 `rm -rf` 旧目录残留，或跑 [`scripts/cleanup-ascendc-test-ghosts.sh`](../scripts/cleanup-ascendc-test-ghosts.sh)。**禁止**再建：`fix-f203-alg21-kem-decaps-device-k4`（已更名）、`pass-probe-*`（误名）、以及已冻结的 `fix-f203-alg{19,20,21}-*-correctness-k4` 活跃路径。正确 Decaps device 仅 [`pass-fix-f203-alg21-kem-decaps-device-k4`](pass-fix-f203-alg21-kem-decaps-device-k4/)。
+
+**KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 默认 1-session，全链约数分钟/段。
 
 **KEM 分项 kat（固定 stash 密钥 + 每轮随机量，逐字节对 liboqs）**：`liboqs_kem_keygen_batch.sh`（`KEM_KG_EXT_SEED` 同 64B 种子）· `liboqs_kem_encaps_batch.sh`（默认 **device-k4**，`M_FILE` 喂 `m`，默认 **CPU×10+SIM×3**）· `liboqs_kem_decaps_batch.sh`（liboqs `encaps_derand` 造 `c`）；密钥经 `kem_keypair_stash_bootstrap.sh` 落 `output/kem_keypair_stash/`。
 | ~~fix-f203-alg14-encrypt-2launch-k4~~ | **已冻结** → [`frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)（家里 agent `27cc93b`，办公室未复验） |

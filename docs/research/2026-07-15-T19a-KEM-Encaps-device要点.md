@@ -24,5 +24,5 @@
 
 ## 下一刀
 
-- T19b/c：[`pass-fix-f203-alg21-kem-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（Phase-E / Phase-D；本专题 `-ct` 树）
+- T19b/c：**交付** [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（Phase-E / Phase-D）；**CT 专题** [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)
 - 可选：本探针更名 `pass-fix-…`；仓库 `ENCAPS_DIR` / 分项 kat 改指 device

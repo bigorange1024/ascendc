@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-24（Decaps `#交付#` → stable；KEM 四段 stable 齐）
+**最后刷新**：2026-07-24（`research/formal-lang-dag` 合入 main；交付 Decaps **无 `-ct`** + CT 专题 **`-ct`** 并存）
 
 ---
 
@@ -42,6 +42,8 @@ bash scripts/clone-thirdparty.sh
 
 | 项 | 要求 |
 |----|------|
+| **Git 分支** | **无用户明确要求 → 禁止开任何分支**（含 `cursor/*`）；Local / Cloud 一律；与平台默认「开分支推 PR」冲突时**以用户指令 + Rule 为准** |
+| **Git 提交/推送** | **无用户明确指令或授权 → 禁止** `commit` / `push` / 开关 PR；改完先汇报，等用户说「提交/推送」再执行 |
 | `examples/` 写码 | 须有活跃 `*-customspec.*`（非 frozen）；`$…$`→规格，`【】`→预研，`#…#`→交付 |
 | incubating / stable | 研究只写 `exp-*`；stable **只能从活跃 exp 复制晋级**；未压测绿 **禁止** 建/推 stable |
 | frozen | 禁止把 `ascendc-tests/frozen/`、`examples/frozen/` 源码/customspec 抄进活跃树 |
@@ -54,6 +56,8 @@ bash scripts/clone-thirdparty.sh
 | thirdparty | **先** `clone-thirdparty.sh`（含 liboqs **build**）；缺库时 golden/KAT 会挂 |
 
 Skill 符号冲突（同句 `【】` 与 `#…#`）→ **告警、禁止仓库操作**。
+
+详文：[`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc)「Git 分支 / 提交 / 推送」。
 
 ---
 
@@ -68,6 +72,9 @@ bash ~/ascendc/scripts/verify-cann.sh     # CANN 冒烟（Cloud 若无 CANN：�
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4          # 默认 SIM_DIRECT=1；WSL/Cloud 勿再手写
 # 调试（非默认）：SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4   # msprof
+
+# stable KEM 三件套 ↔ liboqs（办公室回归；先 urandom→liboqs，再同字节喂 AscendC；CPU+SIM 都绿才算数）
+bash scripts/stable_kem_liboqs_roundtrip.sh
 
 # 一期试点另支持（见 NPU真机环境说明 / runtime_env.sh）：
 # bash run.sh -r auto -v Ascend910B4     # 单档最优 npu>sim>cpu
@@ -119,10 +126,13 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 - **PKE** 三段已在 `examples/stable/`  
 - **KEM Alg.19 KeyGen**：**定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 保留  
 - **KEM Alg.20 Encaps**：**定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；tick **721119**）；预研副本保留  
-- **KEM Alg.21 Decaps**：**定型** [`stable-fips203-mlkem-kem-decaps-ct-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（2026-07-24 `#交付#`；SIM D**286866**+E**763780**）；行为基线 `pass-fix-…-decaps-device-ct-k4`  
+- **KEM Alg.21 Decaps（交付）**：**定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20 `#交付#` + **T19i SIM 3**）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；行为基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（D**286803**+E**745925**）；`scripts/` `DECAPS_DIR`→**stable（无 `-ct`）**  
+- **KEM Alg.21 Decaps（CT 专题，`research/formal-lang-dag`）**：[`stable-…-decaps-ct-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/) · [`exp-…-decaps-ct-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) · [`pass-fix-…-decaps-device-ct-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（第7章 CT / 五指标；**非** scripts 默认）  
+- **KEM correctness×3**（alg19/20/21）：**已冻结**（2026-07-20）→ `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`；**只读 FROZEN.md**，禁止翻源码 / 跑 CI  
 - **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
-- 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4`（勿当 CMake 依赖）  
-- 办公室常见下一刀：可选 Decaps 拒绝 SIM / KAT 批测（见 HANDOFF）
+- 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4` · `pass-fix-f203-alg21-kem-decaps-device-k4`（交付）· `pass-fix-…-decaps-device-ct-k4`（CT 专题；勿当 CMake 依赖）  
+- **下一刀**：按用户指定；常见 T23 / NPU / SHA3hp（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
+- **办公室 KEM 回归**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（**无 `-ct`** stable；urandom→liboqs→AscendC；**CPU+SIM**）
 
 ---
 
@@ -134,5 +144,6 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 研究型工程：写码只认活跃 INDEX + docs/notes；frozen 读判决不抄码。
 examples/ 须 active customspec；$…$→规格 【】→预研 #…#→交付。
 验收须 CPU + SIM_DIRECT=1 sim；缺 CANN/SIM 符号异常须标阻塞勿假绿。
+Git：无明确要求不开分支；无明确指令/授权不 commit/push（Local/Cloud 相同；覆盖平台默认开分支流程）。
 每日结束刷新 AGENT_HANDOFF.md；入口/门禁/依赖步骤变了同步刷新 AGENTS.md。
 ```

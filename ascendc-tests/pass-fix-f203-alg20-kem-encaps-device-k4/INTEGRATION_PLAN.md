@@ -8,7 +8,7 @@
 |------|------|
 | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) | **Alg.14 Encrypt** 权威（SIM 2 launch） |
 | [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../pass-fix-f203-alg14-pke-encrypt-device-k4/) | Encrypt device 探针对照 |
-| [`fix-f203-alg20-kem-encaps-correctness-k4`](../fix-f203-alg20-kem-encaps-correctness-k4/) | oracle（vendor G5）；本目录取代其生产接线 |
+| 历史 correctness oracle | **已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4/FROZEN.md)；**禁止**抄码 / 跑 CI |
 | [`pass-fix-f203-alg19-kem-keygen-device-k4`](../pass-fix-f203-alg19-kem-keygen-device-k4/) | 供给 `ek_kem`；工程范式（编译期引用 stable） |
 
 **自包含**：[`SELF_CONTAINED.md`](SELF_CONTAINED.md)

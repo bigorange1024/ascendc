@@ -70,25 +70,26 @@ inline bool SimHostEncryptFeasPhasedLaunch()
 }
 
 /**
- * decaps：默认 decaps_2session（生产 SIM）；decaps_1session 为排障。
- * 兼容旧 env KEM_DECAPS_SIM_2SESSION=0/1（deprecated；2026-07-08 起 run.sh 应写 ASCENDC_SIM_HOST_MODE）。
+ * decaps：默认 decaps_1session（T2 单设备库后同 session D→E）；
+ * decaps_2session 为对照/保底。兼容旧 env KEM_DECAPS_SIM_2SESSION=0/1（deprecated）。
  */
 inline bool SimHostDecapsUse2Session()
 {
 #if ASCENDC_BUILD_CPU
     return false;
 #else
-    if (SimHostModeIs("decaps_1session")) {
-        return false;
-    }
     if (SimHostModeIs("decaps_2session")) {
         return true;
+    }
+    if (SimHostModeIs("decaps_1session")) {
+        return false;
     }
     const char *legacy = std::getenv("KEM_DECAPS_SIM_2SESSION");
     if (legacy != nullptr) {
         return legacy[0] == '1';
     }
-    return true;
+    // unset：与 device run.sh 生产默认一致 → 1-session
+    return false;
 #endif
 }
 

@@ -26,4 +26,4 @@ FIPS 203 **Alg.15 K-PKE.Decrypt**（ml_kem_1024 / k=4）**正确性探针**（G4
 
 - **可进入**读本 `FROZEN.md`、`STATUS.md` 了解 2-launch 正确性切分历史
 - **禁止**作 `DECRYPT_DIR` 默认或回退推荐；**禁止**跑本目录 CI 验收；**禁止**把本树当新实现模板改写后「复活」
-- **例外（KEM vendor 快照）**：[`fix-f203-alg21-kem-decaps-correctness-k4`](../../fix-f203-alg21-kem-decaps-correctness-k4/) 的 `vendor_sync_from_alg15_decrypt.sh` **允许** rsync 本树到 `vendor/pke_decrypt/`（2-launch G4；stable Decrypt 为 1-kernel）。这是拼装快照，不是活跃交付路径。
+- **例外（历史）**：曾允许已冻结的 [`frozen-fix-…-alg21-kem-decaps-correctness-k4`](../frozen-fix-f203-alg21-kem-decaps-correctness-k4/) `vendor_sync` rsync 本树（2-launch G4）。**2026-07-20 起该 correctness 已冻结**；**禁止**为新工作复活 sync / 抄本树。
