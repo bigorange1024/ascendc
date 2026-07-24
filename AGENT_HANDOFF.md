@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-24（教材第6章复盘成文；工程主线见下）
+> **最后刷新**：2026-07-24（第7章 CT → Decaps device CPU+SIM PASS）
 
 ---
 
@@ -11,26 +11,25 @@
 
 | 项 | 状态 |
 |----|------|
-| **形式方法教材** | 分支 [`research/formal-lang-dag`](docs/research/)；**第6章复盘已成文**（KeyGen/Encaps 事后 CT + 结论）；第4–5章算法细节暂不细抠 |
+| **形式方法教材** | 分支 [`research/formal-lang-dag`](docs/research/)；第6章复盘已成文；**第7章 CT 已先交并驱动实现** |
 | **KEM Encaps / KeyGen / PKE** | 均已 `examples/stable/` 定型 |
-| **Decaps** | 有 correctness 标本 + `pass-fix-…-decaps-device-k4`；**第7章方法论路径尚未按「先 CT 再写码」闭环** |
+| **Decaps device** | [`pass-fix-f203-alg21-kem-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)：**CPU+SIM 合法 `K` max=0 PASS**；SIM 默认 `decaps_2session`；拒绝 CPU PASS |
 
 ---
 
 ## ★ 下一刀（P0）
 
-1. **第7章前置**：`kem.decaps` 先交真闭包表 CT（多父 + FO 接缝 + Forbidden）  
-2. 按 CT → customspec → 实现 → CPU+SIM；再写第7章并判决方法论  
-3. 全程继续在 **`research/formal-lang-dag`**（不合入 `main`，除非用户明确指令）
+1. 教材第7章 **实现后判决**占位改写（弱/强成功 + 与 correctness 三轴对照）
+2. 可选：拒绝路径 SIM；`liboqs_kem_decaps_batch` 长测；`#交付#` Decaps（须用户授权，本轮未开 examples）
 
 ---
 
 ## ★ Smoke
 
 ```bash
-cd examples/stable/stable-fips203-mlkem-kem-encaps-k4
+cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4
 bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
 
 ---

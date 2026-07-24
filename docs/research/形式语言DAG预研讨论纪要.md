@@ -103,7 +103,7 @@
 
 - [x] KeyGen / Encaps：事后闭包表 + 合法边 / 禁止边复盘（教材第6章；含轨迹对照与欠债）  
 - [ ] KeyGen：若汇报需要，再压一页「合法派生」简图（非本轮阻塞）  
-- [ ] Decaps：方法论前瞻闭包与缺项清单 → 实现验收 → 第7章  
+- [x] Decaps：方法论前瞻闭包 → 实现验收 → 第7章判决（2026-07-24：`pass-fix-…-decaps-device` CPU+SIM PASS；强成功）  
 - [ ] correctness 对照实验设计落成可执行协议  
 - [ ] 结论稳定后再考虑迁 `docs/notes/` 或挂钩 Rule/Skill  
 
@@ -156,3 +156,4 @@
 | 2026-07-24 | **边标签全称**：$\mathsf{sem}\to\mathsf{semantic}$，$\mathsf{forb}\to\mathsf{forbidden}$；集合 $\mathrm{Forb}\to\mathrm{Forbidden}$（含 ForbiddenHit）；节点字段/请求名 `\texttt{forbid}` / $\mathrm{forbid}(x)$ 保留 |
 | 2026-07-24 | **命题 4.3 删绕句**：只保留「$M=\emptyset\Leftrightarrow\mathrm{Dep}^*(T)\subseteq\Gamma$」；去掉「左部单独成立」那句 |
 | 2026-07-24 | **第6章复盘成文**：KeyGen/Encaps 事后 CT、三类边实例、具象化对照表、四组问题复盘判断、分析结论与欠债；后续第7章/编码继续在 `research/formal-lang-dag` |
+| 2026-07-24 | **第7章 CT→实现**：`pass-fix-…-decaps-device` CPU+SIM PASS（D286798+E763663）；拒绝 CPU；判决强成功；SIM 默认 `decaps_2session` |

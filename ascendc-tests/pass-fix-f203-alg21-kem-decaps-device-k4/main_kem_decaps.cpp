@@ -2,8 +2,8 @@
  * @file main_kem_decaps.cpp
  * @brief Alg.21 Decaps 全链 Host：dk_kem + c → K（Phase-D → Phase-E）。
  *
- * SIM 默认 ASCENDC_SIM_HOST_MODE=decaps_1session（T2 单库后同 session D→E）；
- * 对照可设 decaps_2session（见 ascendc_build_mode.hpp）。
+ * SIM 生产默认 ASCENDC_SIM_HOST_MODE=decaps_2session（Phase-D 与 Phase-E 各一 session；
+ * 见 ascendc_build_mode.hpp / 教材第7章 CT）。排障可设 decaps_1session（本探针 Host 仍分段 Finalize）。
  * 行 1–4：dk 切片为指针偏移，不另开 launch。
  */
 #include "ascendc_build_mode.hpp"
@@ -74,7 +74,9 @@ int32_t main(int32_t argc, char *argv[])
 
 #ifndef ASCENDC_CPU_DEBUG
     if (ascendc::SimHostDecapsUse2Session()) {
-        std::fprintf(stderr, "[kem-decaps] NOTE: decaps_2session 对照路径（非默认）\n");
+        std::fprintf(stderr, "[kem-decaps] SIM host mode=decaps_2session（生产默认）\n");
+    } else {
+        std::fprintf(stderr, "[kem-decaps] SIM host mode=decaps_1session（排障；本探针仍分段 session）\n");
     }
 #endif
 

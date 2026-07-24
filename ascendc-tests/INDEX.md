@@ -66,10 +66,10 @@ Phase A 早期 harness 已归档：[`frozen/frozen-f203-ntt-phase-a-fsm/`](froze
 | **vec-k4-v3**（暂定） | fork v2；接入设备 **`src` + `a_hat`**（上行已 PASS：[`lines8-15-se-k4`](pass-fix-f203-alg13-lines8-15-se-k4/) + [`lines3-7-a-hat-k4`](pass-fix-f203-alg13-lines3-7-a-hat-k4/)） |
 | [**fix-f203-alg19-kem-keygen-correctness-k4/**](fix-f203-alg19-kem-keygen-correctness-k4/) | **Alg.19 KEM KeyGen（correctness）✅** — vendor PKE + KeyGen_internal；CPU+SIM+liboqs max=0；SIM **742558** tick |
 | [**fix-f203-alg20-kem-encaps-correctness-k4/**](fix-f203-alg20-kem-encaps-correctness-k4/) | **Alg.20 KEM Encaps（correctness）** — vendor Encrypt **G5←frozen**；**CPU+SIM PASS** |
-| [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；SIM 默认 **2-session** PASS |
-| [**fix-f203-alg21-kem-decaps-device-k4/**](fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device）** — **T19b/c**；**待开工** |
+| [**fix-f203-alg21-kem-decaps-correctness-k4/**](fix-f203-alg21-kem-decaps-correctness-k4/) | **Alg.21 KEM Decaps（correctness）** — vendor D←frozen G4 + E←frozen G5；设备 FO；SIM 默认 **2-session** PASS（oracle；**禁止抄码**） |
+| [**pass-fix-f203-alg21-kem-decaps-device-k4/**](pass-fix-f203-alg21-kem-decaps-device-k4/) | **Alg.21 KEM Decaps（device / T19b/c）** — stable Decrypt+Encrypt 编译期引用；无 vendor；SIM 默认 **`decaps_2session`**（教材第7章 CT） |
 
-**命名（2026-07-10；Encaps 更名 2026-07-15）**：`*-correctness-k4` = vendor oracle 对照（冻结不动）；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19 KeyGen / Alg.20 Encaps device 均已 PASS 并更名 `pass-fix-…`**。KEM `scripts/` KeyGen 默认 [`pass-fix-f203-alg19-kem-keygen-device-k4`](pass-fix-f203-alg19-kem-keygen-device-k4/)；Encaps 默认 [`pass-fix-f203-alg20-kem-encaps-device-k4`](pass-fix-f203-alg20-kem-encaps-device-k4/)（roundtrip / liboqs_vs / kat）；Decaps device 待 **T19b/c**。
+**命名（2026-07-10；Encaps 更名 2026-07-15；Decaps device 2026-07-24）**：`*-correctness-k4` = vendor oracle 对照；`pass-fix-*-device-k4` = 去 vendor 设备主线。**Alg.19/20/21 device 均 `pass-fix-…`**。~~`fix-f203-alg21-kem-decaps-device-k4`~~ 已废（空壳 stub 删除）。KEM `scripts/` KeyGen/Encaps 默认见各 pass-fix；Decaps device 见本行。
 
 **KEM 端到端测试（仓库级 `scripts/`，镜像 PKE）**：`liboqs_kem_vs_ascendc.sh`（KeyGen→Encaps→Decaps→reject 四阶段逐级对 liboqs fixture）；**纯 device round-trip（分项，各跑一次，CPU/SIM 分开）**：`roundtrip_kem_keygen.sh` → `roundtrip_kem_encaps.sh` → `roundtrip_kem_decaps.sh`（stash `output/roundtrip_kem/<cpu|sim>/`）；一体入口 `roundtrip_kem_keygen_encaps_decaps.sh`（含拒绝路径）。SIM Decaps 2-session ~11min/段。
 

@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-24 — [第7章 CT → Decaps device PASS](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
+
+关键字：`CT_decaps` · **T19b/c** · `pass-fix-…-decaps-device-k4` · stable Decrypt/Encrypt · `decaps_2session` · CPU+SIM `K` max=0 · 拒绝 CPU
+
 ### 2026-07-23 — [形式方法教材导论实质 · 第3章冻结](2026-07/2026-07-23-形式方法教材导论实质与第3章冻结.md)
 
 关键字：`correctness 引子` · **开放生成≠合法派生** · **证书闭包受控搜索** · 第3章**先保持**、汇报再删 · `research/formal-lang-dag`

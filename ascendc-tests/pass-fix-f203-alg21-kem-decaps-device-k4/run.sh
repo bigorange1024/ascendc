@@ -6,12 +6,13 @@
 #
 # Usage（默认全链）:
 #   bash run.sh -r cpu -v Ascend910B4
-#   bash run.sh -r sim -v Ascend910B4   # 默认单库 + decaps_1session；T19i 后 SIM 3 launch（pack+FO 同核）
+#   bash run.sh -r sim -v Ascend910B4   # 默认单库 + decaps_2session（教材 CT / T19b/c）；T19i 同核 FO
 #
 # 调试（非默认）:
 #   KEM_DECAPS_PHASEE_ONLY=1 …          # 仅 Phase-E（灌 m'）
 #   KEM_DECAPS_REJECT=1 …               # Gate E3：随机假密文；K vs liboqs Decaps≡J(z‖c)
-#   ASCENDC_SIM_HOST_MODE=decaps_2session …  # SIM 双 session 对照（非默认）
+#   KEM_DECAPS_TAMPER_C=1 …             # 同 REJECT（兼容别名）
+#   ASCENDC_SIM_HOST_MODE=decaps_1session …  # SIM 单 session 排障（T2；非本探针生产默认）
 #   KEM_DECAPS_FORCE_REBUILD=1 …
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -26,12 +27,16 @@ export KEM_DECAPS_VERIFY="${KEM_DECAPS_VERIFY:-1}"
 export KEM_DECAPS_SKIP_REBUILD="${KEM_DECAPS_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-1}}"
 export KEM_DECAPS_FORCE_REBUILD="${KEM_DECAPS_FORCE_REBUILD:-0}"
 export KEM_DECAPS_PHASEE_ONLY="${KEM_DECAPS_PHASEE_ONLY:-0}"
+# TAMPER_C：与 correctness 笔记同义别名 → REJECT（假密文 / 拒绝路径）
+if [ "${KEM_DECAPS_TAMPER_C:-0}" = "1" ]; then
+    export KEM_DECAPS_REJECT=1
+fi
 export KEM_DECAPS_REJECT="${KEM_DECAPS_REJECT:-0}"
 export CMAKE_BUILD_JOBS="${CMAKE_BUILD_JOBS:-2}"
-export KERNEL_COMPUTE_BUDGET_SEC="${KEM_DECAPS_KERNEL_BUDGET_SEC:-1200}"
-# SIM 全链默认 1-session（T2 单库后）；对照可显式 decaps_2session
+export KERNEL_COMPUTE_BUDGET_SEC="${KEM_DECAPS_KERNEL_BUDGET_SEC:-1800}"
+# SIM 生产默认 2-session（教材第7章 CT / 用户锁定）；单 session 须显式覆盖
 if [ -z "${ASCENDC_SIM_HOST_MODE:-}" ]; then
-    export ASCENDC_SIM_HOST_MODE=decaps_1session
+    export ASCENDC_SIM_HOST_MODE=decaps_2session
 fi
 
 BUILD_TYPE="Debug"

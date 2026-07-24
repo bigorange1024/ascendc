@@ -1,31 +1,37 @@
 # STATUS — pass-fix-f203-alg21-kem-decaps-device-k4
 
-FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**（**PASS**；自 `fix-…` 更名 2026-07-18）。
+FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**（T19b/c；教材第7章 CT → 实现）。
 
 | 项 | 值 |
 |---|---|
-| **阶段** | **PASS**（2026-07-17 全链+E3+T2；2026-07-18 更名 `pass-fix`） |
-| **历史 oracle** | **已冻结** — 只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**禁止**翻 frozen 源码 |
-| **PKE** | 编译期引用 stable Decrypt fused + Encrypt |
+| **阶段** | **PASS**（2026-07-24：本分支按第7章前瞻 CT 接线并验收） |
+| **CT** | [`docs/research/…教材草案.tex`](../../docs/research/从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex) §前瞻 `CT_decaps`（先于本目录写码提交） |
+| **PKE** | **编译期引用** [`stable-…-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) fused + [`stable-…-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
+| **KEM** | `kem/`：`G(m'‖h)` 并入 Phase-E prep；设备 FO（SIM：`l18_l19` 同核；CPU：`pack_fo`） |
+| **SIM host** | 生产默认 **`ASCENDC_SIM_HOST_MODE=decaps_2session`**（CT 锁定）；单库合库（`prepare_dec_shim`） |
+| **对照 oracle** | [`fix-…-decaps-correctness-k4`](../fix-f203-alg21-kem-decaps-correctness-k4/) — **只读 STATUS/计划**；**禁止**抄 `.cpp/.hpp` / vendor |
 | **笔记** | [`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) |
 
-## 验收
+## 验收（2026-07-24 Cloud）
 
 | 范围 | 命令 | 结果 |
 |------|------|------|
-| **全链 CPU** | `bash run.sh -r cpu …` | `K` **max=0** |
-| **全链 SIM** | `bash run.sh -r sim …` | `K` **max=0**；单库 + 默认 `decaps_1session`；**T19i 后 3 launch**；D**287037**+E**763886** |
-| **E3 拒绝** | `KEM_DECAPS_REJECT=1 …` | device `K` == liboqs == `J(z‖c)` **PASS** |
-| liboqs 分项 KAT | `bash scripts/liboqs_kem_decaps_batch.sh` | **PASS** CPU×10+SIM×3（2026-07-17） |
-| device roundtrip | `bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu\|sim` | **PASS**（含拒绝） |
+| **全链 CPU** | `bash run.sh -r cpu -v Ascend910B4` | `K` **max=0** **PASS** |
+| **全链 SIM** | `SIM_DIRECT=1 bash run.sh -r sim …` | `K` **max=0** **PASS**；D tick **286798** + E **763663**；根无 stray dump；单 `libascendc_kernels_sim.so` |
+| **拒绝 CPU** | `KEM_DECAPS_REJECT=1`（=`TAMPER_C`） | device `K` == liboqs == `J(z‖c)` **PASS** |
 
 ```bash
+cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4
 bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
 
-**实现要点**：行 1–4 指针偏移；SIM `prepare_dec_shim.sh` 合单库；**T19i PASS**：探针本地 `l18_l19` pack 尾同核 FO → SIM **3** launch（CPU 仍 6）；**禁止**改共享 PKE Encrypt 源。
+## 相对 correctness 的结构差异
 
-**T19i 证据（2026-07-20）**：CPU/SIM `K` max=0；`KEM_DECAPS_REJECT=1` CPU+SIM PASS；SIM tick D**287037**+E**763886**；根无 stray dump。
-
-**已外置**：`#交付#` → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i 已镜像**；SIM **3**）。
+| 轴 | correctness | 本探针 |
+|----|-------------|--------|
+| PKE 源 | frozen G4/G5 `vendor/` | **stable** 编译期引用 + SIM `prepare_dec_shim`（不改 stable） |
+| Launch | 多段 G4+G5 | Decrypt **1** fused + Encrypt 同 stable；KEM 头/尾嵌入 |
+| FO | 独立/嵌入 vendor pack | 探针本地 `kem/` + `l18_l19` 覆盖（勿改共享 Encrypt） |
+| SIM | 默认 2-session | **同**（CT 生产默认） |
+| vendor 树 | 有 | **无** |

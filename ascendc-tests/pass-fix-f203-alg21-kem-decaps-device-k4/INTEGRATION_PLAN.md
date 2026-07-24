@@ -30,7 +30,7 @@
 | **首版全链 launch** | **2**：Phase-D + Phase-E（各内部 = 对应 stable 的 launch 数）；**零额外独立 KEM AIV 核名** |
 | **最终目标** | 尽可能少 launch；**门禁不是**一上来 D+E 单核 |
 | **PKE 源** | 编译期引用 stable；**禁止** `#include` / rsync frozen |
-| **SIM session** | **默认 `decaps_1session`**（T2 单库后同 session D→E）；对照 `ASCENDC_SIM_HOST_MODE=decaps_2session` |
+| **SIM session** | **默认 `decaps_2session`**（教材第7章 CT / 本探针生产）；排障 `ASCENDC_SIM_HOST_MODE=decaps_1session` |
 | **单设备库** | **CPU/SIM 均为单** `libascendc_kernels_*.so`。SIM 用 `scripts/prepare_dec_shim.sh`（冲突头 `dec_*`）合库；见 §T2 |
 
 ---
@@ -130,9 +130,9 @@ Phase-D：`main_kem_decaps_phase_d_run.*` + stable `f203_decrypt_device_fused`�
 | **E2** | 同 E1 SIM | SIM `K` max=0；记 tick | **PASS**（tick **746221**） |
 | **E3** | 拒绝路径：随机假密文 → `K` vs liboqs Decaps≡`J(z‖c)` | CPU（+SIM）max=0 | **PASS**（2026-07-17；`KEM_DECAPS_REJECT=1`） |
 | **D0–D2** | Phase-D / 全链内 Decrypt | `m'` 可用；全链 `K` max=0 | **PASS**（并入 F1） |
-| **F1** | D→E 串联；SIM 默认 1-session（单库） | `K` max=0 | **PASS**（T2：D**286803**+E**745925**） |
-| **F2** | 分项 kat / roundtrip | 按 scripts 约定 | **PASS**（2026-07-17；默认已指本目录；CPU KAT×1） |
-| **T2** | SIM 单库 + 1-session | 无 `…_dec_sim`；`K` max=0；E3 仍绿 | **PASS**（2026-07-17 Cloud） |
+| **F1** | D→E 串联；SIM 默认 **2-session**（CT；单库） | `K` max=0 | **PASS**（2026-07-24：D**286798**+E**763663**） |
+| **F2** | 分项 kat / roundtrip | 按 scripts 约定 | 可选（本轮未跑长测） |
+| **T2** | SIM 单库 + 可选 1-session 排障 | 无双 `.so`；`K` max=0 | **合库 PASS**；本探针生产默认仍 **2-session** |
 
 ---
 
@@ -141,14 +141,14 @@ Phase-D：`main_kem_decaps_phase_d_run.*` + stable `f203_decrypt_device_fused`�
 ```bash
 cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4
 bash run.sh -r cpu -v Ascend910B4          # 默认全链
-bash run.sh -r sim -v Ascend910B4          # 默认单库 + decaps_1session
-# 调试 Phase-E-only / 拒绝 / 2-session 对照（非默认）：
+bash run.sh -r sim -v Ascend910B4          # 默认单库 + decaps_2session
+# 调试 Phase-E-only / 拒绝 / 1-session 排障（非默认）：
 KEM_DECAPS_PHASEE_ONLY=1 bash run.sh -r cpu -v Ascend910B4
 KEM_DECAPS_REJECT=1 bash run.sh -r cpu -v Ascend910B4   # E3：假密文；K vs liboqs
-ASCENDC_SIM_HOST_MODE=decaps_2session bash run.sh -r sim -v Ascend910B4
+ASCENDC_SIM_HOST_MODE=decaps_1session bash run.sh -r sim -v Ascend910B4  # 排障
 ```
 
-防挂死预算：`KERNEL_COMPUTE_BUDGET_SEC`≥600（全链默认 1200）。
+防挂死预算：`KERNEL_COMPUTE_BUDGET_SEC`≥600（全链默认 1800）。
 
 ---
 
@@ -156,7 +156,7 @@ ASCENDC_SIM_HOST_MODE=decaps_2session bash run.sh -r sim -v Ascend910B4
 
 | 项 | 归属 |
 |----|------|
-| **T2：SIM 单库合库 + 单 session** | **PASS**（2026-07-17 Cloud）：`prepare_dec_shim.sh` + 单 `ascendc_library`；默认 `decaps_1session` |
+| **T2：SIM 单库合库** | **PASS**：`prepare_dec_shim.sh` + 单 `ascendc_library`；本探针生产默认仍 `decaps_2session`（CT）；`decaps_1session` 为排障 |
 | **T19i：SIM `fo_only` → `l18_l19` 尾（4→3）** | **本探针 PASS**（2026-07-20；D**287037**+E**763886**）；stable Decaps 待镜像 |
 | D+E 单 launch 融合 | 更后 |
 | `#交付#` / `examples/stable` Decaps | **已完成**（2026-07-20）；本探针仍作行为基线 |

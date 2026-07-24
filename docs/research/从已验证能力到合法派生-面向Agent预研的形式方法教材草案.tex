@@ -3995,9 +3995,11 @@ I/O 契约 $\mathcal{C}$：
   明确不采用 &
   correctness/\texttt{frozen/} 正向实现 \\
   过程指标 &
-  （实现过程中追加：回退次数、门禁是否拦住 Forbidden、CPU/SIM 日志锚点） \\
+  先交 CT；Forbidden 未触（无 correctness/frozen 抄码）；回退 0；
+  合库 shim 一次编过 \\
   结果指标 &
-  （验收后追加：tick、$K$ max、拒绝路径、可选 KAT） \\
+  CPU $K$ max=0；SIM $K$ max=0（D\textbf{286798}+E\textbf{763663}）；
+  拒绝 CPU PASS；根无 stray dump \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -4017,8 +4019,22 @@ I/O 契约 $\mathcal{C}$：
 % --- 实现完成后由 Agent 改写以下占位 ---
 \subsection{实现后分析与方法论判决}
 \label{sec:forward-verdict}
-\textit{（占位：待 device 探针 CPU+SIM 验收后填写。含：轨迹是否遵守 $\mathrm{CT}$、
-与 correctness 三轴对照、弱/强成功判决。）}
+
+\noindent\textbf{轨迹（2026-07-24 Cloud）}：先交 $\mathrm{CT}_{\mathrm{decaps}}$（本章）再写码；落点
+\texttt{pass-fix-f203-alg21-kem-decaps-device-k4}（废 stub \texttt{fix-…-device}）。
+合法代码来源：stable Decrypt fused + Encrypt 编译期引用；Encaps device 头/尾范式；
+\texttt{library/shared} Keccak。\textbf{未}采用 correctness/\texttt{frozen/} 正向实现。
+SIM 生产默认 \texttt{decaps\_2session}（CT）；单库 \texttt{prepare\_dec\_shim}（不改 stable）。
+
+\noindent\textbf{结果证据}：CPU 合法 $K$ max=0；SIM 合法 $K$ max=0（D tick \textbf{286798}+E \textbf{763663}）；
+拒绝路径 CPU（\texttt{KEM\_DECAPS\_REJECT=1}）$K=J(z\Vert c)$ PASS。
+
+\noindent\textbf{与 correctness 三轴}：过程——先 CT 再写码、Forbidden 未触；结构——无 \texttt{vendor/}、挂 stable、
+KEM 嵌入 prep/pack；结果——合法路径 CPU+SIM 对拍绿。
+
+\noindent\textbf{判决}：\textbf{强成功}（弱成功 + 拒绝路径 CPU + 结构相对 correctness 收敛）。
+教材侧后续可补 SIM 拒绝长测与第~8~章对照组细表；\textbf{未}在本轮开 \texttt{examples/} Decaps。
+
 
 % ============================================================
 \section{对照组：\texttt{correctness} 标本的意义}
