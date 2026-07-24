@@ -59,3 +59,9 @@
 | `liboqs_kem_decaps_batch` | **CPU×10** + **SIM×3** **PASS** |
 | `roundtrip_kem_keygen_encaps_decaps` | **CPU + SIM** **PASS**（agreement + E3 reject） |
 | **NPU** | **未跑**（本环境无卡） |
+
+---
+
+## 五指标对照表（同日追加）
+
+精简表已单列：[`docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md`](../../docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md)（A correctness vs B CT；二元 1+2+4+5 → A**=1** / B**=4**；假绿 A**≥3** / B**=3**）。
