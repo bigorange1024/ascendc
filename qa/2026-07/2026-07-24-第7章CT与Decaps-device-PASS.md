@@ -18,8 +18,21 @@
 | SIM 合法 | `[verify] PASS`；tick D**286798**+E**763663**；根无 stray |
 | 拒绝 CPU | `KEM_DECAPS_REJECT=1` → `REJECT PASS` |
 
-## 遗留
+## 遗留（午前）
 
 - 教材 §实现后判决占位待改写（弱/强成功：合法+拒绝已绿；结构无 vendor）
 - 拒绝路径 SIM 长测可选；KAT×10 非本轮门禁
-- 未开 `examples/` exp/stable Decaps（本轮禁止）
+- 未开 `examples/` exp/stable Decaps（午前禁止）
+
+---
+
+## `#交付#` Decaps → examples（同日追加）
+
+用户授权完整晋级：
+
+1. **incubating** [`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)：vendored Decrypt+Encrypt + `kem/`；customspec + [`kem-decaps-baseline-registry`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
+2. **CPU+SIM** 合法路径 `K` max=0（exp：D**286829**+E**763658**）；拒绝 CPU PASS。
+3. **整树复制** → [`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（v1）；本目录复验 CPU+SIM（D**286866**+E**763780**）。
+4. `scripts/` `DECAPS_DIR` 默认改指 stable（对照 Encaps T19e）；device 探针仍为行为基线。
+
+**Forbidden 未触**：未抄 correctness/frozen 源码。

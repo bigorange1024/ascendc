@@ -1,0 +1,14 @@
+# 生成物：Decrypt 合库头隔离树（prepare_dec_shim.sh）；勿提交
+shim/
+# 运行产物
+build_*/
+out_*/
+input/
+output/
+golden/
+sim_log/
+OPPROF_*/
+OPPROF_latest
+ascendc_kem_decaps*
+*.bin
+*.log

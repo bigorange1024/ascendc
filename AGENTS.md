@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-15（Encaps `#验收#` → stable；下一 T19b/c）
+**最后刷新**：2026-07-24（Decaps `#交付#` → stable；KEM 四段 stable 齐）
 
 ---
 
@@ -119,9 +119,10 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 - **PKE** 三段已在 `examples/stable/`  
 - **KEM Alg.19 KeyGen**：**定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 保留  
 - **KEM Alg.20 Encaps**：**定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；tick **721119**）；预研副本保留  
+- **KEM Alg.21 Decaps**：**定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-24 `#交付#`；SIM D**286866**+E**763780**）；行为基线 `pass-fix-…-decaps-device-k4`  
 - **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
 - 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4`（勿当 CMake 依赖）  
-- 办公室常见下一刀：**T19b/c Decaps device**（见 HANDOFF）
+- 办公室常见下一刀：可选 Decaps 拒绝 SIM / KAT 批测（见 HANDOFF）
 
 ---
 

@@ -35,3 +35,7 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 | FO | 独立/嵌入 vendor pack | 探针本地 `kem/` + `l18_l19` 覆盖（勿改共享 Encrypt） |
 | SIM | 默认 2-session | **同**（CT 生产默认） |
 | vendor 树 | 有 | **无** |
+
+## 交付落点（2026-07-24）
+
+本探针仍为**行为基线**（禁止作 CMake 依赖）。定型交付：[`examples/stable/stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（`#交付#` 自 incubating 复制）。
