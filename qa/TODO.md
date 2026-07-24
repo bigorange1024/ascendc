@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-24（**`#交付#` Decaps → stable**；T19b/c device 仍为行为基线；下一：可选拒绝 SIM / KAT 批测）
+**最近刷新**：2026-07-24（Decaps **非 NPU 压测收尾**：拒绝 SIM + KAT 10+3 + roundtrip CPU/SIM；NPU 未跑）
 
 ---
 
@@ -25,14 +25,14 @@
 
 ## 打开项（按优先级）
 
-主线 **可选 Decaps 拒绝 SIM / KAT 批测 + 教材细表**。**T19a Encaps / T19b/c device / T19h Decaps `#交付#` 已完成**。correctness 仍 vendor **frozen G5/G4**（oracle；禁止抄码）。
+主线 **教材细表 / NPU 冒烟（有卡时）**。**T19a Encaps / T19b/c device / T19h Decaps `#交付#` + 非 NPU 压测已完成**。correctness 仍 vendor **frozen G5/G4**（oracle；禁止抄码）。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
 | **P0** | **T19a** | **[`pass-fix-f203-alg20-kem-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)**：prep 前段 H/G + stable Encrypt | **PASS**（CPU+SIM；tick **721010**；liboqs KAT **10+3**） |
 | **P0** | **T19g** | Encaps incubating → `#验收#` [`stable-…-kem-encaps-k4`](../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | **完成**（tick **721119**；KAT **10+3**；scripts 默认改指 stable） |
 | **P0** | **T19b/c** | **[`pass-fix-f203-alg21-kem-decaps-device-k4`](../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)** Phase-E/D（第7章 CT） | **PASS**（行为基线；交付见 **T19h**） |
-| **P0** | **T19h** | Decaps incubating → `#交付#` [`stable-…-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | **完成**（2026-07-24；SIM D**286866**+E**763780**；scripts `DECAPS_DIR`→stable） |
+| **P0** | **T19h** | Decaps incubating → `#交付#` [`stable-…-kem-decaps-k4`](../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) | **完成**（合法 CPU+SIM；拒绝 CPU+SIM；KAT **10+3**；roundtrip CPU+SIM；**NPU 未跑**） |
 | **P0** | **T7c** | ML-KEM **Alg.21** Decaps（correctness）：[`fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | **CPU+SIM PASS**；device **T19b/c 已 PASS** |
 | **P0** | **T7a** | ML-KEM **Alg.20** Encaps（correctness）：[`fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | **PASS**；device **T19a 已 PASS** → [`pass-fix-…-encaps-device-k4`](../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
 | **P0** | **T6** | ML-KEM **Alg.19** KeyGen（correctness）：[`fix-f203-alg19-kem-keygen-correctness-k4`](../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | **PASS**；device [`pass-fix-…-device-k4`](../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) **PASS**（~**713k**）；**stable 交付**见上 |

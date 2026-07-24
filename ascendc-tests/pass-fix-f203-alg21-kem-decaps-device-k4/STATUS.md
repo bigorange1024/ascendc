@@ -18,7 +18,8 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**
 |------|------|------|
 | **全链 CPU** | `bash run.sh -r cpu -v Ascend910B4` | `K` **max=0** **PASS** |
 | **全链 SIM** | `SIM_DIRECT=1 bash run.sh -r sim …` | `K` **max=0** **PASS**；D tick **286798** + E **763663**；根无 stray dump；单 `libascendc_kernels_sim.so` |
-| **拒绝 CPU** | `KEM_DECAPS_REJECT=1`（=`TAMPER_C`） | device `K` == liboqs == `J(z‖c)` **PASS** |
+| **拒绝 CPU** | `KEM_DECAPS_REJECT=1`（=`TAMPER_C` 别名） | device `K` == liboqs == `J(z‖c)` **PASS** |
+| **拒绝 SIM** | `KEM_DECAPS_REJECT=1 SIM_DIRECT=1 …` | `REJECT PASS`；D≈**286703** + E≈**763747**；根无 stray |
 
 ```bash
 cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4

@@ -1,6 +1,6 @@
-# 2026-07-24 — 第7章 CT → Decaps device PASS
+# 2026-07-24 — 第7章 CT → Decaps device PASS · `#交付#` · 非 NPU 压测
 
-关键字：`CT_decaps` · **T19b/c** · `pass-fix-f203-alg21-kem-decaps-device-k4` · stable Decrypt/Encrypt 编译期引用 · `decaps_2session` · 无 vendor · CPU+SIM `K` max=0
+关键字：`CT_decaps` · **T19b/c** · **`#交付#`** stable Decaps · **拒绝 SIM** · KAT **10+3** · **roundtrip** · `M_FILE` · 未跑 NPU
 
 ## 决策
 
@@ -36,3 +36,26 @@
 4. `scripts/` `DECAPS_DIR` 默认改指 stable（对照 Encaps T19e）；device 探针仍为行为基线。
 
 **Forbidden 未触**：未抄 correctness/frozen 源码。
+
+---
+
+## 非 NPU 压测收尾（同日追加）
+
+用户：「除 NPU 外，其余测试继续完成」。
+
+### 脚本修复（须先合入再批测）
+
+| 问题 | 修复 |
+|------|------|
+| CPU twin Phase-E 读 `input/golden_v.bin`，缺匹配 `m` → FO 误走拒绝 | KAT / roundtrip 传 **`M_FILE`**（encaps stash `m.bin`） |
+| `run.sh` verify 失败仍打印 SUCCESS | `python3 verify… \|\| exit $?`（device/exp/stable） |
+| roundtrip Phase 4 旧 `TAMPER_C` 注释 | 对齐 **Gate E3** `KEM_DECAPS_REJECT=1` |
+
+### 证据（Cloud；勿并行多路 SIM）
+
+| 项 | 结果 |
+|----|------|
+| stable / exp / device **拒绝 SIM** | `REJECT PASS`；根无 stray；tick≈D**286k**+E**763k** |
+| `liboqs_kem_decaps_batch` | **CPU×10** + **SIM×3** **PASS** |
+| `roundtrip_kem_keygen_encaps_decaps` | **CPU + SIM** **PASS**（agreement + E3 reject） |
+| **NPU** | **未跑**（本环境无卡） |
