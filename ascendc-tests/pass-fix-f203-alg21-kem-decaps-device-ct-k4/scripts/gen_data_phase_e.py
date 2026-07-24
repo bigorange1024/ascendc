@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """
-gen_data_phase_e.py — Phase-E-only 输入：stash ek/dk + liboqs encaps → m'/h/z/c + golden K。
+gen_data_phase_e.py — **仅 Phase-E**（重加密 + FO）的 input / golden 生成。
 
-合法路径：m' := encaps 的 m（模拟正确 Decrypt）；FO 应输出 encaps 的 K。
+## 与 gen_data.py 的分工
+- gen_data.py：全链（含 Decrypt 段），支持 Gate E3 REJECT。
+- 本脚本：假设 Decrypt 已得 m'=m，只生成 Phase-E 所需 ek、h、z、c、m'、coins、golden_v、golden/K。
+
+## 合法路径语义
+m' := encaps 所用 m（模拟正确 Decrypt）；设备 FO 应输出 encaps 的 K（与 golden/K.bin 一致）。
+
+## golden_v
+与 Encrypt 参考链相同：v = embed(INTT(tr̂), m) + e₂；供 CPU twin 在 pack 前对拍 v 系数。
+coins 仅用于算 golden_v；设备侧噪声由核内 G(m,h) 自产。
+
+## 路径解析（device 探针）
+REPO = ROOT.parents[1]；HOST_GOLDEN 借 stable Encrypt（与 gen_data.py 一致）。
 """
 from __future__ import annotations
 
@@ -31,11 +43,13 @@ M_BYTES = 32
 
 
 def g_mh(m: bytes, h: bytes) -> tuple[bytes, bytes]:
+    """G(m,h) → (K_ref, coins)；Phase-E 仅需 coins 段算 golden_v。"""
     kr = hashlib.sha3_512(m + h).digest()
     return kr[:32], kr[32:]
 
 
 def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
+    """LUT 平面堆叠（even/odd 列），写入 input/lut_*_stacked.bin。"""
     if even:
         top = lut[:, 0:N:2]
         bottom = lut[:, N:512:2]
@@ -46,6 +60,7 @@ def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
 
 
 def _gen_luts(inp: Path) -> None:
+    """Phase-E 仅需 NTT/INTT 四套 LUT（无 Encrypt 别名 lut_even/odd）。"""
     lut_ntt = load_lut_t_i8("ntt")
     lut_intt = load_lut_t_i8("intt")
     _lut_planar_stacked(lut_ntt, True).tofile(inp / "lut_ntt_even_stacked.bin")
@@ -74,6 +89,7 @@ def main() -> None:
     h = dk[3104:3136]
     z = dk[3136:3168]
 
+    # m：KAT 用 M_FILE/M_HEX；否则随机（与 encaps 消息一致）
     if os.environ.get("M_FILE"):
         m = Path(os.environ["M_FILE"]).read_bytes()
     elif os.environ.get("M_HEX"):
@@ -85,21 +101,23 @@ def main() -> None:
     ref = REPO / "scripts" / "liboqs_kem_ref"
     if not ref.is_file():
         subprocess.check_call(["bash", str(REPO / "scripts" / "build_liboqs_kem_ref.sh")])
+    # encaps 得 c 与 golden K（FO 合法路径期望输出此 K）
     subprocess.check_call(
         [str(ref), "encaps", str(ek_path), str(inp / "c.bin"), str(golden / "K.bin"), m.hex()]
     )
 
     (inp / "ek_kem.bin").write_bytes(ek)
     (inp / "ek_pke.bin").write_bytes(ek)
-    (inp / "m_prime.bin").write_bytes(m)  # Phase-E-only：正确 Decrypt ⇒ m'=m
+    (inp / "m_prime.bin").write_bytes(m)  # Phase-E：正确 Decrypt ⇒ m' = m
     (inp / "h.bin").write_bytes(h)
     (inp / "z.bin").write_bytes(z)
 
     _k_ref, coins = g_mh(m, h)
-    (inp / "coins.bin").write_bytes(coins)  # 仅 golden_v 参考；设备自产
+    (inp / "coins.bin").write_bytes(coins)  # 仅 golden_v 参考；设备核内自产噪声
 
     _gen_luts(inp)
 
+    # golden_v：Encrypt 行 18–21 后 v 系数，CPU pack 对拍用
     t_hat = gc.decode_t_hat(ek[: gc.EK_T_BYTES])
     r, _e1, e2 = gc.build_re(coins)
     r_hat = stage123_transform(r, "ntt")

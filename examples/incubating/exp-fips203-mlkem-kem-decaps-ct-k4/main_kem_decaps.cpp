@@ -1,12 +1,20 @@
 /**
  * @file main_kem_decaps.cpp
- * @brief Alg.21 Decaps 全链 Host：dk_kem + c → K（Phase-D → Phase-E）。
+ * @brief Alg.21 Decaps 全链 Host 入口：dk_kem + c → K（Phase-D Decrypt → Phase-E G+Encrypt+FO）。
  *
  * 本目录为 incubating 自包含交付（vendored Decrypt+Encrypt + kem）；
  * 行为对齐 pass-fix-f203-alg21-kem-decaps-device-ct-k4。
- * SIM 生产默认 ASCENDC_SIM_HOST_MODE=decaps_2session（Phase-D 与 Phase-E 各一 session；
- * 见 ascendc_build_mode.hpp / 教材第7章 CT_decaps）。排障可设 decaps_1session。
- * 行 1–4：dk 切片为指针偏移，不另开 launch。
+ *
+ * 流水线（教材第7章 CT_decaps）：
+ *   1) 读 dk_kem、c、Decrypt NTT/INTT LUT；
+ *   2) Phase-D：`RunKemDecapsPhaseD` → m'（可写 output/m_prime.bin）；
+ *   3) Host 按偏移切 ek/h/z（行 1–4，不另开 launch）；
+ *   4) Phase-E：`RunKemDecapsPhaseE` → K → output/K.bin。
+ *
+ * SIM Host：生产默认 `ASCENDC_SIM_HOST_MODE=decaps_2session`（D/E 各一 ACL session）；
+ * 排障可设 `decaps_1session`（本探针仍分段 Finalize）。
+ *
+ * 与 golden：run.sh + verify 只验 K I/O；本文件不内嵌对拍。
  */
 #include "ascendc_build_mode.hpp"
 #include "data_utils.h"
@@ -24,12 +32,13 @@ int32_t main(int32_t argc, char *argv[])
     (void)argc;
     (void)argv;
 
+    // Host 侧缓冲：私钥、密文、明文候选、共享秘密
     std::vector<uint8_t> dk(F203KemDec::kDkKemBytes);
     std::vector<uint8_t> c(F203KemDec::kCtBytes);
     std::vector<uint8_t> m(F203KemDec::kMsgBytes);
     std::vector<uint8_t> K(F203KemDec::kSharedSecretBytes);
 
-    // Decrypt LUT（无 ntt_ 前缀）与 Encrypt LUT（lut_ntt_*）分文件
+    // Decrypt 用 LUT（无 ntt_ 前缀）；Encrypt Phase-E 另读 lut_ntt_* / lut_intt_*
     constexpr size_t kDecLutBytes = 65536;  // tiling::lutEvenOddFileBytes（Decrypt）
     std::vector<uint8_t> lutEven(kDecLutBytes);
     std::vector<uint8_t> lutOdd(kDecLutBytes);
@@ -59,6 +68,7 @@ int32_t main(int32_t argc, char *argv[])
         return 21;
     }
 
+    // —— Phase-D：K-PKE.Decrypt(dk_pke, c) → m' ——
     std::fprintf(stderr, "[kem-decaps] Phase-D Decrypt (sim_2session=%d)\n",
                  ascendc::SimHostDecapsUse2Session() ? 1 : 0);
     const int dRc =
@@ -69,7 +79,7 @@ int32_t main(int32_t argc, char *argv[])
     }
     (void)WriteFile("./output/m_prime.bin", m.data(), m.size());
 
-    // 行 1–4 切片：Host 偏移（不另开 launch）
+    // Alg.18 行 1–4：dk_kem 切片为指针（零拷贝语义）
     const uint8_t *ek = dk.data() + F203KemDec::kOffEk;
     const uint8_t *h = dk.data() + F203KemDec::kOffH;
     const uint8_t *z = dk.data() + F203KemDec::kOffZ;
@@ -82,6 +92,7 @@ int32_t main(int32_t argc, char *argv[])
     }
 #endif
 
+    // —— Phase-E：G + Encrypt + FO → K ——
     std::fprintf(stderr, "[kem-decaps] Phase-E G+Encrypt+FO\n");
     const int eRc = RunKemDecapsPhaseE(ek, m.data(), h, z, c.data(), K.data());
     if (eRc != 0) {

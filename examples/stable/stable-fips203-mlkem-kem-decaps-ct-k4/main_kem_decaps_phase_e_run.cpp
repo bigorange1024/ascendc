@@ -1,7 +1,16 @@
 /**
  * @file main_kem_decaps_phase_e_run.cpp
- * @brief Phase-E Host 编排：G+Encrypt+FO（可被全链 / Phase-E-only 复用）。
- * SIM：prep → l18_l19（pack+FO）；CPU：分段 + pack_fo（T19i 后无 fo_only）。
+ * @brief Phase-E Host 编排：G(m'‖h) + Encrypt compute + 设备 FO → K（全链 / Phase-E-only 共用）。
+ *
+ * 平台分叉（锁参，勿擅自改 launch 数）：
+ *   - SIM：prep → 单核 `f203_encrypt_l18_l19`（内联 pack+FO，T19i，共 2 次设备 launch）；
+ *   - CPU：prep → ntt_y → at_jp → intt_e1 → 读 golden_v → pack_fo（分段便于孪生调试）。
+ *
+ * 数据面要点：
+ *   - Encrypt LUT：`./input/lut_ntt_*` 与 `lut_intt_*`；
+ *   - CPU 的 v 不现场算，读 `./input/golden_v.bin`（须与 encaps 的 m 一致，见 M_FILE / qa 假绿记录）。
+ *
+ * 对齐：CT_decaps；customspec；禁 host memcmp 选 K。
  */
 #include "main_kem_decaps_phase_e_run.hpp"
 
@@ -58,10 +67,12 @@ constexpr size_t kHBytes = F203KemDec::kHashBytes;
 
 void FillPrfTiling(ShakeGeneralTilingData *t)
 {
+    // EncryptPrep 内 PRF/SHAKE 通用 tiling：rate=SHAKE256，按 poly 切分
     FillShakeTiling(t, 8U, 64U, kPrfBytesPerPoly, SHAKE256_RATE_BYTES);
     t->blockDim = 1U;
 }
 
+/** 加载 Encrypt 正向 NTT LUT 到 workspace 的 NTT 槽位。 */
 static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -73,6 +84,7 @@ static bool LoadNttLutHost(uint8_t *ws, size_t lutBytes)
 }
 
 #ifdef ASCENDC_CPU_DEBUG
+/** CPU 分段 INTT：与 NTT 共用同一对 LUT 槽偏移（孪生约定）。 */
 static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -83,6 +95,7 @@ static bool LoadInttLutHostPhased(uint8_t *ws, size_t lutBytes)
     return ReadFile("./input/lut_intt_odd_stacked.bin", rd, ws + tiling::LUT_NTT_ODD_STACKED, lutBytes);
 }
 #else
+/** SIM 融合核：INTT LUT 落在独立 INTT 槽（与 l18_l19 布局一致）。 */
 static bool LoadInttLutHostFused(uint8_t *ws, size_t lutBytes)
 {
     size_t rd = lutBytes;
@@ -100,6 +113,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
 {
     constexpr size_t cBytes = F203_TAIL_C_BYTES;
 
+    // Encrypt compute tiling（mixPass 等由 GenerateTiling 填生产默认）
     TilingData tilingHost{};
     GenerateTiling(tilingHost);
 
@@ -113,6 +127,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     const size_t lutBytes = tiling::lutEvenOddBytes;
 
 #ifdef ASCENDC_CPU_DEBUG
+    // ========== CPU 孪生路径：多 launch + golden_v ==========
     uint8_t *ekPke = (uint8_t *)AscendC::GmAlloc(kEkBytes);
     uint8_t *mPrime = (uint8_t *)AscendC::GmAlloc(kMBytes);
     uint8_t *hIn = (uint8_t *)AscendC::GmAlloc(kHBytes);
@@ -143,9 +158,11 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     std::memcpy(prepTilingGm, &prepTilingHost, prepTilingBytes);
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    // 1) G(m'‖h) + EncryptPrep → K'、coins、Â、re
     ICPU_RUN_KF(f203_kem_dec_phase_e_prep, kPrepBlockDim, ekPke, mPrime, hIn, kPrime, coins, aHat, prf, re,
                 prepTilingGm);
 
+    // re 布局内 y / e1 偏移（与 Encrypt full layout 一致）
     uint8_t *ySrc = re + F203EncryptFull::kReYByteOff;
     uint8_t *e1 = re + F203EncryptFull::kReE1ByteOff;
 
@@ -154,6 +171,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     if (!LoadNttLutHost(ws, lutBytes)) {
         return 20;
     }
+    // 2–4) NTT(y) → Â·ŷ → INTT+e1 → u
     g_f203_ntt_y_mix_pass = tilingHost.mixPass;
     ICPU_RUN_KF(f203_encrypt_ntt_y, 1, yHat, ySrc, ws, tilingHost);
     ICPU_RUN_KF(f203_encrypt_at_jp, 2, uNtt, aHat, yHat);
@@ -163,12 +181,14 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     }
     ICPU_RUN_KF(f203_encrypt_intt_e1, 1, uOut, uNtt, e1, ws, tilingHost);
 
+    // CPU 不跑完整 v 链：读 gen_data 按 m 预计算的 golden_v（须与 c 匹配）
     size_t rs = vSize;
     if (!ReadFile("./input/golden_v.bin", rs, vOut, vSize)) {
         return 17;
     }
 
     AscendC::SetKernelMode(KernelMode::AIV_MODE);
+    // 5) pack(u,v)→c' 并同核 FO → K
     ICPU_RUN_KF(f203_kem_dec_pack_fo, 1, uOut, vOut, cPrime, cIn, zIn, kPrime, kOut);
 
     (void)WriteFile("./output/c_prime.bin", cPrime, cBytes);
@@ -194,6 +214,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     AscendC::GmFree(ws);
     return 0;
 #else
+    // ========== SIM/NPU：独立 session；prep + l18_l19（内联 pack+FO）==========
     constexpr size_t mBytes = kMBytes;
     const size_t uTrSize = tiling::uTrFileBytes;
     const size_t trHatNttSize = tiling::n * sizeof(int32_t);

@@ -1,8 +1,11 @@
 /**
  * @file main_kem_decaps_phase_e.cpp
- * @brief Phase-E-only 入口（调试）：读 input/{ek,m_prime,h,z,c} → output/K.bin。
+ * @brief Phase-E-only 调试入口：跳过 Decrypt，直接读 m'/h/z/ek/c → K。
  *
- * 生产默认走 main_kem_decaps.cpp 全链；本文件仅 `KEM_DECAPS_PHASEE_ONLY=1` / phase_e profile。
+ * 生产默认走 `main_kem_decaps.cpp` 全链。
+ * 启用：`KEM_DECAPS_PHASEE_ONLY=1` 或 phase_e 构建 profile（见 run.sh）。
+ *
+ * 用途：隔离 Phase-E / FO / SIM session 问题；非正式验收路径。
  */
 #include "data_utils.h"
 #include "f203_kem_dec_layout.h"
@@ -25,6 +28,7 @@ int32_t main(int32_t argc, char *argv[])
     std::vector<uint8_t> K(F203KemDec::kSharedSecretBytes);
 
     size_t rs = 0;
+    // 兼容 ek_kem.bin 与历史 ek_pke.bin 文件名
     if ((!ReadFile("./input/ek_kem.bin", rs, ek.data(), ek.size()) || rs != ek.size()) &&
         (!ReadFile("./input/ek_pke.bin", rs, ek.data(), ek.size()) || rs != ek.size())) {
         return 13;

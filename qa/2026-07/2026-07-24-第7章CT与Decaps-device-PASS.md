@@ -79,3 +79,9 @@
 | `stable-fips203-mlkem-kem-decaps-k4` | `stable-fips203-mlkem-kem-decaps-ct-k4` |
 
 约定：后续只在 **`research/formal-lang-dag`** 推进；**勿**再新建旁支。
+
+---
+
+## 自研代码中文注释（同日追加）
+
+对 CT 三树（`*-decaps-*-ct-k4`）自研面补详细中文注释：`kem/`（FO/layout/prep/pack/l18_l19）、`main_kem_decaps*`、`scripts/gen_data*.py` / `verify_kem_decaps.py`、`data_utils.h`。vendored PKE `prep/`/`compute/`/`pke_decrypt/` 未改。

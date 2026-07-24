@@ -1,9 +1,12 @@
 /**
  * @file main_kem_decaps_phase_d_run.cpp
- * @brief Phase-D：launch stable `f203_decrypt_device_fused`；输入 dk_kem 前缀作 dk_pke。
+ * @brief Phase-D Host：launch `f203_decrypt_device_fused`（编译期引用 stable Decrypt / 本树 shim）。
  *
- * 背景：Alg.18 行 1–4 切分不另开 launch——dk_pke 为 dk_kem[0:1536)；ek/h/z 由全链 Host
- * 用偏移交给 Phase-E。SIM 本函数自含 aclInit…aclFinalize（供 decaps_2session）。
+ * 背景（CT / qa）：
+ *   - Alg.18 行 1–4 切分不另开 launch：dk_pke = dk_kem[0:1536)；ek/h/z 留给全链 Host 偏移给 Phase-E。
+ *   - SIM：本函数完整 aclInit→launch→aclFinalize，供 `decaps_2session` 与 Phase-E 隔离 session。
+ *
+ * 与 golden：本段只产出 m'；最终 K 对拍在 Phase-E 之后。
  */
 #include "main_kem_decaps_phase_d_run.hpp"
 
@@ -43,9 +46,10 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
 
 namespace {
 
-constexpr uint32_t kBlockDim = 1U;
-constexpr size_t kSoftSyncBytes = 64U;
+constexpr uint32_t kBlockDim = 1U;       // Decrypt fused 单 block
+constexpr size_t kSoftSyncBytes = 64U;   // CrossCore soft sync 占位
 
+/** 将 even/odd LUT 填入 workspace 约定偏移（NTT 与 INTT 各一份 ws）。 */
 void FillNttWs(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, const uint8_t *lut_odd)
 {
     std::memset(ws, 0, wsBytes);
@@ -53,6 +57,7 @@ void FillNttWs(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, const uint8
     std::memcpy(ws + tiling::LUT_ODD_STACKED, lut_odd, tiling::lutEvenOddFileBytes);
 }
 
+/** Decrypt fused 默认 tiling：n、k、mixPass=3（生产全量）。 */
 TilingData MakeTiling()
 {
     TilingData t{};
@@ -70,10 +75,11 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
 {
     using namespace tiling;
     const TilingData tilingData = MakeTiling();
-    // 行 1–4：dk_pke = dk_kem 前缀（零拷贝语义；H2D 仅 1536）
+    // 行 1–4：仅把前缀当作 dk_pke 上传（H2D 1536B）
     const uint8_t *dk_pke = dk_kem;
 
 #ifdef ASCENDC_CPU_DEBUG
+    // —— CPU 孪生：GmAlloc + ICPU_RUN_KF ——
     uint8_t *dkGm = (uint8_t *)AscendC::GmAlloc(F203_DK_PKE_BYTES);
     uint8_t *cGm = (uint8_t *)AscendC::GmAlloc(F203_CT_PKE_BYTES);
     uint8_t *mGm = (uint8_t *)AscendC::GmAlloc(F203_MSG_BYTES);
@@ -114,6 +120,7 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     AscendC::GmFree(softSyncGm);
     return 0;
 #else
+    // —— SIM/NPU：独立 ACL session ——
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));
@@ -155,6 +162,7 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     CHECK_ACL(aclrtMemcpy(dkDev, F203_DK_PKE_BYTES, dk_pke, F203_DK_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(cDev, F203_CT_PKE_BYTES, c, F203_CT_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     {
+        // softSync 清零；NTT/INTT workspace 填 LUT 后 H2D
         std::vector<uint8_t> zeros(kSoftSyncBytes, 0);
         CHECK_ACL(aclrtMemcpy(softSyncDev, kSoftSyncBytes, zeros.data(), kSoftSyncBytes, ACL_MEMCPY_HOST_TO_DEVICE));
         std::vector<uint8_t> wsHost(wssize, 0);
