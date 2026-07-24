@@ -3863,28 +3863,162 @@ device 探针则曾\textbf{编译期引用} stable——两种工程落点都合
 \end{enumerate}
 
 % ============================================================
-\section{前瞻：用理论指导尚未完成的 \texttt{kem.decaps}}
+\section{前瞻：用理论指导 \texttt{kem.decaps}（试金石）}
 \label{sec:forward}
+
+本章是方法论的\textbf{正例压力测试}：先交闭包表，再在门禁下实现与验收，
+最后用证据判决弱/强成功。实现落点锁定为仓库主线
+\texttt{ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/}
+（T19b/c；目标更名 \texttt{pass-fix-…}）；
+\textbf{不}开 \texttt{examples/} 的 \texttt{exp-*}/\texttt{stable-*}（晋级须另行授权）。
+对照标本 \texttt{fix-…-decaps-correctness-k4} 只作 Forbidden 与数字对照，\textbf{禁止抄码}。
 
 \subsection{为什么 Decaps 适合做试金石}
 Decaps 同时依赖 Encrypt、Decrypt、KeyGen 的 I/O，还有 FO 失败路径，是典型的\textbf{多父 DAG}；
-而且，如果理论只能解释已经做完的故事、生不出待办清单，方法论就停在修辞层面了。
+若理论只能解释已经做完的故事、生不出待办清单，方法论就停在修辞层面。
 
-\subsection{前瞻时 Agent（或人）至少应交出的闭包}
+\subsection{先交闭包表 $\mathrm{CT}_{\mathrm{decaps}}$（写码前）}
+\label{sec:forward-ct}
+
+目标 $T=\texttt{kem.decaps.k4}$（FIPS~203 Alg.21 / 内部 Alg.18）。
+验收级别 $\ell=\mathsf{lemma}$（device 探针：CPU+SIM 对拍；KAT 批测为加分项）。
+I/O 契约 $\mathcal{C}$：
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.2cm}L{10.6cm}@{}}
+  \toprule
+  项 & 约定 \\
+  \midrule
+  输入 &
+  $\mathit{dk}_{\mathrm{KEM}}$ 3168\,B（$=\mathit{dk}_{\mathrm{PKE}}\Vert\mathit{ek}\Vert h\Vert z$）；
+  密文 $c$ 1568\,B；LUT 随 Decrypt/Encrypt 先决 \\
+  输出 &
+  共享秘密 $K$ 32\,B（默认只落盘 \texttt{K.bin}） \\
+  合法路径 &
+  与同种子 Encaps 的 $K$ 一致 \\
+  拒绝路径 &
+  $c'\neq c$ 时 $K=J(z\Vert c)$（SHAKE256），不得泄露 $K'$ \\
+  设备义务 &
+  $m'$、$G$、重加密、$J$ 与常数时间选择均在 device；Host 禁代算 FO \\
+  SIM host &
+  生产默认 \texttt{ASCENDC\_SIM\_HOST\_MODE=decaps\_2session}（单 session 属后续 T2） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+闭包表（启动实现时的\textbf{前瞻}填写；缺项须先补洞）：
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.8cm}L{11.0cm}@{}}
+  \toprule
+  栏 & 前瞻填写 \\
+  \midrule
+  $T,\mathcal{C},\ell$ &
+  如上；$\ell=\mathsf{lemma}$（device） \\
+  已获证（ok） &
+  \texttt{pke.decrypt.k4}（stable fused）；
+  \texttt{pke.encrypt.k4}（stable）；
+  \texttt{kem.keygen.k4} / \texttt{kem.encaps.k4}（供上游 $\mathit{dk}$/$c$ 与对拍）；
+  设备 SHA3-256/512、SHAKE256（\texttt{library/shared} Keccak） \\
+  依赖闭包 $D$ &
+  Decrypt $\to$ $G(m'\Vert h)$ $\to$ Encrypt$(ek,m',r')$ $\to$ FO$(c,c',z,K')$；
+  另含「单设备库合库」与 SIM 2-session 编排接缝 \\
+  缺项 $M$（开工前） &
+  （1）device 探针本体未实现；
+  （2）Phase-D 对 stable Decrypt fused 的 host/合库接线；
+  （3）Phase-E 对 stable Encrypt 的接线；
+  （4）设备 FO 尾（$\mathsf{compose}$ 接缝，非 PKE 自动附赠） \\
+  接缝 $\mathrm{Seams}$ &
+  $s_{\mathrm{Dec}\circ G}$；
+  $s_{G\circ\mathrm{Enc}}$；
+  $s_{\mathrm{FO}}$（比对+$J$+选 $K$）；
+  $s_{\mathrm{sim2sess}}$（SIM 生产保底） \\
+  $\mathrm{ForbiddenHit}$ &
+  \texttt{fix-…-decaps-correctness} 的 frozen G4/G5 \texttt{vendor/}；
+  任意 \texttt{frozen/} 正向源码；
+  Host 代算 $J$/memcmp 冒充设备 FO \\
+  $\mathrm{Warn}$ &
+  单 session SIM 真修仍 open；本轮不把 T2 塞进 $\ell$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{写码许可（v0）}
+按定理~\ref{thm:coding-permit}：在 $M$ 清空（device 探针就位且接缝获证）之前，
+\textbf{禁止}宣称 Decaps 交付或 stable 晋级。
+本轮允许的动作只有：按最小补洞序实现缺项并验收，使 $M\to\emptyset$。
+
+\subsection{三类边与最小补洞序}
+\label{sec:forward-fill}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.4cm}L{11.4cm}@{}}
+  \toprule
+  $\tau$ & Decaps 实例 \\
+  \midrule
+  $\mathsf{semantic}$ &
+  Decaps 依赖 Decrypt / Encrypt 的 interface；
+  $\mathit{dk}$ 布局依赖 KeyGen；对拍 $c$/$K$ 依赖 Encaps 契约 \\
+  $\mathsf{compose}$ &
+  Decrypt 已证 $\not\Rightarrow$ $G$+重加密+FO 自动获证；须单独认证全链 \\
+  $\mathsf{forbidden}$ &
+  correctness vendor 与 frozen G4/G5；抄 correctness 源码冒充 device \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+最小补洞 $B$（算法~\ref{alg:min-fill} 精神；本轮执行序）：
 \begin{enumerate}
-  \item 目标 I/O 与验收级别；
-  \item 依赖节点清单（标好 ok / missing / dirty）；
-  \item 接缝清单（对称失败、重加密比对等，要不要单独成节点）；
-  \item 否定边（不能引用的 correctness vendor / frozen 实现）；
-  \item 最小补洞顺序（先探针哪条缝）。
+  \item \textbf{Phase-D 接线}：编译期引用 stable Decrypt fused，跑通 $m'$（可分段对拍）；
+  \item \textbf{K1 $G$}：设备 $G(m'\Vert h)\to(K',r')$（复用 shared Keccak；范式对齐 Encaps 头）；
+  \item \textbf{Phase-E 接线}：编译期引用 stable Encrypt，注入 $m'$/$r'$ 得 $c'$；
+  \item \textbf{FO 全链}：单库合并；设备比对+$J$+选 $K$；SIM 默认 2-session；
+        合法路径 $K$ max=0；拒绝路径（篡改 coins）$K=J(z\Vert c)$。
 \end{enumerate}
+
+\subsection{实现轨迹与过程记账（随实现刷新）}
+\label{sec:forward-trace}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.6cm}L{11.2cm}@{}}
+  \toprule
+  项 & 记录 \\
+  \midrule
+  是否先交 $\mathrm{CT}$ &
+  \textbf{是}（本节 $\mathrm{CT}_{\mathrm{decaps}}$ 先于 device 源码提交） \\
+  合法代码来源 &
+  stable Decrypt / Encrypt；Encaps device 接线范式；\texttt{library/shared} Keccak；
+  FIPS~203 + \texttt{docs/notes/…Alg21…} 契约 \\
+  明确不采用 &
+  correctness/\texttt{frozen/} 正向实现 \\
+  过程指标 &
+  （实现过程中追加：回退次数、门禁是否拦住 Forbidden、CPU/SIM 日志锚点） \\
+  结果指标 &
+  （验收后追加：tick、$K$ max、拒绝路径、可选 KAT） \\
+  \bottomrule
+\end{tabular}
+\end{center}
 
 \subsection{成功标准（分阶段）}
 \begin{itemize}
-  \item \textbf{弱成功}：闭包表能拿去执行；偏差能归因到缺边、假边或脏证书，并回写进本章理论；
-  \item \textbf{强成功}：在门禁之下做完 device/stable 级实现，而且过程指标好过 correctness 那一段探索史
-        （比较轴见下一章）。
+  \item \textbf{弱成功}：$\mathrm{CT}$ 可执行；偏差能归因；device CPU+SIM 合法路径 PASS；
+  \item \textbf{强成功}：另含拒绝路径；过程/结构相对 correctness 明显收敛（无 vendor 树、挂 stable）；
+  \item \textbf{未达成}：无法在 Forbidden 约束下交付可对拍实现——如实写入结论，回写理论欠债。
 \end{itemize}
+
+\subsection{本章小结（实现前）}
+\label{sec:forward-summary-pre}
+前瞻 $\mathrm{CT}$ 已给出多父依赖、接缝与 Forbidden；最小补洞序已排定。
+下一节（随实现完成而改写）给出轨迹证据与方法论判决。
+
+% --- 实现完成后由 Agent 改写以下占位 ---
+\subsection{实现后分析与方法论判决}
+\label{sec:forward-verdict}
+\textit{（占位：待 device 探针 CPU+SIM 验收后填写。含：轨迹是否遵守 $\mathrm{CT}$、
+与 correctness 三轴对照、弱/强成功判决。）}
 
 % ============================================================
 \section{对照组：\texttt{correctness} 标本的意义}
