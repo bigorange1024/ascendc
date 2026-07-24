@@ -4,6 +4,14 @@
 **目的**：说明 FIPS 203 **Algorithm 21** `ML-KEM.Decaps(dk, c)` 在 **ml_kem_1024（k=4）** 上的设备全链契约、FO 尾段边界，以及本轮发现的 **CAModel 单 session Decrypt→Encrypt 污染**诊断结论。  
 **案例锚点**：[`ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/)（**单设备库合并版** · CPU 单 session PASS；SIM 默认 **2-session** PASS + 设备 FO；liboqs 分项 kat `CPU×10+SIM×1 PASS`）  
 
+> **2026-07-24 更新（本专题 CT 实验树，与 main 交付区分）**：
+> - 形式方法第7章 CT→实现落点在专题分支 `research/formal-lang-dag`，目录统一加 **`-ct`**：
+>   [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) ·
+>   [`exp-…-decaps-ct-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) ·
+>   [`stable-…-decaps-ct-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)。
+> - **main** 上无 `-ct` 的同名树为办公室交付主线；二者勿混引用。
+> - 本文仍以 **correctness** 作 SIM 单 session / 双库诊断的案例锚点；device CT 树为无 vendor 行为基线（编译期引用 stable PKE）。
+>
 > **2026-07-02 更新（根因修正）**：本文早期把 SIM 单 session 重加密 `c'` 污染归为「泛化 CAModel 状态问题」。**实为探针曾用 decrypt/encrypt 双设备库**：一个 ACL session 内两份 device binary **func_key 空间重叠 / 装载边界冲突**，后加载库的核 launch 被派发到错误 binary。已由**合并单设备库**（单 func_key 空间）消除此双库冲突 —— 见 §4.3（含合库落地要点与 R3 触发面）与案例 STATUS「单库合并」节。
 >
 > **2026-07-10 更新（vendor 源与重构债）**：

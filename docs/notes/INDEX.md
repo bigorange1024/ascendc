@@ -34,7 +34,7 @@
 | [F203-PKE-liboqs交叉验证与Compress定点技术总结.md](F203-PKE-liboqs交叉验证与Compress定点技术总结.md) | **PKE L2 liboqs** oracle、`Compress_d` 定点 bias（d=5 `(1<<26)`） |
 | [F203-KEM-Alg19-KeyGen设备全链技术总结.md](F203-KEM-Alg19-KeyGen设备全链技术总结.md) | **Alg.19 KEM KeyGen**；correctness [`fix-f203-alg19-kem-keygen-correctness-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) · device [`…-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
 | [F203-KEM-Alg20-Encaps设备全链技术总结.md](F203-KEM-Alg20-Encaps设备全链技术总结.md) | **Alg.20 KEM Encaps**；stable [`stable-…-kem-encaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) · device [`pass-fix-…-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
-| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps**；correctness [`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) · device [`…-device-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) |
+| [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps**；correctness [`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) · device [`pass-fix-…-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) |
 | [F203-Encrypt-compute-行18-19-UB驻留技术总结.md](F203-Encrypt-compute-行18-19-UB驻留技术总结.md) | **Alg.14 compute** 内积→INTT **UB 驻留**、MIX GATE 握手、SIM 标量/MTE 可见性；[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) |
 
 ## AscendC 平台

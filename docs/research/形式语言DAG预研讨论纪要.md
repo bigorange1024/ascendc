@@ -103,7 +103,7 @@
 
 - [x] KeyGen / Encaps：事后闭包表 + 合法边 / 禁止边复盘（教材第6章；含轨迹对照与欠债）  
 - [ ] KeyGen：若汇报需要，再压一页「合法派生」简图（非本轮阻塞）  
-- [x] Decaps：方法论前瞻闭包 → 实现验收 → 第7章判决（2026-07-24：`pass-fix-…-decaps-device` CPU+SIM PASS；强成功）  
+- [x] Decaps：方法论前瞻闭包 → 实现验收 → 第7章判决（2026-07-24：`pass-fix-…-decaps-device-ct-k4` CPU+SIM PASS；强成功；后补 `-ct` 改名/压测/注释）  
 - [ ] correctness 对照实验设计落成可执行协议  
 - [ ] 结论稳定后再考虑迁 `docs/notes/` 或挂钩 Rule/Skill  
 
@@ -158,3 +158,6 @@
 | 2026-07-24 | **第6章复盘成文**：KeyGen/Encaps 事后 CT、三类边实例、具象化对照表、四组问题复盘判断、分析结论与欠债；后续第7章/编码继续在 `research/formal-lang-dag` |
 | 2026-07-24 | **第7章 CT→实现**：`pass-fix-…-decaps-device` CPU+SIM PASS（D286798+E763663）；拒绝 CPU；判决强成功；SIM 默认 `decaps_2session` |
 | 2026-07-24 | **Decaps CT 三树改名 `-ct`**：与 main 已交付同名树区分；工作只在 `research/formal-lang-dag`，勿开旁支 |
+| 2026-07-24 | **非 NPU 压测收尾**：拒绝 SIM + KAT CPU×10+SIM×3 + roundtrip CPU/SIM；`M_FILE`/假 SUCCESS 修复 |
+| 2026-07-24 | **五指标对照**落盘 `docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md` |
+| 2026-07-24 | **自研中文注释**（kem/main/scripts）；**引用审计**清 stub/幽灵 frozen 链 |

@@ -9,7 +9,7 @@
 | [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) | Phase-D Decrypt 权威 |
 | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) / [`stable-…-kem-encaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) | Phase-E Encrypt 权威 |
 | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../pass-fix-f203-alg20-kem-encaps-device-k4/) | Encaps「头融 prep」工程范式 |
-| 历史 correctness oracle | **已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**禁止**抄码 / 跑 CI |
+| 历史 correctness oracle | 仍活跃只读对照 [`fix-…-decaps-correctness-k4`](../fix-f203-alg21-kem-decaps-correctness-k4/)（**禁止抄码**；非 frozen 幽灵路径） |
 | [`docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md`](../../docs/notes/F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | FO / SIM session 定论 |
 
 **自包含**：[`SELF_CONTAINED.md`](SELF_CONTAINED.md)

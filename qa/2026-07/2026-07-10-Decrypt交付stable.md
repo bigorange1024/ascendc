@@ -153,7 +153,7 @@
 |--------|---------------------|----------------|
 | alg19 KeyGen | [`fix-f203-alg19-kem-keygen-correctness-k4`](../../ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/) | [`…-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
 | alg20 Encaps | [`fix-f203-alg20-kem-encaps-correctness-k4`](../../ascendc-tests/fix-f203-alg20-kem-encaps-correctness-k4/) | [`pass-fix-…-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
-| alg21 Decaps | [`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | [`…-device-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-device-k4/) |
+| alg21 Decaps | [`fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) | [`pass-fix-…-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) |
 
 - 仓库 `scripts/roundtrip_kem_*` / `liboqs_kem_vs_ascendc.sh`：当时默认仍指向 correctness-k4；**2026-07-15**：Encaps 默认已改指 [`pass-fix-…-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)（KeyGen 早已 pass-fix；Decaps 仍 correctness 直至 T19b/c）。
 - frozen `FROZEN.md` vendor 例外路径已改为 correctness-k4。

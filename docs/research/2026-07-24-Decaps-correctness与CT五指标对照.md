@@ -49,3 +49,8 @@
 
 - A：`fix-…-decaps-correctness` `STATUS.md`；`docs/research/形式语言DAG预研讨论纪要.md` §4  
 - B：`999d357` / `a7d9286`；`qa/2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md`
+
+
+## 改名与审计（同日）
+
+B 臂目录已统一为 **`-ct`**（见上表），避免与 **main** 同名交付冲突。引用审计见当日 [`qa/2026-07-24-…`](../../qa/2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)「工程引用审计」节。

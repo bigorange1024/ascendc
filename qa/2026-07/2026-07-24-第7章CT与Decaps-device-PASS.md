@@ -1,6 +1,6 @@
 # 2026-07-24 — 第7章 CT → Decaps device PASS · `#交付#` · 非 NPU 压测
 
-关键字：`CT_decaps` · **T19b/c** · **`#交付#`** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **10+3** · **roundtrip** · `M_FILE` · 未跑 NPU
+关键字：`CT_decaps` · **T19b/c** · **`#交付#`** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **10+3** · **roundtrip** · `M_FILE` · 未跑 NPU · **引用审计** · 中文注释
 
 ## 决策
 
@@ -85,3 +85,28 @@
 ## 自研代码中文注释（同日追加）
 
 对 CT 三树（`*-decaps-*-ct-k4`）自研面补详细中文注释：`kem/`（FO/layout/prep/pack/l18_l19）、`main_kem_decaps*`、`scripts/gen_data*.py` / `verify_kem_decaps.py`、`data_utils.h`。vendored PKE `prep/`/`compute/`/`pke_decrypt/` 未改。
+
+---
+
+## 工程引用审计与文档收尾（同日追加）
+
+### 幽灵 / 虚空引用已修
+
+| 问题 | 处理 |
+|------|------|
+| 多处链到已废 stub `fix-…-decaps-device-k4` | 改指 `pass-fix-…-decaps-device-ct-k4`（qa regress / notes INDEX / KeyGen INTEGRATION_PLAN / NPU 说明 / T19a 要点等） |
+| device `INTEGRATION_PLAN` 链不存在的 `frozen-fix-…-decaps-correctness/FROZEN.md` | 改指仍活跃只读 [`fix-…-decaps-correctness-k4`](../../ascendc-tests/fix-f203-alg21-kem-decaps-correctness-k4/) |
+| 省略号标签缺 `-ct` | INDEX / TODO 显示名与链接对齐 `…-ct-k4` |
+| 教材 tex 仍写 stub 路径 | 改为 `pass-fix-…-device-ct-k4` |
+
+**保留**：当日「改名对照表」中的旧名（仅作迁移记录，非活跃引用）。
+
+### 今日事项总览（本专题分支）
+
+1. 非 NPU 压测收尾（拒绝 SIM / KAT 10+3 / roundtrip）  
+2. 五指标对照表落盘  
+3. CT 三树改名 `-ct`；删误建 `cursor/*` 旁支  
+4. 自研面详细中文注释  
+5. 引用审计 + 纪要/笔记/HANDOFF 刷新  
+
+工作目录：**仅** `research/formal-lang-dag`。
