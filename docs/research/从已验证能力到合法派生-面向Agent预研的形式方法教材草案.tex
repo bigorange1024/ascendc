@@ -2890,12 +2890,12 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 当前已获证集 $\Gamma$；约束库 $S$（含与各顶点相关的 $\mathrm{Forb}$ 片段）；
 仓库锚点映射 $\rho:V\to\mathrm{Paths}$（活跃权威路径，禁止指向 \texttt{frozen/} 正向源码）。}
 \algoin{顶点 $v\in V$。}
-\algoout{节点卡 $\mathrm{Card}(v)=(\texttt{id},\texttt{layer},\texttt{iface},\texttt{cert},\texttt{forbid},\texttt{repo})$。}
+\algoout{节点卡 $\mathrm{Card}(v)=(\texttt{id},\texttt{layer},\texttt{interface},\texttt{cert},\texttt{forbid},\texttt{repo})$。}
 \begin{algosteps}
   \item 令 $\texttt{id}(v)$ 为 $v$ 的稳定名字（跨任务可引用；不得用临时目录名冒充）。
   \item 令 $\texttt{layer}(v)=\lambda(v)$（P0--P3 只描述能力角色，不要求与磁盘树同构）。
-  \item 从 $S$ 中抽取 $v$ 对外可复用的 I/O、dtype、布局与同步约定，写入 $\texttt{iface}(v)$。
-        约定：后续边与引用只允许挂 $\texttt{iface}$，不允许默许「拷源码」。
+  \item 从 $S$ 中抽取 $v$ 对外可复用的 I/O、dtype、布局与同步约定，写入 $\texttt{interface}(v)$。
+        约定：后续边与引用只允许挂 $\texttt{interface}$，不允许默许「拷源码」。
   \item 若 $v\in\Gamma$，令 $\texttt{cert}(v)$ 记录获证证据指针（路径、CPU+SIM/KAT、版本锚点）；
         若 $v\notin\Gamma$，令 $\texttt{cert}(v)=\bot$。
   \item 令 $\texttt{forbid}(v)$ 为 $S$ 中与 $v$ 相关的否定约束（可空）。
@@ -2919,9 +2919,9 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
   不要用「这次 PR 的临时文件夹名」当 id。 \\
   \texttt{layer} &
   方法论分层 P0--P3（见表~\ref{tab:p0p3}）。分层描述能力角色，\textbf{不必}与磁盘目录一一对应。 \\
-  \texttt{iface} &
+  \texttt{interface} &
   I/O、dtype、形状/布局、同步与 launch 约定中，\textbf{对外可复用}的那部分。
-  能挂到边上的是 iface，不是「把源码拷过来」。 \\
+  能挂到边上的是 interface，不是「把源码拷过来」。 \\
   \texttt{cert} &
   证书证据：权威路径 + 验收级别（CPU+SIM，必要时 KAT）+ 版本锚点（commit / tag / STATUS 日期）；
   未获证时填 $\bot$ 或「未获证」。 \\
@@ -2955,14 +2955,14 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 固定 $G,\Gamma,S$。对任意 $v\in V$，由算法~\ref{alg:encode-node} 得到的 $\mathrm{Card}(v)$ 足以判定：
 \begin{enumerate}
   \item $v$ 当前是否已获证（看 $\texttt{cert}(v)\neq\bot$，等价于 $v\in\Gamma$）；
-  \item 引用 $v$ 时对外应遵守的接口（$\texttt{iface}$）；
+  \item 引用 $v$ 时对外应遵守的接口（$\texttt{interface}$）；
   \item 是否触碰与 $v$ 相关的禁止项（$\texttt{forbid}$）。
 \end{enumerate}
 换言之：门禁若只关心「能否引用 $v$」，不必再翻开 $v$ 的实现源码。
 \end{proposition}
 \begin{proof}[证明梗概]
 第~3~章定义「已获证」为 $v\in\Gamma$，算法步骤~4 正是该隶属关系的工程编码；
-$\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法引用在定义上只依赖证书资格与 $S$ 中接口/禁止约束。
+$\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法引用在定义上只依赖证书资格与 $S$ 中接口/禁止约束。
 \end{proof}
 
 \begin{corollary}[禁止同任务发明未获证底层]
@@ -2981,7 +2981,7 @@ $\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法�
   \midrule
   \texttt{id} & \texttt{pke.keygen.k4} \\
   \texttt{layer} & P2 \\
-  \texttt{iface} &
+  \texttt{interface} &
   与 stable PKE KeyGen 交付 I/O 一致；NTT LUT 静态约定；设备侧布局与后续 KEM 尾拼兼容的那部分写清 \\
   \texttt{cert} &
   \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}；CPU+SIM 对拍；STATUS / 交付纪要作版本锚点 \\
@@ -2991,7 +2991,7 @@ $\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法�
   \bottomrule
 \end{tabular}
 \end{center}
-当 KEM.KeyGen 引用它时，引用的是这张卡上的 \texttt{iface}+\texttt{cert}，不是「目录里好像有个绿名」。
+当 KEM.KeyGen 引用它时，引用的是这张卡上的 \texttt{interface}+\texttt{cert}，不是「目录里好像有个绿名」。
 \end{example}
 
 \subsection{由边关系导出三类边}
@@ -3015,7 +3015,7 @@ $\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法�
   \item 若 $r=\mathrm{compose}(A,B)$，或 $(A,B)\in\mathcal{C}_{\mathrm{seam}}$，令 $\tau=\mathsf{compose}$：
         新建或引用接缝顶点 $s_{A\!\circ\!B}$（若尚无），要求日后单独 $\mathsf{Probe}/\mathsf{Certify}$；
         \textbf{不}把「$A\in\Gamma$ 且 $B\in\Gamma$」推成 $s_{A\!\circ\!B}\in\Gamma$。
-  \item 否则若 $r=(u,v)$ 且任务语义为「$v$ 的正确性依赖 $u$ 的 iface」，令 $\tau=\mathsf{sem}$，确保 $(u,v)\in E$。
+  \item 否则若 $r=(u,v)$ 且任务语义为「$v$ 的正确性依赖 $u$ 的 interface」，令 $\tau=\mathsf{sem}$，确保 $(u,v)\in E$。
   \item 返回 $\tau(r)$ 与载体。
 \end{algosteps}
 \end{methodalgo}
@@ -3027,7 +3027,7 @@ $\texttt{iface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合法�
   标签 $\tau$ & 含义 & 写入何处 / 后果 \\
   \midrule
   $\mathsf{sem}$ &
-  $v$ 要对，离不开 $u$ 的 iface &
+  $v$ 要对，离不开 $u$ 的 interface &
   进入 $E$；参与 $\mathrm{Dep}^*$ \\
   $\mathsf{compose}$ &
   $A,B$ 各有证，$A\!\circ\!B$ 仍须单独认证 &
@@ -3055,7 +3055,7 @@ A\in\Gamma \;\land\; B\in\Gamma \quad\not\Rightarrow\quad s\in\Gamma.
 
 \begin{remark}[边 $\neq$ \texttt{\#include}]
 $\mathsf{sem}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编译依赖。
-自包含原则写进 $\texttt{iface}$：对外挂接口；共享库例外必须进入 $S$，不能默许 Agent 自由翻抄。
+自包含原则写进 $\texttt{interface}$：对外挂接口；共享库例外必须进入 $S$，不能默许 Agent 自由翻抄。
 \end{remark}
 
 \begin{example}[KeyGen 上的三类边（填表示意）]
@@ -3145,7 +3145,7 @@ $(\mathrm{Dep}^*(T)\cap\Gamma)\dot{\cup}M$ 的左部单独成立。
   \texttt{probe} &
   探针级：平台/接缝行为已用 CPU+SIM（或任务声明级别）跑通；$v\in\Gamma$，弱证书。 \\
   \texttt{lemma} &
-  可稳定引用；iface 写清，可进入依赖闭包的「已获证」栏。 \\
+  可稳定引用；interface 写清，可进入依赖闭包的「已获证」栏。 \\
   \texttt{deliverable} &
   交付级（如 stable）：在 lemma 之上还有交付目录、登记表与交接文书。 \\
   \texttt{dirty} &
@@ -3405,7 +3405,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
         若命中 $\mathsf{forb}$，执行 $\mathsf{Freeze}$ / 拒绝，停止。
   \item \textbf{允许写码}：当 $\mathrm{GateCheck}=\mathsf{ALLOW}$ 后，按 $\ell$ 实现 $T$；
         验收通过则 $\mathsf{Certify}(T)$，写回 INDEX/STATUS/节点卡。
-  \item \textbf{非单调维护}：若随后某 $u$ 的 iface 变更，调用 $\mathrm{DirtyPropagate}(\{u\})$ 更新 $\Gamma$，
+  \item \textbf{非单调维护}：若随后某 $u$ 的 interface 变更，调用 $\mathrm{DirtyPropagate}(\{u\})$ 更新 $\Gamma$，
         并要求依赖锥内任务重新进入步骤~2。
 \end{algosteps}
 \end{methodalgo}
