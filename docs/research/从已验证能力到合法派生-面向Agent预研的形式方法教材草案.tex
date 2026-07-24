@@ -145,7 +145,7 @@
   特例引出 & 工程故事 $\to$ 图与语法树 & 完备公式 \\
   套公式 & 用数学\textbf{复述}已见现象 & 证明 \\
   改公式 & 缺口反过来改理论 & 为漂亮删工程事实 \\
-  套别例 & Encaps 复盘；换域；Decaps 前瞻 & 一次塞太多缺口 \\
+  套别例 & Encaps 复盘（第~\ref{sec:replay}~章已做）；Decaps 前瞻与真做 & 一次塞太多缺口 \\
   迭代方法论 & 门禁与流程收敛 & 急进 Rule/Skill \\
   成型后 & 证明、可解释性 & 过早锁死抽象 \\
   \bottomrule
@@ -3598,47 +3598,269 @@ ML-KEM 仍是接缝多、对照清的压力测试床。
 \section{复盘：理论如何对照 \texttt{kem.keygen} 与 \texttt{kem.encaps}}
 \label{sec:replay}
 
-\subsection{复盘的目的}
-不是要证明「我们其实早就在按理论做」（事后贴标签没什么价值），而是：
+本章把第~\ref{sec:mathbg}--\ref{sec:gates}~章已经写下的对象，
+\textbf{套回}两个已经交付的故事：\texttt{kem.keygen} 与 \texttt{kem.encaps}。
+写法是事后补一张闭包表、标三类边、回答第~\ref{sec:hook}~章四组问题——
+不是宣称「当年就按理论做的」，而是检验：\textbf{理论语言能不能把做过的事说清楚}，
+以及\textbf{哪里说不清（欠债）}。说不清的地方，留给第~\ref{sec:forward}~章用 Decaps 再压。
+
+\subsection{复盘的目的与方法}
+\label{sec:replay-method}
+
+\paragraph{目的}
 \begin{enumerate}
-  \item 检查分层和接缝能不能\textbf{用理论语言说清楚}；
-  \item 找出偏离（例如曾经靠 correctness 里的 vendor、或 frozen 模板）并记成\textbf{方法论上的欠债}或\textbf{否定边}；
-  \item 总结「数学原理是怎么落到目录、launch、证书上的」。
+  \item 检查分层（P0--P3）和接缝能不能用依赖图 / 闭包 / 禁止集说清楚；
+  \item 找出偏离（correctness vendor、frozen 模板、先写码后补文书）并记成欠债或
+        $\mathrm{Forbidden}$；
+  \item 总结：数学对象落到了哪些目录、launch 边界与证书文书上。
 \end{enumerate}
 
-\subsection{\texttt{kem.keygen} 校准问题单}
-\begin{itemize}
-  \item P3 是不是只依赖已经获证的 P2，而不是在 KeyGen 任务里重写一遍 NTT？
-  \item 2-launch、Alg.16 尾、\texttt{dk} 展开这类接缝，有没有写清楚？
-  \item baseline-registry 里的 golden 块，是不是都能在图上找到对应的 lemma？
-  \item 否定边有没有落笔（Host 默认禁止走密码路径、禁止把 liboqs 当 AscendC 规格）？
-\end{itemize}
-仓库锚点（查阅用）：
-\texttt{examples/stable/stable-fips203-mlkem-kem-keygen-k4/}，
-\texttt{docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md}，
-以及相关的 \texttt{pass-fix-*} device 探针。
+\paragraph{方法（只用已有工具，不新发明记号）}
+对每个目标 $T$，按算法~\ref{alg:closure-table} 的栏位\textbf{事后}填一张 $\mathrm{CT}$
+（此时 $M$ 对已交付目标应为 $\emptyset$，否则说明我们连「已获证」叙事都对不齐）。
+边按算法~\ref{alg:classify-rel} 标 $\mathsf{semantic}$（语义依赖）、
+$\mathsf{compose}$（接缝）、$\mathsf{forbidden}$（禁止）。
+节点卡字段见算法~\ref{alg:encode-node}；仓库锚点只指向活跃 stable / pass-fix，
+\textbf{不}把 frozen 或 correctness 当正向 \texttt{repo}。
 
-\subsection{\texttt{kem.encaps} 复盘要点（讨论共识）}
-\begin{itemize}
-  \item 合法路径应挂在已获证的 \texttt{pke.encrypt} 和哈希/G 等 lemma 上，而不是拿 correctness 里的 vendor 当实现模板；
-  \item 和 stable Encrypt 的编译期关系、接缝关系，必须写进闭包，不能只是「觉得自己复用了」；
-  \item 若实现史上走过一段混乱探索，复盘文应如实写——那是对照组和方法论的动机，不是丢脸。
-\end{itemize}
-
-\subsection{期望产出的「具象化对照表」（后续填空）}
+\paragraph{复盘资产（查阅用，非抄码清单）}
 \begin{center}
-\begin{tabular}{@{}L{4cm}L{5cm}L{5cm}@{}}
+\small
+\begin{tabular}{@{}L{3.2cm}L{10.6cm}@{}}
   \toprule
-  理论对象 & 工程上长什么样 & 证书形态 \\
+  角色 & 路径 / 文书 \\
   \midrule
-  节点 $v$ & 探针/exp/stable 目录 & STATUS + run.sh 对拍 \\
-  语义边 & 「必须先有某某能力」 & INDEX / customspec 引用 \\
-  接缝节点 & 多 launch / 融合边界 & 集成探针单独 PASS \\
-  否定边 & frozen / forbid 条文 & FROZEN.md、Rule \\
-  字 $w\in L$ & 一次任务的闭包表+计划 & 评审通过后再写码 \\
+  KEM KeyGen 交付 &
+  \texttt{examples/stable/stable-fips203-mlkem-kem-keygen-k4/} \\
+  KeyGen 行为基线 &
+  \texttt{ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/} \\
+  KeyGen registry &
+  \texttt{docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md} \\
+  PKE KeyGen（先决） &
+  \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/} \\
+  KEM Encaps 交付 &
+  \texttt{examples/stable/stable-fips203-mlkem-kem-encaps-k4/} \\
+  Encaps 行为基线 &
+  \texttt{ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/} \\
+  Encaps registry &
+  \texttt{docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md} \\
+  PKE Encrypt（先决） &
+  \texttt{examples/stable/stable-fips203-mlkem-pke-encrypt-k4/} \\
+  对照标本（禁抄） &
+  \texttt{ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/}；
+  \texttt{fix-f203-alg20-kem-encaps-correctness-k4/} \\
   \bottomrule
 \end{tabular}
 \end{center}
+
+\subsection{事后闭包表：\texttt{kem.keygen}}
+\label{sec:replay-ct-keygen}
+
+目标 $T=\texttt{kem.keygen.k4}$（FIPS~203 Alg.19，$\ell=\mathsf{deliverable}$）。
+I/O 契约 $\mathcal{C}$：黑盒输入含种子侧约定与 LUT；输出 $\mathit{ek}$（1568\,B）、$\mathit{dk}$（3168\,B）；
+验收为 CPU+SIM 对拍（SIM tick 量级约 $7.07\times 10^{5}$），必要时 liboqs KAT。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.8cm}L{11.0cm}@{}}
+  \toprule
+  栏 & 事后填写（2026-07 交付态） \\
+  \midrule
+  目标 $T,\mathcal{C},\ell$ &
+  如上；级别 $\mathsf{deliverable}$（stable + registry） \\
+  已获证 $\Gamma$ 视角 &
+  \texttt{pke.keygen.k4}（stable）；设备侧哈希/采 $z$ 等已随 device/stable 写入证书叙事；
+  相关 P1（NTT 等）在 PKE 获证时已进入闭包，\textbf{不}在 KEM 任务重写 \\
+  依赖闭包 $D$ &
+  PKE.KeyGen（Alg.13）$+$ Alg.16 尾缝（$H(\mathit{ek})$、采 $z$、拼 $\mathit{dk}$）$+$
+  2-launch 集成边界（prep $\parallel$ mmad+尾融合） \\
+  缺项 $M$ &
+  $\emptyset$（相对当前 $\Gamma$；否则 stable 不应标交付） \\
+  接缝 $\mathrm{Seams}$ &
+  Alg.16 尾；双 launch 汇合（SIM 用 $\mathtt{SyncAll}$ 等工程约束已写入 customspec landmines） \\
+  否定 $\mathrm{ForbiddenHit}$ &
+  计划若指向 correctness 的 3-launch / vendor oracle，或 frozen 正向源码 $\Rightarrow$ 硬冲突；
+  当前交付计划与之\textbf{不相交} \\
+  警告 $\mathrm{Warn}$ &
+  历史：接缝与 launch 预算曾后知后觉（见欠债）；证书时序曾是 device 先绿、文书后补 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{校准问题单（对照第~\ref{sec:hook}~章）——事后答}
+\begin{itemize}
+  \item P3 是否只依赖已获证 P2、不在 KeyGen 任务重写 NTT？
+        \textbf{是}：stable KEM KeyGen 站在 stable PKE KeyGen 能力之上；NTT 等 P1 不在本任务「顺便发明」。
+  \item 2-launch、Alg.16 尾、$\mathit{dk}$ 展开是否写清？
+        \textbf{交付态已写清}（customspec / STATUS）；但历史上 correctness 为 3-launch，device 才收成 2-launch——
+        属「接缝后知」，记欠债而非否认终态。
+  \item baseline-registry 的 golden 块能否在图上找到 lemma？
+        \textbf{基本能}：oracle 侧挂 \texttt{liboqs\_kem\_ref} 等已登记块；胶水循环不另冒充 P1 证书。
+  \item 否定边是否落笔？
+        \textbf{有}：Host 禁冒充生产 $H$/$z$/$\mathit{dk}$；禁把 PKE C/Python 当 AscendC 规格；
+        交付禁链 device/\texttt{frozen/}；correctness 标本显式非模板。
+\end{itemize}
+
+\subsection{事后闭包表：\texttt{kem.encaps}}
+\label{sec:replay-ct-encaps}
+
+目标 $T=\texttt{kem.encaps.k4}$（Alg.20 / 内部 Alg.17，$\ell=\mathsf{deliverable}$）。
+I/O 契约 $\mathcal{C}$：输入 $\mathit{ek}_{\mathrm{KEM}}$ 与消息 $m$（32\,B，作 Alg.17 输入）；
+输出密文 $c$（1568\,B）与共享密钥 $K$（32\,B）；\textbf{不}交付中间 $h$/$r$/噪声等。
+验收：CPU+SIM 对拍（SIM tick 约 $7.21\times 10^{5}$）；liboqs KAT 批测已做过。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.8cm}L{11.0cm}@{}}
+  \toprule
+  栏 & 事后填写（2026-07 交付态） \\
+  \midrule
+  目标 $T,\mathcal{C},\ell$ &
+  如上；$\mathsf{deliverable}$ \\
+  已获证视角 &
+  \texttt{pke.encrypt.k4}（stable）；设备 SHA3-256/512；$m$ 由 Host/GM 提供（交付语义），
+  与 correctness「由 $\mathit{seed}_d$ 设备采 $m$」\textbf{不同}——后者不得混进 $\Gamma$ 叙事 \\
+  依赖闭包 $D$ &
+  PKE.Encrypt（Alg.14）$+$ KEM 头（$H$/$G$ 得 $K\Vert r$）并入 prep 前段 $+$
+  与 Encrypt 同构的 launch 预算（SIM 2 / CPU 5；禁第 3 次独立 launch） \\
+  缺项 $M$ &
+  $\emptyset$（交付态） \\
+  接缝 $\mathrm{Seams}$ &
+  「PKE Encrypt 已证 $\not\Rightarrow$ KEM 头尾自动获证」；头并入 prep、launch 合并须单独认证过 \\
+  否定 $\mathrm{ForbiddenHit}$ &
+  不得以 \texttt{fix-…-encaps-correctness} 的 frozen G5 vendor Encrypt 为模板；
+  不得把 correctness 的 $m$ 语义当成交付契约 \\
+  警告 $\mathrm{Warn}$ &
+  探索史：correctness $\to$ device（挂 stable Encrypt）$\to$ incubating vendored $\to$ stable；
+  语义漂移与模板更换说明：若当年先交 $\mathrm{CT}$，本可少走一截 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{与 PKE Encrypt 的关系（一句话）}
+语义依赖边指向 stable Encrypt 的 \texttt{interface}；交付目录选择\textbf{自包含 vendored} 快照，
+device 探针则曾\textbf{编译期引用} stable——两种工程落点都合法，但必须写进闭包，
+不能只说「觉得自己复用了」。
+
+\subsection{三类边在仓库里的实例}
+\label{sec:replay-edges}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.4cm}L{11.4cm}@{}}
+  \toprule
+  标签 $\tau$ & 实例（真实锚点；禁把对照目录当正向实现） \\
+  \midrule
+  $\mathsf{semantic}$ &
+  $\texttt{kem.keygen.k4}$ 依赖 $\texttt{pke.keygen.k4}$ 的 interface
+  （$\mathit{ek}$ 同形、不在 KEM 任务重做 NTT）；
+  $\texttt{kem.encaps.k4}$ 依赖 $\texttt{pke.encrypt.k4}$ 的 interface
+  （Alg.14 主体）；KeyGen 产出的 $\mathit{ek}$ 作为 Encaps 输入契约的一部分 \\
+  $\mathsf{compose}$ &
+  Alg.13 $+$ Alg.16 尾 $\to$ Alg.19（尾嵌 mmad、2-launch）；
+  Alg.14 $+$ prep 内 $H$/$G$ $\to$ Alg.20；
+  「单点 PASS」推不出这些接缝自动 PASS——须单独进 $\Gamma$ \\
+  $\mathsf{forbidden}$ &
+  \texttt{fix-…-keygen-correctness}（3-launch / vendor oracle）不得作交付模板；
+  \texttt{fix-…-encaps-correctness}（frozen G5 vendor；$m$ 语义异于 Alg.17 交付）不得作模板；
+  任意 \texttt{frozen/} 正向源码路径不得写入节点卡 \texttt{repo} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{具象化对照表（理论 $\mapsto$ 工程）}
+\label{sec:replay-concretize}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.2cm}L{5.4cm}L{5.2cm}@{}}
+  \toprule
+  理论对象 & 在本仓库长什么样 & 证书 / 证据形态 \\
+  \midrule
+  节点 $v$ &
+  \texttt{pass-fix-*} / \texttt{exp-*} / \texttt{stable-*} 目录 &
+  STATUS + \texttt{run.sh} CPU+SIM；必要时 KAT \\
+  $\mathsf{semantic}$ 边 &
+  「必须先有某某 stable/interface」 &
+  INDEX 引用、customspec 依赖声明、registry 块名 \\
+  接缝（$\mathsf{compose}$） &
+  多 launch / 头尾融合 / Alg.16·17 边界 &
+  集成探针或 stable 全链 PASS；landmines 写入规格 \\
+  $\mathrm{Forbidden}$ &
+  correctness 标本、\texttt{frozen/} 判决、Rule 禁抄 &
+  FROZEN.md / STATUS「非模板」/ 交付禁 \texttt{\#include} 条文 \\
+  $\Gamma$ / 脏标记 &
+  已交付且未作废的能力 &
+  上游改 tiling/同步后应 $\mathsf{Dirty}$（机制仍偏手工） \\
+  字 $w\in L$、$\mathrm{CT}$ &
+  一次任务的闭包表 + 计划 &
+  \textbf{理想}：先交表再写码；\textbf{史实}：常后补（欠债） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{回看第~\ref{sec:hook}~章四组问题（复盘后的判断）}
+\label{sec:replay-four-q}
+
+表~\ref{tab:ch2-four-q} 是专题讨论时的诚实对照。本章复盘之后，判断可以收紧为：
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.2cm}L{5.8cm}L{5.8cm}@{}}
+  \toprule
+  问题组 & 复盘后\textbf{已能}说清的 & \textbf{仍欠}、须第~\ref{sec:forward}~章压测的 \\
+  \midrule
+  第一组 &
+  可指出证书锚点（stable + registry + device）；
+  菜单（INDEX）$\neq$ 拼装说明书——说明书 $\approx$ $\mathrm{CT}$+三类边 &
+  机器可读证书对象仍未工具化；Agent 不会自动先交表 \\
+  第二组 &
+  「组合不免费」可用 $\mathsf{compose}$ + $\mathrm{Seams}\subseteq\Gamma$ 表述；
+  KeyGen/Encaps 终态接缝可点名 &
+  验收口径仍以 I/O 为主；接缝获证与 launch 预算的统一检查未自动化 \\
+  第三组 &
+  correctness 负例成立；正向规则（Forbidden、先 CT）已写进第~\ref{sec:gates}~章 &
+  门禁尚未挡住真实 Agent 绕开；Encaps 史实仍是「探索后收敛」 \\
+  第四组 &
+  KeyGen/Encaps \textbf{可以}事后写成 $\mathrm{CT}$；Dirty 概念已有 &
+  统一 schema 未进日常流程；Dirty 传播无自动机制；
+  Decaps 尚未证明「先交表再写码」可行 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{分析结论}
+\label{sec:replay-verdict}
+
+\begin{enumerate}
+  \item \textbf{理论够不够复述已完成故事？够。}
+        依赖闭包、接缝、禁止集、节点卡字段，都能在 KeyGen/Encaps 的交付态找到对应物；
+        不必引入密码代数也能讲完「凭什么站在 PKE 上」。
+  \item \textbf{史实不等于方法论已生效。}
+        两条交付线都曾经历 correctness 或混乱探索；文书与 launch 约束大量\textbf{后置}。
+        因此本章结论是「理论可解释」，不是「当时已按门禁派生」。
+  \item \textbf{欠债清单（供第~\ref{sec:forward}~章对照）}
+        \begin{itemize}
+          \item 闭包表未始终领先实现（device 先绿、规格后补常见）；
+          \item 接缝与 launch 预算后知（KeyGen 3$\to$2 launch；Encaps $m$ 语义漂移）；
+          \item Dirty 失效传播仍靠人记；
+          \item 门禁未工具化，Agent 仍可能绕开 $\mathrm{Forbidden}$。
+        \end{itemize}
+  \item \textbf{对下一章的输入。}
+        若方法论有效，Decaps 应能在写码前交出真 $\mathrm{CT}$（含多父依赖与 FO 失败路径接缝），
+        并在门禁下实现到约定验收级别；过程应可明显区别于 correctness 探索史
+        （比较轴见第~\ref{sec:correctness}~章）。若做不到，应如实判「弱成功未达成」，并回写理论欠债——
+        而不是事后贴标签。
+\end{enumerate}
+
+\subsection{本章小结}
+\label{sec:replay-summary}
+
+\begin{enumerate}
+  \item 为 \texttt{kem.keygen}、\texttt{kem.encaps} 各补了一张事后 $\mathrm{CT}$；$M=\emptyset$ 与交付态一致。
+  \item 三类边均有仓库实例；correctness/\texttt{frozen/} 归入 $\mathrm{Forbidden}$，不作正向 \texttt{repo}。
+  \item 第~\ref{sec:hook}~章四组问题：复述与负例已加强；「先交表再写码」的正例仍待 Decaps 检验。
+\end{enumerate}
 
 % ============================================================
 \section{前瞻：用理论指导尚未完成的 \texttt{kem.decaps}}
@@ -3714,11 +3936,10 @@ B 不必一次就打赢 C；只要明显好过 A，方法论就过了第一关�
 
 \subsection{近期填空顺序（仍然是「先特殊、后一般」）}
 \begin{enumerate}
-  \item 按复盘反馈改第~\ref{sec:mathbg}~章（定义写准一点、例子密一点）；把 KeyGen 合法派生轨迹压成一页纸；
-  \item 第~\ref{sec:math}~章的字段表，和仓库文书（闭包表 schema）对齐；
-  \item Encaps：理论轨迹对照实现轨迹；
-  \item Decaps：前瞻闭包；
-  \item correctness 对照实验写成可执行的协议；
+  \item \textbf{已完成（第~\ref{sec:replay}~章）}：KeyGen / Encaps 事后 $\mathrm{CT}$、三类边实例、四组问题复盘结论与欠债清单；
+  \item \textbf{下一步（第~\ref{sec:forward}~章）}：Decaps 先交真 $\mathrm{CT}$ $\to$ 方案 $\to$ 实现与 CPU+SIM 验收 $\to$ 按效果写前瞻章并判决方法论；
+  \item 按第~\ref{sec:forward}~章反馈，必要时回改第~\ref{sec:mathbg}--\ref{sec:gates}~章定义（只记欠债，不为本轮细抠算法）；
+  \item correctness 对照实验写成可执行协议（与第~\ref{sec:correctness}~章比较轴对齐）；
   \item 结论稳了之后，再考虑迁到 \texttt{docs/notes/}。
 \end{enumerate}
 

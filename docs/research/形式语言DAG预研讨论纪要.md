@@ -101,10 +101,9 @@
 
 ## 6. 待办（纪要级，非 qa/TODO 替代）
 
-- [ ] 按教材提纲重组 / 增补 research 长文（引子 + 剥洋葱目录可先只有标题）  
-- [ ] KeyGen：具体依赖图 + 合法展开树（特例语言，公式旁注）  
-- [ ] Encaps：理论轨迹 vs 实现轨迹对照表  
-- [ ] Decaps：方法论前瞻闭包与缺项清单  
+- [x] KeyGen / Encaps：事后闭包表 + 合法边 / 禁止边复盘（教材第6章；含轨迹对照与欠债）  
+- [ ] KeyGen：若汇报需要，再压一页「合法派生」简图（非本轮阻塞）  
+- [ ] Decaps：方法论前瞻闭包与缺项清单 → 实现验收 → 第7章  
 - [ ] correctness 对照实验设计落成可执行协议  
 - [ ] 结论稳定后再考虑迁 `docs/notes/` 或挂钩 Rule/Skill  
 
@@ -156,3 +155,4 @@
 | 2026-07-24 | **算法参数体例**：禁止「参数写了却步骤不用」。EncodeNode 参数改为只声明 $V$（不声明 $G/E$）；ClassifyRel/DepStar/Dirty/BuildClosureTable 步骤显式读/写 $G$ 或 $E$；MissingOf/MinimalFill 参数只声明整图 $G$；§4.1 增「算法参数体例」段 |
 | 2026-07-24 | **边标签全称**：$\mathsf{sem}\to\mathsf{semantic}$，$\mathsf{forb}\to\mathsf{forbidden}$；集合 $\mathrm{Forb}\to\mathrm{Forbidden}$（含 ForbiddenHit）；节点字段/请求名 `\texttt{forbid}` / $\mathrm{forbid}(x)$ 保留 |
 | 2026-07-24 | **命题 4.3 删绕句**：只保留「$M=\emptyset\Leftrightarrow\mathrm{Dep}^*(T)\subseteq\Gamma$」；去掉「左部单独成立」那句 |
+| 2026-07-24 | **第6章复盘成文**：KeyGen/Encaps 事后 CT、三类边实例、具象化对照表、四组问题复盘判断、分析结论与欠债；后续第7章/编码继续在 `research/formal-lang-dag` |
