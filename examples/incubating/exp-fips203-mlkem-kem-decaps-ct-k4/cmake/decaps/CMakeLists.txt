@@ -1,6 +1,6 @@
 # Alg.21 KEM Decaps incubating — 自包含 vendored Decrypt + Encrypt + kem
 #
-# 规格：exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.*
+# 规格：exp-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.*
 # 禁止：编译期 #include ascendc-tests/ / 其它 examples/ / frozen/
 #
 # 工程策略（对齐 pass-fix device；路径改本地）：

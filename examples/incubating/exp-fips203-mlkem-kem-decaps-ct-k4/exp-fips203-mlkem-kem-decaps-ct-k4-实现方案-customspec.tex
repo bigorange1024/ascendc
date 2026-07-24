@@ -1,5 +1,5 @@
-% stable-fips203-mlkem-kem-decaps-k4 — FIPS 203 Alg.21 ML-KEM-1024 KEM Decaps (k=4)
-% 编译：bash ../../../scripts/xelatex-clean.sh stable-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex
+% exp-fips203-mlkem-kem-decaps-ct-k4 — FIPS 203 Alg.21 ML-KEM-1024 KEM Decaps (k=4)
+% 编译：bash ../../../scripts/xelatex-clean.sh exp-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex
 \documentclass[UTF8,a4paper,11pt]{ctexart}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -14,16 +14,16 @@
 \newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
 
-\title{stable-fips203-mlkem-kem-decaps-k4\\FIPS 203 Alg.21 ML-KEM-1024 KEM Decaps 实现方案（k=4）}
-\author{ascendc 工程（定型交付）}
+\title{exp-fips203-mlkem-kem-decaps-ct-k4\\FIPS 203 Alg.21 ML-KEM-1024 KEM Decaps 实现方案（k=4）}
+\author{ascendc 工程（\texttt{\#交付\#} incubating）}
 \date{2026-07-24}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-本文档描述 \textbf{定型交付算子}
-\dirname{examples/stable/stable-fips203-mlkem-kem-decaps-k4/}：
+本文档描述 \textbf{incubating 交付用例}
+\dirname{examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/}：
 在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203
 \textbf{Algorithm 21} \texttt{ML-KEM.Decaps()}（\textbf{ml\_kem\_1024}，$k=4$），
 经内部 \textbf{Alg.18}：Decrypt$\to G(m'\Vert h)\to$Encrypt$\to$FO，
@@ -77,7 +77,7 @@ CANN / tikicpulib & 工具链 \\
 \subsection{目录布局}
 
 \begin{verbatim}
-stable-fips203-mlkem-kem-decaps-k4/
+exp-fips203-mlkem-kem-decaps-ct-k4/
   …-实现方案-customspec.tex/.pdf
   main_kem_decaps*.cpp|.hpp
   pke_decrypt/          # vendored Decrypt
@@ -169,7 +169,7 @@ SIM 默认 2-session & CT 锁定；勿默改 1-session \\
 \label{sec:verify}
 
 \begin{verbatim}
-cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
+cd examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 # 期望：[verify] PASS / K max=0；根无 stray dump
@@ -183,6 +183,8 @@ $\sim$15\,s 仅为 Tag5T NTT 定标，\textbf{不}套用。
 \section{写码衔接}
 \label{sec:next}
 
-本目录由 incubating \dirname{exp-fips203-mlkem-kem-decaps-k4/} \textbf{整树复制}晋级（v1）；算法与 I/O 不变。
+本轮用户已授权 \texttt{\#交付\#}：先落地本 incubating（CPU+SIM 绿），再\textbf{整树复制}
+晋级 \dirname{examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/}（v1）；
+\textbf{禁止}在 stable 空写首版。
 
 \end{document}

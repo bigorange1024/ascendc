@@ -1,13 +1,13 @@
-# STATUS — stable-fips203-mlkem-kem-decaps-k4
+# STATUS — stable-fips203-mlkem-kem-decaps-ct-k4
 
 FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **定型交付 v1**（2026-07-24 `#交付#` 自 incubating 整树复制）。
 
 | 项 | 值 |
 |---|---|
-| **来源** | [`exp-fips203-mlkem-kem-decaps-k4`](../../incubating/exp-fips203-mlkem-kem-decaps-k4/) |
-| **customspec** | [`stable-…-实现方案-customspec.tex`](stable-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex) |
+| **来源** | [`exp-fips203-mlkem-kem-decaps-ct-k4`](../../incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) |
+| **customspec** | [`stable-…-实现方案-customspec.tex`](stable-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex) |
 | **registry** | [`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`](../../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md) |
-| **行为基线** | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（仍作行为基线；交付以本目录为准） |
+| **行为基线** | [`pass-fix-f203-alg21-kem-decaps-device-ct-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（仍作行为基线；交付以本目录为准） |
 | **PKE** | 本目录 `pke_decrypt/` + `prep/`/`compute/` **vendored** |
 | **SIM host** | 生产默认 **`ASCENDC_SIM_HOST_MODE=decaps_2session`** |
 
@@ -23,7 +23,7 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **定型交付 v1**（2026-
 | **roundtrip** | `bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu\|sim` | **CPU+SIM PASS**（合法 agreement + Gate E3 拒绝） |
 
 ```bash
-cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
+cd examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 # 拒绝 / KAT / roundtrip 见仓库 scripts/ 与 qa 纪要

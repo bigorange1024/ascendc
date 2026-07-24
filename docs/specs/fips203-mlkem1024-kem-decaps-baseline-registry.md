@@ -1,7 +1,7 @@
 # FIPS 203 ML-KEM-1024 KEM Decaps — baseline-registry
 
 **主题**：Alg.21 `ML-KEM.Decaps()`（经 Alg.18；k=4）交付侧 golden / KAT 计算块登记  
-**适用**：交付以 **`examples/stable/stable-fips203-mlkem-kem-decaps-k4`** 为准（2026-07-24 `#交付#` 自 incubating 复制晋级）；预研副本 `examples/incubating/exp-fips203-mlkem-kem-decaps-k4` 保留。  
+**适用**：交付以 **`examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4`** 为准（2026-07-24 `#交付#` 自 incubating 复制晋级）；预研副本 `examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4` 保留。  
 **规则**：生成 `input/` / `golden_*` 的计算内核**仅**可调用下表已验证来源；缺项须停下补登记。
 
 ---

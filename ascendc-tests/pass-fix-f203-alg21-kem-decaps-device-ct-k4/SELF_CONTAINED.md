@@ -1,4 +1,4 @@
-# 自包含与设备全链约束 — pass-fix-f203-alg21-kem-decaps-device-k4
+# 自包含与设备全链约束 — pass-fix-f203-alg21-kem-decaps-device-ct-k4
 
 | 项 | 约定 |
 |----|------|

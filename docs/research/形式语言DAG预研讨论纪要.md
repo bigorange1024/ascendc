@@ -157,3 +157,4 @@
 | 2026-07-24 | **命题 4.3 删绕句**：只保留「$M=\emptyset\Leftrightarrow\mathrm{Dep}^*(T)\subseteq\Gamma$」；去掉「左部单独成立」那句 |
 | 2026-07-24 | **第6章复盘成文**：KeyGen/Encaps 事后 CT、三类边实例、具象化对照表、四组问题复盘判断、分析结论与欠债；后续第7章/编码继续在 `research/formal-lang-dag` |
 | 2026-07-24 | **第7章 CT→实现**：`pass-fix-…-decaps-device` CPU+SIM PASS（D286798+E763663）；拒绝 CPU；判决强成功；SIM 默认 `decaps_2session` |
+| 2026-07-24 | **Decaps CT 三树改名 `-ct`**：与 main 已交付同名树区分；工作只在 `research/formal-lang-dag`，勿开旁支 |

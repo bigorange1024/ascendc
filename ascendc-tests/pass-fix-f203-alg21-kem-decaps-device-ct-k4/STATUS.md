@@ -1,4 +1,4 @@
-# STATUS — pass-fix-f203-alg21-kem-decaps-device-k4
+# STATUS — pass-fix-f203-alg21-kem-decaps-device-ct-k4
 
 FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**（T19b/c；教材第7章 CT → 实现）。
 
@@ -22,7 +22,7 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — **无 vendor 设备主线**
 | **拒绝 SIM** | `KEM_DECAPS_REJECT=1 SIM_DIRECT=1 …` | `REJECT PASS`；D≈**286703** + E≈**763747**；根无 stray |
 
 ```bash
-cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4
+cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
@@ -39,4 +39,4 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 ## 交付落点（2026-07-24）
 
-本探针仍为**行为基线**（禁止作 CMake 依赖）。定型交付：[`examples/stable/stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（`#交付#` 自 incubating 复制）。
+本探针仍为**行为基线**（禁止作 CMake 依赖）。定型交付：[`examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（`#交付#` 自 incubating 复制）。

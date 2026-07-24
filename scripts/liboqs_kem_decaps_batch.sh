@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # liboqs_kem_decaps_batch.sh — KEM Decaps 分项 kat（固定 dk，liboqs 造 c，默认 quiet）
 #
-# 默认 DECAPS_DIR = examples/stable/stable-fips203-mlkem-kem-decaps-k4
+# 默认 DECAPS_DIR = examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4
 #
 # Usage:
 #   bash scripts/kem_keypair_stash_bootstrap.sh   # 一次性

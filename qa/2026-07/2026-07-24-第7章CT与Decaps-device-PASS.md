@@ -1,6 +1,6 @@
 # 2026-07-24 — 第7章 CT → Decaps device PASS · `#交付#` · 非 NPU 压测
 
-关键字：`CT_decaps` · **T19b/c** · **`#交付#`** stable Decaps · **拒绝 SIM** · KAT **10+3** · **roundtrip** · `M_FILE` · 未跑 NPU
+关键字：`CT_decaps` · **T19b/c** · **`#交付#`** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **10+3** · **roundtrip** · `M_FILE` · 未跑 NPU
 
 ## 决策
 
@@ -30,9 +30,9 @@
 
 用户授权完整晋级：
 
-1. **incubating** [`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)：vendored Decrypt+Encrypt + `kem/`；customspec + [`kem-decaps-baseline-registry`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
+1. **incubating** [`exp-fips203-mlkem-kem-decaps-ct-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/)：vendored Decrypt+Encrypt + `kem/`；customspec + [`kem-decaps-baseline-registry`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
 2. **CPU+SIM** 合法路径 `K` max=0（exp：D**286829**+E**763658**）；拒绝 CPU PASS。
-3. **整树复制** → [`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（v1）；本目录复验 CPU+SIM（D**286866**+E**763780**）。
+3. **整树复制** → [`stable-fips203-mlkem-kem-decaps-ct-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（v1）；本目录复验 CPU+SIM（D**286866**+E**763780**）。
 4. `scripts/` `DECAPS_DIR` 默认改指 stable（对照 Encaps T19e）；device 探针仍为行为基线。
 
 **Forbidden 未触**：未抄 correctness/frozen 源码。
@@ -65,3 +65,17 @@
 ## 五指标对照表（同日追加）
 
 精简表已单列：[`docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md`](../../docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md)（A correctness vs B CT；二元 1+2+4+5 → A**=1** / B**=4**；假绿 A**≥3** / B**=3**）。
+
+---
+
+## 目录改名 `-ct`（同日追加）
+
+与 **main** 上已交付的同名三树区分：本专题分支保留第7章 CT 实验副本，统一加后缀 **`-ct`**：
+
+| 旧 | 新 |
+|----|----|
+| `pass-fix-f203-alg21-kem-decaps-device-k4` | `pass-fix-f203-alg21-kem-decaps-device-ct-k4` |
+| `exp-fips203-mlkem-kem-decaps-k4` | `exp-fips203-mlkem-kem-decaps-ct-k4` |
+| `stable-fips203-mlkem-kem-decaps-k4` | `stable-fips203-mlkem-kem-decaps-ct-k4` |
+
+约定：后续只在 **`research/formal-lang-dag`** 推进；**勿**再新建旁支。

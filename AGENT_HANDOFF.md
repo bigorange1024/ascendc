@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-24（Decaps 非 NPU 压测收尾：拒绝 SIM + KAT + roundtrip）
+> **最后刷新**：2026-07-24（Decaps CT 三树改名 `-ct`，与 main 交付区分；工作仅在 research/formal-lang-dag）
 
 ---
 
@@ -12,7 +12,7 @@
 | 项 | 状态 |
 |----|------|
 | **形式方法教材** | [`research/formal-lang-dag`](docs/research/)：第6–7章；第7章强成功 + **stable Decaps 交付落点** |
-| **Decaps 交付** | [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)：合法 CPU+SIM；**拒绝 CPU+SIM**；**KAT CPU×10+SIM×3**；**roundtrip CPU+SIM（含 E3）** |
+| **Decaps CT 实验树** | [`stable-fips203-mlkem-kem-decaps-ct-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)：合法 CPU+SIM；**拒绝 CPU+SIM**；**KAT CPU×10+SIM×3**；**roundtrip CPU+SIM（含 E3）** |
 | **Decaps device / exp** | 行为基线与 incubating 副本：拒绝 SIM 亦 **PASS** |
 | **PKE / KEM KeyGen / Encaps / Decaps** | 均已 `examples/stable/` |
 
@@ -29,7 +29,7 @@
 ## ★ Smoke
 
 ```bash
-cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
+cd examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 # 批测（勿并行多路 SIM）
@@ -43,8 +43,8 @@ SIM_DIRECT=1 bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r sim -v Ascend
 
 | 项 | 说明 |
 |----|------|
-| 专题分支 | 继续 `research/formal-lang-dag`（Cloud PR 镜像：`cursor/kem-decaps-non-npu-tests-5334`） |
+| 专题分支 | 继续 **`research/formal-lang-dag`**（**勿**另开 Cloud 旁支；与 main 同名交付树已用 `-ct` 后缀区分） |
 | thirdparty | Decaps/Encaps 树内 vendored `ntt_onnx` LUT 头；liboqs 供 golden |
 | SIM | 生产默认 `ASCENDC_SIM_HOST_MODE=decaps_2session` |
-| scripts | `DECAPS_DIR` 默认 → stable Decaps；CPU twin 须 `M_FILE`（与 encaps `m` 一致） |
+| scripts | `DECAPS_DIR` 默认 → `stable-…-decaps-ct-k4`（本分支 CT 树）；CPU twin 须 `M_FILE`（与 encaps `m` 一致） |
 | 拒绝 | Gate E3 = `KEM_DECAPS_REJECT=1`（随机假密文）；`TAMPER_C` 仅为别名 |

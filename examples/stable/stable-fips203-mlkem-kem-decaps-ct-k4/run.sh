@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# exp-fips203-mlkem-kem-decaps-k4 — FIPS 203 Alg.21/18 Decaps（vendored Decrypt+Encrypt + 设备 FO）
+# stable-fips203-mlkem-kem-decaps-ct-k4 — FIPS 203 Alg.21/18 Decaps（vendored Decrypt+Encrypt + 设备 FO）
 #
-# customspec：exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex
+# customspec：stable-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex
 # 生产 I/O：input/{dk_kem,c,lut_*} → output/K.bin
 # PKE：本目录 pke_decrypt/ + prep/compute/ vendored；见 SELF_CONTAINED.md
 #
 # Usage（默认 = 全量；SIM 默认 decaps_2session）:
-#   cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4
+#   cd examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4
 #   bash run.sh -r cpu -v Ascend910B4
 #   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 #
@@ -175,7 +175,7 @@ if [ "${RUN_MODE}" = "sim" ]; then
 fi
 
 if [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
-    # 对拍失败须非零退出，禁止假 SUCCESS
+    # 对拍失败须非零退出，禁止假 SUCCESS（曾掩盖并发污染下的 REJECT FAIL）
     python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py" || exit $?
 fi
-echo "[SUCCESS] exp-fips203-mlkem-kem-decaps-k4 ${LABEL} (${RUN_MODE})"
+echo "[SUCCESS] stable-fips203-mlkem-kem-decaps-ct-k4 ${LABEL} (${RUN_MODE})"

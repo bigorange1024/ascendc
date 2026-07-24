@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# pass-fix-f203-alg21-kem-decaps-device-k4 — Alg.21 Decaps 全链（D+E）；可选 Phase-E-only
+# exp-fips203-mlkem-kem-decaps-ct-k4 — FIPS 203 Alg.21/18 Decaps（vendored Decrypt+Encrypt + 设备 FO）
 #
+# customspec：exp-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex
 # 生产 I/O：input/{dk_kem,c,lut_*} → output/K.bin
-# PKE：编译期引用 stable Decrypt + Encrypt；见 INTEGRATION_PLAN.md
+# PKE：本目录 pke_decrypt/ + prep/compute/ vendored；见 SELF_CONTAINED.md
 #
-# Usage（默认全链）:
+# Usage（默认 = 全量；SIM 默认 decaps_2session）:
+#   cd examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4
 #   bash run.sh -r cpu -v Ascend910B4
-#   bash run.sh -r sim -v Ascend910B4   # 默认单库 + decaps_2session（教材 CT / T19b/c）；T19i 同核 FO
+#   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 #
 # 调试（非默认）:
-#   KEM_DECAPS_PHASEE_ONLY=1 …          # 仅 Phase-E（灌 m'）
-#   KEM_DECAPS_REJECT=1 …               # Gate E3：随机假密文；K vs liboqs Decaps≡J(z‖c)
-#   KEM_DECAPS_TAMPER_C=1 …             # 同 REJECT（兼容别名）
-#   ASCENDC_SIM_HOST_MODE=decaps_1session …  # SIM 单 session 排障（T2；非本探针生产默认）
+#   KEM_DECAPS_PHASEE_ONLY=1 …
+#   KEM_DECAPS_REJECT=1 …
+#   KEM_DECAPS_TAMPER_C=1 …
+#   ASCENDC_SIM_HOST_MODE=decaps_1session …
 #   KEM_DECAPS_FORCE_REBUILD=1 …
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 _ORIG_ARGS=("$@")
-REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
+REPO_ROOT="$(cd "${CURRENT_DIR}/../../.." && pwd)"
 
-mkdir -p "${CURRENT_DIR}/scripts"
-ln -sfn ../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/scripts/host_golden "${CURRENT_DIR}/scripts/host_golden"
-ln -sfn ../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/thirdparty "${CURRENT_DIR}/thirdparty"
+# host_golden / thirdparty 已 vendored 于本目录（禁止软链其它 examples）
 
 export KEM_DECAPS_VERIFY="${KEM_DECAPS_VERIFY:-1}"
 export KEM_DECAPS_SKIP_REBUILD="${KEM_DECAPS_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-1}}"
@@ -131,7 +131,7 @@ _kem_build() {
        { [ -f "${_build_stamp}" ] && [ "$(cat "${_build_stamp}")" != "${_build_tag}" ]; }; then
         rm -rf "${BUILD_DIR}" "${INSTALL_PREFIX}"
     fi
-    # SIM/NPU：合库前生成 Decrypt 冲突头隔离 shim（幂等；不改 stable）
+    # SIM/NPU：合库前生成 Decrypt 冲突头隔离 shim（幂等；源=本目录 pke_decrypt）
     if [ "${RUN_MODE}" = "sim" ] || [ "${RUN_MODE}" = "npu" ]; then
         bash "${CURRENT_DIR}/scripts/prepare_dec_shim.sh"
     fi
@@ -178,4 +178,4 @@ if [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
     # 对拍失败须非零退出，禁止假 SUCCESS
     python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py" || exit $?
 fi
-echo "[SUCCESS] pass-fix-f203-alg21-kem-decaps-device-k4 ${LABEL} (${RUN_MODE})"
+echo "[SUCCESS] exp-fips203-mlkem-kem-decaps-ct-k4 ${LABEL} (${RUN_MODE})"

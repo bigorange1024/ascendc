@@ -1,13 +1,13 @@
-# STATUS — exp-fips203-mlkem-kem-decaps-k4
+# STATUS — exp-fips203-mlkem-kem-decaps-ct-k4
 
 FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — incubating 自包含交付（`#交付#` 2026-07-24）。
 
 | 项 | 值 |
 |---|---|
 | **阶段** | **CPU+SIM PASS**（合法 `K` max=0）；拒绝路径 **CPU+SIM PASS**（Gate E3） |
-| **customspec** | [`exp-…-实现方案-customspec.tex`](exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex) |
+| **customspec** | [`exp-…-实现方案-customspec.tex`](exp-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex) |
 | **registry** | [`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`](../../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md) |
-| **行为基线** | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（只读；禁止编译依赖） |
+| **行为基线** | [`pass-fix-f203-alg21-kem-decaps-device-ct-k4`](../../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（只读；禁止编译依赖） |
 | **PKE** | 本目录 `pke_decrypt/` + `prep/`/`compute/` **vendored**（自 stable Decrypt/Encrypt） |
 | **KEM** | `kem/`：`G(m'‖h)` 并入 Phase-E prep；设备 FO（SIM：`l18_l19` 同核；CPU：`pack_fo`） |
 | **SIM host** | 生产默认 **`ASCENDC_SIM_HOST_MODE=decaps_2session`**；单库合库（`prepare_dec_shim` ← 本目录 `pke_decrypt`） |
@@ -22,11 +22,11 @@ FIPS 203 **Algorithm 21 `ML-KEM.Decaps(dk, c)`** — incubating 自包含交付�
 | **拒绝 SIM** | `KEM_DECAPS_REJECT=1 SIM_DIRECT=1 …` | `REJECT PASS`；D≈**286666** + E≈**763697**；根无 stray |
 
 ```bash
-cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4
+cd examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
 
 ## 晋级
 
-整树复制 → [`examples/stable/stable-fips203-mlkem-kem-decaps-k4/`](../../stable/stable-fips203-mlkem-kem-decaps-k4/)（v1）。
+整树复制 → [`examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/`](../../stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（v1）。

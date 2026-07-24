@@ -3,7 +3,7 @@
  * @brief Alg.21 Decaps 全链 Host：dk_kem + c → K（Phase-D → Phase-E）。
  *
  * 本目录为 incubating 自包含交付（vendored Decrypt+Encrypt + kem）；
- * 行为对齐 pass-fix-f203-alg21-kem-decaps-device-k4。
+ * 行为对齐 pass-fix-f203-alg21-kem-decaps-device-ct-k4。
  * SIM 生产默认 ASCENDC_SIM_HOST_MODE=decaps_2session（Phase-D 与 Phase-E 各一 session；
  * 见 ascendc_build_mode.hpp / 教材第7章 CT_decaps）。排障可设 decaps_1session。
  * 行 1–4：dk 切片为指针偏移，不另开 launch。

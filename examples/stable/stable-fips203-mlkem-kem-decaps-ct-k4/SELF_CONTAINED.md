@@ -1,6 +1,6 @@
-# 自包含与设备全链约束 — stable-fips203-mlkem-kem-decaps-k4
+# 自包含与设备全链约束 — stable-fips203-mlkem-kem-decaps-ct-k4
 
-customspec：`stable-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex`  
+customspec：`stable-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex`  
 registry：`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`
 
 ## 密码学契约

@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-24 | [2026-07-24-第7章CT与Decaps-device-PASS.md](2026-07-24-第7章CT与Decaps-device-PASS.md) | **CT_decaps** · **`#交付#` Decaps** · **拒绝 SIM** · KAT **10+3** · **roundtrip CPU+SIM** · `M_FILE` · 未跑 NPU |
+| 2026-07-24 | [2026-07-24-第7章CT与Decaps-device-PASS.md](2026-07-24-第7章CT与Decaps-device-PASS.md) | **CT_decaps** · **`#交付#` Decaps** · **拒绝 SIM** · KAT **10+3** · **roundtrip CPU+SIM** · `M_FILE` · 未跑 NPU · **`-ct` 改名**避 main |
 | 2026-07-23 | [2026-07-23-形式方法教材导论实质与第3章冻结.md](2026-07-23-形式方法教材导论实质与第3章冻结.md) | **correctness 引子** · **开放生成≠合法派生** · **证书闭包受控搜索** · 第3章**先保持**、汇报再删 · `research/formal-lang-dag` |
 | 2026-07-15 | [2026-07-15-TODO与T19a-Encaps-device-PASS.md](2026-07-15-TODO与T19a-Encaps-device-PASS.md) | **TODO** · **T19a PASS** · **Encaps → pass-fix** · **【预研】exp** · **`#验收#` → stable（721119，KAT 10+3）** · scripts 默认 stable · notes/registry · T19g · 下一 T19b/c |
 | 2026-07-14 | [2026-07-14-KEM-KeyGen-incubating预研重写.md](2026-07-14-KEM-KeyGen-incubating预研重写.md) | **`#交付#` kem-keygen** · **PKE/KEM 默认哈希 RNG** · add_custom `-r/-v` · Cloud SIM 指引 |
