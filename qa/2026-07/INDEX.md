@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-24 | [2026-07-24-第7章CT与Decaps-device-PASS.md](2026-07-24-第7章CT与Decaps-device-PASS.md) | **CT_decaps** · **`-ct` 改名** · **拒绝 SIM** · KAT **10+3** · **roundtrip CPU+SIM** · `M_FILE` · 未跑 NPU · 引用审计 · 中文注释 · 五指标 |
+| 2026-07-24 | [2026-07-24-第7章CT与Decaps-device-PASS.md](2026-07-24-第7章CT与Decaps-device-PASS.md) | **CT_decaps** · **`-ct` 改名** · **拒绝 SIM** · KAT **10+3** · **roundtrip** · **T22** CT tick · `M_FILE` · 未跑 NPU · 五指标 |
 | 2026-07-23 | [2026-07-23-形式方法教材导论实质与第3章冻结.md](2026-07-23-形式方法教材导论实质与第3章冻结.md) | **correctness 引子** · **开放生成≠合法派生** · **证书闭包受控搜索** · 第3章**先保持**、汇报再删 · `research/formal-lang-dag` |
 | 2026-07-21 | [2026-07-21-连续SIM-tcache对照矩阵.md](2026-07-21-连续SIM-tcache对照矩阵.md) | 公司 C0–C5×3 **18/18** · 家里 EXP1–4b 全绿 · **两侧未复现 tcache** · 偶发归类 · 不改脚本 |
 | 2026-07-20 | [2026-07-20-Decaps交付stable与registry.md](2026-07-20-Decaps交付stable与registry.md) | **`#交付#` Decaps → stable（无 `-ct`）** · **T19i SIM 3** · **冻结 correctness×3** · **`stable_kem_liboqs_roundtrip`** · **WSL 连续 SIM `tcache` 偶发** · T13b/T11 · T23 · 幽灵清理 |

@@ -12,7 +12,7 @@
 
 ### 2026-07-24 — [第7章 CT → Decaps device PASS · 非 NPU 压测收尾](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
 
-关键字：`CT_decaps` · **T19b/c** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **CPU×10+SIM×3** · **roundtrip CPU+SIM** · `M_FILE` 修复 · 未跑 NPU · 引用审计 · 中文注释 · 五指标对照
+关键字：`CT_decaps` · **T19b/c** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **CPU×10+SIM×3** · **roundtrip CPU+SIM** · `M_FILE` 修复 · 未跑 NPU · 引用审计 · 中文注释 · 五指标对照 · **T22** CT 三树 tick 入 [`active_sim_regress_summary.md`](active_sim_regress_summary.md)
 
 ### 2026-07-23 — [形式方法教材导论实质 · 第3章冻结](2026-07/2026-07-23-形式方法教材导论实质与第3章冻结.md)
 

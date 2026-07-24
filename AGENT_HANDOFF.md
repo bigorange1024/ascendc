@@ -14,7 +14,7 @@
 | **分支** | **`research/formal-lang-dag`**（`origin/main` 已合入；勿开 `cursor/*` 旁支） |
 | **KEM 六算子 stable** | KeyGen / Encaps / Decaps **均已定型**（交付 Decaps **无 `-ct`**）；`scripts/` 默认指 **无 `-ct`** stable |
 | **Decaps 交付树**（main；`scripts/` 默认） | device [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · incubating [`exp-…-kem-decaps-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) · stable [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i SIM 3**；tick **1050620**） |
-| **Decaps CT 树**（本专题；仅 `research/formal-lang-dag`） | device [`pass-fix-…-decaps-device-ct-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) · incubating [`exp-…-decaps-ct-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) · stable [`stable-…-decaps-ct-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（第7章 CT / 五指标；SIM `decaps_2session`） |
+| **Decaps CT 树**（本专题；仅 `research/formal-lang-dag`） | device / exp / stable `*-decaps-*-ct-k4`（第7章 CT / 五指标；SIM `decaps_2session`）；合法 tick 已入 [`qa/active_sim_regress_summary.md`](qa/active_sim_regress_summary.md)（约 **1.05M**） |
 | **形式方法教材** | [`docs/research/`](docs/research/) 第6–7章；第7章 CT 实验引用 **`-ct`** 树 |
 | **Alg.19/20/21 correctness** | **已冻结** → `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`（只读 FROZEN.md；**禁翻源码**） |
 | **办公室回归** | [`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)：**无 `-ct`** stable 三件套；urandom→liboqs→同字节喂 AscendC；**CPU×1 + SIM×1** |
