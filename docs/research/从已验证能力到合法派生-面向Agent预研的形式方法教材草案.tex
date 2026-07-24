@@ -722,7 +722,7 @@ INDEX、\texttt{frozen/}、customspec、晋级复制、CPU+SIM 等，已是纪�
   缺项 & $\mathrm{Missing}_{\Gamma}(\cdot)$ & 依赖闭包里尚未获证的那部分 \\
   闭包表 & （工作对象） & 目标 / 已获证 / 依赖闭包 / 缺项的核对表 \\
   拼装计划 / 合法计划 & 字 $w$；语言 $L$ & 一次任务怎么拼；全体合法拼法 \\
-  禁止拼法 & $\mathrm{Forb}$ & 不得采用的子串或关闭路线 \\
+  禁止拼法 & $\mathrm{Forbidden}$ & 不得采用的子串或关闭路线 \\
   作业过程自动机 & 以配置为状态的迁移系统 & 第三件工具的专名 \\
   作业状态（已获证、还欠什么） & 配置 $(\Gamma,F,S)$ & 自动机的状态 \\
   展开 / 探针取证 / 写入证书 & $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}$ & 自动机上的转移 \\
@@ -2151,12 +2151,12 @@ L(\mathcal{G}) \;=\; \{\,w\in\Sigma^*\mid S\Rightarrow^* w\,\}.
 \begin{definition}[禁字集]
 \label{def:forb}
 \textbf{工程术语}：\textbf{禁止拼法}——不得出现在合法计划中的子串或关闭路线。\\
-\textbf{数学记号}：设 $\mathrm{Forb}\subseteq\Sigma^*$。称语言 $L$ \textbf{避开} $\mathrm{Forb}$，若
+\textbf{数学记号}：设 $\mathrm{Forbidden}\subseteq\Sigma^*$。称语言 $L$ \textbf{避开} $\mathrm{Forbidden}$，若
 \[
-L \;\subseteq\; \{w\in\Sigma^*\mid \text{不存在 }f\in\mathrm{Forb}\text{ 作为 }w\text{ 的因子}\}.
+L \;\subseteq\; \{w\in\Sigma^*\mid \text{不存在 }f\in\mathrm{Forbidden}\text{ 作为 }w\text{ 的因子}\}.
 \]
 其中「因子」指存在 $x,y$ 使 $w=xfy$。
-此后若写 $\mathrm{Forb}$，一律读作「禁止拼法集合」（工程来源含 \texttt{frozen/} 判决等）。
+此后若写 $\mathrm{Forbidden}$，一律读作「禁止拼法集合」（工程来源含 \texttt{frozen/} 判决等）。
 \end{definition}
 
 \begin{definition}[组合不免费（方法论公理图式）]
@@ -2168,7 +2168,7 @@ L \;\subseteq\; \{w\in\Sigma^*\mid \text{不存在 }f\in\mathrm{Forb}\text{ 作�
 \begin{proposition}[菜单不能代替成员判定]
 设 $\Sigma_0\subseteq\Sigma$ 为「菜单上可见的字母」。
 仅给出 $\Sigma_0$ 不能唯一确定 $L$。
-尤其，$L$ 还依赖产生式集合与禁字集 $\mathrm{Forb}$。
+尤其，$L$ 还依赖产生式集合与禁字集 $\mathrm{Forbidden}$。
 \end{proposition}
 
 \begin{example}[纯数学]
@@ -2180,13 +2180,13 @@ L \;\subseteq\; \{w\in\Sigma^*\mid \text{不存在 }f\in\mathrm{Forb}\text{ 作�
 PKE.KeyGen 计划与「某段哈希拼接」各自可能合法，
 但「在新的 2-launch 边界下拼接二者」不必自动合法——这正是接缝节点
 （如 Alg.16 尾缝、\texttt{KemKgTailFused}）存在的理由。
-\texttt{frozen/} 文书对应 $\mathrm{Forb}$ 的工程来源之一。
+\texttt{frozen/} 文书对应 $\mathrm{Forbidden}$ 的工程来源之一。
 \end{example}
 
 \begin{remark}[门禁雏形]
 Agent 提交「闭包表 + 展开计划 $w$」时，门禁检查的是：
 $\mathrm{Missing}_\Gamma(T)=\emptyset$（全依赖已覆盖）且存在派生表明 $w\in L(\mathcal{G})$，
-并且 $w$ 避开 $\mathrm{Forb}$。这是「先交闭包表，再写码」的数学表述。
+并且 $w$ 避开 $\mathrm{Forbidden}$。这是「先交闭包表，再写码」的数学表述。
 \end{remark}
 
 
@@ -2255,7 +2255,7 @@ $\to\subseteq Q\times Q$ 为转移关系，$Q_0\subseteq Q$ 为初始配置集�
 固定目标 $T$ 与生产 I/O 契约 $\mathcal{C}$。
 \begin{itemize}
   \item 配置 $q=(\Gamma,F,S)$ 称为\textbf{接受配置}，若 $T\in\Gamma$、$F$ 为空（或仅含已放电目标），且 $\mathcal{C}$ 满足；
-  \item 若转移过程试图使用 $\mathrm{Forb}$ 中的因子、或引用 $\notin\Gamma$ 的依赖边且未先 $\mathsf{Probe}/\mathsf{Certify}$，
+  \item 若转移过程试图使用 $\mathrm{Forbidden}$ 中的因子、或引用 $\notin\Gamma$ 的依赖边且未先 $\mathsf{Probe}/\mathsf{Certify}$，
         则进入\textbf{拒绝}（具体可建模为沉入拒绝阱状态）。
 \end{itemize}
 \end{definition}
@@ -2265,7 +2265,7 @@ $\to\subseteq Q\times Q$ 为转移关系，$Q_0\subseteq Q$ 为初始配置集�
   \item 称一次作业过程\textbf{合法}，若它对应作业过程自动机中从某初始配置到接受配置的有限转移序列，
         且每一步都符合产生式与 $S$ 中约束。
   \item 称行为构成\textbf{幻觉}，若它执行了非法转移，或在图上使用了无证书边
-        （等价地：计划字 $w\notin L$ 或未避开 $\mathrm{Forb}$）。
+        （等价地：计划字 $w\notin L$ 或未避开 $\mathrm{Forbidden}$）。
 \end{enumerate}
 语义 oracle（FIPS / liboqs / golden）判定「计算结果是否正确」；
 本定义判定「砖是否允许那样砌」。
@@ -2615,7 +2615,7 @@ correctness 能证明字节对得上，\textbf{证明不了}那条路是合法�
 (\Gamma_m,\emptyset,S_m),
 \quad T\in\Gamma_m.
 \]
-若中途引用了禁字集 $\mathrm{Forb}$ 中的因子（已关闭或明确禁止的路线），
+若中途引用了禁字集 $\mathrm{Forbidden}$ 中的因子（已关闭或明确禁止的路线），
 应直接拒绝（$\mathsf{Freeze}$ / 沉入拒绝阱）。
 
 \paragraph{流程八：上游一变——$\mathsf{Dirty}$}
@@ -2820,7 +2820,7 @@ $(\Gamma_i,F_i,S_i)$（见作业过程自动机一节），称为\textbf{配置�
 \label{sec:math}
 
 第~\ref{sec:mathbg}~章已经给出依赖闭包 $\mathrm{Dep}^*$、已获证集 $\Gamma$、缺项
-$\mathrm{Missing}_\Gamma$、禁止拼法 $\mathrm{Forb}$，以及转移
+$\mathrm{Missing}_\Gamma$、禁止拼法 $\mathrm{Forbidden}$，以及转移
 $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 本章\textbf{不}再只堆工程口诀，而是把第~3~章对象当作算法的参数与子程序来构造；
 同时把算法的\textbf{输出长什么样}用表格钉死——推导与表单缺一不可。
@@ -2875,9 +2875,9 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
   （缺项） &
   缺项；闭包表与补洞的核心输出 \\
   \midrule
-  $\mathrm{Forb}$、约束库 $S$ 中的禁拼片段 &
+  $\mathrm{Forbidden}$、约束库 $S$ 中的禁拼片段 &
   \textbf{形式语言} &
-  否定边 / 禁止拼法的来源；成员检查时避开 $\mathrm{Forb}$ \\
+  否定边 / 禁止拼法的来源；成员检查时避开 $\mathrm{Forbidden}$ \\
   \midrule
   配置 $q=(\Gamma,F,S)$ 与基本转移 &
   \textbf{作业过程自动机} &
@@ -2900,7 +2900,7 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
 \label{alg:encode-node}
 \algoparam{能力顶点集 $V$；
 分层映射 $\lambda:V\to\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{P3}\}$；
-当前已获证集 $\Gamma\subseteq V$；约束库 $S$（含与各顶点相关的 $\mathrm{Forb}$ 片段）；
+当前已获证集 $\Gamma\subseteq V$；约束库 $S$（含与各顶点相关的 $\mathrm{Forbidden}$ 片段）；
 仓库锚点映射 $\rho:V\to\mathrm{Paths}$（活跃权威路径，禁止指向 \texttt{frozen/} 正向源码）。}
 \algoin{顶点 $v$。}
 \algoout{节点卡 $\mathrm{Card}(v)=(\texttt{id},\texttt{layer},\texttt{interface},\texttt{cert},\texttt{forbid},\texttt{repo})$；
@@ -3013,22 +3013,22 @@ $\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合
 \label{sec:math-edges}
 
 第~3~章的依赖边与接缝、禁止拼法在工程上常混称「关系」。
-下面算法把一次「关系声明」分类，便于写入 $E$ 或 $\mathrm{Forb}$。
+下面算法把一次「关系声明」分类，便于写入 $E$ 或 $\mathrm{Forbidden}$。
 
 \begin{methodalgo}{边分类 $\mathrm{ClassifyRel}$}
 \label{alg:classify-rel}
 \algoparam{能力 DAG $G=(V,E)$（本算法可读 $V$、写 $E$，从而更新 $G$）；
-禁止拼法族 $\mathrm{Forb}$；接缝声明集 $\mathcal{C}_{\mathrm{seam}}\subseteq V\times V$
+禁止拼法族 $\mathrm{Forbidden}$；接缝声明集 $\mathcal{C}_{\mathrm{seam}}\subseteq V\times V$
 （由约束库维护：哪些「$A$ 与 $B$ 已各自获证仍须单独认证」）。}
 \algoin{关系请求 $r$，形态为以下之一：
 （i）有序对 $(u,v)$ 表示「$v$ 语义依赖 $u$」；
 （ii）接缝请求 $\mathrm{compose}(A,B)$；
 （iii）禁止请求 $\mathrm{forbid}(x)$（关闭路线、禁模板等）。}
-\algoout{标签 $\tau(r)\in\{\mathsf{sem},\mathsf{compose},\mathsf{forb}\}$，以及应写入的载体
-（$G$ 的一条边、接缝节点候选、或 $\mathrm{Forb}$ 的一条）；失败则拒绝。
+\algoout{标签 $\tau(r)\in\{\mathsf{semantic},\mathsf{compose},\mathsf{forbidden}\}$，以及应写入的载体
+（$G$ 的一条边、接缝节点候选、或 $\mathrm{Forbidden}$ 的一条）；失败则拒绝。
 成功后调用方持有的图为更新后的 $G$。}
 \begin{algosteps}
-  \item 若 $r=\mathrm{forbid}(x)$，令 $\tau=\mathsf{forb}$，把 $x$ 并入 $\mathrm{Forb}$（或写入对应 \texttt{forbid} 字段），返回。
+  \item 若 $r=\mathrm{forbid}(x)$，令 $\tau=\mathsf{forbidden}$，把 $x$ 并入 $\mathrm{Forbidden}$（或写入对应 \texttt{forbid} 字段），返回。
   \item 若 $r=\mathrm{compose}(A,B)$，或 $(A,B)\in\mathcal{C}_{\mathrm{seam}}$：
         若 $A\notin V$ 或 $B\notin V$，拒绝；
         否则令 $\tau=\mathsf{compose}$：新建或引用接缝顶点 $s_{A\!\circ\!B}$；
@@ -3036,7 +3036,7 @@ $\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合
         要求日后单独 $\mathsf{Probe}/\mathsf{Certify}$；
         \textbf{不}把「$A$ 与 $B$ 均已获证」推成 $s_{A\!\circ\!B}$ 已获证。
   \item 否则若 $r=(u,v)$：若 $u\notin V$ 或 $v\notin V$，拒绝；
-        若任务语义为「$v$ 的正确性依赖 $u$ 的 interface」，令 $\tau=\mathsf{sem}$，
+        若任务语义为「$v$ 的正确性依赖 $u$ 的 interface」，令 $\tau=\mathsf{semantic}$，
         并更新图 $G$：令 $E\leftarrow E\cup\{(u,v)\}$（若尚无该边）。
   \item 返回 $\tau(r)$ 与载体（及更新后的 $G$，若本步改写了 $V$ 或 $E$）。
 \end{algosteps}
@@ -3044,19 +3044,19 @@ $\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合
 
 \paragraph{输出长什么样：三类边含义表}
 \begin{center}
-\begin{tabular}{@{}L{2.4cm}L{5.4cm}L{5.8cm}@{}}
+\begin{tabular}{@{}L{2.8cm}L{5.2cm}L{5.6cm}@{}}
   \toprule
   标签 $\tau$ & 含义 & 写入何处 / 后果 \\
   \midrule
-  $\mathsf{sem}$ &
+  $\mathsf{semantic}$ &
   $v$ 要对，离不开 $u$ 的 interface &
   进入 $E$；参与 $\mathrm{Dep}^*$ \\
   $\mathsf{compose}$ &
   $A,B$ 各有证，$A\!\circ\!B$ 仍须单独认证 &
   接缝顶点 $s$；\textbf{不}因 $A,B\in\Gamma$ 自动获证 \\
-  $\mathsf{forb}$ &
+  $\mathsf{forbidden}$ &
   明确禁止的路线/模板 &
-  进入 $\mathrm{Forb}$ 或节点 \texttt{forbid} \\
+  进入 $\mathrm{Forbidden}$ 或节点 \texttt{forbid} \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -3076,7 +3076,7 @@ A\in\Gamma \;\land\; B\in\Gamma \quad\not\Rightarrow\quad s\in\Gamma.
 \end{proof}
 
 \begin{remark}[边 $\neq$ \texttt{\#include}]
-$\mathsf{sem}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编译依赖。
+$\mathsf{semantic}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编译依赖。
 自包含原则写进 $\texttt{interface}$：对外挂接口；共享库例外必须进入 $S$，不能默许 Agent 自由翻抄。
 \end{remark}
 
@@ -3086,15 +3086,15 @@ $\mathsf{sem}/\mathsf{compose}$ 边描述的是能力—证书关系，不是编
   \toprule
   标签 & 实例 & 说明 \\
   \midrule
-  $\mathsf{sem}$ &
+  $\mathsf{semantic}$ &
   $\texttt{kem.keygen.k4}\leftarrow\texttt{pke.keygen.k4}$ &
   P3 语义依赖已获证 P2 \\
   $\mathsf{compose}$ &
   Alg.16 尾拼 / $\mathit{dk}$ 展开 &
   PKE 证书覆盖不了，须单独验收 \\
-  $\mathsf{forb}$ &
+  $\mathsf{forbidden}$ &
   禁止 frozen / correctness vendor 模板 &
-  写入 $\mathrm{Forb}$ 或 \texttt{forbid} \\
+  写入 $\mathrm{Forbidden}$ 或 \texttt{forbid} \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -3208,7 +3208,7 @@ $\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证
 
 \begin{remark}[对拍 $\neq$ 证书全部]
 对拍通过是 $\mathsf{Certify}$ 的必要证据之一，不是充分条件：
-仍须引用合法、接缝已认证、未命中 $\mathrm{Forb}$、未落入 $\Delta$。
+仍须引用合法、接缝已认证、未命中 $\mathrm{Forbidden}$、未落入 $\Delta$。
 \end{remark}
 
 \subsection{由投影关系导出「菜单 $\neq$ 说明书」}
@@ -3230,7 +3230,7 @@ $\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证
   仓库机制 & 对应数学 / 算法输出 & 误读 \\
   \midrule
   活跃 INDEX & $\mathrm{Menu}$；构造 $\Gamma$ 的候选 & 当成语言 $L$ 本身 \\
-  \texttt{frozen/}+判决 & $\mathrm{Forb}$ 的来源（算法~\ref{alg:classify-rel} 的 $\mathsf{forb}$） & 当成可抄实现库 \\
+  \texttt{frozen/}+判决 & $\mathrm{Forbidden}$ 的来源（算法~\ref{alg:classify-rel} 的 $\mathsf{forbidden}$） & 当成可抄实现库 \\
   baseline-registry & golden 允许块 $\subseteq$ 已验证计算证据 & AscendC 必须同构的规格 \\
   customspec & 计划文书，待第~5~章与闭包表分工 & 可跳过 $\mathrm{MissingOf}$ \\
   STATUS / 对拍 & $\texttt{cert}$ 证据片段 & 永久执照（无视 $\mathsf{Dirty}$） \\
@@ -3242,7 +3242,7 @@ $\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证
 \label{sec:math-summary}
 
 \begin{enumerate}
-  \item 算法~\ref{alg:encode-node}--\ref{alg:dirty} 把第~3~章的 $V,E,\Gamma,\mathrm{Dep}^*,\mathrm{Missing},\mathrm{Forb},\mathsf{Dirty}$
+  \item 算法~\ref{alg:encode-node}--\ref{alg:dirty} 把第~3~章的 $V,E,\Gamma,\mathrm{Dep}^*,\mathrm{Missing},\mathrm{Forbidden},\mathsf{Dirty}$
         变成可执行构造；命题~\ref{prop:card-sufficient}--\ref{prop:menu-not-L} 是对应结论。
   \item 关键结论：节点卡是引用检查的充分记录；组合不免费；缺项空 $\Leftrightarrow$ 闭包已满；
         脏传播使 $\Gamma$ 非单调；菜单不蕴含 $L$ 成员。
@@ -3272,29 +3272,29 @@ $\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证
 
 \begin{methodalgo}{填写闭包表 $\mathrm{BuildClosureTable}$}
 \label{alg:closure-table}
-\algoparam{能力 DAG $G=(V,E)$；当前已获证集 $\Gamma\subseteq V$；约束库 $S$（含 $\mathrm{Forb}$、接缝声明 $\mathcal{C}_{\mathrm{seam}}$）；
+\algoparam{能力 DAG $G=(V,E)$；当前已获证集 $\Gamma\subseteq V$；约束库 $S$（含 $\mathrm{Forbidden}$、接缝声明 $\mathcal{C}_{\mathrm{seam}}$）；
 分层 $\lambda:V\to\{\mathrm{P0},\mathrm{P1},\mathrm{P2},\mathrm{P3}\}$；
 状态标签 $\sigma$（命题~\ref{prop:cert-ladder}；用于识别已打脏但仍可能误留在文书里的点）。
 子程序：算法~\ref{alg:depstar}、\ref{alg:missing}、\ref{alg:classify-rel}、\ref{alg:encode-node}。}
 \algoin{目标 $T$；I/O 契约 $\mathcal{C}$；声明验收级别 $\ell\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$。}
 \algoout{闭包表
-$\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit},\mathrm{Warn})$，
+$\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbiddenHit},\mathrm{Warn})$，
 其中 $D=\mathrm{Dep}^*_G(T)$，$M=\mathrm{Missing}_\Gamma(T)$；$\mathrm{Warn}$ 为警告袋（可空）。}
 \begin{algosteps}
   \item \textbf{目标声明}：在图 $G=(V,E)$ 上，若 $T\notin V$ 或 $(T,\mathcal{C},\ell)$ 任一项缺失，拒绝输出（任务未声明）。
         否则写入 $(T,\mathcal{C},\ell)$。
-  \item 从约束库 $S$ 取出本任务可见的 $\mathrm{Forb}$ 与 $\mathcal{C}_{\mathrm{seam}}$（后续接缝栏与否定栏只读这两份摘录，
+  \item 从约束库 $S$ 取出本任务可见的 $\mathrm{Forbidden}$ 与 $\mathcal{C}_{\mathrm{seam}}$（后续接缝栏与否定栏只读这两份摘录，
         但仍以 $S$ 为唯一来源——禁止另起一份未登记的禁止表）。
   \item 以参数 $G$ 调用 $\mathrm{DepStar}(T)$ 得 $D$（该子程序沿 $E$ 取前驱）；以参数 $G,\Gamma$ 调用 $\mathrm{MissingOf}(T)$ 得 $M$。
   \item 对每张需要引用的 $v\in D\cap\Gamma$：以 $G$ 的顶点集 $V$ 等参数调用 $\mathrm{EncodeNode}(v)$，
         核对 $\texttt{cert}\neq\bot$；若维护了 $\sigma$ 且 $\sigma(v)=\mathsf{dirty}$，则把 $v$ 移出「可引用已获证」视角并记入 $\mathrm{Warn}$。
-  \item \textbf{接缝栏}：对所有与 $T$ 相关的 $\mathrm{compose}$ 请求，以参数 $G,\mathrm{Forb},\mathcal{C}_{\mathrm{seam}}$ 跑 $\mathrm{ClassifyRel}$，
+  \item \textbf{接缝栏}：对所有与 $T$ 相关的 $\mathrm{compose}$ 请求，以参数 $G,\mathrm{Forbidden},\mathcal{C}_{\mathrm{seam}}$ 跑 $\mathrm{ClassifyRel}$，
         收集尚未获证的接缝顶点集 $\mathrm{Seams}$；把 $\mathrm{Seams}\setminus\Gamma$ 并入缺项视角
         （实现上可并入 $M$ 或单列，但门禁必须看见它们）。
   \item \textbf{分层警告（用到 $\lambda$）}：若存在 $u\in M$ 使 $\lambda(u)\in\{\mathrm{P0},\mathrm{P1}\}$，
         将「禁止在做 $T$ 的同一任务里顺便发明该底层」写入 $\mathrm{Warn}$（对照推论「禁止同任务发明未获证底层」）。
-  \item \textbf{否定栏}：计算 $\mathrm{ForbHit}=\{x\in\mathrm{Forb}\mid x\text{ 与本次计划相交}\}$；
-        若计划显式引用 $\mathrm{ForbHit}$ 中模板，标记为硬冲突。
+  \item \textbf{否定栏}：计算 $\mathrm{ForbiddenHit}=\{x\in\mathrm{Forbidden}\mid x\text{ 与本次计划相交}\}$；
+        若计划显式引用 $\mathrm{ForbiddenHit}$ 中模板，标记为硬冲突。
   \item 返回 $\mathrm{CT}$。
 \end{algosteps}
 \end{methodalgo}
@@ -3318,8 +3318,8 @@ $\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbHit},\mat
   $\mathrm{Missing}_\Gamma(T)$；每项可附「拟补洞手段」 \\
   接缝 $\mathrm{Seams}$ &
   须单独认证的接缝顶点；未获证者门禁必须看见 \\
-  否定 $\mathrm{ForbHit}$ &
-  本次计划与 $\mathrm{Forb}$ 的相交；非空则硬冲突 \\
+  否定 $\mathrm{ForbiddenHit}$ &
+  本次计划与 $\mathrm{Forbidden}$ 的相交；非空则硬冲突 \\
   警告 $\mathrm{Warn}$ &
   可空；含脏证书误留、同任务发明 P0/P1 缺项等非硬冲突提示 \\
   \bottomrule
@@ -3343,7 +3343,7 @@ M=\emptyset
 \;\land\;
 \mathrm{Seams}\subseteq\Gamma
 \;\land\;
-\mathrm{ForbHit}=\emptyset
+\mathrm{ForbiddenHit}=\emptyset
 \;\land\;
 \mathcal{C}\text{ 已声明}.
 \]
@@ -3353,13 +3353,13 @@ M=\emptyset
         此时进入「按 $\ell$ 实现 $T$」与第~3~章「闭包已满后方可冲击顶层」一致；
   \item 若 $M\neq\emptyset$ 或 $\mathrm{Seams}\not\subseteq\Gamma$，则任何跳过 $\mathsf{Probe}/\mathsf{Certify}$、
         直接写 $T$ 顶层实现的动作，都不是合法转移（应被门禁拒绝）；
-  \item 若 $\mathrm{ForbHit}\neq\emptyset$，则计划字触碰 $\mathrm{Forb}$，属于第~3~章工作定义下的幻觉/拒绝类行为。
+  \item 若 $\mathrm{ForbiddenHit}\neq\emptyset$，则计划字触碰 $\mathrm{Forbidden}$，属于第~3~章工作定义下的幻觉/拒绝类行为。
 \end{enumerate}
 \end{theorem}
 \begin{proof}[证明梗概]
-（1）$M=\emptyset\Leftrightarrow\mathrm{Dep}^*(T)\subseteq\Gamma$ 为第~3~章命题；接缝与 $\mathrm{Forb}$ 条件分别对应
+（1）$M=\emptyset\Leftrightarrow\mathrm{Dep}^*(T)\subseteq\Gamma$ 为第~3~章命题；接缝与 $\mathrm{Forbidden}$ 条件分别对应
 $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接对照第~3~章基本转移与合法性定义：
-未获证引用与命中 $\mathrm{Forb}$ 均为非法转移。
+未获证引用与命中 $\mathrm{Forbidden}$ 均为非法转移。
 \end{proof}
 
 \begin{example}[填满的闭包表示意：KEM.KeyGen]
@@ -3399,7 +3399,7 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
   \item 若输入不是完整 $\mathrm{CT}$，则用本算法参数调用算法~\ref{alg:closure-table} 生成 $\mathrm{CT}$；失败则
         $\mathsf{BLOCK}(\{\mathsf{no\_table}\})$。
   \item 若 $\mathrm{CT}$ 未完整，返回 $\mathsf{BLOCK}(\{\mathsf{no\_table}\})$。
-  \item 若 $\mathrm{ForbHit}\neq\emptyset$，返回 $\mathsf{BLOCK}(\{\mathsf{forb}\}\cup\mathrm{ForbHit})$。
+  \item 若 $\mathrm{ForbiddenHit}\neq\emptyset$，返回 $\mathsf{BLOCK}(\{\mathsf{forbidden}\}\cup\mathrm{ForbiddenHit})$。
   \item 若 $M\neq\emptyset$ 或 $\mathrm{Seams}\not\subseteq\Gamma$，返回
         $\mathsf{BLOCK}(\{\mathsf{missing}\}\cup M\cup(\mathrm{Seams}\setminus\Gamma))$。
   \item 否则返回 $\mathsf{ALLOW}$。
@@ -3445,7 +3445,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
   \item \textbf{闭包展开}：$\mathrm{CT}\leftarrow\mathrm{BuildClosureTable}(T,\mathcal{C},\ell)$。
   \item \textbf{门禁}：若 $\mathrm{GateCheck}(\mathrm{CT})=\mathsf{BLOCK}(R)$，则
         对 $R$ 中缺项跑 $\mathrm{MinimalFillRound}$，每成功一次更新 $\Gamma$ 并回到步骤~2；
-        若命中 $\mathsf{forb}$，执行 $\mathsf{Freeze}$ / 拒绝，停止。
+        若命中 $\mathsf{forbidden}$，执行 $\mathsf{Freeze}$ / 拒绝，停止。
   \item \textbf{允许写码}：当 $\mathrm{GateCheck}=\mathsf{ALLOW}$ 后，按 $\ell$ 实现 $T$；
         验收通过则 $\mathsf{Certify}(T)$，写回 INDEX/STATUS/节点卡。
   \item \textbf{非单调维护}：若随后某 $u$ 的 interface 变更，调用 $\mathrm{DirtyPropagate}(\{u\})$ 更新 $\Gamma$，
@@ -3508,7 +3508,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
   \midrule
   先交完整 $\mathrm{CT}$ 再写码 &
   跳过闭包表直接写 examples/探针 \\
-  引用 $v\in\Gamma$ 且未脏、未踩 $\mathrm{Forb}$ &
+  引用 $v\in\Gamma$ 且未脏、未踩 $\mathrm{Forbidden}$ &
   把 INDEX 绿名 / 局部测通 / frozen / correctness 当模板 \\
   缺项先 $\mathsf{Probe}/\mathsf{Certify}$ 再引用 &
   同任务顺手发明未获证 P0/P1 并立刻引用 \\
@@ -3575,20 +3575,20 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
 \subsection{域无关性}
 \label{sec:gates-domain}
 
-算法~\ref{alg:closure-table}--\ref{alg:task-workflow} 的参数是 $G,\Gamma,\mathrm{Forb}$ 与转移名，
-不含密码代数。换域只需重填节点卡与 $\mathrm{Forb}$ 内容；骨架不变。
+算法~\ref{alg:closure-table}--\ref{alg:task-workflow} 的参数是 $G,\Gamma,\mathrm{Forbidden}$ 与转移名，
+不含密码代数。换域只需重填节点卡与 $\mathrm{Forbidden}$ 内容；骨架不变。
 ML-KEM 仍是接缝多、对照清的压力测试床。
 
 \subsection{下一章预告}
 规则与算法齐备后，用 \texttt{kem.keygen}/\texttt{kem.encaps} 复盘：
-历史轨迹是否可写成算法~\ref{alg:task-workflow} 的实例；偏离记为欠债或 $\mathsf{forb}$。
+历史轨迹是否可写成算法~\ref{alg:task-workflow} 的实例；偏离记为欠债或 $\mathsf{forbidden}$。
 再用 \texttt{kem.decaps} 前瞻：能否先输出一张真 $\mathrm{CT}$。
 
 \subsection{本章小结：本章推出了什么}
 \label{sec:gates-summary}
 
 \begin{enumerate}
-  \item 算法~\ref{alg:closure-table} 由 $\mathrm{Dep}^*$、$\mathrm{Missing}_\Gamma$、$\mathrm{Forb}$ 构造闭包表；
+  \item 算法~\ref{alg:closure-table} 由 $\mathrm{Dep}^*$、$\mathrm{Missing}_\Gamma$、$\mathrm{Forbidden}$ 构造闭包表；
         定理~\ref{thm:coding-permit} 给出写码许可的 v0 判定。
   \item 算法~\ref{alg:gate-check}--\ref{alg:task-workflow} 把自动机转移落成 Agent 工作流；
         命题~\ref{prop:workflow-automaton} 说明二者同轨。

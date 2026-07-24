@@ -154,3 +154,4 @@
 | 2026-07-24 | **§4.1 工具箱标注三件工具**：表增「第3章工具」列——依赖图/依赖闭包、形式语言、作业过程自动机 |
 | 2026-07-24 | **字段改名**：节点卡 `iface` 全改为 `interface`（接口/对外可复用约定） |
 | 2026-07-24 | **算法参数体例**：禁止「参数写了却步骤不用」。EncodeNode 参数改为只声明 $V$（不声明 $G/E$）；ClassifyRel/DepStar/Dirty/BuildClosureTable 步骤显式读/写 $G$ 或 $E$；MissingOf/MinimalFill 参数只声明整图 $G$；§4.1 增「算法参数体例」段 |
+| 2026-07-24 | **边标签全称**：$\mathsf{sem}\to\mathsf{semantic}$，$\mathsf{forb}\to\mathsf{forbidden}$；集合 $\mathrm{Forb}\to\mathrm{Forbidden}$（含 ForbiddenHit）；节点字段/请求名 `\texttt{forbid}` / $\mathrm{forbid}(x)$ 保留 |
