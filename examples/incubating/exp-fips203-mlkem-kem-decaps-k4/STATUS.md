@@ -32,4 +32,14 @@ FIPS 203 **Alg.21 / Alg.18 Decaps**（ml_kem_1024 / k=4）— incubating 自包�
 | `KEM_DECAPS_REJECT=1` cpu | **PASS** |
 | `KEM_DECAPS_REJECT=1` sim | **PASS** |
 
-**交付默认仍以 stable 为准**（stable 尚为 SIM 4，待 `$规格$`/`#修改#` 镜像）。registry：[`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`](../../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
+**交付默认仍以 stable 为准**（stable 已 T19i SIM 3）。registry：[`docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md`](../../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
+
+## 工程回灌（2026-07-25；自 `-ct` 专题小改，无行为变更）
+
+| 项 | 说明 |
+|----|------|
+| `run.sh` | `verify \|\| exit $?` — 禁止对拍失败后假 `[SUCCESS]` |
+| `scripts/` 头注释 | Gate E3 / `M_FILE`↔`golden_v` / 合法与拒绝验收口径 |
+| 自研面中文注释 | `kem/` + `main_kem_decaps*` 按 CT 密度回灌；**SIM 默认仍 1-session** |
+| 调用注意 | KAT/roundtrip 须 `M_FILE`；勿并行多路同目录 SIM |
+

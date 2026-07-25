@@ -33,6 +33,7 @@ export KERNEL_COMPUTE_BUDGET_SEC="${KEM_DECAPS_KERNEL_BUDGET_SEC:-1200}"
 if [ -z "${ASCENDC_SIM_HOST_MODE:-}" ]; then
     export ASCENDC_SIM_HOST_MODE=decaps_1session
 fi
+# 验收注意：verify 失败须非零退出（已 || exit $?）；KAT/roundtrip 合法路径须传 M_FILE；勿并行多路同目录 SIM。
 
 BUILD_TYPE="Debug"
 SOC_VERSION="Ascend910B4"
@@ -170,6 +171,7 @@ if [ "${RUN_MODE}" = "sim" ]; then
 fi
 
 if [ "${KEM_DECAPS_VERIFY}" = "1" ]; then
-    python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py"
+    # 对拍失败须非零退出，禁止假 SUCCESS（曾掩盖并发污染下的 FAIL）
+    python3 "${CURRENT_DIR}/scripts/verify_kem_decaps.py" || exit $?
 fi
 echo "[SUCCESS] pass-fix-f203-alg21-kem-decaps-device-k4 ${LABEL} (${RUN_MODE})"

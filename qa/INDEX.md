@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-25 — [Decaps 交付树回灌 CT 工程小改](2026-07/2026-07-25-Decaps交付树回灌CT工程小改.md)
+
+关键字：`Decaps` · 无 `-ct` · **`verify || exit $?`** · 中文注释 / Gate E3·`M_FILE` 文档 · **保留** `decaps_1session`
+
 ### 2026-07-24 — [第7章 CT → Decaps device PASS · 非 NPU 压测收尾](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
 
 关键字：`CT_decaps` · **T19b/c** · **`-ct` 改名**避 main · **拒绝 SIM** · KAT **CPU×10+SIM×3** · **roundtrip CPU+SIM** · `M_FILE` 修复 · 未跑 NPU · 引用审计 · 中文注释 · 五指标对照 · **T22** CT 三树 tick 入 [`active_sim_regress_summary.md`](active_sim_regress_summary.md)

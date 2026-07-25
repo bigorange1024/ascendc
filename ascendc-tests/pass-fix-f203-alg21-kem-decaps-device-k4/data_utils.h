@@ -1,13 +1,13 @@
 /**
  * @file data_utils.h
- * @brief Host 侧 bin 读写、ACL 错误检查宏与调试打印；Encrypt stable 的 main 使用。
+ * @brief Host 侧 bin 读写、ACL 错误检查宏与调试打印（Decaps / Encrypt 用例共用）。
  *
  * ## 流水线位置
- * FIPS 203 Alg.14 / ML-KEM-1024 Encrypt 的 host 编排层（非设备核）。
- * 负责把 input 目录下各 .bin 装入 host 缓冲、把设备回写结果落到 output/c.bin。
+ * FIPS 203 ML-KEM Decaps（Alg.21）或 Encrypt（Alg.14）的 **host 编排层**（非设备核）。
+ * 负责把 input/ 下各 .bin 装入 host 缓冲、把设备回写结果落到 output/（如 K.bin、c.bin）。
  *
  * ## 与 golden 关系
- * 仅 I/O 胶水：不参与密码学计算；对拍由 `run.sh` + `cmp` 完成。
+ * 仅 I/O 胶水：不参与密码学计算；对拍由 `run.sh` + `verify_kem_decaps.py` 或 `cmp` 完成。
  *
  * ## 本文件提供
  * - `ReadFile` / `WriteFile`：定长缓冲的二进制读写
@@ -31,6 +31,7 @@
 #include <sys/stat.h>
 #include "acl/acl.h"
 
+/** 调试打印时的 dtype 分派枚举（与 ACL 张量类型 loosely 对应） */
 typedef enum {
     DT_UNDEFINED = -1,
     FLOAT = 0,
@@ -54,6 +55,7 @@ typedef enum {
 #define INFO_LOG(fmt, args...) fprintf(stdout, "[INFO]  " fmt "\n", ##args)
 #define WARN_LOG(fmt, args...) fprintf(stdout, "[WARN]  " fmt "\n", ##args)
 #define ERROR_LOG(fmt, args...) fprintf(stdout, "[ERROR]  " fmt "\n", ##args)
+/** ACL 调用包装：失败时打印源位置与 aclError 码（不 abort） */
 #define CHECK_ACL(x)                                                                        \
     do {                                                                                    \
         aclError __ret = x;                                                                 \
@@ -64,9 +66,9 @@ typedef enum {
 
 /**
  * 从路径读取整个常规文件到 host 缓冲。
- * @param filePath 输入 bin 路径（如 input/ek_pke.bin）
+ * @param filePath 输入 bin 路径（如 input/dk_kem.bin、input/c.bin）
  * @param fileSize [out] 实际读入字节数
- * @param buffer 调用方预分配缓冲
+ * @param buffer 调用方预分配缓冲（尺寸须 ≥ 文件）
  * @param bufferSize 缓冲容量；文件更大则失败
  * @return true 成功；false 路径非法 / 空文件 / 溢出
  */
@@ -115,7 +117,7 @@ inline bool ReadFile(const std::string &filePath, size_t &fileSize, void *buffer
 
 /**
  * 将 host 缓冲整段写入路径（覆盖创建）。
- * @param filePath 输出路径（如 output/c.bin）
+ * @param filePath 输出路径（如 output/K.bin、output/c.bin）
  * @param buffer 待写数据；不得为空
  * @param size 字节数；须与 write 返回值一致
  * @return true 成功

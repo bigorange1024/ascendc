@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
 """
-gen_data_phase_e.py — Phase-E-only 输入：stash ek/dk + liboqs encaps → m'/h/z/c + golden K。
+gen_data_phase_e.py — **仅 Phase-E**（重加密 + FO）的 input / golden 生成（exp 自包含）。
 
-合法路径：m' := encaps 的 m（模拟正确 Decrypt）；FO 应输出 encaps 的 K。
+## 与 gen_data.py 的分工
+- gen_data.py：全链（含 Decrypt 段），支持 Gate E3 REJECT。
+- 本脚本：假设 Decrypt 已得 m'=m，只生成 Phase-E 所需 ek、h、z、c、m'、coins、golden_v、golden/K。
+
+## 合法路径语义
+m' := encaps 所用 m（模拟正确 Decrypt）；设备 FO 应输出 encaps 的 K（与 golden/K.bin 一致）。
+
+## golden_v
+与 Encrypt 参考链相同：v = embed(INTT(tr̂), m) + e₂；供 CPU twin 在 pack 前对拍 v 系数。
+
+## 路径解析（exp）
+REPO = ROOT.parents[2]；HOST_GOLDEN = 本目录 scripts/host_golden（vendored）。
 """
 from __future__ import annotations
 
@@ -30,11 +41,13 @@ M_BYTES = 32
 
 
 def g_mh(m: bytes, h: bytes) -> tuple[bytes, bytes]:
+    """G(m,h) → (K_ref, coins)；Phase-E 仅需 coins 段算 golden_v。"""
     kr = hashlib.sha3_512(m + h).digest()
     return kr[:32], kr[32:]
 
 
 def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
+    """LUT 平面堆叠（even/odd 列），写入 input/lut_*_stacked.bin。"""
     if even:
         top = lut[:, 0:N:2]
         bottom = lut[:, N:512:2]
@@ -45,6 +58,7 @@ def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
 
 
 def _gen_luts(inp: Path) -> None:
+    """Phase-E 仅需 NTT/INTT 四套 LUT。"""
     lut_ntt = load_lut_t_i8("ntt")
     lut_intt = load_lut_t_i8("intt")
     _lut_planar_stacked(lut_ntt, True).tofile(inp / "lut_ntt_even_stacked.bin")
@@ -90,12 +104,12 @@ def main() -> None:
 
     (inp / "ek_kem.bin").write_bytes(ek)
     (inp / "ek_pke.bin").write_bytes(ek)
-    (inp / "m_prime.bin").write_bytes(m)  # Phase-E-only：正确 Decrypt ⇒ m'=m
+    (inp / "m_prime.bin").write_bytes(m)  # Phase-E：正确 Decrypt ⇒ m' = m
     (inp / "h.bin").write_bytes(h)
     (inp / "z.bin").write_bytes(z)
 
     _k_ref, coins = g_mh(m, h)
-    (inp / "coins.bin").write_bytes(coins)  # 仅 golden_v 参考；设备自产
+    (inp / "coins.bin").write_bytes(coins)  # 仅 golden_v 参考；设备核内自产噪声
 
     _gen_luts(inp)
 

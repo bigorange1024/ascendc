@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-24（`research/formal-lang-dag` 已合入 `origin/main`；两套 Decaps 树并存）
+> **最后刷新**：2026-07-25（交付 Decaps 无 `-ct` 回灌 CT 工程小改；SIM 默认仍 1-session）
 
 ---
 
@@ -13,6 +13,7 @@
 |----|------|
 | **分支** | **`research/formal-lang-dag`**（`origin/main` 已合入；勿开 `cursor/*` 旁支） |
 | **KEM 六算子 stable** | KeyGen / Encaps / Decaps **均已定型**（交付 Decaps **无 `-ct`**）；`scripts/` 默认指 **无 `-ct`** stable |
+| **Decaps 交付工程回灌** | 2026-07-25：`verify || exit $?` + 注释/`M_FILE` 文档；**未**改 `decaps_1session` |
 | **Decaps 交付树**（main；`scripts/` 默认） | device [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · incubating [`exp-…-kem-decaps-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) · stable [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i SIM 3**；tick **1050620**） |
 | **Decaps CT 树**（本专题；仅 `research/formal-lang-dag`） | device / exp / stable `*-decaps-*-ct-k4`（第7章 CT / 五指标；SIM `decaps_2session`）；合法 tick 已入 [`qa/active_sim_regress_summary.md`](qa/active_sim_regress_summary.md)（约 **1.05M**） |
 | **形式方法教材** | [`docs/research/`](docs/research/) 第6–7章；第7章 CT 实验引用 **`-ct`** 树 |

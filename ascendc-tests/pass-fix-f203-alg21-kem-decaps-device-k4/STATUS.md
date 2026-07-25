@@ -29,3 +29,13 @@ bash run.sh -r sim -v Ascend910B4
 **T19i 证据（2026-07-20）**：CPU/SIM `K` max=0；`KEM_DECAPS_REJECT=1` CPU+SIM PASS；SIM tick D**287037**+E**763886**；根无 stray dump。
 
 **已外置**：`#交付#` → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i 已镜像**；SIM **3**）。
+
+## 工程回灌（2026-07-25；自 `-ct` 专题小改，无行为变更）
+
+| 项 | 说明 |
+|----|------|
+| `run.sh` | `verify_kem_decaps.py \|\| exit $?` — 对拍失败禁止假 `[SUCCESS]` |
+| 注释 / gen_data·verify 头 | 补齐 Gate E3、`M_FILE`↔`golden_v`、合法/拒绝验收口径（中文） |
+| SIM 默认 | **仍** `decaps_1session`（**未**采纳 CT 的 2-session 默认） |
+| 调用注意 | KAT/roundtrip 合法路径须传 `M_FILE`；**勿**并行多路同目录 SIM |
+

@@ -43,3 +43,13 @@ KEM_DEC_CPU_TRIALS=10 KEM_DEC_SIM_TRIALS=3 bash scripts/liboqs_kem_decaps_batch.
 bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash scripts/roundtrip_kem_keygen_encaps_decaps.sh -r sim -v Ascend910B4
 ```
+
+## 工程回灌（2026-07-25；自 `-ct` 专题小改，无行为变更）
+
+| 项 | 说明 |
+|----|------|
+| `run.sh` | `verify \|\| exit $?` — 禁止对拍失败后假 `[SUCCESS]` |
+| `scripts/` 头注释 | Gate E3 / `M_FILE`↔`golden_v` / 合法与拒绝验收口径 |
+| 自研面中文注释 | `kem/` + `main_kem_decaps*` 按 CT 密度回灌；**SIM 默认仍 1-session** |
+| 调用注意 | KAT/roundtrip 须 `M_FILE`；勿并行多路同目录 SIM |
+
