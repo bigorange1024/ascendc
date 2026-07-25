@@ -12,7 +12,7 @@
 
 ### 2026-07-25 — [Decaps 交付树回灌 CT 工程小改](2026-07/2026-07-25-Decaps交付树回灌CT工程小改.md)
 
-关键字：`Decaps` · 无 `-ct` 回灌 · **liboqs RT** · **第7章成文**（任务链/对照/方法论效果）
+关键字：`Decaps` · 无 `-ct` 回灌 · liboqs RT · **第7章成文** · **去翻译腔**
 
 ### 2026-07-24 — [第7章 CT → Decaps device PASS · 非 NPU 压测收尾](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
 
