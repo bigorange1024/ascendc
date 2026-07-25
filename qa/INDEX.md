@@ -12,7 +12,7 @@
 
 ### 2026-07-25 — [Decaps 交付树回灌 CT 工程小改](2026-07/2026-07-25-Decaps交付树回灌CT工程小改.md)
 
-关键字：`Decaps` · 无 `-ct` · **`verify || exit $?`** · 中文注释 / Gate E3·`M_FILE` 文档 · **保留** `decaps_1session`
+关键字：`Decaps` · 无 `-ct` · **`verify || exit $?`** · 中文注释 · **liboqs RT** main/CT CPU×5+SIM×1 全绿 · 扩展既有脚本勿新建
 
 ### 2026-07-24 — [第7章 CT → Decaps device PASS · 非 NPU 压测收尾](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)
 
