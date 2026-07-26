@@ -1,9 +1,9 @@
 # FIPS 203 ML-KEM-768 参数卡（P0 锁定）
 
-**状态**：**已锁定**（2026-07-26 用户确认 §决议）  
-**参数组**：ML-KEM-768（\(k=3\)）  
-**范围**：P0 文书；**尚未**写 AscendC kernel  
-**完整计划**：[docs/research/MLKEM-768-从0到exp完整实现计划.md](../research/MLKEM-768-从0到exp完整实现计划.md)  
+**状态**：**已锁定**（2026-07-26 用户确认 §决议）
+**参数组**：ML-KEM-768（\(k=3\)）
+**范围**：P0 文书；**尚未**写 AscendC kernel
+**完整计划**：[docs/research/MLKEM-768-从0到exp完整实现计划.md](../research/MLKEM-768-从0到exp完整实现计划.md)
 **P1 用例表**：[fips203-mlkem768-p1-gap-and-cases.md](fips203-mlkem768-p1-gap-and-cases.md)
 
 ---
@@ -116,6 +116,31 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 
 遇阻 **禁止**改参硬闯；停并重开讨论。
 
+### 3.2 W2 数值锁定（D13–D15）
+
+> **W2 数值 tiling 已锁**（2026-07-26，用户授权「记性能后继续」）。编排对齐活跃 k4 device（prep→compute），几何按 \(k=3\) **重推**；**禁止**零垫凑 4/8。
+
+| 探针 | 字段 | 锁定值 |
+|------|------|--------|
+| **共用** | SIM/生产 launch | D13 **2**（prep→compute）；D14 **2**（prep→compute+tail）；D15 **1**（fused） |
+| | CPU | 可多分段对照；**非**性能基线 |
+| | I/O | 参数卡 §2：ek **1184** / dk_pke **1152** / c **1088** / m **32** |
+| | \(d_u,d_v\) | **10, 4**；c1=960、c2=128 |
+| | Derand | `exp-mlkem-f203-2s1e-k3:SEED_D=`（§4） |
+| **D13** KeyGen | prep | AIV_ONLY **`blockDim=2`**：Â SampleNTT \(3\times3=9\)（分片 **5+4**）+ CBD \(\eta=2\) polyvec6（B3 交叉分片可先写 GM，compute 前按 B5 连续序消费） |
+| | compute | MIX **`blockDim=1`**：polyvec6 NTT（B5）→ Inner \(P=3\)（B6，AIV **2+1**）→ ByteEncode₁₂ **3×384=1152** → `ek‖ρ` 融合 |
+| | Â GM | **`[9,256] int32`**（禁 pad 到 16） |
+| | `s‖e` | **`[6,256]`**；NTT 后 `ŝ` 前 3 行进 dk |
+| **D14** Encrypt | prep | AIV_ONLY **`blockDim=2`**：从 ek 取 \(\rho\) 扩 Â（9）+ CBD `r‖e₁‖e₂`（**7** poly = \(2k+1\)） |
+| | compute | MIX **`blockDim=1`**：NTT(\(r\)) \(k=3\) → Â∘r̂ / 点积 → **INTT batch=4**（\(\hat u\|v\)，**禁** pad 到 6/8）→ Compress+\(d_u{=}10,d_v{=}4\) ByteEncode → `c` |
+| | INTT 几何 | 真 **polyvec4**：S0 **`[8,256] int8`**；mat_c 按 \(4\times4\times2\Rightarrow[32,128]\)；AIV **连续 2+2**；Cube M 对齐垫≠假 poly |
+| **D15** Decrypt | fused | **`blockDim=1`**（与 k4 PASS 同档）：Decode₁₂(dk) → unpack \(c\)（d=10/4）→ NTT(\(u\)) \(k=3\) → 点积 → INTT → Compress₁+ByteEncode₁ → `m` |
+| | 禁 | 复用 k4 的 `kInttBatch=8` / c 长度 1568 / ek 1568 常量当默认 |
+
+积木复用（活跃 k3，非 frozen）：B1–B6 路径见 [`ml-kem-768/INDEX.md`](../../ascendc-tests/ml-kem/ml-kem-768/INDEX.md)。
+
+遇阻 **禁止**改参硬闯；停并重开讨论。
+
 ---
 
 ## 4. Derand / 域分离（草案锁定）
@@ -172,10 +197,11 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 
 ## 8. P0 退出清单
 
-- [x] 用户决议写入本卡  
-- [x] 长度与 liboqs 宏对拍  
-- [x] T-B / C-1 / `-k3` / CT / PKE exp 锁定  
-- [x] 目录壳 + INDEX  
-- [x] registry 骨架  
-- [x] P1 补洞与必建表（另文）  
+- [x] 用户决议写入本卡
+- [x] 长度与 liboqs 宏对拍
+- [x] T-B / C-1 / `-k3` / CT / PKE exp 锁定
+- [x] 目录壳 + INDEX
+- [x] registry 骨架
+- [x] P1 补洞与必建表（另文）
 - [x] **P2/W1**：§3.1 数值 tiling 表（B4–B6）
+- [x] **P2/W2**：§3.2 数值 tiling 表（D13–D15）
