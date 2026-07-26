@@ -31,7 +31,6 @@
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
 | **P0** | **T768-W2** | ML-KEM-768 **P2/W2**：D13 KeyGen · D14 Encrypt · D15 Decrypt device（须授权） | **待开工**；W0+W1 已绿 |
-| — | **T768-W1** | ML-KEM-768 **P2/W1**：B4 SampleNTT · B5 polyvec6 · B6 multiply/inner | **2026-07-26 关闭**：CPU+`SIM_DIRECT=1` sim 全绿（见当日纪要） |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
@@ -116,6 +115,8 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T768-W1** | ML-KEM-768 P2/W1：B4 SampleNTT · B5 polyvec6 NTT/INTT · B6 multiply/inner；CPU+`SIM_DIRECT=1` sim 全绿 | 2026-07-26 |
+| **T768-W0** | ML-KEM-768 P2/W0：B1 compress · B2 byteencode · B3 CBD η=2；CPU+SIM 全绿 | 2026-07-26 |
 | **T2** | Decaps device SIM **单库合库 + 默认 1-session**（`prepare_dec_shim`；D**286803**+E**745925**；E3 仍绿）；NPU 实机另见 **T2-npu** | 2026-07-17 |
 | **T20** | 活跃用例详细中文注释补课 Wave1–5（跳过 `frozen/`/`add_custom/`/`vendor/`/`thirdparty/`） | 2026-07-15（Wave 2026-07-10 已齐；自打开项迁出） |
 | **T19f** | incubating KEM KeyGen → `#交付#` [`stable-…-kem-keygen-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/) · SIM **706633** | 2026-07-14 |
