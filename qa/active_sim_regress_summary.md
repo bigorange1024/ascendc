@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + W2/D13–D15 + W3/D19–D21ct + W4/E13–E15/E19–E20** Cloud SIM tick；Decaps CT k4 行仍沿用 07-24） |
+| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + W2/D13–D15 + W3/D19–D21ct + W4/E13–E15/E19–E21ct** Cloud SIM tick；Decaps CT k4 行仍沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -75,6 +75,8 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | [`exp-fips203-mlkem-pke-decrypt-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-decrypt-k3/) | **222073** | ML-KEM-768 E15；1 fused launch；dk/c→m；m golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-kem-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3/) | **510867** | ML-KEM-768 E19；2 launch；E13/D19 geometry + Alg.16 tail；ek_kem/dk_kem golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-kem-encaps-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3/) | **590261** | ML-KEM-768 E20；2 launch；KEM head + E14/D20 geometry；c/K golden PASS | STATUS 2026-07-26 |
+| [`exp-fips203-mlkem-kem-decaps-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-k3/) | accept **820230**（D**221059** + E**599171**）；reject **822500**（D**220692** + E**601808**） | ML-KEM-768 E21；delivery 默认 `decaps_1session`；K golden PASS；reject `K=J(z‖c)` | STATUS 2026-07-26 |
+| [`exp-fips203-mlkem-kem-decaps-ct-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3/) | accept **826115**（D**220727** + E**605388**）；reject **825836**（D**220787** + E**605049**） | ML-KEM-768 E21ct；CT 默认 `decaps_2session`；accept K max=0；reject `K=J(z‖c)` 且 `reject≠accept` | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-keygen-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/) | 542393 | 已晋级 stable；副本同量级 | STATUS→stable |
 | [`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/) | 627614 | 已晋级；晋级前 SIM | STATUS |
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |

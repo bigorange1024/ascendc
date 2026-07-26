@@ -1,0 +1,181 @@
+% exp-fips203-mlkem-kem-decaps-ct-k3 — FIPS 203 Alg.21 ML-KEM-768 KEM Decaps
+% 编译：bash scripts/xelatex-clean.sh examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3/exp-fips203-mlkem-kem-decaps-ct-k3-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-mlkem-kem-decaps-ct-k3\\FIPS 203 Alg.21 ML-KEM-768 KEM Decaps 实现方案}
+\author{ascendc 工程（ML-KEM-768 W4b / E21ct）}
+\date{2026-07-26}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \dirname{examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 21}，即 ML-KEM-768（$k=3$）\textbf{KEM Decaps CT 专题副本}。
+
+\textbf{参数锁定}：几何、I/O 与 launch 全部锁定到
+\dirname{docs/specs/fips203-mlkem768-parameter-card.md} §3.3 D21ct：
+\texttt{dk\_kem=2400B}，\texttt{c=1088B}，输出 \texttt{K=32B}；合法路径 K max=0，拒绝路径必须输出 $J(z\Vert c)$ 且 reject $\neq$ accept；SIM/生产默认 \textbf{\texttt{decaps\_2session}}（CT 锁定），T19i 形态 \textbf{3 launch}。
+\textbf{行为基线}：活跃探针
+\dirname{ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg21-kem-decaps-device-ct-k3/}。
+\textbf{组成}：Phase-D 复用 E15/D15 k3 Decrypt fused；Phase-E 复用 E14/D14 k3 Encrypt 几何，并在设备侧完成 $G(m'\Vert h)$、再加密、密文比较与 FO 选路。
+\textbf{计划 AI Core 数}：Phase-D 为 MIX \texttt{blockDim=1}；Phase-E prep 为 AIV\_ONLY \texttt{blockDim=2}；Phase-E compute+pack+FO 为 MIX \texttt{blockDim=1}（1 AIC + 2 AIV）。
+\textbf{禁止}：创建 \dirname{examples/stable/ml-kem/ml-kem-768/}；从任何 \dirname{frozen/} 目录复制、改写或移植源码；沿用 k4 的 \texttt{dk=3168}/\texttt{c=1568}、\texttt{du=11/dv=5} 或 pad-to-4/8 几何。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程边界}
+
+\begin{longtable}{@{}L{4.8cm}L{8.4cm}@{}}
+\toprule
+来源 & 用途 \\
+\midrule
+\dirname{ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg21-kem-decaps-device-ct-k3/} & 活跃 D21ct k3 行为基线；可复制后自包含适配到本 exp，最终不得保留对探针目录的编译期 include/import \\
+\dirname{examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-decrypt-k3/} & 活跃 E15 incubating PKE Decrypt；提供已自包含的 k3 Alg.15 主体 \\
+\dirname{examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-encrypt-k3/} & 活跃 E14 incubating PKE Encrypt；提供已自包含的 k3 Alg.14 主体 \\
+\dirname{examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/} & 活跃 k4 incubating Decaps 结构参考；仅用于目录组织与状态口径，不带入 k4 字节长或几何 \\
+\dirname{library/shared/} & SHA3/SHAKE、统一整数压缩、公共设备侧头文件等共享库 \\
+CANN / tikicpulib / CAModel & 编译、CPU 孪生与 SIM 运行环境 \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止项}
+\begin{itemize}
+  \item 禁止从 \dirname{ascendc-tests/frozen/} 或 \dirname{examples/frozen/} 拿源码、customspec 或路线。
+  \item 禁止把 $m'$、$K'$、$r'$、$c'$、$h$、$z$ 等中间态作为默认 I/O 落盘；debug dump 只能由显式开关启用。
+  \item 禁止 Host 预填 $r'$、Host memcmp 或 Host SHAKE256 选 $K$ 冒充生产 FO；$G$ 与 FO 必须在设备侧完成。
+  \item 禁止为 $G$ 或 FO 新增与 Encrypt/Decrypt 无关的产品化独立 launch；默认路径须保持 D21ct T19i 三段结构，并且 reject 必须与 accept 不同。
+  \item 禁止将本 E21ct CT 默认改回 \texttt{decaps\_1session}；1-session 仅作为排障覆盖。
+\end{itemize}
+
+\section{数学语义（Alg.21 $\to$ Alg.18）}
+
+\begin{longtable}{@{}L{3.5cm}L{9.8cm}@{}}
+\toprule
+张量 / 文件 & 契约 \\
+\midrule
+\texttt{input/dk\_kem.bin} & 2400B，展开为 \(\mathrm{dk}_{\mathrm{PKE}}(1152)\Vert \mathrm{ek}(1184)\Vert h(32)\Vert z(32)\) \\
+\texttt{input/c.bin} & 1088B，\(c=c_1\Vert c_2\)，其中 \(c_1=960\)B（\(d_u=10\)，3 poly），\(c_2=128\)B（\(d_v=4\)，1 poly） \\
+\texttt{input/lut\_even\_stacked.bin}、\texttt{lut\_odd\_stacked.bin} & Decrypt/Encrypt NTT/INTT Stage2 LUT；由本目录 golden 脚本生成；不是用户可见交付输入 \\
+\texttt{output/K.bin} & 32B；合法路径为 \(K'\)，拒绝路径为 \(J(z\Vert c)\)，且必须与合法路径 K 不同 \\
+\bottomrule
+\end{longtable}
+
+\begin{align*}
+  m' &\leftarrow \texttt{K-PKE.Decrypt}(\mathrm{dk}_{\mathrm{PKE}}, c) \\
+  (K'\Vert r') &\leftarrow G(m'\Vert h)=\mathrm{SHA3\textrm{-}512}(m'\Vert h) \\
+  c' &\leftarrow \texttt{K-PKE.Encrypt}(\mathrm{ek}, m', r') \\
+  K &\leftarrow
+    \begin{cases}
+      K' & \text{若 } c=c' \\
+      J(z\Vert c)=\mathrm{SHAKE256}(z\Vert c,32) & \text{若 } c\neq c'
+    \end{cases}
+\end{align*}
+
+行 1--4 只做 \texttt{dk\_kem} 指针切片，不另开 launch；行 8--12 的比较与 $J$ 选路在设备 FO 中完成。
+
+\section{AscendC 实现规划}
+
+\begin{longtable}{@{}L{2.8cm}L{3.1cm}L{7.2cm}@{}}
+\toprule
+Launch & 核类型 / blockDim & 数据划分与理由 \\
+\midrule
+Phase-D & MIX，\texttt{blockDim=1} & 继承 E15/D15：Decode12、unpack \(c\)、NTT/Inner/INTT、Compress1+ByteEncode1，输出 \(m'\) 到 GM workspace。选择 1 个 AI Core 是参数卡 §3.3 D21ct 对 D15 fused 的锁定继承。 \\
+Phase-E prep & AIV\_ONLY，\texttt{blockDim=2} & block0 先执行 \(G(m'\Vert h)\) 产生 \(K'\Vert r'\)；随后继承 E14/D14 prep：\(\hat A\) 共 9 poly 按 5+4 分片，\(y\Vert e_1\Vert e_2\) 共 7 poly 由 \(r'\) 采样。 \\
+Phase-E compute+FO & MIX，\texttt{blockDim=1} & 复用 E14/D14 compute；SIM 在本地 \texttt{l18\_l19} 覆盖核尾部 pack 出 \(c'\) 后，同核执行 \texttt{KemDecFo} 写 \texttt{K.bin}。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{GM 几何}
+\begin{longtable}{@{}L{3.8cm}L{9.3cm}@{}}
+\toprule
+对象 & 锁定几何 \\
+\midrule
+\texttt{dk\_kem} & 2400B；偏移：\texttt{dk\_pke[0,1152)}，\texttt{ek[1152,2336)}，\texttt{h[2336,2368)}，\texttt{z[2368,2400)} \\
+\texttt{c} / \texttt{c'} & 1088B；\(d_u=10,d_v=4\)，c1=960B，c2=128B \\
+\(\hat A\) & \texttt{[9,256] int32}；9 个真实 poly，禁止 pad 到 16 \\
+\texttt{re} & \texttt{[7,256] int32}；\texttt{y[0..2] || e1[0..2] || e2[0]}，随机性来自设备 \(r'\) \\
+Phase-E INTT & 真 polyvec4：S0 \texttt{[8,256] int8}，Stage2 \texttt{mat\_c [32,128] int32}；硬件 M 对齐垫不表示假 poly \\
+\texttt{Kprime} / \texttt{Kout} & 各 32B；\texttt{Kprime} 为 workspace，\texttt{Kout} 为唯一 D2H 输出 \\
+\bottomrule
+\end{longtable}
+
+\subsection{同步与流水}
+Phase-D 与 Phase-E 之间由 Host launch 顺序保证 GM 可见性；SIM 默认在同一 ACL session 内连续执行，保持 \texttt{decaps\_2session}，即 Phase-D 与 Phase-E 分 session 执行。
+Phase-E prep 内 \(G\) 写出 \(K'\Vert r'\) 后，PRF/CBD 必须读取完整 \(r'\)；沿用 D21ct 已验顺序与 barrier。
+Phase-E compute 内部沿用 E14/D14 同步：AIV 与 AIC 通过 CrossCore flag 交接平面 Stage1/Stage2/Stage3 GM；AIV 双分片 pack 完成后使用 \apiname{SyncAll} 汇合，再由固定 AIV 执行 FO。
+CPU 仅作为逻辑孪生；SIM 是同步与搬运验收门槛。
+
+\section{AscendC API 表}
+本实现不引入 E21ct 独有的新 AscendC 矢量/矩阵 API；KEM 头尾使用 shared Keccak \texttt{Sha3OneShot}/\texttt{Shake256OneShot}。下表 API 均已有索引记录，使用约束按
+\dirname{library/documents/CANN-AscendC算子开发接口参考-查阅索引.md} 执行。
+
+\begin{longtable}{@{}L{3.2cm}L{2.7cm}L{2.4cm}L{2.3cm}L{3.0cm}@{}}
+\toprule
+API 名 & 分类 / 文档 & Atlas A2 & 本用例 dtype & 备注 \\
+\midrule
+\apiname{GetBlockIdx} / \apiname{GetSubBlockIdx} & 系统变量 / 资源 & √ & 标量索引 & 区分 AIV 分片与 MIX 子核；KEM 头尾仅固定 block/subblock 执行 \\
+\apiname{GlobalTensor} / \apiname{LocalTensor} & 基础结构 & √ & \texttt{uint8/int8/int32} & GM/UB 张量契约必须与本 spec 几何一致 \\
+\apiname{DataCopy} & Memory 数据搬运 & √ & \texttt{uint8/int8/int32} & 连续块搬运；长度与地址遵守 32B 对齐约束 \\
+\apiname{Duplicate} & Memory 矢量计算 & √ & \texttt{uint8/int32} & 用于 UB 清零、pad 与 tail buffer 初始化 \\
+\apiname{PipeBarrier} & Pipe 同步 & √ & — & MTE/Vector/Cube 阶段交界显式同步 \\
+\apiname{CrossCoreSetFlag} / \apiname{CrossCoreWaitFlag} & MIX 同步 & √ & — & AIV/AIC 通过 GM 交接时使用；CPU 过不能删 \\
+\apiname{SyncAll} & 硬同步 & √ & — & 双 AIV pack 完成后汇合，再由 AIV0 执行 FO \\
+\apiname{Mmad} / \apiname{Fixpipe} & 矩阵计算 & √ & \texttt{int8*int8->int32} & NTT/INTT Stage2 MMAD；k3 真 batch 几何 \\
+\apiname{ShiftRight} & 矢量算术 & √ & \texttt{int32} & limb 拆分、Barrett 压缩与 ByteEncode 辅助右移 \\
+\apiname{Muls} / \apiname{Add} / \apiname{Sub} & 矢量算术 & √ & \texttt{int32/int16} & limb、模加减、压缩/编码辅助 \\
+\apiname{Cast} & 类型转换 & √（受限） & \texttt{int32/int16/half/int8} & 遵守索引中 A2 Cast 链约束；不得假设存在 \texttt{int32->int8} 单跳 \\
+\apiname{Gather} & 矢量搬运/选择 & √ & \texttt{int32} & 仅允许在 Alg.11 / ByteEncode 等非 NTT S1--S3 段按既有路径使用；NTT 三段内禁用 \\
+\apiname{GetValue} / \apiname{SetValue} & LocalTensor 标量访问 & √ & \texttt{uint8/int32} & 仅用于 pack 与 KEM 头尾标量缺口；不得把 Compares bit 包当逐 lane 布尔 \\
+\bottomrule
+\end{longtable}
+
+\section{数学步骤覆盖率}
+\begin{longtable}{@{}L{4.4cm}L{4.0cm}L{2.0cm}L{2.8cm}@{}}
+\toprule
+数学步骤 & 实现方式 / API & 覆盖 & 缺口说明 \\
+\midrule
+切分 \texttt{dk\_kem} & Host 传整段 GM，kernel 指针偏移 & 100\% 设备 & 不另开 launch，不落盘中间态 \\
+\(m'=\mathrm{Decrypt}\) & E15/D15 fused & 100\% 设备 & 真 k3、du/dv=10/4 \\
+\(G(m'\Vert h)\) & shared Keccak SHA3-512 & 100\% 设备 & \(K'\) 与 \(r'\) 均在设备 workspace \\
+\(\mathrm{Encrypt}(ek,m',r')\) & E14/D14 prep+compute & 100\% 设备 & Â[9]、re[7]、INTT batch4；无零垫 \\
+\(c\stackrel{?}{=}c'\) 与 FO & 本地 \texttt{KemDecFo} + SHAKE256 J & 100\% 设备 & SIM 嵌入 \texttt{l18\_l19} 尾；CPU 用 \texttt{pack\_fo} \\
+\bottomrule
+\end{longtable}
+
+\section{验证计划}
+\begin{verbatim}
+cd examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+\end{verbatim}
+
+期望：\texttt{K.bin} 为 32B，合法路径与 golden 对拍 PASS；SIM 默认 \texttt{decaps\_2session}，Total tick 登记到 \texttt{qa/active\_sim\_regress\_summary.md}，并检查用例根目录无 stray \texttt{core*.dump}、\texttt{profile\_*log*.toml}。
+
+拒绝路径必验：
+\begin{verbatim}
+KEM_DECAPS_REJECT=1 bash run.sh -r cpu -v Ascend910B4
+KEM_DECAPS_REJECT=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+\end{verbatim}
+
+\section{产出物}
+\begin{itemize}
+  \item \dirname{exp-fips203-mlkem-kem-decaps-ct-k3-实现方案-customspec.tex}
+  \item \dirname{exp-fips203-mlkem-kem-decaps-ct-k3-实现方案-customspec.pdf}
+  \item 后续实现文件须与本 customspec 同目录自包含，且自研 Python/C/AscendC 写详细中文注释。
+\end{itemize}
+\end{document}

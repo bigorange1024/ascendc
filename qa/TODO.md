@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-26（768 **W0–W3 探针全绿**；W4/E13–E15 PKE + E19/E20 KEM incubating **CPU+SIM 绿**）
+**最近刷新**：2026-07-26（768 **W0–W4 incubating 全绿**；下一刀 registry + roundtrip）
 
 ---
 
@@ -26,12 +26,12 @@
 
 ## 打开项（按优先级）
 
-主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**，2026-07-20 `#交付#` + **T19i**）；**`-ct`** 树为 `research/formal-lang-dag` CT 专题（第7章 / 五指标）。768 W3 已完成 **D19+D20+D21+D21ct**，W4a PKE incubating 已完成 **E13+E14+E15**，W4b 已完成 **E19+E20**，下一项 **E21**（examples/ 仍须 customspec 门禁）。打开项：**教材细表 / 768 W4 / NPU / T23 / SHA3hp**。KEM **correctness 三探针已冻结**（见已关闭表）；**禁止**再当实现参考。
+主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**，2026-07-20 `#交付#` + **T19i**）；**`-ct`** 树为 `research/formal-lang-dag` CT 专题（第7章 / 五指标）。768 W0–W4 incubating 已完成 **E13–E15 + E19–E21ct**，本阶段仍 **禁 stable-768**；下一项为 registry 填绿与 exp 端到端 roundtrip。打开项：**教材细表 / 768 glue / NPU / T23 / SHA3hp**。KEM **correctness 三探针已冻结**（见已关闭表）；**禁止**再当实现参考。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
-| **P0** | **T768-W4** | ML-KEM-768 W4：E13–E15 + E19–E21[+ct] incubating（先 customspec 再写码；registry + 768 roundtrip） | **进行中**：E13 PKE KeyGen **CPU+SIM 绿**（tick **373429**）；E14 PKE Encrypt **CPU+SIM 绿**（tick **507633**）；E15 PKE Decrypt **CPU+SIM 绿**（tick **222073**）；E19 KEM KeyGen **CPU+SIM 绿**（tick **510867**）；E20 KEM Encaps **CPU+SIM 绿**（tick **590261**）；下一刀 E21；禁 stable-768 |
+| **P0** | **T768-glue** | ML-KEM-768 incubating 后续胶水：registry 填绿 + `scripts/exp_kem768_liboqs_roundtrip.sh` | **待开工**；W4 incubating 已关闭；仍禁 stable-768 |
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
 | **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境 |
@@ -116,6 +116,7 @@
 | ID | 事项 | 关闭日 |
 |----|------|--------|
 | **T768-W3** | ML-KEM-768 P2/W3：D19 KEM KeyGen + D20 Encaps + D21 Decaps + D21ct CT device 全部 CPU+`SIM_DIRECT=1` sim 绿；W3 device 闭环完成，下一步转 W4 incubating customspec | 2026-07-26 |
+| **T768-W4** | ML-KEM-768 W4 incubating：E13–E15 PKE + E19–E21ct KEM 全部 customspec + CPU + `SIM_DIRECT=1` sim 绿；E21 tick accept **820230** / reject **822500**；E21ct tick accept **826115** / reject **825836**；未建 stable-768，下一步 registry + roundtrip | 2026-07-26 |
 | **T768-W3-D21ct** | ML-KEM-768 P2/W3：D21ct KEM Decaps CT device；`dk_kem(2400)+c(1088)` → `K(32)`；CT 默认 `ASCENDC_SIM_HOST_MODE=decaps_2session`；accept CPU/SIM max=0，SIM tick **826458**（D**220868**+E**605590**）；reject CPU/SIM `K=J(z‖c)` 且 `reject≠accept`，SIM tick **823002**（D**220680**+E**602322**）；根无 stray dump；D21 delivery 默认保持 `decaps_1session` | 2026-07-26 |
 | **T768-W3-D21** | ML-KEM-768 P2/W3：D21 KEM Decaps device（delivery，非 `-ct`）；`dk_kem(2400)+c(1088)` → `K(32)`；Phase-D=D15 k3 Decrypt，Phase-E=D14-shaped re-encrypt+FO；CPU+`SIM_DIRECT=1` sim 全绿，tick **818285**（D**220767**+E**597518**）；合法 `K` max=0，reject CPU/SIM `K=J(z‖c)` | 2026-07-26 |
 | **T768-W3-D20** | ML-KEM-768 P2/W3：D20 KEM Encaps device；SIM 2 / CPU 5；`ek_kem(1184)+m(32)` → `c(1088)+K(32)`；CPU+`SIM_DIRECT=1` sim 全绿，tick **592129**；`c`/`K` max=0 | 2026-07-26 |
