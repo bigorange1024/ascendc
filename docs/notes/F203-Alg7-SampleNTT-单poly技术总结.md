@@ -1,8 +1,8 @@
 # F203 Alg.7 SampleNTT 单 poly — 技术总结
 
 **定稿**：2026-06-24  
-**探针**：[`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/)  
-**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/INTEGRATION_PLAN.md)  
+**探针**：[`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4/)  
+**实现方案**：[`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4/INTEGRATION_PLAN.md)  
 **讨论**：[`qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md`](../../qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md) §13–§18；[`qa/2026-06/2026-06-24-Alg7单poly验收与R5向量compact.md`](../../qa/2026-06/2026-06-24-Alg7单poly验收与R5向量compact.md)  
 **Phase A 历史（已冻结 2026-06-28）**：[`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/) — 见 [`F203-Alg7-PhaseA-向量化技术总结.md`](F203-Alg7-PhaseA-向量化技术总结.md)
 
@@ -110,7 +110,7 @@ Golden：`scripts/gen_data.py` 中 `rej_scalar_from_d12` / `rej_bulk_from_d12` �
 ## 7. 验证方法论
 
 ```bash
-cd ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 python3 scripts/test_multi_seed.py
@@ -138,4 +138,4 @@ python3 scripts/test_multi_seed.py
 
 ## 9. 与 16-poly（Alg.13 行 3–7）的关系
 
-**后继探针**：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/)（方案 [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/INTEGRATION_PLAN.md)）— 16× SampleNTT 链末写 GM `a_hat[16,256]`。Phase A 全链 [`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/) 中 A-v4a/b 已证伪 GM 栈半向量路线（**只读**，勿抄码）。
+**后继探针**：[`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/)（方案 [`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/INTEGRATION_PLAN.md)）— 16× SampleNTT 链末写 GM `a_hat[16,256]`。Phase A 全链 [`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/) 中 A-v4a/b 已证伪 GM 栈半向量路线（**只读**，勿抄码）。

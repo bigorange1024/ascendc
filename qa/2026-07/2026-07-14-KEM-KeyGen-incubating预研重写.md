@@ -2,7 +2,7 @@
 
 ## 结论
 
-`examples/incubating/exp-fips203-mlkem-kem-keygen-k4` 按 customspec（含 SyncAll 踩坑）从零重写完成；**有条件完成**，未晋级 stable。
+`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4` 按 customspec（含 SyncAll 踩坑）从零重写完成；**有条件完成**，未晋级 stable。
 
 ## 实现要点
 
@@ -178,7 +178,7 @@ Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early 
 
 | 项 | 内容 |
 |----|------|
-| 范围 | `examples/incubating/exp-fips203-mlkem-kem-keygen-k4` |
+| 范围 | `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4` |
 | 命令 | `KEYGEN_DIR=<本目录> KEM_KG_CPU_TRIALS=10 KEM_KG_SIM_TRIALS=1 SIM_DIRECT=1 bash scripts/liboqs_kem_keygen_batch.sh` |
 | 结果 | **PASS** CPU×10 + SIM×1（旁路 A 随机 `kem_seed=d‖z` ↔ liboqs `keypair_derand` 逐字节 ek/dk） |
 | 墙钟 | ≈11 min（`BATCH_EXIT:0`，stamp `20260714-185252`） |
@@ -191,8 +191,8 @@ Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early 
 
 | 项 | 内容 |
 |----|------|
-| 来源 | `examples/incubating/exp-fips203-mlkem-kem-keygen-k4`（副本保留） |
-| 目标 | [`examples/stable/stable-fips203-mlkem-kem-keygen-k4`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) |
+| 来源 | `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4`（副本保留） |
+| 目标 | [`examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/) |
 | customspec | `stable-…-实现方案-customspec.{tex,pdf}`（已 `xelatex-clean`） |
 | stable CPU | **PASS** ek/dk max=0 |
 | stable SIM | **PASS** Total tick **706633**；无 stray dump |
@@ -226,10 +226,10 @@ Cloud：`main_keygen.cpp` 未用常量 → Clang `-Werror`。已删（与 early 
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 
-cd examples/stable/stable-fips203-mlkem-pke-keygen-k4
-cd examples/stable/stable-fips203-mlkem-pke-encrypt-k4
-cd examples/stable/stable-fips203-mlkem-pke-decrypt-k4
-cd examples/stable/stable-fips203-mlkem-kem-keygen-k4
+cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4
+cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4
+cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4
+cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4
 ```
 
 定点：`SEED_D=20260619 bash run.sh …`。采 msprof/OPPROF（非默认）：`SIM_DIRECT=0 bash run.sh -r sim …`。共享 RNG：[`library/shared/fips203_host_rng/`](../../library/shared/fips203_host_rng/)。

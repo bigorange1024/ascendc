@@ -1,7 +1,7 @@
 # 2026-06-30 Encrypt 单 session 重建 · SIM func_key≥5 → 507000 病根
 
 > **⚠ 探针已冻结（2026-06-30 晚）**：`fix-f203-alg14-encrypt-2launch-k4` 已迁入 [`../../ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-encrypt-2launch-k4/)。  
-> 本文保留**家里 agent 原始讨论**；办公室未复验该树 PASS。活跃 Encrypt → [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) G5。
+> 本文保留**家里 agent 原始讨论**；办公室未复验该树 PASS。活跃 Encrypt → [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/) G5。
 
 关键词：Encrypt Alg.14、单 ACL session、新探针 `fix-f203-alg14-encrypt-2launch-k4`、G3 合并核 `at_r5`、SIM 507000、AIV binary func_key、CAModel、受控实验。
 

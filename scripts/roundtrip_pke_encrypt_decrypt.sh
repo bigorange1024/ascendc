@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # roundtrip_pke_encrypt_decrypt.sh — device KeyGen 密钥 → Encrypt(c) → Decrypt(m) 闭环
 #
-# KeyGen 默认：examples/stable/stable-fips203-mlkem-pke-keygen-k4
-# Encrypt 默认：examples/stable/stable-fips203-mlkem-pke-encrypt-k4
-# Decrypt 默认：examples/stable/stable-fips203-mlkem-pke-decrypt-k4（定型交付）
+# KeyGen 默认：examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4
+# Encrypt 默认：examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4
+# Decrypt 默认：examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4（定型交付）
 #   回退探针：DECRYPT_DIR=.../pass-fix-f203-alg15-pke-decrypt-device-k4
 #   incubating exp：DECRYPT_DIR=.../exp-fips203-mlkem-pke-decrypt-k4
 #   回退 KeyGen 探针：KEYGEN_DIR=.../pass-fix-f203-alg13-device-keygen-k4
@@ -27,9 +27,9 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-keygen-k4}"
-ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4}"
-DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-decrypt-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4}"
+ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4}"
+DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

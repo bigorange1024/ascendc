@@ -66,7 +66,7 @@ echo "[roundtrip_batch] sim seeds: ${SIM_SEEDS[*]}" | tee -a "${LOG}"
 # KeyGen 密钥可固定（ROUNDTRIP_KEYGEN_SEED_D），与 m 种子解耦。
 export ROUNDTRIP_BOOTSTRAP_KEYGEN="${ROUNDTRIP_BOOTSTRAP_KEYGEN:-1}"
 KEYGEN_SEED="${ROUNDTRIP_KEYGEN_SEED_D:-20260619}"
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-keygen-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4}"
 if [ ! -f "${KEYGEN_DIR}/output/ek_pke.bin" ] || [ ! -f "${KEYGEN_DIR}/output/dk_pke.bin" ]; then
     echo "[roundtrip_batch] bootstrap KeyGen SEED_D=${KEYGEN_SEED} (cpu) …" | tee -a "${LOG}"
     (cd "${KEYGEN_DIR}" && SEED_D="${KEYGEN_SEED}" bash run.sh -r cpu -v "${SOC_VERSION}") >>"${LOG}" 2>&1

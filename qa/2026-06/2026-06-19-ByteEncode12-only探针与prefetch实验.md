@@ -8,7 +8,7 @@
 |------|------|
 | ByteEncode₁₂ prefetch、encode-only tick、合入 vec-k4-v2 | [`docs/notes/F203-ByteEncode12-prefetch技术总结.md`](../../docs/notes/F203-ByteEncode12-prefetch技术总结.md) |
 | 块紧凑 S0 路线否决 | [`examples/frozen/frozen-exp-mlkem-sepolyvec8-ntt-k4-block/`](../../examples/frozen/frozen-exp-mlkem-sepolyvec8-ntt-k4-block/) · [`ascendc-tests/frozen/INDEX.md`](../../ascendc-tests/frozen/INDEX.md) |
-| 全链路 SIM 基线 | [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)（SIM **77958**） |
+| 全链路 SIM 基线 | [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)（SIM **77958**） |
 
 ## 历史章节锚点（兼容旧链接）
 

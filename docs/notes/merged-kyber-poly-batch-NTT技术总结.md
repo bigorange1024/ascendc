@@ -116,8 +116,8 @@
 | 2 s12 | `frozen-fix-merged-kyber-ntt256-limb6-poly2-s12` |
 | 2 s123 | `…-poly2-s123` |
 | 8 s123 | `…-poly8-s123` |
-| 8 互异 | `examples/incubating/exp-sepolyvec8-ntt-k8`（历史 exp；交错 S0） |
-| 8 紧凑向量 | [`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)（**终态**；`[HI₈,LO₈]`；NTT+INTT） |
+| 8 互异 | `examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8`（历史 exp；交错 S0） |
+| 8 紧凑向量 | [`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)（**终态**；`[HI₈,LO₈]`；NTT+INTT） |
 
 ### 6.2 验收
 

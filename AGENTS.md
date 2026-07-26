@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-24（`research/formal-lang-dag` 合入 main；交付 Decaps **无 `-ct`** + CT 专题 **`-ct`** 并存）
+**最后刷新**：2026-07-26（活跃 ML-KEM 迁入 `ml-kem/ml-kem-1024/`；交付 Decaps **无 `-ct`** + CT **`-ct`** 并存）
 
 ---
 
@@ -123,16 +123,12 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
-- **PKE** 三段已在 `examples/stable/`  
-- **KEM Alg.19 KeyGen**：**定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) 保留  
-- **KEM Alg.20 Encaps**：**定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；tick **721119**）；预研副本保留  
-- **KEM Alg.21 Decaps（交付）**：**定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（2026-07-20 `#交付#` + **T19i SIM 3**）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；行为基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（D**286803**+E**745925**）；`scripts/` `DECAPS_DIR`→**stable（无 `-ct`）**  
-- **KEM Alg.21 Decaps（CT 专题，`research/formal-lang-dag`）**：[`stable-…-decaps-ct-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/) · [`exp-…-decaps-ct-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) · [`pass-fix-…-decaps-device-ct-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（第7章 CT / 五指标；**非** scripts 默认）  
-- **KEM correctness×3**（alg19/20/21）：**已冻结**（2026-07-20）→ `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`；**只读 FROZEN.md**，禁止翻源码 / 跑 CI  
-- **Host 随机（PKE/KEM 已正确性）**：默认 [`library/shared/fips203_host_rng`](library/shared/fips203_host_rng/)；`SEED_D=` 定点可覆盖；勿再默认写死 `20260619`  
-- 行为基线探针：`pass-fix-f203-alg19-kem-keygen-device-k4` · `pass-fix-f203-alg20-kem-encaps-device-k4` · `pass-fix-f203-alg21-kem-decaps-device-k4`（交付）· `pass-fix-…-decaps-device-ct-k4`（CT 专题；勿当 CMake 依赖）  
-- **下一刀**：按用户指定；常见 T23 / NPU / SHA3hp（见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）
-- **办公室 KEM 回归**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（**无 `-ct`** stable；urandom→liboqs→AscendC；**CPU+SIM**）
+- **目录**：活跃 ML-KEM 在 `ascendc-tests|examples/{incubating,stable}/ml-kem/ml-kem-1024/`（frozen 不迁入）  
+- **PKE + KEM 六算子** 已在 [`examples/stable/ml-kem/ml-kem-1024/`](examples/stable/ml-kem/ml-kem-1024/)；Decaps 交付无 `-ct`，CT 专题有 `-ct`  
+- **KEM correctness×3**：**已冻结** → `ascendc-tests/frozen/`；只读 `FROZEN.md`  
+- 行为基线：`…/ml-kem-1024/pass-fix-f203-alg{19,20,21}-…`（勿当 CMake 依赖）  
+- **下一刀**：ML-KEM-768 方法论（前提 1–3；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）  
+- **办公室 KEM 回归**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)
 
 ---
 

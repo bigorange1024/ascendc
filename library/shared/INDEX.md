@@ -4,7 +4,7 @@
 |------|------|
 | [`ascendc_build_mode.hpp`](ascendc_build_mode.hpp) | **全仓强制** CPU/SIM 与 SIM host 选项入口（见下） |
 | [`f203_mod_q/`](f203_mod_q/) | Kyber q=3329 向量 Barrett mod 与模加（`mod_q_vec.hpp`、`mod_q_add.hpp`） |
-| [`f203_unified_round/`](f203_unified_round/) | FIPS 203 **统一整数** Compress/Decompress 设备头（`C=41285357`；Compress **int32 limb** 向量、Decompress int32 向量）；探针见 [`exp-fips203-compress-unified-int-vec-k4`](../../examples/incubating/exp-fips203-compress-unified-int-vec-k4/) / [`exp-fips203-decompress-unified-int-vec-k4`](../../examples/incubating/exp-fips203-decompress-unified-int-vec-k4/) |
+| [`f203_unified_round/`](f203_unified_round/) | FIPS 203 **统一整数** Compress/Decompress 设备头（`C=41285357`；Compress **int32 limb** 向量、Decompress int32 向量）；探针见 [`exp-fips203-compress-unified-int-vec-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-compress-unified-int-vec-k4/) / [`exp-fips203-decompress-unified-int-vec-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-decompress-unified-int-vec-k4/) |
 | [`f203_byte_codec/`](f203_byte_codec/) | ByteDecode₁₂ 等设备侧编解码辅助 |
 | [`shake_xof_kernel/`](shake_xof_kernel/) | SHAKE128/256 XOF：`KernelShakeGeneral`（**LocalTensor I/O only**） |
 | [`keccak_f1600_kernel/`](keccak_f1600_kernel/) | Keccak-f[1600] 置换（device header-only）+ **`fips203_device_sha3.hpp`**（AI Core 标量 SHA3-256/512、SHAKE256；语义对齐 tiny_sha3） |

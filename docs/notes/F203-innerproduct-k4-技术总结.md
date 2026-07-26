@@ -129,7 +129,7 @@ Gate-3: 融合 mixPass=0                → 见 2s1e 总结
 ### 6.3 命令
 
 ```bash
-cd ascendc-tests/pass-fix-f203-alg11-12-innerproduct-k4
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-innerproduct-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```

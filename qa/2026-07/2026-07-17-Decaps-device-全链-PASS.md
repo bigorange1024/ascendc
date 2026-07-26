@@ -2,7 +2,7 @@
 
 ## 1. 锁定（先 E 后 D）
 
-[`pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md) 写死：先 E 后 D；G 融 Encrypt prep；设备 FO；SIM 允许 2-session。
+[`pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md) 写死：先 E 后 D；G 融 Encrypt prep；设备 FO；SIM 允许 2-session。
 
 ## 2. Phase-E（午前）
 
@@ -32,7 +32,7 @@ Gate：**D / F1 PASS**。
 
 ## 6. scripts 默认改指 device（同日补）
 
-已把仓库级 Decaps 默认从 correctness 切到 [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)：
+已把仓库级 Decaps 默认从 correctness 切到 [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/)：
 
 | 脚本 | 调整 |
 |------|------|
@@ -52,7 +52,7 @@ Gate：**D / F1 PASS**。
 | **改什么** | 工程折中（CMake 合库、头/符号隔离、host session 编排）；**不**改 Alg.18 |
 | **现状保底** | SIM 双库 + `decaps_2session`（全链已绿） |
 | **目标** | 单 `libascendc_kernels_*.so` + 同 session 连续 D→E（尽量默认 1-session 绿） |
-| **交接面** | [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) ★下一刀；[`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md) |
+| **交接面** | [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) ★下一刀；[`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md) |
 
 本机本轮：刷新文档并 **git push** 基线，供 Cloud 拉仓开工。
 

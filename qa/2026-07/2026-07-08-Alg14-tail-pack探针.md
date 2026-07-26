@@ -95,8 +95,8 @@ SIM tick（910B4）：encode d=4 **5435** · d=5 **5537** · d=10 **6455** · d=
 
 | 项 | 说明 |
 |----|------|
-| **T17** | **PASS** compute+tail — [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | 已关闭 → 见已关闭表 |
-| **T17-next** | 全链 Encrypt — [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/) · **2 launch SIM** | 方案定稿 |
+| **T17** | **PASS** compute+tail — [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) | 已关闭 → 见已关闭表 |
+| **T17-next** | 全链 Encrypt — [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-pke-encrypt-device-k4/) · **2 launch SIM** | 方案定稿 |
 
 ## 6. 证据
 
@@ -105,7 +105,7 @@ SIM tick（910B4）：encode d=4 **5435** · d=5 **5537** · d=10 **6455** · d=
 F203_BYTE_ENCODE_D=5 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # PASS totalTick=5537
 
 # tail pack
-cd ascendc-tests/pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4  # PASS totalTick=56259
 ```
@@ -174,11 +174,11 @@ SIGFPE = _Mod_range_hashing::operator()          # unordered_map 桶数=0 → ha
 ## 11. tail-pack 晋级 pass- + 全链方案（2026-07-08）
 
 - `fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4` → **`pass-fix-f203-alg14-lines20-22-23-24-encrypt-pack-k4`**
-- 新建 [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)：prep + compute+tail **2 launch SIM** 集成方案（`INTEGRATION_PLAN.md`）
+- 新建 [`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-pke-encrypt-device-k4/)：prep + compute+tail **2 launch SIM** 集成方案（`INTEGRATION_PLAN.md`）
 
 ## 12. 全链设备 Encrypt 实现 + CPU/SIM PASS（2026-07-08）
 
-**探针**：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + compute+tail 集成，单 device session GM handoff）。
+**探针**：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-pke-encrypt-device-k4/)（prep + compute+tail 集成，单 device session GM handoff）。
 
 | 模式 | launch | 结果 |
 |------|--------|------|

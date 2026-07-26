@@ -42,8 +42,8 @@
 | 项 | 内容 |
 |----|------|
 | 触发 | `$写规格$`（ascendc-impl-spec）；基线 `pass-fix-f203-alg19-kem-keygen-device-k4` |
-| 落点 | [`examples/incubating/exp-fips203-mlkem-kem-keygen-k4/`](../../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/) |
-| 产出 | [`…-实现方案-customspec.tex/.pdf`](../../examples/incubating/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
+| 落点 | [`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4/`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4/) |
+| 产出 | [`…-实现方案-customspec.tex/.pdf`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4/exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.pdf) |
 | 锁定 | 2 launch；ek\_kem 1568 / dk\_kem 3168；incubating **vendored 自包含**（异于探针 `STABLE_ROOT`）；`F203_KEM_KEYGEN_TAIL=1` |
 | 状态 | 规格已确认 → §5 写码 |
 
@@ -71,7 +71,7 @@
 
 | 项 | 内容 |
 |----|------|
-| 操作 | 曾自 exp 复制到 [`stable-fips203-mlkem-kem-keygen-k4/`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) |
+| 操作 | 曾自 exp 复制到 [`stable-fips203-mlkem-kem-keygen-k4/`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/) |
 | 问题 | 用户指出：incubating CPU 偶发对拍未根治即晋级不当 |
 | 处置 | **stable 标「晋级撤回 / 非权威」**；权威仅 incubating；T19f **重开** |
 
@@ -98,7 +98,7 @@
 | 项 | 内容 |
 |----|------|
 | 意见 | incubating 与 stable 双份实现易漂移；出错先改谁不清晰；过早晋级不当 |
-| 操作 | **整树删除** `examples/stable/stable-fips203-mlkem-kem-keygen-k4/`；**删除** incubating 内全部源码/脚本/build，**仅留** customspec `.tex`/`.pdf` |
+| 操作 | **整树删除** `examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/`；**删除** incubating 内全部源码/脚本/build，**仅留** customspec `.tex`/`.pdf` |
 | 规格 | 已写入 **§踩坑与强制同步（landmines）**：SyncAll、CPU AIV1 做尾、禁空 `KYBER_PIPE_ALL`、禁残留侥幸验收、禁未绿晋级 |
 | 交接 | 刷新根 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)；T19f →「按规格【预研】从零重写」 |
 | 回家任务 | 家里 Agent 读 PDF + registry，**【预研】** 在 incubating 重写；**勿**先建 stable |

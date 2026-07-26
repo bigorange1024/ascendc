@@ -2,7 +2,7 @@
 
 ## 1. 结论
 
-[`fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/) → [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)。
+[`fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/) → [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/)。
 
 > **更名残留（2026-07-20 补记）**：`git mv` 只搬跟踪文件；旧路径下 `build_*`/`input`/`output` 曾留下**无源码空壳**。已删；**禁止再建**该旧名或误名 `pass-probe-*`。扫描/清理：[`scripts/cleanup-ascendc-test-ghosts.sh`](../../scripts/cleanup-ascendc-test-ghosts.sh)。
 
@@ -25,8 +25,8 @@
 
 ## 4. incubating Decaps `$规格$`（ascendc-impl-spec）
 
-新建 [`examples/incubating/exp-fips203-mlkem-kem-decaps-k4/`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)：
-仅 [`exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex/.pdf`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.pdf)。
+新建 [`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/)：
+仅 [`exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex/.pdf`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.pdf)。
 
 | 锁定项 | 约定 |
 |--------|------|

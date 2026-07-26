@@ -12,7 +12,7 @@
 
 ### 2026-07-26 — [教材第7章图示 · WSL 复现 main/CT liboqs RT](2026-07/2026-07-26-教材第7章流程图与对照图.md)
 
-关键字：第7章 TikZ · 写作指导 · **WSL RT/P0**：main+CT 本轮 CPU×3+SIM×1 **均绿**（早先 CT 连续 SIM 偶发仍记宿主机）
+关键字：第7章 TikZ · **ml-kem-1024 目录迁移** · WSL RT/P0 main+CT 均绿（偶发仍记宿主机）
 
 ### 2026-07-25 — [Decaps 交付树回灌 CT 工程小改](2026-07/2026-07-25-Decaps交付树回灌CT工程小改.md)
 
@@ -36,7 +36,7 @@
 
 ### 2026-07-18 — [Decaps pass-fix · incubating customspec](2026-07/2026-07-18-Decaps-pass-fix与incubating-customspec.md)
 
-关键字：`probe` → **`pass-fix-…-decaps-device-k4`** · **`$规格$`** [`exp-…-kem-decaps-k4`](../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) customspec · 下一【预研】
+关键字：`probe` → **`pass-fix-…-decaps-device-k4`** · **`$规格$`** [`exp-…-kem-decaps-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/) customspec · 下一【预研】
 
 ### 2026-07-17 — [Decaps device 全链 PASS · T2 单库](2026-07/2026-07-17-Decaps-device-全链-PASS.md)
 

@@ -1,6 +1,6 @@
 # F203 — 8-poly 批 Stage123 NTT/INTT（AscendC 向量）
 
-**锚点探针**：[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)  
+**锚点探针**：[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)  
 **数学/交付对照**：ntt_study [`sepolyvec8_ntt_f203`](../../thirdparty/ntt_onnx/examples/mlkem/deliverables/sepolyvec8_ntt_f203/)
 
 ---
@@ -51,14 +51,14 @@ NTT / INTT：**同一图**，host 写入不同 LUT（`kMlkemLimb6Ntt_T_i8` / `kM
 
 | 用例 | 关系 |
 |------|------|
-| [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) | 代码 fork 源；4-poly 2s1e 全链 |
-| [`exp-sepolyvec8-ntt-k8`](../../examples/incubating/exp-sepolyvec8-ntt-k8/) | 历史 exp；交错 S0；本探针为 **紧凑 polyvec8** 向量终态 |
+| [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) | 代码 fork 源；4-poly 2s1e 全链 |
+| [`exp-sepolyvec8-ntt-k8`](../../examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8/) | 历史 exp；交错 S0；本探针为 **紧凑 polyvec8** 向量终态 |
 | `sepolyvec8_ntt_f203` | ONNX/实机交付 golden；C 语义同源 |
 
 ## 6. 运行
 
 ```bash
-cd ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-stage123-ntt-intt-polyvec8-vec
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 F203_NTT_MODE=intt bash run.sh -r sim -v Ascend910B4

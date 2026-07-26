@@ -26,7 +26,7 @@
 | `frozen/frozen-fix-merged-kyber-ntt256-limb6-poly2-s12/` | ✓ | ✓ | 上者 + **单 TPipe batch Split**（纠正循环 `new AivSplit`） |
 | `frozen/frozen-fix-merged-kyber-ntt256-limb6-poly2-s123/` | ✓ | — | **全链路** batch Split+Mmad+Merge；`dst` `[2,256]` NTT ≡ limb6 |
 | `frozen/frozen-fix-merged-kyber-ntt256-limb6-poly8-s123/` | ✓ | ✓ | k=8 全链路；8×同 poly |
-| `examples/incubating/exp-sepolyvec8-ntt-k8/` | ✓ | ✓ | F203 预研；k=8 **互异随机** poly；`seed=20260610` |
+| `examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8/` | ✓ | ✓ | F203 预研；k=8 **互异随机** poly；`seed=20260610` |
 | `f203-ntt-phase-a-fsm/` | ✓ | ✗ | **2026-06-19 归档** → [`frozen/frozen-f203-ntt-phase-a-fsm/`](../../ascendc-tests/frozen/frozen-f203-ntt-phase-a-fsm/)（任务完成，非路线否决） |
 | `int8-matmul-cube-128x512x512/` | ✓ | ✗ | 纯 AIC tiling（非 MIX） |
 | ~~`f203-kyber6-stage12-mix/`~~ | ✗ | — | **已删**（CPU 挂死，非 merged_kyber 壳） |
@@ -102,7 +102,7 @@ bash run.sh -r cpu -v Ascend910B4
 
 ## 深夜：exp-sepolyvec8-ntt-k8 落地（F203 k=8 互异随机）
 
-**目录**：`examples/incubating/exp-sepolyvec8-ntt-k8/`  
+**目录**：`examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8/`  
 **规格 PDF**：同目录 `exp-sepolyvec8-ntt-k8-实现方案.pdf`
 
 ### 做了什么
@@ -119,7 +119,7 @@ bash run.sh -r cpu -v Ascend910B4
 ### 验收
 
 ```bash
-cd examples/incubating/exp-sepolyvec8-ntt-k8
+cd examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 # max_abs_diff=0；output.bin == golden.bin

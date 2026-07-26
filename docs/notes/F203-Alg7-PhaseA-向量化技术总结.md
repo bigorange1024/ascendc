@@ -2,7 +2,7 @@
 
 **定稿**：2026-06-23（Phase A 实验）；**单 poly 闭环**见 **[F203-Alg7-SampleNTT-单poly技术总结.md](F203-Alg7-SampleNTT-单poly技术总结.md)**（2026-06-24）  
 **历史探针（已冻结 2026-06-28）**：[`frozen-fix-f203-alg13-device-presample-a-hat-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/) — G+A+P+C 单 launch Phase A；tick 见 [`SIM_BENCHMARK.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg13-device-presample-a-hat-k4/SIM_BENCHMARK.md)  
-**活跃子轨**：单 poly [`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/) · 16×`Â` [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) · `s`/`e` [`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/)  
+**活跃子轨**：单 poly [`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4/) · 16×`Â` [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/) · `s`/`e` [`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines8-15-se-k4/)  
 **讨论纪要**：[`qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md`](../../qa/2026-06/2026-06-23-SampleNTT-PhaseA向量化讨论.md)
 
 ---

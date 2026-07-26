@@ -67,7 +67,7 @@
 ## 验收
 
 ```bash
-cd ascendc-tests/pass-fix-f203-alg13-device-keygen-k4
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 bash kat_liboqs_vs_ascendc.sh
@@ -76,9 +76,9 @@ python3 scripts/inject_probe_code_comments.py  # files_updated=0
 
 ## 关联
 
-- [`STATUS.md`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/STATUS.md)
-- [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/INTEGRATION_PLAN.md)
-- [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/)（交付 I/O 对照）
+- [`STATUS.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/STATUS.md)
+- [`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/INTEGRATION_PLAN.md)
+- [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/)（交付 I/O 对照）
 
 ---
 
@@ -100,7 +100,7 @@ python3 scripts/inject_probe_code_comments.py  # files_updated=0
 ### 6.2 验收（示例目录）
 
 ```bash
-cd examples/incubating/exp-fips203-mlkem-pke-keygen-k4
+cd examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4          # SIM summary 示例：total_tick≈884532
 bash kat_liboqs_vs_ascendc.sh              # 可选
@@ -143,9 +143,9 @@ KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
 
 | 旧目录 | 新目录 | 语义 |
 |--------|--------|------|
-| `pass-fix-f203-alg7-single-poly-sample-ntt-d12-vec-k4` | [`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/) | Alg.7 SampleNTT 单 poly 模块 |
-| `pass-fix-f203-alg13-lines3-7-a-hat-16poly-k4` | [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/) | Alg.13 行 3–7 → `a_hat[16,256]` |
-| `pass-fix-f203-alg13-device-presample-k4` | [`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/pass-fix-f203-alg13-lines8-15-se-k4/) | Alg.13 行 8–15 → `src[8,256]` |
+| `pass-fix-f203-alg7-single-poly-sample-ntt-d12-vec-k4` | [`pass-fix-f203-alg7-sample-ntt-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4/) | Alg.7 SampleNTT 单 poly 模块 |
+| `pass-fix-f203-alg13-lines3-7-a-hat-16poly-k4` | [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/) | Alg.13 行 3–7 → `a_hat[16,256]` |
+| `pass-fix-f203-alg13-device-presample-k4` | [`pass-fix-f203-alg13-lines8-15-se-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines8-15-se-k4/) | Alg.13 行 8–15 → `src[8,256]` |
 
 活跃树内路径与 `ascendc-tests/INDEX.md` §KeyGen 子轨命名 已同步；`backup/` 历史快照仍含旧名。
 
@@ -185,7 +185,7 @@ KEYGEN_VERIFY=1 bash run.sh -r cpu -v Ascend910B4
 ### 8.4 验收
 
 ```bash
-cd ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-stage123-ntt-intt-polyvec8-vec
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 F203_NTT_MODE=intt bash run.sh -r sim -v Ascend910B4
@@ -194,6 +194,6 @@ python3 scripts/cross_check_ntt_study_c.py --regen
 
 ### 8.5 关联
 
-- [`STATUS.md`](../../ascendc-tests/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/STATUS.md)
+- [`STATUS.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/STATUS.md)
 - 定稿 note：[F203-polyvec8-stage123-NTT-INTT技术总结.md](../../docs/notes/F203-polyvec8-stage123-NTT-INTT技术总结.md)
-- 全链路集成（4-poly 2s1e）：[`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)
+- 全链路集成（4-poly 2s1e）：[`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)

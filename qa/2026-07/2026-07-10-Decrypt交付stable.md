@@ -2,7 +2,7 @@
 
 ## 摘要
 
-`exp-fips203-mlkem-pke-decrypt-k4` **`#交付#`** 复制晋级 → [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/)（T15a 关闭）。
+`exp-fips203-mlkem-pke-decrypt-k4` **`#交付#`** 复制晋级 → [`stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/)（T15a 关闭）。
 
 ## 前置验收（家里，2026-07-09 晚）
 
@@ -151,11 +151,11 @@
 
 | 原目录 | correctness（可跑） | device（占位） |
 |--------|---------------------|----------------|
-| alg19 KeyGen | [`frozen-fix-f203-alg19-kem-keygen-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/) | [`…-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) |
-| alg20 Encaps | [`frozen-fix-f203-alg20-kem-encaps-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4/) | [`pass-fix-…-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/) |
-| alg21 Decaps | [`frozen-fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/) | 交付 [`…-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · CT 专题 [`pass-fix-…-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) |
+| alg19 KeyGen | [`frozen-fix-f203-alg19-kem-keygen-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg19-kem-keygen-correctness-k4/) | [`…-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/) |
+| alg20 Encaps | [`frozen-fix-f203-alg20-kem-encaps-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4/) | [`pass-fix-…-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/) |
+| alg21 Decaps | [`frozen-fix-f203-alg21-kem-decaps-correctness-k4`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/) | 交付 [`…-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) · CT 专题 [`pass-fix-…-device-ct-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) |
 
-- 仓库 `scripts/roundtrip_kem_*` / `liboqs_kem_vs_ascendc.sh`：当时默认仍指向 correctness-k4；**2026-07-15**：Encaps 默认已改指 [`pass-fix-…-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)（KeyGen 早已 pass-fix；Decaps 仍 correctness 直至 T19b/c）。
+- 仓库 `scripts/roundtrip_kem_*` / `liboqs_kem_vs_ascendc.sh`：当时默认仍指向 correctness-k4；**2026-07-15**：Encaps 默认已改指 [`pass-fix-…-encaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/)（KeyGen 早已 pass-fix；Decaps 仍 correctness 直至 T19b/c）。
 - frozen `FROZEN.md` vendor 例外路径已改为 correctness-k4。
 - device-k4 当前 `run.sh` exit **2**（未实现）。*（注：Alg.20 Encaps device 其后已实现并更名 pass-fix；本段保留 07-10 当日快照。）*
 
@@ -163,7 +163,7 @@
 
 ## §12 Alg.19 device-k4 实现方案（2 launch · 2026-07-10）
 
-**决策**：[`pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md) — **Alg.19→Alg.16→Alg.13 串链，Launch 预算 = stable PKE（2 次）**。
+**决策**：[`pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md) — **Alg.19→Alg.16→Alg.13 串链，Launch 预算 = stable PKE（2 次）**。
 
 | 要点 | 内容 |
 |------|------|
@@ -186,7 +186,7 @@
 | 保留理由 | 无 mmad merge 债、ROM 不污染 stable、PKE 宏默认 0 零回归 |
 | SHA3 | 尾段两处 SHA3-256 在 `kem/`；日后第三方 AscendC 可替换，见 INTEGRATION_PLAN §4.5 |
 
-文档：[`STATUS.md`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/STATUS.md) · [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md) §4.5
+文档：[`STATUS.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/STATUS.md) · [`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/INTEGRATION_PLAN.md) §4.5
 
 ## §14 Compress/Decompress 统一整数舍入定稿（2026-07-10）
 
@@ -198,8 +198,8 @@
 
 | 探针 | 路径 | 设备路径 | 验收 |
 |------|------|----------|------|
-| Compress | [`exp-fips203-compress-unified-int-vec-k4`](../../examples/incubating/exp-fips203-compress-unified-int-vec-k4/)（自 pass 迁入） | **int32 向量 limb** | 全 d CPU+SIM；customspec PDF |
-| Decompress | [`exp-fips203-decompress-unified-int-vec-k4`](../../examples/incubating/exp-fips203-decompress-unified-int-vec-k4/) | int32 全向量 | 全 d CPU；SIM d=4/11 |
+| Compress | [`exp-fips203-compress-unified-int-vec-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-compress-unified-int-vec-k4/)（自 pass 迁入） | **int32 向量 limb** | 全 d CPU+SIM；customspec PDF |
+| Decompress | [`exp-fips203-decompress-unified-int-vec-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-decompress-unified-int-vec-k4/) | int32 全向量 | 全 d CPU；SIM d=4/11 |
 
 共享：`library/shared/f203_unified_round/`。
 
@@ -211,7 +211,7 @@
 | stable Decrypt unpack | 统一整数 Decompress 命名对齐 |
 | PKE round-trip | `roundtrip_pke_batch.sh` **CPU×10 + SIM×1 PASS**（本地 golden，无 liboqs） |
 | 向量 Compress/Decompress 验收 | **通过**（round-trip 覆盖生产路径） |
-| exp 迁入 | `pass-f203-compress/decompress-unified-int-vec-k4` → `examples/incubating/exp-fips203-*` + customspec |
+| exp 迁入 | `pass-f203-compress/decompress-unified-int-vec-k4` → `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-*` + customspec |
 
 ## §17 KEM KeyGen device 更名 pass-fix（2026-07-10）
 
@@ -219,7 +219,7 @@
 |----|------|
 | 更名 | `fix-f203-alg19-kem-keygen-device-k4` → **`pass-fix-f203-alg19-kem-keygen-device-k4`** |
 | T19e | `scripts/` KeyGen 默认改 **pass-fix**（`roundtrip_kem_*`、`liboqs_kem_vs_ascendc`、`kat_liboqs_kem_keygen`） |
-| 下一 P0 | **T19a** [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)（KEM Encaps） |
+| 下一 P0 | **T19a** [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/)（KEM Encaps） |
 
 ## §18 统一整数 Compress §8 业界对比定稿（2026-07-10 续）
 

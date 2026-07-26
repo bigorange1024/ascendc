@@ -69,7 +69,7 @@ liboqs：`thirdparty/liboqs` tag **0.15.0**（静态 `liboqs.a`）；`scripts/bu
 
 | 项 | 路径 |
 |----|------|
-| 活跃探针 | [`../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
+| 活跃探针 | [`../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/) |
 | 路线 | **AscendC 积木拼装**（INTEGRATION_PLAN Launch 表）；**已删 liboqs** |
 | G0 | marker launch 壳；`ENCRYPT_VERIFY=0` 默认 |
 | 定型交付 | 另建 `exp-fips203-mlkem-pke-encrypt-k4` / `stable-*`（须 customspec） |
@@ -129,11 +129,11 @@ SIM 日志仍有 507000 + 末尾 `free(): invalid pointer`（G4 tail 待修，�
 **明日 demo 保底（CPU）**：
 
 ```bash
-cd ../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4
+cd ../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4
 ENCRYPT_VERIFY=1 ENCRYPT_GATE=5 bash run.sh -r cpu -v Ascend910B4
 ```
 
-**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.11。
+**家里 Agent 优先**：读 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md) §Encrypt · [`STATUS.md`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) · [`G3_SIM_AUDIT.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg14-pke-encrypt-correctness-k4/G3_SIM_AUDIT.md) §9.11。
 
 ### G5 SIM 全链 PASS（2026-06-29 深夜）
 

@@ -38,7 +38,7 @@
 
 **examples（4 试点）**：KEM KeyGen incubating + PKE keygen/encrypt/decrypt stable。
 
-**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）。KEM Decaps device：**交付** [`pass-fix-…-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · **CT 专题** [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)。另：KeyGen [`pass-fix-…-keygen-device-k4`](../../ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/) · Encaps [`…-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)。**不改** `frozen/`。
+**ascendc-tests 活跃探针**：各目录 `run.sh` 已接入（含 `add_custom`、correctness/`pass-*`）。KEM Decaps device：**交付** [`pass-fix-…-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) · **CT 专题** [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)。另：KeyGen [`pass-fix-…-keygen-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/) · Encaps [`…-encaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/)。**不改** `frozen/`。
 
 ### 明确不做
 
@@ -69,7 +69,7 @@ bash run.sh -r npu -v Ascend910B4    # 冒烟（若该用例已支持 npu）
 本仓试点：
 
 ```bash
-cd examples/stable/stable-fips203-mlkem-pke-decrypt-k4
+cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4
 bash run.sh -r auto -v Ascend910B4     # 有卡 → npu
 bash run.sh -r verify -v Ascend910B4   # cpu → sim → npu
 ```

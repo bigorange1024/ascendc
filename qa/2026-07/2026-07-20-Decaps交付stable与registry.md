@@ -2,7 +2,7 @@
 
 ## 结论
 
-[`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) 按 customspec 落地自包含实现：**CPU+SIM 全链绿**。
+[`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/) 按 customspec 落地自包含实现：**CPU+SIM 全链绿**。
 
 | 项 | 证据 |
 |----|------|
@@ -14,7 +14,7 @@
 ## 验收（预研阶段；同日上午）
 
 ```bash
-cd examples/incubating/exp-fips203-mlkem-kem-decaps-k4
+cd examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```
@@ -68,14 +68,14 @@ bash run.sh -r sim -v Ascend910B4
 
 | 项 | 内容 |
 |----|------|
-| 晋级 | 复制 [`exp-…-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) → [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) |
+| 晋级 | 复制 [`exp-…-kem-decaps-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/) → [`stable-…-kem-decaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/) |
 | 默认路径 | 仓库 `DECAPS_DIR` → stable；registry「适用」→ stable |
 | 复验 | stable CPU / SIM / KAT×10+3 / roundtrip（含拒绝）— 见 STATUS |
 
 
 ## `#交付#` stable 复验证据（同日续）
 
-目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)
+目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/)
 
 | 项 | 结果 |
 |----|------|
@@ -112,10 +112,10 @@ bash run.sh -r sim -v Ascend910B4
 
 | ID | 原目标 | 关闭理由 |
 |----|--------|----------|
-| **T13b** | fork `vec-k4-v2`→`vec-k4-v3`（V3 预采样 + 设备 `a_hat`） | [`stable-…-pke-keygen-k4`](../../examples/stable/stable-fips203-mlkem-pke-keygen-k4/) / KEM KeyGen 已是 Launch1 prep（设备 Â + V3 行 8–15）+ Launch2 2s1e；不必再做独立 v3 探针包装 |
+| **T13b** | fork `vec-k4-v2`→`vec-k4-v3`（V3 预采样 + 设备 `a_hat`） | [`stable-…-pke-keygen-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/) / KEM KeyGen 已是 Launch1 prep（设备 Â + V3 行 8–15）+ Launch2 2s1e；不必再做独立 v3 探针包装 |
 | **T11** | 2s1e 探针/exp → 单独 `examples/stable/` | 2s1e 已随 KeyGen `compute/` 定型交付；不另开裸 2s1e stable 算子 |
 
-**仍保留**：探针 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) 作 compute 对照（host 喂 `a_hat` / `KEYGEN_ORCHESTRATE`）；**不**再排 T13b/T11 晋级。
+**仍保留**：探针 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) 作 compute 对照（host 喂 `a_hat` / `KEYGEN_ORCHESTRATE`）；**不**再排 T13b/T11 晋级。
 
 打开项主线：**T23** · **T2-npu** · **T21**（**T19i 已关**）。
 
@@ -201,7 +201,7 @@ Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D�
 
 ## T19i pass-probe/`pass-fix`：`fo_only`→`l18_l19`（同日续）
 
-目录：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（用户口中的 pass-probe 已更名）。
+目录：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/)（用户口中的 pass-probe 已更名）。
 
 | 项 | 内容 |
 |----|------|
@@ -215,7 +215,7 @@ Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D�
 
 ## T19i incubating customspec 修订（同日续；仅规格）
 
-路径：[`exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex/.pdf`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)
+路径：[`exp-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex/.pdf`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/)
 
 | 项 | 内容 |
 |----|------|
@@ -230,7 +230,7 @@ Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D�
 
 ## T19i incubating【迭代】落地（同日续）
 
-目录：[`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)
+目录：[`exp-fips203-mlkem-kem-decaps-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/)
 
 | 项 | 结果 |
 |----|------|
@@ -244,7 +244,7 @@ Decaps SIM tick（本轮）：D **286851** + E **746275**（对标 T2 基线 D�
 
 ## T19i stable `#修改#`（同日续）
 
-目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)
+目录：[`stable-fips203-mlkem-kem-decaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/)
 
 | 项 | 结果 |
 |----|------|

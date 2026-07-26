@@ -19,10 +19,10 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg13-device-keygen-k4}"
-ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-encrypt-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4}"
+ENCRYPT_DIR="${ENCRYPT_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4}"
 # Decrypt 默认 stable 定型；回退：DECRYPT_DIR=.../pass-fix-f203-alg15-pke-decrypt-device-k4
-DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-pke-decrypt-k4}"
+DECRYPT_DIR="${DECRYPT_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

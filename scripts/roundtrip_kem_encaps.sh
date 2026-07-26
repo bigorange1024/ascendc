@@ -15,7 +15,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-encaps-k4}"
+ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

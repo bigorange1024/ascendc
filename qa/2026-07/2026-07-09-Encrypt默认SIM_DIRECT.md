@@ -58,9 +58,9 @@ correctness 探针的 T7b 对齐仍待。
 
 ## 6. examples 晋级：Alg.14 Encrypt customspec（同日）
 
-新建 [`examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/`](../../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/)：
+新建 [`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/)：
 
-- **规格**：[`exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex)（+ PDF）
+- **规格**：[`exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex)（+ PDF）
 - **I/O**：`ek_pke`+`m`+`coins` → **仅** `c`；禁止 Â/y/u/v 等中间态落盘
 - **Launch**：SIM 2 / CPU 5；基线探针 `pass-fix-f203-alg14-pke-encrypt-device-k4`
 - **状态**：`$写规格$` 已闭环；**【预研】写码**已落地 — CPU+SIM `c max=0`（SIM tick **627614**）；`output/` 仅 `c.bin`
@@ -79,7 +79,7 @@ correctness 探针的 T7b 对齐仍待。
 - `scripts/prepare_kat_input.py`：外部 ek/m/coins → input + `golden_v` + golden/c
 - `run.sh`：`ENCRYPT_KAT` / `ENCRYPT_SKIP_GEN_DATA`（KAT/roundtrip 不覆盖 fixture）
 - `scripts/roundtrip_pke_encrypt_decrypt.sh`：默认 Encrypt → **stable**（晋级后）
-- **复制晋级** [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)
+- **复制晋级** [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/)
 - baseline-registry：[`docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md`](../../docs/specs/fips203-mlkem1024-pke-encrypt-baseline-registry.md)
 
 **说明**：无 NPU 实机前，**SIM 为交付主参考**；CPU 依赖 `golden_v` 注入，仅作辅助正确性孪生（非与 SIM 同构）。见 [交付口径笔记](../../docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md)。
@@ -109,7 +109,7 @@ correctness 探针的 T7b 对齐仍待。
 
 ## 10. Alg.15 Decrypt 优化探针开工（同日）
 
-新建 [`../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/)（**P0 仅方案**）。
+新建 [`../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg15-pke-decrypt-device-k4/)（**P0 仅方案**）。
 
 | 锁定 | 说明 |
 |------|------|
@@ -187,15 +187,15 @@ TODO：**T15b**；晋级仍 **T15a**。
 
 | 项 | 内容 |
 |----|------|
-| 目录 | [`examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/`](../../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) |
-| 规格 | [`exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.tex`](../../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.tex) / PDF |
+| 目录 | [`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) |
+| 规格 | [`exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.tex`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/exp-fips203-mlkem-pke-decrypt-k4-实现方案-customspec.tex) / PDF |
 | 基线 | vendor 自 `pass-fix-f203-alg15-pke-decrypt-device-k4`；I/O dk+c→仅 m；1 launch MIX `aicore=1`；tick ~283k |
 
 ### 10.9 Decrypt 【预研】写码 PASS（同日）
 
 | 项 | 结果 |
 |----|------|
-| 目录 | [`exp-fips203-mlkem-pke-decrypt-k4`](../../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) |
+| 目录 | [`exp-fips203-mlkem-pke-decrypt-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) |
 | 动作 | 自 `pass-fix-…-device-k4` 一次性 vendor；切断默认 `vendor_sync`；incubating `REPO_ROOT` |
 | CPU | `m` max=0 |
 | SIM | `m` max=0；tick **283290** |

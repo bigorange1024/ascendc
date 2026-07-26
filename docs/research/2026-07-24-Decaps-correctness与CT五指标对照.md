@@ -16,9 +16,9 @@
 
 | 角色 | 路径 |
 |------|------|
-| 行为基线（device） | `ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4` |
-| incubating | `examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4` |
-| stable v1 | `examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4` |
+| 行为基线（device） | `ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4` |
+| incubating | `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4` |
+| stable v1 | `examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4` |
 
 ## 五指标表
 

@@ -2,7 +2,7 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 **Compress_d** 如何用「`2^T/q` 近似整数 + 幂次 `y` 消分母」化为**纯乘加移位**；为何利于 **常数时间** 与 **AscendC 全 d 向量**；**Decompress** 的配套整数式  
-**案例锚点**：本仓现行探针 [`pass-f203-compress-d-vec-k4`](../../ascendc-tests/pass-f203-compress-d-vec-k4/) · [`pass-f203-decompress-d-vec-k4`](../../ascendc-tests/pass-f203-decompress-d-vec-k4/)（§6）；Encrypt tail 见 [`F203-Compress-Decompress-向量实现指南.md`](F203-Compress-Decompress-向量实现指南.md)  
+**案例锚点**：本仓现行探针 [`pass-f203-compress-d-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-compress-d-vec-k4/) · [`pass-f203-decompress-d-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-decompress-d-vec-k4/)（§6）；Encrypt tail 见 [`F203-Compress-Decompress-向量实现指南.md`](F203-Compress-Decompress-向量实现指南.md)  
 **讨论**：[`qa/2026-07/2026-07-10-Decrypt交付stable.md`](../../qa/2026-07/2026-07-10-Decrypt交付stable.md) §14（2026-07-10 定稿思路）
 
 ---
@@ -133,7 +133,7 @@ round(c · q / 2^d) = ⌊ (c · q + 2^(d-1)) / 2^d ⌋ = (q · c + (1 << (d-1)))
 ```
 
 **无需** 再选 **`2^T/q`**：`q` 为整数，分母 **`2^d`** 为幂次。  
-与本仓 [`decompress_d_vec.hpp`](../../ascendc-tests/pass-f203-decompress-d-vec-k4/decompress_d_vec.hpp) **同式**（向量：`Muls(q) → Adds(2^(d-1)) → ShiftRight(d)`）。
+与本仓 [`decompress_d_vec.hpp`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-decompress-d-vec-k4/decompress_d_vec.hpp) **同式**（向量：`Muls(q) → Adds(2^(d-1)) → ShiftRight(d)`）。
 
 **与浮点 `round` 的 5 个 tie 点**（`y·q/2^d` 恰为半整数）：整数式给出 **`⌊(y·q+2^(d-1))/2^d⌋`**，与 FIPS / liboqs / 本仓 golden **一致**；不以 Python `round()` 为准。
 
@@ -144,7 +144,7 @@ round(c · q / 2^d) = ⌊ (c · q + 2^(d-1)) / 2^d ⌋ = (q · c + (1 << (d-1)))
 | 关切 | 本路线 | 本仓现行部分路径 |
 |------|--------|------------------|
 | 整数 `/` 或 `% q` | **无** | 无（Barrett 亦无） |
-| 浮点 `Div` | **无** | d=10/11 Compress 用 **float `Div`**（[`compress_d_vec.hpp`](../../ascendc-tests/pass-f203-compress-d-vec-k4/compress_d_vec.hpp) P-COMP-2） |
+| 浮点 `Div` | **无** | d=10/11 Compress 用 **float `Div`**（[`compress_d_vec.hpp`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-compress-d-vec-k4/compress_d_vec.hpp) P-COMP-2） |
 | 按秘密 `u` 分支 | **无**（固定 `k`、`C`、`bias`） | 无 |
 | 查表 / Gather | **无** | 无 |
 | 指令序列 | 每 lane **`Muls` → `Adds` → `ShiftRight`** | d=4/5 同；d=10/11 多 **Cast/Div** |
@@ -221,10 +221,10 @@ inline int32_t decompress_d(int32_t y, int d) {
 
 | 路径 | 角色 |
 |------|------|
-| `ascendc-tests/pass-f203-compress-d-vec-k4/compress_d_vec.hpp` | 现行设备 Compress（分档 Barrett + cast_div） |
-| `ascendc-tests/pass-f203-compress-unified-int-vec-k4/` | **统一整数** Compress（int32 向量 limb；C0=63213,C1=629） |
-| `ascendc-tests/pass-f203-decompress-d-vec-k4/decompress_d_vec.hpp` | 设备 Decompress（已与 §3 一致） |
-| `ascendc-tests/pass-f203-decompress-unified-int-vec-k4/` | **统一整数** Decompress（int32 全向量；d=1/4/5/10/11） |
+| `ascendc-tests/ml-kem/ml-kem-1024/pass-f203-compress-d-vec-k4/compress_d_vec.hpp` | 现行设备 Compress（分档 Barrett + cast_div） |
+| `ascendc-tests/ml-kem/ml-kem-1024/pass-f203-compress-unified-int-vec-k4/` | **统一整数** Compress（int32 向量 limb；C0=63213,C1=629） |
+| `ascendc-tests/ml-kem/ml-kem-1024/pass-f203-decompress-d-vec-k4/decompress_d_vec.hpp` | 设备 Decompress（已与 §3 一致） |
+| `ascendc-tests/ml-kem/ml-kem-1024/pass-f203-decompress-unified-int-vec-k4/` | **统一整数** Decompress（int32 全向量；d=1/4/5/10/11） |
 | `docs/notes/F203-PKE-liboqs交叉验证与Compress定点技术总结.md` | d=5 bias 历史 bug、L2 oracle |
 | `docs/notes/F203-Compress-Decompress-向量实现指南.md` | 抄码清单、tail 关系 |
 

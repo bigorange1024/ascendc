@@ -296,8 +296,8 @@ blockDim = 4  →  SetDim(8)    # 4 AIC × 2 AIV
 
 | 项 | 说明 |
 |----|------|
-| 目录 | `examples/incubating/exp-sepolyvec8-ntt-k8/` |
-| 方案 PDF | [exp-sepolyvec8-ntt-k8-实现方案.pdf](../../examples/incubating/exp-sepolyvec8-ntt-k8/exp-sepolyvec8-ntt-k8-实现方案.pdf)（同源 `.tex`） |
+| 目录 | `examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8/` |
+| 方案 PDF | [exp-sepolyvec8-ntt-k8-实现方案.pdf](../../examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8/exp-sepolyvec8-ntt-k8-实现方案.pdf)（同源 `.tex`） |
 | 语义 | `sepolyvec8_ntt_f203`：ML-KEM-1024 $k=4$，8 路 $s\Vert e$ 批 NTT |
 | 模板 | MatmulLeakyRelu **KernelLaunch**；int8→int32 Cube；mod **向量拼接**（不用 Fmod/`%`） |
 | 首版核数 | **1 AI Core**（`blockDim=1`） |

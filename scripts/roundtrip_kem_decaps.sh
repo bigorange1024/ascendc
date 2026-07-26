@@ -17,7 +17,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-decaps-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4}"
 
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"

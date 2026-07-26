@@ -30,9 +30,9 @@
 
 用户授权完整晋级：
 
-1. **incubating** [`exp-fips203-mlkem-kem-decaps-ct-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/)：vendored Decrypt+Encrypt + `kem/`；customspec + [`kem-decaps-baseline-registry`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
+1. **incubating** [`exp-fips203-mlkem-kem-decaps-ct-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4/)：vendored Decrypt+Encrypt + `kem/`；customspec + [`kem-decaps-baseline-registry`](../../docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md)。
 2. **CPU+SIM** 合法路径 `K` max=0（exp：D**286829**+E**763658**）；拒绝 CPU PASS。
-3. **整树复制** → [`stable-fips203-mlkem-kem-decaps-ct-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)（v1）；本目录复验 CPU+SIM（D**286866**+E**763780**）。
+3. **整树复制** → [`stable-fips203-mlkem-kem-decaps-ct-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/)（v1）；本目录复验 CPU+SIM（D**286866**+E**763780**）。
 4. `scripts/` `DECAPS_DIR` 默认改指 stable（对照 Encaps T19e）；device 探针仍为行为基线。
 
 **Forbidden 未触**：未抄 correctness/frozen 源码。

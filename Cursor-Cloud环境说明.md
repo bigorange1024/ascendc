@@ -66,8 +66,8 @@
 
 已验证（标准命令，非绕过）：
 
-- `examples/incubating/exp-fips203-mlkem-kem-keygen-k4`：`Total tick 706880`、`KEM KeyGen overall PASS`。
-- `examples/stable/stable-fips203-mlkem-pke-decrypt-k4`：`Total tick 283562`、`[verify] PASS max=0`，
+- `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4`：`Total tick 706880`、`KEM KeyGen overall PASS`。
+- `examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4`：`Total tick 283562`、`[verify] PASS max=0`，
   且用例根**无 stray dump**（跳过 ADX work path 的附带好处）。
 
 前置：带 golden/KAT 的用例需先 `bash scripts/clone-thirdparty.sh`（或 `ONLY=liboqs … + build-liboqs.sh`）

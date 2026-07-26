@@ -79,7 +79,7 @@
 验收示例：
 
 ```bash
-cd examples/incubating/exp-sepolyvec8-ntt-k8
+cd examples/incubating/ml-kem/ml-kem-1024/exp-sepolyvec8-ntt-k8
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```

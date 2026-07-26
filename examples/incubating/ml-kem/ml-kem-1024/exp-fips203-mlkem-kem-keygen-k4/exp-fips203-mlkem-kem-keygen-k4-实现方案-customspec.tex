@@ -1,0 +1,532 @@
+% exp-fips203-mlkem-kem-keygen-k4 — FIPS 203 Alg.19 ML-KEM-1024 KEM KeyGen (k=4)
+% 编译：bash ../../../scripts/xelatex-clean.sh exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-mlkem-kem-keygen-k4\\FIPS 203 Alg.19 ML-KEM-1024 KEM KeyGen 实现方案（k=4）}
+\author{ascendc 工程（预研）}
+\date{2026-07-13}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \textbf{预研用例} \dirname{examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 19}
+\texttt{ML-KEM.KeyGen()}（参数集 \textbf{ml\_kem\_1024}，$K=4$），经 \textbf{Alg.16} \texttt{KeyGen\_internal}
+调用 \textbf{Alg.13} K-PKE.KeyGen，并在设备侧完成 $H(\mathrm{ek})$ 与 $z$ 的拼接。
+
+\textbf{目录现状（2026-07-13 强制）}：本目录\textbf{仅保留本 customspec}（\texttt{.tex}/\texttt{.pdf}）；
+先前 incubating/stable 实现树已整树删除。换 Agent 须按本文档 \textbf{从零重新实现}，
+\textbf{禁止}从旧备份/对话残留/device 探针 \texttt{cp} 改名冒充；\textbf{禁止}未经验收即晋级
+\dirname{examples/stable/}。踩坑与强制同步见 \S\ref{sec:landmines}。
+
+\textbf{实现基线（只读判决与行为契约；禁止把探针当编译依赖）}：
+\dirname{ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/}
+（CPU+SIM PASS；SIM Total tick $\approx$ \textbf{713227}）。
+定稿原理：\dirname{docs/notes/F203-KEM-Alg19-KeyGen设备全链技术总结.md}。
+PKE 主体行为对齐 \dirname{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/}
+（Alg.13，2 launch，SIM $\approx$542k）。
+
+\textbf{生产 I/O（强制）}：
+\begin{itemize}
+  \item \textbf{输入}：\texttt{input/seed\_d.bin}（4\,B \texttt{uint32} LE，约定 \texttt{SEED\_D=20260619}）
+        + 静态 NTT LUT（与 seed 无关）。
+  \item \textbf{输出}：\textbf{仅} \texttt{ek\_kem.bin}（1568\,B）与 \texttt{dk\_kem.bin}（3168\,B，\textbf{liboqs 展开}）。
+  \item $d$/$z$ 仅在 device UB 生成与消费，\textbf{禁止} D2H / 落盘。
+\end{itemize}
+
+\textbf{设备 Launch（强制）}：与 device 探针相同 —— \textbf{恰好 2 次}
+（prep $\Vert$ mmad+KEM 尾）。\textbf{禁止} correctness 探针式第 3 launch
+\texttt{f203\_kem\_kg\_finish}；\textbf{禁止}为 $H(\mathrm{ek})$/$z$ 单独
+\texttt{aclrtSynchronizeStream}+再 launch。
+
+\textbf{自包含原则（incubating 强制，与 device 探针 CMake 策略不同）}：
+AscendC / Host 源码 \textbf{全部 vendored 于本目录}；
+\textbf{唯一允许的外部代码依赖}：\dirname{library/shared/}。
+\textbf{禁止}编译期 \texttt{\#include} \dirname{ascendc-tests/}、其它 \dirname{examples/}、
+\dirname{frozen/}；写码阶段从 stable PKE KeyGen \textbf{一次性复制}后切断外链
+（接口与 device 探针一致；探针用 \texttt{STABLE\_ROOT} 仅为测试便利）。
+
+写法对齐 \dirname{exp-fips203-mlkem-pke-keygen-k4-实现方案-customspec.tex}。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程约束（自包含）}
+\label{sec:self}
+
+\subsection{允许的外部依赖}
+
+\begin{longtable}{@{}L{4.5cm}L{8.5cm}@{}}
+\toprule
+路径 & 用途 \\
+\midrule
+\dirname{library/shared/shake\_xof\_kernel/} & Prep SampleNTT / PRF（\texttt{ProcessInline}） \\
+\dirname{library/shared/keccak\_f1600\_kernel/} &
+  Keccak-f[1600]：Prep $G(d\Vert k)$（SHA3-512）与 KEM 尾
+  \texttt{Sha3OneShot}（SHA3-256：派生 $z$、$H(\mathrm{ek})$） \\
+\dirname{library/shared/} & 公共头（如 \texttt{shake\_general.h}、\texttt{fips203\_device\_sha3.hpp}） \\
+CANN / tikicpulib & 工具链与仿真（非业务源码） \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止的外部依赖与不安全路径}
+
+\begin{itemize}
+  \item 运行时 / 编译期依赖 \dirname{ascendc-tests/}（含 device / correctness 探针）、
+        \dirname{frozen/}、其它 \dirname{examples/*/}（一次性 vendor 除外）。
+  \item 子进程调用 stable / 探针 \texttt{run.sh} 再拼 KEM。
+  \item Host \texttt{tiny\_sha3} / liboqs 参与\textbf{生产}路径（KAT 脚本除外）。
+  \item correctness 式 Launch-3；Launch-2 后对 $\mathrm{ek}_{\mathrm{PKE}}$/$\mathrm{dk}_{\mathrm{PKE}}$
+        做 D2H$\to$H2D 再算 $H$/$z$。
+  \item 将 $d$、$z$、$H(\mathrm{ek})$、$\hat{A}$、$\hat{s}$、$\rho$ 等中间态写入
+        \texttt{input/}/\texttt{output/} 作为交付契约。
+\end{itemize}
+
+\subsection{相对 device 探针的落点差异}
+
+\begin{longtable}{@{}L{3.6cm}L{4.6cm}L{4.6cm}@{}}
+\toprule
+项 & device 探针 & \textbf{本 exp（锁定）} \\
+\midrule
+PKE 源码 & CMake \texttt{STABLE\_ROOT} 编译期引用 &
+  本目录 \dirname{prep/}+\dirname{compute/} \textbf{vendored} \\
+KEM 尾 & \dirname{kem/} + 宏 \texttt{F203\_KEM\_KEYGEN\_TAIL=1} &
+  同宏语义；尾实现 vendored 于 \dirname{kem/} \\
+Launch / I/O / GM & 2 launch；ek 1568 / dk 3168 & \textbf{同契约} \\
+\bottomrule
+\end{longtable}
+
+\subsection{唯一交付路径（默认即全量）}
+
+\begin{longtable}{@{}L{4.2cm}L{8.8cm}@{}}
+\toprule
+组件 & 锁定配置 \\
+\midrule
+Prep Â & \texttt{F203\_AHAT16\_BLOCK\_DIM=2}，双 AIV 并行 \texttt{BuildAHat16ShardWithUb} \\
+Prep Alg7/CBD & 与 stable PKE KeyGen 同生产宏（rej / CBD$_{\eta_2}$ 向量路径） \\
+Compute 2s1e & \texttt{F203\_STAGE1\_SPLIT=1}，\texttt{mixPass=0}；NTT S1--S3 \textbf{禁 Gather} \\
+行 18--21 & \texttt{HAT\_LINE18\_DOT\_ONLY=0}，\texttt{HAT\_BYTE\_ENCODE=1}，
+            \texttt{F203\_KEYGEN\_EK\_PKE=1} \\
+KEM 尾 & \texttt{F203\_KEM\_KEYGEN\_TAIL=1}：\texttt{KemKgTailFused} 内嵌于 Launch-2；
+            \textbf{须先双 AIV 汇合}（见 \S\ref{sec:landmines}），再由约定 AIV 执行 \\
+Host & 2 launch；seed+LUT $\to$ \textbf{仅} \texttt{ek\_kem}/\texttt{dk\_kem} \\
+\bottomrule
+\end{longtable}
+
+\textbf{禁止}将关尾（\texttt{F203\_KEM\_KEYGEN\_TAIL=0}）、关 ByteEncode、分段 Host 入口等作为默认验收；
+调试对照须显式覆盖 env，并在 \texttt{run.sh} 头注释标「非默认」。
+
+\subsection{目录布局（计划；写码阶段落地）}
+
+\begin{verbatim}
+exp-fips203-mlkem-kem-keygen-k4/
+  exp-fips203-mlkem-kem-keygen-k4-实现方案-customspec.tex/.pdf
+  main_kem_keygen.cpp          # Host：2 launch + dk_kem_gm
+  f203_kem_kg_layout.h         # I/O 常量（1568/3168 偏移）
+  f203_keygen_prep_entry.cpp   # Launch-1（vendored PKE prep）
+  prep/                        # vendored Alg.13 行 3–15
+  compute/mmad_custom.cpp      # vendored Alg.13 行 16–21 + 尾钩子
+  kem/
+    f203_kem_kg_derand_ub.hpp  # DerandZFromSeedD
+    f203_kem_kg_tail_fuse.hpp  # KemKgTailFused（无 ek 独立拷贝）
+  cmake/keygen/CMakeLists.txt
+  scripts/                     # golden / prepare / verify / KAT 胶水
+  run.sh
+  SELF_CONTAINED.md            # 写码阶段补
+  STATUS.md                    # 写码验收后补
+\end{verbatim}
+
+\section{数学语义（Alg.19 $\to$ Alg.16 $\to$ Alg.13）}
+\label{sec:math}
+
+\subsection{参数集}
+
+\textbf{ml\_kem\_1024}：$n=256$，$q=3329$，$k=4$。
+（文档勿与历史笔误「ML-KEM-768」混用；本仓 PKE/KEM 交付均为 1024 档。）
+
+\subsection{Algorithm 19（对外）}
+
+\begin{align*}
+  d &\leftarrow\$ \{0,1\}^{256} && \text{Launch-1 prep UB：\texttt{DerandFromSeedD}(\texttt{seed\_d})} \\
+  z &\leftarrow\$ \{0,1\}^{256} && \text{Launch-2 尾 UB：\texttt{DerandZFromSeedD}(\texttt{seed\_d})} \\
+  (\mathrm{ek},\mathrm{dk}) &\leftarrow \texttt{ML-KEM.KeyGen\_internal}(d,z)
+\end{align*}
+
+可复现验收：Host 仅提供 4\,B \texttt{seed\_d}；\textbf{不}提供 64\,B 外部 $d\Vert z$（旁路 A 仅 test-only，见 §\ref{sec:bypass}）。
+
+\subsection{Algorithm 16（internal）}
+
+\begin{align*}
+  (\mathrm{ek}_{\mathrm{PKE}},\mathrm{dk}_{\mathrm{PKE}}) &\leftarrow \texttt{K-PKE.KeyGen}(d)
+    && \text{Alg.13，Launch-1+2 主体} \\
+  \mathrm{ek} &\leftarrow \mathrm{ek}_{\mathrm{PKE}} \\
+  \mathrm{dk} &\leftarrow \mathrm{dk}_{\mathrm{PKE}}\Vert H(\mathrm{ek})\Vert z
+\end{align*}
+
+其中 $H=\mathrm{SHA3\textrm{-}256}$。
+
+\subsection{liboqs 展开 I/O（验收锁定）}
+
+代数最小 $\mathrm{dk}_{\mathrm{PKE}}\Vert H\Vert z$（1600\,B）\textbf{不是}本仓交付布局。
+对拍 \texttt{OQS\_KEM\_ml\_kem\_1024} 时：
+
+\begin{verbatim}
+ek_kem = ek_PKE                                           // 1568 B
+dk_kem = dk_pke (1536) || ek (1568) || H(ek) (32) || z (32) // 3168 B
+\end{verbatim}
+
+偏移（字节）：$\mathrm{dk}_{\mathrm{PKE}}$ $[0,1536)$；$\mathrm{ek}$ $[1536,3104)$；
+$H$ $[3104,3136)$；$z$ $[3136,3168)$。
+
+\subsection{Algorithm 13 分段（设备）}
+
+\begin{longtable}{@{}L{2.4cm}L{6.0cm}L{4.4cm}@{}}
+\toprule
+FIPS 行 & 设备段 & Launch \\
+\midrule
+3--15 & \texttt{f203\_keygen\_prep}：$\hat{A}$、$\rho/\sigma$、$\hat{s}/\hat{e}$ CBD & L1 \\
+16--20 & \texttt{mmad\_custom}：NTT、内积、\texttt{ByteEncode$_{12}$} & L2 \\
+21 & \texttt{FuseEkPke}：$\mathrm{ek}_{\mathrm{PKE}}=\mathrm{ek}_{\mathrm{polyvec}}\Vert\rho$ & L2 末 AIV0 \\
+Alg.16 尾 & \texttt{KemKgTailFused}：$z$、$H(\mathrm{ek})$、拼 \texttt{dk\_kem} & L2 末 AIV0（同次） \\
+\bottomrule
+\end{longtable}
+
+\section{编排与 Launch}
+\label{sec:launch}
+
+\begin{verbatim}
+aclInit / CreateStream
+  ├─ Launch-1: f203_keygen_prep     // AIV_ONLY, blockDim=2
+  │            seed_d → d → ρ/σ → Â, ŝ/ê, …
+  ├─ Launch-2: mmad_custom          // MIX_AIC_1_2, blockDim=1
+  │            Alg.13 行 16–21 → ek_pke_gm, dk_pke_gm
+  │            尾（AIV0, F203_KEM_KEYGEN_TAIL=1）:
+  │              DerandZ → H(ek) → 写 dk_kem_gm[3168]
+  │              ek_kem ≡ ek_pke_gm（同址，零拷贝）
+  ├─ aclrtSynchronizeStream         // 仅一次，L2 后
+  ├─ D2H: ek_kem.bin, dk_kem.bin
+  └─ aclFinalize
+\end{verbatim}
+
+\subsection{相对 correctness（3 launch）}
+
+\begin{longtable}{@{}L{3.2cm}L{4.8cm}L{4.8cm}@{}}
+\toprule
+项 & correctness-k4 & \textbf{本方案 / device} \\
+\midrule
+Launch 数 & prep $\Vert$ mmad $\Vert$ \textbf{kem\_finish} & prep $\Vert$ \textbf{mmad+tail} \\
+中间 sync & L2 后 + L3 后 & \textbf{仅 L2 后}（同 stable） \\
+\texttt{ek\_kem} & 可独立拷贝 & \textbf{与 \texttt{ek\_pke} 同指针} \\
+SIM tick & $\approx$742k & 目标 $\approx$stable$+\alpha$（device $\approx$713k） \\
+\bottomrule
+\end{longtable}
+
+\section{AI Core 规模}
+\label{sec:aicore}
+
+\begin{longtable}{@{}L{3.2cm}L{10cm}@{}}
+\toprule
+段 & 核类型 / blockDim / 角色 \\
+\midrule
+Prep（L1） & \texttt{KERNEL\_TYPE\_AIV\_ONLY}；\texttt{blockDim=2}；
+             双 AIV 各 8 poly 分片 \^A；block0 独占 PRF+CBD \\
+Compute（L2） & \texttt{KERNEL\_TYPE\_MIX\_AIC\_1\_2}；\texttt{blockDim=1}；
+                1 AIC + 2 AIV；NTT/MMAD/Encode \\
+KEM 尾 & 同 L2；Encode 后\textbf{双 AIV 汇合}再由约定 AIV 执行 Fuse+尾
+         （SIM：\texttt{subBlockID==0}；CPU：\texttt{==1}；见 \S\ref{sec:landmines}）；
+         不新增 AI Core、不增 blockDim \\
+\bottomrule
+\end{longtable}
+
+串行占用 \textbf{1 颗 AI Core}（与 stable PKE KeyGen 同）。
+CPU \texttt{[SUCCESS][AIC\_*]} 为 tikicpu 拓扑 artifact；以 SIM \texttt{profile\_*.toml} 为准。
+
+\textbf{选型理由}：复用已验收 PKE KeyGen 拓扑；KEM 增量仅尾段标量 SHA3 + 字节拼接，
+不值得为尾段单独开 AIV\_ONLY launch（correctness 已否决）。
+
+\section{GM 布局与零额外搬运}
+\label{sec:gm}
+
+\begin{longtable}{@{}L{3.4cm}L{2.0cm}L{7.4cm}@{}}
+\toprule
+GM 缓冲 & 尺寸 & 用途 \\
+\midrule
+\texttt{seed\_d\_gm} & 4\,B（旁路 A：64\,B） & L1 读；$z$ 派生再读 \\
+\texttt{a\_hat}…\texttt{rho}… & 同 stable & L1 写 / L2 读 \\
+\texttt{ws} & LUT+workspace & L2 \\
+\texttt{ek\_pke\_gm} & 1568 & L2 写；\textbf{= \texttt{ek\_kem\_gm} 别名} \\
+\texttt{dk\_pke\_gm} & 1536 & L2 写；尾段读 \\
+\texttt{dk\_kem\_gm} & \textbf{3168} & \textbf{仅尾段写}（唯一新增 KEM GM） \\
+\bottomrule
+\end{longtable}
+
+\textbf{不新增}：\texttt{h\_gm}、\texttt{z\_gm}、独立 \texttt{ek\_kem} 缓冲（$H$/$z$ 全程 UB）。
+
+\subsection{\texttt{KemKgTailFused} 步骤（汇合后的约定 AIV）}
+
+\begin{enumerate}
+  \item \texttt{DerandZFromSeedD}（或旁路 A 读 $[32:64)$）$\to z[32]$ UB。
+  \item 自 \texttt{ek\_pke\_gm} 读入 UB $\to$ \texttt{Sha3OneShot}$\to H[32]$ UB。
+  \item 顺序写 \texttt{dk\_kem\_gm}：$\mathrm{dk}_{\mathrm{PKE}}\Vert\mathrm{ek}\Vert H\Vert z$。
+  \item \textbf{省略} $\mathrm{ek}_{\mathrm{kem}}\leftarrow\mathrm{ek}_{\mathrm{PKE}}$ 拷贝（同址）。
+\end{enumerate}
+
+\textbf{同步（强制，2026-07-13 订正）}：
+\begin{itemize}
+  \item ByteEncode 由 \textbf{双 AIV 分片}写 \texttt{ek\_out}/\texttt{sk\_out}；
+        \texttt{FuseEkPke}/\texttt{KemKgTailFused} 须读\textbf{完整} 1536\,B \texttt{sk\_out}。
+  \item \textbf{禁止}仅靠本核 \texttt{PipeBarrier}/\texttt{KYBER\_PIPE\_ALL} 后立刻做尾
+        （本核屏障\textbf{不能}等待对端 AIV 写完 GM）。
+  \item \textbf{设备 / SIM}：双 AIV 在 Encode 后均调用
+        \texttt{AscendC::SyncAll</*isAIVOnly=*/true>()}（硬同步，A2 支持；
+        见 CANN API §2.3.7.2.3 / 查阅索引），再由 \texttt{subBlockID==0} 做
+        \texttt{FuseEkPke}+尾。
+  \item \textbf{CPU（\texttt{ASCENDC\_CPU\_DEBUG}）}：tikicpu 常\textbf{串行}
+        AIV0$\to$AIV1；对 AIV0 做硬 \texttt{SyncAll} 易死等。须改由
+        \texttt{subBlockID==1}（后执行的 AIV）做 Fuse+尾，或等价保证
+        「两片 Encode 均已落 GM 后再读 \texttt{sk\_out}」。
+  \item \texttt{KYBER\_PIPE\_ALL} 须定义为真实 \texttt{PipeBarrier<PIPE\_ALL>}
+        （\textbf{禁止} CPU 下空操作）；尾段前后再显式 \texttt{PipeBarrier}。
+\end{itemize}
+详证与误判史见 \S\ref{sec:landmines}。
+
+\section{踩坑与强制同步（2026-07-13 debug；换 Agent 必读）}
+\label{sec:landmines}
+
+\subsection{过程摘要}
+
+\begin{enumerate}
+  \item 曾按本规格写码并一度声称 CPU+SIM PASS，随即 \texttt{\#验收\#} 复制晋级 stable ——
+        \textbf{流程错误}：incubating 偶发对拍未根治不得晋级。
+  \item 偶发：\texttt{ek\_kem} PASS / \texttt{dk\_kem} FAIL（\texttt{max}$\approx$254），
+        或 \texttt{ek[768:]} 错。初判归咎 \texttt{KYBER\_PIPE\_ALL} 在 CPU 为空操作，
+        仅加本核 \texttt{PipeBarrier} 后短压测曾绿，\textbf{仍不够}。
+  \item 精确定位（同二进制连跑 + 分段比对）：FAIL 时 \textbf{仅}
+        \texttt{dk\_kem} 前 1536\,B（$\mathrm{dk}_{\mathrm{PKE}}$）出错，
+        首坏偏移常为 \textbf{1152}（$=3\times384$，末 poly，属 AIV1 分片）；
+        \texttt{ek\_kem}、dk 内 ek 段、$H(\mathrm{ek})$、$z$ \textbf{全对}。
+        $\Rightarrow$ Tail 在 AIV1 写完 \texttt{sk\_out} 前就拷贝了 $\mathrm{dk}_{\mathrm{PKE}}$。
+  \item 残留掩盖：连续跑同一 seed 时，GM 上旧的正确 \texttt{sk\_out} 可使「抢跑拷贝」
+        仍对拍通过。验收须\textbf{清零} \texttt{output/} 或强制重编后多轮压测
+        （建议 CPU $\ge$40 次），不可偶发 PASS 即晋级。
+  \item 用户裁决（2026-07-13）：删除 stable 与 incubating \textbf{全部实现}，
+        仅留本规格；回家 Agent 按规格重写；debug 写入当日 \dirname{qa/} 与
+        \dirname{AGENT\_HANDOFF.md}。
+\end{enumerate}
+
+\subsection{强制条款（实现时违反即视为未完成）}
+
+\begin{longtable}{@{}L{3.2cm}L{9.6cm}@{}}
+\toprule
+条款 & 要求 \\
+\midrule
+双 AIV 汇合 & Encode 后、Fuse/Tail 前：SIM/设备 \texttt{SyncAll<true>}；
+  CPU 用 AIV1 做尾或其它\textbf{已证明}无死锁方案 \\
+禁侥幸验收 & 禁止「跑通一次就晋级」；须 CPU 多轮 + SIM；建议清零 output 防残留 \\
+禁空屏障 & \texttt{KYBER\_PIPE\_ALL} 不得在 \texttt{ASCENDC\_CPU\_DEBUG} 下为空 \\
+禁过早 stable & 仅 incubating CPU$\times N$+SIM 稳定绿后，用户 \texttt{\#交付\#}/\texttt{\#验收\#}
+  再复制晋级；出错先改 incubating \\
+禁抄 frozen & 含 \dirname{examples/frozen/}、\dirname{ascendc-tests/frozen/} \\
+基线只读 & device 探针可对照 I/O/行为；\textbf{禁止}编译期依赖其源码路径 \\
+\bottomrule
+\end{longtable}
+
+\subsection{推荐压测脚本口径（写码后）}
+
+\begin{verbatim}
+# 强制重编 + 单次
+KEM_KEYGEN_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
+# 同二进制多轮（每轮可先 dd 清零 output/*.bin）
+# … kernel + gen_data + verify_kem …
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+# 用例根目录不得残留 stray core*.dump / profile_*_log*.toml
+\end{verbatim}
+
+\section{旁路 A（test-only）}
+\label{sec:bypass}
+
+\texttt{KEM\_KG\_EXT\_SEED=1}：\texttt{seed\_d\_gm} 扩为 64\,B（$d\Vert z$ 外部给定），
+prep 走 \texttt{extseed} 入口；生产默认\textbf{关闭}。
+用于 liboqs 批量 KAT；不得改变默认 \texttt{run.sh} 契约。
+
+\section{全量 API 清单（查阅 CANN 9.0.0）}
+\label{sec:api}
+
+说明：PKE 主体（prep / NTT / MMAD / ByteEncode$_{12}$ / \texttt{FuseEkPke}）
+API 与 \dirname{exp-fips203-mlkem-pke-keygen-k4} / device 探针\textbf{同集}，
+已在 \dirname{library/documents/CANN-AscendC算子开发接口参考-查阅索引.md} 有记录；
+下表列\textbf{本用例须显式锁定}的主路径 API（含 KEM 尾）。
+分类按 PDF 第 2 章；在线 ID 为社区 \texttt{atlasascendc\_api\_07\_*}。
+
+\begin{longtable}{@{}L{2.6cm}L{1.6cm}L{2.2cm}L{0.7cm}L{3.4cm}L{3.4cm}@{}}
+\toprule
+API & 分类 & 在线 ID & A2 & 输入/输出（本用例） & 备注 \\
+\midrule
+\endhead
+\apiname{GlobalTensor} & 2.2 & 07\_0007 & $\checkmark$ & GM 描述 & \texttt{SetGlobalBuffer} \\
+\apiname{LocalTensor} & 2.2 & 07\_0006 & $\checkmark$ & UB 描述 & 尾段字节缓冲 \\
+\apiname{GetBlockIdx} & 2.3 系统 & 07\_0185 & $\checkmark$ & 核索引 & Prep 分片 \\
+\apiname{GetSubBlockIdx} & 2.3 系统 & 07\_0186 邻 & $\checkmark$ & AIC/AIV 子块 &
+  Fuse/尾：SIM 用 0；CPU 用 1（\S\ref{sec:landmines}） \\
+\apiname{KERNEL\_TYPE\_AIV\_ONLY} & Utils & 编程指南 & $\checkmark$ & L1 & Prep \\
+\apiname{KERNEL\_TYPE\_MIX\_AIC\_1\_2} & Utils & 编程指南 & $\checkmark$ & L2 & 1 AIC : 2 AIV \\
+\apiname{TPipe} & 2.3 资源 & 07\_0108 & $\checkmark$ & 管道 & 尾可独立小 Pipe \\
+\apiname{InitBuffer} & 2.3 资源 & 07\_0110 & $\checkmark$ & UB 分配 & 尾段 \\
+\apiname{TQue}/\apiname{TBuf} & 2.3 Pipe & 07\_0137 & $\checkmark$ & 队列/临时区 & Prep/Compute \\
+\apiname{DataCopy} & 2.3.1 & 07\_0101 & $\checkmark$ &
+  \texttt{uint8}/\texttt{int32} GM$\leftrightarrow$UB &
+  尾：ek 读入、dk\_kem 写出 \\
+\apiname{DataCopyPad} & 2.3.1 & 07\_0265 & $\checkmark$ & 可选跨步 &
+  尾主路径\textbf{不用}（连续块） \\
+\apiname{ShiftRight} & 2.3.3 & 07\_0059 & $\checkmark$ & \texttt{int32} & Stage1 $hi{=}v{\gg}6$ \\
+\apiname{Muls} & 2.3.3 & 07\_0055 & $\checkmark$ & \texttt{int32} & Stage1 $hi{\times}64$ 等 \\
+\apiname{Adds}/\apiname{Add}/\apiname{Sub} & 2.3.3 & 07\_0054/35/36 & $\checkmark$ & \texttt{int32} &
+  NTT/mod/Encode 链 \\
+\apiname{Duplicate} & 2.3.3 & 07\_0041 邻 & $\checkmark$ & 填充 & Prep/对齐块 \\
+\apiname{CrossCoreSetFlag} & 同步 & API 列表 & $\checkmark$ & AIC$\leftrightarrow$AIV & L2 NTT 流水 \\
+\apiname{CrossCoreWaitFlag} & 同步 & API 列表 & $\checkmark$ & 同上 & 与 vec-k4-v2 同构 \\
+\apiname{SyncAll} & 同步 & §2.3.7.2.3 & $\checkmark$ &
+  硬同步 \texttt{SyncAll<true>()} &
+  Encode 后\textbf{双 AIV} 汇合（\S\ref{sec:landmines}）；
+  \texttt{isAIVOnly=true}（AIC 已返回） \\
+\apiname{PipeBarrier} & 同步 & 常用 & $\checkmark$ & \texttt{PIPE\_ALL} 等 &
+  本核 MTE/V；\textbf{不能}代替双 AIV 汇合 \\
+\apiname{Gather} & 2.3.3 & 07\_0071 邻 & $\checkmark$ & — &
+  \textbf{NTT S1--S3 禁用}；Encode 后另议 \\
+\bottomrule
+\end{longtable}
+
+\subsection{设备哈希（非 CANN 矢量 API；工程共享库）}
+
+\begin{longtable}{@{}L{4.2cm}L{8.6cm}@{}}
+\toprule
+符号 & 契约 \\
+\midrule
+\apiname{F203SeDeviceKeccak::Sha3OneShot} &
+  \dirname{library/shared/keccak\_f1600\_kernel/fips203\_device\_sha3.hpp}；
+  \texttt{\_\_aicore\_\_} one-shot；mdlen=32（$z$、$H(\mathrm{ek})$）/64（Prep $G$）。
+  日后可换第三方 AscendC SHA3，\textbf{勿}改 layout 偏移与域分离串。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{评估过但未采用}
+\label{sec:rejected}
+
+\begin{longtable}{@{}L{3.6cm}L{9.2cm}@{}}
+\toprule
+方案 & 结论 \\
+\midrule
+correctness 第 3 launch \texttt{kem\_finish} &
+  多一次 sync+launch；SIM 约 742k；\textbf{否决}（device 已 PASS 2 launch） \\
+Host 拼 $\mathrm{dk}_{\mathrm{kem}}$ / Host SHA3 & 违反设备全链；\textbf{禁止} \\
+独立 \texttt{ek\_kem} GM 拷贝 & 与 $\mathrm{ek}_{\mathrm{PKE}}$ 字节恒等；零拷贝更优 \\
+mmad fork（\texttt{mmad\_custom\_kem.cpp}） &
+  device P1 已废弃；本 exp vendored 单份 \texttt{mmad\_custom} + 宏钩子 \\
+仅本核 \texttt{PipeBarrier} 后 AIV0 做尾 &
+  \textbf{否决}：无法等待 AIV1 写完 \texttt{sk\_out}；见 \S\ref{sec:landmines} \\
+CPU 下空操作 \texttt{KYBER\_PIPE\_ALL} & \textbf{禁止} \\
+未稳定绿即复制 stable & \textbf{禁止}（用户 2026-07-13 明确） \\
+NTT S1--S3 内 \texttt{Gather} & Tag5T 禁令；沿用 PKE KeyGen \\
+从 \dirname{frozen/} 抄 KEM/PKE & Rule 禁止 \\
+\bottomrule
+\end{longtable}
+
+\section{数学步骤 $\to$ API 覆盖率}
+\label{sec:coverage}
+
+\begin{longtable}{@{}L{3.8cm}L{3.6cm}L{1.4cm}L{4.0cm}@{}}
+\toprule
+数学步骤 & 主路径 & 覆盖 & 缺口/备注 \\
+\midrule
+$G(d\Vert k)\to\rho,\sigma$ & SHA3-512 共享库 & 标量 & Keccak 标量核（与 PKE 同） \\
+SampleNTT $\hat{A}$ & SHAKE + rej 向量 & 部分 & 与 stable Prep 同；Alg7 标量缺口见 PKE 纪要 \\
+PRF+CBD$_{\eta_2}$ & 向量 MTE2/V & 高 & 同 PKE KeyGen \\
+NTT / 内积 / Encode$_{12}$ & MIX 向量+Cube & 高 & S1--S3 无 Gather；见 MLKEM-NTT 定稿 \\
+$\mathrm{ek}\Vert\rho$（行 21） & \texttt{DataCopy} & 100\% 搬运 & AIV0 \texttt{FuseEkPke} \\
+$\mathrm{Derand}\,z$ & SHA3-256 & 标量 & UB only \\
+$H(\mathrm{ek})$ & SHA3-256 + \texttt{DataCopy} & 标量摘要 & 1568\,B 入 UB 后 one-shot \\
+拼 \texttt{dk\_kem} & \texttt{DataCopy} 四段 & 100\% 搬运 & 无跨 launch \\
+\bottomrule
+\end{longtable}
+
+\textbf{主路径结论}：PKE 计算段与 stable 同覆盖率；KEM 增量的密码学哈希为\textbf{显式标量缺口}
+（设备共享 Keccak，非矢量 API）。拼接为纯搬运，\textbf{100\%} \texttt{DataCopy}。
+
+\section{验证}
+\label{sec:verify}
+
+\subsection{Golden 角色}
+
+Host / liboqs 仅提供合法输入与期望输出（黑盒 oracle）。
+\textbf{禁止}以「与 device / correctness 源码同构」为验收；仅 \textbf{I/O 等价}。
+
+\subsection{生产验收（默认；写码完成后）}
+
+\begin{verbatim}
+cd examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4
+bash run.sh -r cpu -v Ascend910B4
+bash run.sh -r sim -v Ascend910B4   # 默认全量；run.sh 内自动 SIM_DIRECT=1
+# 检查 output/ek_kem.bin (1568B) + dk_kem.bin (3168B)
+\end{verbatim}
+
+对照 oracle（写码阶段）：同 \texttt{SEED\_D} 下与
+\dirname{pass-fix-f203-alg19-kem-keygen-device-k4} 及/或
+\dirname{pass-fix-f203-alg19-kem-keygen-device-k4} 的 \texttt{ek\_kem}/\texttt{dk\_kem}
+逐字节一致；可选 \texttt{bash scripts/liboqs\_kem\_vs\_ascendc.sh}（仓库根）。
+
+\textbf{禁止}把一长串与 default 相同的 \texttt{HAT\_*=0/1} 写入标准验收命令。
+
+\subsection{Gate 建议（写码阶段，非本规格交付物）}
+
+\begin{longtable}{@{}L{1.4cm}L{11.4cm}@{}}
+\toprule
+Gate & 验收 \\
+\midrule
+G1 & 临时关尾：$\mathrm{ek}/\mathrm{dk}_{\mathrm{PKE}}$ vs stable 同 seed max=0 \\
+G3 & 开尾：\texttt{ek\_kem}/\texttt{dk\_kem} vs device/correctness max=0 \\
+G4 & 默认 \texttt{run.sh} CPU+SIM PASS；dump 仅在 \texttt{OPPROF\_*/dump/} \\
+G4b & CPU 同二进制 $\ge$40 轮 verify\texttt{ek}/\texttt{dk} max=0（建议清零 output 防残留） \\
+G5 & 旁路 A + liboqs 批量（可选） \\
+G6 & SIM tick 量级 $\le$ device + 50k（参考 $\approx$713k；远超则 profile） \\
+\bottomrule
+\end{longtable}
+
+\section{性能（SIM 910B4 参考）}
+\label{sec:perf}
+
+\begin{itemize}
+  \item stable PKE KeyGen：Total tick $\approx$ \textbf{542339}（prep$\approx$462k + mmad$\approx$80k）。
+  \item device KEM KeyGen（本基线）：Total tick $\approx$ \textbf{713227}（P1 宏钩子；相对早期 mmad fork $\approx$+1.8\%）。
+  \item 本 exp 写码验收目标：与 device \textbf{同量级}；\textbf{远超}（例如无日志挂死）视为回归。
+  \item $\sim$15\,s 仅为 Tag5T NTT 全流程性能定标，\textbf{不}套用本用例防挂死预算；
+        预算写进本用例 \texttt{run.sh}（建议默认 900\,s 量级，与 device 同）。
+\end{itemize}
+
+\section{写码衔接（本规格确认后）}
+
+\begin{enumerate}
+  \item 用户确认本 customspec（含 \S\ref{sec:landmines}）。
+  \item 用户明确 \texttt{【预研】} /「可以写代码」并指明本路径后，按
+        \dirname{.cursor/skills/pre-research/SKILL.md} 在本目录\textbf{从零}落地 vendored 源码
+        （当前目录无实现可抄）。
+  \item 登记表：\dirname{docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md}。
+  \item incubating 经验收阶梯（含 G4b）稳定后，用户 \texttt{\#交付\#}/\texttt{\#验收\#}
+        再\textbf{复制}晋级 \dirname{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/}；
+        \textbf{禁止}未绿先晋级、禁止 stable 与 incubating 双轨各改各的。
+\end{enumerate}
+
+\end{document}

@@ -149,7 +149,7 @@ bash run.sh -r sim -v Ascend910B4
 
 ### 7.3 向量 basemul 继任
 
-[`pass-fix-f203-alg11-12-multiplyntts-k4`](../../ascendc-tests/pass-fix-f203-alg11-12-multiplyntts-k4/) — ROM + Init DataCopy；**勿** fork `frozen-fix-f203-2s1e-basemul-vec-k4`。
+[`pass-fix-f203-alg11-12-multiplyntts-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-multiplyntts-k4/) — ROM + Init DataCopy；**勿** fork `frozen-fix-f203-2s1e-basemul-vec-k4`。
 
 ### 7.4 相关
 

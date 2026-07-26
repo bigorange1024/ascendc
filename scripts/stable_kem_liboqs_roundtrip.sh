@@ -20,7 +20,7 @@
 #
 # 对照 / 加压（须显式）：
 #   CPU_TRIALS=5 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh
-#   DECAPS_DIR=$PWD/examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4 \
+#   DECAPS_DIR=$PWD/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4 \
 #     CPU_TRIALS=5 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh
 #
 # 定点复现（仅作用于首个 trial 的 fixture；后续 trial 仍 --random）：
@@ -43,9 +43,9 @@ FIXTURE_PY="${REPO_ROOT}/scripts/liboqs_kem_fixture.py"
 VERIFY_PY="${REPO_ROOT}/scripts/liboqs_kem_vs_ascendc_verify.py"
 SOC_VERSION="${SOC_VERSION:-Ascend910B4}"
 
-KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-keygen-k4}"
-ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-encaps-k4}"
-DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/stable-fips203-mlkem-kem-decaps-k4}"
+KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4}"
+ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4}"
+DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4}"
 
 CPU_TRIALS="${CPU_TRIALS:-1}"
 SIM_TRIALS="${SIM_TRIALS:-1}"

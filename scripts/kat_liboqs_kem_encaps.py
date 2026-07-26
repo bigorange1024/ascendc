@@ -5,7 +5,7 @@ kat_liboqs_kem_encaps.py — liboqs KEM Encaps ↔ device 探针批测（默认 
 固定 stash 公钥 ek_kem；每轮 os.urandom(32B) m，
 liboqs encaps_derand(ek, m) 与 device（生产路径读 m.bin / M_FILE）对拍 c/K。
 
-默认交付目录：examples/stable/stable-fips203-mlkem-kem-encaps-k4
+默认交付目录：examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4
 （设备已把 m 定为 GM 输入，无需 KEM_ENC_EXT_SEED 旁路宏。）
 
 前置：bash scripts/kem_keypair_stash_bootstrap.sh
@@ -30,7 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ENCAPS_DIR = Path(
     os.environ.get(
         "ENCAPS_DIR",
-        REPO_ROOT / "examples/stable/stable-fips203-mlkem-kem-encaps-k4",
+        REPO_ROOT / "examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4",
     )
 )
 STASH = Path(os.environ.get("KEM_KEYPAIR_STASH", REPO_ROOT / "output/kem_keypair_stash"))

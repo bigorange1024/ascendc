@@ -2,9 +2,9 @@
 
 **读者**：优化 Alg.13 行 19–20 编码、或对照 vec-k4-v2 全链路 tick 的实现者  
 **目的**：记录 **prefetch 合入** 后的性能与输入契约；非独立交付算子  
-**案例锚点**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](../../ascendc-tests/pass-fix-f203-2s1e-byteencode12-vec-k4/) · 全链路 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)  
+**案例锚点**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-byteencode12-vec-k4/) · 全链路 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)  
 **讨论**：[`qa/2026-06/2026-06-19-ByteEncode12-only探针与prefetch实验.md`](../../qa/2026-06/2026-06-19-ByteEncode12-only探针与prefetch实验.md)  
-**SIM 表**：[`SIM_BENCHMARK.md`](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/SIM_BENCHMARK.md)
+**SIM 表**：[`SIM_BENCHMARK.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/SIM_BENCHMARK.md)
 
 ---
 

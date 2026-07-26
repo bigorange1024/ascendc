@@ -3,7 +3,7 @@
 **读者**：后续 Agent / 协作者（未参与本仓库历史讨论）  
 **目的**：说明**何时** CPU 孪生与 SIM 必须分叉、**如何**写代码才不误导后人  
 **共享头文件**：[`library/shared/ascendc_build_mode.hpp`](../../library/shared/ascendc_build_mode.hpp)  
-**案例锚点**：[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) `main.cpp`（§附录 A）
+**案例锚点**：[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) `main.cpp`（§附录 A）
 
 ---
 

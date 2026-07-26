@@ -1,8 +1,8 @@
 # FIPS 203 Alg.14 PKE Encrypt — 交付口径（CPU 辅助 / SIM 主参考）
 
-**交付算子**：[`examples/stable/stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)  
-**预研副本**：[`examples/incubating/exp-fips203-mlkem-pke-encrypt-k4`](../../examples/incubating/exp-fips203-mlkem-pke-encrypt-k4/)  
-**探针基线**：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg14-pke-encrypt-device-k4/)  
+**交付算子**：[`examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/)  
+**预研副本**：[`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/)  
+**探针基线**：[`pass-fix-f203-alg14-pke-encrypt-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-pke-encrypt-device-k4/)  
 **日期**：2026-07-09  
 **讨论**：[qa/2026-07-09](../../qa/2026-07/2026-07-09-Encrypt默认SIM_DIRECT.md) §7–§8
 

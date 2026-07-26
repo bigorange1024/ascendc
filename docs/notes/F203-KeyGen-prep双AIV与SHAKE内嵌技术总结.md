@@ -2,9 +2,9 @@
 
 **读者**：在 AscendC 多 block 核内调用共享 Keccak/SHAKE 模块、或做 ML-KEM KeyGen prep 并行化的实现者  
 **目的**：说明 **为何** `blockDim=2` 曾「只写一半 GM」、**如何**用内嵌语义修复、以及 **tick 为何能降 ~41%**  
-**案例锚点**：`ascendc-tests/pass-fix-f203-alg13-device-keygen-k4`（G4 Step4）、`library/shared/shake_xof_kernel/`  
+**案例锚点**：`ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4`（G4 Step4）、`library/shared/shake_xof_kernel/`  
 **讨论**：`qa/2026-06/2026-06-25-KeyGen-prep优化路线图.md` §Opt-4  
-**实现方案**：`examples/incubating/exp-fips203-mlkem-pke-keygen-k4/` customspec
+**实现方案**：`examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/` customspec
 
 ---
 
@@ -143,12 +143,12 @@ for (groupIdx = GetBlockIdx(); groupIdx < groupCount; groupIdx += GetBlockNum())
 | 生产默认 | `F203_AHAT16_BLOCK_DIM=2` |
 | Opt-3 | 双缓冲流水 **已关闭**（+3.3%），无 `PIPE_SHAKE` |
 | Opt-5 | Pipe 细同步 **部分合入**（CBD MTE2/V + C-04 删减）→ [F203-KeyGen-prep-Pipe细同步技术总结.md](F203-KeyGen-prep-Pipe细同步技术总结.md) |
-| exp 交付 | `examples/incubating/exp-fips203-mlkem-pke-keygen-k4/`（**PKE** KeyGen；与 KEM 层区分） |
+| exp 交付 | `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/`（**PKE** KeyGen；与 KEM 层区分） |
 
 **验收命令**：
 
 ```bash
-cd ascendc-tests/pass-fix-f203-alg13-device-keygen-k4
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 ```

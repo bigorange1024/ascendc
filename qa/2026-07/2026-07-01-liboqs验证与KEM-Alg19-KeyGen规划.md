@@ -36,7 +36,7 @@ bash scripts/liboqs_pke_vs_ascendc.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash scripts/liboqs_pke_vs_ascendc.sh -r sim -v Ascend910B4
 ```
 
-探针目录 [`INTEGRATION_PLAN.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/INTEGRATION_PLAN.md) §10 说明与探针边界（liboqs **不进**探针 `run.sh`）。
+探针目录 [`INTEGRATION_PLAN.md`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/INTEGRATION_PLAN.md) §10 说明与探针边界（liboqs **不进**探针 `run.sh`）。
 
 ---
 

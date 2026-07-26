@@ -2,8 +2,8 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent（含后续 ML-KEM 加解密、FIPS203/204 混合算子）。  
 **目的**：说明**为什么**这样设计、**哪些原理**可迁移，而不是罗列某次探针的函数名与变量名。  
-**案例锚点**：`ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`（下文 §6 附录）。  
-**实现方案**：[INTEGRATION_PLAN.md](../../ascendc-tests/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/INTEGRATION_PLAN.md)  
+**案例锚点**：`ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`（下文 §6 附录）。  
+**实现方案**：[INTEGRATION_PLAN.md](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/INTEGRATION_PLAN.md)  
 **讨论纪要**：[qa/2026-06/2026-06-18-内积布局与NTT内积UB融合讨论.md](../../qa/2026-06/2026-06-18-内积布局与NTT内积UB融合讨论.md)
 
 ---

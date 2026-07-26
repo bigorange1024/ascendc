@@ -1,0 +1,73 @@
+% exp-fips203-compress-unified-int-vec-k4 统一整数 Compress_d 实现方案
+% 编译：bash ../../../scripts/xelatex-clean.sh exp-fips203-compress-unified-int-vec-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\geometry{margin=2.2cm}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-compress-unified-int-vec-k4\\FIPS 203 统一整数 Compress\_d 向量实现方案}
+\author{ascendc 工程}
+\date{2026-07-10}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \texttt{examples/incubating/ml-kem/ml-kem-1024/exp-fips203-compress-unified-int-vec-k4/}：
+在 Ascend910B / AIV-only 单 launch 上实现 FIPS 203 §4.2.1 \textbf{Compress\_d} 的\textbf{统一整数舍入}路径。
+公式锁定为 $C=\lfloor 2^{37}/q\rfloor=41285357$，$\text{Compress}_d(u)=(C\cdot u+2^{36-d})\gg(37-d)$；
+设备侧用 \textbf{int32 limb 宽乘}（$C=629\cdot 2^{16}+63213$）避免 $C\cdot u$ 的 int32 环绕。
+数学推导见 \texttt{docs/notes/F203-Compress-Decompress-统一整数舍入技术总结.md}。
+\end{abstract}
+
+\section{数学语义}
+
+\subsection{输入输出}
+\begin{itemize}
+  \item 输入 \texttt{poly.bin}：$N=256$ 个 \texttt{int32}，各 $u\in[0,q)$，$q=3329$。
+  \item 输出 \texttt{comp.bin}：$N$ 个 \texttt{int32}，值为 $\text{Compress}_d(u)$ 再 mask 到 $d$ bit（与 FIPS 一致）。
+  \item 档位 $d\in\{1,4,5,10,11\}$，由编译期 \texttt{F203\_UNIFIED\_ROUND\_D} 选择。
+\end{itemize}
+
+\subsection{统一常数}
+\[
+  C = \left\lfloor \frac{2^{37}}{q} \right\rfloor = 41285357 = 629\cdot 2^{16} + 63213
+\]
+按 $d$ 派生 bias 与 acc shift（见 \texttt{library/shared/f203\_unified\_round/f203\_unified\_round\_params.hpp}）。
+
+\section{设备实现}
+
+\subsection{核函数}
+\texttt{compress\_unified\_int\_custom}（\texttt{KERNEL\_TYPE\_AIV\_ONLY}，\texttt{blockDim=1}）：
+GM $\rightarrow$ UB $\rightarrow$ 共享头 \texttt{poly\_compress\_unified\_local} $\rightarrow$ GM。
+
+\subsection{向量路径（默认）}
+\texttt{COMPRESS\_UNIFIED\_INT\_VEC=1}：
+\begin{enumerate}
+  \item \texttt{Muls(lo, in, C0)}、\texttt{Muls(hi, in, C1)}；
+  \item 进位安全合并 \texttt{carry}（\texttt{ShiftRight} + \texttt{mask\_low\_bits} + \texttt{Adds}/\texttt{Add}）；
+  \item \texttt{ShiftRight(out, hi+carry, acc\_shift)}；
+  \item \texttt{mask\_low\_bits(out, d)}。
+\end{enumerate}
+UB 须 \textbf{4 路独立 int32}（lo/hi/carry/tmp），\textbf{禁止}与 out 别名。
+
+\subsection{标量对照}
+\texttt{COMPRESS\_UNIFIED\_INT\_VEC=0}：逐 lane int64 计算 $(C\cdot u+\text{bias})\gg k$，用于 SIM tick 基准。
+
+\section{Golden 与验收}
+
+\begin{itemize}
+  \item Golden：\texttt{compress\_unified\_int\_ref.c}（Host gcc 动态库，与 kernel 同 \texttt{F203\_UNIFIED\_ROUND\_D}）。
+  \item 命令：\texttt{bash run.sh -r cpu -v Ascend910B4}；\texttt{F203\_UNIFIED\_ROUND\_D=11 SIM\_DIRECT=1 bash run.sh -r sim -v Ascend910B4}。
+  \item 验收：\texttt{output/comp.bin} 与 \texttt{output/golden\_comp.bin} 逐字节一致（\texttt{verify\_result.py}）。
+  \item 生产集成：stable Encrypt tail（d=5/11）已内联同公式；本 exp 为\textbf{单算子隔离探针}。
+\end{itemize}
+
+\section{性能参考（SIM，2026-07-10）}
+
+向量 limb 路径各档 tick $\approx 3.38$k--$3.42$k；标量 int64 lane $\approx 10.7$k；提升约 \textbf{3.15--3.18$\times$}。
+
+\end{document}

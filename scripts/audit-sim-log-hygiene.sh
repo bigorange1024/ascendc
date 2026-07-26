@@ -78,10 +78,10 @@ _stale="/tmp/audit-stale-sim-log-$$"
 export CAMODEL_LOG_PATH="${_stale}"
 export ASCEND_WORK_PATH="${_stale}"
 # shellcheck source=/dev/null
-source scripts/camodel_sim_log.sh "${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg8-cbd-eta2-k4"
+source scripts/camodel_sim_log.sh "${REPO_ROOT}/ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg8-cbd-eta2-k4"
 if [[ "${CAMODEL_LOG_PATH}" == "${_stale}" ]]; then
   _fail "source camodel_sim_log.sh 未能覆盖 stale CAMODEL_LOG_PATH"
-elif [[ "${CAMODEL_LOG_PATH}" != "${REPO_ROOT}/ascendc-tests/pass-fix-f203-alg8-cbd-eta2-k4/sim_log" ]]; then
+elif [[ "${CAMODEL_LOG_PATH}" != "${REPO_ROOT}/ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg8-cbd-eta2-k4/sim_log" ]]; then
   _fail "camodel 绑定路径异常: ${CAMODEL_LOG_PATH}"
 else
   _ok "stale env 覆盖测试通过"

@@ -1,7 +1,7 @@
 # T19a — KEM Encaps device 调研要点（2026-07-15）
 
 > **状态**：探针已 **CPU+SIM PASS**；本文为 research 侧摘要，权威实现方案见  
-> [`ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/INTEGRATION_PLAN.md)。  
+> [`ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/INTEGRATION_PLAN.md)。  
 > 定稿笔记（若需原理长文）日后再迁 `docs/notes/`。
 
 ## 锁定（相对 Alg.14 Encrypt 的增量）
@@ -24,5 +24,5 @@
 
 ## 下一刀
 
-- T19b/c：**交付** [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)（Phase-E / Phase-D）；**CT 专题** [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)
+- T19b/c：**交付** [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/)（Phase-E / Phase-D）；**CT 专题** [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)
 - 可选：本探针更名 `pass-fix-…`；仓库 `ENCAPS_DIR` / 分项 kat 改指 device

@@ -1,7 +1,7 @@
 # FIPS 203 ByteEncode_d / ByteDecode_d — 向量与标量选型（d=4/5/10/11）
 
 **读者**：Encrypt tail pack、Decrypt 解包抄码者；审「是否该上真·向量 bit 流」时先读本文。  
-**配对探针**：[`pass-f203-byteencode-d-vec-k4`](../../ascendc-tests/pass-f203-byteencode-d-vec-k4/) · [`pass-f203-alg6-bytedecode-d-vec-k4`](../../ascendc-tests/pass-f203-alg6-bytedecode-d-vec-k4/)  
+**配对探针**：[`pass-f203-byteencode-d-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-byteencode-d-vec-k4/) · [`pass-f203-alg6-bytedecode-d-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-alg6-bytedecode-d-vec-k4/)  
 **Compress/Decompress**（per-lane，默认向量）：[`F203-Compress-Decompress-向量实现指南.md`](F203-Compress-Decompress-向量实现指南.md)  
 **d=12 真·向量 bit 流**（2 系数=24bit=3B）：[`F203-ByteEncode12-prefetch技术总结.md`](F203-ByteEncode12-prefetch技术总结.md)
 
@@ -60,7 +60,7 @@ Encrypt tail **抄 Compress 向量路径**（`f203_tail_compress_byteencode.hpp`
 
 ## 3. VEC=2 实验结论（2026-07-08，仅 ByteEncode d=5/d=11）
 
-**动机**：审 [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) 时问「ByteEncode 是否该抄真·向量写法」。
+**动机**：审 [`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) 时问「ByteEncode 是否该抄真·向量写法」。
 
 **方法**：在 `pass-f203-byteencode-d-vec-k4` 实现 `poly_byte_encode_d5/d11_vecpack`（仿 `byte_encode12_vec.hpp`：`Gather` 8 position-lane → 向量 byte-lane → 4 组拼字 → 批量 `DataCopy`）。
 
@@ -89,7 +89,7 @@ Decrypt (Alg.15 等):
   c ──► [ByteDecode 标量 unpack d=5/11] ──► [Decompress 向量 DECOMPRESS_D_VEC=1] ──► u'/v'
 ```
 
-**集成探针**：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) — SIM **1 launch**（`f203_tail_pack_ops.hpp` 内联）；CPU 仍独立 `f203_encrypt_alg14_pack`。
+**集成探针**：[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/) — SIM **1 launch**（`f203_tail_pack_ops.hpp` 内联）；CPU 仍独立 `f203_encrypt_alg14_pack`。
 
 ---
 

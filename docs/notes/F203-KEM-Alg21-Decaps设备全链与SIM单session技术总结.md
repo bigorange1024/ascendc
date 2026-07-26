@@ -6,13 +6,13 @@
 
 > **2026-07-24 更新（CT 专题树，与 main 交付区分）**：
 > - 形式方法第7章 CT→实现落点在专题分支 `research/formal-lang-dag`，目录统一加 **`-ct`**：
->   [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) ·
->   [`exp-…-decaps-ct-k4`](../../examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) ·
->   [`stable-…-decaps-ct-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/)。
-> - **交付主线（无 `-ct`）**：[`pass-fix-…-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/)；`scripts/` `DECAPS_DIR` 默认指后者。
+>   [`pass-fix-…-decaps-device-ct-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/) ·
+>   [`exp-…-decaps-ct-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4/) ·
+>   [`stable-…-decaps-ct-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/)。
+> - **交付主线（无 `-ct`）**：[`pass-fix-…-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) · [`stable-…-kem-decaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/)；`scripts/` `DECAPS_DIR` 默认指后者。
 > - 本文 SIM 单 session / 双库诊断以 **frozen correctness** 为历史案例锚点；device 交付树为无 vendor 行为基线（编译期引用 stable PKE）。
 
-- **设备主线（交付，2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**。仓库 `scripts/` `DECAPS_DIR` 默认已指 **stable（无 `-ct`）** Decaps（可用 env 覆盖回本探针）；**禁止**再建已更名的旧路径 `fix-…-decaps-device-k4` 或误名 `pass-probe-…`。
+- **设备主线（交付，2026-07-18 更名）**：[`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) — stable Decrypt fused + Encrypt；CPU/SIM **单库**；默认 **`decaps_1session`**。仓库 `scripts/` `DECAPS_DIR` 默认已指 **stable（无 `-ct`）** Decaps（可用 env 覆盖回本探针）；**禁止**再建已更名的旧路径 `fix-…-decaps-device-k4` 或误名 `pass-probe-…`。
 - **历史 correctness oracle**：**已冻结**（2026-07-20）— 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**禁止**翻 frozen 源码 / 当实现模板。
 
 > **2026-07-18 更新（更名 pass-fix）**：`fix-…-decaps-device-k4` → `pass-fix-…-decaps-device-k4`；KAT/roundtrip 已绿；下一 `#交付#`。
@@ -45,7 +45,7 @@
 > 3. **单 session 首错在 `at_r5`**（`KEM_DECAPS_SIM_2SESSION=0`，排障用）：Phase-D 后 `m'/coins max=0`，Phase-E `c' max=244`，而 **PhaseE-only 对照 `K max=0`** → 系 **Phase-D 已执行触发的 CAModel session 级状态残留**（非 GM 输入 / 同步 / LUT / 算法错）。单 session 真修仍 open，2-session 为可靠保底。
 > 4. **单库 SIM 构建坑**：`vendor/.../f203_alg7_rej_scalar.c` 是 CPU/参考语义文件，不参与设备热路径；若进 `ascendc_library`，AIC/AIV 合并阶段 `ld.lld -m aicorelinux` 报 `.c.o unknown file type`。修法：仅 CPU twin 库链入该 `.c`，SIM/NPU 设备库只保留 `.cpp` kernel 入口 + `.hpp` 内联逻辑（见 `cmake/decaps/CMakeLists.txt`）。
 **讨论**：[`qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md`](../../qa/2026-07/2026-07-02-KEM-Alg19-KeyGen交付与命名纠正.md) §7  
-**实现方案**：device [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md)（历史 correctness 计划书已冻结，只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)）
+**实现方案**：device [`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/INTEGRATION_PLAN.md)（历史 correctness 计划书已冻结，只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)）
 
 ---
 
@@ -216,7 +216,7 @@ K        max=216 ✗
 | 项 | 值 |
 |----|-----|
 | 历史探针 | **已冻结** — 只读 [`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)；**勿再跑** |
-| 现行设备主线 | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) |
+| 现行设备主线 | [`pass-fix-f203-alg21-kem-decaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) |
 | 输入（历史） | alg19 `dk_kem.bin` + alg20 `c.bin`，`SEED_D=20260619` |
 | CPU（历史） | G4 合法 `c` 路径 PASS，单 session + 设备 FO；拒绝路径（篡改 device `coins[0]`）`K=J(z‖c)` PASS |
 | SIM（历史） | G4 合法 `c` 路径 PASS，默认 **2-session + 设备 FO**（无 host memcmp） |

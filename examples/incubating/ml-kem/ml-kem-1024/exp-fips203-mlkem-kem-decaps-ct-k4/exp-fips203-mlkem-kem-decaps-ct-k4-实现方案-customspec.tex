@@ -1,0 +1,190 @@
+% exp-fips203-mlkem-kem-decaps-ct-k4 — FIPS 203 Alg.21 ML-KEM-1024 KEM Decaps (k=4)
+% 编译：bash ../../../scripts/xelatex-clean.sh exp-fips203-mlkem-kem-decaps-ct-k4-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-mlkem-kem-decaps-ct-k4\\FIPS 203 Alg.21 ML-KEM-1024 KEM Decaps 实现方案（k=4）}
+\author{ascendc 工程（\texttt{\#交付\#} incubating）}
+\date{2026-07-24}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \textbf{incubating 交付用例}
+\dirname{examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203
+\textbf{Algorithm 21} \texttt{ML-KEM.Decaps()}（\textbf{ml\_kem\_1024}，$k=4$），
+经内部 \textbf{Alg.18}：Decrypt$\to G(m'\Vert h)\to$Encrypt$\to$FO，
+设备写出共享秘密 $K\in\mathbb{B}^{32}$。
+
+\textbf{行为基线（只读；禁止编译依赖）}：
+\dirname{ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/}
+（CPU+SIM 合法路径 $K$ max$=$0；拒绝 CPU PASS；SIM 默认
+\texttt{decaps\_2session}）。
+PKE 主体一次性 vendor 自
+\dirname{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/} 与
+\dirname{…-pke-encrypt-k4/}；KEM 增量对照 device \dirname{kem/}+Host 编排。
+
+\textbf{生产 I/O}：输入 \texttt{dk\_kem.bin}（3168\,B）+ \texttt{c.bin}（1568\,B）
++ 静态 LUT；输出\textbf{仅} \texttt{K.bin}（32\,B）。
+中间态 $m'$/$h$/$z$/$K'$/$r'$/$c'$ \textbf{禁止}作为交付落盘。
+
+\textbf{SIM}：生产默认 \texttt{ASCENDC\_SIM\_HOST\_MODE=decaps\_2session}
+（教材第~7~章 $\mathrm{CT}_{\mathrm{decaps}}$）；单设备库 +
+\texttt{prepare\_dec\_shim}（Decrypt 冲突头 $\to$\texttt{dec\_*}）。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程约束（自包含）}
+\label{sec:self}
+
+\begin{longtable}{@{}L{4.2cm}L{8.6cm}@{}}
+\toprule
+路径 & 用途 \\
+\midrule
+本目录 \dirname{pke\_decrypt/} & vendored stable Decrypt（CPU 直编；SIM shim 源） \\
+本目录 \dirname{prep/}+\dirname{compute/} & vendored stable Encrypt \\
+本目录 \dirname{kem/} & Phase-E prep 头 $G$、pack/FO、本地 \texttt{l18\_l19} 覆盖 \\
+\dirname{library/shared/} & Keccak / SHA3 / SHAKE（\textbf{唯一}外部代码依赖） \\
+CANN / tikicpulib & 工具链 \\
+\bottomrule
+\end{longtable}
+
+\subsection{Forbidden}
+
+\begin{itemize}
+  \item 编译期 \texttt{\#include} \dirname{ascendc-tests/}、其它 \dirname{examples/}、
+        \dirname{frozen/}（一次性 vendor 除外）。
+  \item 从 \dirname{probe-*-decaps-correctness} / \dirname{frozen/} \textbf{抄实现}。
+  \item Host 代算 $J$/memcmp 冒充设备 FO；Host 预填生产 $r'$/$K$。
+  \item 为 $G$/FO 另开与 Decrypt/Encrypt 无关的产品化第 3 套 launch 拓扑。
+\end{itemize}
+
+\subsection{目录布局}
+
+\begin{verbatim}
+exp-fips203-mlkem-kem-decaps-ct-k4/
+  …-实现方案-customspec.tex/.pdf
+  main_kem_decaps*.cpp|.hpp
+  pke_decrypt/          # vendored Decrypt
+  prep/ compute/        # vendored Encrypt（l18_l19 以 kem/ 覆盖为准）
+  kem/                  # G / FO / pack_fo / l18_l19 覆盖
+  cmake/decaps/CMakeLists.txt
+  scripts/              # gen_data / verify / prepare_dec_shim / host_golden
+  shim/                 # SIM 生成物（gitignore）
+  run.sh  SELF_CONTAINED.md  STATUS.md
+\end{verbatim}
+
+\section{数学语义（Alg.21 $\to$ Alg.18）}
+\label{sec:math}
+
+\textbf{ml\_kem\_1024}：$n=256$，$q=3329$，$k=4$；$d_u=11$，$d_v=5$。
+
+\begin{align*}
+  \mathrm{dk} &\in \mathbb{B}^{3168}
+    =\mathrm{dk}_{\mathrm{PKE}}(1536)\Vert\mathrm{ek}(1568)\Vert h(32)\Vert z(32) \\
+  c &\in \mathbb{B}^{1568} \\
+  m' &\leftarrow \texttt{K-PKE.Decrypt}(\mathrm{dk}_{\mathrm{PKE}},\,c)
+    && \text{Phase-D} \\
+  (K'\Vert r') &\leftarrow G(m'\Vert h)=\mathrm{SHA3\textrm{-}512}(m'\Vert h)
+    && \text{Phase-E prep 头} \\
+  c' &\leftarrow \texttt{K-PKE.Encrypt}(\mathrm{ek},\,m',\,r')
+    && \text{Phase-E} \\
+  K &\leftarrow
+    \begin{cases}
+      K' & c=c' \\
+      J(z\Vert c)=\mathrm{SHAKE256}(z\Vert c,32) & c\neq c'
+    \end{cases}
+    && \text{设备 FO}
+\end{align*}
+
+Golden / KAT：liboqs \texttt{decaps}（及造向量的 \texttt{encaps\_derand}）；
+\textbf{仅} I/O 等价。登记表：
+\dirname{docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md}。
+
+\section{编排与 Launch}
+\label{sec:launch}
+
+\subsection{全链（生产）}
+
+\begin{verbatim}
+Host：H2D dk_kem, c, LUT
+  ├─ Phase-D：f203_decrypt_device_fused → m'_gm
+  │            （SIM：可选 aclFinalize → fresh session）
+  └─ Phase-E：
+        Launch-E1: f203_kem_dec_phase_e_prep   // G + Â + CBD
+        SIM:  f203_encrypt_l18_l19（pack→c' 后同核 FO→K）
+        CPU:  ntt / at_jp / intt / f203_kem_dec_pack_fo
+Host：D2H K.bin
+\end{verbatim}
+
+SIM 生产：\textbf{2-session}（D 一段 + E 一段）；单
+\texttt{libascendc\_kernels\_sim.so}。
+排障：\texttt{ASCENDC\_SIM\_HOST\_MODE=decaps\_1session}（非默认）。
+
+\subsection{AI Core}
+
+\begin{longtable}{@{}L{3.2cm}L{10cm}@{}}
+\toprule
+段 & 核 / blockDim \\
+\midrule
+Phase-D & 同 stable Decrypt fused \\
+Phase-E prep & \texttt{AIV\_ONLY}；\texttt{blockDim=2}；仅 block0 跑 $G$ \\
+Phase-E compute & 同 stable Encrypt（SIM MIX \texttt{l18\_l19}；CPU 分叉） \\
+FO & SIM：嵌 \texttt{l18\_l19} 尾；CPU：\texttt{pack\_fo} \\
+\bottomrule
+\end{longtable}
+
+\section{踩坑与强制条款}
+\label{sec:landmines}
+
+\begin{longtable}{@{}L{3.2cm}L{9.6cm}@{}}
+\toprule
+条款 & 要求 \\
+\midrule
+禁 frozen/correctness 抄码 & 只读判决 / oracle 契约 \\
+禁编译依赖探针/stable & incubating 须 vendored；device 仅行为基线 \\
+禁 Host FO & $J$/选 $K$ 须在设备 \\
+SIM 默认 2-session & CT 锁定；勿默改 1-session \\
+合库 shim & 仅改本树 \dirname{shim/}；勿改共享 Encrypt/Decrypt 源 \\
+\texttt{l18\_l19} 覆盖 & 仅本目录 \dirname{kem/}；勿改 stable Encrypt 同名 TU \\
+\bottomrule
+\end{longtable}
+
+\section{验证}
+\label{sec:verify}
+
+\begin{verbatim}
+cd examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+# 期望：[verify] PASS / K max=0；根无 stray dump
+# 拒绝（尽量）：KEM_DECAPS_REJECT=1 bash run.sh -r cpu -v Ascend910B4
+\end{verbatim}
+
+参考 tick（device 2026-07-24）：D $\approx$\textbf{286798} + E $\approx$\textbf{763663}。
+防挂死预算：本用例 \texttt{run.sh} 默认 $\ge$1800\,s（全链）；
+$\sim$15\,s 仅为 Tag5T NTT 定标，\textbf{不}套用。
+
+\section{写码衔接}
+\label{sec:next}
+
+本轮用户已授权 \texttt{\#交付\#}：先落地本 incubating（CPU+SIM 绿），再\textbf{整树复制}
+晋级 \dirname{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/}（v1）；
+\textbf{禁止}在 stable 空写首版。
+
+\end{document}

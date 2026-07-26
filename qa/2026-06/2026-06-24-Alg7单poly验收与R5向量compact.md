@@ -72,7 +72,7 @@
 | R5 向量 compact | **暂停**；建议独立探针 |
 | 母探针 16-poly | 未开工；可迁入本探针模块 |
 
-**验收命令**：见 [`STATUS.md`](../../ascendc-tests/pass-fix-f203-alg7-sample-ntt-k4/STATUS.md)
+**验收命令**：见 [`STATUS.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4/STATUS.md)
 
 ---
 
@@ -89,7 +89,7 @@
 
 ## 7. Alg.13 行 3–7 十六 poly 向量实现（追加）
 
-**探针**：`ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/`
+**探针**：`ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/`
 
 | 决策 | 结论 |
 |------|------|
@@ -127,7 +127,7 @@
 - **tick**：714150 ≈ 2×(733859/2) → SIM tick 更像 **各核周期累加**，不是整 launch 关键路径；故 −2.7% **不代表**并行无效。
 - **墙钟**：333s→334s 无下降 → WSL `SIM_DIRECT=1` CAModel **未量出**并行加速（长任务 + 仿真开销）；**不能**推断真机无收益，也**不能**当已验证快一倍。
 - **对比 504B**：504 减 squeeze → tick **与**墙钟均降；2 AIV 只分片 → 收益应看 makespan，本次 SIM 两指标均未体现 → **保持可选非默认**。
-- **详表**：[`INTEGRATION_PLAN` §5.1](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/INTEGRATION_PLAN.md)；tick≠墙钟见 [`F203-2s1e-NTT内积UB融合技术总结.md`](../../docs/notes/F203-2s1e-NTT内积UB融合技术总结.md)。
+- **详表**：[`INTEGRATION_PLAN` §5.1](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/INTEGRATION_PLAN.md)；tick≠墙钟见 [`F203-2s1e-NTT内积UB融合技术总结.md`](../../docs/notes/F203-2s1e-NTT内积UB融合技术总结.md)。
 
 ### §7.3 504B XOF 对照（追加）
 
@@ -140,7 +140,7 @@
 | rej | 504 路径暂 **标量 rej**（168-pair 向量 interleave 待修） |
 | 对拍 | `SEED_D=20260619` 与 672 golden **bit-identical** |
 | 解读 | 单 poly 672→504 约 +13%；16 poly **−25%** → Keccak 占比更高 |
-| 默认 | 仍为 **672B** + vec rej（squeeze 策略冻结；504 为实验对照，见 [`INTEGRATION_PLAN` §5.1](../../ascendc-tests/pass-fix-f203-alg13-lines3-7-a-hat-k4/INTEGRATION_PLAN.md)） |
+| 默认 | 仍为 **672B** + vec rej（squeeze 策略冻结；504 为实验对照，见 [`INTEGRATION_PLAN` §5.1](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/INTEGRATION_PLAN.md)） |
 
 ---
 
@@ -162,4 +162,4 @@
 
 **ρ**：G3/G4 暂 Host `golden_rho` 作 `rho.bin`（Â 探针未 dump 设备 ρ）；G1 只读 GM 拼接。
 
-探针：[`INTEGRATION_PLAN`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/INTEGRATION_PLAN.md)、[`STATUS`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/STATUS.md)。
+探针：[`INTEGRATION_PLAN`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/INTEGRATION_PLAN.md)、[`STATUS`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/STATUS.md)。

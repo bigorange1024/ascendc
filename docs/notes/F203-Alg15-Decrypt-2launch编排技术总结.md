@@ -2,9 +2,9 @@
 
 **读者**：未参与本仓库开发的 AscendC 实现者 / Agent  
 **目的**：说明 Decrypt 全 device 链为何不能单 launch 融合 NTT+INTT，以及 **2 次 host launch** 的最小正确切分  
-**案例锚点**：[`../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/)（§附录）
+**案例锚点**：[`../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/)（§附录）
 
-> **2026-07-09 生产路径更新**：优化探针 [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/pass-fix-f203-alg15-pke-decrypt-device-k4/) 与 incubating [`exp-fips203-mlkem-pke-decrypt-k4`](../../examples/incubating/exp-fips203-mlkem-pke-decrypt-k4/) 已用 **单 kernel**（GATE 4/8 + softSync）跑通 SIM ~283k。本文保留 **2-launch 正确性切分**原理（correctness 探针仍用）；**新实现以 1-kernel 为准**。  
+> **2026-07-09 生产路径更新**：优化探针 [`pass-fix-f203-alg15-pke-decrypt-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg15-pke-decrypt-device-k4/) 与 incubating [`exp-fips203-mlkem-pke-decrypt-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) 已用 **单 kernel**（GATE 4/8 + softSync）跑通 SIM ~283k。本文保留 **2-launch 正确性切分**原理（correctness 探针仍用）；**新实现以 1-kernel 为准**。  
 > **生产 I/O**：`input/` 仅 `dk_pke`+`c`+`lut_*` → `output/m`；造 c 夹具不得进生产 input（见 qa §10.10）。
 
 ---
@@ -68,7 +68,7 @@ Launch 2 在 host 侧为**一次逻辑 launch**（prep 之后），内含 **2 �
 ## 4. 验证
 
 ```bash
-cd ../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4
+cd ../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4
 bash run.sh -r cpu -v Ascend910B4
 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```

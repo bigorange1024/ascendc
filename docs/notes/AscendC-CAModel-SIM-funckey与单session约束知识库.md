@@ -3,7 +3,7 @@
 **读者**：未参与本仓库开发的 AscendC + CAModel SIM 使用者 / Agent  
 **目的**：把「SIM 上的算子 `aclrtLaunchKernel` 返回 `507000` 但 NPU/CPU 都没事」从「玄学」拆成两个确定性的平台不变量，以便将来设计 SIM 工程时**第一时间**避免重蹈覆辙。  
 **讨论**：[`qa/2026-06/2026-06-30-funckey-507000本地独立验证.md`](../../qa/2026-06/2026-06-30-funckey-507000本地独立验证.md)（§1–§9 含错误尝试与受控实验）  
-**案例锚点**：[`../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（Alg.14 Encrypt at_r5 合并核重构，§6 附录）  
+**案例锚点**：[`../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/)（Alg.14 Encrypt at_r5 合并核重构，§6 附录）  
 **也适用于**：任何 SIM 上 `aclrtLaunchKernel` 返回 `507000 ACL_ERROR_RT_INTERNAL_ERROR` 而 CPU 标量孪生 PASS 的探针
 
 ---
@@ -279,7 +279,7 @@ aclrtResetDevice(0); aclFinalize();
 
 ### 6.4 实现效果（双模式）
 
-**SIM 测试通过声明**（2026-06-30 12:58 UTC+8）：探针 `../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`、命令 `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4`、退出码 0、`[SUCCESS] ... gate=G5 (sim) ENCRYPT_VERIFY=1`、`Total tick=43479`、`aclrtLaunchKernel` 返回 `507000` 次数 = 0。详 [`STATUS.md`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) §SIM 测试通过声明。
+**SIM 测试通过声明**（2026-06-30 12:58 UTC+8）：探针 `../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/`、命令 `ENCRYPT_VERIFY=1 bash run.sh -r sim -v Ascend910B4`、退出码 0、`[SUCCESS] ... gate=G5 (sim) ENCRYPT_VERIFY=1`、`Total tick=43479`、`aclrtLaunchKernel` 返回 `507000` 次数 = 0。详 [`STATUS.md`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/STATUS.md) §SIM 测试通过声明。
 
 | 项 | CPU | SIM | 来源 |
 |---|---|---|---|
@@ -333,7 +333,7 @@ aclrtResetDevice(0); aclFinalize();
 - [`docs/notes/ascendc-TQue与Pipe框架知识库.md`](ascendc-TQue与Pipe框架知识库.md)（TPipe/event）
 - [`docs/engineering/用例自包含与设备全链约束.md`](../engineering/用例自包含与设备全链约束.md)
 - [`.cursor/rules/ascendc-development.mdc`](../../.cursor/rules/ascendc-development.mdc)「Agent 跑用例验收」段：CPU + SIM 双模式契约
-- 案例 [`../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)：`STATUS.md` / `INTEGRATION_PLAN.md` §2.3、§4
+- 案例 [`../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/)：`STATUS.md` / `INTEGRATION_PLAN.md` §2.3、§4
 
 ---
 

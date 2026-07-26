@@ -2,7 +2,7 @@
 
 **记录时间**：2026-06-15
 
-**探针**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](../../ascendc-tests/pass-fix-f203-2s1e-byteencode12-vec-k4/)（自 `fix-f203-2s1e-alg13-16171820-k4` fork，仅改 ByteEncode）
+**探针**：[`pass-fix-f203-2s1e-byteencode12-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-byteencode12-vec-k4/)（自 `fix-f203-2s1e-alg13-16171820-k4` fork，仅改 ByteEncode）
 
 ---
 
@@ -25,14 +25,14 @@
 | `BYTE_ENCODE12_SCATTER_VEC` | `1` | `0`=标量 `SetValue` 交织；`1`=pack_quad12 + `DataCopy` |
 
 ```bash
-cd ascendc-tests/pass-fix-f203-2s1e-byteencode12-vec-k4
+cd ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-byteencode12-vec-k4
 bash run.sh -r cpu -v Ascend910B4
 bash run.sh -r sim -v Ascend910B4
 # 对照标量交织：
 BYTE_ENCODE12_SCATTER_VEC=0 bash run.sh -r sim -v Ascend910B4
 ```
 
-方案细节：[BYTE_ENCODE12_VEC.md](../../ascendc-tests/pass-fix-f203-2s1e-byteencode12-vec-k4/BYTE_ENCODE12_VEC.md)
+方案细节：[BYTE_ENCODE12_VEC.md](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-byteencode12-vec-k4/BYTE_ENCODE12_VEC.md)
 
 ---
 
@@ -118,7 +118,7 @@ pair 0..3 @ bytes 0..11:
 
 ## 7. 索引与备份
 
-- 探针 STATUS：[STATUS.md](../../ascendc-tests/pass-fix-f203-2s1e-byteencode12-vec-k4/STATUS.md)
+- 探针 STATUS：[STATUS.md](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-2s1e-byteencode12-vec-k4/STATUS.md)
 - 实现指南 §3 / §7.5 已刷新：[MLKEM-NTT-向量与标量实现指南.md](../../docs/notes/MLKEM-NTT-向量与标量实现指南.md)
 - 当日备份：`backup/v0.1_20260615193314/`（`bash backup-project.sh`）
 
@@ -126,7 +126,7 @@ pair 0..3 @ bytes 0..11:
 
 ## 8. 行 18 basemul spike（同日晚间，`fix-f203-2s1e-basemul-vec-k4` → **2026-06-16 冻结**）
 
-> ⛔ 已迁入 [`frozen/frozen-fix-f203-2s1e-basemul-vec-k4`](../../ascendc-tests/frozen/frozen-fix-f203-2s1e-basemul-vec-k4/)。继任：[`pass-fix-f203-alg11-12-multiplyntts-k4`](../../ascendc-tests/pass-fix-f203-alg11-12-multiplyntts-k4/)。
+> ⛔ 已迁入 [`frozen/frozen-fix-f203-2s1e-basemul-vec-k4`](../../ascendc-tests/frozen/frozen-fix-f203-2s1e-basemul-vec-k4/)。继任：[`pass-fix-f203-alg11-12-multiplyntts-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-multiplyntts-k4/)。
 
 | 变体 | CPU | SIM | 说明 |
 |------|-----|-----|------|

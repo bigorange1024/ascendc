@@ -2999,7 +2999,7 @@ $\texttt{interface}$ 与 $\texttt{forbid}$ 直接截取自约束库 $S$，而合
   \texttt{interface} &
   与 stable PKE KeyGen 交付 I/O 一致；NTT LUT 静态约定；设备侧布局与后续 KEM 尾拼兼容的那部分写清 \\
   \texttt{cert} &
-  \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/}；CPU+SIM 对拍；STATUS / 交付纪要作版本锚点 \\
+  \texttt{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/}；CPU+SIM 对拍；STATUS / 交付纪要作版本锚点 \\
   \texttt{forbid} &
   不得把 liboqs C 源码当作 AscendC 实现规格；不得从 \texttt{frozen/} 抄实现 \\
   \texttt{repo} & 上述 stable 目录（及对应 baseline-registry 条目，若有） \\
@@ -3631,21 +3631,21 @@ $\mathsf{compose}$（接缝）、$\mathsf{forbidden}$（禁止）。
   角色 & 路径 / 文书 \\
   \midrule
   KEM KeyGen 交付 &
-  \texttt{examples/stable/stable-fips203-mlkem-kem-keygen-k4/} \\
+  \texttt{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/} \\
   KeyGen 行为基线 &
-  \texttt{ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/} \\
+  \texttt{ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/} \\
   KeyGen registry &
   \texttt{docs/specs/fips203-mlkem1024-kem-keygen-baseline-registry.md} \\
   PKE KeyGen（先决） &
-  \texttt{examples/stable/stable-fips203-mlkem-pke-keygen-k4/} \\
+  \texttt{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/} \\
   KEM Encaps 交付 &
-  \texttt{examples/stable/stable-fips203-mlkem-kem-encaps-k4/} \\
+  \texttt{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/} \\
   Encaps 行为基线 &
-  \texttt{ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/} \\
+  \texttt{ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/} \\
   Encaps registry &
   \texttt{docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md} \\
   PKE Encrypt（先决） &
-  \texttt{examples/stable/stable-fips203-mlkem-pke-encrypt-k4/} \\
+  \texttt{examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/} \\
   对照标本（禁抄） &
   \texttt{ascendc-tests/fix-f203-alg19-kem-keygen-correctness-k4/}；
   \texttt{fix-f203-alg20-kem-encaps-correctness-k4/} \\

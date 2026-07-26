@@ -6,9 +6,9 @@
 
 | 阶段 | 代码位置 | 说明 |
 |------|----------|------|
-| **预研** | `examples/incubating/exp-<名>/` | 方案未定时的试验代码**只写这里** |
-| **定型** | `examples/stable/stable-<名>-vN/` | 从 `exp-*` **复制**晋级；修订用新版本号 |
-| **功能探针** | `ascendc-tests/<名>/` | 平台验证（含 `add_custom` 冒烟）；**无** customspec、**不**晋级 stable |
+| **预研** | `examples/incubating/ml-kem/ml-kem-*/exp-<名>/` 等 | 方案未定时的试验代码**只写 incubating**；ML-KEM 按参数组分子目录 |
+| **定型** | `examples/stable/ml-kem/ml-kem-*/stable-<名>/` 等 | 从活跃 `exp-*` **复制**晋级；修订用新版本号 |
+| **功能探针** | `ascendc-tests/ml-kem/ml-kem-*/` 或本层玩具 | 平台验证（含 `add_custom` 冒烟）；**无** customspec、**不**晋级 stable |
 | **路线关闭** | `ascendc-tests/frozen/`、`examples/frozen/` | **否决判决**；可进目录读 `FROZEN.md`/INDEX；**禁止把代码/路线带出** |
 
 ## 研究型仓库：路线会大量关闭
@@ -45,10 +45,11 @@
 ├── library/                  # 外部资料 + shared/（探针共用代码与 vendored 设备原语）
 ├── thirdparty/               # 外部依赖（不进 Git；见 docs/engineering/thirdparty-本地依赖.md）
 │                             # 换机：bash scripts/clone-thirdparty.sh（默认 build liboqs）
-├── ascendc-tests/            # 平台功能探针（无 exp- 前缀；见 INDEX.md）
+├── ascendc-tests/            # 平台功能探针（见 INDEX.md）
+│   └── ml-kem/ml-kem-1024/   # ML-KEM-1024 活跃探针（frozen 仍在 frozen/）
 ├── examples/
-│   ├── incubating/exp-*/     # 研究中
-│   └── stable/stable-*/      # 定型
+│   ├── incubating/ml-kem/ml-kem-1024/exp-*/   # 研究中（按参数组）
+│   └── stable/ml-kem/ml-kem-1024/stable-*/    # 定型（按参数组）
 ├── src/  include/  Makefile  # 普通 C（唯一 main：src/main.c）
 ├── scripts/                  # env.sh、verify-cann.sh、clone-thirdparty.sh、roundtrip_*
 
@@ -76,16 +77,16 @@
 | 安装路径 | `~/Ascend/cann` → `~/Ascend/cann-9.0.0` |
 | 驱动 | 未安装（WSL 无 NPU，正常） |
 | 验证 | `verify-cann.sh` 已通过 |
-| KeyGen 交付 | [`stable-fips203-mlkem-pke-keygen-k4`](examples/stable/stable-fips203-mlkem-pke-keygen-k4/) **CPU/SIM/KAT ✓**（SIM **542393**）；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/) |
-| Encrypt 交付 | [`stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) **SIM 主参考** tick **627590** · CPU 辅助 · KAT×10+1 / roundtrip×10+1 ✓；[交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) |
-| Decrypt 交付 | [`stable-fips203-mlkem-pke-decrypt-k4`](examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) **CPU/SIM/KAT ✓**（SIM **283290** tick）；KAT×10+1 / roundtrip×10+1 ✓ |
-| KEM KeyGen | **定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`；SIM ~707k）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-keygen-k4/)；行为基线探针 [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4/)（~713k） |
-| KEM Encaps | **定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；SIM **721119**）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)；行为基线 [`pass-fix-…-encaps-device-k4`](ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)（**721010**） |
-| KEM Decaps（交付） | **定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（`#交付#` + **T19i SIM 3**；tick **1050620**）；预研副本 [`exp-…`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/)；基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/)；`scripts/` 默认 |
-| KEM Decaps（CT 专题） | [`stable-…-decaps-ct-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4/) · [`exp-…-decaps-ct-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-ct-k4/) · [`pass-fix-…-decaps-device-ct-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（`research/formal-lang-dag`；第7章 CT / 五指标；**非** scripts 默认） |
+| KeyGen 交付 | [`stable-fips203-mlkem-pke-keygen-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/) **CPU/SIM/KAT ✓**（SIM **542393**）；探针 [`pass-fix-f203-alg13-device-keygen-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/) |
+| Encrypt 交付 | [`stable-fips203-mlkem-pke-encrypt-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/) **SIM 主参考** tick **627590** · CPU 辅助 · KAT×10+1 / roundtrip×10+1 ✓；[交付口径](docs/notes/F203-Alg14-Encrypt-交付口径-CPU辅助与SIM主参考.md) |
+| Decrypt 交付 | [`stable-fips203-mlkem-pke-decrypt-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/) **CPU/SIM/KAT ✓**（SIM **283290** tick）；KAT×10+1 / roundtrip×10+1 ✓ |
+| KEM KeyGen | **定型** [`stable-fips203-mlkem-kem-keygen-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/)（2026-07-14 `#交付#`；SIM ~707k）；预研副本 [`exp-…`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-keygen-k4/)；行为基线探针 [`pass-fix-f203-alg19-kem-keygen-device-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/)（~713k） |
+| KEM Encaps | **定型** [`stable-fips203-mlkem-kem-encaps-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`；SIM **721119**）；预研副本 [`exp-…`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-encaps-k4/)；行为基线 [`pass-fix-…-encaps-device-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/)（**721010**） |
+| KEM Decaps（交付） | **定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/)（`#交付#` + **T19i SIM 3**；tick **1050620**）；预研副本 [`exp-…`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/)；基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/)；`scripts/` 默认 |
+| KEM Decaps（CT 专题） | [`stable-…-decaps-ct-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/) · [`exp-…-decaps-ct-k4`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4/) · [`pass-fix-…-decaps-device-ct-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（`research/formal-lang-dag`；第7章 CT / 五指标；**非** scripts 默认） |
 | Host 随机 | 已正确性 PKE/KEM：**默认** [`fips203_host_rng`](library/shared/fips203_host_rng/) SHA3/SHAKE 派生；`SEED_D=` 定点可覆盖 |
 | KEM 三分项 | **Alg.19/20/21** device+stable **均已绿**（交付 Decaps **无 `-ct`**）；办公室↔liboqs：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（urandom→同字节喂 AscendC；**CPU+SIM 全绿**）；correctness×3 **已冻结**；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) · [`qa/TODO.md`](qa/TODO.md) |
-| 统一整数 Compress/Decompress | exp [`exp-fips203-compress-unified-int-vec-k4`](examples/incubating/exp-fips203-compress-unified-int-vec-k4/) · [`exp-fips203-decompress-unified-int-vec-k4`](examples/incubating/exp-fips203-decompress-unified-int-vec-k4/)（customspec）；生产路径已迁入 stable PKE Encrypt/Decrypt；**PKE round-trip PASS** |
+| 统一整数 Compress/Decompress | exp [`exp-fips203-compress-unified-int-vec-k4`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-compress-unified-int-vec-k4/) · [`exp-fips203-decompress-unified-int-vec-k4`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-decompress-unified-int-vec-k4/)（customspec）；生产路径已迁入 stable PKE Encrypt/Decrypt；**PKE round-trip PASS** |
 | 官方样例 | `samples/` ← [gitee.com/ascend/samples](https://gitee.com/ascend/samples) `master`（`6511a5f`，2026-06 拉取）；AscendC Cube+Vector 融合参考：`samples/operator/ascendc/tutorials/MatmulLeakyReluCustomSample/` |
 
 ## 普通 C 演示（根目录）

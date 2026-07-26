@@ -2,9 +2,9 @@
 
 **读者**：未参与本仓库开发的实现者 / Agent  
 **目的**：说明 Encrypt 线性段 **内积产出 û 如何无 GM 往返地喂给 INTT Stage1**，以及 SIM 上标量写/MTE 读的可见性陷阱  
-**案例锚点**：`ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`（2026-07-07 晋级 `pass-`；§6 附录）  
+**案例锚点**：`ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`（2026-07-07 晋级 `pass-`；§6 附录）  
 **讨论**：[`qa/2026-07/2026-07-06`](../../qa/2026-07/2026-07-06-Encrypt-compute单launch与UB驻留.md) · [`qa/2026-07/2026-07-07`](../../qa/2026-07/2026-07-07-CPU-SIM-launch分叉约定.md)  
-**实现方案**：探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) §8  
+**实现方案**：探针 [`INTEGRATION_PLAN.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/INTEGRATION_PLAN.md) §8  
 **上游原理**：[`F203-2s1e-NTT内积UB融合技术总结.md`](F203-2s1e-NTT内积UB融合技术总结.md)
 
 ---

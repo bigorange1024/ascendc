@@ -1,7 +1,7 @@
 # F203 Alg.8 CBD η=2 — 性能优化技术总结
 
 **读者**：KeyGen prep 中 PRF+CBD 段、或 `pass-fix-f203-alg8-cbd-eta2-k4` 探针维护者  
-**案例锚点**：[`ascendc-tests/pass-fix-f203-alg8-cbd-eta2-k4/`](../../ascendc-tests/pass-fix-f203-alg8-cbd-eta2-k4/)（2026-06-28 **`pass-` 终态**；CPU+SIM PASS；P2 **18048** / P1b **33311** tick）  
+**案例锚点**：[`ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg8-cbd-eta2-k4/`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg8-cbd-eta2-k4/)（2026-06-28 **`pass-` 终态**；CPU+SIM PASS；P2 **18048** / P1b **33311** tick）  
 **讨论**：[`qa/2026-06/2026-06-22-Alg8-CBD-eta2-性能优化讨论.md`](../../qa/2026-06/2026-06-22-Alg8-CBD-eta2-性能优化讨论.md) · [`2026-06-25 KeyGen prep 路线图`](../../qa/2026-06/2026-06-25-KeyGen-prep优化路线图.md) §Opt-5  
 **Pipe 同步**：[`F203-KeyGen-prep-Pipe细同步技术总结.md`](F203-KeyGen-prep-Pipe细同步技术总结.md)
 
@@ -22,7 +22,7 @@
 ## 2. 与 KeyGen prep 关系
 
 - 生产 prep 使用 `prep/alg8/f203_cbd_eta2_ub_io.hpp`（vendored 于 exp / 探针）。  
-- Opt-5 **Pipe 细同步**在 KeyGen 探针 [`PIPE_SYNC_EVAL.md`](../../ascendc-tests/pass-fix-f203-alg13-device-keygen-k4/PIPE_SYNC_EVAL.md) 逐轮验证；未证前勿删 barrier。
+- Opt-5 **Pipe 细同步**在 KeyGen 探针 [`PIPE_SYNC_EVAL.md`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/PIPE_SYNC_EVAL.md) 逐轮验证；未证前勿删 barrier。
 
 ---
 

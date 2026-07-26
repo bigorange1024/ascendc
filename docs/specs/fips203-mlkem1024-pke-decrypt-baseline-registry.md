@@ -1,7 +1,7 @@
 # FIPS 203 ML-KEM-1024 PKE Decrypt — baseline-registry
 
 **主题**：Alg.15 K-PKE.Decrypt（k=4）交付侧 golden / KAT 计算块登记  
-**适用**：交付以 **`examples/stable/stable-fips203-mlkem-pke-decrypt-k4`** 为准（2026-07-10 自 incubating 复制晋级）；预研副本 `examples/incubating/exp-fips203-mlkem-pke-decrypt-k4` 保留。  
+**适用**：交付以 **`examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4`** 为准（2026-07-10 自 incubating 复制晋级）；预研副本 `examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4` 保留。  
 **补登记**：2026-07-20（历史晋级时缺表；按现网 `scripts/gen_data.py` 生产契约回溯）。  
 **规则**：生成 `input/` / `golden_*` 的计算内核**仅**可调用下表已验证来源；缺项须停下补登记。
 

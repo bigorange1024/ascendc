@@ -11,7 +11,7 @@
 
 细则见 [.cursor/rules/ascendc-development.mdc](../../.cursor/rules/ascendc-development.mdc) §`**/frozen/`**；研究型仓库说明见 [研究路线与frozen治理.md](../../docs/notes/研究路线与frozen治理.md)。examples 侧 frozen 见 [examples/frozen/INDEX.md](../../examples/frozen/INDEX.md)。
 
-**活跃 MLKEM 探针**：向量全链路 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)；预研 [`exp-k4`](../../examples/incubating/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) — 见 [MLKEM-NTT-向量与标量实现指南.md](../../docs/notes/MLKEM-NTT-向量与标量实现指南.md)。标量对照组已归档：[`frozen-fix-f203-2s1e-alg13-16171820-k4`](frozen-fix-f203-2s1e-alg13-16171820-k4/)。
+**活跃 MLKEM 探针**：向量全链路 [`pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2`](../ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)；预研 [`exp-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-alg13-16171820-2s1e-k4/) — 见 [MLKEM-NTT-向量与标量实现指南.md](../../docs/notes/MLKEM-NTT-向量与标量实现指南.md)。标量对照组已归档：[`frozen-fix-f203-2s1e-alg13-16171820-k4`](frozen-fix-f203-2s1e-alg13-16171820-k4/)。
 
 
 
@@ -19,41 +19,41 @@
 
 | 目录 | 原角色 | 关闭原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg19-kem-keygen-correctness-k4/](frozen-fix-f203-alg19-kem-keygen-correctness-k4/) | Alg.19 KeyGen correctness / oracle | **正确性路标任务完成**；stable + pass-fix device 已齐；禁再作实现参考 | [`stable-…-kem-keygen-k4`](../../examples/stable/stable-fips203-mlkem-kem-keygen-k4/) · [`pass-fix-…-keygen-device-k4`](../pass-fix-f203-alg19-kem-keygen-device-k4/) |
-| [frozen-fix-f203-alg20-kem-encaps-correctness-k4/](frozen-fix-f203-alg20-kem-encaps-correctness-k4/) | Alg.20 Encaps correctness / oracle | 同上 | [`stable-…-kem-encaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-encaps-k4/) · [`pass-fix-…-encaps-device-k4`](../pass-fix-f203-alg20-kem-encaps-device-k4/) |
-| [frozen-fix-f203-alg21-kem-decaps-correctness-k4/](frozen-fix-f203-alg21-kem-decaps-correctness-k4/) | Alg.21 Decaps correctness / oracle | 同上 | [`stable-…-kem-decaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-decaps-k4/) · [`pass-fix-…-decaps-device-k4`](../pass-fix-f203-alg21-kem-decaps-device-k4/) |
+| [frozen-fix-f203-alg19-kem-keygen-correctness-k4/](frozen-fix-f203-alg19-kem-keygen-correctness-k4/) | Alg.19 KeyGen correctness / oracle | **正确性路标任务完成**；stable + pass-fix device 已齐；禁再作实现参考 | [`stable-…-kem-keygen-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/) · [`pass-fix-…-keygen-device-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4/) |
+| [frozen-fix-f203-alg20-kem-encaps-correctness-k4/](frozen-fix-f203-alg20-kem-encaps-correctness-k4/) | Alg.20 Encaps correctness / oracle | 同上 | [`stable-…-kem-encaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/) · [`pass-fix-…-encaps-device-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/) |
+| [frozen-fix-f203-alg21-kem-decaps-correctness-k4/](frozen-fix-f203-alg21-kem-decaps-correctness-k4/) | Alg.21 Decaps correctness / oracle | 同上 | [`stable-…-kem-decaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/) · [`pass-fix-…-decaps-device-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) |
 
 ## 2026-07-10 — PKE Encrypt/Decrypt 正确性探针归档（任务完成）
 
 | 目录 | 原角色 | 关闭原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg14-pke-encrypt-correctness-k4/](frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) | Alg.14 Encrypt G5 正确性拼装 | **正确性任务完成**；交付已晋级 stable | 交付：[`stable-…-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/) |
-| [frozen-fix-f203-alg15-pke-decrypt-correctness-k4/](frozen-fix-f203-alg15-pke-decrypt-correctness-k4/) | Alg.15 Decrypt G4（2 launch）正确性 | **正确性任务完成**；交付已晋级 stable（1-kernel） | 交付：[`stable-…-decrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-decrypt-k4/) |
+| [frozen-fix-f203-alg14-pke-encrypt-correctness-k4/](frozen-fix-f203-alg14-pke-encrypt-correctness-k4/) | Alg.14 Encrypt G5 正确性拼装 | **正确性任务完成**；交付已晋级 stable | 交付：[`stable-…-encrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/) |
+| [frozen-fix-f203-alg15-pke-decrypt-correctness-k4/](frozen-fix-f203-alg15-pke-decrypt-correctness-k4/) | Alg.15 Decrypt G4（2 launch）正确性 | **正确性任务完成**；交付已晋级 stable（1-kernel） | 交付：[`stable-…-decrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/) |
 
 ## 2026-06-30 — Encrypt 家里分叉探针关闭（办公室未复验）
 
 | 目录 | 原角色 | 关闭原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg14-encrypt-2launch-k4/](frozen-fix-f203-alg14-encrypt-2launch-k4/) | 家里 agent 单 session 重建 Encrypt 整树（commit `27cc93b`） | **办公室未复验** PASS；与原探针分叉；R1/R2 结论已在原探针 G5 落地 | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/stable-fips203-mlkem-pke-encrypt-k4/)（原 G5 正确性探针已同步冻结） |
+| [frozen-fix-f203-alg14-encrypt-2launch-k4/](frozen-fix-f203-alg14-encrypt-2launch-k4/) | 家里 agent 单 session 重建 Encrypt 整树（commit `27cc93b`） | **办公室未复验** PASS；与原探针分叉；R1/R2 结论已在原探针 G5 落地 | [`stable-fips203-mlkem-pke-encrypt-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/)（原 G5 正确性探针已同步冻结） |
 
 ## 2026-06-29 — KeyGen 串行 Â pass 归档（dual-aiv 晋级）
 
 | 目录 | 原角色 | 归档原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg13-device-keygen-k4/](frozen-fix-f203-alg13-device-keygen-k4/) | Alg.13 全链 KeyGen（block0 串行 Â workaround） | SIM **≈886801**；非终态最优 | [`pass-fix-f203-alg13-device-keygen-k4`](../pass-fix-f203-alg13-device-keygen-k4/) · [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/exp-fips203-mlkem-pke-keygen-k4/) |
+| [frozen-fix-f203-alg13-device-keygen-k4/](frozen-fix-f203-alg13-device-keygen-k4/) | Alg.13 全链 KeyGen（block0 串行 Â workaround） | SIM **≈886801**；非终态最优 | [`pass-fix-f203-alg13-device-keygen-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg13-device-keygen-k4/) · [`exp-fips203-mlkem-pke-keygen-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/) |
 
 ## 2026-06-28 — Phase A 全链 benchmark 归档（任务完成）
 
 | 目录 | 原角色 | 归档原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg13-device-presample-a-hat-k4/](frozen-fix-f203-alg13-device-presample-a-hat-k4/) | G+A+P+C 单 launch Phase A（行 3–7+8–15） | tick 实验完成；集成路径已拆分 | [`pass-fix-f203-alg7-sample-ntt-k4`](../pass-fix-f203-alg7-sample-ntt-k4/) · [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../pass-fix-f203-alg13-lines3-7-a-hat-k4/) · [`pass-fix-f203-alg13-lines8-15-se-k4`](../pass-fix-f203-alg13-lines8-15-se-k4/) |
+| [frozen-fix-f203-alg13-device-presample-a-hat-k4/](frozen-fix-f203-alg13-device-presample-a-hat-k4/) | G+A+P+C 单 launch Phase A（行 3–7+8–15） | tick 实验完成；集成路径已拆分 | [`pass-fix-f203-alg7-sample-ntt-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg7-sample-ntt-k4/) · [`pass-fix-f203-alg13-lines3-7-a-hat-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines3-7-a-hat-k4/) · [`pass-fix-f203-alg13-lines8-15-se-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines8-15-se-k4/) |
 
 ## 2026-06-26 — Alg.13 标量正确性探针（任务完成归档）
 
 | 目录 | 原角色 | 冻结原因（摘要） | 继任 |
 |------|--------|------------------|------|
-| [frozen-fix-f203-alg13-se-device-scalar-k4/](frozen-fix-f203-alg13-se-device-scalar-k4/) | 设备行 8–15 标量 `SEED_D`→`src` | 阶段一a golden PASS；presample V3 已接班 | [`pass-fix-f203-alg13-lines8-15-se-k4`](../pass-fix-f203-alg13-lines8-15-se-k4/) |
-| [frozen-fix-f203-alg13-host-scalar-fullchain-k4/](frozen-fix-f203-alg13-host-scalar-fullchain-k4/) | Host 行 8–20 标量全链 golden | 正确性验证完成；golden 胶水迁 `library/shared` | [`golden_se_sampling.py`](../../library/shared/fips203_se_sample/golden_se_sampling.py)、[`vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) |
+| [frozen-fix-f203-alg13-se-device-scalar-k4/](frozen-fix-f203-alg13-se-device-scalar-k4/) | 设备行 8–15 标量 `SEED_D`→`src` | 阶段一a golden PASS；presample V3 已接班 | [`pass-fix-f203-alg13-lines8-15-se-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg13-lines8-15-se-k4/) |
+| [frozen-fix-f203-alg13-host-scalar-fullchain-k4/](frozen-fix-f203-alg13-host-scalar-fullchain-k4/) | Host 行 8–20 标量全链 golden | 正确性验证完成；golden 胶水迁 `library/shared` | [`golden_se_sampling.py`](../../library/shared/fips203_se_sample/golden_se_sampling.py)、[`vec-k4-v2`](../ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/) |
 
 ## 2026-06-19 — 块紧凑 S0 路线否决
 
@@ -61,7 +61,7 @@
 |------|--------|------------------|
 | [frozen-fix-merged-kyber-ntt256-limb6-poly8-block-s123/](frozen-fix-merged-kyber-ntt256-limb6-poly8-block-s123/) | merged_kyber 块紧凑 poly8 全链路 | **A2 1:2** Stage3 须 GM；Gather 行 `p`/`8+p` 分散；ntt_study 1:1 无差别 **不可外推** |
 
-examples 侧同期否决：[`frozen-exp-mlkem-sepolyvec8-ntt-k4-block`](../../examples/frozen/frozen-exp-mlkem-sepolyvec8-ntt-k4-block/)。**8-poly 紧凑向量终态**：[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)；历史 exp [`exp-sepolyvec8-ntt-k8`](../../examples/incubating/exp-sepolyvec8-ntt-k8/)；全链路 [`vec-k4-v2`](../pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)。详见各目录 `FROZEN.md`。
+examples 侧同期否决：[`frozen-exp-mlkem-sepolyvec8-ntt-k4-block`](../../examples/frozen/frozen-exp-mlkem-sepolyvec8-ntt-k4-block/)。**8-poly 紧凑向量终态**：[`pass-fix-f203-stage123-ntt-intt-polyvec8-vec`](../ml-kem/ml-kem-1024/pass-fix-f203-stage123-ntt-intt-polyvec8-vec/)；历史 exp [`exp-sepolyvec8-ntt-k8`](../../examples/incubating/exp-sepolyvec8-ntt-k8/)；全链路 [`vec-k4-v2`](../ml-kem/ml-kem-1024/pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2/)。详见各目录 `FROZEN.md`。
 
 ---
 
@@ -95,7 +95,7 @@ examples 侧同期否决：[`frozen-exp-mlkem-sepolyvec8-ntt-k4-block`](../../ex
 
 | 目录 | 原角色 | 冻结原因（摘要） |
 |------|--------|------------------|
-| [frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/](frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/) | 2×2×1 内积二期 `j→half→p` | **SIM 无收益**（~23.2k vs 一期打平）；复杂度高；4×4×1 未验证；由 [`pass-fix-f203-alg11-12-innerproduct-k4`](../pass-fix-f203-alg11-12-innerproduct-k4/) **一期全 poly** 取代 |
+| [frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/](frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/) | 2×2×1 内积二期 `j→half→p` | **SIM 无收益**（~23.2k vs 一期打平）；复杂度高；4×4×1 未验证；由 [`pass-fix-f203-alg11-12-innerproduct-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-innerproduct-k4/) **一期全 poly** 取代 |
 
 详见 `FROZEN.md`；纪要 [qa/2026-06/2026-06-17-innerproduct-k4一二期路线讨论.md](../../qa/2026-06/2026-06-17-innerproduct-k4一二期路线讨论.md)。
 
@@ -105,7 +105,7 @@ examples 侧同期否决：[`frozen-exp-mlkem-sepolyvec8-ntt-k4-block`](../../ex
 
 | 目录 | 原角色 | 冻结原因（摘要） |
 |------|--------|------------------|
-| [frozen-fix-f203-2s1e-basemul-vec-k4/](frozen-fix-f203-2s1e-basemul-vec-k4/) | 2s1e 行 18 basemul B1/B2 | SIM **慢于标量**；混合 Barrett；无 `MEM_OPS=1`；由 [`pass-fix-f203-alg11-12-multiplyntts-k4`](../pass-fix-f203-alg11-12-multiplyntts-k4/) 取代 |
+| [frozen-fix-f203-2s1e-basemul-vec-k4/](frozen-fix-f203-2s1e-basemul-vec-k4/) | 2s1e 行 18 basemul B1/B2 | SIM **慢于标量**；混合 Barrett；无 `MEM_OPS=1`；由 [`pass-fix-f203-alg11-12-multiplyntts-k4`](../ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-multiplyntts-k4/) 取代 |
 
 详见 `FROZEN.md`。
 

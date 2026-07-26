@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-KEYGEN_DIR = Path(os.environ.get("KEYGEN_DIR", REPO_ROOT / "ascendc-tests/pass-fix-f203-alg19-kem-keygen-device-k4"))
+KEYGEN_DIR = Path(os.environ.get("KEYGEN_DIR", REPO_ROOT / "ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg19-kem-keygen-device-k4"))
 REF_BIN = REPO_ROOT / "scripts/liboqs_kem_ref"
 BUILD_REF = REPO_ROOT / "scripts/build_liboqs_kem_ref.sh"
 

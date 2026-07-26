@@ -2,7 +2,7 @@
 
 **记录时间**：2026-06-17
 
-**探针**：[`pass-fix-f203-alg11-12-innerproduct-k4`](../../ascendc-tests/pass-fix-f203-alg11-12-innerproduct-k4/)
+**探针**：[`pass-fix-f203-alg11-12-innerproduct-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-innerproduct-k4/)
 
 **知识库**：[F203-innerproduct-k4-技术总结.md](../../docs/notes/F203-innerproduct-k4-技术总结.md)
 
@@ -161,7 +161,7 @@ INNERPRODUCT_HALF_BATCH=1 bash run.sh -r sim -v Ascend910B4
 ## 10. 关联链接
 
 - [FROZEN.md](../../ascendc-tests/frozen/frozen-fix-f203-alg11-12-innerproduct-k4-halfbatch/FROZEN.md)
-- [STATUS.md](../../ascendc-tests/pass-fix-f203-alg11-12-innerproduct-k4/STATUS.md)
+- [STATUS.md](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg11-12-innerproduct-k4/STATUS.md)
 - [2026-06-16 Alg11/12 向量化纪要](2026-06-16-Alg11-12向量化与微优化A-B.md)
 - [2026-06-12 alg13 行18 TQue 纪要](2026-06-12-F203-alg13行18-TQue与模运算讨论.md)
 

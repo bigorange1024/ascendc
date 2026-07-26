@@ -1,9 +1,9 @@
 # F203 KEM Alg.20 Encaps — 设备全链技术总结
 
 **定稿性质**：原理优先（Alg.17 契约 + 设备布局），案例附录只作索引。  
-**交付锚点**：[`examples/stable/stable-fips203-mlkem-kem-encaps-k4`](../../examples/stable/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`）  
-**行为基线**：[`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/pass-fix-f203-alg20-kem-encaps-device-k4/)  
-**预研副本**：[`exp-fips203-mlkem-kem-encaps-k4`](../../examples/incubating/exp-fips203-mlkem-kem-encaps-k4/)  
+**交付锚点**：[`examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/)（2026-07-15 `#验收#`）  
+**行为基线**：[`pass-fix-f203-alg20-kem-encaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/)  
+**预研副本**：[`exp-fips203-mlkem-kem-encaps-k4`](../../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-encaps-k4/)  
 **登记表**：[`docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md`](../specs/fips203-mlkem1024-kem-encaps-baseline-registry.md)
 
 ---

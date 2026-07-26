@@ -1,7 +1,7 @@
 # FIPS 203 Compress_d / Decompress_d — AscendC 向量实现指南
 
 **读者**：后续 Encrypt/Decrypt pack、tail 探针抄码者  
-**探针**：[`pass-f203-compress-d-vec-k4`](../../ascendc-tests/pass-f203-compress-d-vec-k4/) · [`pass-f203-decompress-d-vec-k4`](../../ascendc-tests/pass-f203-decompress-d-vec-k4/)  
+**探针**：[`pass-f203-compress-d-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-compress-d-vec-k4/) · [`pass-f203-decompress-d-vec-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-f203-decompress-d-vec-k4/)  
 **定点契约**：[`F203-PKE-liboqs交叉验证与Compress定点技术总结.md`](F203-PKE-liboqs交叉验证与Compress定点技术总结.md)  
 **统一整数舍入（`2^37/q`、CT + 全 d 向量）**：[`F203-Compress-Decompress-统一整数舍入技术总结.md`](F203-Compress-Decompress-统一整数舍入技术总结.md)（含 **§8 业界对比**）
 
@@ -97,7 +97,7 @@ for d in 4 5 10 11; do F203_DECOMPRESS_D=$d bash run.sh -r cpu -v Ascend910B4; d
 
 ## 5. 与 tail pack / ByteEncode 的关系
 
-[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/)（及前身 tail-only 探针）已 vendored **d=5 Barrett + d=11 cast_div** 至 `compute/f203_tail_compress_byteencode.hpp`（**Compress 向量、`COMPRESS_D_VEC=1` 路径**；禁止跨探针 `#include`）。
+[`pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4/)（及前身 tail-only 探针）已 vendored **d=5 Barrett + d=11 cast_div** 至 `compute/f203_tail_compress_byteencode.hpp`（**Compress 向量、`COMPRESS_D_VEC=1` 路径**；禁止跨探针 `#include`）。
 
 **ByteEncode / ByteDecode 选型**（bit 重组 vs per-lane）见定稿：[`F203-ByteEncode-ByteDecode-d-向量与标量选型.md`](F203-ByteEncode-ByteDecode-d-向量与标量选型.md)。
 
