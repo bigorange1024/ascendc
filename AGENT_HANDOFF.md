@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-26（教材第7章补流程图与 A/B/C 对照图）
+> **最后刷新**：2026-07-26（教材第7章图修订：折线依赖 / 概念目录 / 跨泳道关系）
 
 ---
 
@@ -16,7 +16,7 @@
 | **Decaps 交付工程回灌** | 2026-07-25：`verify || exit $?` + 注释/`M_FILE` 文档；**未**改 `decaps_1session` |
 | **Decaps 交付树**（main；`scripts/` 默认） | device [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · incubating [`exp-…-kem-decaps-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) · stable [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i SIM 3**；tick **1050620**） |
 | **Decaps CT 树**（本专题；仅 `research/formal-lang-dag`） | device / exp / stable `*-decaps-*-ct-k4`（第7章 CT / 五指标；SIM `decaps_2session`）；合法 tick 已入 [`qa/active_sim_regress_summary.md`](qa/active_sim_regress_summary.md)（约 **1.05M**） |
-| **形式方法教材** | [`docs/research/`](docs/research/) 第6–7章；第7章 CT 实验引用 **`-ct`** 树 |
+| **形式方法教材** | [`docs/research/`](docs/research/) 第6–7章；第7章图：依赖正交折线、落地概念目录、A/B/C 跨泳道（禁抄/复用/共享终态） |
 | **Alg.19/20/21 correctness** | **已冻结** → `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`（只读 FROZEN.md；**禁翻源码**） |
 | **办公室回归** | [`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)：**无 `-ct`** stable 三件套；urandom→liboqs→同字节喂 AscendC；**CPU×1 + SIM×1** |
 | **五指标对照** | [`docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md`](docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md)（**`-ct`** 专题） |

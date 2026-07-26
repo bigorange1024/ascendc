@@ -3981,35 +3981,37 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 本任务\textbf{不再重写}那两条。
 
 画成图更清楚（图~\ref{fig:ch7-dep}）：只画\textbf{实现}要用的依赖——对拍用的 KeyGen/Encaps、禁止抄码等写在正文，不塞进这张图。
+箭头一律走折线，避免斜线交叉。
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  x=1.2cm, y=1.05cm,
+  x=1cm, y=0.95cm,
   n/.style={draw, rounded corners=2pt, align=center, font=\small,
-            minimum width=2.5cm, minimum height=0.78cm, fill=blue!6},
-  t/.style={n, fill=orange!16, minimum width=2.7cm},
+            minimum width=2.35cm, minimum height=0.85cm, fill=blue!6},
+  t/.style={n, fill=orange!16, minimum width=2.5cm},
   arr/.style={-{Stealth[length=2mm]}, thick}
 ]
-  \node[n] (dec) at (0,2.0) {Decrypt\\stable};
-  \node[n] (enc) at (4.2,2.0) {Encrypt\\stable};
-  \node[n] (kecc) at (8.4,2.0) {Keccak\\shared};
-
-  \node[t] (g) at (2.1,0.75) {$G(m'\Vert h)$};
-  \node[t] (fo) at (6.3,0.75) {设备 FO};
-  \node[t] (decaps) at (4.2,-0.55) {Decaps\\目标 $T$};
+  % 自左向右分层：已有模块 → 接缝 → 目标（正交折线，无斜穿）
+  \node[n] (dec) at (0,2.2) {Decrypt\\stable};
+  \node[n] (kecc) at (0,1.1) {Keccak\\shared};
+  \node[n] (enc) at (0,0.0) {Encrypt\\stable};
+  \node[t] (g) at (4.0,2.2) {$G(m'\Vert h)$};
+  \node[t] (fo) at (4.0,0.0) {设备 FO};
+  \node[t] (decaps) at (8.0,1.1) {Decaps\\目标 $T$};
 
   \draw[arr] (dec) -- (g);
-  \draw[arr] (kecc) -- (g);
   \draw[arr] (enc) -- (fo);
-  \draw[arr] (kecc) -- (fo);
-  \draw[arr] (g) -- (decaps);
-  \draw[arr] (fo) -- (decaps);
-  \draw[arr] (dec) -- (decaps);
-  \draw[arr] (enc) -- (decaps);
+  % Keccak 先水平再上下折入两条接缝
+  \draw (kecc.east) -- ++(0.55,0) coordinate (kfork);
+  \draw[arr] (kfork) |- (g.west);
+  \draw[arr] (kfork) |- (fo.west);
+  % 接缝折入目标北 / 南侧，两线不相交
+  \draw[arr] (g.east) -| (decaps.north);
+  \draw[arr] (fo.east) -| (decaps.south);
 
-  \node[font=\footnotesize, text=gray!55!black] at (4.2,-1.45) {
-    箭头：实现时的语义 / 接缝依赖（不含对拍材料、不含 Forbidden 文书）
+  \node[font=\footnotesize, text=gray!55!black] at (4.0,-1.05) {
+    从左到右：已有模块 $\to$ 接缝 $\to$ 目标；箭头只走正交折线
   };
 \end{tikzpicture}
 \caption{Decaps 实现依赖（写码前从目标反推；仅实现相关）}
@@ -4087,27 +4089,29 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  node distance=4mm and 5mm,
   box/.style={draw, rounded corners=2pt, align=center, font=\small,
-              minimum width=2.2cm, minimum height=0.9cm, fill=orange!12},
-  ok/.style={box, fill=green!12},
+              minimum width=2.35cm, minimum height=0.95cm, fill=orange!12},
+  ok/.style={box, fill=green!12, minimum width=2.6cm},
   arr/.style={-{Stealth[length=2mm]}, thick}
 ]
-  \node[box] (d) {① Phase-D\\Decrypt$\to m'$};
-  \node[box, right=of d] (g) {② 设备 $G$\\$\to K',r'$};
-  \node[box, right=of g] (e) {③ Phase-E\\Encrypt$\to c'$};
-  \node[box, right=of e] (fo) {④ FO\\选最终 $K$};
-  \node[ok, below=8mm of $(g)!0.5!(e)$] (acc) {合法路径\\$K$ 对拍};
-  \node[ok, right=of acc] (rej) {拒绝路径\\$K=J(z\Vert c)$};
+  \node[box] (d) at (0,1.4) {① Phase-D\\Decrypt$\to m'$};
+  \node[box] (g) at (3.0,1.4) {② 设备 $G$\\$\to K',r'$};
+  \node[box] (e) at (6.0,1.4) {③ Phase-E\\Encrypt$\to c'$};
+  \node[box] (fo) at (9.0,1.4) {④ FO\\选最终 $K$};
+  % 合法 / 拒绝对称分叉：先共用竖段，再左右折线，避免两根 |- 重叠
+  \node[ok] (acc) at (6.6,-0.35) {合法路径\\$K$ 对拍};
+  \node[ok] (rej) at (9.0,-0.35) {拒绝路径\\$K=J(z\Vert c)$};
   \draw[arr] (d) -- (g) -- (e) -- (fo);
-  \draw[arr] (fo) |- (acc);
-  \draw[arr] (fo) |- (rej);
+  \draw (fo.south) -- ++(0,-0.4) coordinate (fork);
+  \draw[arr] (fork) -| (acc.north);
+  \draw[arr] (fork) -| (rej.north);
 \end{tikzpicture}
-\caption{最小补洞顺序（B 线实际执行）}
+\caption{最小补洞顺序（B 线实际执行；末级分叉为合法 / 拒绝）}
 \label{fig:ch7-fill}
 \end{figure}
 
-图~\ref{fig:ch7-fill} 把上面四步画成流水线：前面补洞，后面分出合法 / 拒绝两条验收。
+图~\ref{fig:ch7-fill} 要传达的不是「四步串行」本身（正文枚举已够），
+而是\textbf{补洞之后必须同时覆盖合法与拒绝两条验收}——末级折线分叉才是这张图的信息。
 
 \subsection{文书和代码是怎么一步步落下来的}
 \label{sec:forward-docs-code}
@@ -4130,31 +4134,38 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 shared Keccak；FIPS~203 和 Alg.21 相关笔记。
 \textbf{明确不从哪来}：correctness / \texttt{frozen/} 里的正向实现。
 
+单线时间轴画成流程图没有额外信息；改用\textbf{概念分层目录}（图~\ref{fig:ch7-timeline}）
+表达「先表后码、再分层落地」——名字是示意，\textbf{不是}仓库真路径，也不锁定日后目录拼法。
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  x=1.85cm, y=1cm,
-  box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
-              minimum width=1.55cm, minimum height=0.85cm, fill=blue!8},
-  arr/.style={-{Stealth[length=2mm]}, thick}
+  x=1cm, y=0.62cm,
+  every node/.style={anchor=west, font=\small\ttfamily},
+  note/.style={anchor=west, font=\footnotesize\rmfamily, text=gray!50!black}
 ]
-  \node[box] (ct) at (0,0) {教材 CT\\先提交};
-  \node[box, fill=orange!12] (plan) at (1,0) {计划\\STATUS};
-  \node[box, fill=orange!14] (dev) at (2,0) {device\\探针};
-  \node[box, fill=orange!16] (exp) at (3,0) {exp\\incubating};
-  \node[box, fill=orange!18] (st) at (4,0) {stable\\texttt{-ct}};
-  \node[box, fill=green!12] (test) at (5,0) {压测\\+对照};
-  \foreach \a/\b in {ct/plan, plan/dev, dev/exp, exp/st, st/test}
-    \draw[arr] (\a) -- (\b);
-  \node[font=\scriptsize, text=gray!55!black, below=3mm of $(ct)!0.5!(test)$]
-    {时间向右：先表后码，再晋级，最后对照实验};
+  \node (r) at (0,0) {decaps-method-line/};
+  \node (ct) at (0.35,-1) {├── 01-closure-table/};
+  \node[note] at (5.6,-1) {← 最先落：闭包表 / 教材 CT};
+  \node (pl) at (0.35,-2) {├── 02-plan-docs/};
+  \node[note] at (5.6,-2) {计划与状态文书};
+  \node (dv) at (0.35,-3) {├── 03-device-probe/};
+  \node[note] at (5.6,-3) {设备探针（先于研究副本）};
+  \node (rs) at (0.35,-4) {├── 04-research-copy/};
+  \node[note] at (5.6,-4) {研究副本（incubating 角色）};
+  \node (rl) at (0.35,-5) {└── 05-release-copy/};
+  \node[note] at (5.6,-5) {定型副本（stable 角色）};
+  \node (bn) at (0.7,-6) {└── bench-compare/};
+  \node[note] at (5.6,-6) {压测与对照记录};
+  \node[font=\footnotesize\rmfamily, text=gray!55!black, anchor=west]
+    at (0,-7.15) {示意分层，非仓库真路径；只读先后与角色，不读目录字面量};
 \end{tikzpicture}
-\caption{B 线文书与代码落地时间线}
+\caption{B 线落地物的概念分层（示意目录，非真路径）}
 \label{fig:ch7-timeline}
 \end{figure}
 
-图~\ref{fig:ch7-timeline} 强调一件事：\textbf{闭包表提交早于源码}；晋级和压测在后面。
+图~\ref{fig:ch7-timeline} 要看的只有两件事：\textbf{闭包表层在源码层之上}；
+探针 → 研究副本 → 定型副本是角色分层，不是又一条可执行流水线。
 
 \subsection{测了什么，结果怎么读}
 \label{sec:forward-tests}
@@ -4205,51 +4216,68 @@ C 线是交付默认：T19i 之后 SIM 三个 launch，默认单 session，
 办公室脚本 \texttt{stable\_kem\_liboqs\_roundtrip} 也指它。
 B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G$ 进 prep，FO 挂在 pack / \texttt{l18\_l19} 尾。
 差在\textbf{怎么走过来}、SIM 默认怎么设、文书谁先谁后。
-用图比用长表更直观：先看三条路怎么走（图~\ref{fig:ch7-lanes}），
-再看相对 A 的五指标（图~\ref{fig:ch7-metrics}），最后看相对 C 的 tick（图~\ref{fig:ch7-tick}）。
+三条路若各自画成单线串行，图并不比文字多说什么；
+图~\ref{fig:ch7-lanes} 要传达的是\textbf{泳道之间的关系}：谁禁止抄谁、谁复用谁、谁共享终态、谁当默认回归。
+五指标与 tick 仍见图~\ref{fig:ch7-metrics}、图~\ref{fig:ch7-tick}。
 
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
   x=1cm, y=1cm,
-  lane/.style={draw, rounded corners=2pt, minimum width=12.6cm, minimum height=1.35cm},
+  lane/.style={draw, rounded corners=2pt, minimum width=12.4cm, minimum height=1.4cm},
   arr/.style={-{Stealth[length=1.8mm]}, thick},
   s/.style={draw, rounded corners=1pt, align=center, font=\scriptsize,
-            minimum height=0.55cm, inner sep=2pt}
+            minimum height=0.52cm, inner sep=2pt, minimum width=1.8cm},
+  xarr/.style={-{Stealth[length=1.8mm]}, thick, densely dashed},
+  lab/.style={font=\scriptsize, align=center, inner sep=1pt}
 ]
-  % A
-  \node[lane, fill=red!4, anchor=north west] (la) at (0,3.2) {};
-  \node[font=\small\bfseries, anchor=west] at (0.15,3.2-0.28) {A 探索};
-  \node[s, fill=red!12] (a1) at (2.2,2.55) {无路线乱搜};
-  \node[s, fill=red!12] (a2) at (5.0,2.55) {vendor 堆叠};
-  \node[s, fill=red!12] (a3) at (7.8,2.55) {假绿反复};
-  \node[s, fill=yellow!20] (a4) at (10.6,2.55) {结果可对拍};
-  \draw[arr] (a1) -- (a2) -- (a3) -- (a4);
+  % --- 三条泳道底 ---
+  \node[lane, fill=red!4, anchor=north west] at (0,3.3) {};
+  \node[lane, fill=green!4, anchor=north west] at (0,1.7) {};
+  \node[lane, fill=blue!4, anchor=north west] at (0,0.1) {};
+  \node[font=\small\bfseries, anchor=west] at (0.12,3.02) {A 探索};
+  \node[font=\small\bfseries, anchor=west] at (0.12,1.42) {B 方法};
+  \node[font=\small\bfseries, anchor=west] at (0.12,-0.18) {C 交付};
+
+  % A：特征阶段（不假装完整流水线）
+  \node[s, fill=red!12] (a1) at (3.0,2.55) {无路线乱搜};
+  \node[s, fill=red!14] (a2) at (6.2,2.55) {vendor 堆叠};
+  \node[s, fill=yellow!22] (a3) at (9.8,2.55) {终态可对拍};
+  \draw[arr] (a1) -- (a2) -- (a3);
 
   % B
-  \node[lane, fill=green!4, anchor=north west] (lb) at (0,1.6) {};
-  \node[font=\small\bfseries, anchor=west] at (0.15,1.6-0.28) {B 方法};
-  \node[s, fill=green!15] (b1) at (2.2,0.95) {先交 CT};
-  \node[s, fill=green!15] (b2) at (4.6,0.95) {禁抄 Forbidden};
-  \node[s, fill=green!15] (b3) at (7.2,0.95) {按序补洞};
-  \node[s, fill=green!18] (b4) at (10.0,0.95) {可晋级 stable};
+  \node[s, fill=green!14] (b1) at (2.8,0.95) {先交 CT};
+  \node[s, fill=green!16] (b2) at (5.4,0.95) {Forbidden};
+  \node[s, fill=green!16] (b3) at (8.0,0.95) {按序补洞};
+  \node[s, fill=green!20] (b4) at (10.6,0.95) {可晋级};
   \draw[arr] (b1) -- (b2) -- (b3) -- (b4);
 
   % C
-  \node[lane, fill=blue!4, anchor=north west] (lc) at (0,0) {};
-  \node[font=\small\bfseries, anchor=west] at (0.15,0-0.28) {C 交付};
-  \node[s, fill=blue!12] (c1) at (2.4,-0.65) {长期人工优化};
-  \node[s, fill=blue!12] (c2) at (5.4,-0.65) {T2 单 session};
-  \node[s, fill=blue!14] (c3) at (8.2,-0.65) {脚本默认};
-  \node[s, fill=blue!16] (c4) at (10.8,-0.65) {办公室回归};
+  \node[s, fill=blue!12] (c1) at (2.8,-0.65) {人工优化主线};
+  \node[s, fill=blue!14] (c2) at (5.6,-0.65) {PKE stable};
+  \node[s, fill=blue!16] (c3) at (8.2,-0.65) {单 session};
+  \node[s, fill=blue!20] (c4) at (10.7,-0.65) {默认回归};
   \draw[arr] (c1) -- (c2) -- (c3) -- (c4);
 
-  \node[font=\footnotesize, align=left] at (6.3,-1.55) {
-    A：过程乱、终态能对拍；B：过程可控、终态可交付；C：终态工程定标最强（默认回归）
+  % 跨泳道关系（本图真正要说的话；跨道也走折线，避免斜穿邻框）
+  \draw[xarr, red!70!black] (a2.south) -- (b2.north)
+    node[midway, lab, fill=white, inner sep=1.5pt, text=red!70!black] {禁抄};
+  \draw[xarr, blue!70!black] (c2.north) -- ++(0,0.28) -| (b3.south)
+    node[pos=0.35, lab, fill=white, inner sep=1.5pt, text=blue!70!black] {复用};
+  % B/C 终态汇合到共享锚点（放在泳道下方，避免超版心）
+  \node[draw, rounded corners=2pt, fill=yellow!18, font=\scriptsize, align=center,
+        minimum width=2.8cm, minimum height=0.65cm] (io) at (9.6,-1.75) {共享终态：I/O 对拍};
+  \draw[arr, green!50!black] (b4.south) -- ++(0,-0.35) -| ([xshift=-4mm]io.north);
+  \draw[arr, blue!60!black] (c4.south) -- ++(0,-0.2) -| ([xshift=4mm]io.north);
+  \node[lab, text=blue!60!black, anchor=west] at ([xshift=2mm]c4.east) {办公室入口};
+
+  \node[font=\footnotesize, align=left, anchor=west] at (0,-2.55) {
+    虚线 $=$ 跨泳道关系；实线 $=$ 泳道内阶段。\\
+    不要把 A/B/C 读成同一条优化曲线上的三个点。
   };
 \end{tikzpicture}
-\caption{三条路怎么走：过程对照（不是同一条优化曲线）}
+\caption{A/B/C 泳道对照：禁抄、复用与共享终态（不是三条互不相干的串行）}
 \label{fig:ch7-lanes}
 \end{figure}
 
@@ -4312,12 +4340,12 @@ B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G
 
 \paragraph{怎么读这些图}
 \begin{enumerate}
-  \item \textbf{正确性}：B 与 C 在约定验收上打平（图~\ref{fig:ch7-lanes} 终点都能对拍）。
+  \item \textbf{正确性}：图~\ref{fig:ch7-lanes} 里 B、C 都折入「共享终态：I/O 对拍」——
         方法论没有变出「更正确」的密码学结果。
   \item \textbf{性能}：图~\ref{fig:ch7-tick} 里两条棒几乎一样长——B 没有跑赢 C；
         双 session 相对单 session 是保底，不是优化胜利。
-  \item \textbf{过程}：图~\ref{fig:ch7-lanes} 与图~\ref{fig:ch7-metrics} 一起看——
-        相对 A，B 在「先交表、拦住乱抄、可交付」上拉开；相对 C，B 赢的是轨迹说得清。
+  \item \textbf{过程}：先看图~\ref{fig:ch7-lanes} 的跨泳道虚线（A$\to$B 禁抄、C$\to$B 复用），
+        再看图~\ref{fig:ch7-metrics} 的五指标——相对 A 拉开的是过程门禁，相对 C 赢的是轨迹说得清。
   \item \textbf{顺便修到的洞}：B 线上的假绿回灌给 C 有用（verify 必须失败退出），
         这是实验带给主线的好处，不是把核从 B 搬到 C。
 \end{enumerate}
@@ -4398,9 +4426,9 @@ B 是对照实验副本（\texttt{-ct}）。
 
 \begin{enumerate}
   \item 写码前交了 $\mathrm{CT}_{\mathrm{decaps}}$，按补洞顺序做完 B 线的 device，再晋级到带 \texttt{-ct} 的 incubating / stable
-        （总览见图~\ref{fig:ch7-overview}，时间线见图~\ref{fig:ch7-timeline}）。
+        （总览见图~\ref{fig:ch7-overview}，落地分层见图~\ref{fig:ch7-timeline}）。
   \item 该跑的测试都绿了；假绿三例说得清。
-  \item 相对 A：强成功（图~\ref{fig:ch7-lanes}、图~\ref{fig:ch7-metrics}）。
+  \item 相对 A：强成功（图~\ref{fig:ch7-lanes} 的禁抄/过程、图~\ref{fig:ch7-metrics}）。
         相对 C：对得一样齐，tick 不更短（图~\ref{fig:ch7-tick}），过程更好讲。
   \item 一句话：\textbf{先交表这道门有用；它代替不了人工优化主线，也堵不死验收脚本上的洞}。
 \end{enumerate}
