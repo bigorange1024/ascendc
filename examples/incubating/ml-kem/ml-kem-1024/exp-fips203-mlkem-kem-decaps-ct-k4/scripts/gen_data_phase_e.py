@@ -13,7 +13,7 @@ m' := encaps 所用 m（模拟正确 Decrypt）；设备 FO 应输出 encaps 的
 与 Encrypt 参考链相同：v = embed(INTT(tr̂), m) + e₂；供 CPU twin 在 pack 前对拍 v 系数。
 
 ## 路径解析（exp）
-REPO = ROOT.parents[2]；HOST_GOLDEN = 本目录 scripts/host_golden（vendored）。
+REPO = _ascendc_repo_root(ROOT)
 """
 from __future__ import annotations
 
@@ -23,10 +23,19 @@ import subprocess
 import sys
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO = ROOT.parents[2]
+REPO = _ascendc_repo_root(ROOT)
 HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))

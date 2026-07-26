@@ -4,7 +4,20 @@
 set -euo pipefail
 
 CASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REPO_ROOT="$(cd "${CASE_DIR}/../.." && pwd)"
+REPO_ROOT="$(
+  _d="${CASE_DIR}"
+  while [ "${_d}" != "/" ]; do
+    if [ -f "${_d}/AGENTS.md" ] && [ -d "${_d}/scripts" ]; then
+      printf '%s
+' "${_d}"; break
+    fi
+    _d="$(dirname "${_d}")"
+  done
+)"
+if [ -z "${REPO_ROOT}" ] || [ ! -d "${REPO_ROOT}/scripts" ]; then
+  echo "[ERROR] cannot locate repo root from ${CASE_DIR}" >&2
+  exit 1
+fi
 if [ ! -d "${REPO_ROOT}/library/shared" ]; then
     REPO_ROOT="$(cd "${CASE_DIR}/../../.." && pwd)"
 fi

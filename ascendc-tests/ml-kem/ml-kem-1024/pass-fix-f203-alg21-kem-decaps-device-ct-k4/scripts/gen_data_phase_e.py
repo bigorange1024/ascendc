@@ -14,7 +14,7 @@ m' := encaps 所用 m（模拟正确 Decrypt）；设备 FO 应输出 encaps 的
 coins 仅用于算 golden_v；设备侧噪声由核内 G(m,h) 自产。
 
 ## 路径解析（device 探针）
-REPO = ROOT.parents[1]；HOST_GOLDEN 借 stable Encrypt（与 gen_data.py 一致）。
+REPO = _ascendc_repo_root(ROOT)
 """
 from __future__ import annotations
 
@@ -24,11 +24,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO = ROOT.parents[1]
-STABLE_ENC = REPO / "examples" / "stable" / "stable-fips203-mlkem-pke-encrypt-k4"
+REPO = _ascendc_repo_root(ROOT)
+STABLE_ENC = REPO / "examples" / "stable" / "ml-kem" / "ml-kem-1024" / "stable-fips203-mlkem-pke-encrypt-k4"
 HOST_GOLDEN = STABLE_ENC / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))

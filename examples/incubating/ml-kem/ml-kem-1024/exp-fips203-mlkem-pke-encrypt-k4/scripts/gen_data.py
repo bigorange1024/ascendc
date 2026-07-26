@@ -15,7 +15,18 @@ Alg.14 输出只有密文 c；Â/y/u/v 等为设备内部中间量，禁止作�
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import os
+
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve() if isinstance(start, Path) else Path(start).resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
 import shutil
 import subprocess
 import sys
@@ -26,7 +37,7 @@ _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
 _HOST_GOLDEN = os.path.join(_SCRIPT_DIR, "host_golden")
 sys.path.insert(0, _HOST_GOLDEN)
-_REPO = os.path.normpath(os.path.join(_CASE_DIR, "..", "..", ".."))
+_REPO = str(_ascendc_repo_root(Path(_CASE_DIR)))
 sys.path.insert(0, os.path.join(_REPO, "library/shared/fips203_host_rng"))
 
 from f203_ref_common import (  # noqa: E402

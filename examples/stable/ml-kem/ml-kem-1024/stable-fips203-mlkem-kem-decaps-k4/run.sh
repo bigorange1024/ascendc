@@ -36,8 +36,8 @@ if [ -z "${REPO_ROOT}" ] || [ ! -d "${REPO_ROOT}/scripts" ]; then
 fi
 
 mkdir -p "${CURRENT_DIR}/scripts"
-ln -sfn ../stable-fips203-mlkem-pke-encrypt-k4/scripts/host_golden "${CURRENT_DIR}/scripts/host_golden"
-ln -sfn ../stable-fips203-mlkem-pke-encrypt-k4/thirdparty "${CURRENT_DIR}/thirdparty"
+ln -sfn "${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/scripts/host_golden" "${CURRENT_DIR}/scripts/host_golden"
+ln -sfn "${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/thirdparty" "${CURRENT_DIR}/thirdparty"
 
 export KEM_DECAPS_VERIFY="${KEM_DECAPS_VERIFY:-1}"
 export KEM_DECAPS_SKIP_REBUILD="${KEM_DECAPS_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-1}}"

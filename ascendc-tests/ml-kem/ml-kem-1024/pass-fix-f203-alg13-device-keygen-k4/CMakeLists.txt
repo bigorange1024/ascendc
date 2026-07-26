@@ -2,9 +2,22 @@
 # 编译/运行默认 = 生产全链路线；选项表见 BUILD_OPTIONS.md
 cmake_minimum_required(VERSION 3.16)
 project(Ascend_c)
+# 向上查找仓库根（兼容 ml-kem/ml-kem-*/ 嵌套）
+get_filename_component(_ASCENDC_WALK "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+set(REPO_ROOT "")
+while(NOT REPO_ROOT)
+  if(EXISTS "${_ASCENDC_WALK}/AGENTS.md" AND IS_DIRECTORY "${_ASCENDC_WALK}/scripts")
+    set(REPO_ROOT "${_ASCENDC_WALK}")
+  else()
+    get_filename_component(_ASCENDC_PARENT "${_ASCENDC_WALK}/.." ABSOLUTE)
+    if(_ASCENDC_PARENT STREQUAL _ASCENDC_WALK)
+      message(FATAL_ERROR "cannot locate ascendc repo root from ${CMAKE_CURRENT_LIST_DIR}")
+    endif()
+    set(_ASCENDC_WALK "${_ASCENDC_PARENT}")
+  endif()
+endwhile()
 
 set(TEST_ROOT "${CMAKE_CURRENT_LIST_DIR}")
-set(REPO_ROOT "${TEST_ROOT}/../..")
 
 set(RUN_MODE "npu" CACHE STRING "cpu/sim/npu")
 set(SOC_VERSION "Ascend910B4" CACHE STRING "system on chip type")

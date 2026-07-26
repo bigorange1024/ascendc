@@ -21,6 +21,7 @@ import os
 import shutil
 from pathlib import Path
 
+
 from golden_encrypt_prep import XOF_BYTES, build_a_hat_from_rho, build_re_from_coins
 
 ROOT = Path(__file__).resolve().parent.parent

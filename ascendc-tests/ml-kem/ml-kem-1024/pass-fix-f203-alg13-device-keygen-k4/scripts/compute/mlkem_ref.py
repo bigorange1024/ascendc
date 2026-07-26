@@ -19,6 +19,7 @@
 import re
 from pathlib import Path
 
+
 Q = 3329
 N = 256
 K = 8

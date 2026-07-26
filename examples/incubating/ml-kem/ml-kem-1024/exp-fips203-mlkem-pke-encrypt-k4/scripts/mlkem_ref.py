@@ -10,13 +10,22 @@ mlkem_ref.py — F203 交付语义参考（sepolyvec8_ntt_f203）：Stage1 hi/lo
 import re
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 Q = 3329
 N = 256
 K = 8
 M_MAT_A = 2 * K
 OUT_COLS = 512
 
-_REPO = Path(__file__).resolve().parents[1]
+_REPO = _ascendc_repo_root(Path(__file__).resolve())
 _TABLES_H = _REPO / "thirdparty/ntt_onnx/include/mlkem/stable/mlkem_ntt_tables.h"
 _F203_CASE = _REPO / "thirdparty/ntt_onnx/deliverables/sepolyvec8_ntt_f203"
 

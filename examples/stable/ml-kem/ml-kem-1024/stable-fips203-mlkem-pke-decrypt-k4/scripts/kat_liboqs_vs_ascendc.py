@@ -23,10 +23,19 @@ import subprocess
 import sys
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO_ROOT = ROOT.parent.parent.parent
+REPO_ROOT = _ascendc_repo_root(ROOT)
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 from liboqs_pke_decrypt_fixture import generate_fixture  # noqa: E402

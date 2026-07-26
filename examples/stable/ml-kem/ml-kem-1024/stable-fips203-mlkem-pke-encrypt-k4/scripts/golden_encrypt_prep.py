@@ -31,9 +31,7 @@ PRF_BYTES = (ETA * KYBER_N) // 4  # 128
 
 
 def shake128_squeeze(msg: bytes, outlen: int) -> bytes:
-
-流水线位置：FIPS 203 Alg.14 / ML-KEM-1024 Encrypt；与 golden 对拍 c.bin。
-"""SHAKE128 固定长度 squeeze（本探针 XOF_BYTES=672）。"""
+    """SHAKE128 固定长度 squeeze（本探针 XOF_BYTES=672）。"""
     return hashlib.shake_128(msg).digest(outlen)
 
 

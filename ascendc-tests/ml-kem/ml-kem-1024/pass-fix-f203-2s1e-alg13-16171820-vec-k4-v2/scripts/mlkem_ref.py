@@ -10,6 +10,7 @@ mlkem_ref.py — F203 交付语义参考辅助（Stage1 hi/lo + 右 LUT MatMul +
 import re
 from pathlib import Path
 
+
 Q = 3329
 N = 256
 K = 8

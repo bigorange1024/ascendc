@@ -2,15 +2,23 @@
 # KERNEL：prep entry（1）+ compute/tail（5）→ 单 device 库 ascendc_kernels_${RUN_MODE}
 cmake_minimum_required(VERSION 3.16)
 project(Ascend_c)
+# 向上查找仓库根（兼容 ml-kem/ml-kem-*/ 嵌套）
+get_filename_component(_ASCENDC_WALK "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+set(REPO_ROOT "")
+while(NOT REPO_ROOT)
+  if(EXISTS "${_ASCENDC_WALK}/AGENTS.md" AND IS_DIRECTORY "${_ASCENDC_WALK}/scripts")
+    set(REPO_ROOT "${_ASCENDC_WALK}")
+  else()
+    get_filename_component(_ASCENDC_PARENT "${_ASCENDC_WALK}/.." ABSOLUTE)
+    if(_ASCENDC_PARENT STREQUAL _ASCENDC_WALK)
+      message(FATAL_ERROR "cannot locate ascendc repo root from ${CMAKE_CURRENT_LIST_DIR}")
+    endif()
+    set(_ASCENDC_WALK "${_ASCENDC_PARENT}")
+  endif()
+endwhile()
 
 set(TEST_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 # examples/incubating/exp-* 比 ascendc-tests/* 多一层 incubating/
-get_filename_component(_REPO_CAND "${TEST_ROOT}/../.." ABSOLUTE)
-if(EXISTS "${_REPO_CAND}/library/shared")
-    set(REPO_ROOT "${_REPO_CAND}")
-else()
-    get_filename_component(REPO_ROOT "${TEST_ROOT}/../../.." ABSOLUTE)
-endif()
 set(COMPUTE_DIR "${TEST_ROOT}/compute")
 # alg11 / multiply_ntts 已 vendored 到 compute/；禁止外链其它探针
 # prep vendored 子树（自 stable KeyGen prep）+ SHAKE/Keccak 共享库

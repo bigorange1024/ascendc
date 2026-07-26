@@ -31,14 +31,23 @@ import subprocess
 import sys
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 import numpy as np
 
 # 用例根：ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/
 ROOT = Path(__file__).resolve().parent.parent
 # ascendc-tests → repo 根（比 exp/stable 少一层 examples）
-REPO = ROOT.parents[1]
+REPO = _ascendc_repo_root(ROOT)
 # 借 stable Encrypt 的 host golden（device 探针未 vendored host_golden）
-STABLE_ENC = REPO / "examples" / "stable" / "stable-fips203-mlkem-pke-encrypt-k4"
+STABLE_ENC = REPO / "examples" / "stable" / "ml-kem" / "ml-kem-1024" / "stable-fips203-mlkem-pke-encrypt-k4"
 HOST_GOLDEN = STABLE_ENC / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))

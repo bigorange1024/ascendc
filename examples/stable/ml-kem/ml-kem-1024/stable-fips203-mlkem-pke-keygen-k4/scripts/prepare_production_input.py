@@ -29,6 +29,15 @@ import os
 import struct
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 ROOT = Path(__file__).resolve().parent.parent
 _COMPUTE_GEN = ROOT / "scripts" / "compute" / "gen_data.py"
 
@@ -70,7 +79,7 @@ def scrub_stray_input(inp: Path) -> None:
 def main() -> None:
     import sys
 
-    repo = ROOT.parent.parent.parent
+    repo = _ascendc_repo_root(ROOT)
     sys.path.insert(0, str(repo / "library/shared/fips203_host_rng"))
     from host_rng import resolve_seed_d
 

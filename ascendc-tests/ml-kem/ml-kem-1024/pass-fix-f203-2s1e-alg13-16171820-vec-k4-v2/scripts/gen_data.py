@@ -35,6 +35,19 @@ gen_data.py — pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2 的 golden / input �
 """
 import ctypes
 import os
+
+def _ascendc_repo_root_os(start: str) -> str:
+    """os.path 版：向上查找仓库根。"""
+    import os
+    d = os.path.abspath(start)
+    while True:
+        if os.path.isfile(os.path.join(d, "AGENTS.md")) and os.path.isdir(os.path.join(d, "scripts")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+        d = parent
+
 import re
 import subprocess
 import sys
@@ -43,7 +56,7 @@ import numpy as np
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _CASE_DIR = os.path.normpath(os.path.join(_SCRIPT_DIR, ".."))
-_SHARED = os.path.normpath(os.path.join(_CASE_DIR, "../../library/shared"))
+_SHARED = os.path.join(_ascendc_repo_root_os(_CASE_DIR), "library", "shared")
 _MLKEM_REF = _SCRIPT_DIR
 _NTT_LUT_HDR = os.path.normpath(
     os.path.join(_CASE_DIR, "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h")

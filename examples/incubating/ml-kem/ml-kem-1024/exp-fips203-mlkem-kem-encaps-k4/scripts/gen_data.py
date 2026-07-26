@@ -13,11 +13,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+def _ascendc_repo_root(start: Path) -> Path:
+    """自 start 向上查找含 AGENTS.md 与 scripts/ 的仓库根（兼容 ml-kem 参数组嵌套）。"""
+    p = start.resolve()
+    for d in [p, *p.parents]:
+        if (d / "AGENTS.md").is_file() and (d / "scripts").is_dir():
+            return d
+    raise RuntimeError(f"cannot locate ascendc repo root from {start}")
+
+
 import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 # exp-* → incubating → examples → repo
-REPO = ROOT.parents[2] if (ROOT.parents[2] / "library" / "shared").is_dir() else ROOT.parents[3]
+REPO = _ascendc_repo_root(ROOT)
 HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))

@@ -1,9 +1,22 @@
 # Alg.13 行 3–7：16× SampleNTT 向量探针
 cmake_minimum_required(VERSION 3.16)
 project(Ascend_c)
+# 向上查找仓库根（兼容 ml-kem/ml-kem-*/ 嵌套）
+get_filename_component(_ASCENDC_WALK "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+set(REPO_ROOT "")
+while(NOT REPO_ROOT)
+  if(EXISTS "${_ASCENDC_WALK}/AGENTS.md" AND IS_DIRECTORY "${_ASCENDC_WALK}/scripts")
+    set(REPO_ROOT "${_ASCENDC_WALK}")
+  else()
+    get_filename_component(_ASCENDC_PARENT "${_ASCENDC_WALK}/.." ABSOLUTE)
+    if(_ASCENDC_PARENT STREQUAL _ASCENDC_WALK)
+      message(FATAL_ERROR "cannot locate ascendc repo root from ${CMAKE_CURRENT_LIST_DIR}")
+    endif()
+    set(_ASCENDC_WALK "${_ASCENDC_PARENT}")
+  endif()
+endwhile()
 
 set(TEST_ROOT "${CMAKE_CURRENT_LIST_DIR}")
-set(REPO_ROOT "${TEST_ROOT}/../..")
 set(ALG7_INC "${TEST_ROOT}/../pass-fix-f203-alg7-sample-ntt-k4")
 set(PRESAMPLE_INC "${TEST_ROOT}/../pass-fix-f203-alg13-lines8-15-se-k4")
 set(SHAKE_XOF_INC "${REPO_ROOT}/library/shared/shake_xof_kernel")
