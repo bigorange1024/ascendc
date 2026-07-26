@@ -29,6 +29,7 @@
 | KEM head `H(ek)` / `G(m‖H(ek))` | E20 `K.bin` 与 device `r` oracle | `scripts/gen_data.py` `hashlib.sha3_256/sha3_512`；device 侧 `library/shared/keccak_f1600_kernel` | **已验证**：E20 CPU/SIM `K.bin` max=0 |
 | 静态 NTT/INTT LUT | Stage2 limb 编码 | 本 exp `scripts/host_golden/f203_ref_common.py` `load_lut_t_i8()` + `scripts/gen_data.py` 写 `lut_*_stacked.bin` | **已验证**：E20 CPU/SIM `c.bin` max=0 |
 | NTT / CBD / Compress / ByteEncode 核心 | 设备算法 | E20 本目录自包含 AscendC；来源为活跃 D20/E14/D14 k3，未使用 `**/frozen/**` | **已验证**：CPU PASS；SIM tick **590261** |
+| AscendC-only KEM roundtrip glue | E20 `c/K` 交给 E21 accept/reject | `scripts/exp_kem768_liboqs_roundtrip.sh`（当前不使用 liboqs-768；见脚本头注释） | **已验证**：CPU×1 + SIM×1 PASS；accept `K(encaps)==K(decaps)` max=0 |
 
 ---
 
@@ -42,4 +43,4 @@
 
 ## 4. 维护
 
-E20 已登记；后续若补 liboqs KAT / NPU，应在本表追加具体命令、fixture 与提交。
+E20 已登记；后续若补 liboqs KAT / NPU，应在本表追加具体命令、fixture 与提交。本表当前仅支撑 768 E20 incubating 预研与 AscendC-only roundtrip，不表示 stable-768 可晋级。

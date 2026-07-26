@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-26 | [2026-07-26-教材第7章流程图与对照图.md](2026-07-26-教材第7章流程图与对照图.md) | 第7章图 · **1024 迁移** · **768 P0+P1** · **W0/W1 全绿** · **W2/D13 KeyGen + D14 Encrypt + D15 Decrypt 全绿** · **W3/D19 KEM KeyGen + D20 Encaps + D21 Decaps + D21ct CT 全绿** · **W4/E13–E15 PKE + E19–E21ct KEM incubating 全绿** · 幽灵 none |
+| 2026-07-26 | [2026-07-26-教材第7章流程图与对照图.md](2026-07-26-教材第7章流程图与对照图.md) | 第7章图 · **1024 迁移** · **768 P0+P1** · **W0/W1 全绿** · **W2/D13 KeyGen + D14 Encrypt + D15 Decrypt 全绿** · **W3/D19 KEM KeyGen + D20 Encaps + D21 Decaps + D21ct CT 全绿** · **W4/E13–E15 PKE + E19–E21ct KEM incubating 全绿** · **768 glue registry + AscendC-only RT CPU/SIM 绿** · 幽灵 none |
 | 2026-07-25 | [2026-07-25-Decaps交付树回灌CT工程小改.md](2026-07-25-Decaps交付树回灌CT工程小改.md) | 无 `-ct` 回灌；liboqs RT；**第7章成文** |
 | 2026-07-24 | [2026-07-24-第7章CT与Decaps-device-PASS.md](2026-07-24-第7章CT与Decaps-device-PASS.md) | **CT_decaps** · **`-ct` 改名** · **拒绝 SIM** · KAT **10+3** · **roundtrip** · **T22** CT tick · `M_FILE` · 未跑 NPU · 五指标 |
 | 2026-07-23 | [2026-07-23-形式方法教材导论实质与第3章冻结.md](2026-07-23-形式方法教材导论实质与第3章冻结.md) | **correctness 引子** · **开放生成≠合法派生** · **证书闭包受控搜索** · 第3章**先保持**、汇报再删 · `research/formal-lang-dag` |

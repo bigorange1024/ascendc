@@ -1,7 +1,7 @@
 # examples/incubating/ml-kem/ml-kem-768 — ML-KEM-768（k=3）预研
 
 **参数组**：FIPS 203 **ML-KEM-768**（\(k=3\)）  
-**阶段**：**W4 incubating 已完成** — W4a/E13–E15 PKE exp 与 W4b/E19–E21ct KEM exp 均已 customspec + CPU/SIM 绿；下一刀 registry + roundtrip
+**阶段**：**W4 incubating + glue 已完成** — W4a/E13–E15 PKE exp 与 W4b/E19–E21ct KEM exp 均已 customspec + CPU/SIM 绿；registry + `scripts/exp_kem768_liboqs_roundtrip.sh` AscendC-only CPU/SIM 绿
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem768-parameter-card.md](../../../../docs/specs/fips203-mlkem768-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem768-p1-gap-and-cases.md](../../../../docs/specs/fips203-mlkem768-p1-gap-and-cases.md)  

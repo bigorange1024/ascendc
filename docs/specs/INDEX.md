@@ -13,12 +13,12 @@
 | [fips203-mlkem1024-kem-decaps-baseline-registry.md](fips203-mlkem1024-kem-decaps-baseline-registry.md) | Alg.21 KEM Decaps 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem768-parameter-card.md](fips203-mlkem768-parameter-card.md) | **ML-KEM-768 P0 参数卡**（已锁：T-B / `-k3` / CT / PKE+KEM exp） |
 | [fips203-mlkem768-p1-gap-and-cases.md](fips203-mlkem768-p1-gap-and-cases.md) | **ML-KEM-768 P1** 补洞图与必建用例表（已定稿） |
-| [fips203-mlkem768-pke-keygen-baseline-registry.md](fips203-mlkem768-pke-keygen-baseline-registry.md) | Alg.13（k=3）registry **草稿** |
-| [fips203-mlkem768-pke-encrypt-baseline-registry.md](fips203-mlkem768-pke-encrypt-baseline-registry.md) | Alg.14（k=3）registry **草稿** |
-| [fips203-mlkem768-pke-decrypt-baseline-registry.md](fips203-mlkem768-pke-decrypt-baseline-registry.md) | Alg.15（k=3）registry **草稿** |
-| [fips203-mlkem768-kem-keygen-baseline-registry.md](fips203-mlkem768-kem-keygen-baseline-registry.md) | Alg.19（k=3）registry **草稿** |
-| [fips203-mlkem768-kem-encaps-baseline-registry.md](fips203-mlkem768-kem-encaps-baseline-registry.md) | Alg.20（k=3）registry；E20 incubating CPU/SIM 已验证（2026-07-26） |
-| [fips203-mlkem768-kem-decaps-baseline-registry.md](fips203-mlkem768-kem-decaps-baseline-registry.md) | Alg.21（k=3）registry **草稿** |
+| [fips203-mlkem768-pke-keygen-baseline-registry.md](fips203-mlkem768-pke-keygen-baseline-registry.md) | Alg.13（k=3）registry；E13 incubating CPU/SIM 已验证（2026-07-26） |
+| [fips203-mlkem768-pke-encrypt-baseline-registry.md](fips203-mlkem768-pke-encrypt-baseline-registry.md) | Alg.14（k=3）registry；E14 incubating CPU/SIM 已验证（2026-07-26） |
+| [fips203-mlkem768-pke-decrypt-baseline-registry.md](fips203-mlkem768-pke-decrypt-baseline-registry.md) | Alg.15（k=3）registry；E15 incubating CPU/SIM 已验证（2026-07-26） |
+| [fips203-mlkem768-kem-keygen-baseline-registry.md](fips203-mlkem768-kem-keygen-baseline-registry.md) | Alg.19（k=3）registry；E19 incubating CPU/SIM + AscendC-only roundtrip 已验证（2026-07-26） |
+| [fips203-mlkem768-kem-encaps-baseline-registry.md](fips203-mlkem768-kem-encaps-baseline-registry.md) | Alg.20（k=3）registry；E20 incubating CPU/SIM + AscendC-only roundtrip 已验证（2026-07-26） |
+| [fips203-mlkem768-kem-decaps-baseline-registry.md](fips203-mlkem768-kem-decaps-baseline-registry.md) | Alg.21（k=3）registry；E21/E21ct incubating accept/reject CPU/SIM + AscendC-only roundtrip 已验证（2026-07-26） |
 
 ---
 
