@@ -1,7 +1,7 @@
 # ascendc-tests/ml-kem/ml-kem-768 — ML-KEM-768（k=3）探针
 
 **参数组**：FIPS 203 **ML-KEM-768**（\(k=3\)）
-**阶段**：**P2/W0+W1 积木已绿**；W2+ 仍为目录壳
+**阶段**：**P2/W0+W1 积木已绿**；W2 D13/D14 已绿，D15+ 仍为目录壳
 **上级**：[../INDEX.md](../INDEX.md)
 **参数卡**：[docs/specs/fips203-mlkem768-parameter-card.md](../../../docs/specs/fips203-mlkem768-parameter-card.md)
 **P1 表**：[docs/specs/fips203-mlkem768-p1-gap-and-cases.md](../../../docs/specs/fips203-mlkem768-p1-gap-and-cases.md)
@@ -27,7 +27,7 @@
 | W1 | [pass-fix-f203-stage123-ntt-intt-polyvec6-k3/](pass-fix-f203-stage123-ntt-intt-polyvec6-k3/) | B5 | **PASS** | **PASS** |
 | W1 | [pass-fix-f203-alg11-12-multiply-inner-k3/](pass-fix-f203-alg11-12-multiply-inner-k3/) | B6 | **PASS** | **PASS** |
 | W2 | [pass-fix-f203-alg13-device-keygen-k3/](pass-fix-f203-alg13-device-keygen-k3/) | D13 | **PASS** | **PASS** |
-| W2 | [pass-fix-f203-alg14-pke-encrypt-device-k3/](pass-fix-f203-alg14-pke-encrypt-device-k3/) | D14 | 壳 | 壳 |
+| W2 | [pass-fix-f203-alg14-pke-encrypt-device-k3/](pass-fix-f203-alg14-pke-encrypt-device-k3/) | D14 | **PASS** | **PASS** |
 | W2 | [pass-fix-f203-alg15-pke-decrypt-device-k3/](pass-fix-f203-alg15-pke-decrypt-device-k3/) | D15 | 壳 | 壳 |
 | W3 | [pass-fix-f203-alg19-kem-keygen-device-k3/](pass-fix-f203-alg19-kem-keygen-device-k3/) | D19 | 壳 | 壳 |
 | W3 | [pass-fix-f203-alg20-kem-encaps-device-k3/](pass-fix-f203-alg20-kem-encaps-device-k3/) | D20 | 壳 | 壳 |

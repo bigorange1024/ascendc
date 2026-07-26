@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + D13** Cloud SIM tick；Decaps CT 行仍沿用 07-24） |
+| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + D13/D14** Cloud SIM tick；Decaps CT 行仍沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -25,6 +25,7 @@
 | **B5** | [`pass-fix-f203-stage123-ntt-intt-polyvec6-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-stage123-ntt-intt-polyvec6-k3/) | NTT **26651** / INTT **26672** | `[6,256]`；AIV 连续 3+3 | STATUS 2026-07-26 |
 | **B6** | [`pass-fix-f203-alg11-12-multiply-inner-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg11-12-multiply-inner-k3/) | multiply **9416** / inner **21881** | Inner `P=3`；AIV **2+1** | STATUS 2026-07-26 |
 | **D13** | [`pass-fix-f203-alg13-device-keygen-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg13-device-keygen-k3/) | **373426** | 2 launch；prep 5+4；compute polyvec6 + inner 2+1；ek/dk golden PASS | STATUS 2026-07-26 |
+| **D14** | [`pass-fix-f203-alg14-pke-encrypt-device-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg14-pke-encrypt-device-k3/) | **507605** | 2 launch；prep Â[9]+re[7]；compute INTT batch4 + d10/d4 pack；c golden PASS | STATUS 2026-07-26 |
 
 ### 与 k=4 同名积木对照（量级参考，非验收门禁）
 
@@ -36,7 +37,7 @@
 | MultiplyNTTs | **9416** | ~9031 | 同量级 |
 | InnerProduct | **21881**（2+1） | 26185（halfrows 2+2） | 输出行 3 vs 4 |
 
-W2 device：D13 已登记；D14–D15 未实现。
+W2 device：D13/D14 已登记；D15 未实现。
 
 ---
 
