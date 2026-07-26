@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + W2/D13–D15 + W3/D19–D21ct + W4/E13** Cloud SIM tick；Decaps CT k4 行仍沿用 07-24） |
+| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + W2/D13–D15 + W3/D19–D21ct + W4/E13–E15/E19** Cloud SIM tick；Decaps CT k4 行仍沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -73,6 +73,7 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | [`exp-fips203-mlkem-pke-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-keygen-k3/) | **373429** | ML-KEM-768 E13；2 launch；prep 5+4 + compute polyvec6；ek/dk golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-encrypt-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-encrypt-k3/) | **507633** | ML-KEM-768 E14；2 launch；Â[9]+re[7]；INTT batch4；c golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-decrypt-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-decrypt-k3/) | **222073** | ML-KEM-768 E15；1 fused launch；dk/c→m；m golden PASS | STATUS 2026-07-26 |
+| [`exp-fips203-mlkem-kem-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3/) | **510867** | ML-KEM-768 E19；2 launch；E13/D19 geometry + Alg.16 tail；ek_kem/dk_kem golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-keygen-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/) | 542393 | 已晋级 stable；副本同量级 | STATUS→stable |
 | [`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/) | 627614 | 已晋级；晋级前 SIM | STATUS |
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |
