@@ -30,19 +30,14 @@
 3. **要求** reject/CT（D21ct + E21ct）
 4. **PKE exp 也要做**
 5. 命名 `-k3`
-6. P0+P1 已完成；**已授权 P2/W0 + W1**（本波完成）
+6. P0+P1 已完成；**已授权 P2/W0 + W1 + W2 + W3**（W3 进行中）
 
 ---
 
-## ★ 下一刀（P0）— P2 / W3（KEM device）
+## ★ 下一刀（P0）— P2 / W3（进行中）
 
-**W3 device**：D19 KeyGen / D20 Encaps / D21 Decaps / D21ct（k=3）
-
-开写前：
-
-- 探针：【预研】或等价授权
-- 对照参数卡 §3 / P1 表；遇阻停问
-- incubating：仍须 `$规格$`（W4 才写 exp）
+**W3 device**：D19 KeyGen / D20 Encaps / D21 Decaps / D21ct（k=3）  
+参数卡 **§3.3 已锁**；仅 `ascendc-tests`；incubating 仍须 `$规格$`。
 
 ---
 
