@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-26（**768 W4/E13 incubating PKE KeyGen 全绿**；下一刀 E14）
+> **最后刷新**：2026-07-26（**768 W4/E13 PKE KeyGen + E14 PKE Encrypt incubating 全绿**；下一刀 E15）
 
 ---
 
@@ -14,7 +14,7 @@
 | **分支** | **`research/formal-lang-dag`** · PR [#12](https://github.com/bigorange1024/ascendc/pull/12) |
 | **768 参数卡** | [`docs/specs/fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md) **已锁**（§3.1–§3.3） |
 | **探针 W0–W3** | **全绿**（CPU + `SIM_DIRECT=1` sim；tick 见 `qa/active_sim_regress_summary.md`） |
-| **incubating-768** | **W4 进行中**：E13 PKE KeyGen 已完成 customspec + CPU/SIM（tick **373429**）；下一刀 E14 |
+| **incubating-768** | **W4 进行中**：E13 PKE KeyGen（tick **373429**）+ E14 PKE Encrypt（tick **507633**）已完成 customspec + CPU/SIM；下一刀 E15 |
 | **stable-768** | **本阶段不建**（计划锁定） |
 
 ### 用户决议
@@ -33,7 +33,7 @@
 
 | 优先级 | 项 | 说明 |
 |--------|-----|------|
-| **P0** | **W4a** E13–E15 | E13 已绿；下一刀 E14，再 E15（均 customspec → 从 D13–D15 晋级写码 → CPU+SIM） |
+| **P0** | **W4a** E13–E15 | E13/E14 已绿；下一刀 E15（均 customspec → 从 D13–D15 晋级写码 → CPU+SIM） |
 | **P0** | **W4b** E19–E21[+ct] | incubating KEM：customspec → 从 D19–D21[+ct] 晋级 → CPU+SIM |
 | **P1** | registry 填绿 | `docs/specs/fips203-mlkem768-*-baseline-registry.md` 随 exp 补「已验证」 |
 | **P1** | `scripts/exp_kem768_liboqs_roundtrip.sh` | P3 端到端；W4b 后补 |
@@ -60,8 +60,8 @@
 
 ## ★ 下一刀（进行中）— W4
 
-顺序：**E14→E15→E19→E20→E21→E21ct**（每目录：`*-customspec.*` + PDF → 写码 → CPU+SIM）。
-已完成：**E13** `examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-keygen-k3/`，CPU/SIM PASS，tick **373429**。
+顺序：**E15→E19→E20→E21→E21ct**（每目录：`*-customspec.*` + PDF → 写码 → CPU+SIM）。
+已完成：**E13** `examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-keygen-k3/`，CPU/SIM PASS，tick **373429**；**E14** `examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-encrypt-k3/`，CPU/SIM PASS，tick **507633**。
 几何锁：参数卡 §3.2/§3.3；行为基线：活跃 `pass-fix-…-k3`。
 
 ---

@@ -71,6 +71,7 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | 目录 | SIM tick | 备注 | 来源 |
 |------|----------|------|------|
 | [`exp-fips203-mlkem-pke-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-keygen-k3/) | **373429** | ML-KEM-768 E13；2 launch；prep 5+4 + compute polyvec6；ek/dk golden PASS | STATUS 2026-07-26 |
+| [`exp-fips203-mlkem-pke-encrypt-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-encrypt-k3/) | **507633** | ML-KEM-768 E14；2 launch；Â[9]+re[7]；INTT batch4；c golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-keygen-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/) | 542393 | 已晋级 stable；副本同量级 | STATUS→stable |
 | [`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/) | 627614 | 已晋级；晋级前 SIM | STATUS |
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |
