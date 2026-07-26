@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-07-26 — [教材第7章 · 1024 迁移 · 768 W0/W1/W2/W3-D19](2026-07/2026-07-26-教材第7章流程图与对照图.md)
+### 2026-07-26 — [教材第7章 · 1024 迁移 · 768 W0/W1/W2/W3-D19-D20](2026-07/2026-07-26-教材第7章流程图与对照图.md)
 
-关键字：第7章 TikZ · **ml-kem-1024 迁移** · **768 P0+P1** · **768 W0+W1 CPU+SIM 全绿** · **768 W2/D13 KeyGen + D14 Encrypt + D15 Decrypt CPU+SIM 绿** · **768 W3/D19 KEM KeyGen CPU+SIM 绿** · 幽灵 none · WSL RT/P0 main+CT 均绿（偶发仍记宿主机）
+关键字：第7章 TikZ · **ml-kem-1024 迁移** · **768 P0+P1** · **768 W0+W1 CPU+SIM 全绿** · **768 W2/D13 KeyGen + D14 Encrypt + D15 Decrypt CPU+SIM 绿** · **768 W3/D19 KEM KeyGen + D20 Encaps CPU+SIM 绿** · 幽灵 none · WSL RT/P0 main+CT 均绿（偶发仍记宿主机）
 
 ### 2026-07-25 — [Decaps 交付树回灌 CT 工程小改](2026-07/2026-07-25-Decaps交付树回灌CT工程小改.md)
 
