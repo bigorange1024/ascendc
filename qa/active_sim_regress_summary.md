@@ -2,12 +2,40 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-24（登记 **Decaps CT 三树** Cloud SIM tick；交付无 `-ct` 行仍沿用 07-20） |
+| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1** Cloud SIM tick；Decaps CT 行仍沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
 | **范围** | 活跃 `stable-*` / `exp-*` / `ascendc-tests`；**不含** `frozen/`、`thirdparty/` |
 | **维护** | 手工登记（非 CI dump）；见 `qa/TODO.md` **T22** |
+
+---
+
+## ML-KEM-768（k=3）积木 — W0 / W1
+
+> Cloud / `SIM_DIRECT=1` / Ascend910B4（2026-07-26）。**非** msprof；首版正确性优先，**非**生产性能基线。  
+> 路径根：[`ascendc-tests/ml-kem/ml-kem-768/`](../ascendc-tests/ml-kem/ml-kem-768/INDEX.md)。对照 k4 同行见下文各积木节。
+
+| ID | 目录 | SIM tick（默认） | 备注 | 来源 |
+|----|------|------------------|------|------|
+| **B1** | [`pass-fix-f203-compress-decompress-du10-dv4-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-compress-decompress-du10-dv4-k3/) | compress d4/**3196** d10/**3420**；decompress d4/**3304** d10/**3247** | 编排 d∈{4,10} | STATUS 2026-07-26 |
+| **B2** | [`pass-fix-f203-byteencode-decode-d-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-byteencode-decode-d-k3/) | enc4/**5423** dec4/**9351**；enc10/**6539** dec10/**6572**；encode12/**17511** | encode12 仍用 k4 几何作 d=12 算法探针 | STATUS 2026-07-26 |
+| **B3** | [`pass-fix-f203-alg8-cbd-eta2-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg8-cbd-eta2-k3/) | **14949** | polyvec6；`blockDim=2` | STATUS 2026-07-26 |
+| **B4** | [`pass-fix-f203-alg7-sample-ntt-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg7-sample-ntt-k3/) | **80783** | 默认 (j,i)=(0,0)；G 内 k=3 | STATUS 2026-07-26 |
+| **B5** | [`pass-fix-f203-stage123-ntt-intt-polyvec6-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-stage123-ntt-intt-polyvec6-k3/) | NTT **26651** / INTT **26672** | `[6,256]`；AIV 连续 3+3 | STATUS 2026-07-26 |
+| **B6** | [`pass-fix-f203-alg11-12-multiply-inner-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg11-12-multiply-inner-k3/) | multiply **9416** / inner **21881** | Inner `P=3`；AIV **2+1** | STATUS 2026-07-26 |
+
+### 与 k=4 同名积木对照（量级参考，非验收门禁）
+
+| 能力 | 768 (k3) tick | 1024 (k4) 登记 tick | 备注 |
+|------|---------------|---------------------|------|
+| CBD η=2 | **14949**（6 行） | 18048（8 行，P2） | 行数↓，tick 同量级 |
+| SampleNTT 单 poly | **80783** | ~80100 | 几乎持平（XOF/rej 主导） |
+| Stage123 NTT | **26651**（polyvec6） | 30347（polyvec8） | 批更小 |
+| MultiplyNTTs | **9416** | ~9031 | 同量级 |
+| InnerProduct | **21881**（2+1） | 26185（halfrows 2+2） | 输出行 3 vs 4 |
+
+W2 device（D13–D15）未实现 → 本表不登记。
 
 ---
 
