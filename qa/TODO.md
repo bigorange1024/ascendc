@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-26（768 **W2 全绿 + W3/D19+D20 CPU+SIM 全绿**；T768-W3-D20 关闭）
+**最近刷新**：2026-07-26（768 **W2 全绿 + W3/D19+D20+D21 CPU+SIM 全绿**；T768-W3-D21 关闭）
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 打开项（按优先级）
 
-主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**，2026-07-20 `#交付#` + **T19i**）；**`-ct`** 树为 `research/formal-lang-dag` CT 专题（第7章 / 五指标）。768 W3 已完成 **D19+D20**，下一项 **D21 Decaps device-k3**。打开项：**教材细表 / NPU / T23 / SHA3hp**。KEM **correctness 三探针已冻结**（见已关闭表）；**禁止**再当实现参考。
+主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**，2026-07-20 `#交付#` + **T19i**）；**`-ct`** 树为 `research/formal-lang-dag` CT 专题（第7章 / 五指标）。768 W3 已完成 **D19+D20+D21**，下一项 **D21ct device-k3**。打开项：**教材细表 / NPU / T23 / SHA3hp**。KEM **correctness 三探针已冻结**（见已关闭表）；**禁止**再当实现参考。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
@@ -34,7 +34,7 @@
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
 | **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境 |
-| **P1** | **T768-W3-D21+** | ML-KEM-768 W3：D21 Decaps、D21ct device-k3 | D20 已绿；D21 下一刀，按参数卡 §3.3 接 D15 k3 Decrypt + FO |
+| **P1** | **T768-W3-D21ct** | ML-KEM-768 W3：D21ct device-k3 | D21 delivery 已绿；下一刀在其上做 CT / reject 专题，默认不可回改为 `decaps_2session` |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
 | — | **T2b / T5** | PKE/KEM 各算子 `*-baseline-registry` | **2026-07-20 关闭**：六表齐（补 PKE KeyGen/Decrypt + Decaps）；晋级硬卡点见 ascendc-delivery Skill |
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
@@ -115,6 +115,7 @@
 
 | ID | 事项 | 关闭日 |
 |----|------|--------|
+| **T768-W3-D21** | ML-KEM-768 P2/W3：D21 KEM Decaps device（delivery，非 `-ct`）；`dk_kem(2400)+c(1088)` → `K(32)`；Phase-D=D15 k3 Decrypt，Phase-E=D14-shaped re-encrypt+FO；CPU+`SIM_DIRECT=1` sim 全绿，tick **818285**（D**220767**+E**597518**）；合法 `K` max=0，reject CPU/SIM `K=J(z‖c)` | 2026-07-26 |
 | **T768-W3-D20** | ML-KEM-768 P2/W3：D20 KEM Encaps device；SIM 2 / CPU 5；`ek_kem(1184)+m(32)` → `c(1088)+K(32)`；CPU+`SIM_DIRECT=1` sim 全绿，tick **592129**；`c`/`K` max=0 | 2026-07-26 |
 | **T768-W3-D19** | ML-KEM-768 P2/W3：D19 KEM KeyGen device；2 launch（D13 prep → compute+Alg.16 tail）；CPU+`SIM_DIRECT=1` sim 全绿，tick **510775**；`ek_kem`/`dk_kem` max=0 | 2026-07-26 |
 | **T768-W2** | ML-KEM-768 P2/W2：D13 KeyGen · D14 Encrypt · D15 Decrypt device；CPU+`SIM_DIRECT=1` sim 全绿，tick D13 **373426** / D14 **507605** / D15 **222032** | 2026-07-26 |

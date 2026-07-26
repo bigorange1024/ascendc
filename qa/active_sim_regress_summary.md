@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + W2/D13–D15 + W3/D19–D20** Cloud SIM tick；Decaps CT 行仍沿用 07-24） |
+| **刷新** | 2026-07-26（新增 **ML-KEM-768 W0/W1 + W2/D13–D15 + W3/D19–D21** Cloud SIM tick；Decaps CT 行仍沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -29,6 +29,7 @@
 | **D15** | [`pass-fix-f203-alg15-pke-decrypt-device-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg15-pke-decrypt-device-k3/) | **222032** | 1 fused launch；dk=1152+c=1088；d10/d4 unpack；m golden PASS | STATUS 2026-07-26 |
 | **D19** | [`pass-fix-f203-alg19-kem-keygen-device-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg19-kem-keygen-device-k3/) | **510775** | 2 launch；D13 prep+compute；Alg.16 tail embedded；ek_kem/dk_kem golden PASS | STATUS 2026-07-26 |
 | **D20** | [`pass-fix-f203-alg20-kem-encaps-device-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg20-kem-encaps-device-k3/) | **592129** | 2 launch；KEM 头 + D14 k3 Encrypt；c/K golden PASS | STATUS 2026-07-26 |
+| **D21** | [`pass-fix-f203-alg21-kem-decaps-device-k3`](../ascendc-tests/ml-kem/ml-kem-768/pass-fix-f203-alg21-kem-decaps-device-k3/) | **818285**（D**220767** + E**597518**） | SIM 3 launch；D15 k3 Decrypt + D14-shaped re-encrypt + FO；K golden PASS | STATUS 2026-07-26 |
 
 ### 与 k=4 同名积木对照（量级参考，非验收门禁）
 
@@ -40,7 +41,7 @@
 | MultiplyNTTs | **9416** | ~9031 | 同量级 |
 | InnerProduct | **21881**（2+1） | 26185（halfrows 2+2） | 输出行 3 vs 4 |
 
-W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿。W3 device：D19 KEM KeyGen 与 D20 Encaps 已登记；D21/D21ct 待做。
+W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿。W3 device：D19 KEM KeyGen、D20 Encaps 与 D21 Decaps 已登记；D21ct 待做。
 
 ---
 
