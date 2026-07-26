@@ -161,6 +161,7 @@
 | 2026-07-24 | **非 NPU 压测收尾**：拒绝 SIM + KAT CPU×10+SIM×3 + roundtrip CPU/SIM；`M_FILE`/假 SUCCESS 修复 |
 | 2026-07-24 | **五指标对照**落盘 `docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md` |
 | 2026-07-24 | **自研中文注释**（kem/main/scripts）；**引用审计**清 stub/幽灵 frozen 链 |
+| 2026-07-26 | **第7章流程图**：总览/依赖/补洞/时间线 + A/B/C 泳道与条形对照 |
 | 2026-07-25 | **第7章去翻译腔**：叙述改口语教材口吻（结论不变） |
 | 2026-07-25 | **第7章成文**：扩写 `sec:forward`（任务链、文书代码、测试、B↔C 对照、方法论效果）；PDF 已编
 | 2026-07-24 | **merge origin/main → research**：交付 Decaps 无 `-ct` 与 CT 专题 `-ct` 并存；scripts 默认指交付树 |

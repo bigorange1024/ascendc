@@ -28,7 +28,7 @@
 \usepackage{enumitem}
 \usepackage[most]{tcolorbox}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric,calc}
 \geometry{margin=2.2cm}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
@@ -3885,6 +3885,43 @@ device 探针则曾\textbf{编译期引用} stable——两种工程落点都合
 \texttt{qa/active\_sim\_regress\_summary.md}，以及 7 月 24、25 日的纪要。
 本章只把该讲清的故事和判断写进教材。
 
+整章可以先看成一张总览图（图~\ref{fig:ch7-overview}）：左边是已经写好的三件工具，右边是落到 Decaps 上的实践链。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=5mm and 6mm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\small,
+              minimum width=2.35cm, minimum height=0.78cm},
+  tool/.style={box, fill=blue!8, minimum width=2.1cm},
+  prac/.style={box, fill=orange!12},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  % 三件工具
+  \node[tool] (dep) {依赖图\\与闭包};
+  \node[tool, right=of dep] (lang) {形式语言\\（合法拼装）};
+  \node[tool, right=of lang] (auto) {作业过程\\自动机};
+  \node[font=\footnotesize\bfseries, above=3mm of lang] {第~3--5~章：工具已有};
+
+  % 落到实践
+  \node[prac, below=12mm of lang] (ct) {先交 $\mathrm{CT}_{\mathrm{decaps}}$};
+  \node[prac, below=of ct] (fill) {按序补洞\\$D\to G\to E\to\mathrm{FO}$};
+  \node[prac, below=of fill] (code) {写码 / 晋级\\device$\to$exp$\to$stable};
+  \node[prac, below=of code] (test) {验收\\合法+拒绝+RT};
+  \node[prac, fill=green!12, below=of test] (ver) {判决\\相对 A / 相对 C};
+
+  \draw[arr] (dep) |- (ct);
+  \draw[arr] (lang) -- (ct);
+  \draw[arr] (auto) |- (ct);
+  \draw[arr] (ct) -- (fill) -- (code) -- (test) -- (ver);
+
+  \node[font=\footnotesize, text=gray!60!black, right=2mm of fill.east, align=left]
+    {门禁：缺项未清\\不许宣称交付};
+\end{tikzpicture}
+\caption{第~7~章总览：方法论工具如何落到 Decaps 实践}
+\label{fig:ch7-overview}
+\end{figure}
+
 \subsection{为什么拿 Decaps 当试金石}
 \label{sec:forward-why}
 
@@ -3942,6 +3979,50 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 \end{enumerate}
 对拍要用的 $\mathit{dk}$、$c$、$K$，可以由已经交付的 KeyGen / Encaps 提供；
 本任务\textbf{不再重写}那两条。
+
+画成图更清楚（图~\ref{fig:ch7-dep}）：目标在下，已获证能力在上，虚线红是禁止抄的 correctness vendor。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  x=1.15cm, y=1.0cm,
+  n/.style={draw, rounded corners=2pt, align=center, font=\small,
+            minimum width=2.4cm, minimum height=0.75cm, fill=blue!6},
+  t/.style={n, fill=orange!16, minimum width=2.8cm},
+  forb/.style={n, fill=red!10, dashed},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[n] (dec) at (0,2.2) {Decrypt\\stable};
+  \node[n] (enc) at (4.2,2.2) {Encrypt\\stable};
+  \node[n] (kecc) at (8.4,2.2) {Keccak\\shared};
+  \node[n] (kg) at (1.5,3.6) {KeyGen\\（对拍用）};
+  \node[n] (caps) at (6.5,3.6) {Encaps\\（对拍用）};
+
+  \node[t] (g) at (2.1,0.9) {$G(m'\Vert h)$};
+  \node[t] (fo) at (6.3,0.9) {设备 FO};
+  \node[t] (decaps) at (4.2,-0.4) {Decaps\\目标 $T$};
+
+  \node[forb] (vend) at (10.6,0.9) {correctness\\vendor（禁）};
+
+  \draw[arr] (dec) -- (g);
+  \draw[arr] (kecc) -- (g);
+  \draw[arr] (enc) -- (fo);
+  \draw[arr] (kecc) -- (fo);
+  \draw[arr] (g) -- (decaps);
+  \draw[arr] (fo) -- (decaps);
+  \draw[arr] (dec) -- (decaps);
+  \draw[arr] (enc) -- (decaps);
+  \draw[arr, gray] (kg) -- (decaps);
+  \draw[arr, gray] (caps) -- (decaps);
+  \draw[arr, red!60!black, dashed] (vend) -- node[above, font=\scriptsize, text=red!60!black]{Forbidden} (fo);
+
+  \node[font=\footnotesize, align=left] at (4.2,-1.5) {
+    实线：语义/接缝依赖；灰线：对拍材料；虚线红：禁止抄码
+  };
+\end{tikzpicture}
+\caption{Decaps 多父依赖示意（写码前从目标反推）}
+\label{fig:ch7-dep}
+\end{figure}
 
 \paragraph{缺什么，为什么不能一把写完}
 动手前明显还缺四块：device 探针本身、Phase-D 接线、Phase-E 接线、FO 尾巴。
@@ -4010,6 +4091,32 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
         合法路径 $K$ 对拍为 0；拒绝路径得到 $J(z\Vert c)$。
 \end{enumerate}
 
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=4mm and 5mm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\small,
+              minimum width=2.2cm, minimum height=0.9cm, fill=orange!12},
+  ok/.style={box, fill=green!12},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[box] (d) {① Phase-D\\Decrypt$\to m'$};
+  \node[box, right=of d] (g) {② 设备 $G$\\$\to K',r'$};
+  \node[box, right=of g] (e) {③ Phase-E\\Encrypt$\to c'$};
+  \node[box, right=of e] (fo) {④ FO\\选最终 $K$};
+  \node[ok, below=8mm of $(g)!0.5!(e)$] (acc) {合法路径\\$K$ 对拍};
+  \node[ok, right=of acc] (rej) {拒绝路径\\$K=J(z\Vert c)$};
+  \draw[arr] (d) -- (g) -- (e) -- (fo);
+  \draw[arr] (fo) |- (acc);
+  \draw[arr] (fo) |- (rej);
+\end{tikzpicture}
+\caption{最小补洞顺序（B 线实际执行）}
+\label{fig:ch7-fill}
+\end{figure}
+
+图~\ref{fig:ch7-fill} 把上面四步画成流水线：前面补洞，后面分出合法 / 拒绝两条验收。
+
 \subsection{文书和代码是怎么一步步落下来的}
 \label{sec:forward-docs-code}
 
@@ -4030,6 +4137,32 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 \noindent\textbf{B 线代码允许从哪来}：stable 的 Decrypt / Encrypt；Encaps device 的接线习惯；
 shared Keccak；FIPS~203 和 Alg.21 相关笔记。
 \textbf{明确不从哪来}：correctness / \texttt{frozen/} 里的正向实现。
+
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  x=1.85cm, y=1cm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
+              minimum width=1.55cm, minimum height=0.85cm, fill=blue!8},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[box] (ct) at (0,0) {教材 CT\\先提交};
+  \node[box, fill=orange!12] (plan) at (1,0) {计划\\STATUS};
+  \node[box, fill=orange!14] (dev) at (2,0) {device\\探针};
+  \node[box, fill=orange!16] (exp) at (3,0) {exp\\incubating};
+  \node[box, fill=orange!18] (st) at (4,0) {stable\\texttt{-ct}};
+  \node[box, fill=green!12] (test) at (5,0) {压测\\+对照};
+  \foreach \a/\b in {ct/plan, plan/dev, dev/exp, exp/st, st/test}
+    \draw[arr] (\a) -- (\b);
+  \node[font=\scriptsize, text=gray!55!black, below=3mm of $(ct)!0.5!(test)$]
+    {时间向右：先表后码，再晋级，最后对照实验};
+\end{tikzpicture}
+\caption{B 线文书与代码落地时间线}
+\label{fig:ch7-timeline}
+\end{figure}
+
+图~\ref{fig:ch7-timeline} 强调一件事：\textbf{闭包表提交早于源码}；晋级和压测在后面。
 
 \subsection{测了什么，结果怎么读}
 \label{sec:forward-tests}
@@ -4080,49 +4213,136 @@ C 线是交付默认：T19i 之后 SIM 三个 launch，默认单 session，
 办公室脚本 \texttt{stable\_kem\_liboqs\_roundtrip} 也指它。
 B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G$ 进 prep，FO 挂在 pack / \texttt{l18\_l19} 尾。
 差在\textbf{怎么走过来}、SIM 默认怎么设、文书谁先谁后。
+用图比用长表更直观：先看三条路怎么走（图~\ref{fig:ch7-lanes}），
+再看相对 A 的五指标（图~\ref{fig:ch7-metrics}），最后看相对 C 的 tick（图~\ref{fig:ch7-tick}）。
 
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  x=1cm, y=1cm,
+  lane/.style={draw, rounded corners=2pt, minimum width=12.6cm, minimum height=1.35cm},
+  arr/.style={-{Stealth[length=1.8mm]}, thick},
+  s/.style={draw, rounded corners=1pt, align=center, font=\scriptsize,
+            minimum height=0.55cm, inner sep=2pt}
+]
+  % A
+  \node[lane, fill=red!4, anchor=north west] (la) at (0,3.2) {};
+  \node[font=\small\bfseries, anchor=west] at (0.15,3.2-0.28) {A 探索};
+  \node[s, fill=red!12] (a1) at (2.2,2.55) {无路线乱搜};
+  \node[s, fill=red!12] (a2) at (5.0,2.55) {vendor 堆叠};
+  \node[s, fill=red!12] (a3) at (7.8,2.55) {假绿反复};
+  \node[s, fill=yellow!20] (a4) at (10.6,2.55) {结果可对拍};
+  \draw[arr] (a1) -- (a2) -- (a3) -- (a4);
+
+  % B
+  \node[lane, fill=green!4, anchor=north west] (lb) at (0,1.6) {};
+  \node[font=\small\bfseries, anchor=west] at (0.15,1.6-0.28) {B 方法};
+  \node[s, fill=green!15] (b1) at (2.2,0.95) {先交 CT};
+  \node[s, fill=green!15] (b2) at (4.6,0.95) {禁抄 Forbidden};
+  \node[s, fill=green!15] (b3) at (7.2,0.95) {按序补洞};
+  \node[s, fill=green!18] (b4) at (10.0,0.95) {可晋级 stable};
+  \draw[arr] (b1) -- (b2) -- (b3) -- (b4);
+
+  % C
+  \node[lane, fill=blue!4, anchor=north west] (lc) at (0,0) {};
+  \node[font=\small\bfseries, anchor=west] at (0.15,0-0.28) {C 交付};
+  \node[s, fill=blue!12] (c1) at (2.4,-0.65) {长期人工优化};
+  \node[s, fill=blue!12] (c2) at (5.4,-0.65) {T2 单 session};
+  \node[s, fill=blue!14] (c3) at (8.2,-0.65) {脚本默认};
+  \node[s, fill=blue!16] (c4) at (10.8,-0.65) {办公室回归};
+  \draw[arr] (c1) -- (c2) -- (c3) -- (c4);
+
+  \node[font=\footnotesize, align=left] at (6.3,-1.55) {
+    A：过程乱、终态能对拍；B：过程可控、终态可交付；C：终态工程定标最强（默认回归）
+  };
+\end{tikzpicture}
+\caption{三条路怎么走：过程对照（不是同一条优化曲线）}
+\label{fig:ch7-lanes}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=1cm, y=0.55cm]
+  \def\ylabels{{"先表后码","拦住非法","可交付形态","失败路径","假绿次数(越少越好)"}}
+  % axes
+  \draw[thick, -{Stealth}] (0,0) -- (0,5.6);
+  \draw[thick, -{Stealth}] (0,0) -- (9.2,0) node[right, font=\footnotesize] {得分};
+  \foreach \y/\name in {1/先表后码, 2/拦住非法, 3/可交付形态, 4/失败路径, 5/假绿(越少越好)} {
+    \node[font=\footnotesize, anchor=east] at (-0.15,\y) {\name};
+  }
+  % scale: binary 0/1 -> width 0 or 3.5; fake green inverted: A>=3 -> short bar meaning worse, show as count bars
+  % A bars (red): 0,0,0,1 and fake=3
+  \fill[red!55] (0,0.7) rectangle (0.15,1.3); % ~0
+  \fill[red!55] (0,1.7) rectangle (0.15,2.3);
+  \fill[red!55] (0,2.7) rectangle (0.15,3.3);
+  \fill[red!55] (0,3.7) rectangle (3.5,4.3); % 1
+  \fill[red!35] (0,4.7) rectangle (5.25,5.3); % fake 3 (unit 1.75)
+  \node[font=\scriptsize] at (5.55,5.0) {A$\ge$3};
+
+  % B bars (green) offset slightly up within band - draw second series with y offset 0.05 and hatch via lighter
+  \fill[green!60!black] (0,0.85) rectangle (3.5,1.25); % 1
+  \fill[green!60!black] (0,1.85) rectangle (3.5,2.25);
+  \fill[green!60!black] (0,2.85) rectangle (3.5,3.25);
+  \fill[green!60!black] (0,3.85) rectangle (3.5,4.25);
+  \fill[green!40!black] (0,4.85) rectangle (5.25,5.15); % fake 3
+  \node[font=\scriptsize] at (5.55,4.85) {B$=$3};
+
+  \node[font=\footnotesize, fill=red!55, minimum width=4mm, minimum height=3mm, label=right:{\footnotesize A correctness}] at (6.2,2.8) {};
+  \node[font=\footnotesize, fill=green!60!black, minimum width=4mm, minimum height=3mm, label=right:{\footnotesize B 方法论}] at (6.2,2.0) {};
+  \node[font=\scriptsize, align=left, anchor=west] at (6.0,1.1) {前四项：满格$=1$\\假绿：越长越差};
+\end{tikzpicture}
+\caption{五指标对照（图示）：B 在前四项拉开，假绿同量级}
+\label{fig:ch7-metrics}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=0.85cm, y=0.7cm]
+  % tick scale: ~1.04e6 -> 10.4 units; use /1e5
+  \draw[thick, -{Stealth}] (0,0) -- (12.2,0) node[right, font=\footnotesize] {SIM Total tick（$\times 10^{5}$）};
+  \foreach \x in {0,2,...,10} {
+    \draw (\x,0.08) -- (\x,-0.08) node[below, font=\scriptsize] {\x};
+  }
+  % B bar
+  \fill[orange!60] (0,0.55) rectangle (10.506,1.25);
+  \node[font=\small, anchor=west] at (0.1,0.9) {B \texttt{-ct} $\approx 10.51$};
+  % C bar
+  \fill[blue!45] (0,1.7) rectangle (10.419,2.4);
+  \node[font=\small, anchor=west] at (0.1,2.05) {C 交付 $\approx 10.42$};
+  \node[font=\footnotesize, align=left] at (6.0,-1.0) {
+    同量级；B \textbf{没有}更短——性能不是方法论相对 C 的胜场
+  };
+\end{tikzpicture}
+\caption{合法路径 SIM tick：B 与 C 打平（量级对照）}
+\label{fig:ch7-tick}
+\end{figure}
+
+\paragraph{怎么读这些图}
+\begin{enumerate}
+  \item \textbf{正确性}：B 与 C 在约定验收上打平（图~\ref{fig:ch7-lanes} 终点都能对拍）。
+        方法论没有变出「更正确」的密码学结果。
+  \item \textbf{性能}：图~\ref{fig:ch7-tick} 里两条棒几乎一样长——B 没有跑赢 C；
+        双 session 相对单 session 是保底，不是优化胜利。
+  \item \textbf{过程}：图~\ref{fig:ch7-lanes} 与图~\ref{fig:ch7-metrics} 一起看——
+        相对 A，B 在「先交表、拦住乱抄、可交付」上拉开；相对 C，B 赢的是轨迹说得清。
+  \item \textbf{顺便修到的洞}：B 线上的假绿回灌给 C 有用（verify 必须失败退出），
+        这是实验带给主线的好处，不是把核从 B 搬到 C。
+\end{enumerate}
+
+\noindent\textit{细项对照表}（需要查数字时再用）：
 \begin{center}
 \small
-\begin{tabular}{@{}L{2.6cm}L{5.4cm}L{5.4cm}@{}}
+\begin{tabular}{@{}L{2.8cm}L{5.2cm}L{5.2cm}@{}}
   \toprule
-  比什么 & B（方法论 / \texttt{-ct}） & C（交付 / 无 \texttt{-ct}） \\
+  项 & B（\texttt{-ct}） & C（交付） \\
   \midrule
-  是否先交表再写码 &
-  是 &
-  否（先探索，后收敛；表可以事后补） \\
-  禁止抄码 &
-  开工就写死 &
-  终态也没有 vendor，但路上绕过 \\
-  SIM 默认 &
-  双 session（保底） &
-  单 session（T2 定论） \\
-  合法 SIM tick &
-  大约 \textbf{1050646} &
-  登记 \textbf{1041906}（端到端口径；单算子曾约 1050620） \\
-  对不对（I/O） &
-  合法+拒绝都绿；liboqs RT 5+1 绿 &
-  同样绿（2026-07-25 同套脚本） \\
-  是不是脚本默认 &
-  不是 &
-  是 \\
-  能回灌给交付的 &
-  对拍失败别假成功、注释和 E3/\texttt{M\_FILE} 说明 &
-  2026-07-25 已回灌；\textbf{没有}改成双 session \\
+  SIM 默认 & 双 session & 单 session（T2） \\
+  合法 SIM tick & $\approx$\textbf{1050646} & 登记 \textbf{1041906} \\
+  脚本默认 & 否 & 是 \\
   \bottomrule
 \end{tabular}
 \end{center}
-
-\paragraph{怎么读这张表}
-\begin{enumerate}
-  \item \textbf{正确性}：约定验收上，B 和 C 打平。方法论没有变出「更正确」的密码学结果，
-        也不该拿这个当卖点。
-  \item \textbf{性能}：B 没有跑赢 C；tick 同一个量级，还略偏高或持平。
-        双 session 相对单 session 是保底，不是优化胜利。
-  \item \textbf{过程}：相对 A，B 在「先交表、拦住乱抄、最后长成可交付形态」上拉开差距
-        （五指标里四个二元项 4 比 1）。相对 C，B 赢的是轨迹说得清，不是终态更强。
-  \item \textbf{顺便修到的洞}：B 线上撞到的假绿，回灌给 C 有用（比如 verify 必须失败退出）。
-        这是实验带给主线的好处，不是把核算法从 B 搬到 C。
-\end{enumerate}
 
 \subsection{怎样算成功，本章怎么判}
 \label{sec:forward-verdict}
@@ -4185,9 +4405,11 @@ B 是对照实验副本（\texttt{-ct}）。
 \label{sec:forward-summary}
 
 \begin{enumerate}
-  \item 写码前交了 $\mathrm{CT}_{\mathrm{decaps}}$，按补洞顺序做完 B 线的 device，再晋级到带 \texttt{-ct} 的 incubating / stable。
+  \item 写码前交了 $\mathrm{CT}_{\mathrm{decaps}}$，按补洞顺序做完 B 线的 device，再晋级到带 \texttt{-ct} 的 incubating / stable
+        （总览见图~\ref{fig:ch7-overview}，时间线见图~\ref{fig:ch7-timeline}）。
   \item 该跑的测试都绿了；假绿三例说得清。
-  \item 相对 A：强成功。相对 C：对得一样齐，跑得并不更快，过程更好讲，SIM 编排仍不如 T2 定论。
+  \item 相对 A：强成功（图~\ref{fig:ch7-lanes}、图~\ref{fig:ch7-metrics}）。
+        相对 C：对得一样齐，tick 不更短（图~\ref{fig:ch7-tick}），过程更好讲。
   \item 一句话：\textbf{先交表这道门有用；它代替不了人工优化主线，也堵不死验收脚本上的洞}。
 \end{enumerate}
 
