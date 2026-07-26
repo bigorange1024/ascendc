@@ -123,12 +123,11 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
-- **目录**：活跃 ML-KEM 在 `ascendc-tests|examples/{incubating,stable}/ml-kem/ml-kem-1024/`（frozen 不迁入）  
-- **PKE + KEM 六算子** 已在 [`examples/stable/ml-kem/ml-kem-1024/`](examples/stable/ml-kem/ml-kem-1024/)；Decaps 交付无 `-ct`，CT 专题有 `-ct`  
-- **KEM correctness×3**：**已冻结** → `ascendc-tests/frozen/`；只读 `FROZEN.md`  
-- 行为基线：`…/ml-kem-1024/pass-fix-f203-alg{19,20,21}-…`（勿当 CMake 依赖）  
-- **下一刀**：ML-KEM-768 方法论（前提 1–3；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）  
-- **办公室 KEM 回归**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)
+- **目录**：1024 活跃在 `…/ml-kem/ml-kem-1024/`；768 **P0/P1 壳**在 `…/ml-kem/ml-kem-768/`（无源码；**无** stable-768）  
+- **768 权威**：[`docs/specs/fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md) · [P1 用例表](docs/specs/fips203-mlkem768-p1-gap-and-cases.md)  
+- **PKE + KEM 六算子（1024）** 已在 [`examples/stable/ml-kem/ml-kem-1024/`](examples/stable/ml-kem/ml-kem-1024/)  
+- **下一刀**：768 **P2/W0**（须授权 + Skill；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）  
+- **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)
 
 ---
 
