@@ -22,7 +22,7 @@
 | W4a | [exp-fips203-mlkem-pke-keygen-k3/](exp-fips203-mlkem-pke-keygen-k3/) | E13 | **有** | **PASS** | **PASS**（tick **373429**） |
 | W4a | [exp-fips203-mlkem-pke-encrypt-k3/](exp-fips203-mlkem-pke-encrypt-k3/) | E14 | **有** | **PASS** | **PASS**（tick **507633**） |
 | W4a | [exp-fips203-mlkem-pke-decrypt-k3/](exp-fips203-mlkem-pke-decrypt-k3/) | E15 | **有** | **PASS** | **PASS**（tick **222073**） |
-| W4b | [exp-fips203-mlkem-kem-keygen-k3/](exp-fips203-mlkem-kem-keygen-k3/) | E19 | 缺 | 壳 | 壳 |
+| W4b | [exp-fips203-mlkem-kem-keygen-k3/](exp-fips203-mlkem-kem-keygen-k3/) | E19 | **有** | 待实现 | 待实现 |
 | W4b | [exp-fips203-mlkem-kem-encaps-k3/](exp-fips203-mlkem-kem-encaps-k3/) | E20 | 缺 | 壳 | 壳 |
 | W4b | [exp-fips203-mlkem-kem-decaps-k3/](exp-fips203-mlkem-kem-decaps-k3/) | E21 | 缺 | 壳 | 壳 |
 | W4b | [exp-fips203-mlkem-kem-decaps-ct-k3/](exp-fips203-mlkem-kem-decaps-ct-k3/) | E21ct | 缺 | 壳 | 壳 |
