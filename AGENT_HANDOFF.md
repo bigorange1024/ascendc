@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-26（教材第7章图修订：折线依赖 / 概念目录 / 跨泳道关系）
+> **最后刷新**：2026-07-26（P0：WSL Agent 分类 Decaps 偶发失败；照下面「WSL Agent 照做」执行）
 
 ---
 
@@ -11,33 +11,83 @@
 
 | 项 | 状态 |
 |----|------|
-| **分支** | **`research/formal-lang-dag`**（`origin/main` 已合入；勿开 `cursor/*` 旁支） |
+| **分支** | **`main`**（与 `research/formal-lang-dag` tip 曾对齐；WSL 测交付树请拉 **`main`**） |
 | **KEM 六算子 stable** | KeyGen / Encaps / Decaps **均已定型**（交付 Decaps **无 `-ct`**）；`scripts/` 默认指 **无 `-ct`** stable |
-| **Decaps 交付工程回灌** | 2026-07-25：`verify || exit $?` + 注释/`M_FILE` 文档；**未**改 `decaps_1session` |
-| **Decaps 交付树**（main；`scripts/` 默认） | device [`pass-fix-…-decaps-device-k4`](ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-k4/) · incubating [`exp-…-kem-decaps-k4`](examples/incubating/exp-fips203-mlkem-kem-decaps-k4/) · stable [`stable-…-kem-decaps-k4`](examples/stable/stable-fips203-mlkem-kem-decaps-k4/)（**T19i SIM 3**；tick **1050620**） |
-| **Decaps CT 树**（本专题；仅 `research/formal-lang-dag`） | device / exp / stable `*-decaps-*-ct-k4`（第7章 CT / 五指标；SIM `decaps_2session`）；合法 tick 已入 [`qa/active_sim_regress_summary.md`](qa/active_sim_regress_summary.md)（约 **1.05M**） |
-| **形式方法教材** | [`docs/research/`](docs/research/) 第6–7章；第7章图：依赖正交折线、落地概念目录、A/B/C 跨泳道（禁抄/复用/共享终态） |
-| **Alg.19/20/21 correctness** | **已冻结** → `ascendc-tests/frozen/frozen-fix-…-*-correctness-k4/`（只读 FROZEN.md；**禁翻源码**） |
-| **办公室回归** | [`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)：**无 `-ct`** stable 三件套；urandom→liboqs→同字节喂 AscendC；**CPU×1 + SIM×1** |
-| **五指标对照** | [`docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md`](docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md)（**`-ct`** 专题） |
+| **Decaps 交付树**（`scripts/` 默认） | `stable-…-kem-decaps-k4`（**T19i**；SIM 默认 `decaps_1session`） |
+| **Decaps CT 树**（教材/对照） | `*-decaps-*-ct-k4`（SIM 默认 `decaps_2session`）；**非**办公室默认 |
+| **已知偶发** | 连续 SIM（KeyGen→Encaps→立刻 Decaps）时 Decaps Phase-D 曾见 `tcache` / segfault；单独 Decaps SIM 常绿 → 归类 CAModel/glibc 宿主机偶发（见 `qa/2026-07-21-连续SIM-tcache对照矩阵.md`） |
+| **WSL 纪要（今日）** | [`qa/2026-07/2026-07-26-….md`](qa/2026-07/2026-07-26-教材第7章流程图与对照图.md)「WSL 复现」节：交付树曾全绿；CT 连续 SIM fragile |
 
 ---
 
-## ★ 下一刀（P0）
+## ★ 下一刀（P0）— WSL Agent 照做
 
-按用户指定。常见候选项：
+**目标**：复现并**分类** Decaps「有时失败」（交付树 vs CT；连续 SIM vs 单独 Decaps）。  
+**约束**：只跑测 + 写当日 `qa/`；**禁止**为消偶发改 `stable_kem_liboqs_roundtrip.sh` / stable 核；勿并行多路 SIM。
 
-| 优先级 | 事项 |
-|--------|------|
-| **P1** | **T23** 多 AI Core 并行 stable（先 2 Core） |
-| **P1** | **T2-npu** / **T21**（SHA3hp 调研） |
-| 专题 | 教材细表 / **NPU** 冒烟（有卡时；交付树 **无 `-ct`**） |
+### 1) 准备
+
+```bash
+git pull origin main
+set -o pipefail
+export CMAKE_BUILD_JOBS="${CMAKE_BUILD_JOBS:-2}"
+mkdir -p /tmp/wsl_kem_rt
+```
+
+### 2) 基线：交付树（无 `-ct`）
+
+```bash
+CPU_TRIALS=3 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh \
+  2>&1 | tee /tmp/wsl_kem_rt/main_rt.log
+echo EXIT:$?
+```
+
+记录：EXIT、fixture（`output/stable_kem_liboqs_rt/<ts>/`）、失败形态：
+
+| 形态 | 特征 |
+|------|------|
+| 宿主机崩 | `tcache_*` / `Aborted` / `signal 11` / EXIT 139；常无 Decaps `Total tick` |
+| 假拒 / 对拍 | `K(decaps) max≠0` 或 verify 非零（查是否缺 `M_FILE`） |
+
+### 3) 若 2) 的 SIM Decaps 失败：同 fixture 单独复验
+
+用失败那次 fixture 里已有 KeyGen/Encaps 输出，**只**跑交付 Decaps（勿整链重跑）：
+
+```bash
+cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
+# 按该目录 STATUS / roundtrip 脚本惯例接好 EK_KEM_SRC DK_KEM_SRC M_FILE 等（与失败 trial 同字节）
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4 2>&1 | tee /tmp/wsl_kem_rt/main_decaps_solo.log
+echo EXIT:$?
+```
+
+| 单独结果 | 记法 |
+|----------|------|
+| 绿 | **连续 SIM 宿主机偶发**；非算法回归 |
+| 红 | 贴 verify/`max` 与 Phase-D/E 日志尾；升级为待查接线/污染 |
+
+### 4) CT 对照（方法论树；非默认）
+
+```bash
+DECAPS_DIR=$PWD/examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4 \
+  CPU_TRIALS=3 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh \
+  2>&1 | tee /tmp/wsl_kem_rt/ct_rt.log
+echo EXIT:$?
+```
+
+若连续 SIM segfault：对 CT 树重复步骤 3（目录换成 `…-decaps-ct-k4`）。
+
+### 5) 回写
+
+追加到**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（无则新建；同日只一篇）：
+
+- 命令、EXIT、fixture 路径
+- 失败形态分类 + 单独 Decaps 复验结果
+- 同步一行到 `qa/INDEX.md` / 当月 `qa/YYYY-MM/INDEX.md`
+- **commit + push `main`**（仅文档/纪要）
 
 ---
 
-## ★ Smoke
-
-**办公室 KEM↔liboqs（交付默认，无 `-ct`）**：
+## ★ Smoke（日常，非本次 P0）
 
 ```bash
 set -o pipefail
@@ -45,37 +95,12 @@ bash scripts/stable_kem_liboqs_roundtrip.sh 2>&1 | tee /tmp/stable_kem_rt.log
 echo EXIT:$?
 ```
 
-单算子（交付 stable Decaps）：
-
-```bash
-cd examples/stable/stable-fips203-mlkem-kem-decaps-k4
-bash run.sh -r cpu -v Ascend910B4
-bash run.sh -r sim -v Ascend910B4
-```
-
-**CT 专题（本分支；勿与交付默认混用）**：
-
-```bash
-cd ascendc-tests/pass-fix-f203-alg21-kem-decaps-device-ct-k4
-# 或 examples/stable/stable-fips203-mlkem-kem-decaps-ct-k4
-bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-```
-
-| 注意 | 说明 |
-|------|------|
-| **验收口径** | CPU 全绿 + SIM 全绿才算端到端通过 |
-| **WSL 偶发** | 连续 SIM 后 Decaps Phase-D 曾见 `tcache` abort；公司+家里对照矩阵均未复现 → 归类 CAModel/glibc 偶发；**未**改 roundtrip/stable |
-| **复验** | 遇上述失败：对 Decaps 目录单独 `bash run.sh -r sim`；绿则记环境偶发 |
-| **定点** | `KEM_SEED_HEX=… M_HEX=… bash scripts/stable_kem_liboqs_roundtrip.sh` |
-
 ---
 
 ## ★ 勿做
 
 - 从 `**/frozen/**` 抄码；未 `#…#` 改 stable 实现
 - WSL 上 `run.sh -r npu`
-- Decaps 全链只传 `DK_KEM_SRC` 不传 `EK_KEM_SRC`（stash ek → FO 假拒）
-- **另起分支** / **无指令擅自 commit·push**（见 Rule「Git 分支 / 提交 / 推送」）
-- 把连续 SIM 的 CAModel `tcache` 偶发当成算法回归去改稳定算子
-- 写「定型交付 / scripts 默认」时误指 **`-ct`** 树；写第7章 CT / 五指标时误指**无 `-ct`** 交付树
+- 把连续 SIM 的 CAModel `tcache`/segfault 偶发当成算法回归去改稳定算子
+- 写「定型交付 / scripts 默认」时误指 **`-ct`** 树
+- 并行多路 SIM；外层 `bash … \| tee` 忘记 `set -o pipefail`（会掩盖非零 EXIT）
