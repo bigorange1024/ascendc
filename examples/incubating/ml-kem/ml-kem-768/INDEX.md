@@ -20,7 +20,7 @@
 | 波次 | 目录 | ID | customspec | CPU | SIM |
 |------|------|----|------------|-----|-----|
 | W4a | [exp-fips203-mlkem-pke-keygen-k3/](exp-fips203-mlkem-pke-keygen-k3/) | E13 | **有** | **PASS** | **PASS**（tick **373429**） |
-| W4a | [exp-fips203-mlkem-pke-encrypt-k3/](exp-fips203-mlkem-pke-encrypt-k3/) | E14 | 缺 | 壳 | 壳 |
+| W4a | [exp-fips203-mlkem-pke-encrypt-k3/](exp-fips203-mlkem-pke-encrypt-k3/) | E14 | **有** | 待实现 | 待实现 |
 | W4a | [exp-fips203-mlkem-pke-decrypt-k3/](exp-fips203-mlkem-pke-decrypt-k3/) | E15 | 缺 | 壳 | 壳 |
 | W4b | [exp-fips203-mlkem-kem-keygen-k3/](exp-fips203-mlkem-kem-keygen-k3/) | E19 | 缺 | 壳 | 壳 |
 | W4b | [exp-fips203-mlkem-kem-encaps-k3/](exp-fips203-mlkem-kem-encaps-k3/) | E20 | 缺 | 壳 | 壳 |
