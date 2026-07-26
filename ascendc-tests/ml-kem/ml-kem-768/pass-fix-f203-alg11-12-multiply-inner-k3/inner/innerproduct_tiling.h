@@ -41,18 +41,8 @@ constexpr int32_t kOffOutLine = 3 * kN;
 constexpr int32_t kScratchInts = kOffOutLine + kPPerAivMax * kN;
 
 /**
- * 按 blockIdx 取本核输出行区间 [pBegin, pEnd)。
- * AIV0 → [0,2)；AIV1 → [2,3)。
+ * 分核约定（实现见 kernel Init，勿在本头文件放 __aicore__/host 双用函数）：
+ * AIV0 → t̂ 行 [0,2)；AIV1 → [2,3)。k=3 不可用 P_OUT/2。
  */
-inline void GetPRange(int32_t blockIdx, int32_t &pBegin, int32_t &pEnd)
-{
-    if (blockIdx == 0) {
-        pBegin = 0;
-        pEnd = 2;
-    } else {
-        pBegin = 2;
-        pEnd = kPOut; // 3
-    }
-}
 
 } // namespace innerproduct_tiling

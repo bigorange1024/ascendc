@@ -63,8 +63,14 @@ public:
         sGm_.SetGlobalBuffer((__gm__ int32_t *)sHat, kSVec * kN);
         tGm_.SetGlobalBuffer((__gm__ int32_t *)tHat, kPOut * kN);
 
-        // 本核输出行：AIV0 → [0,2)，AIV1 → [2,3)
-        innerproduct_tiling::GetPRange(static_cast<int32_t>(GetBlockIdx()), pBegin_, pEnd_);
+        // 本核输出行：AIV0 → [0,2)，AIV1 → [2,3)（参数卡 §3.1；不可 P_OUT/2）
+        if (GetBlockIdx() == 0) {
+            pBegin_ = 0;
+            pEnd_ = 2;
+        } else {
+            pBegin_ = 2;
+            pEnd_ = kPOut; // 3
+        }
 
 #if defined(ASCENDC_CPU_DEBUG)
         (void)pipe_;
