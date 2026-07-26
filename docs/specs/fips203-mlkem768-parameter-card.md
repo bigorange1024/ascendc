@@ -85,7 +85,7 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 
 ## 3. Tiling / 分核（T-B 锁定摘要）
 
-> 细粒度 `SetSingleShape` / `blockDim` / `usedCoreNum` **尚未**数值锁定；P2 开写前在各 `INTEGRATION_PLAN` / customspec 补表。本卡只锁**语义不变量**。
+> **W1 数值 tiling 已锁**（2026-07-26，用户授权 P2/W1）。语义不变量仍优先；遇阻 **禁止**改参硬闯。
 
 | 不变量 | 锁定内容 |
 |--------|----------|
@@ -94,13 +94,25 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 | NTT S1–S3 | 禁 `Gather`（同 Tag5T 范围）；平面 mat_c；几何按 \(k=3\) **重推** |
 | 禁止 | 末 poly 置零凑 4/8；复用 k4 的 8 路常量当默认 |
 
-**待 P2 首刀前补齐的数值字段**（占位，未锁）：
+### 3.1 W1 数值锁定（B4–B6）
 
-| 字段 | 状态 |
-|------|------|
-| Stage2 MMAD `M,N,K` / `SetSingleShape` | 未锁 → W1 分析后填 |
-| `blockDim` / `usedCoreNum` | 未锁 |
-| AIV 负载划分（6 poly → 核映射） | 未锁（须服从「整 poly 同 AIV」） |
+| 探针 | 字段 | 锁定值 |
+|------|------|--------|
+| **B4** SampleNTT | 范围 | 单 poly `(j,i)`；验收矩阵 \((j,i)\in\{0,1,2\}^2\) |
+| | `k` in `G(d‖byte(k))` | **3** |
+| | derand 前缀 | `exp-mlkem-f203-2s1e-k3:SEED_D=` |
+| | XOF / rej | 672B / 224 cand（与 k 无关） |
+| | `blockDim` | **1**（AIV_ONLY） |
+| **B5** Stage123 | `kK` / ROWS | **6**（polyvec6） |
+| | S0 紧凑 | **`[HI₆,LO₆]=[12,256] int8`**（禁 pad 到 16 行假 poly） |
+| | 平面 mat_c | **`[48,128] int32`**（`6×4×2`） |
+| | Stage2 MMAD | 逻辑 **M=12**, K=256, N=128；硬件 `mmadParams.m=ceil(12/16)*16=16`（Cube 对齐垫，**非**假 poly） |
+| | MIX / `blockDim` | **1** → 1 AIC + 2 AIV |
+| | AIV poly 映射 | **连续** AIV0 `{0,1,2}` / AIV1 `{3,4,5}`（`kPolysPerAiv=3`） |
+| | 与 CBD 分片关系 | B3 CBD 可用交叉 `{0,1,3}\|{2,4,5}`；NTT 批处理锁连续 3+3；融合时由 prep 重排，**不**为对齐 CBD 而改本表 |
+| **B6** Multiply+Inner | Alg.11 | 单对 `(f,g)→h`；与 k 无关；`blockDim=1` |
+| | InnerProduct | **`P_OUT=S_VEC=3`**；GM `a_hat[9,256]` / `s_hat[3,256]` / `t_hat[3,256]` |
+| | Inner 默认分核 | **`blockDim=2`**：AIV0 `t̂[{0,1}]`、AIV1 `t̂[{2}]`（**禁止** `P/2` 整除假设） |
 
 遇阻 **禁止**改参硬闯；停并重开讨论。
 
@@ -166,4 +178,4 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 - [x] 目录壳 + INDEX  
 - [x] registry 骨架  
 - [x] P1 补洞与必建表（另文）  
-- [ ] **P2 开写前**：补齐 §3 数值 tiling 表（按波次）
+- [x] **P2/W1**：§3.1 数值 tiling 表（B4–B6）

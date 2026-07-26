@@ -15,13 +15,18 @@ ETA = 2
 SEED_D_DEFAULT = 20260619
 
 
-def derand_bytes_from_seed(seed_d: int) -> bytes:
-    msg = f"exp-mlkem-f203-2s1e-k4:SEED_D={seed_d}".encode()
+def derand_bytes_from_seed(seed_d: int, kyber_k: int = 4) -> bytes:
+    """SEED_D → d[32]。域前缀按参数组分离（1024→k4，768→k3），默认 k=4 保持既有契约。"""
+    if kyber_k not in (2, 3, 4):
+        raise ValueError(f"unsupported kyber_k={kyber_k}")
+    msg = f"exp-mlkem-f203-2s1e-k{kyber_k}:SEED_D={seed_d}".encode()
     return hashlib.sha3_256(msg).digest()
 
 
-def hash_g_sigma(d: bytes) -> bytes:
-    buf = hashlib.sha3_512(d + bytes([K & 0xFF])).digest()
+def hash_g_sigma(d: bytes, kyber_k: int | None = None) -> bytes:
+    """G(d‖byte(k)) 的 σ 半段；kyber_k 默认取模块常量 K（1024=4）。"""
+    kk = K if kyber_k is None else int(kyber_k)
+    buf = hashlib.sha3_512(d + bytes([kk & 0xFF])).digest()
     return buf[32:64]
 
 
