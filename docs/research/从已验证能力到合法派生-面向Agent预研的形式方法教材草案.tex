@@ -4282,20 +4282,19 @@ B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G
 \label{fig:ch7-lanes}
 \end{figure}
 
-% 雷达轴改「过程开销/形态」：门禁二元项（先表/禁抄/可交付…）仍见表，不适合用面积比。
-% 各轴为序数示意（越大越好），不是精密计量；不写 token 倍数。
+% 轴名只用中性量名（类比球员能力雷达：速度/防守，不加「多/少/大/小」）；
+% 极性：越大 = 该量越大；本图是开销/负担雷达，面积大 = 更贵、更散（不是「越好」）。
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}
   \def\R{2.55}
-  % 轴：搜索克制 / 少整路返工 / 少资源空转 / 不靠禁源 / 少前置文书
+  % 轴（中性量名）：搜索空间 / 整路返工 / 资源空转 / 禁源依赖 / 前置文书
   \def\angA{90}
   \def\angB{18}
   \def\angC{-54}
   \def\angD{-126}
   \def\angE{-198}
-  % A≈(0.20, 0.25, 0.20, 0.15, 0.85)；B≈(0.90, 0.75, 0.80, 1.00, 0.35)
-  % 「少前置文书」B 更短：先交 CT 是多付的固定成本，换来其余轴更长
+  % 序数示意：A≈(0.90, 0.85, 0.85, 0.90, 0.20)；B≈(0.25, 0.30, 0.25, 0.10, 0.80)
   \foreach \rr in {0.2,0.4,0.6,0.8,1.0} {
     \draw[gray!28] (0,0) -- ({\angA}:{\rr*\R}) -- ({\angB}:{\rr*\R}) -- ({\angC}:{\rr*\R})
           -- ({\angD}:{\rr*\R}) -- ({\angE}:{\rr*\R}) -- cycle;
@@ -4303,37 +4302,37 @@ B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G
   \foreach \ang in {\angA,\angB,\angC,\angD,\angE} {
     \draw[gray!55] (0,0) -- ({\ang}:\R);
   }
-  \node[font=\footnotesize, anchor=south] at ({\angA}:{\R+0.32}) {搜索空间克制};
-  \node[font=\footnotesize, anchor=south west] at ({\angB}:{\R+0.28}) {少整路返工};
-  \node[font=\footnotesize, anchor=north west] at ({\angC}:{\R+0.22}) {少资源空转};
-  \node[font=\footnotesize, anchor=north east] at ({\angD}:{\R+0.22}) {不靠禁抄源};
-  \node[font=\footnotesize, anchor=east] at ({\angE}:{\R+0.28}) {少前置文书};
-  % B 先、A 后（两形交叉，后画描边更清晰）
-  \fill[green!55!black, opacity=0.22]
-    ({\angA}:{0.90*\R}) -- ({\angB}:{0.75*\R}) -- ({\angC}:{0.80*\R})
-    -- ({\angD}:{1.00*\R}) -- ({\angE}:{0.35*\R}) -- cycle;
-  \draw[green!45!black, very thick]
-    ({\angA}:{0.90*\R}) -- ({\angB}:{0.75*\R}) -- ({\angC}:{0.80*\R})
-    -- ({\angD}:{1.00*\R}) -- ({\angE}:{0.35*\R}) -- cycle;
-  \fill[red!70, opacity=0.40]
-    ({\angA}:{0.20*\R}) -- ({\angB}:{0.25*\R}) -- ({\angC}:{0.20*\R})
-    -- ({\angD}:{0.15*\R}) -- ({\angE}:{0.85*\R}) -- cycle;
+  \node[font=\footnotesize, anchor=south] at ({\angA}:{\R+0.32}) {搜索空间};
+  \node[font=\footnotesize, anchor=south west] at ({\angB}:{\R+0.28}) {整路返工};
+  \node[font=\footnotesize, anchor=north west] at ({\angC}:{\R+0.22}) {资源空转};
+  \node[font=\footnotesize, anchor=north east] at ({\angD}:{\R+0.22}) {禁源依赖};
+  \node[font=\footnotesize, anchor=east] at ({\angE}:{\R+0.28}) {前置文书};
+  % A 面积大（负担重）先铺底；B 后画
+  \fill[red!70, opacity=0.35]
+    ({\angA}:{0.90*\R}) -- ({\angB}:{0.85*\R}) -- ({\angC}:{0.85*\R})
+    -- ({\angD}:{0.90*\R}) -- ({\angE}:{0.20*\R}) -- cycle;
   \draw[red!75!black, thick]
-    ({\angA}:{0.20*\R}) -- ({\angB}:{0.25*\R}) -- ({\angC}:{0.20*\R})
-    -- ({\angD}:{0.15*\R}) -- ({\angE}:{0.85*\R}) -- cycle;
-  \fill[green!55!black, opacity=0.35] (-3.1,-3.55) rectangle (-2.75,-3.25);
-  \draw[green!45!black] (-3.1,-3.55) rectangle (-2.75,-3.25);
-  \node[font=\footnotesize, anchor=west] at (-2.65,-3.4) {B 方法论};
-  \fill[red!70, opacity=0.5] (-0.55,-3.55) rectangle (-0.2,-3.25);
-  \draw[red!75!black] (-0.55,-3.55) rectangle (-0.2,-3.25);
-  \node[font=\footnotesize, anchor=west] at (-0.1,-3.4) {A correctness};
+    ({\angA}:{0.90*\R}) -- ({\angB}:{0.85*\R}) -- ({\angC}:{0.85*\R})
+    -- ({\angD}:{0.90*\R}) -- ({\angE}:{0.20*\R}) -- cycle;
+  \fill[green!55!black, opacity=0.28]
+    ({\angA}:{0.25*\R}) -- ({\angB}:{0.30*\R}) -- ({\angC}:{0.25*\R})
+    -- ({\angD}:{0.10*\R}) -- ({\angE}:{0.80*\R}) -- cycle;
+  \draw[green!45!black, very thick]
+    ({\angA}:{0.25*\R}) -- ({\angB}:{0.30*\R}) -- ({\angC}:{0.25*\R})
+    -- ({\angD}:{0.10*\R}) -- ({\angE}:{0.80*\R}) -- cycle;
+  \fill[red!70, opacity=0.5] (-3.1,-3.55) rectangle (-2.75,-3.25);
+  \draw[red!75!black] (-3.1,-3.55) rectangle (-2.75,-3.25);
+  \node[font=\footnotesize, anchor=west] at (-2.65,-3.4) {A correctness};
+  \fill[green!55!black, opacity=0.35] (-0.35,-3.55) rectangle (0.0,-3.25);
+  \draw[green!45!black] (-0.35,-3.55) rectangle (0.0,-3.25);
+  \node[font=\footnotesize, anchor=west] at (0.1,-3.4) {B 方法论};
   \node[font=\scriptsize, align=center] at (0,-4.15) {
-    序数示意（非计量）；各轴越大越好，面积大 $=$ 过程更省、更干净。\\
-    B 在「少前置文书」更短——多付闭包表，换搜索/返工/禁源三轴更长。\\
-    门禁二元项（先表/禁抄/可交付/失败路径/假绿）仍见对照表，不画进本图。
+    轴名只是量；越大 $=$ 该量越大（序数示意，非计量）。\\
+    本图是\textbf{开销雷达}：面积大 $=$ 负担更重。A 大半圈；B 收小，只在「前置文书」凸出。\\
+    门禁二元项仍见对照表，不画进本图。
   };
 \end{tikzpicture}
-\caption{A/B 过程开销形态（雷达示意）：B 用前置文书换搜索与返工空间}
+\caption{A/B 过程开销形态（雷达示意）：量名中性；面积大表示负担重}
 \label{fig:ch7-metrics}
 \end{figure}
 
@@ -4366,8 +4365,8 @@ B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G
   \item \textbf{性能}：图~\ref{fig:ch7-tick} 里两条棒几乎一样长——B 没有跑赢 C；
         双 session 相对单 session 是保底，不是优化胜利。
   \item \textbf{过程}：先看图~\ref{fig:ch7-lanes} 的跨泳道虚线（A$\to$B 禁抄、C$\to$B 复用），
-        再看图~\ref{fig:ch7-metrics}——B 面积更大，是因为搜索/返工/资源空转/禁源四轴拉开；
-        「少前置文书」轴 B 更短（先交 CT 的固定成本）。相对 C 赢的仍是轨迹说得清，不是面积神话。
+        再看图~\ref{fig:ch7-metrics}——这是开销雷达（面积大 $=$ 负担重）：A 在搜索/返工/空转/禁源上铺开，
+        B 收小、只在前置文书上凸出。相对 C 赢的仍是轨迹说得清，不是面积神话。
   \item \textbf{顺便修到的洞}：B 线上的假绿回灌给 C 有用（verify 必须失败退出），
         这是实验带给主线的好处，不是把核从 B 搬到 C。
 \end{enumerate}
