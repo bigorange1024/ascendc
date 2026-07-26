@@ -144,4 +144,4 @@ PY
 fi
 
 python3 "${CURRENT_DIR}/scripts/verify_result.py"
-echo "[SUCCESS] pass-f203-compress-d-vec-k4 d=${F203_COMPRESS_D} (${RUN_MODE})"
+echo "[SUCCESS] pass-fix-f203-compress-decompress-du10-dv4-k3/compress d=${F203_COMPRESS_D} (${RUN_MODE})"

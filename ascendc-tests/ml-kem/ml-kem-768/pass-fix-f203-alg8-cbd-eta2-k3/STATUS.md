@@ -29,13 +29,13 @@ P2 编译 + CPU `blockDim=1`：内核 `GetBlockNum()==1` 时 block0 串行 6 行
 | 项 | 状态 | 说明 |
 |----|------|------|
 | CPU 对拍 P2（默认） | **PASS** | `bash run.sh -r cpu -v Ascend910B4` → `[verify] src[6,256] PASS (6144 bytes)` exit 0 |
-| SIM 对拍 P2（默认） | **PASS** | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` → verify PASS；**Total tick: 14960**；用例根无 stray dump |
+| SIM 对拍 P2（默认） | **PASS** | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` → verify PASS；**Total tick: 14949**；用例根无 stray dump |
 
 ## SIM 性能（910B4，2026-07-26）
 
 | 变体 | blockDim | Total tick | 说明 |
 |------|----------|------------|------|
-| **P2 双 AIV（默认）** | 2 | **14960** | polyvec6 / ROWS=6 |
+| **P2 双 AIV（默认）** | 2 | **14949** | polyvec6 / ROWS=6 |
 
 ## 测试专用 override
 

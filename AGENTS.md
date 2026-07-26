@@ -123,10 +123,10 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
-- **目录**：1024 活跃在 `…/ml-kem/ml-kem-1024/`；768 **P0/P1 壳**在 `…/ml-kem/ml-kem-768/`（无源码；**无** stable-768）  
+- **目录**：1024 活跃在 `…/ml-kem/ml-kem-1024/`；768 W0 积木在 `…/ml-kem/ml-kem-768/`（**无** stable-768）  
 - **768 权威**：[`docs/specs/fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md) · [P1 用例表](docs/specs/fips203-mlkem768-p1-gap-and-cases.md)  
-- **PKE + KEM 六算子（1024）** 已在 [`examples/stable/ml-kem/ml-kem-1024/`](examples/stable/ml-kem/ml-kem-1024/)  
-- **下一刀**：768 **P2/W0**（须授权 + Skill；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）  
+- **768 W0**：B1/B2/B3 **CPU+SIM 全绿**（见 `ascendc-tests/ml-kem/ml-kem-768/INDEX.md`）  
+- **下一刀**：768 **P2/W1**（B4–B6；须再授权；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）  
 - **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)
 
 ---
