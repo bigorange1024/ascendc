@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-26（P0：WSL Agent 分类 Decaps 偶发失败；照下面「WSL Agent 照做」执行）
+> **最后刷新**：2026-07-26（WSL P0 分类复测：本轮 main+CT CPU×3+SIM×1 均绿；早先 CT 连续 SIM 偶发仍记宿主机）
 
 ---
 
@@ -15,8 +15,8 @@
 | **KEM 六算子 stable** | KeyGen / Encaps / Decaps **均已定型**（交付 Decaps **无 `-ct`**）；`scripts/` 默认指 **无 `-ct`** stable |
 | **Decaps 交付树**（`scripts/` 默认） | `stable-…-kem-decaps-k4`（**T19i**；SIM 默认 `decaps_1session`） |
 | **Decaps CT 树**（教材/对照） | `*-decaps-*-ct-k4`（SIM 默认 `decaps_2session`）；**非**办公室默认 |
-| **已知偶发** | 连续 SIM（KeyGen→Encaps→立刻 Decaps）时 Decaps Phase-D 曾见 `tcache` / segfault；单独 Decaps SIM 常绿 → 归类 CAModel/glibc 宿主机偶发（见 `qa/2026-07-21-连续SIM-tcache对照矩阵.md`） |
-| **WSL 纪要（今日）** | [`qa/2026-07/2026-07-26-….md`](qa/2026-07/2026-07-26-教材第7章流程图与对照图.md)「WSL 复现」节：交付树曾全绿；CT 连续 SIM fragile |
+| **已知偶发** | 连续 SIM 时 Decaps Phase-D 曾见 `tcache` / segfault；单独 Decaps SIM 常绿 → CAModel/glibc 宿主机偶发 |
+| **WSL P0（今日）** | 交付+CT 均 `CPU×3+SIM×1` **EXIT=0**（fixture `…175815_1481` / `…184309_6528`）；早先 CT 连续红仍记偶发，见当日 qa |
 
 ---
 

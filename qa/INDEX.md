@@ -12,7 +12,7 @@
 
 ### 2026-07-26 — [教材第7章图示 · WSL 复现 main/CT liboqs RT](2026-07/2026-07-26-教材第7章流程图与对照图.md)
 
-关键字：第7章 TikZ · 写作指导 · **WSL RT**：main **PASS** · CT CPU×5 绿 / 连续 SIM segfault · 单独 CT Decaps SIM 绿
+关键字：第7章 TikZ · 写作指导 · **WSL RT/P0**：main+CT 本轮 CPU×3+SIM×1 **均绿**（早先 CT 连续 SIM 偶发仍记宿主机）
 
 ### 2026-07-25 — [Decaps 交付树回灌 CT 工程小改](2026-07/2026-07-25-Decaps交付树回灌CT工程小改.md)
 
