@@ -1,7 +1,7 @@
 # examples/incubating/ml-kem/ml-kem-768 — ML-KEM-768（k=3）预研
 
 **参数组**：FIPS 203 **ML-KEM-768**（\(k=3\)）  
-**阶段**：**W4 进行中** — W4a/E13–E15 PKE exp 已完成 customspec + incubating 实现；下一刀 E19
+**阶段**：**W4 进行中** — W4a/E13–E15 PKE exp 已完成；W4b/E19–E20 KEM exp 已完成；下一刀 E21
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem768-parameter-card.md](../../../../docs/specs/fips203-mlkem768-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem768-p1-gap-and-cases.md](../../../../docs/specs/fips203-mlkem768-p1-gap-and-cases.md)  
@@ -23,6 +23,6 @@
 | W4a | [exp-fips203-mlkem-pke-encrypt-k3/](exp-fips203-mlkem-pke-encrypt-k3/) | E14 | **有** | **PASS** | **PASS**（tick **507633**） |
 | W4a | [exp-fips203-mlkem-pke-decrypt-k3/](exp-fips203-mlkem-pke-decrypt-k3/) | E15 | **有** | **PASS** | **PASS**（tick **222073**） |
 | W4b | [exp-fips203-mlkem-kem-keygen-k3/](exp-fips203-mlkem-kem-keygen-k3/) | E19 | **有** | **PASS** | **PASS**（tick **510867**） |
-| W4b | [exp-fips203-mlkem-kem-encaps-k3/](exp-fips203-mlkem-kem-encaps-k3/) | E20 | **有** | 待实现 | 待实现 |
+| W4b | [exp-fips203-mlkem-kem-encaps-k3/](exp-fips203-mlkem-kem-encaps-k3/) | E20 | **有** | **PASS** | **PASS**（tick **590261**） |
 | W4b | [exp-fips203-mlkem-kem-decaps-k3/](exp-fips203-mlkem-kem-decaps-k3/) | E21 | 缺 | 壳 | 壳 |
 | W4b | [exp-fips203-mlkem-kem-decaps-ct-k3/](exp-fips203-mlkem-kem-decaps-ct-k3/) | E21ct | 缺 | 壳 | 壳 |

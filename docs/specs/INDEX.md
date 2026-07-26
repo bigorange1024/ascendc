@@ -17,7 +17,7 @@
 | [fips203-mlkem768-pke-encrypt-baseline-registry.md](fips203-mlkem768-pke-encrypt-baseline-registry.md) | Alg.14（k=3）registry **草稿** |
 | [fips203-mlkem768-pke-decrypt-baseline-registry.md](fips203-mlkem768-pke-decrypt-baseline-registry.md) | Alg.15（k=3）registry **草稿** |
 | [fips203-mlkem768-kem-keygen-baseline-registry.md](fips203-mlkem768-kem-keygen-baseline-registry.md) | Alg.19（k=3）registry **草稿** |
-| [fips203-mlkem768-kem-encaps-baseline-registry.md](fips203-mlkem768-kem-encaps-baseline-registry.md) | Alg.20（k=3）registry **草稿** |
+| [fips203-mlkem768-kem-encaps-baseline-registry.md](fips203-mlkem768-kem-encaps-baseline-registry.md) | Alg.20（k=3）registry；E20 incubating CPU/SIM 已验证（2026-07-26） |
 | [fips203-mlkem768-kem-decaps-baseline-registry.md](fips203-mlkem768-kem-decaps-baseline-registry.md) | Alg.21（k=3）registry **草稿** |
 
 ---
