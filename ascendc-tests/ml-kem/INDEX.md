@@ -5,6 +5,6 @@
 | 目录 | 参数组 | 说明 |
 |------|--------|------|
 | [ml-kem-1024/](ml-kem-1024/INDEX.md) | **ML-KEM-1024**（k=4） | 当前活跃探针全集（已冒烟） |
-| [ml-kem-768/](ml-kem-768/INDEX.md) | **ML-KEM-768**（k=3） | **W0/W1/W2 已绿**；W3 D19/D20 已绿；D21/D21ct 待做 |
+| [ml-kem-768/](ml-kem-768/INDEX.md) | **ML-KEM-768**（k=3） | **W0/W1/W2/W3 已绿**（含 D21ct CT） |
 
 上级：[../INDEX.md](../INDEX.md)。
