@@ -3980,29 +3980,24 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 对拍要用的 $\mathit{dk}$、$c$、$K$，可以由已经交付的 KeyGen / Encaps 提供；
 本任务\textbf{不再重写}那两条。
 
-画成图更清楚（图~\ref{fig:ch7-dep}）：目标在下，已获证能力在上，虚线红是禁止抄的 correctness vendor。
+画成图更清楚（图~\ref{fig:ch7-dep}）：只画\textbf{实现}要用的依赖——对拍用的 KeyGen/Encaps、禁止抄码等写在正文，不塞进这张图。
 
 \begin{figure}[H]
 \centering
 \begin{tikzpicture}[
-  x=1.15cm, y=1.0cm,
+  x=1.2cm, y=1.05cm,
   n/.style={draw, rounded corners=2pt, align=center, font=\small,
-            minimum width=2.4cm, minimum height=0.75cm, fill=blue!6},
-  t/.style={n, fill=orange!16, minimum width=2.8cm},
-  forb/.style={n, fill=red!10, dashed},
+            minimum width=2.5cm, minimum height=0.78cm, fill=blue!6},
+  t/.style={n, fill=orange!16, minimum width=2.7cm},
   arr/.style={-{Stealth[length=2mm]}, thick}
 ]
-  \node[n] (dec) at (0,2.2) {Decrypt\\stable};
-  \node[n] (enc) at (4.2,2.2) {Encrypt\\stable};
-  \node[n] (kecc) at (8.4,2.2) {Keccak\\shared};
-  \node[n] (kg) at (1.5,3.6) {KeyGen\\（对拍用）};
-  \node[n] (caps) at (6.5,3.6) {Encaps\\（对拍用）};
+  \node[n] (dec) at (0,2.0) {Decrypt\\stable};
+  \node[n] (enc) at (4.2,2.0) {Encrypt\\stable};
+  \node[n] (kecc) at (8.4,2.0) {Keccak\\shared};
 
-  \node[t] (g) at (2.1,0.9) {$G(m'\Vert h)$};
-  \node[t] (fo) at (6.3,0.9) {设备 FO};
-  \node[t] (decaps) at (4.2,-0.4) {Decaps\\目标 $T$};
-
-  \node[forb] (vend) at (10.6,0.9) {correctness\\vendor（禁）};
+  \node[t] (g) at (2.1,0.75) {$G(m'\Vert h)$};
+  \node[t] (fo) at (6.3,0.75) {设备 FO};
+  \node[t] (decaps) at (4.2,-0.55) {Decaps\\目标 $T$};
 
   \draw[arr] (dec) -- (g);
   \draw[arr] (kecc) -- (g);
@@ -4012,15 +4007,12 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
   \draw[arr] (fo) -- (decaps);
   \draw[arr] (dec) -- (decaps);
   \draw[arr] (enc) -- (decaps);
-  \draw[arr, gray] (kg) -- (decaps);
-  \draw[arr, gray] (caps) -- (decaps);
-  \draw[arr, red!60!black, dashed] (vend) -- node[above, font=\scriptsize, text=red!60!black]{Forbidden} (fo);
 
-  \node[font=\footnotesize, align=left] at (4.2,-1.5) {
-    实线：语义/接缝依赖；灰线：对拍材料；虚线红：禁止抄码
+  \node[font=\footnotesize, text=gray!55!black] at (4.2,-1.45) {
+    箭头：实现时的语义 / 接缝依赖（不含对拍材料、不含 Forbidden 文书）
   };
 \end{tikzpicture}
-\caption{Decaps 多父依赖示意（写码前从目标反推）}
+\caption{Decaps 实现依赖（写码前从目标反推；仅实现相关）}
 \label{fig:ch7-dep}
 \end{figure}
 
