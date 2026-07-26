@@ -141,6 +141,32 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 
 遇阻 **禁止**改参硬闯；停并重开讨论。
 
+### 3.3 W3 数值锁定（D19–D21[+ct]）
+
+> **W3 数值 tiling 已锁**（2026-07-26，用户授权「我授权」开 W3）。KEM 设备探针在活跃 **D13–D15** 之上加 Alg.16/17/18 头尾；几何复用 §3.2；**禁止**零垫与 k4 字节长默认。
+
+| 探针 | 字段 | 锁定值 |
+|------|------|--------|
+| **共用** | I/O | ek_kem **1184**＝ek_pke；dk_kem **2400**＝dk_pke(1152)‖ek(1184)‖H(ek)(32)‖z(32)；c **1088**；K/m **32** |
+| | Derand | `d`：`exp-mlkem-f203-2s1e-k3:SEED_D=`；`z`：`exp-mlkem-f203-kem-k3:SEED_Z=`（§4） |
+| | PKE 内核几何 | **原样复用** §3.2 D13/D14/D15（Â[9]、polyvec6、INTT batch4、d_u/d_v=10/4） |
+| | 禁 | k4 的 ek=1568 / dk_kem=3168 / c=1568；pad 凑 4/8；从 `frozen/` 抄码 |
+| **D19** Alg.19 KeyGen | Launch | SIM/生产 **2**：prep（＝D13 prep）→ compute+**Alg.16 尾**（H(ek)‖拼 dk_kem；内嵌，无第 3 launch） |
+| | blockDim | prep **2** AIV_ONLY；compute MIX **1** |
+| | 输出 | `ek_kem` 1184 · `dk_kem` 2400 |
+| **D20** Alg.20 Encaps | Launch | SIM **2** / CPU 可多分段（对齐 D14）；头 `G(m‖H(ek))`→(K̄,r) 后走 D14 Encrypt |
+| | 输出 | `c` 1088 · `K` 32 |
+| | 验收 | `c`/`K` max=0 vs golden（或 liboqs-768 encaps_derand） |
+| **D21** Alg.21 Decaps（交付） | 组成 | Phase-D＝D15 Decrypt → Phase-E＝D14 形重加密 + FO（`K` 或 `J(z‖c)`） |
+| | Launch | SIM 默认对齐 k4 交付：**少 launch**（目标 3；CPU 可多段）；**默认 `decaps_1session`** |
+| | 输出 | 合法路径 `K` 32；可选 `KEM_DECAPS_REJECT=1` 拒绝路径 |
+| **D21ct** Alg.21 CT | 与 D21 | 同 I/O；生产 SIM 默认 **`decaps_2session`**（CT 锁定） |
+| | 验收 | 合法 `K` max=0；拒绝路径 `REJECT PASS` 且 **reject≠accept** |
+
+积木复用：D13–D15 + B1–B6（活跃 k3）。incubating/stable-768 **本波不写**。
+
+遇阻 **禁止**改参硬闯；停并重开讨论。
+
 ---
 
 ## 4. Derand / 域分离（草案锁定）
