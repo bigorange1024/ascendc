@@ -24,7 +24,8 @@ ascendc-tests/
 ├── add_custom/                 # 冒烟（非算法）
 ├── pass-shake*/ pass-toy*/ …   # 平台玩具 / 授权示例（非 ML-KEM 参数组树）
 ├── ml-kem/
-│   └── ml-kem-1024/            # FIPS 203 ML-KEM-1024（k=4）活跃探针
+│   ├── ml-kem-1024/            # FIPS 203 ML-KEM-1024（k=4）活跃探针
+│   └── ml-kem-768/             # ML-KEM-768（k=3）P0/P1 目录壳
 │       └── INDEX.md
 ├── frozen/                     # 已关闭路线（不迁入 ml-kem/）
 └── INDEX.md                    # 本文件
@@ -34,6 +35,7 @@ ascendc-tests/
 |------|------|
 | [ml-kem/](ml-kem/INDEX.md) | **按参数组**组织的 ML-KEM 探针；详表见各 `ml-kem-*/INDEX.md` |
 | [ml-kem/ml-kem-1024/](ml-kem/ml-kem-1024/INDEX.md) | **当前** ML-KEM-1024（k=4）活跃探针全集 |
+| [ml-kem/ml-kem-768/](ml-kem/ml-kem-768/INDEX.md) | **P0/P1 壳** ML-KEM-768（k=3）；见参数卡 |
 | [frozen/](frozen/INDEX.md) | 路线关闭；只读判决书 |
 
 ---

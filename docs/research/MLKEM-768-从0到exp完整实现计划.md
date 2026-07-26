@@ -1,10 +1,10 @@
-# ML-KEM-768：从 0 到 incubating exp 完整实现计划（草案，待审）
+# ML-KEM-768：从 0 到 incubating exp 完整实现计划
 
-**状态**：调研草稿 · **未开写码** · 待用户审阅后锁定  
-**范围**：真 **ML-KEM-768**（\(k=3\)）→ `examples/incubating/ml-kem/ml-kem-768/exp-*` **KEM 三算子**  
-**不做**：零垫冒充（\(k=4\) 末 poly 置零）；本阶段 **不**建 `examples/stable/ml-kem/ml-kem-768/`  
-**参考（只读模式，不抄实现）**：`…/ml-kem/ml-kem-1024/` 已获证阶梯与 `docs/notes/` 定稿  
-**分支建议**：在 `research/formal-lang-dag` 或独立 `cursor/mlkem768-…` 上推进（开写前再定）
+**状态**：**P0+P1 已落地**（2026-07-26）· **P2 未开写码**  
+**权威参数 / 用例表**：[`docs/specs/fips203-mlkem768-parameter-card.md`](../specs/fips203-mlkem768-parameter-card.md) · [`…-p1-gap-and-cases.md`](../specs/fips203-mlkem768-p1-gap-and-cases.md)  
+**范围**：真 **ML-KEM-768**（\(k=3\)）→ incubating **PKE×3 + KEM×3 + decaps-ct**  
+**不做**：零垫；本阶段 **不**建 `examples/stable/ml-kem/ml-kem-768/`  
+**参考（只读模式，不抄实现）**：`…/ml-kem/ml-kem-1024/` 与 `docs/notes/`
 
 ---
 
@@ -12,7 +12,7 @@
 
 | 项 | 约定 |
 |----|------|
-| **终点** | incubating 下三算子均可默认路径验收：`exp-…-kem-keygen-k3` / `…-encaps-k3` / `…-decaps-k3` |
+| **终点** | incubating：**PKE** keygen/encrypt/decrypt + **KEM** keygen/encaps/decaps + **decaps-ct** 均可默认路径验收 |
 | **验收** | 各用例目录 **CPU + `SIM_DIRECT=1` sim** 双过；I/O 与 golden（liboqs `ML-KEM-768`）一致；用例根无 stray dump |
 | **端到端** | 新增 `scripts/exp_kem768_liboqs_roundtrip.sh`（或等价）：KeyGen→Encaps→Decaps 至少 CPU×1 + SIM×1 |
 | **非目标** | stable 晋级、NPU 真机压测、性能打满、教材长文成稿（可另开） |
@@ -70,10 +70,10 @@ P0 文书锁定 ──► P1 补洞清单+用例表 ──► P2 按波次实现
 
 | 阶段 | 产出 | 退出门禁 |
 |------|------|----------|
-| **P0** | 参数卡 + CT + **分核/tiling 选项决议** + 目录壳 + INDEX | 用户书面确认参数与选项；未确认不写 kernel |
-| **P1** | 相对 1024 的洞表；本计划 §3 用例表定稿 | 用户确认「必建探针集合」无增减争议 |
-| **P2** | 积木 → PKE device →（可选）KEM device 探针全绿 | 每波双模式绿；洞关闭打勾 |
-| **P3** | 三个 `exp-…-kem-*-k3` + 768 roundtrip | 声明「有条件完成（至 exp）」 |
+| **P0** | 参数卡 + CT + **分核/tiling 选项决议** + 目录壳 + INDEX | ✅ 已完成（见参数卡） |
+| **P1** | 相对 1024 的洞表；必建用例表定稿 | ✅ 已完成（见 P1 文；含 PKE exp + CT） |
+| **P2** | 积木 → PKE device → KEM device(+ct) 探针全绿 | 每波双模式绿；洞关闭打勾 |
+| **P3** | PKE+KEM exp(+ct) + 768 roundtrip | 声明「有条件完成（至 exp）」 |
 
 Skill 节奏（开写时）：积木/探针可走 **【预研】**；进 `examples/incubating/…` 写码前须有活跃 **`*-customspec.*`**（`$规格$`）；本阶段不触发 `#交付#` stable。
 
@@ -103,7 +103,7 @@ Skill 节奏（开写时）：积木/探针可走 **【预研】**；进 `exampl
 | **T-B** | **6-poly（s‖e）为批单位** 重做「polyvec6」流水（类比 1024 的 polyvec8，但是 6 非 8） | 延续「整 poly 握在同一 AIV」不变量 | 仍须重做 tiling；不能复用 8 路常量 |
 | **T-C** | 矩阵按行/列 **串行多 launch** 降低单核形状难度 | 降低首版 SIM 风险 | launch 数↑；须在 customspec 写清，避免日后误当性能基线 |
 
-**计划默认推荐（待你否决）**：**T-B 为主、T-A 为矩阵 \(\hat A\) 采样侧配套**——即噪声向量走 6-poly 批语义，\(\hat A\) 的 \(3\times3\) 用独立 prep launch；**明确拒绝**「pad 到 4/8」的任何变体（即前提 4）。
+**已锁定（用户同意）**：**T-B**（polyvec6）+ \(\hat A\) 独立 prep；**明确拒绝** pad 到 4/8。
 
 #### 选项 C — Compress / ByteEncode
 
@@ -188,7 +188,7 @@ Skill 节奏（开写时）：积木/探针可走 **【预研】**；进 `exampl
 | **E21** | `exp-fips203-mlkem-kem-decaps-k3` | 必有 | CPU+SIM；建议含 reject 开关 |
 | **E21ct** | `exp-…-kem-decaps-ct-k3`（可选） | 若 D21ct 路径要晋级再开 | 非终点必达 |
 
-**PKE 的 exp**（`exp-…-pke-*-k3`）：**非终点必达**；若 D13–D15 已绿且 KEM exp 直接 vendoring 其对象代码，可跳过独立 PKE exp，以减少重复。计划默认：**跳过 PKE exp，KEM exp 为唯一 incubating 交付面**。
+**PKE 的 exp**（`exp-…-pke-*-k3`）：**用户要求必做**（E13–E15）；另加 **E21ct**。详见 P1 表。
 
 ### 4.3 明确不建（除非卡死再开）
 
@@ -289,14 +289,18 @@ KAT 批次数（建议，非 stable 门禁）：device/exp 各 **CPU×3 + SIM×1
 
 ---
 
-## 9. 请你审阅时重点拍板的问题
+## 9. 决议记录（2026-07-26）
 
-1. **分核主路线**：是否同意默认 **T-B（polyvec6）+ \(\hat A\) 独立 prep**？或改 T-A / T-C？  
-2. **KEM device 探针 D19–D21**：保留（推荐）还是与 exp 合并以加速？  
-3. **D21ct / E21ct**：终点是否要求拒绝路径 CT 探针？  
-4. **PKE exp**：确认跳过，仅 KEM exp？  
-5. **命名**：`-k3` 是否接受（相对现网 `-k4`）？  
-6. 是否授权在审阅通过后直接开 **P0 文书 + 空目录**（仍不写 kernel）？
+| # | 决议 |
+|---|------|
+| 1 | 同意 **T-B + Â prep** |
+| 2 | **保留** D19–D21 |
+| 3 | **要求** reject/CT（D21ct + E21ct） |
+| 4 | **PKE exp 也要做** |
+| 5 | 命名 **`-k3` OK** |
+| 6 | 先完成 **P0+P1**（本轮已落地文书与目录壳） |
+
+**下一刀**：用户授权后开 **P2 / W0**（须按 Skill：【预研】与/或 `$规格$`）。
 
 ---
 

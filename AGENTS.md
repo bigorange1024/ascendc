@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-26（活跃 ML-KEM 迁入 `ml-kem/ml-kem-1024/`；交付 Decaps **无 `-ct`** + CT **`-ct`** 并存）
+**最后刷新**：2026-07-26（1024 迁入完成；**ML-KEM-768 P0+P1 目录壳+参数卡**已落地）
 
 ---
 
