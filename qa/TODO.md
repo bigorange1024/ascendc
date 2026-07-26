@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-26（768 **W0–W3 探针全绿**；用户休息前**一并授权 W4** incubating）
+**最近刷新**：2026-07-26（768 **W0–W3 探针全绿**；W4/E13 incubating PKE KeyGen **CPU+SIM 绿**）
 
 ---
 
@@ -31,7 +31,7 @@
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
-| **P0** | **T768-W4** | ML-KEM-768 W4：E13–E15 + E19–E21[+ct] incubating（先 customspec 再写码；registry + 768 roundtrip） | **进行中**（2026-07-26 用户一并授权）；禁 stable-768 |
+| **P0** | **T768-W4** | ML-KEM-768 W4：E13–E15 + E19–E21[+ct] incubating（先 customspec 再写码；registry + 768 roundtrip） | **进行中**：E13 PKE KeyGen **CPU+SIM 绿**（tick **373429**）；下一刀 E14；禁 stable-768 |
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
 | **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境 |
