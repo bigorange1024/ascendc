@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-27（**768 有条件完成至 incubating + glue**；文档/索引收尾）
+**最后刷新**：2026-07-27（**换 Agent**：先读 AGENT_HANDOFF——512 文档+代码审阅；research=main@0f8b2d4）
 
 ---
 
