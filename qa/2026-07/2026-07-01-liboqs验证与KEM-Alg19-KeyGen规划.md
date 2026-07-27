@@ -27,7 +27,12 @@
 | `liboqs_pke_vs_ascendc.sh` | 三阶段主编排 |
 | `liboqs_pke_vs_ascendc_verify.py` | 字节对拍 |
 
-**前置**：`thirdparty/liboqs` 已 build；`bash scripts/build_liboqs_pke_ref.sh`。
+> **改名备注（2026-07-27）**：仓根全 PKE 黑盒已更名为  
+> `scripts/liboqs_pke_ref_mlkem1024.c` / `build_liboqs_pke_ref_mlkem1024.sh` / 产物 `liboqs_pke_ref_mlkem1024`  
+> （标明 **仅 ML-KEM-1024**；`build_liboqs_pke_ref.sh` 仍作兼容转发）。  
+> 用例内编 `liboqs_pke_keygen_ref` 的脚本另改名为 `build_liboqs_pke_keygen_ref.sh`，勿与仓根全 PKE 混淆。
+
+**前置**：`thirdparty/liboqs` 已 build；`bash scripts/build_liboqs_pke_ref.sh`（今可写 `bash scripts/build_liboqs_pke_ref_mlkem1024.sh`）。
 
 **验收**：
 

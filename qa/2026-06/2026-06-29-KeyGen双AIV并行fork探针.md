@@ -46,6 +46,9 @@ bash kat_liboqs_vs_ascendc.sh   # KAT_CPU_COUNT=10 KAT_SIM_COUNT=1 默认
 
 liboqs：`thirdparty/liboqs` tag **0.15.0**（静态 `liboqs.a`）；`scripts/build_liboqs_pke_ref.sh` 已支持 `.a` / `.so`。
 
+> **改名备注（2026-07-27）**：仓根全 PKE 构建现为 `scripts/build_liboqs_pke_ref_mlkem1024.sh`（源码/产物带 `mlkem1024` 后缀；旧 `build_liboqs_pke_ref.sh` 仍转发）。  
+> 本条 KAT 实际多用用例内 `liboqs_pke_keygen_ref`；对应脚本现名 `build_liboqs_pke_keygen_ref.sh`。
+
 ## CPU `[SUCCESS]` 日志判读
 
 **背景**：用户/KAT 见控制台或 `kat_liboqs_vs_ascendc.log` 中 prep 后约 6 行、`mmad` 后 3 行 `[SUCCESS][AIC_x]/[AIV_x]`，易误读为「2AIC+4AIV 多核占用/空转」。

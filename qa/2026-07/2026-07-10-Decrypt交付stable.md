@@ -11,6 +11,8 @@
 | KAT `CPU×10 + SIM×1` | PASS（`liboqs_pke_decrypt_fixture.py`：liboqs keygen + host golden_c，规避 `liboqs_pke_ref` encrypt/decrypt 链接） |
 | roundtrip `CPU×10 + SIM×1` | PASS（`DECRYPT_DIR`→exp） |
 
+> **改名备注（2026-07-27）**：文中 `liboqs_pke_ref` 现为 `scripts/liboqs_pke_ref_mlkem1024`（仅 1024）；T18 债条目亦按新名登记。
+
 ## 晋级操作
 
 - `rsync` 复制 exp → stable（排除 build/output/sim_log）
@@ -49,7 +51,8 @@
 | Alg.15 Decrypt | `stable-fips203-mlkem-pke-decrypt-k4` | **T15a** |
 
 - 打开项主线切 **KEM Alg.19–21**（T6 / T7a / T7c）；T7b 降为 P1 工程债
-- 新增 **T18**（Encrypt `liboqs_pke_ref` 链接债，非阻塞）
+- 新增 **T18**（Encrypt `liboqs_pke_ref` 链接债，非阻塞）  
+  → **2026-07-27**：对象现名 `liboqs_pke_ref_mlkem1024`（见 [`qa/TODO.md`](../TODO.md) T18）
 
 ## 索引死链清理（同日推送前）
 
