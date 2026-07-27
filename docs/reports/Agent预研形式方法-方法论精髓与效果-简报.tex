@@ -1,6 +1,6 @@
 % 研究汇报简报：从教材正文摘抄定义 / 定理 / 图 / 表（无封面，≤15 页）
 % 编译：bash scripts/xelatex-clean.sh docs/reports/Agent预研形式方法-方法论精髓与效果-简报.tex
-% 受众：数学 / 密码专家；不讲 PQC 入门；符号与教材草案一致
+% 体例：每页标题点明主题；页末一句「本页价值」总结作用
 \documentclass[UTF8,aspectratio=169,11pt]{ctexbeamer}
 \usetheme{Madrid}
 \usecolortheme{default}
@@ -11,161 +11,150 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,calc}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-% ctexbeamer 已提供 definition / theorem；勿再用 amsthm 重定义
-\setlength{\parskip}{0.2em}
+\newcommand{\pagesummary}[1]{%
+  \vfill
+  {\footnotesize\noindent\textbf{本页价值：}#1\par}%
+}
+\setlength{\parskip}{0.15em}
 
 \begin{document}
 
 % ========== 1 ==========
-\begin{frame}{研究问题与主张}
+\begin{frame}{主题：研究要解决什么问题、主张是什么}
 \begin{block}{问题}
 把复杂预研交给 Agent 时，开放文本空间里的生成会发散：跳层发明、引用未获证依赖、
 把 \texttt{frozen/}/correctness 当模板、用「对拍过」冒充闭包已满。
 \end{block}
-\begin{block}{主张（教材愿景的操作化）}
-只允许沿\textbf{已验证能力及其合法组合}生长实现——即把开放生成收成
-对能力 DAG 上 $\mathrm{Dep}^*$ / $\mathrm{Missing}_\Gamma$ / $\mathrm{Forbidden}$ 的\textbf{可检查受控搜索}。
+\begin{block}{主张}
+只允许沿\textbf{已验证能力及其合法组合}生长——把开放生成收成对
+$\mathrm{Dep}^*$ / $\mathrm{Missing}_\Gamma$ / $\mathrm{Forbidden}$ 的\textbf{可检查受控搜索}。
 \end{block}
 \begin{itemize}
-  \item 压力测试床 1：ML-KEM-1024 \texttt{kem.decaps}（先交 $\mathrm{CT}$ 再写码）。
-  \item 压力测试床 2：真 ML-KEM-768（$k{=}3$；先锁参数卡再按波次）。
+  \item 压力床 1：ML-KEM-1024 \texttt{kem.decaps}（先交 $\mathrm{CT}$ 再写码）。
+  \item 压力床 2：真 ML-KEM-768（$k{=}3$；先锁参数卡再按波次）。
 \end{itemize}
+\pagesummary{为本场汇报定问题与主张，后续定义与实验都服务这一主张，而不是堆算子细节。}
 \end{frame}
 
 % ========== 2 ==========
-\begin{frame}{定义：依赖闭包 $\mathrm{Dep}^*$}
-\begin{definition}[单点依赖闭包（教材 Def.）]
-固定依赖图 $G=(V,E)$。对目标 $T\in V$，
+\begin{frame}{主题：依赖闭包 $\mathrm{Dep}^*$——「完成目标理论上要齐谁」}
+\begin{definition}[单点依赖闭包（教材）]
+固定 $G=(V,E)$，$T\in V$，
 \[
 \mathrm{Dep}^*_G(T)
-\;=\;
-\{u\in V\mid u\rightsquigarrow_G T\}
-\;=\;
-\{u\in V\mid (u,T)\in E^{*}\}.
+=\{u\in V\mid u\rightsquigarrow_G T\}
+=\{u\in V\mid (u,T)\in E^{*}\}.
 \]
-恒有 $T\in\mathrm{Dep}^*_G(T)$。工程读法：完成 $T$ 理论上必须齐备的全部先决（含 $T$）。
+恒有 $T\in\mathrm{Dep}^*_G(T)$。
 \end{definition}
 \begin{theorem}[迭代收敛]
-$D_0(T)=\{T\}$，$D_{k+1}=D_k\cup\bigcup_{v\in D_k}\mathrm{Pred}(v)$。
-有限图上存在 $K\le|V|$ 使 $k\ge K\Rightarrow D_k(T)=\mathrm{Dep}^*(T)$。
+$D_0=\{T\}$，$D_{k+1}=D_k\cup\bigcup_{v\in D_k}\mathrm{Pred}(v)$；
+有限图上 $\exists K\le|V|$ 使 $k\ge K\Rightarrow D_k=\mathrm{Dep}^*(T)$。
 \end{theorem}
-\vspace{-0.3em}
-{\footnotesize 等价算法：在转置图 $G^\top$ 上从 $T$ 做 BFS/DFS，访问集 $=\mathrm{Dep}^*(T)$。}
+{\footnotesize 算法：在 $G^\top$ 上从 $T$ 做 BFS/DFS，访问集 $=\mathrm{Dep}^*(T)$。}
+\pagesummary{给出「先决集合」的精确定义，使「缺什么」可计算，而不是凭感觉列清单。}
 \end{frame}
 
 % ========== 3 ==========
-\begin{frame}{定义：证书、$\Gamma$、缺项}
-\begin{definition}[证书 / 已获证集 $\Gamma$]
-证书 $=$ 对顶点 $v$ 的\textbf{可引用判决}（约定验收下已通过）。\\
-$\Gamma\subseteq V$：当前允许被后续任务引用的能力集。$v\in\Gamma$ 称已获证。
+\begin{frame}{主题：证书 $\Gamma$ 与缺项 $\mathrm{Missing}$——「已有什么、还缺什么」}
+\begin{definition}[证书 / $\Gamma$]
+证书 $=$ 对顶点 $v$ 的\textbf{可引用判决}。$\Gamma\subseteq V$：当前允许引用的能力集。
 \end{definition}
-\begin{definition}[缺项集]
-\[
-\mathrm{Missing}_\Gamma(T)
-\;=\;
-\mathrm{Dep}^*(T)\setminus\Gamma.
-\]
-$\mathrm{Missing}_\Gamma(T)=\emptyset\iff\mathrm{Dep}^*(T)\subseteq\Gamma$（闭包已满）。
+\begin{definition}[缺项]
+$\mathrm{Missing}_\Gamma(T)=\mathrm{Dep}^*(T)\setminus\Gamma$；
+空集 $\iff$ 闭包已满（$\mathrm{Dep}^*(T)\subseteq\Gamma$）。
 \end{definition}
 \begin{theorem}[缺项基本性质（摘）]
-若 $\Gamma\subseteq\Gamma'$ 则 $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$；
-且 $\mathrm{Dep}^*(T)=(\mathrm{Dep}^*(T)\cap\Gamma)\,\dot\cup\,\mathrm{Missing}_\Gamma(T)$。
+$\Gamma\subseteq\Gamma'\Rightarrow\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$；
+$\mathrm{Dep}^*(T)=(\mathrm{Dep}^*(T)\cap\Gamma)\,\dot\cup\,\mathrm{Missing}_\Gamma(T)$。
 \end{theorem}
+\pagesummary{把「能不能引用」与「还要补什么」从口语变成集合差，后面门禁直接读这两个对象。}
 \end{frame}
 
 % ========== 4 ==========
-\begin{frame}{定义：闭包表 $\mathrm{CT}$ 与三类边}
+\begin{frame}{主题：闭包表 $\mathrm{CT}$ 与三类边——写码前交什么、边怎么分类}
 \begin{definition}[闭包表]
-任务启动时填写的检查表，至少含
-$(A,\Gamma,\mathrm{Dep}^*(A),\mathrm{Missing}_\Gamma(A))$；
-工程扩展栏：接缝 $\mathrm{Seams}$、否定 $\mathrm{ForbiddenHit}$、契约 $\mathcal{C}$、级别 $\ell$。\\
-\textbf{先交闭包表，再写码}——customspec/STATUS \textbf{替代不了} $\mathrm{CT}$。
+至少含 $(A,\Gamma,\mathrm{Dep}^*(A),\mathrm{Missing}_\Gamma(A))$；
+扩展：$\mathrm{Seams}$、$\mathrm{ForbiddenHit}$、$\mathcal{C}$、$\ell$。\\
+\textbf{先交 $\mathrm{CT}$，再写码}——customspec/STATUS \textbf{替代不了} $\mathrm{CT}$。
 \end{definition}
 {\footnotesize
 \begin{center}
-\begin{tabular}{@{}L{2.2cm}L{4.0cm}L{5.5cm}@{}}
+\begin{tabular}{@{}L{2.1cm}L{3.8cm}L{5.4cm}@{}}
   \toprule
-  标签 $\tau$ & 含义 & 写入 / 后果 \\
+  $\tau$ & 含义 & 后果 \\
   \midrule
-  $\mathsf{semantic}$ & $v$ 依赖 $u$ 的 interface & 入 $E$；进 $\mathrm{Dep}^*$ \\
-  $\mathsf{compose}$ & $A,B$ 各有证，$A\!\circ\!B$ 仍须单证 & 接缝顶点 $s$；\textbf{不}自动入 $\Gamma$ \\
+  $\mathsf{semantic}$ & $v$ 依赖 $u$ 的 interface & 入 $E$，进 $\mathrm{Dep}^*$ \\
+  $\mathsf{compose}$ & $A,B$ 各有证，$A\!\circ\!B$ 仍须单证 & 接缝 $s$\textbf{不}自动入 $\Gamma$ \\
   $\mathsf{forbidden}$ & 禁止路线/模板 & 入 $\mathrm{Forbidden}$ \\
   \bottomrule
 \end{tabular}
 \end{center}
 }
 \begin{theorem}[组合不免费]
-$A,B\in\Gamma$ 且 $\mathrm{compose}(A,B)$ 得接缝 $s$ $\;\not\Rightarrow\;$ $s\in\Gamma$。
+$A,B\in\Gamma$ 且得接缝 $s$ $\;\not\Rightarrow\;$ $s\in\Gamma$。
 \end{theorem}
+\pagesummary{规定写码前的审计表单，并堵住「两块已绿就默认拼装已绿」的幻觉。}
 \end{frame}
 
 % ========== 5 ==========
-\begin{frame}{定理：写码许可 $\mathrm{PermitCode}$（v0）}
-\begin{theorem}[写码许可的充分必要条件（教材 Thm.）]
-在 $\mathrm{BuildClosureTable}$ 输出的 $\mathrm{CT}$ 上定义
+\begin{frame}{主题：写码许可定理 $\mathrm{PermitCode}$——何时允许实现目标 $T$}
+\begin{theorem}[写码许可的充要条件（v0，教材）]
 \[
 \mathrm{PermitCode}(\mathrm{CT})
-\;:\iff\;
+:\iff
 M=\emptyset
-\;\land\;
-\mathrm{Seams}\subseteq\Gamma
-\;\land\;
-\mathrm{ForbiddenHit}=\emptyset
-\;\land\;
-\mathcal{C}\text{ 已声明}.
+\land\mathrm{Seams}\subseteq\Gamma
+\land\mathrm{ForbiddenHit}=\emptyset
+\land\mathcal{C}\text{ 已声明}.
 \]
-则：（1）为真时可按 $\ell$ 实现 $T$；
-（2）$M\neq\emptyset$ 或接缝未获证时，跳过 $\mathsf{Probe}/\mathsf{Certify}$ 写顶层 $=$ 非法转移；
-（3）$\mathrm{ForbiddenHit}\neq\emptyset$ 属拒绝类行为。
+为真 $\Rightarrow$ 可按 $\ell$ 实现；缺项/接缝未齐或踩 Forbidden $\Rightarrow$ 非法转移，应 $\mathsf{BLOCK}$。
 \end{theorem}
-\vspace{0.3em}
 {\footnotesize
-$\mathrm{GateCheck}$：无表 / Forbidden 相交 / 缺项或接缝未齐 $\to\mathsf{BLOCK}(R)$；否则 $\mathsf{ALLOW}$。\\
-外层 $\mathrm{TaskWorkflow}$：声明 $\to$ 展开 $\mathrm{CT}$ $\to$ 补洞直至 $\mathsf{ALLOW}$ $\to$ $\mathsf{Certify}$；变更则 $\mathrm{DirtyPropagate}$。
+$\mathrm{GateCheck}\to\mathsf{ALLOW}/\mathsf{BLOCK}(R)$；
+$\mathrm{TaskWorkflow}$：声明$\to\mathrm{CT}\to$补洞$\to\mathsf{Certify}$；变更则 $\mathrm{DirtyPropagate}$。
 }
+\pagesummary{把门禁从口号收成可判定谓词，Agent/人能否开写有同一把尺子。}
 \end{frame}
 
 % ========== 6 ==========
-\begin{frame}{工作流四步（摘自教材表）}
+\begin{frame}{主题：四步工作流——门禁如何嵌进日常任务循环}
 \begin{center}
 \footnotesize
-\begin{tabular}{@{}cL{2.0cm}L{9.2cm}@{}}
+\begin{tabular}{@{}cL{1.8cm}L{9.4cm}@{}}
   \toprule
-  步 & 名称 & 做什么 / 完成标准 \\
+  步 & 名称 & 完成标准 \\
   \midrule
-  1 & 目标声明 &
-  写清 $T$、I/O、验收级别 $\ell$；无级别 $=$ 未声明任务 \\
-  2 & 闭包展开 &
-  $\mathrm{BuildClosureTable}$；标 ok/missing/dirty；接缝与否定栏齐 \\
-  3 & 最小补洞 &
-  对 $\mathsf{BLOCK}$ 中缺项跑 $\mathrm{MinimalFillRound}$；forbid 落笔 \\
-  4 & 闭环写回 &
-  $\mathsf{Certify}(T)$ 入 INDEX/STATUS/节点卡；该脏则 $\mathrm{DirtyPropagate}$ \\
+  1 & 目标声明 & $T$、I/O、$\ell$ 齐；无级别 $=$ 未声明 \\
+  2 & 闭包展开 & $\mathrm{BuildClosureTable}$；接缝/否定栏齐 \\
+  3 & 最小补洞 & $\mathrm{MinimalFillRound}$ 消 $M$；forbid 落笔 \\
+  4 & 闭环写回 & $\mathsf{Certify}$ 入 INDEX/STATUS；该脏则传播 \\
   \bottomrule
 \end{tabular}
 \end{center}
-\vspace{0.5em}
-\begin{alertblock}{与转移的对照}
-闭包展开 $\leftrightarrow\mathsf{Expand}$；补洞 $\leftrightarrow\mathsf{Probe}+\mathsf{Certify}$；
-命中 Forbidden $\leftrightarrow$ 拒绝/冻结；接口变更 $\leftrightarrow\mathsf{Dirty}$。
-\end{alertblock}
+\vspace{0.35em}
+{\footnotesize
+对照：展开$\leftrightarrow\mathsf{Expand}$；补洞$\leftrightarrow\mathsf{Probe}+\mathsf{Certify}$；
+Forbidden$\leftrightarrow$拒绝；变更$\leftrightarrow\mathsf{Dirty}$。
+}
+\pagesummary{给出可执行外层算法，使 $\mathrm{PermitCode}$ 不只停留在定理页，而能按步跑完一轮任务。}
 \end{frame}
 
 % ========== 7 ==========
-\begin{frame}{床 1：Decaps——工具如何落地（教材图）}
+\begin{frame}{主题：压力床 1（Decaps）——方法论工具如何落到接缝任务}
 \begin{center}
 \begin{tikzpicture}[
-  node distance=3.5mm and 4mm,
+  node distance=3.2mm and 3.5mm,
   box/.style={draw, rounded corners=2pt, align=center, font=\scriptsize,
-              minimum width=1.85cm, minimum height=0.62cm},
-  tool/.style={box, fill=blue!8, minimum width=1.7cm},
+              minimum width=1.8cm, minimum height=0.58cm},
+  tool/.style={box, fill=blue!8, minimum width=1.65cm},
   prac/.style={box, fill=orange!12},
-  arr/.style={-{Stealth[length=1.6mm]}, thick}
+  arr/.style={-{Stealth[length=1.5mm]}, thick}
 ]
   \node[tool] (dep) {依赖图\\与闭包};
   \node[tool, right=of dep] (lang) {形式语言\\合法拼装};
   \node[tool, right=of lang] (auto) {作业过程\\自动机};
-  \node[prac, below=8mm of lang] (ct) {先交 $\mathrm{CT}_{\mathrm{decaps}}$};
+  \node[prac, below=7mm of lang] (ct) {先交 $\mathrm{CT}_{\mathrm{decaps}}$};
   \node[prac, below=of ct] (fill) {补洞 $D{\to}G{\to}E{\to}\mathrm{FO}$};
   \node[prac, below=of fill] (code) {写码 device$\to$exp$\to$stable};
   \node[prac, below=of code] (test) {验收：合法+拒绝+RT};
@@ -176,124 +165,115 @@ $\mathrm{GateCheck}$：无表 / Forbidden 相交 / 缺项或接缝未齐 $\to\ma
   \draw[arr] (ct) -- (fill) -- (code) -- (test) -- (ver);
 \end{tikzpicture}
 \end{center}
-\vspace{0.2em}
-{\footnotesize
-压力点：Decrypt / Encrypt / FO \textbf{多父汇合}；
-$A{=}B$ 各自获证 $\not\Rightarrow$ 接缝 $s$ 获证（组合不免费）。
-}
+{\footnotesize 压力：Decrypt/Encrypt/FO 多父汇合；组合不免费。}
+\pagesummary{说明「接缝类」任务为何是试金石：理论对象必须先变成一张可交的表，再谈写码。}
 \end{frame}
 
 % ========== 8 ==========
-\begin{frame}{床 1：写码前的 $\mathrm{CT}_{\mathrm{decaps}}$（摘抄填表）}
+\begin{frame}{主题：压力床 1 的证据——$\mathrm{CT}_{\mathrm{decaps}}$ 实例与判决}
 {\footnotesize
 \begin{center}
-\begin{tabular}{@{}L{2.0cm}L{10.2cm}@{}}
+\begin{tabular}{@{}L{1.8cm}L{10.4cm}@{}}
   \toprule
   栏 & 写码前填写（教材实例） \\
   \midrule
-  目标/级别 &
-  $T=\texttt{kem.decaps.k4}$；先 device/lemma；后另授权才 stable \\
-  已获证 &
-  Decrypt、Encrypt、KeyGen、Encaps；设备 SHA3/SHAKE \\
-  依赖闭包 &
-  Decrypt $\to G\to$ Encrypt $\to$ FO；合库与 session 编排 \\
-  缺项 $M$ &
-  device 本体；D/E 接线；FO 尾 \\
-  接缝 &
-  Decrypt$\circ G$；$G\circ$Encrypt；FO；SIM 双 session \\
-  Forbidden &
-  correctness 的 \texttt{vendor/}；任何 \texttt{frozen/} 正向源码；Host 冒充 FO \\
+  目标/级别 & $T=\texttt{kem.decaps.k4}$；先 device/lemma \\
+  已获证 & Decrypt、Encrypt、KeyGen、Encaps；SHA3/SHAKE \\
+  依赖闭包 & Decrypt$\to G\to$Encrypt$\to$FO；合库与 session \\
+  缺项 $M$ & device 本体；D/E 接线；FO 尾 \\
+  接缝 & Decrypt$\circ G$；$G\circ$Encrypt；FO；双 session \\
+  Forbidden & correctness \texttt{vendor/}；\texttt{frozen/}；Host 冒充 FO \\
   \bottomrule
 \end{tabular}
 \end{center}
 }
-\vspace{0.3em}
-\textbf{判决}：相对 correctness 探索\textbf{强成功}（过程可审计）；相对人工优化主线正确性同阶、tick 同量级——\textbf{不}宣称性能胜出。
+{\footnotesize
+判决：相对 correctness \textbf{强成功}；相对人工优化主线正确性同阶、tick 同量级——\textbf{不}宣称性能胜出。
+}
+\pagesummary{用填满的 $\mathrm{CT}$ 证明「先表后码」可执行，并把成功边界说清楚（过程胜、性能不吹）。}
 \end{frame}
 
 % ========== 9 ==========
-\begin{frame}{床 2：768——参数卡锁定（摘）}
+\begin{frame}{主题：压力床 2（ML-KEM-768）——参数卡把什么锁死}
 {\footnotesize
-真 $k{=}3$（奇数维）。\textbf{禁止}零垫凑 $4/8$。本阶段终点：incubating，不建 stable-768。
+真 $k{=}3$。\textbf{禁}零垫凑 $4/8$。终点：incubating（不建 stable-768）。
 \begin{center}
-\begin{tabular}{@{}L{2.4cm}L{3.0cm}L{3.0cm}L{4.0cm}@{}}
+\begin{tabular}{@{}L{2.2cm}L{2.6cm}L{2.6cm}L{4.0cm}@{}}
   \toprule
-  项 & ML-KEM-768 & ML-KEM-1024 & 工程后果 \\
+  项 & 768 & 1024 & 后果 \\
   \midrule
   $k$ & $3$ & $4$ & 分核难均分 \\
-  $(d_u,d_v)$ & $10,4$ & $11,5$ & Compress/pack 重做 \\
+  $(d_u,d_v)$ & $10,4$ & $11,5$ & pack 重做 \\
   $|ek|/|dk|/|c|$ & $1184/2400/1088$ & $1568/3168/1568$ & I/O 全锁 \\
-  噪声批 & polyvec6 & polyvec8 & 禁复用 8 路常量 \\
+  噪声批 & polyvec6 & polyvec8 & 禁套 8 路常量 \\
   \bottomrule
 \end{tabular}
 \end{center}
-\vspace{0.2em}
-\textbf{决议 T-B}：polyvec6 + $\hat A$ 独立 prep。\\
-\textbf{数值锁（例）}：Inner AIV\,$2{+}1$；$\hat A[9]$ prep\,$5{+}4$；Encrypt INTT batch4；
-D21ct 默认 \texttt{decaps\_2session}。遇阻\textbf{停}，禁止改参硬闯。
+T-B：polyvec6 + $\hat A$ 独立 prep。\\
+锁例：Inner $2{+}1$；$\hat A[9]$\,$5{+}4$；INTT batch4。遇阻\textbf{停}，禁改参硬闯。
 }
+\pagesummary{展示参数组迁移时「先锁几何」的具体内容，说明门禁如何挡住零垫捷径。}
 \end{frame}
 
 % ========== 10 ==========
-\begin{frame}{床 2：波次依赖（教材图）}
+\begin{frame}{主题：压力床 2 的波次门禁——积木到 incubating 怎么推进}
 \begin{center}
 \begin{tikzpicture}[
-  node distance=5mm and 6mm,
+  node distance=4.5mm and 5mm,
   w/.style={draw, rounded corners=2pt, align=center, font=\scriptsize,
-            minimum width=1.75cm, minimum height=0.7cm, fill=blue!6},
-  arr/.style={-{Stealth[length=1.6mm]}, thick}
+            minimum width=1.7cm, minimum height=0.65cm, fill=blue!6},
+  arr/.style={-{Stealth[length=1.5mm]}, thick}
 ]
-  \node[w] (w0) {W0\\B1--B3};
-  \node[w, right=of w0] (w1) {W1\\B4--B6};
-  \node[w, right=of w1] (w2) {W2\\D13--D15};
-  \node[w, right=of w2] (w3) {W3\\D19--D21ct};
-  \node[w, below=9mm of w2] (w4) {W4\\E13--E21ct};
-  \node[w, fill=green!12, right=of w4] (g) {glue\\registry+RT};
+  \node[w] (w0) {W0 B1--B3};
+  \node[w, right=of w0] (w1) {W1 B4--B6};
+  \node[w, right=of w1] (w2) {W2 D13--D15};
+  \node[w, right=of w2] (w3) {W3 D19--D21ct};
+  \node[w, below=8mm of w2] (w4) {W4 E13--E21ct};
+  \node[w, fill=green!12, right=of w4] (g) {glue RT};
   \draw[arr] (w0) -- (w1) -- (w2) -- (w3);
   \draw[arr] (w2) -- (w4);
   \draw[arr] (w3) |- (w4);
   \draw[arr] (w4) -- (g);
 \end{tikzpicture}
 \end{center}
-\vspace{0.3em}
 {\footnotesize
-每波：分析 $\to$ 文书 $\to$ 实现 $\to$ CPU + \texttt{SIM\_DIRECT=1} sim 双绿。\\
-合法源：活跃 1024 \textbf{模式} + 参数卡；\textbf{禁止}从 \texttt{**/frozen/**} 抄实现。\\
-$P_0$--$P_3$：文书锁卡 $\to$ 补洞表 $\to$ 探针绿 $\to$ incubating+RT（有条件完成）。
+每波：分析$\to$文书$\to$实现$\to$CPU+\texttt{SIM\_DIRECT=1} 双绿。\\
+合法源：活跃 1024\textbf{模式}+参数卡；\textbf{禁}抄 \texttt{frozen/}。
 }
+\pagesummary{把 $\mathrm{PermitCode}$ 思想展开成可授权的波次 DAG，保证缺项按层消掉再往上长。}
 \end{frame}
 
 % ========== 11 ==========
-\begin{frame}{床 2：结果表（登记值）}
+\begin{frame}{主题：压力床 2 的实现效果——绿线、tick 与未做边界}
 {\footnotesize
 \begin{center}
-\begin{tabular}{@{}L{2.6cm}L{3.4cm}L{6.2cm}@{}}
+\begin{tabular}{@{}L{2.4cm}L{3.0cm}L{6.4cm}@{}}
   \toprule
   层 & 状态 & 代表 SIM tick（Cloud） \\
   \midrule
-  W0--W3 探针 & CPU+SIM 全绿 &
-  D13 $3.73{\times}10^5$；D14 $5.08{\times}10^5$；D15 $2.22{\times}10^5$ \\
-  & & D19 $5.11{\times}10^5$；D20 $5.92{\times}10^5$；D21 $8.18{\times}10^5$ \\
-  W4 incubating & E13--E21ct 全绿 & 与对应 D* 同量级 \\
-  glue & AscendC-only RT PASS & 含 reject：$K{=}J(z\Vert c)$且 $\neq$accept \\
+  W0--W3 & CPU+SIM 全绿 &
+  D13 $3.73{\times}10^5$；D14 $5.08{\times}10^5$；D15 $2.22{\times}10^5$；
+  D19--D21 $\sim(5.1$--$8.2){\times}10^5$ \\
+  W4 exp & E13--E21ct 全绿 & 与对应 D* 同量级 \\
+  glue & AscendC-only RT & reject：$K{=}J(z\Vert c)$且 $\neq$accept \\
   \bottomrule
 \end{tabular}
 \end{center}
-\vspace{0.25em}
-正确性：I/O $\max{=}0$。相对同结构 $k{=}4$ tick 约低 $18\%$--$31\%$（维数预期；\textbf{非}优化 SLA）。\\
-\textbf{未做}：stable-768、liboqs-768 交叉 KAT、NPU。脚本名含 liboqs $\neq$ 已交叉。
+I/O $\max{=}0$。相对 $k{=}4$ tick 约低 $18\%$--$31\%$（登记，非 SLA）。\\
+未做：stable-768、liboqs-768 交叉、NPU。
 }
+\pagesummary{用可核对数字支撑「有条件完成至 incubating」，并主动划清未声称范围。}
 \end{frame}
 
 % ========== 12 ==========
-\begin{frame}{成本体感（教材第 8 章题外话）}
+\begin{frame}{主题：成本体感对照——门禁如何改变配额与墙钟}
 {\footnotesize
 \begin{center}
-\begin{tabular}{@{}L{2.8cm}L{4.5cm}L{4.5cm}@{}}
+\begin{tabular}{@{}L{2.4cm}L{4.4cm}L{4.6cm}@{}}
   \toprule
   & 开放 correctness 探索 & 有门禁的 768 \\
   \midrule
-  设定 & 公司/家里 Agent 各做 Encaps correctness & 参数卡$\to$W0--W4+glue \\
+  设定 & 双 Agent 各做 Encaps correctness & 参数卡$\to$W0--W4+glue \\
   墙钟 & 各 $\sim 1$ 天 & $<4$ 小时 \\
   配额 & $\sim 2/3$ 月度 Pro+ & $41\%\to 55\%$（$\Delta\sim 14$\,pp） \\
   \bottomrule
@@ -301,58 +281,55 @@ $P_0$--$P_3$：文书锁卡 $\to$ 补洞表 $\to$ 探针绿 $\to$ incubating+RT�
 \end{center}
 }
 \begin{itemize}
-  \item \textbf{不是}同任务严格对账实验；不作「快 $N$ 倍」宣称。
-  \item 解释：作业面被 $\mathrm{PermitCode}$ / 锁参 / Forbidden 收小，省的是无效派生。
+  \item 非同任务严格对账；不作「快 $N$ 倍」宣称。
+  \item 解释：作业面被 $\mathrm{PermitCode}$/锁参/Forbidden 收小。
 \end{itemize}
+\pagesummary{提供维护者体感证据：方法论的价值首先表现为压缩无效派生的成本，而非神话性能。}
 \end{frame}
 
 % ========== 13 ==========
-\begin{frame}{证明了什么 / 没有证明什么}
+\begin{frame}{主题：证据边界——已支持的判断与明确未声称}
 \begin{columns}[T]
 \begin{column}{0.48\textwidth}
 \textbf{工程证据支持}
 \begin{itemize}
   \item $\mathrm{PermitCode}$ 可执行；Forbidden 可挡
-  \item Decaps：先 $\mathrm{CT}$ 后补洞可走到对拍
-  \item 768：参数组迁移可复用同一门禁（非零垫）
-  \item 体感上配额/墙钟显著可控
+  \item Decaps：先 $\mathrm{CT}$ 后补洞可对拍
+  \item 768：参数组迁移可复用门禁
+  \item 配额/墙钟体感显著可控
 \end{itemize}
 \end{column}
 \begin{column}{0.48\textwidth}
 \textbf{明确未声称}
 \begin{itemize}
-  \item 密码学机器验证 / 完备性定理封闭
+  \item 密码学机器验证 / 理论封闭
   \item 性能优于人工优化主线
   \item 已可无审写入 Rule/Skill
-  \item 768 已交付 stable 或交叉 KAT
+  \item 768 已 stable / 交叉 KAT
 \end{itemize}
 \end{column}
 \end{columns}
-\vspace{0.5em}
-\begin{block}{地位}
-\texttt{docs/research/} 调研草稿 + 两条压力床上的可审计证据；结论稳定后再考虑迁 \texttt{notes/}。
-\end{block}
+\vspace{0.35em}
+{\footnotesize 地位：\texttt{docs/research/} 草稿 + 两条压力床证据；稳定后再迁 \texttt{notes/}。}
+\pagesummary{防止汇报被听成「全面胜利」：把可辩护结论与禁区写在同一页，便于领导追问。}
 \end{frame}
 
 % ========== 14 ==========
-\begin{frame}{带走公式与材料}
+\begin{frame}{主题：可带走的核心公式与材料指针}
 \begin{align*}
 \mathrm{Dep}^*(T)&=\{u\mid u\rightsquigarrow T\},&
 \mathrm{Missing}_\Gamma(T)&=\mathrm{Dep}^*(T)\setminus\Gamma,\\
-\mathrm{PermitCode}&\iff M=\emptyset\land\mathrm{Seams}\subseteq\Gamma\land\mathrm{ForbiddenHit}=\emptyset\land\mathcal{C}\text{ 已声明}.
+\mathrm{PermitCode}&\iff
+M=\emptyset\land\mathrm{Seams}\subseteq\Gamma\land\mathrm{ForbiddenHit}=\emptyset\land\mathcal{C}\text{ 已声明}.
 \end{align*}
 {\footnotesize
 \begin{itemize}
-  \item 教材：\texttt{docs/research/从已验证能力到合法派生-…教材草案.pdf}\\
-        （Def./Thm. 见第 3--5 章；Decaps 第 7 章；768 第 8 章）
+  \item 教材 PDF：\texttt{docs/research/从已验证能力到合法派生-…教材草案.pdf}
   \item 768 参数卡：\texttt{docs/specs/fips203-mlkem768-parameter-card.md}
   \item tick：\texttt{qa/active\_sim\_regress\_summary.md}
 \end{itemize}
-\vspace{0.3em}
-\begin{center}
-本简报无封面，共 14 页。符号与填表摘自教材正文，非另起口号。
-\end{center}
 }
+\pagesummary{浓缩本场符号与出处，方便会后按公式回查教材 Def./Thm. 与实验登记，而不是只记住口号。}
 \end{frame}
 
 \end{document}
