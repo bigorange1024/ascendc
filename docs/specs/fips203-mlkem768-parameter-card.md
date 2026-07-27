@@ -2,7 +2,7 @@
 
 **状态**：**已锁定**（2026-07-26 用户确认 §决议）；**实现有条件完成至 incubating**（2026-07-26/27）
 **参数组**：ML-KEM-768（\(k=3\)）
-**范围**：P0 文书已锁；探针 W0–W3 + incubating W4 + glue 已绿；**本阶段不建** stable-768
+**范围**：P0 文书已锁；P2（W0–W3）+ P3（W4 + glue）已绿；**本阶段不建** stable-768
 **完整计划**：[docs/research/MLKEM-768-从0到exp完整实现计划.md](../research/MLKEM-768-从0到exp完整实现计划.md)
 **P1 用例表**：[fips203-mlkem768-p1-gap-and-cases.md](fips203-mlkem768-p1-gap-and-cases.md)
 **收尾纪要**：[qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md](../../qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md)
@@ -18,7 +18,7 @@
 | 3 | reject / CT | **要求** `…-decaps-device-ct-k3` 与 incubating `…-decaps-ct-k3` |
 | 4 | PKE exp | **要做**（keygen / encrypt / decrypt 三个 `exp-…-pke-*-k3`） |
 | 5 | 命名后缀 | **`-k3`** |
-| 6 | 本轮范围（当时） | **先完成 P0 + P1**（文书 + 目录壳）；其后已授权并完成 W0–W4 + glue |
+| 6 | 本轮范围（当时） | **先完成 P0 + P1**（文书 + 目录壳）；其后已授权并完成 P2（W0–W3）+ P3（W4 + glue） |
 
 附加锁定（计划默认，随 P0 一并生效）：
 
@@ -86,7 +86,7 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 
 ## 3. Tiling / 分核（T-B 锁定摘要）
 
-> **W1 数值 tiling 已锁**（2026-07-26，用户授权 P2/W1）。语义不变量仍优先；遇阻 **禁止**改参硬闯。
+> **W1 数值 tiling 已锁**（2026-07-26，用户授权 P2、W1）。语义不变量仍优先；遇阻 **禁止**改参硬闯。
 
 | 不变量 | 锁定内容 |
 |--------|----------|
@@ -206,11 +206,11 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 
 ## 6. 目录落点（P0-D）
 
-| 树 | 路径 | 说明 |
-|----|------|------|
-| 探针 | `ascendc-tests/ml-kem/ml-kem-768/` | W0–W3 全绿；见该树 `INDEX.md` |
-| incubating | `examples/incubating/ml-kem/ml-kem-768/` | W4 E13–E21ct 全绿（均有 customspec） |
-| stable | — | **本阶段不建**（须 `#交付#`） |
+| 树 | 路径 | P | W | 说明 |
+|----|------|---|---|------|
+| 探针 | `ascendc-tests/ml-kem/ml-kem-768/` | P2 | W0–W3 | 全绿；见该树 `INDEX.md` |
+| incubating | `examples/incubating/ml-kem/ml-kem-768/` | P3 | W4 | E13–E21ct 全绿（均有 customspec） |
+| stable | — | — | — | **本阶段不建**（须 `#交付#`） |
 
 命名：探针 `pass-fix-f203-…-k3`；exp `exp-fips203-…-k3`。
 
@@ -230,9 +230,10 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 - [x] 目录壳 + INDEX
 - [x] registry 骨架 → incubating 补绿
 - [x] P1 补洞与必建表（另文）
-- [x] **P2/W0–W1**：积木 B1–B6
-- [x] **P2/W2**：§3.2 / D13–D15
-- [x] **P2/W3**：§3.3 / D19–D21[+ct]
-- [x] **P3/W4**：E13–E15、E19–E21ct + AscendC-only roundtrip
+- [x] P2、W0–W1：积木 B1–B6
+- [x] P2、W2：§3.2 / D13–D15
+- [x] P2、W3：§3.3 / D19–D21[+ct]
+- [x] P3、W4：E13–E15、E19–E21ct
+- [x] P3、glue：AscendC-only roundtrip
 - [ ] stable-768（须 `#交付#`）
 - [ ] liboqs-768 helper / device KAT（T768-post，可选）

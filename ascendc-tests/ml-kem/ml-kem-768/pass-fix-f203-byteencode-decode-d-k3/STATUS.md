@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **W0/B2 有条件完成**（CPU+SIM 金标） |
-| 波次 | W0 / B2 |
+| P | P2 |
+| W | W0 |
+| ID | B2 |
 | 结构 | `encode/`+`decode/`（d=4,10）+ `encode12/`（d=12 encode-only） |
 | 参数卡 | [fips203-mlkem768-parameter-card.md](../../../../docs/specs/fips203-mlkem768-parameter-card.md) |
 | CPU | **PASS**（2026-07-26 Cloud） |

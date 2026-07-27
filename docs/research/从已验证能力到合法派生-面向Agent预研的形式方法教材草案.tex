@@ -4573,14 +4573,15 @@ incubating \repo{examples/incubating/ml-kem/ml-kem-768/}；
 
 \begin{center}
 \small
-\begin{tabular}{@{}L{1.4cm}L{5.8cm}L{6cm}@{}}
+\begin{tabular}{@{}L{0.8cm}L{1.0cm}L{5.2cm}L{6cm}@{}}
   \toprule
-  阶段 & 产出 & 退出 \\
+  P & W & 产出 & 退出 \\
   \midrule
-  P0 & 参数卡 + CT 长度 + 分核选项 + 目录壳 + registry 骨架 & 用户锁决议 \\
-  P1 & 补洞图 + 必建用例表（含 PKE exp 与 CT） & 表定稿 \\
-  P2 & W0--W3 探针全绿 & 每波 CPU+\texttt{SIM\_DIRECT=1} sim \\
-  P3 & W4 incubating + roundtrip & 有条件完成（本阶段） \\
+  P0 & — & 参数卡 + CT 长度 + 分核选项 + 目录壳 + registry 骨架 & 用户锁决议 \\
+  P1 & — & 补洞图 + 必建用例表（含 PKE exp 与 CT） & 表定稿 \\
+  P2 & W0--W3 & 探针全绿 & 每波 CPU+\texttt{SIM\_DIRECT=1} sim \\
+  P3 & W4 & incubating exp 全绿 & 有条件完成（本阶段） \\
+  P3 & glue & registry + roundtrip & AscendC-only RT \\
   \bottomrule
 \end{tabular}
 \end{center}

@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **有条件完成**（E20 incubating；CPU + `SIM_DIRECT=1` sim 通过；未跑 liboqs KAT / NPU） |
-| 波次 | W4b / E20 |
+| P | P3 |
+| W | W4b |
+| ID | E20 |
 | CPU | **PASS** — `bash run.sh -r cpu -v Ascend910B4`，`c`/`K` 对拍 max=0 |
 | SIM | **PASS** — `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4`，Total tick **590261** |
 | customspec | [`exp-fips203-mlkem-kem-encaps-k3-实现方案-customspec.pdf`](exp-fips203-mlkem-kem-encaps-k3-实现方案-customspec.pdf) |

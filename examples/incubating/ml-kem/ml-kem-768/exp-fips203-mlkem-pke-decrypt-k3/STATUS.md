@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **有条件完成**（E15 incubating；CPU + `SIM_DIRECT=1` sim 通过；未跑 PKE roundtrip / NPU） |
-| 波次 | W4a / E15 |
+| P | P3 |
+| W | W4a |
+| ID | E15 |
 | CPU | **PASS** — `bash run.sh -r cpu -v Ascend910B4`，`[verify] PASS max=0 (32 bytes)` |
 | SIM | **PASS** — `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4`，Total tick **222073** |
 | customspec | [`exp-fips203-mlkem-pke-decrypt-k3-实现方案-customspec.pdf`](exp-fips203-mlkem-pke-decrypt-k3-实现方案-customspec.pdf) |

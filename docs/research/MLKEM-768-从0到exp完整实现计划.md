@@ -75,7 +75,9 @@ P0 文书锁定 ──► P1 补洞清单+用例表 ──► P2 按波次实现
 | **P0** | 参数卡 + CT + **分核/tiling 选项决议** + 目录壳 + INDEX | ✅ 已完成（见参数卡） |
 | **P1** | 相对 1024 的洞表；必建用例表定稿 | ✅ 已完成（见 P1 文；含 PKE exp + CT） |
 | **P2** | 积木 → PKE device → KEM device(+ct) 探针全绿 | ✅ 已完成（W0–W3；2026-07-26） |
-| **P3** | PKE+KEM exp(+ct) + 768 roundtrip | ✅ **有条件完成**（AscendC-only RT；2026-07-26/27） |
+| **P3** | PKE+KEM exp(+ct) + 768 roundtrip | ✅ **有条件完成**（W4 + glue；AscendC-only RT；2026-07-26/27） |
+
+**P 与 W**：P0–P3 为方法论主阶段；W0–W4 为 P2/P3 内工程子波次（详见 [P1 用例表 §0](../specs/fips203-mlkem768-p1-gap-and-cases.md)）。表内 **P、W 分列**，勿写 `P2-W0`。
 
 Skill 节奏（开写时）：积木/探针可走 **【预研】**；进 `examples/incubating/…` 写码前须有活跃 **`*-customspec.*`**（`$规格$`）；本阶段不触发 `#交付#` stable。
 
@@ -146,49 +148,49 @@ Skill 节奏（开写时）：积木/探针可走 **【预研】**；进 `exampl
 
 > 原则：**不**克隆 1024 全部 ~27 探针；只建「参数变化会导致错误的最小闭环」。中间分段探针（如仅 lines3–7）默认 **不建**，除非 P2 某波卡死再加。
 
-#### 波次 W0 — 编码与压缩（P1 积木）
+#### W0（P2）— 编码与压缩（P1 积木）
 
-| ID | 目录（建议名） | 作用 | 验收 |
-|----|----------------|------|------|
-| **B1** | `pass-f203-compress-decompress-du10-dv4-k3` | Compress/Decompress \(d_u=10,d_v=4\)（可单目录多 target） | CPU+SIM；与 Python/liboqs 定点一致 |
-| **B2** | `pass-f203-byteencode-decode-d-k3` | ByteEncode/Decode：至少 **d=10,4,12** | CPU+SIM；长度公式锁死 |
-| **B3** | `pass-fix-f203-alg8-cbd-eta2-k3` | CBD \(\eta=2\) × **3 poly 打包**（验证 k 维布局，非算法新发明） | CPU+SIM |
+| ID | P | W | 目录（建议名） | 作用 | 验收 |
+|----|---|---|----------------|------|------|
+| **B1** | P2 | W0 | `pass-f203-compress-decompress-du10-dv4-k3` | Compress/Decompress \(d_u=10,d_v=4\)（可单目录多 target） | CPU+SIM；与 Python/liboqs 定点一致 |
+| **B2** | P2 | W0 | `pass-f203-byteencode-decode-d-k3` | ByteEncode/Decode：至少 **d=10,4,12** | CPU+SIM；长度公式锁死 |
+| **B3** | P2 | W0 | `pass-fix-f203-alg8-cbd-eta2-k3` | CBD \(\eta=2\) × **3 poly 打包**（验证 k 维布局，非算法新发明） | CPU+SIM |
 
-#### 波次 W1 — 采样与 NTT（P1→P2 核心风险）
+#### W1（P2）— 采样与 NTT（P1→P2 核心风险）
 
-| ID | 目录（建议名） | 作用 | 验收 |
-|----|----------------|------|------|
-| **B4** | `pass-fix-f203-alg7-sample-ntt-k3` | SampleNTT；矩阵索引 \(i,j\in\{0,1,2\}\)，覆盖 \(3\times3\) | CPU+SIM；多 seed |
-| **B5** | `pass-fix-f203-stage123-ntt-intt-polyvec-k3` | Stage1–3 NTT/INTT，**真 k=3 / polyvec6 语义**（禁 Gather 于 S1–S3，沿用 Tag5T 不变量） | CPU+SIM；与 liboqs/ref 系数域对拍 |
-| **B6** | `pass-fix-f203-alg11-12-multiply-inner-k3` | MultiplyNTTs + InnerProduct（\(k=3\) 维） | CPU+SIM；可为合并探针以省目录 |
+| ID | P | W | 目录（建议名） | 作用 | 验收 |
+|----|---|---|----------------|------|------|
+| **B4** | P2 | W1 | `pass-fix-f203-alg7-sample-ntt-k3` | SampleNTT；矩阵索引 \(i,j\in\{0,1,2\}\)，覆盖 \(3\times3\) | CPU+SIM；多 seed |
+| **B5** | P2 | W1 | `pass-fix-f203-stage123-ntt-intt-polyvec-k3` | Stage1–3 NTT/INTT，**真 k=3 / polyvec6 语义**（禁 Gather 于 S1–S3，沿用 Tag5T 不变量） | CPU+SIM；与 liboqs/ref 系数域对拍 |
+| **B6** | P2 | W1 | `pass-fix-f203-alg11-12-multiply-inner-k3` | MultiplyNTTs + InnerProduct（\(k=3\) 维） | CPU+SIM；可为合并探针以省目录 |
 
-#### 波次 W2 — PKE device（P2）
+#### W2（P2）— PKE device
 
-| ID | 目录（建议名） | 作用 | 验收 |
-|----|----------------|------|------|
-| **D13** | `pass-fix-f203-alg13-device-keygen-k3` | Alg.13 全链 → `ek_pke`/`dk_pke` | CPU+SIM；liboqs 交叉 |
-| **D14** | `pass-fix-f203-alg14-pke-encrypt-device-k3` | Alg.14 → `c`（1088 B） | CPU+SIM |
-| **D15** | `pass-fix-f203-alg15-pke-decrypt-device-k3` | Alg.15 → `m` | CPU+SIM；与 D14 roundtrip |
+| ID | P | W | 目录（建议名） | 作用 | 验收 |
+|----|---|---|----------------|------|------|
+| **D13** | P2 | W2 | `pass-fix-f203-alg13-device-keygen-k3` | Alg.13 全链 → `ek_pke`/`dk_pke` | CPU+SIM；liboqs 交叉 |
+| **D14** | P2 | W2 | `pass-fix-f203-alg14-pke-encrypt-device-k3` | Alg.14 → `c`（1088 B） | CPU+SIM |
+| **D15** | P2 | W2 | `pass-fix-f203-alg15-pke-decrypt-device-k3` | Alg.15 → `m` | CPU+SIM；与 D14 roundtrip |
 
-#### 波次 W3 — KEM 行为基线（P2，建议要）
+#### W3（P2）— KEM 行为基线（建议要）
 
-| ID | 目录（建议名） | 作用 | 验收 |
-|----|----------------|------|------|
-| **D19** | `pass-fix-f203-alg19-kem-keygen-device-k3` | Alg.19；产出 ek/dk_kem | CPU+SIM |
-| **D20** | `pass-fix-f203-alg20-kem-encaps-device-k3` | Alg.20；`c`/`K` | CPU+SIM |
-| **D21** | `pass-fix-f203-alg21-kem-decaps-device-k3` | Alg.21 合法路径 `K` | CPU+SIM |
-| **D21ct** | `pass-fix-f203-alg21-kem-decaps-device-ct-k3` | 拒绝路径 / CT 工程对照（**强烈建议**，与 1024 经验一致） | CPU+SIM；reject≠accept |
+| ID | P | W | 目录（建议名） | 作用 | 验收 |
+|----|---|---|----------------|------|------|
+| **D19** | P2 | W3 | `pass-fix-f203-alg19-kem-keygen-device-k3` | Alg.19；产出 ek/dk_kem | CPU+SIM |
+| **D20** | P2 | W3 | `pass-fix-f203-alg20-kem-encaps-device-k3` | Alg.20；`c`/`K` | CPU+SIM |
+| **D21** | P2 | W3 | `pass-fix-f203-alg21-kem-decaps-device-k3` | Alg.21 合法路径 `K` | CPU+SIM |
+| **D21ct** | P2 | W3 | `pass-fix-f203-alg21-kem-decaps-device-ct-k3` | 拒绝路径 / CT 工程对照（**强烈建议**，与 1024 经验一致） | CPU+SIM；reject≠accept |
 
 > 若进度极紧，可论证 **D19–D21 与 exp 合并**（device 探针只留 D13–D15）。**默认建议保留 D19–D21**：exp 写码前先有行为基线，避免 FO 与 PKE 耦合一次炸。
 
-#### 波次 W4 — incubating exp（P3 终点）
+#### W4（P3）— incubating exp（终点）
 
-| ID | 目录（建议名） | customspec | 验收 |
-|----|----------------|------------|------|
-| **E19** | `exp-fips203-mlkem-kem-keygen-k3` | 必有 | CPU+SIM；registry 已填 |
-| **E20** | `exp-fips203-mlkem-kem-encaps-k3` | 必有 | CPU+SIM |
-| **E21** | `exp-fips203-mlkem-kem-decaps-k3` | 必有 | CPU+SIM；建议含 reject 开关 |
-| **E21ct** | `exp-…-kem-decaps-ct-k3`（可选） | 若 D21ct 路径要晋级再开 | 非终点必达 |
+| ID | P | W | 目录（建议名） | customspec | 验收 |
+|----|---|---|----------------|------------|------|
+| **E19** | P3 | W4b | `exp-fips203-mlkem-kem-keygen-k3` | 必有 | CPU+SIM；registry 已填 |
+| **E20** | P3 | W4b | `exp-fips203-mlkem-kem-encaps-k3` | 必有 | CPU+SIM |
+| **E21** | P3 | W4b | `exp-fips203-mlkem-kem-decaps-k3` | 必有 | CPU+SIM；建议含 reject 开关 |
+| **E21ct** | P3 | W4b | `exp-…-kem-decaps-ct-k3`（可选） | 若 D21ct 路径要晋级再开 | 非终点必达 |
 
 **PKE 的 exp**（`exp-…-pke-*-k3`）：**用户要求必做**（E13–E15）；另加 **E21ct**。详见 P1 表。
 
@@ -223,13 +225,13 @@ W0 (B1–B3) ─┬─► W1 (B4–B6) ─► W2 (D13–D15) ─► W3 (D19–D2
 
 ### 5.2 各波关键风险与停问点
 
-| 波次 | 最高风险 | 停问条件 |
-|------|----------|----------|
-| W0 | d=10/4 定点与 liboqs 一致性 | 对拍差 1 ULP 级争议 |
-| W1 | **奇数 k 分核 / mat_c 几何** | 任何「先 pad 成 4」的诱惑 → 必须停 |
-| W2 | prep+compute+pack 融合与 SIM session | launch 数要改参数卡 |
-| W3 | FO、reject、密文长 1088 | `M_FILE`/`C_SRC` 语义歧义 |
-| W4 | customspec 与 device 行为漂移 | exp 与 D19–D21 I/O 不一致 |
+| P | W | 最高风险 | 停问条件 |
+|---|---|----------|----------|
+| P2 | W0 | d=10/4 定点与 liboqs 一致性 | 对拍差 1 ULP 级争议 |
+| P2 | W1 | **奇数 k 分核 / mat_c 几何** | 任何「先 pad 成 4」的诱惑 → 必须停 |
+| P2 | W2 | prep+compute+pack 融合与 SIM session | launch 数要改参数卡 |
+| P2 | W3 | FO、reject、密文长 1088 | `M_FILE`/`C_SRC` 语义歧义 |
+| P3 | W4 | customspec 与 device 行为漂移 | exp 与 D19–D21 I/O 不一致 |
 
 ### 5.3 测试矩阵（最小）
 
@@ -280,14 +282,14 @@ KAT 批次数（建议，非 stable 门禁）：device/exp 各 **CPU×3 + SIM×1
 
 ## 8. 建议排期节奏（按技术依赖，非日历）
 
-| 序 | 内容 | 退出 |
-|----|------|------|
-| 1 | 你审阅本计划；确认 §3.2 **T/\*\*C** 选项与 §4.2 必建表 | 书面 OK |
-| 2 | P0 文书 + 目录壳 + 长度核对脚本 | 参数锁定 |
-| 3 | W0 → W1 | 积木双绿 |
-| 4 | W2 | PKE device 三绿 + PKE roundtrip |
-| 5 | W3 | KEM device（+ct）绿 |
-| 6 | W4 | exp 三算子 + 768 roundtrip；刷新 HANDOFF |
+| 序 | P | W | 内容 | 退出 |
+|----|---|---|------|------|
+| 1 | — | — | 你审阅本计划；确认 §3.2 **T/\*\*C** 选项与 §4.2 必建表 | 书面 OK |
+| 2 | P0 | — | P0 文书 + 目录壳 + 长度核对脚本 | 参数锁定 |
+| 3 | P2 | W0→W1 | 积木双绿 | B1–B6 双绿 |
+| 4 | P2 | W2 | PKE device 三绿 + PKE roundtrip | D13–D15 |
+| 5 | P2 | W3 | KEM device（+ct）绿 | D19–D21ct |
+| 6 | P3 | W4+glue | exp 三算子 + 768 roundtrip；刷新 HANDOFF | 有条件完成 |
 
 ---
 
@@ -302,7 +304,7 @@ KAT 批次数（建议，非 stable 门禁）：device/exp 各 **CPU×3 + SIM×1
 | 5 | 命名 **`-k3` OK** |
 | 6 | 先完成 **P0+P1**（本轮已落地文书与目录壳） |
 
-**下一刀**：用户授权后开 **P2 / W0**（须按 Skill：【预研】与/或 `$规格$`）。
+**下一刀**：用户授权后开 **P2、W0**（须按 Skill：【预研】与/或 `$规格$`）。
 
 ---
 

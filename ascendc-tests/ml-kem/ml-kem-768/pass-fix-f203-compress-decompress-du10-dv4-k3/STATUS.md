@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **W0/B1 有条件完成**（CPU+SIM 金标） |
-| 波次 | W0 / B1 |
+| P | P2 |
+| W | W0 |
+| ID | B1 |
 | 结构 | 子目录 `compress/` + `decompress/`；顶层 `run.sh` 编排 d∈{4,10} |
 | 参数卡 | [fips203-mlkem768-parameter-card.md](../../../../docs/specs/fips203-mlkem768-parameter-card.md) |
 | CPU | **PASS**（2026-07-26 Cloud） |

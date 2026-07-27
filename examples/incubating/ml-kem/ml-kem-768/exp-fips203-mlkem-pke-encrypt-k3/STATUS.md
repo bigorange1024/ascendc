@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **有条件完成**（E14 incubating；CPU + `SIM_DIRECT=1` sim 通过；未跑 PKE roundtrip / NPU） |
-| 波次 | W4a / E14 |
+| P | P3 |
+| W | W4a |
+| ID | E14 |
 | CPU | **PASS** — `ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4`，`[cmp] c max=0` |
 | SIM | **PASS** — `ENCRYPT_FORCE_REBUILD=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4`，Total tick **507633** |
 | customspec | [`exp-fips203-mlkem-pke-encrypt-k3-实现方案-customspec.pdf`](exp-fips203-mlkem-pke-encrypt-k3-实现方案-customspec.pdf) |

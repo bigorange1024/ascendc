@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **有条件完成**（E13 incubating；CPU + `SIM_DIRECT=1` sim 通过；未跑 liboqs KAT / NPU） |
-| 波次 | W4a / E13 |
+| P | P3 |
+| W | W4a |
+| ID | E13 |
 | CPU | **PASS** — `bash run.sh -r cpu -v Ascend910B4`，输出 `ek_pke=1184B` / `dk_pke=1152B` |
 | SIM | **PASS** — `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4`，Total tick **373429** |
 | golden | **PASS** — `KEYGEN_GOLDEN_ONLY=1 python3 scripts/gen_data.py && python3 scripts/verify_production.py`，ek/dk 对拍通过 |

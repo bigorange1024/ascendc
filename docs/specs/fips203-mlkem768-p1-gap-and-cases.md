@@ -6,6 +6,29 @@
 
 ---
 
+## 0. P 与 W 编号约定
+
+| 符号 | 含义 |
+|------|------|
+| **P0–P3** | 方法论主阶段（文书 → 补洞表 → 探针实现 → incubating 闭环） |
+| **W0–W4** | **P2/P3 内的工程执行子波次**（积木 → device → exp）；**不是**另一套 P 定义 |
+| **glue** | **P3** 收尾：registry 补登 + AscendC-only roundtrip（无独立 W 序号） |
+
+| P | W | 内容 |
+|---|---|------|
+| P0 | — | 参数卡、CT、目录壳、registry 骨架 |
+| P1 | — | 补洞图、必建用例表定稿 |
+| P2 | W0 | 编码/压缩积木 B1–B3 |
+| P2 | W1 | 采样/NTT/内积 B4–B6 |
+| P2 | W2 | PKE device D13–D15 |
+| P2 | W3 | KEM device D19–D21ct |
+| P3 | W4 | incubating E13–E21ct |
+| P3 | glue | registry + `exp_kem768_liboqs_roundtrip.sh` |
+
+下文用例表 **P、W 分列**；禁止写成 `P2-W0` / `P2/W0` 合并格。
+
+---
+
 ## 1. 相对 ML-KEM-1024 的补洞图
 
 | 能力块 | 1024（参考模式） | 768 策略 | 洞级 |
@@ -32,33 +55,33 @@
 
 ### 2.1 探针 — `ascendc-tests/ml-kem/ml-kem-768/`
 
-| ID | 波次 | 目录 | 作用 | 最小验收 |
-|----|------|------|------|----------|
-| **B1** | W0 | `pass-fix-f203-compress-decompress-du10-dv4-k3` | Compress/Decompress \(d_u=10,d_v=4\) | CPU+SIM；定点 vs oracle |
-| **B2** | W0 | `pass-fix-f203-byteencode-decode-d-k3` | ByteEncode/Decode：至少 d=10,4,12 | CPU+SIM |
-| **B3** | W0 | `pass-fix-f203-alg8-cbd-eta2-k3` | CBD \(\eta=2\) × k 维打包 | CPU+SIM |
-| **B4** | W1 | `pass-fix-f203-alg7-sample-ntt-k3` | SampleNTT；\(i,j\in\{0,1,2\}\) | CPU+SIM；多 seed |
-| **B5** | W1 | `pass-fix-f203-stage123-ntt-intt-polyvec6-k3` | Stage1–3；**真 polyvec6** | CPU+SIM；禁 S1–S3 Gather |
-| **B6** | W1 | `pass-fix-f203-alg11-12-multiply-inner-k3` | MultiplyNTTs + InnerProduct（\(k=3\)） | CPU+SIM |
-| **D13** | W2 | `pass-fix-f203-alg13-device-keygen-k3` | Alg.13 → ek/dk_pke | CPU+SIM；liboqs 交叉 |
-| **D14** | W2 | `pass-fix-f203-alg14-pke-encrypt-device-k3` | Alg.14 → c(1088) | CPU+SIM |
-| **D15** | W2 | `pass-fix-f203-alg15-pke-decrypt-device-k3` | Alg.15 → m | CPU+SIM；与 D14 RT |
-| **D19** | W3 | `pass-fix-f203-alg19-kem-keygen-device-k3` | Alg.19 | CPU+SIM |
-| **D20** | W3 | `pass-fix-f203-alg20-kem-encaps-device-k3` | Alg.20 | CPU+SIM |
-| **D21** | W3 | `pass-fix-f203-alg21-kem-decaps-device-k3` | Alg.21 合法路径 | CPU+SIM |
-| **D21ct** | W3 | `pass-fix-f203-alg21-kem-decaps-device-ct-k3` | **拒绝路径 / CT** | CPU+SIM；reject≠accept |
+| ID | P | W | 目录 | 作用 | 最小验收 |
+|----|---|---|------|------|----------|
+| **B1** | P2 | W0 | `pass-fix-f203-compress-decompress-du10-dv4-k3` | Compress/Decompress \(d_u=10,d_v=4\) | CPU+SIM；定点 vs oracle |
+| **B2** | P2 | W0 | `pass-fix-f203-byteencode-decode-d-k3` | ByteEncode/Decode：至少 d=10,4,12 | CPU+SIM |
+| **B3** | P2 | W0 | `pass-fix-f203-alg8-cbd-eta2-k3` | CBD \(\eta=2\) × k 维打包 | CPU+SIM |
+| **B4** | P2 | W1 | `pass-fix-f203-alg7-sample-ntt-k3` | SampleNTT；\(i,j\in\{0,1,2\}\) | CPU+SIM；多 seed |
+| **B5** | P2 | W1 | `pass-fix-f203-stage123-ntt-intt-polyvec6-k3` | Stage1–3；**真 polyvec6** | CPU+SIM；禁 S1–S3 Gather |
+| **B6** | P2 | W1 | `pass-fix-f203-alg11-12-multiply-inner-k3` | MultiplyNTTs + InnerProduct（\(k=3\)） | CPU+SIM |
+| **D13** | P2 | W2 | `pass-fix-f203-alg13-device-keygen-k3` | Alg.13 → ek/dk_pke | CPU+SIM；liboqs 交叉 |
+| **D14** | P2 | W2 | `pass-fix-f203-alg14-pke-encrypt-device-k3` | Alg.14 → c(1088) | CPU+SIM |
+| **D15** | P2 | W2 | `pass-fix-f203-alg15-pke-decrypt-device-k3` | Alg.15 → m | CPU+SIM；与 D14 RT |
+| **D19** | P2 | W3 | `pass-fix-f203-alg19-kem-keygen-device-k3` | Alg.19 | CPU+SIM |
+| **D20** | P2 | W3 | `pass-fix-f203-alg20-kem-encaps-device-k3` | Alg.20 | CPU+SIM |
+| **D21** | P2 | W3 | `pass-fix-f203-alg21-kem-decaps-device-k3` | Alg.21 合法路径 | CPU+SIM |
+| **D21ct** | P2 | W3 | `pass-fix-f203-alg21-kem-decaps-device-ct-k3` | **拒绝路径 / CT** | CPU+SIM；reject≠accept |
 
 ### 2.2 incubating exp — `examples/incubating/ml-kem/ml-kem-768/`
 
-| ID | 波次 | 目录 | 作用 | 最小验收 |
-|----|------|------|------|----------|
-| **E13** | W4a | `exp-fips203-mlkem-pke-keygen-k3` | PKE KeyGen exp | CPU+SIM；须 customspec |
-| **E14** | W4a | `exp-fips203-mlkem-pke-encrypt-k3` | PKE Encrypt exp | CPU+SIM |
-| **E15** | W4a | `exp-fips203-mlkem-pke-decrypt-k3` | PKE Decrypt exp | CPU+SIM |
-| **E19** | W4b | `exp-fips203-mlkem-kem-keygen-k3` | KEM KeyGen exp | CPU+SIM |
-| **E20** | W4b | `exp-fips203-mlkem-kem-encaps-k3` | KEM Encaps exp | CPU+SIM |
-| **E21** | W4b | `exp-fips203-mlkem-kem-decaps-k3` | KEM Decaps exp | CPU+SIM |
-| **E21ct** | W4b | `exp-fips203-mlkem-kem-decaps-ct-k3` | Decaps CT / reject | CPU+SIM |
+| ID | P | W | 目录 | 作用 | 最小验收 |
+|----|---|---|------|------|----------|
+| **E13** | P3 | W4a | `exp-fips203-mlkem-pke-keygen-k3` | PKE KeyGen exp | CPU+SIM；须 customspec |
+| **E14** | P3 | W4a | `exp-fips203-mlkem-pke-encrypt-k3` | PKE Encrypt exp | CPU+SIM |
+| **E15** | P3 | W4a | `exp-fips203-mlkem-pke-decrypt-k3` | PKE Decrypt exp | CPU+SIM |
+| **E19** | P3 | W4b | `exp-fips203-mlkem-kem-keygen-k3` | KEM KeyGen exp | CPU+SIM |
+| **E20** | P3 | W4b | `exp-fips203-mlkem-kem-encaps-k3` | KEM Encaps exp | CPU+SIM |
+| **E21** | P3 | W4b | `exp-fips203-mlkem-kem-decaps-k3` | KEM Decaps exp | CPU+SIM |
+| **E21ct** | P3 | W4b | `exp-fips203-mlkem-kem-decaps-ct-k3` | Decaps CT / reject | CPU+SIM |
 
 **端到端脚本（P3）**：`scripts/exp_kem768_liboqs_roundtrip.sh`（KeyGen→Encaps→Decaps；建议另含 reject 抽检）。
 
@@ -103,6 +126,6 @@ KAT 起步建议：device/exp **CPU×3 + SIM×1**（非 stable 门禁）。
 - [x] 必建表含 **PKE exp + KEM device + CT**（用户决议）  
 - [x] 目录壳与 INDEX 对齐本表  
 - [x] 与参数卡交叉引用  
-- [x] P2–P3 已按授权完成（W0–W4 + glue；2026-07-26/27）  
+- [x] P2（W0–W3）与 P3（W4 + glue）已按授权完成（2026-07-26/27）  
 - [ ] stable-768（须 `#交付#`）  
 - [ ] T768-post（liboqs-768 helper / device KAT 等，可选）

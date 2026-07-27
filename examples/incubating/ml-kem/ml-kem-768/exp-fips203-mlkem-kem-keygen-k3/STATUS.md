@@ -3,7 +3,9 @@
 | 项 | 状态 |
 |----|------|
 | 阶段 | **有条件完成**（E19 incubating；CPU + `SIM_DIRECT=1` sim 通过；未跑 liboqs KAT / NPU） |
-| 波次 | W4b / E19 |
+| P | P3 |
+| W | W4b |
+| ID | E19 |
 | CPU | **PASS** — `bash run.sh -r cpu -v Ascend910B4`，`ek_kem`/`dk_kem` 对拍 max=0 |
 | SIM | **PASS** — `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4`，Total tick **510867** |
 | customspec | [`exp-fips203-mlkem-kem-keygen-k3-实现方案-customspec.pdf`](exp-fips203-mlkem-kem-keygen-k3-实现方案-customspec.pdf) |

@@ -247,15 +247,15 @@ T-B：polyvec6 + $\hat A$ 独立 prep。\\
 \begin{frame}{主题：压力床 2 的实现效果——绿线、tick 与未做边界}
 {\footnotesize
 \begin{center}
-\begin{tabular}{@{}L{2.4cm}L{3.0cm}L{6.4cm}@{}}
+\begin{tabular}{@{}L{0.6cm}L{1.0cm}L{2.4cm}L{3.0cm}L{6.4cm}@{}}
   \toprule
-  层 & 状态 & 代表 SIM tick（Cloud） \\
+  P & W & 层 & 状态 & 代表 SIM tick（Cloud） \\
   \midrule
-  W0--W3 & CPU+SIM 全绿 &
+  P2 & W0--W3 & 探针 & CPU+SIM 全绿 &
   D13 $3.73{\times}10^5$；D14 $5.08{\times}10^5$；D15 $2.22{\times}10^5$；
   D19--D21 $\sim(5.1$--$8.2){\times}10^5$ \\
-  W4 exp & E13--E21ct 全绿 & 与对应 D* 同量级 \\
-  glue & AscendC-only RT & reject：$K{=}J(z\Vert c)$且 $\neq$accept \\
+  P3 & W4 & exp & E13--E21ct 全绿 & 与对应 D* 同量级 \\
+  P3 & glue & RT & AscendC-only & reject：$K{=}J(z\Vert c)$且 $\neq$accept \\
   \bottomrule
 \end{tabular}
 \end{center}
