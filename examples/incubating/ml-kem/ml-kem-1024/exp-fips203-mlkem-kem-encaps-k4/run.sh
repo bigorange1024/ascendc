@@ -16,7 +16,8 @@
 # 调试（非默认）:
 #   KEM_ENCAPS_FORCE_REBUILD=1 …
 #   SIM_DIRECT=0 …（msprof）
-#   M_HEX=… / M_FILE=… / EK_KEM_SRC=… / M_RANDOM=1
+#   M_FILE=… / M_HEX=… / M_DEFAULT_HEX=… / EK_KEM_SRC=…
+#   （默认 m=urandom；禁止默认可全 0。M_RANDOM 已废，勿再依赖）
 #   bash run.sh -r npu …                       # 仅真机；WSL 拒绝
 #
 # SIM：WSL dump 桩 / Cloud 不装桩 — scripts/sim_env.sh

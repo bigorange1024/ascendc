@@ -114,16 +114,20 @@ def main() -> None:
     (inp / "ek_kem.bin").write_bytes(ek)
     (inp / "ek_pke.bin").write_bytes(ek)
 
+    # m 优先级：外部文件 → 显式 hex → 可选定点 M_DEFAULT_HEX → urandom。
+    # 背景：曾默认可为全 0（"00"*32），削弱 Encaps 回归；与 512/768 对齐，禁止默认全 0。
     if os.environ.get("M_FILE"):
         m = Path(os.environ["M_FILE"]).read_bytes()
     elif os.environ.get("M_HEX"):
         m = bytes.fromhex(os.environ["M_HEX"])
+    elif os.environ.get("M_DEFAULT_HEX"):
+        m = bytes.fromhex(os.environ["M_DEFAULT_HEX"])
     else:
-        # 默认定点 m，便于回归；可用 M_HEX / M_FILE / urandom 覆盖
-        m = bytes.fromhex(os.environ.get("M_DEFAULT_HEX", "00" * 32))
-        if os.environ.get("M_RANDOM", "0") == "1":
-            m = os.urandom(M_BYTES)
-    assert len(m) == M_BYTES
+        m = os.urandom(M_BYTES)
+    if len(m) != M_BYTES:
+        raise SystemExit(f"m want {M_BYTES}B got {len(m)}B")
+    if m == bytes(M_BYTES):
+        raise SystemExit("m 全 0 禁止（请换 M_FILE/M_HEX/M_DEFAULT_HEX 或使用默认 urandom）")
     (inp / "m.bin").write_bytes(m)
 
     _k_ref, r_ref = g_mh(m, ek)
