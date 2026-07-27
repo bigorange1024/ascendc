@@ -20,7 +20,7 @@
 | **终点**     | incubating：**PKE**×3 + **KEM**×3 + **decaps-ct** 均可默认路径验收                                               |
 | **验收**     | 各用例 **CPU +** `SIM_DIRECT=1` **sim** 双过；I/O 与 golden（liboqs `ML-KEM-512`）一致；用例根无 stray dump             |
 | **端到端**    | `scripts/exp_kem512_*_roundtrip.sh`（至少 AscendC-only KeyGen→Encaps→Decaps；含 reject 抽检）                   |
-| **交叉 KAT** | **本阶段目标内**：device/exp 对 liboqs-512 derand/KAT 至少 CPU×N + SIM×1（N 见 §6；helper 若仍硬编码 1024 则 **P0 先修**）    |
+| **交叉 KAT** | **本阶段目标内**：device/exp 对 liboqs-512 derand/KAT 至少 CPU×N + SIM×1（N 见 §6）；**KEM helper 已支持 512**（见 P0-G） |
 | **性能**     | 首绿以正确性为准；同波次内消除明显标量 GM / 多余同步大头；SIM tick **相对 768 同算子应更低或同量级**（k=2）；挂死超时遵守各 `run.sh` 预算                 |
 | **文档**     | 参数卡 / P1 表 / registry / 两树 INDEX / STATUS / 当日 `qa/` / `AGENT_HANDOFF`；定稿教训择要入 `docs/notes/` 或教材续章（可后置） |
 | **非目标**    | stable 晋级、NPU、教材第9章长文（除非用户另开）                                                                           |
@@ -177,7 +177,7 @@ Skill：探针可走【预研】；`examples/incubating/` 写码前须活跃 `*-
 | P0-D | 目录壳 + INDEX                | `ascendc-tests/ml-kem/ml-kem-512/` · `examples/incubating/ml-kem/ml-kem-512/`（**无** stable） |
 | P0-E | registry×6 骨架              | `docs/specs/fips203-mlkem512-*-baseline-registry.md`                                        |
 | P0-F | 尺寸自检                       | `scripts/check_mlkem512_sizes.sh`                                                           |
-| P0-G | liboqs 参数组可切换（KAT/RT 前置）   | helper / gen_data 去硬编码 1024；缺则 P2 前完成                                                       |
+| P0-G | liboqs 参数组可切换（KAT/RT 前置） | **KEM 已做**（2026-07-27）：`MLKEM_PARAM=512\|768\|1024`；冒烟 `smoke_liboqs_kem_params.sh` 绿。**PKE** `liboqs_pke_ref` 仍 1024，另轨 |
 
 
 
