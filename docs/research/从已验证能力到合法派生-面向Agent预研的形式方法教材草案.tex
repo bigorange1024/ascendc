@@ -4205,7 +4205,7 @@ shared Keccak；FIPS~203 和 Alg.21 相关笔记。
   \item 同一个目录上并行多路 SIM，可能把结果搅脏。
 \end{itemize}
 五指标里，B 线假绿记了 \textbf{3} 次，和 A 线下界「至少 3」是一个量级。
-所以判决里要写死一句：\textbf{先交闭包表，不等于验收脚本没有洞}。
+所以判决里要写死一句：\textbf{先交闭包表，不等于验收脚本没有漏检}。
 
 \paragraph{SIM tick（Total tick，不是 msprof）}
 B 线 stable 合法合计大约 \textbf{1050646}（D\textbf{286866}+E\textbf{763780}）；
@@ -4370,7 +4370,7 @@ B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G
   \item \textbf{过程}：先看图~\ref{fig:ch7-lanes} 的跨泳道虚线（A$\to$B 禁抄、C$\to$B 复用），
         再看图~\ref{fig:ch7-metrics}——这是开销雷达（面积大 $=$ 负担重）：A 在搜索/返工/空转/禁源上铺开，
         B 收小、只在前置文书上凸出。相对 C 赢的仍是轨迹说得清，不是面积神话。
-  \item \textbf{顺便修到的洞}：B 线上的假绿回灌给 C 有用（verify 必须失败退出），
+  \item \textbf{顺便修到的验收漏检}：B 线上的假绿回灌给 C 有用（verify 必须失败退出），
         这是实验带给主线的好处，不是把核从 B 搬到 C。
 \end{enumerate}
 
@@ -4454,7 +4454,7 @@ B 是对照实验副本（\texttt{-ct}）。
   \item 该跑的测试都绿了；假绿三例说得清。
   \item 相对 A：强成功（图~\ref{fig:ch7-lanes} 的禁抄/过程、图~\ref{fig:ch7-metrics}）。
         相对 C：对得一样齐，tick 不更短（图~\ref{fig:ch7-tick}），过程更好讲。
-  \item 一句话：\textbf{先交表这道门有用；它代替不了人工优化主线，也堵不死验收脚本上的洞}。
+  \item 一句话：\textbf{先交表这道门有用；它代替不了人工优化主线，也堵不死验收脚本上的漏检}。
 \end{enumerate}
 
 
@@ -4526,7 +4526,7 @@ incubating \repo{examples/incubating/ml-kem/ml-kem-768/}；
 而且会把日后真正奇数维布局的坑藏起来。用户锁定的前提是：\textbf{禁止零垫}；后缀用 \texttt{-k3}；
 本阶段终点停在 incubating（PKE$\times$3 + KEM$\times$3 + decaps-ct），\textbf{不}建 stable-768。
 
-\subsection{怎么分析：相对 1024，洞在哪里}
+\subsection{怎么分析：相对 1024，缺项在哪里}
 \label{sec:mlkem768-analysis}
 
 先把 FIPS~203 与 liboqs 宏对拍清楚（长度已用脚本核过）：
