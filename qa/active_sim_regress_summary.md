@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-27（新增 **ML-KEM-512 W1 B4 SampleNTT** Cloud SIM tick；W0 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
+| **刷新** | 2026-07-27（新增 **ML-KEM-512 W1 B5 Stage123 NTT/INTT** Cloud SIM tick；W0/B4 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -57,6 +57,7 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | **B3a** | [`pass-fix-f203-alg8-cbd-eta2-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg8-cbd-eta2-k2/) | **11377** | polyvec4；η=2；`blockDim=2`；AIV0 `{0,2}` / AIV1 `{1,3}` | STATUS 2026-07-27 |
 | **B3b** | [`pass-fix-f203-alg8-cbd-eta3-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg8-cbd-eta3-k2/) | **13566** | polyvec4；η=3；`blockDim=2`；AIV0 `{0,2}` / AIV1 `{1,3}` | STATUS 2026-07-27 |
 | **B4** | [`pass-fix-f203-alg7-sample-ntt-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg7-sample-ntt-k2/) | **80235** | SampleNTT 单 poly；`G(d||2)`；2×2 matrix CPU PASS | STATUS 2026-07-27 |
+| **B5** | [`pass-fix-f203-stage123-ntt-intt-polyvec4-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-stage123-ntt-intt-polyvec4-k2/) | NTT **22921** / INTT **22836** | true polyvec4；MIX `blockDim=1`；AIV 连续 `{0,1}`/`{2,3}`；Cube HW pad m→16 非假 poly | STATUS 2026-07-27 |
 
 ---
 
