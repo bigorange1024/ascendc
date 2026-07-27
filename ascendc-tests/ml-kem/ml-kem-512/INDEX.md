@@ -1,7 +1,7 @@
 # ascendc-tests/ml-kem/ml-kem-512 — ML-KEM-512（k=2）探针
 
 **参数组**：FIPS 203 **ML-KEM-512**（\(k=2\)，\(\eta_1=3,\eta_2=2\)，\(d_u=10,d_v=4\)）  
-**阶段**：**P0 目录壳已建**；P2（W0–W3）待实现  
+**阶段**：**P0/P1 已建**；P2 W0 B3b（CBD-η3）已绿，其余待实现
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem512-parameter-card.md](../../../docs/specs/fips203-mlkem512-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem512-p1-gap-and-cases.md](../../../docs/specs/fips203-mlkem512-p1-gap-and-cases.md)  
@@ -25,7 +25,7 @@
 | P2 | W0 | `pass-fix-f203-compress-decompress-du10-dv4-k2/` | B1 | 待建 | 待建 |
 | P2 | W0 | `pass-fix-f203-byteencode-decode-d-k2/` | B2 | 待建 | 待建 |
 | P2 | W0 | `pass-fix-f203-alg8-cbd-eta2-k2/` | B3a | 待建 | 待建 |
-| P2 | W0 | `pass-fix-f203-alg8-cbd-eta3-k2/` | B3b | 待建 | 待建 |
+| P2 | W0 | `pass-fix-f203-alg8-cbd-eta3-k2/` | B3b | PASS | PASS（13566） |
 | P2 | W1 | `pass-fix-f203-alg7-sample-ntt-k2/` | B4 | 待建 | 待建 |
 | P2 | W1 | `pass-fix-f203-stage123-ntt-intt-polyvec4-k2/` | B5 | 待建 | 待建 |
 | P2 | W1 | `pass-fix-f203-alg11-12-multiply-inner-k2/` | B6 | 待建 | 待建 |
