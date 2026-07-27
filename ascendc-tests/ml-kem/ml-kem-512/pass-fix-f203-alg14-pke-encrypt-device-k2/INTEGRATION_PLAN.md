@@ -2,7 +2,7 @@
 
 **定位**：ML-KEM-512 W2/D14，FIPS 203 Alg.14 完整 K-PKE.Encrypt device 探针。输入 `ek_pke[800] + m[32] + coins[32]`，输出仅 `c[768]`。
 
-**状态**：2026-07-27 **CPU + `SIM_DIRECT=1` sim PASS**；SIM tick **338153**；根目录 0 stray dump。详见 [`STATUS.md`](STATUS.md)。
+**状态**：2026-07-27 **CPU + `SIM_DIRECT=1` sim PASS**（glue-c 后）；SIM tick **365995**；根目录 0 stray dump。详见 [`STATUS.md`](STATUS.md)。
 
 **参数来源**：[`docs/specs/fips203-mlkem512-parameter-card.md`](../../../docs/specs/fips203-mlkem512-parameter-card.md) §3.2。以下数字视为锁定值，遇阻不得改参硬闯。
 
@@ -96,7 +96,7 @@ derand 前缀使用参数卡锁定的 `exp-mlkem-f203-2s1e-k2:SEED_D=`；golden 
 |------|------|------|
 | S0 | k3 活跃 device tree 复制到 k2；删除 build/out/input/output/OPPROF 等产物 | ✓ |
 | S1 | retarget k=2：`ek=800`、`c=768`、`a_hat=4`、`re=5`、d=10/4、INTT batch=4 | ✓ |
-| PASS | `bash run.sh -r cpu -v Ascend910B4` 与 `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` 均 `c max=0` | ✓ tick **338153** |
+| PASS | `bash run.sh -r cpu -v Ascend910B4` 与 `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` 均 `c max=0` | ✓ tick **365995**（glue-c 后） |
 
 ---
 

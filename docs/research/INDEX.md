@@ -20,7 +20,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| [MLKEM-512-从0到exp完整实现计划.md](MLKEM-512-从0到exp完整实现计划.md) | 真 k=2 + **单 AI Core**；**P0 决议已锁**；方法论压力床 3；用语：缺项/补缺；权威卡见 `docs/specs/fips203-mlkem512-parameter-card.md` |
+| [MLKEM-512-从0到exp完整实现计划.md](MLKEM-512-从0到exp完整实现计划.md) | 真 k=2 + **单 AI Core**；**有条件完成至 incubating**（W0–W4+glue；glue-c `r←η1=3`）；用语：缺项/补缺；权威卡见 `docs/specs/fips203-mlkem512-parameter-card.md` |
 | [MLKEM-768-从0到exp完整实现计划.md](MLKEM-768-从0到exp完整实现计划.md) | 真 k=3 从 0→exp；**有条件完成至 incubating**（W0–W4+glue）；权威表见 `docs/specs/fips203-mlkem768-*` |
 | [教材与调研文档写作指导.md](教材与调研文档写作指导.md) | **写文档口味**：文风、图示、指标表达；大版本后同步刷新 |
 | [从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex](从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex) / [PDF](从已验证能力到合法派生-面向Agent预研的形式方法教材草案.pdf) | **专题唯一长文**（无日期、持续修订）：第6–7章 1024 复盘/前瞻；**第8章 ML-KEM-768 完整复盘**（2026-07-27：分析→计划→实现/测试/修改→有条件完成） |

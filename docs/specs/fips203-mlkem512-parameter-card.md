@@ -1,8 +1,9 @@
 # FIPS 203 ML-KEM-512 参数卡（P0 已锁）
 
-**状态**：**已锁定**（2026-07-27 用户确认 §0）· **未实现**  
+**状态**：**已锁定**（2026-07-27 用户确认 §0）· **P0–P3 有条件完成**（W4+glue 全绿；禁 stable-512）  
 **参数组**：ML-KEM-512（k=2）  
 **范围**：§0 已锁；本阶段 **不建** stable-512  
+ 
 **完整计划**：[docs/research/MLKEM-512-从0到exp完整实现计划.md](../research/MLKEM-512-从0到exp完整实现计划.md)  
 **P1 用例表**：[`fips203-mlkem512-p1-gap-and-cases.md`](fips203-mlkem512-p1-gap-and-cases.md)（**已定稿**）  
 **对照**：[`fips203-mlkem768-parameter-card.md`](fips203-mlkem768-parameter-card.md)
@@ -56,7 +57,7 @@
 | encaps seed                          | **32 B**   | `…_length_encaps_seed`                 |
 
 
-脚本（P0 待建）：`bash scripts/check_mlkem512_sizes.sh`。
+脚本：`bash scripts/check_mlkem512_sizes.sh`（已建）。
 
 ```text
 ek_kem == ek_pke                         # 800
@@ -117,13 +118,13 @@ c = c1 ‖ c2                              # 640+128 = 768
 
 
 
-## 4. 目录落点（P0-D，待建）
+## 4. 目录落点（已建）
 
 
 | 树          | 路径                                       | P   | W     | 说明        |
 | ---------- | ---------------------------------------- | --- | ----- | --------- |
-| 探针         | `ascendc-tests/ml-kem/ml-kem-512/`       | P2  | W0–W3 | 待建        |
-| incubating | `examples/incubating/ml-kem/ml-kem-512/` | P3  | W4    | 待建        |
+| 探针         | `ascendc-tests/ml-kem/ml-kem-512/`       | P2  | W0–W3 | **全绿**    |
+| incubating | `examples/incubating/ml-kem/ml-kem-512/` | P3  | W4    | **全绿** + glue |
 | stable     | —                                        | —   | —     | **本阶段不建** |
 
 
@@ -149,7 +150,7 @@ c = c1 ‖ c2                              # 640+128 = 768
 - [x] 目录壳 + INDEX
 - [x] registry 骨架
 - [x] P1 缺项对照（补缺图）与必建表
-- [ ] P2、W0–W3 探针全绿
-- [ ] P3、W4 incubating 全绿
-- [ ] P3、glue：AscendC RT + liboqs-512 KAT
+- [x] P2、W0–W3 探针全绿
+- [x] P3、W4 incubating 全绿
+- [x] P3、glue：AscendC RT + liboqs-512 KAT（2026-07-27 glue-c：`r←η1=3` / `e←η2=2`）
 - [ ] stable-512（须 `#交付#`，非本阶段）

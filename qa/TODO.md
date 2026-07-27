@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-27（**T512 W4+glue 完成**；glue-c η1 补缺；只推 research）
+**最近刷新**：2026-07-27（**文档全局刷新**；T512 W4+glue 完成；1024 Encaps 禁默认全 0 `m`；只推 research）
 
 ---
 
@@ -26,7 +26,7 @@
 
 ## 打开项（按优先级）
 
-主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**）；768 incubating+glue 有条件完成（禁 stable-768）。**下一方法论压力床**：**T512**（P0+P1 已落；W0–W3 绿）。打开项：T512 / T768-post / NPU / T23 / SHA3hp / T-WebViz。
+主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**）；768 / 512 incubating+glue 均有条件完成（禁 stable-768 / stable-512）。打开项：T512（仅 `#交付#`）/ T768-post / NPU / T23 / SHA3hp / T-WebViz。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|

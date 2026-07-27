@@ -10,16 +10,17 @@ FIPS 203 **Alg.20 / Alg.17 Encaps**（ml_kem_1024 / k=4）— incubating 自包�
 | **KEM 头** | `kem/`：`m` GM → `H`/`G` → `K`‖`r`（并入 prep；非 Host 预填 `r`） |
 | **Launch** | SIM 2 / CPU 5 |
 | **I/O** | `ek_kem`+`m`+LUT → `c`+`K` |
-| **SIM tick** | **721211**（全 0 `m`）；**721033**（定点非零 `m`）；复测 **721102**；对标 device **721010** |
+| **SIM tick** | 交付登记 **721119**（stable）；对标 device **721010**；历史曾用全 0 `m` 测得 ~721k（**已废止默认全 0**） |
 
 ## 验收证据（2026-07-15）
 
 | 模式 | 结果 |
 |------|------|
-| CPU | **PASS**（`c`/`K` max=0；含默认 `m=0` + **随机 `m`×3**） |
+| CPU | **PASS**（`c`/`K` max=0；默认 `m=urandom`；可用 `M_HEX`/`M_FILE` 定点） |
 | SIM | **PASS**（`c`/`K` max=0；根目录无 stray dump） |
 | golden | liboqs `encaps_derand`（`scripts/liboqs_kem_ref`） |
-| liboqs 分项 KAT | **PASS**（同 device 口径：固定 stash `ek` + 随机 `m`；**CPU×10 + SIM×3**；`c`/`K` 逐字节 = liboqs） |
+| liboqs 分项 KAT | **PASS**（固定 stash `ek` + 随机 `m`；**CPU×10 + SIM×3**；`c`/`K` 逐字节 = liboqs） |
+| 默认 `m` | **禁止全 0**（2026-07-27）：`M_FILE` → `M_HEX` → 显式 `M_DEFAULT_HEX`（若全 0 → exit 1）→ `os.urandom(32)` |
 
 ```bash
 bash run.sh -r cpu -v Ascend910B4
@@ -32,6 +33,5 @@ ENCAPS_DIR=$PWD/examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-enc
 
 ## 未做 / 非本轮
 
-- `#交付#` → `examples/stable/stable-…-kem-encaps-k4`
 - Decaps；NPU 真机
-- 仓库级 `scripts/liboqs_kem_encaps_batch.sh` 默认改指本目录（仍指 pass-fix device；本轮用 `ENCAPS_DIR=` 覆盖测）
+- （本目录已晋级 stable；勿再以「默认全 0 `m`」作验收口径）

@@ -11,7 +11,7 @@
 | **KEM 头** | `kem/`：`m` GM → 设备 `H`/`G` → `K`‖`r` |
 | **Launch** | SIM **2** / CPU **5** |
 | **I/O** | `ek_kem`+`m`+LUT → **仅** `c`+`K` |
-| **SIM tick** | **721119**（stable 交付验收）；对标 device **721010** |
+| **SIM tick** | **721119**（stable 交付验收）；对标 device **721010**；默认 `m=urandom`（禁默认可全 0） |
 | **预研副本** | [`exp-fips203-mlkem-kem-encaps-k4`](../../incubating/exp-fips203-mlkem-kem-encaps-k4/) |
 | **行为基线** | [`pass-fix-f203-alg20-kem-encaps-device-k4`](../../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/) |
 | **原理总结** | [`docs/notes/F203-KEM-Alg20-Encaps设备全链技术总结.md`](../../../docs/notes/F203-KEM-Alg20-Encaps设备全链技术总结.md) |

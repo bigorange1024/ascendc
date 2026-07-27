@@ -1,6 +1,7 @@
 # ML-KEM-512：从 0 到 incubating exp 完整实现计划
 
-**状态**：**P0 决议已锁**（2026-07-27 用户确认 §9）· 未写码 · 下一刀落 P0 目录壳  
+**状态**：**有条件完成**（2026-07-27；P0–P3 W0–W4+glue 全绿；禁 stable-512）  
+
 **参数组**：真 **ML-KEM-512**（k=2,\eta_1=3,\eta_2=2,d_u=10,d_v=4）  
 **实验意图**：**方法论压力床 3**——参照 768 闭环，在用户**极少介入**下自主推进至 incubating + 测试 + 文档刷新  
 **权威参数卡**：[docs/specs/fips203-mlkem512-parameter-card.md](../specs/fips203-mlkem512-parameter-card.md)（**已锁**）  

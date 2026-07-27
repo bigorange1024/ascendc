@@ -41,5 +41,5 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 ## 后续
 
-- D19/D20/D21/D21ct KEM device-k2 仍待补；D20 可复用本 D14 的 `c=768B` 与 d=10/4 布局。
-- 本探针不晋级 `examples/stable`，也不写 `examples/incubating`；PKE exp 需另走 customspec。
+- D19–D21ct **已绿**（见本树 INDEX）；incubating E14–E21ct + glue **已绿**。
+- 本探针不晋级 `examples/stable`；stable-512 须用户 `#交付#`。

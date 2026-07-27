@@ -2,8 +2,8 @@
 
 | 目录 | 参数组 | 说明 |
 |------|--------|------|
-| [ml-kem-1024/](ml-kem-1024/INDEX.md) | **ML-KEM-1024**（k=4） | 当前活跃 `exp-*` |
+| [ml-kem-1024/](ml-kem-1024/INDEX.md) | **ML-KEM-1024**（k=4） | 当前活跃 `exp-*`；Encaps 默认 `m=urandom`（禁默认可全 0） |
 | [ml-kem-768/](ml-kem-768/INDEX.md) | **ML-KEM-768**（k=3） | **W4+glue 已完成**（E13–E15、E19–E21ct）；本阶段无 stable |
-| [ml-kem-512/](ml-kem-512/INDEX.md) | **ML-KEM-512**（k=2） | **W4 incubating 全绿**；glue AscendC RT 绿；liboqs Encaps c 仍有缺项；见 [MLKEM-512 计划](../../../docs/research/MLKEM-512-从0到exp完整实现计划.md) |
+| [ml-kem-512/](ml-kem-512/INDEX.md) | **ML-KEM-512**（k=2） | **P0–P3 有条件完成**；W4 incubating 全绿；**glue（AscendC RT + liboqs-512）全绿**（glue-c：`r←η1=3`）；禁 stable-512；见 [计划](../../../docs/research/MLKEM-512-从0到exp完整实现计划.md) |
 
 上级：[../INDEX.md](../INDEX.md)。frozen 仍在 [`../../frozen/`](../../frozen/INDEX.md)（不迁入本树）。

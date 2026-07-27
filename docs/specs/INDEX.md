@@ -11,8 +11,8 @@
 | [fips203-mlkem1024-kem-keygen-baseline-registry.md](fips203-mlkem1024-kem-keygen-baseline-registry.md) | Alg.19 KEM KeyGen 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem1024-kem-encaps-baseline-registry.md](fips203-mlkem1024-kem-encaps-baseline-registry.md) | Alg.20 KEM Encaps 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem1024-kem-decaps-baseline-registry.md](fips203-mlkem1024-kem-decaps-baseline-registry.md) | Alg.21 KEM Decaps 交付 golden / KAT 计算块登记 |
-| [fips203-mlkem512-parameter-card.md](fips203-mlkem512-parameter-card.md) | **ML-KEM-512 P0 参数卡（已锁）**：S-1 / T-B2 / `-k2` / CBD‑η3 |
-| [fips203-mlkem512-p1-gap-and-cases.md](fips203-mlkem512-p1-gap-and-cases.md) | **ML-KEM-512 P1** 缺项对照（补缺图）与必建用例表（已定稿） |
+| [fips203-mlkem512-parameter-card.md](fips203-mlkem512-parameter-card.md) | **ML-KEM-512 参数卡（已锁）**：S-1 / T-B2 / `-k2`；**P0–P3 有条件完成**（禁 stable） |
+| [fips203-mlkem512-p1-gap-and-cases.md](fips203-mlkem512-p1-gap-and-cases.md) | **ML-KEM-512 P1** 缺项对照（补缺图）与必建用例表（已定稿；P2/P3 已实现） |
 | [fips203-mlkem512-pke-keygen-baseline-registry.md](fips203-mlkem512-pke-keygen-baseline-registry.md) | Alg.13（k=2）registry **P0 骨架** |
 | [fips203-mlkem512-pke-encrypt-baseline-registry.md](fips203-mlkem512-pke-encrypt-baseline-registry.md) | Alg.14（k=2）registry **P0 骨架** |
 | [fips203-mlkem512-pke-decrypt-baseline-registry.md](fips203-mlkem512-pke-decrypt-baseline-registry.md) | Alg.15（k=2）registry **P0 骨架** |

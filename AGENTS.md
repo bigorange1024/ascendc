@@ -123,12 +123,13 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
-- **目录**：1024 活跃在 `…/ml-kem/ml-kem-1024/`；768 在 `…/ml-kem/ml-kem-768/`（**无** stable-768）  
-- **768 权威**：[`docs/specs/fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md) · [P1 用例表](docs/specs/fips203-mlkem768-p1-gap-and-cases.md) · [计划](docs/research/MLKEM-768-从0到exp完整实现计划.md)  
-- **768 状态**：**有条件完成至 incubating** — 探针 W0–W3 + incubating W4 + AscendC-only RT 全绿；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)  
-- **下一刀（可选）**：T768-post / `#交付#` stable-768；仓级 T23 / T21 / T2-npu  
+- **目录**：1024 / 768 / 512 分别在 `…/ml-kem/ml-kem-{1024,768,512}/`（**无** stable-768 / stable-512）  
+- **512 状态**：**有条件完成至 incubating** — W0–W4+glue 全绿（含 liboqs-512 Encaps `c`/`K`）；glue-c：`r←η1=3`；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)  
+- **768 状态**：**有条件完成至 incubating** — 探针 W0–W3 + incubating W4 + AscendC-only RT 全绿  
+- **1024 Encaps**：默认 `m=urandom`（禁默认可全 0）  
+- **下一刀**：stable-512 / stable-768 须用户 `#交付#`；可选 D20 tick 重登；仓级 T23 / T21 / T2-npu  
 - **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)  
-- **768 RT（AscendC-only）**：[`scripts/exp_kem768_liboqs_roundtrip.sh`](scripts/exp_kem768_liboqs_roundtrip.sh)
+- **512 / 768 RT**：[`scripts/exp_kem512_liboqs_roundtrip.sh`](scripts/exp_kem512_liboqs_roundtrip.sh) · [`scripts/exp_kem768_liboqs_roundtrip.sh`](scripts/exp_kem768_liboqs_roundtrip.sh)
 
 ---
 

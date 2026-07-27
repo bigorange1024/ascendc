@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-27（新增 **ML-KEM-512 W3 D21/D21ct KEM Decaps** Cloud SIM tick；W0–W2 + W3 D20/D21/D21ct 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
+| **刷新** | 2026-07-27（**512 glue-c**：D14/E14/E20 tick 重登；1024 Encaps 禁默认全 0 `m`；W0–W3 + W4+glue 已登记） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -60,9 +60,9 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | **B5** | [`pass-fix-f203-stage123-ntt-intt-polyvec4-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-stage123-ntt-intt-polyvec4-k2/) | NTT **22921** / INTT **22836** | true polyvec4；MIX `blockDim=1`；AIV 连续 `{0,1}`/`{2,3}`；Cube HW pad m→16 非假 poly | STATUS 2026-07-27 |
 | **B6** | [`pass-fix-f203-alg11-12-multiply-inner-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg11-12-multiply-inner-k2/) | multiply **9290** / inner **12603** | Inner `P_OUT=S_VEC=2`；AIV **1+1**；`t_hat[2,256]` | STATUS 2026-07-27 |
 | **D13** | [`pass-fix-f203-alg13-device-keygen-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg13-device-keygen-k2/) | **230102** | 2 launch；prep Â[4] 2+2 + polyvec4 CBD-η3；compute `S0[8,256]` + inner 1+1；ek/dk 800/768 golden PASS | STATUS 2026-07-27 |
-| **D14** | [`pass-fix-f203-alg14-pke-encrypt-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg14-pke-encrypt-device-k2/) | **338153** | 2 launch；prep Â[4]+re[5]；compute INTT polyvec4 `u0,u1,v,空槽` + d10/d4 pack；c=768 golden PASS | STATUS 2026-07-27 |
+| **D14** | [`pass-fix-f203-alg14-pke-encrypt-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg14-pke-encrypt-device-k2/) | **365995** | 2 launch；prep Â[4]+re[5]（`r←η1=3`/`e←η2=2`）；compute INTT polyvec4 `u0,u1,v,空槽` + d10/d4 pack；c=768 golden PASS | STATUS 2026-07-27 glue-c |
 | **D15** | [`pass-fix-f203-alg15-pke-decrypt-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg15-pke-decrypt-device-k2/) | **168975** | 1 fused launch；dk=768+c=768；c1=2×320、c2=128；m golden PASS | STATUS 2026-07-27 |
-| **D20** | [`pass-fix-f203-alg20-kem-encaps-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg20-kem-encaps-device-k2/) | **394978** | 2 launch；KEM head `G(m‖H(ek))` + D14 k2 Encrypt；c/K golden PASS | STATUS 2026-07-27 |
+| **D20** | [`pass-fix-f203-alg20-kem-encaps-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg20-kem-encaps-device-k2/) | **394978*** | 2 launch；KEM head + D14 k2 Encrypt；c/K golden PASS；\*glue-c 后代码已补缺，tick **待重登**（对照 E20 **427927**） | STATUS 2026-07-27；E20 INDEX |
 | **D21** | [`pass-fix-f203-alg21-kem-decaps-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg21-kem-decaps-device-k2/) | accept **571206**（D**163145** + E**408061**）；reject **570547**（D**163109** + E**407438**） | Delivery 默认 `decaps_1session`；`dk_kem=1632B+c=768B→K=32B`；accept K max=0；reject `K=J(z‖c)` | STATUS 2026-07-27 |
 | **D21ct** | [`pass-fix-f203-alg21-kem-decaps-device-ct-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg21-kem-decaps-device-ct-k2/) | accept **570707**（D**163069** + E**407638**）；reject **571369**（D**163025** + E**408344**） | CT 默认 `decaps_2session`；accept K max=0；reject `K=J(z‖c)` 且 `reject≠accept` | STATUS 2026-07-27 |
 
