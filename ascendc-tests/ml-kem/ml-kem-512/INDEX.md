@@ -32,7 +32,7 @@
 | P2 | W2 | [`pass-fix-f203-alg13-device-keygen-k2/`](pass-fix-f203-alg13-device-keygen-k2/) | D13 | **PASS** | **PASS（230102）** |
 | P2 | W2 | [`pass-fix-f203-alg14-pke-encrypt-device-k2/`](pass-fix-f203-alg14-pke-encrypt-device-k2/) | D14 | **PASS** | **PASS（338153）** |
 | P2 | W2 | [`pass-fix-f203-alg15-pke-decrypt-device-k2/`](pass-fix-f203-alg15-pke-decrypt-device-k2/) | D15 | **PASS** | **PASS（168975）** |
-| P2 | W3 | `pass-fix-f203-alg19-kem-keygen-device-k2/` | D19 | 待建 | 待建 |
+| P2 | W3 | [`pass-fix-f203-alg19-kem-keygen-device-k2/`](pass-fix-f203-alg19-kem-keygen-device-k2/) | D19 | **PASS** | **PASS（320247）** |
 | P2 | W3 | [`pass-fix-f203-alg20-kem-encaps-device-k2/`](pass-fix-f203-alg20-kem-encaps-device-k2/) | D20 | **PASS** | **PASS（394978）** |
 | P2 | W3 | [`pass-fix-f203-alg21-kem-decaps-device-k2/`](pass-fix-f203-alg21-kem-decaps-device-k2/) | D21 | **PASS**（accept/reject） | **PASS**（accept **571206** / reject **570547**） |
 | P2 | W3 | [`pass-fix-f203-alg21-kem-decaps-device-ct-k2/`](pass-fix-f203-alg21-kem-decaps-device-ct-k2/) | D21ct | **PASS**（accept/reject） | **PASS**（accept **570707** / reject **571369**） |
