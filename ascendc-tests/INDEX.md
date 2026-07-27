@@ -26,7 +26,7 @@ ascendc-tests/
 ├── ml-kem/
 │   ├── ml-kem-1024/            # FIPS 203 ML-KEM-1024（k=4）活跃探针
 │   ├── ml-kem-768/             # ML-KEM-768（k=3）；W0+W1+W2+W3 已绿（含 D21ct）
-│   └── ml-kem-512/             # ML-KEM-512（k=2）；W0/W1 全绿，W2 D13/D14/D15 已绿
+│   └── ml-kem-512/             # ML-KEM-512（k=2）；W0/W1 全绿，W2 D13/D14/D15 已绿，W3 D20 已绿
 │       └── INDEX.md
 ├── frozen/                     # 已关闭路线（不迁入 ml-kem/）
 └── INDEX.md                    # 本文件
@@ -37,7 +37,7 @@ ascendc-tests/
 | [ml-kem/](ml-kem/INDEX.md) | **按参数组**组织的 ML-KEM 探针；详表见各 `ml-kem-*/INDEX.md` |
 | [ml-kem/ml-kem-1024/](ml-kem/ml-kem-1024/INDEX.md) | **当前** ML-KEM-1024（k=4）活跃探针全集 |
 | [ml-kem/ml-kem-768/](ml-kem/ml-kem-768/INDEX.md) | **W0–W3 全绿** ML-KEM-768（k=3）；incubating W4+glue 已完成；见参数卡 |
-| [ml-kem/ml-kem-512/](ml-kem/ml-kem-512/INDEX.md) | **W0/W1 全绿 + W2 D13/D14/D15 PASS** ML-KEM-512（k=2）；P0/P1 已定稿，继续 W3 |
+| [ml-kem/ml-kem-512/](ml-kem/ml-kem-512/INDEX.md) | **W0/W1 全绿 + W2 D13/D14/D15 + W3 D20 PASS** ML-KEM-512（k=2）；P0/P1 已定稿，继续 W3 |
 | [frozen/](frozen/INDEX.md) | 路线关闭；只读判决书 |
 
 ---
