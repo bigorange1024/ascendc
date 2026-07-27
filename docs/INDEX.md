@@ -12,7 +12,7 @@
 | [specs/](specs/INDEX.md) | 研究计划、baseline-registry、实施说明 |
 | [engineering/](engineering/INDEX.md) | 环境复现、工具链、Agent 清单 |
 | [notes/](notes/INDEX.md) | **定稿技术总结**（原理层） |
-| [reports/](reports/INDEX.md) | 汇报、论文、正式报告 |
+| [reports/](reports/INDEX.md) | 汇报、论文、正式报告（含 [方法论精髓简报](reports/Agent预研形式方法-方法论精髓与效果-简报.pdf)） |
 
 > **`research/` 与 `notes/`**：草稿 → research；结论稳定后再按 [技术总结写作模板](notes/技术总结写作模板.md) 写入 notes。  
 > 历史：2026-06-18 曾整目录迁入 notes；**2026-07-15** 恢复 research 作调研区。
