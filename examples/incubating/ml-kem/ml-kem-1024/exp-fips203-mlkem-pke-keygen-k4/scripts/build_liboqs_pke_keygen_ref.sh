@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# 用例内 KeyGen-only 黑盒：编译本目录 liboqs_pke_keygen_ref.c → liboqs_pke_keygen_ref
+# 勿与仓根 scripts/liboqs_pke_ref_mlkem1024（全 PKE）混淆。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROBE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"

@@ -25,7 +25,7 @@
 
 ```bash
 bash scripts/clone-thirdparty.sh
-# 默认会：clone 六仓 + build liboqs 0.15.0 + 编 liboqs_kem_ref/pke_ref
+# 默认会：clone 六仓 + build liboqs 0.15.0 + 编 liboqs_kem_ref / liboqs_pke_ref_mlkem1024
 # 仅补编：bash scripts/build-liboqs.sh
 # 只 clone 不编：BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 ```

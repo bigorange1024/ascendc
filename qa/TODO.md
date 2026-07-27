@@ -43,7 +43,7 @@
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
 | — | **T4** | 换机后可选重编 liboqs（OpenSSL） | 可选 |
 | — | **T7** | FIPS 204 / ML-DSA | 后阶段 |
-| — | **T18** | Encrypt KAT：`liboqs_pke_ref` encrypt/decrypt 链接（hidden 符号）；Decrypt 已用 `liboqs_pke_decrypt_fixture` 绕过 | 非阻塞；Encrypt KAT 若复现再修 |
+| — | **T18** | Encrypt KAT：`liboqs_pke_ref_mlkem1024` encrypt/decrypt 链接（hidden 符号）；Decrypt 已用 `liboqs_pke_decrypt_fixture` 绕过 | 非阻塞；Encrypt KAT 若复现再修 |
 
 ### T19 — KEM device-k4 ↔ stable PKE 布局对齐（拆分）
 
@@ -178,4 +178,4 @@
 
 ## 维护
 
-关闭项只追加、不删历史行。新增打开项分配简短 ID（T14 后继已用 T14a/T14b；Decrypt 交付为 T15a；liboqs_pke_ref 债为 T18）。
+关闭项只追加、不删历史行。新增打开项分配简短 ID（T14 后继已用 T14a/T14b；Decrypt 交付为 T15a；`liboqs_pke_ref_mlkem1024` 链接债为 T18）。

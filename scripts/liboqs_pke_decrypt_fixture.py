@@ -30,7 +30,7 @@ DECRYPT_HOST_GOLDEN = (
     REPO_ROOT / "examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/scripts/host_golden"
 )
 REF_BIN = KEYGEN_SCRIPTS / "liboqs_pke_keygen_ref"
-BUILD_REF = KEYGEN_SCRIPTS / "build_liboqs_pke_ref.sh"
+BUILD_REF = KEYGEN_SCRIPTS / "build_liboqs_pke_keygen_ref.sh"
 
 sys.path.insert(0, str(FIPS203_SE))
 from golden_se_sampling import derand_bytes_from_seed  # noqa: E402

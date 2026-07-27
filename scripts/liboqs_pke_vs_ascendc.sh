@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # liboqs_pke_vs_ascendc.sh — liboqs PKE 向量 ↔ AscendC KeyGen/Encrypt/Decrypt 三阶段对拍
 #
+# 范围：**仅 ML-KEM-1024**（fixture 走 liboqs_pke_ref_mlkem1024 / liboqs_pke_fixture.py）。
+# 本阶段不对 512/768 做 PKE liboqs 交叉。
+#
 # 流程：
 #   1. liboqs 生成 fixture（seed_d, d, m, coins, ek, dk, c, m_rec）
 #   2. KeyGen 探针（SEED_D）→ ek/dk 与 liboqs 比

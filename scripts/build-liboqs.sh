@@ -66,7 +66,9 @@ if [[ "${BUILD_REFS}" = "1" ]]; then
   if [[ -f "${SCRIPT_DIR}/build_liboqs_kem_ref.sh" ]]; then
     bash "${SCRIPT_DIR}/build_liboqs_kem_ref.sh"
   fi
-  if [[ -f "${SCRIPT_DIR}/build_liboqs_pke_ref.sh" ]]; then
+  if [[ -f "${SCRIPT_DIR}/build_liboqs_pke_ref_mlkem1024.sh" ]]; then
+    bash "${SCRIPT_DIR}/build_liboqs_pke_ref_mlkem1024.sh"
+  elif [[ -f "${SCRIPT_DIR}/build_liboqs_pke_ref.sh" ]]; then
     bash "${SCRIPT_DIR}/build_liboqs_pke_ref.sh"
   fi
 fi

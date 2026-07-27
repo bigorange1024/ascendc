@@ -50,7 +50,7 @@ from golden_se_sampling import derand_bytes_from_seed  # noqa: E402
 EK_PKE_BYTES = 1568
 DK_PKE_BYTES = 1536
 REF_BIN = ROOT / "scripts" / "liboqs_pke_keygen_ref"
-BUILD_REF_SH = ROOT / "scripts" / "build_liboqs_pke_ref.sh"
+BUILD_REF_SH = ROOT / "scripts" / "build_liboqs_pke_keygen_ref.sh"
 SOC_VERSION = os.environ.get("KAT_SOC_VERSION", "Ascend910B4")
 VERBOSE = os.environ.get("KAT_VERBOSE", "0") == "1"
 LOG_PATH = Path(os.environ.get("KAT_LOG", str(ROOT / "output" / "kat_liboqs_vs_ascendc.log")))

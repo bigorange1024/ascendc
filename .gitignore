@@ -52,6 +52,7 @@ backup/
 !ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/fixtures/
 !ascendc-tests/pass-fix-f203-alg14-lines3-15-encrypt-prep-k4/fixtures/**
 scripts/liboqs_pke_ref
+scripts/liboqs_pke_ref_mlkem1024
 scripts/liboqs_kem_ref
 **/.liboqs_vs_built_mode
 **/stub_reg.log

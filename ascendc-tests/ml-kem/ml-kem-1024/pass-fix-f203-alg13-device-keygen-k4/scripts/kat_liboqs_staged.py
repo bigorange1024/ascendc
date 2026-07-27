@@ -60,7 +60,7 @@ from keygen_golden import build_full_keygen  # noqa: E402
 EK_PKE_BYTES = 1568
 DK_PKE_BYTES = 1536
 REF_BIN = ROOT / "scripts" / "liboqs_pke_keygen_ref"
-BUILD_REF = ROOT / "scripts" / "build_liboqs_pke_ref.sh"
+BUILD_REF = ROOT / "scripts" / "build_liboqs_pke_keygen_ref.sh"
 OUT = ROOT / "output"
 SOC = os.environ.get("KAT_SOC_VERSION", "Ascend910B4")
 RUN_MODE = os.environ.get("KAT_RUN_MODE", "cpu")

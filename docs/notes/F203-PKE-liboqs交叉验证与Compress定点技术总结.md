@@ -131,6 +131,7 @@ return ((u * 1290176 + (1 << 26)) >> 27) & 0x1F
 ```bash
 bash scripts/build_liboqs_pke_ref_mlkem1024.sh
 # 兼容入口：bash scripts/build_liboqs_pke_ref.sh
+# 用例内 KeyGen-only 黑盒：各用例 scripts/build_liboqs_pke_keygen_ref.sh → liboqs_pke_keygen_ref
 bash scripts/liboqs_pke_vs_ascendc.sh -r cpu -v Ascend910B4
 ```
 
