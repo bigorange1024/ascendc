@@ -1,8 +1,8 @@
 # ML-KEM-768 P1：补洞图与必建用例表（已定稿）
 
-**状态**：**P1 定稿**（2026-07-26，随用户决议）  
+**状态**：**P1 定稿**（2026-07-26）；**实现有条件完成至 incubating**（2026-07-26/27，见当日纪要）  
 **依据**：[参数卡](fips203-mlkem768-parameter-card.md) · [完整计划](../research/MLKEM-768-从0到exp完整实现计划.md)  
-**下一阶段**：P2 按波次写码（须 【预研】/`$规格$`；本文件不授权跳过 customspec）
+**下一阶段（可选）**：T768-post / `#交付#` stable-768；本文件不授权跳过 customspec
 
 ---
 
@@ -28,7 +28,7 @@
 
 ## 2. 必建用例总表（已锁）
 
-目录壳已存在；`STATUS=壳` 表示仅占位，无实现。
+目录与用例均已落盘；实现状态见各树 `INDEX.md` / `STATUS.md`（探针 W0–W3、incubating W4 均已绿）。
 
 ### 2.1 探针 — `ascendc-tests/ml-kem/ml-kem-768/`
 
@@ -103,4 +103,6 @@ KAT 起步建议：device/exp **CPU×3 + SIM×1**（非 stable 门禁）。
 - [x] 必建表含 **PKE exp + KEM device + CT**（用户决议）  
 - [x] 目录壳与 INDEX 对齐本表  
 - [x] 与参数卡交叉引用  
-- [ ] P2 启动授权（用户另发 【预研】/`$规格$` 或明确开波次）
+- [x] P2–P3 已按授权完成（W0–W4 + glue；2026-07-26/27）  
+- [ ] stable-768（须 `#交付#`）  
+- [ ] T768-post（liboqs-768 helper / device KAT 等，可选）

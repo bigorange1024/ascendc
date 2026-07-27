@@ -35,7 +35,7 @@ ascendc-tests/
 |------|------|
 | [ml-kem/](ml-kem/INDEX.md) | **按参数组**组织的 ML-KEM 探针；详表见各 `ml-kem-*/INDEX.md` |
 | [ml-kem/ml-kem-1024/](ml-kem/ml-kem-1024/INDEX.md) | **当前** ML-KEM-1024（k=4）活跃探针全集 |
-| [ml-kem/ml-kem-768/](ml-kem/ml-kem-768/INDEX.md) | **W0+W1 积木绿；W2/D13 KeyGen + D14 Encrypt + D15 Decrypt 绿；W3/D19 KEM KeyGen + D20 Encaps + D21 Decaps + D21ct CT 绿** ML-KEM-768（k=3）；见参数卡 |
+| [ml-kem/ml-kem-768/](ml-kem/ml-kem-768/INDEX.md) | **W0–W3 全绿** ML-KEM-768（k=3）；incubating W4+glue 已完成；见参数卡 |
 | [frozen/](frozen/INDEX.md) | 路线关闭；只读判决书 |
 
 ---

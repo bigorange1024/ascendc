@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-26（768 **W0–W4 + glue 全绿**；registry + AscendC-only roundtrip 已完成）
+**最近刷新**：2026-07-27（768 **有条件完成至 incubating + glue**；复盘与文档刷新入当日纪要）
 
 ---
 

@@ -1,10 +1,12 @@
 # ML-KEM-768：从 0 到 incubating exp 完整实现计划
 
-**状态**：**P0+P1 已落地**（2026-07-26）· **P2 未开写码**  
+**状态**：**有条件完成（至 incubating exp）**（2026-07-26/27）· P0–P3 主线已走通；**未**建 stable-768 / 未跑 NPU / liboqs-768 交叉仍可选  
 **权威参数 / 用例表**：[`docs/specs/fips203-mlkem768-parameter-card.md`](../specs/fips203-mlkem768-parameter-card.md) · [`…-p1-gap-and-cases.md`](../specs/fips203-mlkem768-p1-gap-and-cases.md)  
-**范围**：真 **ML-KEM-768**（\(k=3\)）→ incubating **PKE×3 + KEM×3 + decaps-ct**  
-**不做**：零垫；本阶段 **不**建 `examples/stable/ml-kem/ml-kem-768/`  
-**参考（只读模式，不抄实现）**：`…/ml-kem/ml-kem-1024/` 与 `docs/notes/`
+**范围**：真 **ML-KEM-768**（\(k=3\)）→ incubating **PKE×3 + KEM×3 + decaps-ct**（已绿）  
+**不做（本阶段）**：零垫；**不**建 `examples/stable/ml-kem/ml-kem-768/`  
+**端到端**：[`scripts/exp_kem768_liboqs_roundtrip.sh`](../../scripts/exp_kem768_liboqs_roundtrip.sh)（当前 **AscendC-only**；CPU×1+SIM×1 已绿）  
+**参考（只读模式，不抄实现）**：`…/ml-kem/ml-kem-1024/` 与 `docs/notes/`  
+**当日收尾纪要**：[qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md](../../qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md)
 
 ---
 
@@ -72,8 +74,8 @@ P0 文书锁定 ──► P1 补洞清单+用例表 ──► P2 按波次实现
 |------|------|----------|
 | **P0** | 参数卡 + CT + **分核/tiling 选项决议** + 目录壳 + INDEX | ✅ 已完成（见参数卡） |
 | **P1** | 相对 1024 的洞表；必建用例表定稿 | ✅ 已完成（见 P1 文；含 PKE exp + CT） |
-| **P2** | 积木 → PKE device → KEM device(+ct) 探针全绿 | 每波双模式绿；洞关闭打勾 |
-| **P3** | PKE+KEM exp(+ct) + 768 roundtrip | 声明「有条件完成（至 exp）」 |
+| **P2** | 积木 → PKE device → KEM device(+ct) 探针全绿 | ✅ 已完成（W0–W3；2026-07-26） |
+| **P3** | PKE+KEM exp(+ct) + 768 roundtrip | ✅ **有条件完成**（AscendC-only RT；2026-07-26/27） |
 
 Skill 节奏（开写时）：积木/探针可走 **【预研】**；进 `examples/incubating/…` 写码前须有活跃 **`*-customspec.*`**（`$规格$`）；本阶段不触发 `#交付#` stable。
 

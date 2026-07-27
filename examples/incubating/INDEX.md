@@ -16,7 +16,7 @@
 examples/incubating/
 ├── ml-kem/
 │   ├── ml-kem-1024/     # FIPS 203 ML-KEM-1024（k=4）活跃 exp-*
-│   └── ml-kem-768/      # ML-KEM-768（k=3）P0/P1 目录壳
+│   └── ml-kem-768/      # ML-KEM-768（k=3）W4 incubating 已绿
 ├── frozen/              # 见 ../frozen/（不在本 INDEX 树内展开）
 └── INDEX.md
 ```
@@ -25,7 +25,7 @@ examples/incubating/
 |------|------|
 | [ml-kem/](ml-kem/INDEX.md) | ML-KEM 预研按参数组 |
 | [ml-kem/ml-kem-1024/](ml-kem/ml-kem-1024/INDEX.md) | **当前** ML-KEM-1024 `exp-*` 详表 |
-| [ml-kem/ml-kem-768/](ml-kem/ml-kem-768/INDEX.md) | **P0/P1 壳** ML-KEM-768；写码前须 customspec |
+| [ml-kem/ml-kem-768/](ml-kem/ml-kem-768/INDEX.md) | **W4+glue 已完成** ML-KEM-768（E13–E15、E19–E21ct）；本阶段无 stable |
 
 ---
 

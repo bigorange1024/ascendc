@@ -21,9 +21,9 @@ ML-KEM 活跃用例按参数组落在：
 
 | 树 | 路径 |
 |----|------|
-| 探针 | `ascendc-tests/ml-kem/ml-kem-1024/` · **壳** `…/ml-kem-768/`（P0/P1） |
-| 预研 | `examples/incubating/ml-kem/ml-kem-1024/` · **壳** `…/ml-kem-768/` |
-| 定型 | `examples/stable/ml-kem/ml-kem-1024/`（**无** ml-kem-768） |
+| 探针 | `ascendc-tests/ml-kem/ml-kem-1024/` · `…/ml-kem-768/`（W0–W3 全绿） |
+| 预研 | `examples/incubating/ml-kem/ml-kem-1024/` · `…/ml-kem-768/`（W4+glue 已完成） |
+| 定型 | `examples/stable/ml-kem/ml-kem-1024/`（**无** ml-kem-768；须 `#交付#`） |
 
 详表见各树 `INDEX.md`。**frozen 不迁入**参数组目录。768 参数卡：[`docs/specs/fips203-mlkem768-parameter-card.md`](../docs/specs/fips203-mlkem768-parameter-card.md)。
 

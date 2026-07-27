@@ -3,6 +3,6 @@
 | 目录 | 参数组 | 说明 |
 |------|--------|------|
 | [ml-kem-1024/](ml-kem-1024/INDEX.md) | **ML-KEM-1024**（k=4） | 当前活跃 `exp-*` |
-| [ml-kem-768/](ml-kem-768/INDEX.md) | **ML-KEM-768**（k=3） | **P0/P1 目录壳**；写码前须 customspec |
+| [ml-kem-768/](ml-kem-768/INDEX.md) | **ML-KEM-768**（k=3） | **W4+glue 已完成**（E13–E15、E19–E21ct）；本阶段无 stable |
 
 上级：[../INDEX.md](../INDEX.md)。frozen 仍在 [`../../frozen/`](../../frozen/INDEX.md)（不迁入本树）。

@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-26（1024 迁入完成；**ML-KEM-768 P0+P1 目录壳+参数卡**已落地）
+**最后刷新**：2026-07-27（**768 有条件完成至 incubating + glue**；文档/索引收尾）
 
 ---
 
@@ -123,11 +123,12 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
-- **目录**：1024 活跃在 `…/ml-kem/ml-kem-1024/`；768 W0 积木在 `…/ml-kem/ml-kem-768/`（**无** stable-768）  
-- **768 权威**：[`docs/specs/fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md) · [P1 用例表](docs/specs/fips203-mlkem768-p1-gap-and-cases.md)  
-- **768 W0**：B1/B2/B3 **CPU+SIM 全绿**（见 `ascendc-tests/ml-kem/ml-kem-768/INDEX.md`）  
-- **下一刀**：768 **P2/W1**（B4–B6；须再授权；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)）  
-- **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)
+- **目录**：1024 活跃在 `…/ml-kem/ml-kem-1024/`；768 在 `…/ml-kem/ml-kem-768/`（**无** stable-768）  
+- **768 权威**：[`docs/specs/fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md) · [P1 用例表](docs/specs/fips203-mlkem768-p1-gap-and-cases.md) · [计划](docs/research/MLKEM-768-从0到exp完整实现计划.md)  
+- **768 状态**：**有条件完成至 incubating** — 探针 W0–W3 + incubating W4 + AscendC-only RT 全绿；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)  
+- **下一刀（可选）**：T768-post / `#交付#` stable-768；仓级 T23 / T21 / T2-npu  
+- **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)  
+- **768 RT（AscendC-only）**：[`scripts/exp_kem768_liboqs_roundtrip.sh`](scripts/exp_kem768_liboqs_roundtrip.sh)
 
 ---
 

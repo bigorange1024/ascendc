@@ -1,7 +1,7 @@
 # ascendc-tests/ml-kem/ml-kem-768 — ML-KEM-768（k=3）探针
 
 **参数组**：FIPS 203 **ML-KEM-768**（\(k=3\)）
-**阶段**：**P2/W0+W1 积木已绿**；W2 D13/D14/D15 PKE device 已绿；W3/D19 KEM KeyGen + D20 Encaps + D21 Decaps + D21ct CT 已绿
+**阶段**：**W0–W3 全绿**（积木 + PKE/KEM device + CT）；对应 incubating W4+glue 已完成
 **上级**：[../INDEX.md](../INDEX.md)
 **参数卡**：[docs/specs/fips203-mlkem768-parameter-card.md](../../../docs/specs/fips203-mlkem768-parameter-card.md)
 **P1 表**：[docs/specs/fips203-mlkem768-p1-gap-and-cases.md](../../../docs/specs/fips203-mlkem768-p1-gap-and-cases.md)
