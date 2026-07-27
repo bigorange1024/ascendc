@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-27（**用语统一：缺项/补缺**；512 决议已锁；下一刀 P0）
+> **最后刷新**：2026-07-27（**512 P0+P1 已落**；下一刀 W0 / B3b CBD‑η3）
 
 ---
 
@@ -11,17 +11,16 @@
 
 | 项 | 状态 |
 |----|------|
-| **分支** | **`research/formal-lang-dag`**（与 `main` @ `5b39d64` 对齐后再续；PR [#13](https://github.com/bigorange1024/ascendc/pull/13) 已合入） |
-| **768** | incubating + glue **有条件完成**；**真 liboqs 交叉 RT 已绿**；禁 stable-768 |
-| **512** | **P0 决议已锁**；KEM liboqs 胶水可切 512/768/1024；**目录壳/写码未开** |
-| **512 计划** | [`docs/research/MLKEM-512-从0到exp完整实现计划.md`](docs/research/MLKEM-512-从0到exp完整实现计划.md)（含用语约定） |
-| **512 参数卡** | [`docs/specs/fips203-mlkem512-parameter-card.md`](docs/specs/fips203-mlkem512-parameter-card.md) |
-| **用语** | **缺项** / **补缺** / **补缺图**（=缺项对照）；**禁止**「洞 / 新洞 / 洞级 / 补洞」 |
+| **分支** | **`research/formal-lang-dag`**（与 `main` 对齐后推进 512） |
+| **768** | incubating + glue **有条件完成**；真 liboqs 交叉已绿；禁 stable-768 |
+| **512** | **P0+P1 完成**：目录壳、sizes、registry×6、P1 表；`sample_poly_cbd3` 已入 shared |
+| **授权** | `$规格说明书$` + `【预研代码】`（2026-07-27） |
+| **用语** | **缺项** / **补缺** / **补缺图**；禁「洞 / 补洞」 |
 | **当日纪要** | [`qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md) |
 
 ### 512 已锁默认
 
-S-1 单 cube；T-B2 polyvec4；`-k2`；CBD‑η3 为相对 768 的**缺项**；D19–D21+CT；PKE exp 必做；本阶段 **liboqs-512 交叉必达**；禁零垫 / 禁 stable-512；**自主推进**（仅停问点打断）。
+S-1；T-B2 polyvec4；`-k2`；CBD‑η3 缺项；D19–D21+CT；PKE exp；liboqs-512 交叉必达；禁零垫 / 禁 stable-512。
 
 ---
 
@@ -29,18 +28,19 @@ S-1 单 cube；T-B2 polyvec4；`-k2`；CBD‑η3 为相对 768 的**缺项**；D
 
 | 项 | 说明 |
 |----|------|
-| **T512** | 落 P0 目录壳 / `check_mlkem512_sizes.sh` → P1 缺项对照定稿 → W0 |
-| T768-post | 可选；非挡 512 |
-| stable-768/512 | 仅 `#交付#` |
+| **T512 W0** | B3b `pass-fix-f203-alg8-cbd-eta3-k2`（优先）→ B1/B2/B3a |
+| W4 | 先写 `*-customspec.*` 再动 `exp-…-k2` |
+| stable | 仅 `#交付#` |
 
 ---
 
 ## ★ Smoke
 
 ```bash
+bash scripts/check_mlkem512_sizes.sh
 bash scripts/smoke_liboqs_kem_params.sh
-bash scripts/check_mlkem768_sizes.sh
-test -f docs/specs/fips203-mlkem512-parameter-card.md
+test -f docs/specs/fips203-mlkem512-p1-gap-and-cases.md
+test -d ascendc-tests/ml-kem/ml-kem-512
 test ! -d examples/stable/ml-kem/ml-kem-512
 ```
 
@@ -48,7 +48,6 @@ test ! -d examples/stable/ml-kem/ml-kem-512
 
 ## ★ 勿做
 
-- 建 stable-512；从 `**/frozen/**` 抄实现；零垫凑 3/4/6/8  
+- 建 stable-512；从 `**/frozen/**` 抄实现；零垫  
 - 无 customspec 改 `examples/incubating/ml-kem/ml-kem-512/`  
-- 擅自改已锁参数  
-- **擅自新建方法论用语**；旧称「补洞」一律改用 **补缺**
+- 擅自改已锁参数；另造方法论用语（须用 **缺项/补缺**）

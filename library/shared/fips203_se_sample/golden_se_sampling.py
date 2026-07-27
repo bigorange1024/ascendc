@@ -51,6 +51,11 @@ def _load32_le(buf: bytes, off: int) -> int:
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
+def _load24_le(buf: bytes, off: int) -> int:
+    """小端加载 3 字节（FIPS 203 SamplePolyCBD_3 / liboqs cbd3）。"""
+    return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16)
+
+
 def sample_poly_cbd2(buf: bytes) -> np.ndarray:
     coeffs = np.zeros(N, dtype=np.int32)
     for i in range(N // 8):
@@ -63,6 +68,28 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
             if c < 0:
                 c += Q
             coeffs[8 * i + j] = c % Q
+    return coeffs
+
+
+def sample_poly_cbd3(buf: bytes) -> np.ndarray:
+    """
+    FIPS 203 Alg.8 SamplePolyCBD_η=3。
+    输入：192 B（η·n/4）；输出：[256] int32，系数 ∈ [0,q)（a−b 负值已 +q）。
+    位抽取与 liboqs/pqcrystals `cbd3` / `mlk_poly_cbd3` 同构；本函数额外做非负模 q（与仓内 cbd2 golden 一致）。
+    """
+    if len(buf) < 192:
+        raise ValueError(f"cbd3 needs 192 bytes, got {len(buf)}")
+    coeffs = np.zeros(N, dtype=np.int32)
+    for i in range(N // 4):
+        t = _load24_le(buf, 3 * i)
+        d = (t & 0x00249249) + ((t >> 1) & 0x00249249) + ((t >> 2) & 0x00249249)
+        for j in range(4):
+            a = (d >> (6 * j + 0)) & 0x7
+            b = (d >> (6 * j + 3)) & 0x7
+            c = a - b
+            if c < 0:
+                c += Q
+            coeffs[4 * i + j] = c % Q
     return coeffs
 
 

@@ -19,6 +19,11 @@ static uint32_t load32_le(const uint8_t *buf)
     return (uint32_t)buf[0] | ((uint32_t)buf[1] << 8) | ((uint32_t)buf[2] << 16) | ((uint32_t)buf[3] << 24);
 }
 
+static uint32_t load24_le(const uint8_t *buf)
+{
+    return (uint32_t)buf[0] | ((uint32_t)buf[1] << 8) | ((uint32_t)buf[2] << 16);
+}
+
 void fips203_derand_bytes_from_seed_d(uint32_t seed_d, uint8_t d[32])
 {
     char msg[64];
@@ -50,6 +55,25 @@ void fips203_sample_poly_cbd2_row(int32_t *dst_row, const uint8_t *buf)
             }
             c %= FIPS203_SE_Q;
             dst_row[8 * i + j] = c;
+        }
+    }
+}
+
+void fips203_sample_poly_cbd3_row(int32_t *dst_row, const uint8_t *buf)
+{
+    /* 背景：ML-KEM-512 η1=3；结论：与 liboqs cbd3 同抽取，负差 +q 对齐仓内 cbd2 I/O 风格。 */
+    for (int i = 0; i < FIPS203_SE_N / 4; ++i) {
+        uint32_t t = load24_le(buf + 3U * (uint32_t)i);
+        uint32_t d = (t & 0x00249249U) + ((t >> 1) & 0x00249249U) + ((t >> 2) & 0x00249249U);
+        for (int j = 0; j < 4; ++j) {
+            int32_t a = (int32_t)((d >> (6 * j + 0)) & 0x7U);
+            int32_t b = (int32_t)((d >> (6 * j + 3)) & 0x7U);
+            int32_t c = a - b;
+            while (c < 0) {
+                c += FIPS203_SE_Q;
+            }
+            c %= FIPS203_SE_Q;
+            dst_row[4 * i + j] = c;
         }
     }
 }

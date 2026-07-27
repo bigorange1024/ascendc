@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-07-27（**T512 决议已锁**；用语：缺项/补缺，废「补洞」；768 有条件完成）
+**最近刷新**：2026-07-27（**T512 P0+P1 已落**；下一刀 W0 CBD‑η3；用语：缺项/补缺）
 
 ---
 
@@ -32,7 +32,7 @@
 |--------|-----|------|------|
 | — | **T-WebViz** | **方法论网页可视化**：参考领导用 DAG 网页展示研究/解决问题过程的思路，探索用网页更直观展示本方法论（依赖 DAG、门禁流、闭包演化等）；待拍板技术路线（静态 HTML / D3.js / 其它） | **低优先级，实现完成后再规划**（2026-07-27） |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
-| **P0** | **T512** | ML-KEM-512（k=2，单 AI Core）：决议已锁；自主 P0→P3 incubating + liboqs-512 KAT/RT；用语：缺项/补缺（禁「洞/补洞」） | **下一刀：P0 目录壳 / sizes**；见计划/参数卡 |
+| **P0** | **T512** | ML-KEM-512（k=2，单 AI Core）：**P0+P1 已落**；自主 W0→P3 + liboqs-512 KAT/RT；用语：缺项/补缺 | **下一刀：W0 B3b CBD‑η3 探针** |
 | **P0** | **T768-post** | ML-KEM-768 可选后续：device KAT 加压、D14↔D15 PKE RT、stable-768（须 `#交付#`） | **KEM liboqs 交叉 RT 已绿**（2026-07-27：`USE_LIBOQS=1` CPU×1+SIM×1）；其余仍可选；禁 stable-768 |
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |

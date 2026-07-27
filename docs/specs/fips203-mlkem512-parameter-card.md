@@ -4,7 +4,7 @@
 **参数组**：ML-KEM-512（k=2）  
 **范围**：§0 已锁；本阶段 **不建** stable-512  
 **完整计划**：[docs/research/MLKEM-512-从0到exp完整实现计划.md](../research/MLKEM-512-从0到exp完整实现计划.md)  
-**P1 用例表**：待 P1 产出 `fips203-mlkem512-p1-gap-and-cases.md`  
+**P1 用例表**：[`fips203-mlkem512-p1-gap-and-cases.md`](fips203-mlkem512-p1-gap-and-cases.md)（**已定稿**）  
 **对照**：[`fips203-mlkem768-parameter-card.md`](fips203-mlkem768-parameter-card.md)
 
 ---
@@ -143,12 +143,12 @@ c = c1 ‖ c2                              # 640+128 = 768
 
 ## 6. P0–P3 退出清单
 
-- [ ] 用户决议写入本卡（§0）
-- [ ] 长度与 liboqs 宏对拍脚本
-- [ ] S-1 / T-B2 / `-k2` / CT / PKE exp / liboqs 交叉锁定
-- [ ] 目录壳 + INDEX
-- [ ] registry 骨架
-- [ ] P1 缺项对照（补缺图）与必建表
+- [x] 用户决议写入本卡（§0）
+- [x] 长度与 liboqs 宏对拍脚本（`scripts/check_mlkem512_sizes.sh`）
+- [x] S-1 / T-B2 / `-k2` / CT / PKE exp / liboqs 交叉锁定
+- [x] 目录壳 + INDEX
+- [x] registry 骨架
+- [x] P1 缺项对照（补缺图）与必建表
 - [ ] P2、W0–W3 探针全绿
 - [ ] P3、W4 incubating 全绿
 - [ ] P3、glue：AscendC RT + liboqs-512 KAT
