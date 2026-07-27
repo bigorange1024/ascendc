@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-27（新增 **ML-KEM-512 W0 B2 ByteEncode/Decode_d** Cloud SIM tick；B1/B3a/B3b 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
+| **刷新** | 2026-07-27（新增 **ML-KEM-512 W0 B2 ByteEncode/Decode_d** Cloud SIM tick；B3a/B3b 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
