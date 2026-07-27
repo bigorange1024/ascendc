@@ -11,6 +11,7 @@
 | [fips203-mlkem1024-kem-keygen-baseline-registry.md](fips203-mlkem1024-kem-keygen-baseline-registry.md) | Alg.19 KEM KeyGen 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem1024-kem-encaps-baseline-registry.md](fips203-mlkem1024-kem-encaps-baseline-registry.md) | Alg.20 KEM Encaps 交付 golden / KAT 计算块登记 |
 | [fips203-mlkem1024-kem-decaps-baseline-registry.md](fips203-mlkem1024-kem-decaps-baseline-registry.md) | Alg.21 KEM Decaps 交付 golden / KAT 计算块登记 |
+| [fips203-mlkem512-parameter-card.md](fips203-mlkem512-parameter-card.md) | **ML-KEM-512 P0 参数卡（草案待锁）**：S-1 单 cube / T-B2 polyvec4 / `-k2` / CBD‑η3 |
 | [fips203-mlkem768-parameter-card.md](fips203-mlkem768-parameter-card.md) | **ML-KEM-768 P0 参数卡**（已锁：T-B / `-k3` / CT / PKE+KEM exp） |
 | [fips203-mlkem768-p1-gap-and-cases.md](fips203-mlkem768-p1-gap-and-cases.md) | **ML-KEM-768 P1** 补洞图与必建用例表（已定稿） |
 | [fips203-mlkem768-pke-keygen-baseline-registry.md](fips203-mlkem768-pke-keygen-baseline-registry.md) | Alg.13（k=3）registry；E13 incubating CPU/SIM 已验证（2026-07-26） |
