@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-27（新增 **ML-KEM-512 W2 D15 PKE Decrypt** Cloud SIM tick；W0/W1 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
+| **刷新** | 2026-07-27（新增 **ML-KEM-512 W2 D13 PKE KeyGen + D15 PKE Decrypt** Cloud SIM tick；W0/W1 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -46,9 +46,9 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 
 ---
 
-## ML-KEM-512（k=2）积木 — W0 / W1
+## ML-KEM-512（k=2）积木 — W0 / W1 / W2
 
-> Cloud / `SIM_DIRECT=1` / Ascend910B4（2026-07-27）。512 W0/W1 积木探针；正确性优先，非生产性能基线。
+> Cloud / `SIM_DIRECT=1` / Ascend910B4（2026-07-27）。512 W0/W1 积木探针与 W2 device；正确性优先，非生产性能基线。
 > 路径根：[`ascendc-tests/ml-kem/ml-kem-512/`](../ascendc-tests/ml-kem/ml-kem-512/INDEX.md)。
 
 | ID | 目录 | SIM tick（默认） | 备注 | 来源 |
@@ -59,6 +59,7 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | **B4** | [`pass-fix-f203-alg7-sample-ntt-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg7-sample-ntt-k2/) | **80235** | SampleNTT 单 poly；`G(d||2)`；2×2 matrix CPU PASS | STATUS 2026-07-27 |
 | **B5** | [`pass-fix-f203-stage123-ntt-intt-polyvec4-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-stage123-ntt-intt-polyvec4-k2/) | NTT **22921** / INTT **22836** | true polyvec4；MIX `blockDim=1`；AIV 连续 `{0,1}`/`{2,3}`；Cube HW pad m→16 非假 poly | STATUS 2026-07-27 |
 | **B6** | [`pass-fix-f203-alg11-12-multiply-inner-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg11-12-multiply-inner-k2/) | multiply **9290** / inner **12603** | Inner `P_OUT=S_VEC=2`；AIV **1+1**；`t_hat[2,256]` | STATUS 2026-07-27 |
+| **D13** | [`pass-fix-f203-alg13-device-keygen-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg13-device-keygen-k2/) | **230102** | 2 launch；prep Â[4] 2+2 + polyvec4 CBD-η3；compute `S0[8,256]` + inner 1+1；ek/dk 800/768 golden PASS | STATUS 2026-07-27 |
 | **D15** | [`pass-fix-f203-alg15-pke-decrypt-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg15-pke-decrypt-device-k2/) | **168975** | 1 fused launch；dk=768+c=768；c1=2×320、c2=128；m golden PASS | STATUS 2026-07-27 |
 
 ---
