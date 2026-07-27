@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-27（**512 W0 全绿 + W1 B4/B5 绿**；下一刀 B6）
+> **最后刷新**：2026-07-27（**512 W0/W1 全绿**；下一刀 W2/W3）
 
 ---
 
@@ -13,7 +13,7 @@
 |----|------|
 | **分支** | **`research/formal-lang-dag`**（领先 `main`；PR [#15](https://github.com/bigorange1024/ascendc/pull/15)） |
 | **768** | incubating + glue 有条件完成；禁 stable-768 |
-| **512** | **P0+P1 完成**；**W0 全绿**（B1/B2/B3a/B3b）；**W1 B4 SampleNTT 2×2 + B5 Stage123 NTT/INTT 绿** |
+| **512** | **P0+P1 完成**；**W0 全绿**（B1/B2/B3a/B3b）；**W1 全绿**（B4 SampleNTT、B5 Stage123 NTT/INTT、B6 Multiply/Inner） |
 | **授权** | `$规格说明书$` + `【预研代码】`（继续有效） |
 | **用语** | **缺项** / **补缺**；禁「洞 / 补洞」 |
 | **当日纪要** | [`qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md) |
@@ -28,6 +28,7 @@
 | B3b | CBD η=3 polyvec4 | **13566** |
 | B4 | SampleNTT 2×2 / k2 | **80235** |
 | B5 | Stage123 NTT/INTT polyvec4 | NTT **22921**；INTT **22836** |
+| B6 | MultiplyNTTs / InnerProduct k2 | multiply **9290**；inner **12603** |
 
 ---
 
@@ -35,9 +36,8 @@
 
 | 项 | 说明 |
 |----|------|
-| **T512 W1** | B6 Multiply/Inner |
-| W2/W3 | PKE/KEM device |
-| W4 | **先** customspec 再 `exp-…-k2` |
+| **T512 W2/W3** | PKE/KEM device |
+| W4 | incubating 前先 customspec |
 
 ---
 

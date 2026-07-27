@@ -1,7 +1,7 @@
 # ascendc-tests/ml-kem/ml-kem-512 — ML-KEM-512（k=2）探针
 
 **参数组**：FIPS 203 **ML-KEM-512**（\(k=2\)，\(\eta_1=3,\eta_2=2\)，\(d_u=10,d_v=4\)）  
-**阶段**：**P0/P1 已建**；P2 W0 全绿；W1 B4/B5 已绿，B6 待实现
+**阶段**：**P0/P1 已建**；P2 W0/W1 全绿（B1–B6）
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem512-parameter-card.md](../../../docs/specs/fips203-mlkem512-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem512-p1-gap-and-cases.md](../../../docs/specs/fips203-mlkem512-p1-gap-and-cases.md)  
@@ -28,7 +28,7 @@
 | P2 | W0 | `pass-fix-f203-alg8-cbd-eta3-k2/` | B3b | PASS | PASS（13566） |
 | P2 | W1 | `pass-fix-f203-alg7-sample-ntt-k2/` | B4 | PASS（含 2×2 matrix） | PASS（80235） |
 | P2 | W1 | `pass-fix-f203-stage123-ntt-intt-polyvec4-k2/` | B5 | PASS（ntt+intt） | PASS（NTT 22921 / INTT 22836） |
-| P2 | W1 | `pass-fix-f203-alg11-12-multiply-inner-k2/` | B6 | 待建 | 待建 |
+| P2 | W1 | `pass-fix-f203-alg11-12-multiply-inner-k2/` | B6 | PASS | PASS（multiply 9290 / inner 12603） |
 | P2 | W2 | `pass-fix-f203-alg13-device-keygen-k2/` | D13 | 待建 | 待建 |
 | P2 | W2 | `pass-fix-f203-alg14-pke-encrypt-device-k2/` | D14 | 待建 | 待建 |
 | P2 | W2 | `pass-fix-f203-alg15-pke-decrypt-device-k2/` | D15 | 待建 | 待建 |
