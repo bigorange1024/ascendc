@@ -147,7 +147,7 @@ test -f thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h && ec
 | 仓 | 说明 |
 |----|------|
 | **tiny_sha3** | `sha3.c` / `sha3.h`；路径恒为 `thirdparty/tiny_sha3`。Host golden / 对照，**不进**默认设备生产路径。 |
-| **liboqs** | 须 **0.15.0**。`clone-thirdparty.sh` **默认**调用 [`scripts/build-liboqs.sh`](../../scripts/build-liboqs.sh)（`BUILD_SHARED_LIBS=ON`、`OQS_BUILD_ONLY_LIB=ON`，并编 `liboqs_kem_ref` / `liboqs_pke_ref`）。 |
+| **liboqs** | 须 **0.15.0**。`clone-thirdparty.sh` **默认**调用 [`scripts/build-liboqs.sh`](../../scripts/build-liboqs.sh)（`BUILD_SHARED_LIBS=ON`、`OQS_BUILD_ONLY_LIB=ON`，并编 `liboqs_kem_ref` / `liboqs_pke_ref_mlkem1024`）。 |
 | **ascend-samples** | Gitee [ascend/samples](https://gitee.com/ascend/samples)。体积大；**勿**直接编译旧样例当 CANN 9.0 主路径。 |
 | **SHA3hp** | OpenI Keccak/SHA3 AscendC；仅调研/对照。 |
 | **cann-ntt** | OpenI 前向 `Ntt`；仅调研/对照。 |
@@ -161,7 +161,7 @@ bash scripts/build-liboqs.sh
 # BUILD_LIBOQS_REFS=0 …                  # 只编 lib，不编 scripts/liboqs_*_ref
 ```
 
-产出：`thirdparty/liboqs/build/lib/liboqs.so`（或 `.a`）+ `scripts/liboqs_kem_ref` / `liboqs_pke_ref`。  
+产出：`thirdparty/liboqs/build/lib/liboqs.so`（或 `.a`）+ `scripts/liboqs_kem_ref` / `liboqs_pke_ref_mlkem1024`（兼容软链 `liboqs_pke_ref`）。  
 历史说明见 `qa/2026-06/2026-06-08-Rule-Skill落地与FIPS203-204终极目标.md` §liboqs。
 
 ---

@@ -28,7 +28,7 @@
 | `build_full_keygen` → ek/dk | golden `ek_pke`/`dk_pke` | 本目录 `scripts/keygen_golden.py`（编排 prep/compute 子 golden） | **仅** Host oracle；非 AscendC 规格 |
 | SampleNTT / CBD / NTT / hat / ByteEncode₁₂（host） | golden 子块 | 本目录 `scripts/prep/`、`scripts/compute/` + `f203_ref_common` / LUT | 禁止在 golden 路径另写 NTT 核心 |
 | 静态 NTT LUT | `gen_data` | `load_lut_t_i8`（同 Encrypt 族） | 只读 |
-| liboqs indcpa_keypair 等 | **KAT 对照 oracle** | `scripts/liboqs_pke_ref` / 用例 `kat_liboqs_vs_ascendc.sh` | **仅** KAT；非实现规格 |
+| liboqs indcpa_keypair 等 | **KAT 对照 oracle** | `scripts/liboqs_pke_ref_mlkem1024` / 用例 `kat_liboqs_vs_ascendc.sh` | **仅** KAT；非实现规格；**仅 1024** |
 | KeyGen 主体（设备） | Alg.13 | AscendC；I/O 对拍即可 | **禁止**「与 keygen_golden 同构」验收 |
 
 ---

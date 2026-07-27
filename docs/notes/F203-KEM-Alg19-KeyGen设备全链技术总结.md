@@ -60,7 +60,7 @@ dk_kem = dk_pke (1536) || ek (1568) || H(ek) (32) || z (32)
 ek_kem = ek_PKE (1568)
 ```
 
-代数最小形态 `dk_PKE || H(ek) || z`（1600B）是 FIPS 行级描述；**实现验收以 liboqs 3168B 布局为准**（与 [`scripts/liboqs_pke_ref.c`](../../scripts/liboqs_pke_ref.c) 中 `KEM_SK_BYTES` 一致）。
+代数最小形态 `dk_PKE || H(ek) || z`（1600B）是 FIPS 行级描述；**实现验收以 liboqs 3168B 布局为准**（与 [`scripts/liboqs_pke_ref_mlkem1024.c`](../../scripts/liboqs_pke_ref_mlkem1024.c) 中 `KEM_SK_BYTES` 一致）。
 
 ---
 

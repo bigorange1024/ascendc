@@ -1,5 +1,8 @@
 /**
- * liboqs ML-KEM-1024（k=4）PKE 黑盒：Alg.13 KeyGen / Alg.14 Encrypt / Alg.15 Decrypt。
+ * liboqs_pke_ref_mlkem1024.c — ML-KEM-1024（k=4）PKE 黑盒：Alg.13/14/15。
+ *
+ * 文件名故意带 mlkem1024：本 helper **仅**服务 1024；不对 512/768 做 PKE 交叉。
+ * （KEM 交叉见 liboqs_kem_ref + MLKEM_PARAM。）
  *
  * 子命令（与 AscendC 探针 I/O 尺寸一致）：
  *   keygen <ek.bin> <dk.bin> <hex64_d>

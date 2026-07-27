@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-liboqs_pke_fixture.py — 生成 liboqs PKE 黑盒向量（ml_kem_1024 / k=4）。
+liboqs_pke_fixture.py — 生成 liboqs PKE 黑盒向量（**仅** ml_kem_1024 / k=4）。
+
+依赖：`scripts/liboqs_pke_ref_mlkem1024`（由 build_liboqs_pke_ref_mlkem1024.sh 编译）。
+不对 512/768 做 PKE 交叉。
 
 输出目录（默认 output/liboqs_pke_fixture/<SEED_D>/）：
   seed_d.bin   — uint32 LE（与 KeyGen 探针 input 一致）
@@ -25,8 +28,8 @@ import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIPS203_SE = REPO_ROOT / "library/shared/fips203_se_sample"
-REF_BIN = REPO_ROOT / "scripts/liboqs_pke_ref"
-BUILD_REF = REPO_ROOT / "scripts/build_liboqs_pke_ref.sh"
+REF_BIN = REPO_ROOT / "scripts/liboqs_pke_ref_mlkem1024"
+BUILD_REF = REPO_ROOT / "scripts/build_liboqs_pke_ref_mlkem1024.sh"
 
 sys.path.insert(0, str(FIPS203_SE))
 from golden_se_sampling import derand_bytes_from_seed  # noqa: E402

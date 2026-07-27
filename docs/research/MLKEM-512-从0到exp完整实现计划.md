@@ -177,7 +177,7 @@ Skill：探针可走【预研】；`examples/incubating/` 写码前须活跃 `*-
 | P0-D | 目录壳 + INDEX                | `ascendc-tests/ml-kem/ml-kem-512/` · `examples/incubating/ml-kem/ml-kem-512/`（**无** stable） |
 | P0-E | registry×6 骨架              | `docs/specs/fips203-mlkem512-*-baseline-registry.md`                                        |
 | P0-F | 尺寸自检                       | `scripts/check_mlkem512_sizes.sh`                                                           |
-| P0-G | liboqs 参数组可切换（KAT/RT 前置） | **KEM 已做**（2026-07-27）：`MLKEM_PARAM=512\|768\|1024`；冒烟 `smoke_liboqs_kem_params.sh` 绿。**PKE** `liboqs_pke_ref` 仍 1024，另轨 |
+| P0-G | liboqs 参数组可切换（KAT/RT 前置） | **KEM 已做**（2026-07-27）：`MLKEM_PARAM=512\|768\|1024`；冒烟绿。**PKE** 仅 1024：`liboqs_pke_ref_mlkem1024`（已改名标明范围；本阶段不对 512/768 测 PKE） |
 
 
 

@@ -15,7 +15,7 @@
 #
 # 随后可选：
 #   bash scripts/build_liboqs_kem_ref.sh
-#   bash scripts/build_liboqs_pke_ref.sh
+#   bash scripts/build_liboqs_pke_ref_mlkem1024.sh   # 或兼容入口 build_liboqs_pke_ref.sh
 
 set -euo pipefail
 
