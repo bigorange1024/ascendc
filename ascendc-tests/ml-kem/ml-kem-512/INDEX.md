@@ -1,7 +1,7 @@
 # ascendc-tests/ml-kem/ml-kem-512 — ML-KEM-512（k=2）探针
 
 **参数组**：FIPS 203 **ML-KEM-512**（\(k=2\)，\(\eta_1=3,\eta_2=2\)，\(d_u=10,d_v=4\)）  
-**阶段**：**P0/P1 已建**；P2 W0/W1 全绿（B1–B6）；W2 D13/D14/D15 PKE device 已绿；W3 D20/D21/D21ct 已绿
+**阶段**：**P0/P1 已建**；**P2 W0–W3 全绿**（B1–B6，D13–D15，D19–D21ct）
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem512-parameter-card.md](../../../docs/specs/fips203-mlkem512-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem512-p1-gap-and-cases.md](../../../docs/specs/fips203-mlkem512-p1-gap-and-cases.md)  
