@@ -129,7 +129,8 @@ return ((u * 1290176 + (1 << 26)) >> 27) & 0x1F
 **smoke**：
 
 ```bash
-bash scripts/build_liboqs_pke_ref.sh
+bash scripts/build_liboqs_pke_ref_mlkem1024.sh
+# 兼容入口：bash scripts/build_liboqs_pke_ref.sh
 bash scripts/liboqs_pke_vs_ascendc.sh -r cpu -v Ascend910B4
 ```
 
