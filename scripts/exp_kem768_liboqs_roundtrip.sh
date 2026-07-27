@@ -1,38 +1,41 @@
 #!/usr/bin/env bash
 # exp_kem768_liboqs_roundtrip.sh — ML-KEM-768 incubating KEM 三件套端到端闭环
 #
-# 当前口径（2026-07-26）：仓库现有 liboqs fixture/ref helper 仍硬编码 ml_kem_1024
-# 尺寸，尚无可直接复用的 liboqs-768 胶水。因此本脚本按 P1 表保留该文件名，
-# 但实际执行的是 AscendC-only roundtrip：
-#   1. E19 KeyGen：seed_d → ek_kem(1184B), dk_kem(2400B)
-#   2. E20 Encaps：读取 E19 ek_kem + 记录下来的 m → c(1088B), K(32B)
-#   3. E21 Decaps：读取 E19 dk_kem + E20 c/m/K → K(32B)，并与 E20 K 对拍
-#   4. 可选 reject：篡改 c 后喂 E21，要求 K=J(z‖c_bad) 且 K != accept K
+# 两种模式：
+#   默认 AscendC-only（历史口径）：E19→E20→E21 自洽 + 可选 reject
+#   USE_LIBOQS=1：真 liboqs-768 交叉（委托 stable_kem_liboqs_roundtrip.sh + MLKEM_PARAM=768）
 #
-# 默认算子：incubating k3，无 `-ct` Decaps。
-#
-# Usage（默认 = CPU×1 + SIM×1；SIM 串行，勿并行多路同目录）：
+# Usage：
 #   bash scripts/exp_kem768_liboqs_roundtrip.sh
-#
-# 快速 / 对照（须显式）：
+#   USE_LIBOQS=1 bash scripts/exp_kem768_liboqs_roundtrip.sh
 #   SKIP_SIM=1 bash scripts/exp_kem768_liboqs_roundtrip.sh
-#   CPU_TRIALS=3 SIM_TRIALS=0 bash scripts/exp_kem768_liboqs_roundtrip.sh
-#   DECAPS_DIR=$PWD/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3 \
-#     CPU_TRIALS=1 SIM_TRIALS=1 bash scripts/exp_kem768_liboqs_roundtrip.sh
 #
-# 环境（可选）：SOC_VERSION / CPU_TRIALS / SIM_TRIALS / SKIP_CPU=1 / SKIP_SIM=1
-#   KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR / EXP_KEM768_RT_DIR
-#   EXP_KEM768_SKIP_REJECT=1
+# 环境：SOC_VERSION / CPU_TRIALS / SIM_TRIALS / SKIP_CPU / SKIP_SIM
+#       KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR / EXP_KEM768_RT_DIR
+#       EXP_KEM768_SKIP_REJECT=1 / USE_LIBOQS=1
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOC_VERSION="${SOC_VERSION:-Ascend910B4}"
 
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3}"
 ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3}"
 DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-k3}"
 
+if [[ "${USE_LIBOQS:-0}" == "1" ]]; then
+    echo "[exp_kem768_rt] mode=liboqs-cross MLKEM_PARAM=768"
+    export MLKEM_PARAM=768
+    export KEYGEN_DIR ENCAPS_DIR DECAPS_DIR
+    export LIBOQS_KEM_VS_SKIP_REJECT="${EXP_KEM768_SKIP_REJECT:-${LIBOQS_KEM_VS_SKIP_REJECT:-0}}"
+    export STABLE_KEM_RT_DIR="${EXP_KEM768_RT_DIR:-${REPO_ROOT}/output/exp_kem768_liboqs_rt}"
+    # 与历史脚本默认对齐：未显式设则 CPU×1+SIM×1
+    export CPU_TRIALS="${CPU_TRIALS:-1}"
+    export SIM_TRIALS="${SIM_TRIALS:-1}"
+    exec bash "${REPO_ROOT}/scripts/stable_kem_liboqs_roundtrip.sh"
+fi
+
+# ---------- AscendC-only（以下保持原逻辑）----------
+SOC_VERSION="${SOC_VERSION:-Ascend910B4}"
 CPU_TRIALS="${CPU_TRIALS:-1}"
 SIM_TRIALS="${SIM_TRIALS:-1}"
 
@@ -58,7 +61,7 @@ RT_ROOT="${EXP_KEM768_RT_DIR:-${REPO_ROOT}/output/exp_kem768_ascendc_rt/${STAMP}
 mkdir -p "${RT_ROOT}"
 
 echo "[exp_kem768_rt] REPO=${REPO_ROOT}"
-echo "[exp_kem768_rt] mode=AscendC-only (liboqs-768 glue not present)"
+echo "[exp_kem768_rt] mode=AscendC-only (set USE_LIBOQS=1 for true liboqs-768 cross)"
 echo "[exp_kem768_rt] rt_root=${RT_ROOT}"
 echo "[exp_kem768_rt] KEYGEN=${KEYGEN_DIR}"
 echo "[exp_kem768_rt] ENCAPS=${ENCAPS_DIR}"

@@ -17,7 +17,8 @@
 #
 # 环境（可选）：
 #   SEED_D                   默认 20260619（三阶段与 fixture 必须同种子）
-#   LIBOQS_KEM_FIXTURE_DIR   默认 output/liboqs_kem_fixture/<SEED_D>/
+#   MLKEM_PARAM              512|768|1024（默认 1024）
+#   LIBOQS_KEM_FIXTURE_DIR   默认 output/liboqs_kem_fixture/<PARAM>/<SEED_D>/
 #   LIBOQS_KEM_VS_SKIP_REJECT=1  跳过 Phase 4 拒绝路径（只验合法链）
 #
 # 注意：SIM 下 Decaps 走 2-session（探针默认），单跑 ~11min；勿与其他 SIM 并行。
@@ -32,7 +33,8 @@ DECAPS_DIR="${DECAPS_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable
 RUN_MODE="cpu"
 SOC_VERSION="Ascend910B4"
 export SEED_D="${SEED_D:-20260619}"
-FIXTURE_DIR="${LIBOQS_KEM_FIXTURE_DIR:-${REPO_ROOT}/output/liboqs_kem_fixture/${SEED_D}}"
+MLKEM_PARAM="${MLKEM_PARAM:-1024}"
+FIXTURE_DIR="${LIBOQS_KEM_FIXTURE_DIR:-${REPO_ROOT}/output/liboqs_kem_fixture/${MLKEM_PARAM}/${SEED_D}}"
 
 SHORT=r:,v:
 LONG=run-mode:,soc-version:
@@ -47,10 +49,11 @@ while :; do
     esac
 done
 
-echo "[liboqs_kem_vs] SEED_D=${SEED_D} RUN_MODE=${RUN_MODE} fixture=${FIXTURE_DIR}"
+echo "[liboqs_kem_vs] MLKEM_PARAM=${MLKEM_PARAM} SEED_D=${SEED_D} RUN_MODE=${RUN_MODE} fixture=${FIXTURE_DIR}"
 
 # --- Phase 0: liboqs fixture ---
-python3 "${REPO_ROOT}/scripts/liboqs_kem_fixture.py" --seed-d "${SEED_D}" --out-dir "${FIXTURE_DIR}"
+MLKEM_PARAM="${MLKEM_PARAM}" python3 "${REPO_ROOT}/scripts/liboqs_kem_fixture.py" \
+    --param "${MLKEM_PARAM}" --seed-d "${SEED_D}" --out-dir "${FIXTURE_DIR}"
 
 _verify() {
     # $1=stage $2=ascendc_out_dir

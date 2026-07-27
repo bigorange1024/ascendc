@@ -1,40 +1,31 @@
 #!/usr/bin/env bash
-# stable_kem_liboqs_roundtrip.sh — stable KEM 三件套 ↔ liboqs（先 liboqs 随机字节，再喂 AscendC）
+# stable_kem_liboqs_roundtrip.sh — KEM 三件套 ↔ liboqs（先 liboqs 随机字节，再喂 AscendC）
 #
 # 流程（每一 trial 独立抽随机，除非给了 KEM_SEED_HEX / M_HEX——仅首轮定点）：
-#   0. liboqs_kem_fixture.py --random
-#        → urandom 64B kem_seed=d‖z + 32B m
-#        → liboqs keypair_derand / encaps_derand / decaps → fixture 向量
-#   1. AscendC KeyGen：KEM_KG_EXT_SEED=1，input/kem_seed.bin = 同上 64B
-#   2. AscendC Encaps：M_FILE=fixture/m.bin，EK=device ek
-#   3. AscendC Decaps accept：dk=device、c=device
-#   4. AscendC Decaps reject：dk=device、c=fixture c_bad
-#   上述 1–4 对拍 fixture。
+#   0. liboqs_kem_fixture.py --random --param $MLKEM_PARAM
+#   1–4. AscendC KeyGen/Encaps/Decaps accept/reject 对拍 fixture
 #
-# 默认算子：
-#   KeyGen / Encaps：stable 无 `-ct`
-#   Decaps：stable 无 `-ct`（可用 DECAPS_DIR 指到 `-ct` 专题树对照）
+# 参数组（新增）：
+#   MLKEM_PARAM=1024|768|512   默认 1024（兼容旧调用）
+#   须与 KEYGEN_DIR/ENCAPS_DIR/DECAPS_DIR 的参数组一致（长度门禁在 fixture 自检）。
 #
-# Usage（默认 = CPU×1 + SIM×1，与办公室回归一致）：
+# 默认算子：ml-kem-1024 stable 无 `-ct`
+#
+# Usage：
 #   bash scripts/stable_kem_liboqs_roundtrip.sh
+#   MLKEM_PARAM=768 \
+#     KEYGEN_DIR=$PWD/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3 \
+#     ENCAPS_DIR=$PWD/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3 \
+#     DECAPS_DIR=$PWD/examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-k3 \
+#     bash scripts/stable_kem_liboqs_roundtrip.sh
 #
-# 对照 / 加压（须显式）：
+# 对照：
 #   CPU_TRIALS=5 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh
-#   DECAPS_DIR=$PWD/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4 \
-#     CPU_TRIALS=5 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh
+#   DECAPS_DIR=…/stable-…-decaps-ct-k4 CPU_TRIALS=5 SIM_TRIALS=1 bash scripts/stable_kem_liboqs_roundtrip.sh
 #
-# 定点复现（仅作用于首个 trial 的 fixture；后续 trial 仍 --random）：
-#   KEM_SEED_HEX=… M_HEX=… bash scripts/stable_kem_liboqs_roundtrip.sh
-#
-# 环境（可选）：
-#   SOC_VERSION / SKIP_CPU=1 / SKIP_SIM=1 / SKIP_CLEAN_SIM=1
-#   LIBOQS_KEM_VS_SKIP_REJECT=1
-#   KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR
-#   CPU_TRIALS（默认 1）/ SIM_TRIALS（默认 1）
-#   STABLE_KEM_RT_DIR   fixture 根，默认 output/stable_kem_liboqs_rt/<stamp>/
-#
-# 说明：SIM 前默认清 Decaps build_prod_sim（kem→compute 迁文件幽灵 .o）；
-#       勿对同一 DECAPS_DIR 并行多路 SIM。
+# 环境：SOC_VERSION / SKIP_CPU / SKIP_SIM / SKIP_CLEAN_SIM / LIBOQS_KEM_VS_SKIP_REJECT
+#       KEYGEN_DIR / ENCAPS_DIR / DECAPS_DIR / CPU_TRIALS / SIM_TRIALS / STABLE_KEM_RT_DIR
+#       MLKEM_PARAM / KEM_SEED_HEX / M_HEX
 
 set -euo pipefail
 
@@ -42,6 +33,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FIXTURE_PY="${REPO_ROOT}/scripts/liboqs_kem_fixture.py"
 VERIFY_PY="${REPO_ROOT}/scripts/liboqs_kem_vs_ascendc_verify.py"
 SOC_VERSION="${SOC_VERSION:-Ascend910B4}"
+MLKEM_PARAM="${MLKEM_PARAM:-1024}"
 
 KEYGEN_DIR="${KEYGEN_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4}"
 ENCAPS_DIR="${ENCAPS_DIR:-${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4}"
@@ -72,6 +64,7 @@ FIXTURE_ROOT="${STABLE_KEM_RT_DIR:-${REPO_ROOT}/output/stable_kem_liboqs_rt/${ST
 mkdir -p "${FIXTURE_ROOT}"
 
 echo "[stable_kem_liboqs_rt] REPO=${REPO_ROOT}"
+echo "[stable_kem_liboqs_rt] MLKEM_PARAM=${MLKEM_PARAM}"
 echo "[stable_kem_liboqs_rt] fixture_root=${FIXTURE_ROOT}"
 echo "[stable_kem_liboqs_rt] KEYGEN=${KEYGEN_DIR}"
 echo "[stable_kem_liboqs_rt] ENCAPS=${ENCAPS_DIR}"
@@ -93,12 +86,11 @@ _clean_decaps_sim() {
         "${DECAPS_DIR}/ascendc_kem_decaps_phase_e_bbit"
 }
 
-# 每一 trial：先 liboqs 抽随机 → 再 AscendC 全链对拍同一套字节
 _make_fixture() {
     local out_dir="$1"
-    local use_pinned="$2" # 1=允许 KEM_SEED_HEX/M_HEX；0=强制纯 random
+    local use_pinned="$2"
     mkdir -p "${out_dir}"
-    local _fx_args=(--random --out-dir "${out_dir}")
+    local _fx_args=(--param "${MLKEM_PARAM}" --random --out-dir "${out_dir}")
     if [[ "${use_pinned}" == "1" ]]; then
         if [[ -n "${KEM_SEED_HEX:-}" ]]; then
             _fx_args+=(--kem-seed-hex "${KEM_SEED_HEX}")
@@ -107,7 +99,7 @@ _make_fixture() {
             _fx_args+=(--m-hex "${M_HEX}")
         fi
     fi
-    python3 "${FIXTURE_PY}" "${_fx_args[@]}"
+    MLKEM_PARAM="${MLKEM_PARAM}" python3 "${FIXTURE_PY}" "${_fx_args[@]}"
     if [[ ! -f "${out_dir}/kem_seed.bin" || ! -f "${out_dir}/m.bin" ]]; then
         echo "[stable_kem_liboqs_rt] ERROR: fixture missing kem_seed.bin / m.bin in ${out_dir}" >&2
         exit 1
