@@ -1,7 +1,7 @@
 # examples/incubating/ml-kem/ml-kem-512 — ML-KEM-512（k=2）预研
 
 **参数组**：FIPS 203 **ML-KEM-512**（\(k=2\)）  
-**阶段**：**P0+P1**；**P2 探针全绿**；**P3 W4 incubating 全绿**；**glue 有条件完成**  
+**阶段**：**P0–P3 完成**；W4 incubating 全绿；**glue（AscendC RT + liboqs-512）全绿**  
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem512-parameter-card.md](../../../../docs/specs/fips203-mlkem512-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem512-p1-gap-and-cases.md](../../../../docs/specs/fips203-mlkem512-p1-gap-and-cases.md)  
