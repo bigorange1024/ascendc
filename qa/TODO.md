@@ -26,7 +26,7 @@
 
 ## 打开项（按优先级）
 
-主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**）；768 incubating+glue 有条件完成（禁 stable-768）。**下一方法论压力床**：**T512**（决议已锁，待落 P0）。打开项：T512 / T768-post / NPU / T23 / SHA3hp / T-WebViz。
+主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**）；768 incubating+glue 有条件完成（禁 stable-768）。**下一方法论压力床**：**T512**（P0+P1 已落；B3b 绿）。打开项：T512 / T768-post / NPU / T23 / SHA3hp / T-WebViz。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
