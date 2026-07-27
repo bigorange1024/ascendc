@@ -1,0 +1,181 @@
+% exp-fips203-mlkem-pke-decrypt-k2 — FIPS 203 Alg.15 ML-KEM-512 PKE Decrypt
+% 编译：bash scripts/xelatex-clean.sh examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-pke-decrypt-k2/exp-fips203-mlkem-pke-decrypt-k2-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-mlkem-pke-decrypt-k2\\FIPS 203 Alg.15 ML-KEM-512 PKE Decrypt 实现方案}
+\author{ascendc 工程（ML-KEM-512 W4a / E15）}
+\date{2026-07-27}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \dirname{examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-pke-decrypt-k2/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 15}，即 ML-KEM-512（$k=2$）\textbf{PKE Decrypt}。
+
+\textbf{参数锁定}：参数卡与
+\dirname{ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg15-pke-decrypt-device-k2/STATUS.md}。
+\textbf{生产 I/O}：\texttt{input/} 为 \texttt{dk\_pke.bin}（768B）、\texttt{c.bin}（768B）与静态 LUT；
+\texttt{output/} 仅 \texttt{m.bin}（32B）。
+\textbf{计划 AI Core 数}：1 launch；\texttt{f203\_decrypt\_device\_fused} 为 MIX \texttt{blockDim=1}（S-1）。
+\textbf{禁止}：写入 stable-512；从 \dirname{frozen/} 抄码；用 k3/k4 字节长或假 poly 替代 k2 几何。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程边界}
+
+\begin{longtable}{@{}L{4.6cm}L{8.6cm}@{}}
+\toprule
+来源 & 用途 \\
+\midrule
+\dirname{ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg15-pke-decrypt-device-k2/} & 活跃 D15 k2 行为基线；可复制后自包含适配 \\
+\dirname{examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-decrypt-k3/} & 活跃 k3 incubating 结构参考；仅 retarget 到 k2 \\
+\dirname{library/shared/} & 统一整数压缩/解压等共享库 \\
+CANN / tikicpulib / CAModel & 编译与运行环境 \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止项}
+\begin{itemize}
+  \item 禁止从 \dirname{frozen/} 拿源码、customspec 或路线。
+  \item 禁止将 \(u'\)、\(v'\)、\(\hat s\)、\(\hat u\)、\(w\) 等中间态作为默认 I/O 落盘。
+  \item 禁止读写第 3/4 个假 poly；NTT/INTT 仅 AIV0=poly0、AIV1=poly1。
+  \item 禁止新建或写入 stable-512。
+\end{itemize}
+
+\section{数学语义（Alg.15，$k=2$，$n=256$，$q=3329$）}
+
+\subsection{输入输出}
+
+\begin{longtable}{@{}L{3.3cm}L{10.2cm}@{}}
+\toprule
+张量 / 文件 & 契约 \\
+\midrule
+\texttt{input/dk\_pke.bin} & 768B；\(\hat s\) 的 \(\mathrm{ByteEncode}_{12}\)，即 \(2\times384\)B \\
+\texttt{input/c.bin} & 768B；\(c=c_1\Vert c_2\)，其中 \(c_1=640\)B（\(d_u=10\)，2 poly），\(c_2=128\)B（\(d_v=4\)，1 poly） \\
+\texttt{input/lut\_even\_stacked.bin}、\texttt{lut\_odd\_stacked.bin} & NTT/INTT Stage2 LUT \\
+\texttt{output/m.bin} & 32B，\(\mathrm{ByteEncode}_{1}(\mathrm{Compress}_{1}(w))\) \\
+\bottomrule
+\end{longtable}
+
+\subsection{阶段公式}
+
+\begin{enumerate}
+  \item 行 1--2：拆分 \(c_1=c[0:640]\)，\(c_2=c[640:768]\)。
+  \item 行 3：\(u'\leftarrow\mathrm{Decompress}_{10}(\mathrm{ByteDecode}_{10}(c_1))\)，得到 2 个 poly。
+  \item 行 4：\(v'\leftarrow\mathrm{Decompress}_{4}(\mathrm{ByteDecode}_{4}(c_2))\)，得到 1 个 poly。
+  \item 行 5：\(\hat s\leftarrow\mathrm{ByteDecode}_{12}(\texttt{dk\_pke})\)，得到 2 个 NTT 域 poly。
+  \item 行 6：\(\hat u\leftarrow\mathrm{NTT}(u')\)；\(\hat w\leftarrow\sum_{j=0}^{1}\mathrm{MultiplyNTTs}(\hat s[j],\hat u[j])\)；再对 \(\hat w\) pad 到 k2 前缀后执行 INTT，得到 \(w_t\)。
+  \item 行 7：\(w=(v'-w_t)\bmod q\)，\(m=\mathrm{ByteEncode}_{1}(\mathrm{Compress}_{1}(w))\)。
+\end{enumerate}
+
+\textbf{尾段方向锁定}：Decrypt 行 7 是 \(\mathrm{ByteEncode}_{1}(\mathrm{Compress}_{1}(w))\)，不是 Encrypt 的 \(\mathrm{Decompress}_{1}(\mathrm{ByteDecode}_{1}(m))\)。
+
+\section{AscendC 实现规划}
+
+\subsection{Launch 与 AI Core 规模}
+
+\begin{longtable}{@{}L{2.5cm}L{3.0cm}L{7.6cm}@{}}
+\toprule
+Launch & 核类型 / blockDim & 数据划分与理由 \\
+\midrule
+1 fused & MIX，\texttt{blockDim=1} & S-1：AIV0 负责 unpack、\(\hat s\cdot\hat u\) 与尾 pack 关键串行段；NTT/INTT AIV0=poly0、AIV1=poly1。继承 D15 k2 GATE 4/8 与 softSyncGm。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{GM 几何}
+
+\begin{longtable}{@{}L{3.7cm}L{9.5cm}@{}}
+\toprule
+对象 & 锁定几何 \\
+\midrule
+\(u'\) & \texttt{[2,256] int32}；c1 d10 unpack + Decompress10 \\
+\(v'\) & \texttt{[1,256] int32}；c2 d4 unpack + Decompress4 \\
+\(\hat s\) & \texttt{[2,256] int32}；dk\_pke ByteDecode12 \\
+\(\hat u\) NTT & 真 polyvec2；AIV 1+1，禁止读写假 poly \\
+\(\hat w\) / INTT & \(\hat w\) 写入 k2 前缀，后续 INTT 只消费第 0 个时域 poly \\
+Tail pack & Compress1 产 256 bit；ByteEncode1 LSB-first pack 为 32B \\
+\bottomrule
+\end{longtable}
+
+\section{AscendC API 表}
+
+本实现不引入 E15 独有的新 AscendC API。
+
+\begin{longtable}{@{}L{3.2cm}L{2.7cm}L{2.5cm}L{2.2cm}L{3.0cm}@{}}
+\toprule
+API 名 & 分类 / 文档 & Atlas A2 & 本用例 dtype & 备注 \\
+\midrule
+\apiname{GetBlockIdx} / \apiname{GetSubBlockIdx} & 系统变量 / 资源 & √ & 标量索引 & 区分 AIV 分片与 MIX 子核 \\
+\apiname{GlobalTensor} / \apiname{LocalTensor} & 基础结构 & √ & \texttt{uint8/int8/int32} & GM/UB 张量契约须与本 spec 几何一致 \\
+\apiname{DataCopy} & Memory 数据搬运 & √ & \texttt{uint8/int8/int32} & 连续块搬运；32B 对齐约束 \\
+\apiname{Duplicate} & Memory 矢量计算 & √ & \texttt{uint8/int32} & UB 清零、pad 与 tail buffer 初始化 \\
+\apiname{PipeBarrier} & Pipe 同步 & √ & — & MTE/Vector/Cube 阶段交界显式同步 \\
+\apiname{CrossCoreSetFlag} / \apiname{CrossCoreWaitFlag} & MIX 同步 & √ & — & AIV/AIC 通过 GM 交接；CPU 过不能删 \\
+\apiname{Mmad} / \apiname{Fixpipe} & 矩阵计算 & √ & \texttt{int8*int8->int32} & Stage2 MMAD；硬件 M 对齐垫不表示假 poly \\
+\apiname{ShiftRight} & 矢量算术 & √ & \texttt{int32} & limb 拆分、Barrett 与 ByteEncode 辅助右移 \\
+\apiname{Muls} / \apiname{Add} / \apiname{Sub} & 矢量算术 & √ & \texttt{int32/int16} & limb、模加减、压缩/编码辅助 \\
+\apiname{Cast} & 类型转换 & √（受限） & \texttt{int32/int16/half/int8} & 遵守 A2 Cast 链；不得假设 \texttt{int32->int8} 单跳 \\
+\apiname{Gather} & 矢量搬运/选择 & √ & \texttt{int32} & 仅允许非 NTT S1--S3 段；NTT 三段内禁用 \\
+\apiname{GetValue} / \apiname{SetValue} & LocalTensor 标量访问 & √ & \texttt{uint8/int32} & 仅用于 pack 尾部等标量缺口 \\
+\bottomrule
+\end{longtable}
+
+\subsection{评估过但未采用}
+
+\begin{longtable}{@{}L{3.8cm}L{9.2cm}@{}}
+\toprule
+API / 路线 & 不采用原因 \\
+\midrule
+真向量 ByteEncode1 bit pack & d=1 跨字节 bit 流，已有标量 pack 更简单且 D15 已验 \\
+\apiname{Gather} 用于 NTT S1--S3 & NTT 定稿禁止 \\
+读写假第 3/4 poly & S-1 / 禁零垫 \\
+\bottomrule
+\end{longtable}
+
+\section{数学步骤覆盖率}
+
+\begin{longtable}{@{}L{4.2cm}L{4.0cm}L{2.0cm}L{3.0cm}@{}}
+\toprule
+数学步骤 & 实现方式 / API & 覆盖 & 缺口说明 \\
+\midrule
+ByteDecode/Decompress d10/d4 & 标量 unpack + 统一整数向量 Decompress & 部分向量 & bit unpack 标量缺口沿用 D15 \\
+ByteDecode12(\(\hat s\)) & 标量 unpack & 部分向量 & 与 D15 基线一致 \\
+NTT(\(u'\)) 与 \(\hat s\cdot\hat u\) & MIX + \apiname{Mmad} + Alg.11 & 100\% 设备 & NTT 内无 Gather \\
+INTT(\(\hat w\)) & MIX Stage3 merge & 100\% 设备 & pad 到 k2 前缀 \\
+Compress1 + ByteEncode1 & 向量 Barrett + 标量 bit pack & 部分向量 & ByteEncode1 标量缺口沿用 D15 \\
+\bottomrule
+\end{longtable}
+
+\section{验证计划}
+
+\begin{verbatim}
+cd examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-pke-decrypt-k2
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+\end{verbatim}
+
+期望：\texttt{m.bin} 为 32B，与 golden 对拍 PASS；用例根无 stray dump。
+
+\section{产出物}
+\begin{itemize}
+  \item \dirname{exp-fips203-mlkem-pke-decrypt-k2-实现方案-customspec.tex}
+  \item \dirname{exp-fips203-mlkem-pke-decrypt-k2-实现方案-customspec.pdf}
+  \item 后续实现文件须与本 customspec 同目录自包含，且自研 Python/C/AscendC 写详细中文注释。
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,177 @@
+% exp-fips203-mlkem-kem-encaps-k2 — FIPS 203 Alg.20 ML-KEM-512 KEM Encaps
+% 编译：bash scripts/xelatex-clean.sh examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-encaps-k2/exp-fips203-mlkem-kem-encaps-k2-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-mlkem-kem-encaps-k2\\FIPS 203 Alg.20 ML-KEM-512 KEM Encaps 实现方案}
+\author{ascendc 工程（ML-KEM-512 W4b / E20）}
+\date{2026-07-27}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \dirname{examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-encaps-k2/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 20}，即 ML-KEM-512（$k=2$）\textbf{KEM Encaps}。
+
+\textbf{参数锁定}：参数卡与
+\dirname{ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg20-kem-encaps-device-k2/STATUS.md}：
+\texttt{ek=800B}，\texttt{m=32B}，输出 \texttt{c=768B} 与 \texttt{K=32B}，SIM/生产 \textbf{2 launch}。
+\textbf{行为基线}：活跃 D20 k2；PKE Encrypt 主体可由 E14 与 Alg.17 KEM 头组合。
+\textbf{计划 AI Core 数}：Launch 1 为 AIV\_ONLY \texttt{blockDim=2}（KEM 头 + Encrypt prep），Launch 2 为 MIX \texttt{blockDim=1}（S-1）。
+\textbf{禁止}：写入 stable-512；从 \dirname{frozen/} 抄码；沿用 k3/k4 的 \texttt{c}/\texttt{re} 或零垫。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程边界}
+
+\begin{longtable}{@{}L{4.8cm}L{8.4cm}@{}}
+\toprule
+来源 & 用途 \\
+\midrule
+\dirname{ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg20-kem-encaps-device-k2/} & 活跃 D20 k2 行为基线；可复制后自包含适配 \\
+\dirname{examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-pke-encrypt-k2/} & 活跃 E14 incubating PKE Encrypt \\
+\dirname{examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3/} & 活跃 k3 incubating 结构参考；仅 retarget \\
+\dirname{library/shared/} & SHAKE/Keccak、统一整数压缩等 \\
+CANN / tikicpulib / CAModel & 编译与运行环境 \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止项}
+\begin{itemize}
+  \item 禁止从 \dirname{frozen/} 拿源码、customspec 或路线。
+  \item 禁止把 $h=H(\mathrm{ek})$、$r$、$y$、$e_1$、$e_2$、$\hat A$ 等中间态作为默认 I/O 落盘。
+  \item 禁止 Host 预填 $r$ 冒充设备 KEM 头；$r$ 必须由设备侧 $G(m\Vert H(ek))$ 产生。
+  \item 禁止为 $H$/$G$ 单独增加第三次生产 launch。
+\end{itemize}
+
+\section{数学语义（Alg.20 $\to$ Alg.17 $\to$ Alg.14）}
+
+\subsection{输入输出}
+
+\begin{longtable}{@{}L{3.5cm}L{9.8cm}@{}}
+\toprule
+张量 / 文件 & 契约 \\
+\midrule
+\texttt{input/ek\_kem.bin} & 800B；前 768B 为 \(\hat t\) 的 \(\mathrm{ByteEncode}_{12}\)，末 32B 为 \(\rho\) \\
+\texttt{input/m.bin} & 32B；设备侧 $G(m\Vert H(ek))$ 前半为 $K$，后半为 Encrypt 随机性 $r$ \\
+\texttt{input/lut\_even\_stacked.bin}、\texttt{lut\_odd\_stacked.bin} & NTT/INTT Stage2 LUT \\
+\texttt{output/c.bin} & 768B，\(c=c_1\Vert c_2\)（640+128） \\
+\texttt{output/K.bin} & 32B，\(G(m\Vert H(ek))\) 前半 \\
+\bottomrule
+\end{longtable}
+
+\subsection{阶段公式}
+
+\begin{enumerate}
+  \item KEM 头：$h=H(\mathrm{ek})=\mathrm{SHA3\textrm{-}256}(\mathrm{ek})$，$(K\Vert r)=G(m\Vert h)=\mathrm{SHA3\textrm{-}512}(m\Vert h)$。
+  \item Alg.14 行 3--7：取 \(\rho=\texttt{ek[768:800]}\)，生成 \(\hat A[4,256]\)。
+  \item Alg.14 行 8--15：用设备产生的 \(r\) 采样 \(y\Vert e_1\Vert e_2\) 共 5 个 poly；GM \texttt{[5,256]}。
+  \item Alg.14 行 16--21：NTT(\(y\))、内积、INTT batch4（槽 \(u0,u1,v,\)空）。
+  \item Alg.14 行 22：按 \(d_u=10,d_v=4\) pack 得 \(c\)；与 $K$ 共同作为输出。
+\end{enumerate}
+
+\section{AscendC 实现规划}
+
+\subsection{Launch 与 AI Core 规模}
+
+\begin{longtable}{@{}L{2.5cm}L{3.1cm}L{7.5cm}@{}}
+\toprule
+Launch & 核类型 / blockDim & 数据划分与理由 \\
+\midrule
+1 prep+head & AIV\_ONLY，\texttt{blockDim=2} & block0 先执行 KEM 头；随后继承 E14/D14 prep：$\hat A$ 2+2，\texttt{re[5]}。 \\
+2 compute+pack & MIX，\texttt{blockDim=1} & S-1；复用 E14/D14 compute；tail pack 输出 \texttt{c=768B}。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{GM 几何}
+
+\begin{longtable}{@{}L{3.8cm}L{9.3cm}@{}}
+\toprule
+对象 & 锁定几何 \\
+\midrule
+\(\hat A\) & \texttt{[4,256] int32}；禁止 pad \\
+\texttt{re} & \texttt{[5,256] int32}；随机性来自设备 \(r\) \\
+INTT batch4 & S0 \texttt{[8,256] int8}，mat\_c \texttt{[32,128] int32} \\
+Tail pack & \(u\) 两 poly → 640B；\(v\) → 128B \\
+\bottomrule
+\end{longtable}
+
+\section{AscendC API 表}
+
+本实现不引入 E20 独有的新 AscendC 矢量/矩阵 API；KEM 头使用 shared Keccak \texttt{Sha3OneShot}。
+
+\begin{longtable}{@{}L{3.2cm}L{2.7cm}L{2.5cm}L{2.2cm}L{3.0cm}@{}}
+\toprule
+API 名 & 分类 / 文档 & Atlas A2 & 本用例 dtype & 备注 \\
+\midrule
+\apiname{GetBlockIdx} / \apiname{GetSubBlockIdx} & 系统变量 / 资源 & √ & 标量索引 & 区分 AIV 分片与 MIX 子核 \\
+\apiname{GlobalTensor} / \apiname{LocalTensor} & 基础结构 & √ & \texttt{uint8/int8/int32} & GM/UB 张量契约须与本 spec 几何一致 \\
+\apiname{DataCopy} & Memory 数据搬运 & √ & \texttt{uint8/int8/int32} & 连续块搬运；32B 对齐约束 \\
+\apiname{Duplicate} & Memory 矢量计算 & √ & \texttt{uint8/int32} & UB 清零、pad 与 tail buffer 初始化 \\
+\apiname{PipeBarrier} & Pipe 同步 & √ & — & MTE/Vector/Cube 阶段交界显式同步 \\
+\apiname{CrossCoreSetFlag} / \apiname{CrossCoreWaitFlag} & MIX 同步 & √ & — & AIV/AIC 通过 GM 交接；CPU 过不能删 \\
+\apiname{Mmad} / \apiname{Fixpipe} & 矩阵计算 & √ & \texttt{int8*int8->int32} & Stage2 MMAD；硬件 M 对齐垫不表示假 poly \\
+\apiname{ShiftRight} & 矢量算术 & √ & \texttt{int32} & limb 拆分、Barrett 与 ByteEncode 辅助右移 \\
+\apiname{Muls} / \apiname{Add} / \apiname{Sub} & 矢量算术 & √ & \texttt{int32/int16} & limb、模加减、压缩/编码辅助 \\
+\apiname{Cast} & 类型转换 & √（受限） & \texttt{int32/int16/half/int8} & 遵守 A2 Cast 链；不得假设 \texttt{int32->int8} 单跳 \\
+\apiname{Gather} & 矢量搬运/选择 & √ & \texttt{int32} & 仅允许非 NTT S1--S3 段；NTT 三段内禁用 \\
+\apiname{GetValue} / \apiname{SetValue} & LocalTensor 标量访问 & √ & \texttt{uint8/int32} & 仅用于 pack 尾部等标量缺口 \\
+\bottomrule
+\end{longtable}
+
+\subsection{评估过但未采用}
+
+\begin{longtable}{@{}L{4.0cm}L{9.0cm}@{}}
+\toprule
+API / 路线 & 不采用原因 \\
+\midrule
+Host 预填 \texttt{coins.bin} 作生产随机性 & Alg.20 要求 \(r=G(m\Vert H(ek))\)；Host coins 仅 golden/调试 \\
+第三 launch KEM head & D20 锁定 SIM 2 launch \\
+零垫 \texttt{re} 到 7/9 & 禁零垫 \\
+\bottomrule
+\end{longtable}
+
+\section{数学步骤覆盖率}
+
+\begin{longtable}{@{}L{4.4cm}L{4.0cm}L{2.0cm}L{2.8cm}@{}}
+\toprule
+数学步骤 & 实现方式 / API & 覆盖 & 缺口说明 \\
+\midrule
+$H(ek)$ 与 $G(m\Vert H(ek))$ & shared Keccak + UB/GM & 100\% 设备 & `K` 与 `r` 均由设备 KEM 头产生 \\
+采样 \(\hat A[4]\)、\texttt{re[5]} & AIV\_ONLY & 100\% 设备 & 无零垫 \\
+NTT / 内积 / INTT / pack & MIX + E14 路径 & 100\%/部分 & pack 尾部标量缺口沿用 E14/D14 \\
+\bottomrule
+\end{longtable}
+
+\section{验证计划}
+
+\begin{verbatim}
+cd examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-encaps-k2
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+\end{verbatim}
+
+期望：\texttt{c.bin}=768B，\texttt{K.bin}=32B，与 golden 对拍 PASS；根无 stray dump。
+
+\section{产出物}
+\begin{itemize}
+  \item \dirname{exp-fips203-mlkem-kem-encaps-k2-实现方案-customspec.tex}
+  \item \dirname{exp-fips203-mlkem-kem-encaps-k2-实现方案-customspec.pdf}
+  \item 后续实现文件须与本 customspec 同目录自包含，且自研 Python/C/AscendC 写详细中文注释。
+\end{itemize}
+
+\end{document}

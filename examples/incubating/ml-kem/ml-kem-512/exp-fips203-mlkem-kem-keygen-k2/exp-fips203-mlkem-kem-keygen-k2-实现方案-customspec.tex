@@ -1,0 +1,174 @@
+% exp-fips203-mlkem-kem-keygen-k2 — FIPS 203 Alg.19 ML-KEM-512 KEM KeyGen
+% 编译：bash scripts/xelatex-clean.sh examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-keygen-k2/exp-fips203-mlkem-kem-keygen-k2-实现方案-customspec.tex
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{seqsplit}
+\geometry{margin=2.2cm}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\apiname}[1]{\texttt{\seqsplit{#1}}}
+\newcommand{\dirname}[1]{\texttt{\seqsplit{#1}}}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue}
+
+\title{exp-fips203-mlkem-kem-keygen-k2\\FIPS 203 Alg.19 ML-KEM-512 KEM KeyGen 实现方案}
+\author{ascendc 工程（ML-KEM-512 W4b / E19）}
+\date{2026-07-27}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文档描述 \dirname{examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-keygen-k2/}：
+在 \textbf{Atlas A2 / Ascend910B4} 上以 AscendC 实现 FIPS 203 \textbf{Algorithm 19}，即 ML-KEM-512（$k=2$）\textbf{KEM KeyGen}。
+
+\textbf{参数锁定}：参数卡与
+\dirname{ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg19-kem-keygen-device-k2/STATUS.md}：
+\texttt{ek\_kem=800B}，\texttt{dk\_kem=1632B}，SIM/生产 \textbf{2 launch}，Alg.16 尾在第二个 launch 内融合。
+\textbf{行为基线}：活跃 D19 k2；PKE 主体可由本参数组 E13 与 Alg.16 KEM tail 组合。
+\textbf{计划 AI Core 数}：Launch 1 为 AIV\_ONLY \texttt{blockDim=2}；Launch 2 为 MIX \texttt{blockDim=1}（S-1）。
+\textbf{禁止}：写入 stable-512；从 \dirname{frozen/} 抄码；沿用 k3/k4 字节长或零垫。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{工程边界}
+
+\begin{longtable}{@{}L{4.8cm}L{8.4cm}@{}}
+\toprule
+来源 & 用途 \\
+\midrule
+\dirname{ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg19-kem-keygen-device-k2/} & 活跃 D19 k2 行为基线；可复制后自包含适配 \\
+\dirname{examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-pke-keygen-k2/} & 活跃 E13 incubating PKE KeyGen \\
+\dirname{examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3/} & 活跃 k3 incubating 结构参考；仅 retarget \\
+\dirname{library/shared/} & SHAKE/Keccak、公共设备侧头文件 \\
+CANN / tikicpulib / CAModel & 编译与运行环境 \\
+\bottomrule
+\end{longtable}
+
+\subsection{禁止项}
+\begin{itemize}
+  \item 禁止从 \dirname{frozen/} 拿源码、customspec 或路线。
+  \item 禁止把 $d$、$z$、$H(\mathrm{ek})$、$\hat A$、$\hat s$、$\rho$ 等中间态作为默认 I/O 落盘。
+  \item 禁止把 k3/k4 字节长、polyvec6/8 或零垫当作默认。
+  \item 禁止为 $H(\mathrm{ek})$ 或 $z$ 单独增加第三次生产 launch。
+\end{itemize}
+
+\section{数学语义（Alg.19 $\to$ Alg.16 $\to$ Alg.13）}
+
+\subsection{输入输出}
+
+\begin{longtable}{@{}L{3.5cm}L{9.8cm}@{}}
+\toprule
+张量 / 文件 & 契约 \\
+\midrule
+\texttt{input/seed\_d.bin} & 4B LE \texttt{uint32}；域分离 \texttt{exp-mlkem-f203-2s1e-k2:SEED\_D=} \\
+\texttt{input/lut\_even\_stacked.bin}、\texttt{lut\_odd\_stacked.bin} & NTT Stage2 LUT \\
+\texttt{output/ek\_kem.bin} & 800B，等于 PKE public key \\
+\texttt{output/dk\_kem.bin} & 1632B，展开为 \(\texttt{dk\_pke}(768)\Vert\texttt{ek\_kem}(800)\Vert H(\texttt{ek})(32)\Vert z(32)\) \\
+\bottomrule
+\end{longtable}
+
+\subsection{阶段公式}
+
+\begin{enumerate}
+  \item Alg.19：从 \texttt{seed\_d.bin} 派生 $d$ 与 $z$；$d$ 用 \texttt{…-k2:SEED\_D=}，$z$ 用 \texttt{exp-mlkem-f203-kem-k2:SEED\_Z=}。
+  \item Alg.16：调用 Alg.13 生成 $(\mathrm{ek}_{\mathrm{PKE}},\mathrm{dk}_{\mathrm{PKE}})$。
+  \item Alg.16 尾：$\mathrm{ek}_{\mathrm{KEM}}=\mathrm{ek}_{\mathrm{PKE}}$；$\mathrm{dk}_{\mathrm{KEM}}=\mathrm{dk}_{\mathrm{PKE}}\Vert\mathrm{ek}_{\mathrm{KEM}}\Vert H(\mathrm{ek}_{\mathrm{KEM}})\Vert z$。
+  \item Alg.13 主体复用 E13/D13 k2 几何：$\hat A[4,256]$、$s\Vert e[4,256]$（CBD-$\eta=3$）、polyvec4 NTT、InnerProduct 输出 2 行、ByteEncode12 $2\times384$B。
+\end{enumerate}
+
+\section{AscendC 实现规划}
+
+\subsection{Launch 与 AI Core 规模}
+
+\begin{longtable}{@{}L{2.5cm}L{3.1cm}L{7.5cm}@{}}
+\toprule
+Launch & 核类型 / blockDim & 数据划分与理由 \\
+\midrule
+1 prep & AIV\_ONLY，\texttt{blockDim=2} & 继承 E13/D13：$\hat A$ 4 poly 按 2+2；$s\Vert e$ 4 poly 真 polyvec4。 \\
+2 compute+tail & MIX，\texttt{blockDim=1} & S-1；复用 E13 compute；AIV0 在 FuseEk 后算 $H(\mathrm{ek})$、派生 $z$ 并拼 \texttt{dk\_kem}。 \\
+\bottomrule
+\end{longtable}
+
+\subsection{GM 几何}
+
+\begin{longtable}{@{}L{3.8cm}L{9.3cm}@{}}
+\toprule
+对象 & 锁定几何 \\
+\midrule
+$\hat A$ / $s\Vert e$ / NTT & 同 E13：\texttt{[4,256]} / polyvec4 / S0\texttt{[8,256]} / mat\_c\texttt{[32,128]} \\
+\texttt{ek\_kem} & 800B；与 \texttt{ek\_pke} 共用输出缓冲语义 \\
+\texttt{dk\_kem} & 1632B；偏移 \texttt{dk\_pke[0,768)}、\texttt{ek[768,1568)}、\texttt{h[1568,1600)}、\texttt{z[1600,1632)} \\
+\bottomrule
+\end{longtable}
+
+\section{AscendC API 表}
+
+本实现不引入 E19 独有的新 AscendC 矢量/矩阵 API；KEM tail 使用 shared Keccak \texttt{Sha3OneShot}。
+
+\begin{longtable}{@{}L{3.2cm}L{2.7cm}L{2.5cm}L{2.2cm}L{3.0cm}@{}}
+\toprule
+API 名 & 分类 / 文档 & Atlas A2 & 本用例 dtype & 备注 \\
+\midrule
+\apiname{GetBlockIdx} / \apiname{GetSubBlockIdx} & 系统变量 / 资源 & √ & 标量索引 & 区分 AIV 分片与 MIX 子核 \\
+\apiname{GlobalTensor} / \apiname{LocalTensor} & 基础结构 & √ & \texttt{uint8/int8/int32} & GM/UB 张量契约须与本 spec 几何一致 \\
+\apiname{DataCopy} & Memory 数据搬运 & √ & \texttt{uint8/int8/int32} & 连续块搬运；32B 对齐约束 \\
+\apiname{Duplicate} & Memory 矢量计算 & √ & \texttt{uint8/int32} & UB 清零、pad 与 tail buffer 初始化 \\
+\apiname{PipeBarrier} & Pipe 同步 & √ & — & MTE/Vector/Cube 阶段交界显式同步 \\
+\apiname{CrossCoreSetFlag} / \apiname{CrossCoreWaitFlag} & MIX 同步 & √ & — & AIV/AIC 通过 GM 交接；CPU 过不能删 \\
+\apiname{Mmad} / \apiname{Fixpipe} & 矩阵计算 & √ & \texttt{int8*int8->int32} & Stage2 MMAD；硬件 M 对齐垫不表示假 poly \\
+\apiname{ShiftRight} & 矢量算术 & √ & \texttt{int32} & limb 拆分、Barrett 与 ByteEncode 辅助右移 \\
+\apiname{Muls} / \apiname{Add} / \apiname{Sub} & 矢量算术 & √ & \texttt{int32/int16} & limb、模加减、压缩/编码辅助 \\
+\apiname{Cast} & 类型转换 & √（受限） & \texttt{int32/int16/half/int8} & 遵守 A2 Cast 链；不得假设 \texttt{int32->int8} 单跳 \\
+\apiname{Gather} & 矢量搬运/选择 & √ & \texttt{int32} & 仅允许非 NTT S1--S3 段；NTT 三段内禁用 \\
+\apiname{GetValue} / \apiname{SetValue} & LocalTensor 标量访问 & √ & \texttt{uint8/int32} & 仅用于 pack 尾部等标量缺口 \\
+\bottomrule
+\end{longtable}
+
+\subsection{评估过但未采用}
+
+\begin{longtable}{@{}L{4.0cm}L{9.0cm}@{}}
+\toprule
+API / 路线 & 不采用原因 \\
+\midrule
+第三 launch KEM tail & D19 锁定 SIM 2 launch；尾段必须并入 compute \\
+零垫 / k3/k4 字节长 & 参数卡禁止 \\
+\bottomrule
+\end{longtable}
+
+\section{数学步骤覆盖率}
+
+\begin{longtable}{@{}L{4.4cm}L{4.0cm}L{2.0cm}L{2.8cm}@{}}
+\toprule
+数学步骤 & 实现方式 / API & 覆盖 & 缺口说明 \\
+\midrule
+Alg.13 主体 & 复用 E13/D13 & 100\% 设备 & 见 E13 覆盖率 \\
+$H(\mathrm{ek})$ 与拼 \texttt{dk\_kem} & shared Keccak + DataCopy & 100\% 设备 & AIV0 串行 owner \\
+派生 $z$ & derand + SHAKE & 100\% 设备 & 域分离 \texttt{…-kem-k2:SEED\_Z=} \\
+\bottomrule
+\end{longtable}
+
+\section{验证计划}
+
+\begin{verbatim}
+cd examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-keygen-k2
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+\end{verbatim}
+
+期望：\texttt{ek\_kem.bin}=800B，\texttt{dk\_kem.bin}=1632B，与 golden 对拍 PASS；根无 stray dump。
+后续 glue 补 liboqs-512 KAT。
+
+\section{产出物}
+\begin{itemize}
+  \item \dirname{exp-fips203-mlkem-kem-keygen-k2-实现方案-customspec.tex}
+  \item \dirname{exp-fips203-mlkem-kem-keygen-k2-实现方案-customspec.pdf}
+  \item 后续实现文件须与本 customspec 同目录自包含，且自研 Python/C/AscendC 写详细中文注释。
+\end{itemize}
+
+\end{document}
