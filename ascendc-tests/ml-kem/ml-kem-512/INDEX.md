@@ -1,7 +1,7 @@
 # ascendc-tests/ml-kem/ml-kem-512 — ML-KEM-512（k=2）探针
 
 **参数组**：FIPS 203 **ML-KEM-512**（\(k=2\)，\(\eta_1=3,\eta_2=2\)，\(d_u=10,d_v=4\)）  
-**阶段**：**P0/P1 已建**；P2 W0/W1 全绿（B1–B6）；W2 D13/D14/D15 PKE device 已绿；W3 D19/D20 已绿
+**阶段**：**P0/P1 已建**；P2 W0/W1 全绿（B1–B6）；W2 D13/D14/D15 PKE device 已绿；W3 D20/D21/D21ct 已绿
 **上级**：[../INDEX.md](../INDEX.md)  
 **参数卡**：[docs/specs/fips203-mlkem512-parameter-card.md](../../../docs/specs/fips203-mlkem512-parameter-card.md)  
 **P1 表**：[docs/specs/fips203-mlkem512-p1-gap-and-cases.md](../../../docs/specs/fips203-mlkem512-p1-gap-and-cases.md)  
@@ -32,7 +32,7 @@
 | P2 | W2 | [`pass-fix-f203-alg13-device-keygen-k2/`](pass-fix-f203-alg13-device-keygen-k2/) | D13 | **PASS** | **PASS（230102）** |
 | P2 | W2 | [`pass-fix-f203-alg14-pke-encrypt-device-k2/`](pass-fix-f203-alg14-pke-encrypt-device-k2/) | D14 | **PASS** | **PASS（338153）** |
 | P2 | W2 | [`pass-fix-f203-alg15-pke-decrypt-device-k2/`](pass-fix-f203-alg15-pke-decrypt-device-k2/) | D15 | **PASS** | **PASS（168975）** |
-| P2 | W3 | [`pass-fix-f203-alg19-kem-keygen-device-k2/`](pass-fix-f203-alg19-kem-keygen-device-k2/) | D19 | **PASS** | **PASS（320247）** |
+| P2 | W3 | `pass-fix-f203-alg19-kem-keygen-device-k2/` | D19 | 待建 | 待建 |
 | P2 | W3 | [`pass-fix-f203-alg20-kem-encaps-device-k2/`](pass-fix-f203-alg20-kem-encaps-device-k2/) | D20 | **PASS** | **PASS（394978）** |
-| P2 | W3 | `pass-fix-f203-alg21-kem-decaps-device-k2/` | D21 | 待建 | 待建 |
-| P2 | W3 | `pass-fix-f203-alg21-kem-decaps-device-ct-k2/` | D21ct | 待建 | 待建 |
+| P2 | W3 | [`pass-fix-f203-alg21-kem-decaps-device-k2/`](pass-fix-f203-alg21-kem-decaps-device-k2/) | D21 | **PASS**（accept/reject） | **PASS**（accept **571206** / reject **570547**） |
+| P2 | W3 | [`pass-fix-f203-alg21-kem-decaps-device-ct-k2/`](pass-fix-f203-alg21-kem-decaps-device-ct-k2/) | D21ct | **PASS**（accept/reject） | **PASS**（accept **570707** / reject **571369**） |
