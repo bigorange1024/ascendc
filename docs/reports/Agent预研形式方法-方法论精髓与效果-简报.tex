@@ -112,7 +112,7 @@ M=\emptyset
 \end{theorem}
 {\footnotesize
 $\mathrm{GateCheck}\to\mathsf{ALLOW}/\mathsf{BLOCK}(R)$；
-$\mathrm{TaskWorkflow}$：声明$\to\mathrm{CT}\to$补洞$\to\mathsf{Certify}$；变更则 $\mathrm{DirtyPropagate}$。
+$\mathrm{TaskWorkflow}$：声明$\to\mathrm{CT}\to$补缺$\to\mathsf{Certify}$；变更则 $\mathrm{DirtyPropagate}$。
 }
 \pagesummary{把门禁从口号收成可判定谓词，Agent/人能否开写有同一把尺子。}
 \end{frame}
@@ -127,14 +127,14 @@ $\mathrm{TaskWorkflow}$：声明$\to\mathrm{CT}\to$补洞$\to\mathsf{Certify}$�
   \midrule
   1 & 目标声明 & $T$、I/O、$\ell$ 齐；无级别 $=$ 未声明 \\
   2 & 闭包展开 & $\mathrm{BuildClosureTable}$；接缝/否定栏齐 \\
-  3 & 最小补洞 & $\mathrm{MinimalFillRound}$ 消 $M$；forbid 落笔 \\
+  3 & 最小补缺 & $\mathrm{MinimalFillRound}$ 消 $M$；forbid 落笔 \\
   4 & 闭环写回 & $\mathsf{Certify}$ 入 INDEX/STATUS；该脏则传播 \\
   \bottomrule
 \end{tabular}
 \end{center}
 \vspace{0.35em}
 {\footnotesize
-对照：展开$\leftrightarrow\mathsf{Expand}$；补洞$\leftrightarrow\mathsf{Probe}+\mathsf{Certify}$；
+对照：展开$\leftrightarrow\mathsf{Expand}$；补缺$\leftrightarrow\mathsf{Probe}+\mathsf{Certify}$；
 Forbidden$\leftrightarrow$拒绝；变更$\leftrightarrow\mathsf{Dirty}$。
 }
 \pagesummary{给出可执行外层算法，使 $\mathrm{PermitCode}$ 不只停留在定理页，而能按步跑完一轮任务。}
@@ -155,7 +155,7 @@ Forbidden$\leftrightarrow$拒绝；变更$\leftrightarrow\mathsf{Dirty}$。
   \node[tool, right=of dep] (lang) {形式语言\\合法拼装};
   \node[tool, right=of lang] (auto) {作业过程\\自动机};
   \node[prac, below=7mm of lang] (ct) {先交 $\mathrm{CT}_{\mathrm{decaps}}$};
-  \node[prac, below=of ct] (fill) {补洞 $D{\to}G{\to}E{\to}\mathrm{FO}$};
+  \node[prac, below=of ct] (fill) {补缺 $D{\to}G{\to}E{\to}\mathrm{FO}$};
   \node[prac, below=of fill] (code) {写码 device$\to$exp$\to$stable};
   \node[prac, below=of code] (test) {验收：合法+拒绝+RT};
   \node[prac, fill=green!12, below=of test] (ver) {判决：相对 A / 相对 C};
@@ -294,7 +294,7 @@ I/O $\max{=}0$。相对 $k{=}4$ tick 约低 $18\%$--$31\%$（登记，非 SLA）
 \textbf{工程证据支持}
 \begin{itemize}
   \item $\mathrm{PermitCode}$ 可执行；Forbidden 可挡
-  \item Decaps：先 $\mathrm{CT}$ 后补洞可对拍
+  \item Decaps：先 $\mathrm{CT}$ 后补缺可对拍
   \item 768：参数组迁移可复用门禁
   \item 配额/墙钟体感显著可控
 \end{itemize}

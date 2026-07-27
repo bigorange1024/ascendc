@@ -114,7 +114,7 @@
 
 \textbf{压力测试床}：ML-KEM-1024 链上的 \texttt{pke.keygen} / \texttt{kem.keygen} / \texttt{kem.encaps}，
 并以 \texttt{kem.decaps} 为理论前瞻试金石；\texttt{*-correctness-*} 作为「只求正确、不计优化」的对照组标本。
-另用真 \textbf{ML-KEM-768}（$k=3$）做参数组迁移复盘（第~\ref{sec:mlkem768}~章）：检验「先锁参数卡再按波次补洞」能否走到 incubating，而不是把 1024 零垫改名。
+另用真 \textbf{ML-KEM-768}（$k=3$）做参数组迁移复盘（第~\ref{sec:mlkem768}~章）：检验「先锁参数卡再按波次补缺」能否走到 incubating，而不是把 1024 零垫改名。
 \end{abstract}
 
 \tableofcontents
@@ -677,7 +677,7 @@ INDEX、\texttt{frozen/}、customspec、晋级复制、CPU+SIM 等，已是纪�
 
 \begin{itemize}
   \item \textbf{能力库}：一张「谁依赖谁、谁已获证」的图；活跃菜单是线索，不等于合法拼装说明书。
-  \item \textbf{一次任务}：不是将依赖的项目整库拷贝，而是从目标出发展开依赖闭包，标出已有 / 缺项 / 禁止，再决定最小补洞。
+  \item \textbf{一次任务}：不是将依赖的项目整库拷贝，而是从目标出发展开依赖闭包，标出已有 / 缺项 / 禁止，再决定最小补缺。
   \item \textbf{接缝单独成事}：两块各自测通，拼在一起仍要单独验证；
   \item \textbf{节点状态要管}：下层接口约定一改，上层不能继续拿「上次测通」当仍然有效；
   \item \textbf{对拍与拼装路径分开看}：golden / liboqs / FIPS 管「算得对不对」；方法论管「允许怎么往上拼」。
@@ -778,7 +778,7 @@ INDEX、\texttt{frozen/}、customspec、晋级复制、CPU+SIM 等，已是纪�
   \textbf{自动机} &
   依赖图是静态库，形式语言给出合法计划集合；
   真正干活还要有\textbf{怎么一步步往前走}的规则：
-  补洞$\to$探针$\to$写入证书，有时还要作废。
+  补缺$\to$探针$\to$写入证书，有时还要作废。
   没有自动机，就无法说「走到接受」与「上次 PASS 为何作废」。 &
   状态 $\approx$ 当前已获证哪些、前沿还欠什么；
   转移 $\approx$ 展开 / 探针取证 / 写入证书；
@@ -1814,9 +1814,9 @@ $\Gamma$ 随预研过程可变：新顶点验收通过后可写入 $\Gamma$；�
 菜单提供构造 $\Gamma$ 的\textbf{证据来源候选}，本身既不等于 $\Gamma$，也不蕴含 $\mathrm{Missing}_\Gamma(T)=\emptyset$。
 \end{definition}
 
-\paragraph{生成集与基（为「最小补洞」作准备）}
+\paragraph{生成集与基（为「最小补缺」作准备）}
 $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其闭包已能覆盖整个 $\mathrm{Dep}^*(T)$。
-下面先定义生成集，再说明「补洞」指什么。
+下面先定义生成集，再说明「补缺」指什么。
 
 \begin{definition}[生成集]
 设 $T\in V$。若 $B\subseteq V$ 满足
@@ -1835,10 +1835,10 @@ $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其
 本教材把「基」暂当作极小生成集的同义语；更细的唯一性/规范基问题留待门禁章。
 \end{definition}
 
-\begin{definition}[补洞与最小补洞]
-相对已证书集 $\Gamma$，把缺项逐步变成已证书项、从而使目标闭包已满的过程，称为\textbf{补洞}。
-形式上一轮补洞至少包含：选取某些缺项 $u\in\mathrm{Missing}_\Gamma(T)$，经探针取证后写入证书，得到更大的已获证集合 $\Gamma'$。
-若优先寻找尽可能小的缺项生成集（定义见下）作为补证对象，则称该选择问题为\textbf{最小补洞}（算法细节后置）。
+\begin{definition}[补缺与最小补缺]
+相对已证书集 $\Gamma$，把缺项逐步变成已证书项、从而使目标闭包已满的过程，称为\textbf{补缺}。
+形式上一轮补缺至少包含：选取某些缺项 $u\in\mathrm{Missing}_\Gamma(T)$，经探针取证后写入证书，得到更大的已获证集合 $\Gamma'$。
+若优先寻找尽可能小的缺项生成集（定义见下）作为补证对象，则称该选择问题为\textbf{最小补缺}（算法细节后置）。
 \end{definition}
 
 \begin{definition}[相对 $\Gamma$ 的缺项生成集]
@@ -1849,7 +1849,7 @@ $\mathrm{Dep}^*(T)$ 可能很大；有时只需指出一堆「种子点」，其
 \]
 则称 $B$ 为相对 $\Gamma$ 的一个\textbf{缺项生成集}：
 把「已证书部分」$\mathrm{Dep}^*(T)\cap\Gamma$ 与「还打算补证的 $B$」合在一起，闭包就能盖住整个 $\mathrm{Dep}^*(T)$。
-最小补洞即在缺项生成集中寻找尽可能小者。
+最小补缺即在缺项生成集中寻找尽可能小者。
 \end{definition}
 
 \begin{property}[菜单、$\Gamma$ 与闭包]
@@ -2875,7 +2875,7 @@ $\mathsf{Expand}/\mathsf{Probe}/\mathsf{Certify}/\mathsf{Dirty}$。
   $\mathrm{Missing}_\Gamma(T)=\mathrm{Dep}^*(T)\setminus\Gamma$ &
   \textbf{依赖闭包}
   （缺项） &
-  缺项；闭包表与补洞的核心输出 \\
+  缺项；闭包表与补缺的核心输出 \\
   \midrule
   $\mathrm{Forbidden}$、约束库 $S$ 中的禁拼片段 &
   \textbf{形式语言} &
@@ -3262,7 +3262,7 @@ $\sigma(v)\in\{\mathsf{probe},\mathsf{lemma},\mathsf{deliverable}\}$（未获证
 \begin{quote}
 \noindent
 \textbf{门禁的数学含义}：只允许作业过程自动机上的合法转移；\\
-\textbf{门禁的操作面}：先交闭包表，再写码；缺项先补洞；禁止项不得当模板。
+\textbf{门禁的操作面}：先交闭包表，再写码；缺项先补缺；禁止项不得当模板。
 \end{quote}
 
 \subsection{闭包表算法}
@@ -3316,7 +3316,7 @@ $\mathrm{CT}=(T,\mathcal{C},\ell,\Gamma,D,M,\mathrm{Seams},\mathrm{ForbiddenHit}
   依赖闭包 $D$ &
   $\mathrm{Dep}^*(T)$：语义依赖 + 已知接缝项所覆盖的先决 \\
   缺项 $M$ &
-  $\mathrm{Missing}_\Gamma(T)$；每项可附「拟补洞手段」 \\
+  $\mathrm{Missing}_\Gamma(T)$；每项可附「拟补缺手段」 \\
   接缝 $\mathrm{Seams}$ &
   须单独认证的接缝顶点；未获证者门禁必须看见 \\
   否定 $\mathrm{ForbiddenHit}$ &
@@ -3387,7 +3387,7 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
 若尾缝尚在 $\mathrm{Seams}\setminus\Gamma$，则许可为假——即使 PKE 已绿。
 \end{example}
 
-\subsection{门禁判定与最小补洞}
+\subsection{门禁判定与最小补缺}
 \label{sec:gates-decide}
 
 \begin{methodalgo}{门禁判定 $\mathrm{GateCheck}$}
@@ -3407,7 +3407,7 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
 \end{algosteps}
 \end{methodalgo}
 
-\begin{methodalgo}{最小补洞一轮 $\mathrm{MinimalFillRound}$}
+\begin{methodalgo}{最小补缺一轮 $\mathrm{MinimalFillRound}$}
 \label{alg:min-fill}
 \algoparam{有限依赖图 $G$；当前已获证集 $\Gamma$
 （选取缺项生成集时必须相对 $G$ 上的 $\mathrm{Dep}^*_G$ 判定）。}
@@ -3420,12 +3420,12 @@ $\mathsf{Compose}$ 已写入证书与避开禁止拼法。（2）（3）直接�
         $\mathrm{Dep}^*_G\bigl((D\cap\Gamma)\cup B\bigr)=\mathrm{Dep}^*_G(T)$
         （即第~3~章「相对 $\Gamma$ 的缺项生成集」；优先较小者；有限图 $G$ 上极小生成集存在）。
   \item 对每个 $u\in B$：输出动作「$\mathsf{Probe}(u)$；验收通过则 $\mathsf{Certify}(u)$ 使 $\Gamma\leftarrow\Gamma\cup\{u\}$」。
-  \item 禁止把 $B$ 选成「整份 $T$ 顶层实现」来冒充补洞——补洞对象应是缺项，不是跳过闭包。
+  \item 禁止把 $B$ 选成「整份 $T$ 顶层实现」来冒充补缺——补缺对象应是缺项，不是跳过闭包。
 \end{algosteps}
 \end{methodalgo}
 
-\begin{corollary}[补洞单调消缺项]
-若一轮补洞成功得到 $\Gamma'\supseteq\Gamma$ 且 $B\subseteq\Gamma'$，则
+\begin{corollary}[补缺单调消缺项]
+若一轮补缺成功得到 $\Gamma'\supseteq\Gamma$ 且 $B\subseteq\Gamma'$，则
 $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章缺项基本性质~3）。
 反复执行算法~\ref{alg:min-fill} 直至 $M=\emptyset$，在有限 $V$ 上必终止。
 \end{corollary}
@@ -3433,7 +3433,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
 \subsection{四步工作流＝外层算法}
 \label{sec:gates-workflow}
 
-把「声明—展开—补洞—写回」写成调用上述子程序的外层算法。
+把「声明—展开—补缺—写回」写成调用上述子程序的外层算法。
 
 \begin{methodalgo}{任务工作流 $\mathrm{TaskWorkflow}$}
 \label{alg:task-workflow}
@@ -3466,7 +3466,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
   写清 $T$、I/O、验收级别；没有级别声明 $=$ 未声明任务。 \\
   2 & 闭包展开 &
   跑 $\mathrm{BuildClosureTable}$；标 ok / missing / dirty；接缝与否定栏齐。 \\
-  3 & 最小补洞 &
+  3 & 最小补缺 &
   对 $\mathsf{BLOCK}$ 中的缺项跑 $\mathrm{MinimalFillRound}$；forbid 落笔。 \\
   4 & 闭环写回 &
   $\mathsf{Certify}(T)$ 入 INDEX/STATUS/节点卡；失败则 Freeze；该脏则 $\mathrm{DirtyPropagate}$。 \\
@@ -3482,7 +3482,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
   工作流动作 & 大致对应 \\
   \midrule
   闭包展开 & $\mathsf{Expand}$：前沿与缺项暴露出来 \\
-  探针 / 补洞取证 & $\mathsf{Probe}$：为缺项跑通约定级别的证据 \\
+  探针 / 补缺取证 & $\mathsf{Probe}$：为缺项跑通约定级别的证据 \\
   写入证书 / 晋级 & $\mathsf{Certify}$：节点进入 $\Gamma$ \\
   上游变更作废 & $\mathsf{Dirty}$：$\Gamma$ 收缩，假绿不得继续 \\
   \bottomrule
@@ -3492,7 +3492,7 @@ $\mathrm{Missing}_{\Gamma'}(T)\subseteq\mathrm{Missing}_\Gamma(T)$（第~3~章�
 \begin{proposition}[工作流轨迹是自动机路径的投影]
 \label{prop:workflow-automaton}
 算法~\ref{alg:task-workflow} 的每一步成功更新，都对应第~3~章作业过程自动机上的有限转移序列片段：
-展开 $\sim\mathsf{Expand}$，补洞 $\sim\mathsf{Probe};\mathsf{Certify}$，写回 $\sim\mathsf{Certify}(T)$，
+展开 $\sim\mathsf{Expand}$，补缺 $\sim\mathsf{Probe};\mathsf{Certify}$，写回 $\sim\mathsf{Certify}(T)$，
 作废 $\sim\mathsf{Dirty}$，冻结 $\sim\mathsf{Freeze}$。
 因此「守门禁」不是额外口号，而是要求 Agent 的轨迹落在合法转移集合内。
 \end{proposition}
@@ -3907,7 +3907,7 @@ device 探针则曾\textbf{编译期引用} stable——两种工程落点都合
 
   % 落到实践
   \node[prac, below=12mm of lang] (ct) {先交 $\mathrm{CT}_{\mathrm{decaps}}$};
-  \node[prac, below=of ct] (fill) {按序补洞\\$D\to G\to E\to\mathrm{FO}$};
+  \node[prac, below=of ct] (fill) {按序补缺\\$D\to G\to E\to\mathrm{FO}$};
   \node[prac, below=of fill] (code) {写码 / 晋级\\device$\to$exp$\to$stable};
   \node[prac, below=of code] (test) {验收\\合法+拒绝+RT};
   \node[prac, fill=green!12, below=of test] (ver) {判决\\相对 A / 相对 C};
@@ -4055,10 +4055,10 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 
 \paragraph{什么时候才许说「交付了」}
 按定理~\ref{thm:coding-permit}：缺项没清零之前，\textbf{不许}宣称交付或 stable 晋级。
-允许做的事只有一件：按下面的补洞顺序把缺项补齐并验过。
+允许做的事只有一件：按下面的补缺顺序把缺项补齐并验过。
 （同一天你另外下了 \texttt{\#交付\#}，才打开 \texttt{examples/…-ct-k4} 的晋级。）
 
-\subsection{三种边，以及我们实际补洞的顺序}
+\subsection{三种边，以及我们实际补缺的顺序}
 \label{sec:forward-fill}
 
 \begin{center}
@@ -4078,7 +4078,7 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
 \end{tabular}
 \end{center}
 
-补洞顺序（跟算法~\ref{alg:min-fill} 同一套想法，按我们实际执行写）：
+补缺顺序（跟算法~\ref{alg:min-fill} 同一套想法，按我们实际执行写）：
 \begin{enumerate}
   \item Phase-D：编译期挂上 stable Decrypt，先跑通 $m'$；
   \item 设备上算 $G$，得到 $(K',r')$；
@@ -4108,12 +4108,12 @@ Decaps（Alg.21）同时要 Decrypt、Encrypt，还要对付 FO 失败路径，
   \draw[arr] (fork) -| (acc.north);
   \draw[arr] (fork) -| (rej.north);
 \end{tikzpicture}
-\caption{最小补洞顺序（B 线实际执行；末级分叉为合法 / 拒绝）}
+\caption{最小补缺顺序（B 线实际执行；末级分叉为合法 / 拒绝）}
 \label{fig:ch7-fill}
 \end{figure}
 
 图~\ref{fig:ch7-fill} 要传达的不是「四步串行」本身（正文枚举已够），
-而是\textbf{补洞之后必须同时覆盖合法与拒绝两条验收}——末级折线分叉才是这张图的信息。
+而是\textbf{补缺之后必须同时覆盖合法与拒绝两条验收}——末级折线分叉才是这张图的信息。
 
 \subsection{文书和代码是怎么一步步落下来的}
 \label{sec:forward-docs-code}
@@ -4252,7 +4252,7 @@ B 和 C 在核上的拆法其实一样——Decrypt 一段、Encrypt 一段，$G
   % B
   \node[s, fill=green!14] (b1) at (2.8,0.95) {先交 CT};
   \node[s, fill=green!16] (b2) at (5.4,0.95) {Forbidden};
-  \node[s, fill=green!16] (b3) at (8.0,0.95) {按序补洞};
+  \node[s, fill=green!16] (b3) at (8.0,0.95) {按序补缺};
   \node[s, fill=green!20] (b4) at (10.6,0.95) {可晋级};
   \draw[arr] (b1) -- (b2) -- (b3) -- (b4);
 
@@ -4448,7 +4448,7 @@ B 是对照实验副本（\texttt{-ct}）。
 \label{sec:forward-summary}
 
 \begin{enumerate}
-  \item 写码前交了 $\mathrm{CT}_{\mathrm{decaps}}$，按补洞顺序做完 B 线的 device，再晋级到带 \texttt{-ct} 的 incubating / stable
+  \item 写码前交了 $\mathrm{CT}_{\mathrm{decaps}}$，按补缺顺序做完 B 线的 device，再晋级到带 \texttt{-ct} 的 incubating / stable
         （总览见图~\ref{fig:ch7-overview}，落地分层见图~\ref{fig:ch7-timeline}）。
   \item 该跑的测试都绿了；假绿三例说得清。
   \item 相对 A：强成功（图~\ref{fig:ch7-lanes} 的禁抄/过程、图~\ref{fig:ch7-metrics}）。
@@ -4578,7 +4578,7 @@ incubating \repo{examples/incubating/ml-kem/ml-kem-768/}；
   P & W & 产出 & 退出 \\
   \midrule
   P0 & — & 参数卡 + CT 长度 + 分核选项 + 目录壳 + registry 骨架 & 用户锁决议 \\
-  P1 & — & 补洞图 + 必建用例表（含 PKE exp 与 CT） & 表定稿 \\
+  P1 & — & 补缺图 + 必建用例表（含 PKE exp 与 CT） & 表定稿 \\
   P2 & W0--W3 & 探针全绿 & 每波 CPU+\texttt{SIM\_DIRECT=1} sim \\
   P3 & W4 & incubating exp 全绿 & 有条件完成（本阶段） \\
   P3 & glue & registry + roundtrip & AscendC-only RT \\
