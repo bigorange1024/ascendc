@@ -10,7 +10,7 @@
 
 | Skill | 目录 | 何时激活 |
 |-------|------|----------|
-| **ascendc-engineering-notes** | [ascendc-engineering-notes/SKILL.md](ascendc-engineering-notes/SKILL.md) | **不依赖触发词**；**写码前强制阅读**（标量/向量/矩阵、搬运、**CPU vs SIM/NPU 同步**、离线 CANN 索引） |
+| **ascendc-engineering-notes** | [ascendc-engineering-notes/SKILL.md](ascendc-engineering-notes/SKILL.md) | **不依赖触发词**；**写码前强制阅读**（平台约束 + **§8.1 会话排程**：先 CPU 成批 SIM、交叉前移） |
 | *(可选)* 场景路线纪要 | [ascendc-engineering-notes/references/route-and-scenario-notes.md](ascendc-engineering-notes/references/route-and-scenario-notes.md) | **非强制**；NTT / merged_kyber 等；**MLKEM Tag5T 定稿**见 [docs/notes/MLKEM-NTT-实现总结.md](../../docs/notes/MLKEM-NTT-实现总结.md) |
 | **ascendc-impl-spec** | [ascendc-impl-spec/SKILL.md](ascendc-impl-spec/SKILL.md) | `$方案$` `$写方案$` `$计划$` `$写计划$` `$规格$` `$写规格$` 等 `$…$`；产出 `*-customspec.*`（须写清计划 **AI Core** 数：1 / 多 / 多档验证） |
 | **pre-research** | [pre-research/SKILL.md](pre-research/SKILL.md) | `【预研】` `【调研】` `【实验】` `【迭代】` 等；**且**用户已指明 `*-customspec.*` 才可动 `examples/` 代码 |

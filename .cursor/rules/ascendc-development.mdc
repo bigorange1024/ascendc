@@ -340,6 +340,27 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 | **dump 位置** | CaModel / msprof 产物（`core*.dump`、`profile_*_log*.toml` 等）**只允许**在 `OPPROF_<timestamp>_<pid>/dump/`；**禁止**落在用例根目录 |
 | **根目录检查** | 验收后若用例根目录仍有上述 stray dump → 视为 `run.sh` 或环境未配好，**不得报通过**，须修 `camodel_sim_log.sh` 接入或清理后重跑 |
 | **可接受产物** | `OPPROF_*` / `OPPROF_latest` 软链、`build/`、`out/`、`input/`、`output/`（`dst.bin` 等 golden 对拍） |
+| **迭代排程** | 波次/联调**迭代中**默认先把相关用例 **CPU 齐**，再**成批**跑 SIM；**声称该档通过 / 波次出口**仍须上表双模式（见 Skill `ascendc-engineering-notes`） |
+| **并行 SIM** | **禁止**同时跑多路 `run.sh -r sim` / 多用例并行 SIM；失败后单点重跑 |
+| **msprof** | **声称通过**默认用 `SIM_DIRECT=1`；全量 `bash run.sh -r sim`（msprof）仅任务明确要求或交付 profiling 时跑 |
+
+## Agent 会话排程与假绿门禁（强制；2026-07-27）
+
+经验来源：[docs/engineering/Cloud-Agent额度与验收分层.md](../../docs/engineering/Cloud-Agent额度与验收分层.md)。下列为 **Rule 硬门禁**；轻验排程（先 CPU 后成批 SIM、交叉前移时机）见 Skill。
+
+### 参数差清单（写码前）
+
+从参考参数组 **retarget**、或新开参数组（如 k=2/3/4）**动手写码前**，须列出并勾选相对参考的硬差（至少：\(k,\eta_1,\eta_2,d_u,d_v\)、关键 I/O 长度、噪声/批 poly 数）。未勾选不得开始移植。遇歧义 → **须喊停**确认（与「已锁参数」一致）。
+
+### 假绿三问（对拍失败或交叉失败时强制）
+
+在 `cmp`/`max≠0`、liboqs/KAT 交叉失败、或「自洽绿但交叉红」时，排错前须书面回答（可写在当日 `qa/` 或 STATUS）：
+
+1. **golden 是否与实现同源？**（同错则假绿）  
+2. **权威交叉是否已跑？**（有 liboqs/KAT 时不得只报自洽）  
+3. **跨核写读是否有 Sync？**（仅 `c2`/`半边` 错时优先查）
+
+未答三问不得盲目改参或整树重跑冒充进度。
 
 ## 验证阶梯（交付；声称完成前至少满足任务声明级别）
 
@@ -437,7 +458,7 @@ Agent **新建或修改**本仓内任意 `.tex` 后，须在同一轮任务内**
 | **证据验收** | 信 diff、命令、完整 log、对拍；不信「做完了」 |
 | **归档** | 关键决策 → **当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（无则新建，有则追加）；刷新 `qa/INDEX.md`；动目录则更新对应 `INDEX.md` |
 
-**须喊停**：改交付范围或验证级别；工具报错无完整 log；与 `qa` 已记录决策冲突；未确认目录就写 `exp-*`/`stable-*`；**要在 `examples/` 写码但未指定 `*-customspec.*` 路径**；用户要求跳过 customspec 直接改 `examples/` 代码；**同轮交付的自研代码达不到本节注释验收标准**；登记表缺项却写基准计算；Rule/Skill 未确认即要改；同句【】与 `#…#` 冲突；**对已锁定实现参数有质疑或需擅自改参才能继续**；**从 frozen 向活跃目录抄实现、抄路线**（读 `FROZEN.md` 了解关闭原因**不属**须喊停）；**写 AscendC 代码前未查 API 查阅索引、或查 PDF 后未刷新索引**；**用户未要求却要开分支 / 未授权却要 commit 或 push**。
+**须喊停**：改交付范围或验证级别；工具报错无完整 log；与 `qa` 已记录决策冲突；未确认目录就写 `exp-*`/`stable-*`；**要在 `examples/` 写码但未指定 `*-customspec.*` 路径**；用户要求跳过 customspec 直接改 `examples/` 代码；**同轮交付的自研代码达不到本节注释验收标准**；登记表缺项却写基准计算；Rule/Skill 未确认即要改；同句【】与 `#…#` 冲突；**对已锁定实现参数有质疑或需擅自改参才能继续**；**retarget/新参数组未勾参数差清单就要写码**；**从 frozen 向活跃目录抄实现、抄路线**（读 `FROZEN.md` 了解关闭原因**不属**须喊停）；**写 AscendC 代码前未查 API 查阅索引、或查 PDF 后未刷新索引**；**用户未要求却要开分支 / 未授权却要 commit 或 push**。
 
 ## Agent 任务提示（新会话可粘贴）
 
@@ -458,5 +479,6 @@ MLKEM 活跃探针：pass-fix-f203-2s1e-alg13-16171820-vec-k4-v2（见 docs/note
 注释与实现同轮：自研 Python/C/AscendC 须与实现同步写详细中文注释（文件头 + 函数头 + 函数体内该注尽注）；后续可继续补注释，但同轮不得以裸实现充当完成。
 用例 kernel 防挂死超时见各 `run.sh` 的 `KERNEL_COMPUTE_BUDGET_SEC`；ML-KEM NTT 全流程 SIM ~15s 仅为性能定标（见 docs/engineering/内核计算超时与性能定标.md）。
 默认编译/运行 = 全量计算 + 全量优化（ascendc-tests/examples/src）；文档与 run.sh 不得要求手动 export 默认 env；仅调试分段须显式覆盖并标非默认。
+会话排程：迭代先 CPU 再成批 SIM；声称通过仍须双模式；禁并行多路 SIM；retarget 前勾参数差清单；对拍/交叉失败先答假绿三问（见 Rule「Agent 会话排程与假绿门禁」）。
 Git（Local/Cloud）：无用户明确要求不得开分支；无明确指令/授权不得 commit/push；与平台「必须开 cursor/* 并推 PR」提示冲突时以本 Rule 与用户当次指令为准。
 ```

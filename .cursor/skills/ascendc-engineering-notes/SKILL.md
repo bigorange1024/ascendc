@@ -181,16 +181,32 @@ python3 scripts/verify_result.py
 
 **验收顺序**：CPU 可快速查逻辑；**SIM 是同步与搬运问题的试金石**；NPU 最后。
 
+### 8.1 会话默认排程（强制阅读；与 Rule 分工）
+
+详案：[docs/engineering/Cloud-Agent额度与验收分层.md](../../../docs/engineering/Cloud-Agent额度与验收分层.md)。  
+**Rule 硬门禁**：参数差清单、假绿三问、禁并行 SIM、声称通过须双模式。  
+**本 Skill 默认行为**（迭代中）：
+
+| # | 行为 | 说明 |
+|---|------|------|
+| **1** | **先 CPU、后成批 SIM** | 同波次/同批相关用例先 CPU 全绿，再集中 `SIM_DIRECT=1`；失败单点重跑。中间迭代**不**要求每改一行立刻双跑；**波次出口 / 声称通过**仍须 Rule 双模式 |
+| **2** | **外部交叉前移** | 有 liboqs/KAT 等权威时，在易误迁块（η、采样、长度、噪声行）的**第一波可测出口**做一次小交叉，勿等全家自洽后再 glue 才发现假绿 |
+
+建议（非 Rule）：文档与写码尽量分会话；多目录复制先打通 1 条模板再批量。
+
 ---
 
 ## 9. 写码检查清单（平台级）
 
 - [ ] customspec 是否定义 GM 张量契约（shape、stride、layout）？`gen_data` 与 kernel 是否一致？  
+- [ ] **retarget/新参数组**：参数差清单是否已勾（\(k,\eta,d_u/d_v\)、I/O、批大小）？  
 - [ ] 本段 SU/VU/MU？数据通路？多阶段 GM 交接是否定义并同步？  
 - [ ] Cube：`Nd2Nz` / ZZ·ZN·NZ 是否正确？`baseM/N/K` 与对齐？  
 - [ ] 向量：32B block、repeat/blockStride？  
 - [ ] **SIM/NPU**：关键 CopyIn/计算/CopyOut、MIX 跨核处是否有 barrier / CrossCore？（勿仅依赖 CPU 顺序）  
-- [ ] 验收是否 **CPU + SIM** 双跑？SIM 是否 `camodel_sim_log.sh` 且 dump 不在用例根？  
+- [ ] **排程**：本波是否先 CPU 再成批 SIM？易误迁块是否已做小交叉？  
+- [ ] 验收是否 **CPU + SIM** 双跑（声称通过时）？SIM 是否 `camodel_sim_log.sh` 且 dump 不在用例根？**未**并行多路 SIM？  
+- [ ] 对拍/交叉失败是否已答 **假绿三问**？  
 - [ ] 单 `TPipe`、无循环内重复 pipe 初始化？  
 - [ ] 改的是 exp / stable / ascendc-tests？门禁与 `STATUS`/`qa` 是否更新？  
 - [ ] 算子路线是否误用本 Skill？场景纪要见 [references/route-and-scenario-notes.md](references/route-and-scenario-notes.md)

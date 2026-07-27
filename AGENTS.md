@@ -89,7 +89,7 @@ bash scripts/stable_kem_liboqs_roundtrip.sh
 | 并行 | 建议 `CMAKE_BUILD_JOBS=2` / `LIBOQS_JOBS=2`；**勿并行多路 SIM** |
 | `thirdparty/` | **不进 Git**；权威 [`docs/engineering/thirdparty-本地依赖.md`](docs/engineering/thirdparty-本地依赖.md)；**`ntt_onnx` 私有**，Cloud 须 Secrets **`ASCENDC_GH_PAT`** |
 | liboqs | tag **0.15.0**；[`scripts/build-liboqs.sh`](scripts/build-liboqs.sh)（`clone-thirdparty` 默认调用） |
-| Cloud 额度排程 | 他工程可参考 [`docs/engineering/Cloud-Agent额度与验收分层.md`](docs/engineering/Cloud-Agent额度与验收分层.md)；**不**降低本仓出口 CPU+SIM 门禁；**不**改 ML-KEM 现行波次流程 |
+| Cloud 额度排程 | **Rule**：参数差清单 / 假绿三问 / 禁并行 SIM；**Skill**：先 CPU 成批 SIM、交叉前移；叙述见 [`docs/engineering/Cloud-Agent额度与验收分层.md`](docs/engineering/Cloud-Agent额度与验收分层.md) |
 
 ### Cloud Agent 注意（分轨）
 
