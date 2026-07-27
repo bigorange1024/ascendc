@@ -4826,6 +4826,39 @@ E* 与对应 D* 同量级（incubating 未另开性能叙事）。
 它\textbf{不}代替 stable 晋级，也\textbf{不}证明 liboqs 交叉或 NPU；
 脚本名里的 liboqs 字样，目前还不能当成交叉证据读。
 
+\subsection{题外话：配额与墙钟上的体感}
+\label{sec:mlkem768-aside}
+
+这一节\textbf{不是}对照实验，也不冒充已对账的 token 计量。
+它只把维护者当时的\textbf{直接感受}写下来——和第~\ref{sec:correctness}~章保留 correctness 标本的理由连着读：
+开放搜索有多贵，门禁把作业面收小之后，体感上能便宜多少。
+
+\paragraph{对照的两端（同一类「让 Agent 把密码算子做出来」，不是同一次任务）}
+\begin{itemize}
+  \item \textbf{以前}：公司 Agent 与家里 Agent \textbf{各自}去做 Encaps 的 \texttt{correctness} 路线。
+        两边大约各用掉\textbf{一天}墙钟；合计直接吃掉当月 Cursor Pro+ 订阅配额的大约\textbf{三分之二}。
+        过程形态接近第~\ref{sec:forward}~章臂 A：没有先交闭包、没有禁源纪律、没有波次停问——
+        主要在开放文本空间里搜「怎样才能对」。
+  \item \textbf{昨晚（768）}：从计划到测试完成（参数卡$\to$W0--W4+glue），
+        配额使用大约从 \textbf{41\%} 走到 \textbf{55\%}（增量约十四个百分点）；
+        Agent 墙钟\textbf{没有超过四小时}；代码跑到 incubating，效果「还不错」
+        （本章正文的绿线与 tick，不是这句形容词）。
+\end{itemize}
+
+\paragraph{怎么读这段体感}
+\begin{enumerate}
+  \item 差的不是「Agent 突然变聪明」，而是作业面被收成了：
+        先锁参数卡、禁零垫、按波双绿、改接缝不改锁参。
+  \item 省下的主要是\textbf{无效派生}（乱改形状、抄冻结树、为编译过而改锁参、名实不符的假绿），
+        不是魔法提速，也代替不了人工优化主线。
+  \item 数字来自订阅面板与当场印象：\textbf{序数级体感}，未做同任务、同模型、同提示的严格复现对账。
+        因此本章\textbf{不}据此宣称「快 $N$ 倍 / 省 $N$ 倍 token」——只承认：
+        门禁开着时，维护者觉得「值了」；门禁关着时，配额会以天为单位被搜索烧掉。
+\end{enumerate}
+
+一句话：\textbf{体感本身也是证据的一种}——它证明「先锁边界再写码」值得付前置文书的成本；
+细账仍以 git、\texttt{qa/}、STATUS 与对拍为准。
+
 \subsection{本章小结}
 \label{sec:mlkem768-summary}
 
@@ -4834,6 +4867,8 @@ E* 与对应 D* 同量级（incubating 未另开性能叙事）。
   \item 分析$\to$计划$\to$波次实现$\to$双模式验收$\to$改接缝不改锁参——这条链跑通了（图~\ref{fig:ch8-overview}、\ref{fig:ch8-waves}）。
   \item 结果：W0--W4+glue 绿；tick 见图~\ref{fig:ch8-ticks}；稳定与交叉仍明示未做。
   \item 回扣第~\ref{sec:gates}~章：缺项与锁参歧义就停；假绿（名实不符的 roundtrip）要写进文书，不能靠文件名装扮。
+  \item 题外话（§\ref{sec:mlkem768-aside}）：correctness 式开放搜索曾以「天 + 月配额大头」计价；
+        768 有门禁的一夜大约只动了十四个百分点配额、墙钟不到四小时——体感证据，不作倍数宣称。
 \end{enumerate}
 
 % ============================================================
