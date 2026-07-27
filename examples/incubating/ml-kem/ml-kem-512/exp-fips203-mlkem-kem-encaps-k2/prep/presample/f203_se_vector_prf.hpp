@@ -1,4 +1,4 @@
-// @probe exp-fips203-mlkem-kem-encaps-k2
+// @probe pass-fix-f203-alg14-pke-encrypt-device-k2
 // @file prep/presample/f203_se_vector_prf.hpp
 // @layer prep
 // @role prep/presample：SHAKE/PRF/CBD 预采样
@@ -14,11 +14,11 @@
  * @brief Phase P：σ → 8× SHAKE256 PRF（单 TPipe UB shake，链末 DataCopy 对拍 prf_out GM）。
  *
  * 流水线位置：
- *   - KeyGen/presample：σ = G(d) 后半 → PRF(σ, nonce=0..7) → prf_out[8,128]
- *   - Encrypt prep：复用 RunShakePrfBatchUbWithUb（coins 代替 σ），再由 f203_encrypt_re_prf 补 nonce 8
+ *   - Encrypt prep：f203_encrypt_re_prf 逐 nonce squeeze → prf_out[5,192]
+ *     （η1 行用满 192B；η2 行只用前 128B，XOF 前缀 ≡ squeeze(128)）
  *
- * 关键点：PRF_MSG_STRIDE=64（8B 对齐），lengths 仍为 33；见 2026-06-25 SIM pem_lsu 回归。
- * 与 golden：prf_shake256 / PRF_BYTES=128。
+ * 对齐点：PRF_MSG_STRIDE=64（8B 对齐），lengths 仍为 33；见 2026-06-25 SIM pem_lsu 回归。
+ * 与 golden：prf_shake256(..., 192) / CBD 按行选 η1|η2。
  */
 #pragma once
 
@@ -42,7 +42,8 @@ constexpr uint32_t PRF_MSG_LEN = 33U;
  * lengths[i] 仍为 PRF_MSG_LEN；仅布局 stride 垫到 64。
  */
 constexpr uint32_t PRF_MSG_STRIDE = ShakeXofUb::CeilAlign32(PRF_MSG_LEN);
-constexpr uint32_t PRF_OUT_LEN = 128U;
+/** Encrypt re 行 stride：按 η1=3 取 192B（η2 行前 128B 有效）。 */
+constexpr uint32_t PRF_OUT_LEN = 192U;
 constexpr uint32_t PRF_X_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * PRF_MSG_STRIDE);
 constexpr uint32_t PRF_LEN_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * static_cast<uint32_t>(sizeof(uint32_t)));
 constexpr uint32_t PRF_Y_UB_BYTES = ShakeXofUb::CeilAlign32(PRF_BATCH * PRF_OUT_LEN);

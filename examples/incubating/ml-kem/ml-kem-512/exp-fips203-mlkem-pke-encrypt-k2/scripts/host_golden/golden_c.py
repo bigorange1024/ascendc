@@ -32,7 +32,9 @@ from f203_ref_common import (
 
 XOF_BYTES = 672
 CAND_PAIRS = XOF_BYTES // 3
-PRF_BYTES = 128
+# ML-KEM-512：r←η1=3（192B）；e₁/e₂←η2=2（128B）。曾误全 η=2（glue-c 2026-07-27）。
+PRF_BYTES_ETA1 = 192
+PRF_BYTES_ETA2 = 128
 PRF_BATCH = 5  # r(2)+e₁(2)+e₂(1)
 EK_T_BYTES = 768  # ByteEncode₁₂(t̂) 不含 ρ
 
@@ -119,13 +121,13 @@ def build_a_hat(rho: bytes) -> np.ndarray:
     return a_hat
 
 
-def prf_shake256(coins: bytes, nonce: int) -> bytes:
-    """Alg.8 前：PRF(coins‖nonce) → 128B CBD 输入。"""
-    return hashlib.shake_256(coins + bytes([nonce & 0xFF])).digest(PRF_BYTES)
+def prf_shake256(coins: bytes, nonce: int, nbytes: int) -> bytes:
+    """Alg.8 前：PRF(coins‖nonce) → nbytes（η1=192 / η2=128）。"""
+    return hashlib.shake_256(coins + bytes([nonce & 0xFF])).digest(nbytes)
 
 
 def _load32_le(buf: bytes, off: int) -> int:
-    """小端读 32-bit 字（CBD 比特抽取用）。"""
+    """小端读 32-bit 字（CBD_η2 比特抽取用）。"""
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
@@ -148,15 +150,32 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
     return coeffs
 
 
+def sample_poly_cbd3(buf: bytes) -> np.ndarray:
+    """
+    Alg.8 η=3 CBD：192B → int32[N]（对齐 liboqs cbd3 / 参数卡 η1）。
+    每 3 字节产 4 个系数。
+    """
+    coeffs = np.zeros(N, dtype=np.int32)
+    for i in range(N // 4):
+        t = int(buf[3 * i]) | (int(buf[3 * i + 1]) << 8) | (int(buf[3 * i + 2]) << 16)
+        d = (t & 0x00249249) + ((t >> 1) & 0x00249249) + ((t >> 2) & 0x00249249)
+        for j in range(4):
+            a = (d >> (6 * j + 0)) & 0x7
+            b = (d >> (6 * j + 3)) & 0x7
+            c = a - b
+            if c < 0:
+                c += Q
+            coeffs[4 * i + j] = c % Q
+    return coeffs
+
+
 def build_re(coins: bytes) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    行 7–15：coins → r[K,N], e₁[K,N], e₂[N]（nonce 0..4）。
+    行 7–15：coins → r[K,N]（η1=3）、e₁[K,N]/e₂[N]（η2=2）；nonce 0..4。
     """
-    rows = [sample_poly_cbd2(prf_shake256(coins, nonce)) for nonce in range(PRF_BATCH)]
-    stacked = np.stack(rows)
-    r = stacked[0:K]
-    e1 = stacked[K : 2 * K]
-    e2 = stacked[2 * K]
+    r = np.stack([sample_poly_cbd3(prf_shake256(coins, n, PRF_BYTES_ETA1)) for n in range(0, K)])
+    e1 = np.stack([sample_poly_cbd2(prf_shake256(coins, n, PRF_BYTES_ETA2)) for n in range(K, 2 * K)])
+    e2 = sample_poly_cbd2(prf_shake256(coins, 2 * K, PRF_BYTES_ETA2))
     return r, e1, e2
 
 

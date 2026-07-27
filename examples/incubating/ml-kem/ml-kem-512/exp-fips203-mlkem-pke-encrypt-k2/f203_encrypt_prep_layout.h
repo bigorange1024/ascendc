@@ -4,7 +4,13 @@
  *
  * 流水线位置：
  *   - 行 3–7：ek_pke 尾 ρ[32] → SampleNTT → a_hat[4,256] int32
- *   - 行 8–15：coins[32] → PRF(η=2) → CBD → re[5,256] int32（r‖e₁‖e₂）
+ *   - 行 8–15：coins[32] → PRF → CBD → re[5,256] int32（r‖e₁‖e₂）
+ *     · r（nonce 0..1）：η1=3，PRF 192B / 行
+ *     · e₁（nonce 2..3）、e₂（nonce 4）：η2=2，PRF 128B / 行
+ *     · GM 行 stride 统一按 max=192B 打包（SHAKE XOF 前缀性质：squeeze(192) 的前 128B == squeeze(128)）
+ *
+ * 背景（2026-07-27 glue-c）：曾误把 5 行全部走 η=2，导致相对 liboqs Encaps `c` 全错、`K` 仍对齐；
+ * 已按参数卡 η1=3/η2=2 补缺。
  *
  * 与 golden I/O：
  *   - input：ek_pke.bin（kEkPkeBytes）、coins.bin（kCoinsBytes）
@@ -36,11 +42,17 @@ constexpr uint32_t kRhoBytes = 32U;
 /** Encrypt 随机性 coins（Alg.14 输入）。 */
 constexpr uint32_t kCoinsBytes = 32U;
 
-/** CBD η=2；PRF 每 poly 输出 (η·N)/4 = 128B。 */
-constexpr uint32_t kEta = 2U;
+/** ML-KEM-512：r 用 η1=3；e₁/e₂ 用 η2=2（参数卡已锁）。 */
+constexpr uint32_t kEta1 = 3U;
+constexpr uint32_t kEta2 = 2U;
 /** re 行数：r(k) + e₁(k) + e₂(1) = 5；禁止按 k3/k4 噪声行数零垫。 */
 constexpr uint32_t kRePolys = 2U * kKyberK + 1U;  // 5
-constexpr uint32_t kPrfBytesPerPoly = (kEta * kKyberN) / 4U;  // 128
+/** r 占用的前几行（CBD_η1）。 */
+constexpr uint32_t kReRRows = kKyberK;  // 2
+/** PRF 每 poly 字节：η1 → 192；η2 → 128；GM 行 stride 取 max=192。 */
+constexpr uint32_t kPrfBytesEta1 = (kEta1 * kKyberN) / 4U;  // 192
+constexpr uint32_t kPrfBytesEta2 = (kEta2 * kKyberN) / 4U;  // 128
+constexpr uint32_t kPrfBytesPerPoly = kPrfBytesEta1;         // 192（行 stride）
 constexpr uint32_t kPrfBatch = kRePolys;
 /** PRF 消息有效长：coins[32] ‖ byte(nonce)。 */
 constexpr uint32_t kPrfMsgLen = 33U;  // coins[32] || byte(nonce)
@@ -49,7 +61,7 @@ constexpr size_t kEkBytes = static_cast<size_t>(kEkPkeBytes);
 constexpr size_t kCoinsSize = static_cast<size_t>(kCoinsBytes);
 /** a_hat 扁平字节数：4×256×sizeof(int32)。 */
 constexpr size_t kAHatBytes = static_cast<size_t>(kAHatPolys) * kKyberN * sizeof(int32_t);
-/** PRF 中间态总字节：5×128。 */
+/** PRF 中间态总字节：5×192。 */
 constexpr size_t kPrfBytes = static_cast<size_t>(kPrfBatch) * kPrfBytesPerPoly;
 /** re 扁平字节数：5×256×sizeof(int32)。 */
 constexpr size_t kReBytes = static_cast<size_t>(kRePolys) * kKyberN * sizeof(int32_t);

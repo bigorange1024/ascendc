@@ -4,7 +4,7 @@
 
 流水线位置（Alg.14 Encrypt prep，行 3–15）：
   - build_a_hat_from_rho(ρ)：4× SampleNTT → a_hat 扁平 int32[1024]
-  - build_re_from_coins(coins)：5× (PRF→CBD_η=2) → re[5,256] int32
+  - build_re_from_coins(coins)：r←η1=3（2 poly）+ e₁/e₂←η2=2（3 poly）→ re[5,256] int32
 
 代码自 stable / pass 探针抄写并固化于本目录；禁止 import 其它 ascendc-tests 用例或 library/shared。
 仅依赖本目录 scripts/prep/alg7_geom.py（几何常量，与设备 f203_alg7_layout.h 同步）。
@@ -30,9 +30,11 @@ from alg7_geom import CAND_PAIRS, XOF_BYTES  # noqa: E402
 KYBER_K = 2
 KYBER_N = 256
 KYBER_Q = 3329
-ETA = 2
-# PRF 每 poly 字节数：(η·N)/4 = 128
-PRF_BYTES = (ETA * KYBER_N) // 4  # 128
+# ML-KEM-512：r 用 η1=3；e₁/e₂ 用 η2=2（参数卡；glue-c 2026-07-27 补缺）
+ETA1 = 3
+ETA2 = 2
+PRF_BYTES_ETA1 = (ETA1 * KYBER_N) // 4  # 192
+PRF_BYTES_ETA2 = (ETA2 * KYBER_N) // 4  # 128
 
 
 # --- Alg.7 SampleNTT（抄自 stable scripts/prep/gen_data.py，路径已本地化）---
@@ -127,16 +129,16 @@ def build_a_hat_from_rho(rho: bytes) -> np.ndarray:
     return a_hat
 
 
-# --- Alg.14 PRF + CBD η=2（抄自 stable scripts/prep/fips203_se_sample/golden_se_sampling.py）---
+# --- Alg.14 PRF + 混合 CBD（η1=3 for r；η2=2 for e₁/e₂）---
 
 
-def prf_shake256(key: bytes, nonce: int) -> bytes:
-    """PRF(key, nonce) = SHAKE256(key || byte(nonce))，squeeze 128B。"""
-    return hashlib.shake_256(key + bytes([nonce & 0xFF])).digest(PRF_BYTES)
+def prf_shake256(key: bytes, nonce: int, nbytes: int) -> bytes:
+    """PRF(key, nonce) = SHAKE256(key || byte(nonce))，squeeze nbytes。"""
+    return hashlib.shake_256(key + bytes([nonce & 0xFF])).digest(nbytes)
 
 
 def _load32_le(buf: bytes, off: int) -> int:
-    """小端 load32（CBD 每 4B 产 8 系数）。"""
+    """小端 load32（CBD_η2 每 4B 产 8 系数）。"""
     return int(buf[off]) | (int(buf[off + 1]) << 8) | (int(buf[off + 2]) << 16) | (int(buf[off + 3]) << 24)
 
 
@@ -159,15 +161,39 @@ def sample_poly_cbd2(buf: bytes) -> np.ndarray:
     return coeffs
 
 
+def sample_poly_cbd3(buf: bytes) -> np.ndarray:
+    """SamplePolyCBD_η=3（对齐 liboqs cbd3；Encrypt 的 r 用）。"""
+    coeffs = np.zeros(KYBER_N, dtype=np.int32)
+    for i in range(KYBER_N // 4):
+        t = int(buf[3 * i]) | (int(buf[3 * i + 1]) << 8) | (int(buf[3 * i + 2]) << 16)
+        d = (t & 0x00249249) + ((t >> 1) & 0x00249249) + ((t >> 2) & 0x00249249)
+        for j in range(4):
+            a = (d >> (6 * j + 0)) & 0x7
+            b = (d >> (6 * j + 3)) & 0x7
+            c = a - b
+            if c < 0:
+                c += KYBER_Q
+            coeffs[4 * i + j] = c % KYBER_Q
+    return coeffs
+
+
 def build_re_from_coins(coins: bytes, n_polys: int = 2 * KYBER_K + 1) -> np.ndarray:
-    """coins → r(2)‖e₁(2)‖e₂(1) 共 5 poly，nonce 0..4。
+    """coins → r(2,η1=3)‖e₁(2,η2=2)‖e₂(1,η2=2)，nonce 0..4。
 
     @return shape (5, 256) int32，行主序与设备 re_gm 一致。
     """
+    if n_polys != 2 * KYBER_K + 1:
+        raise SystemExit(f"n_polys={n_polys} 须为 {2 * KYBER_K + 1}（k2 re 行数）")
     rows = []
     for nonce in range(n_polys):
-        buf = prf_shake256(coins, nonce)
-        if len(buf) != PRF_BYTES:
-            raise SystemExit(f"PRF len {len(buf)} != {PRF_BYTES}")
-        rows.append(sample_poly_cbd2(buf))
+        if nonce < KYBER_K:
+            buf = prf_shake256(coins, nonce, PRF_BYTES_ETA1)
+            if len(buf) != PRF_BYTES_ETA1:
+                raise SystemExit(f"PRF η1 len {len(buf)} != {PRF_BYTES_ETA1}")
+            rows.append(sample_poly_cbd3(buf))
+        else:
+            buf = prf_shake256(coins, nonce, PRF_BYTES_ETA2)
+            if len(buf) != PRF_BYTES_ETA2:
+                raise SystemExit(f"PRF η2 len {len(buf)} != {PRF_BYTES_ETA2}")
+            rows.append(sample_poly_cbd2(buf))
     return np.stack(rows)

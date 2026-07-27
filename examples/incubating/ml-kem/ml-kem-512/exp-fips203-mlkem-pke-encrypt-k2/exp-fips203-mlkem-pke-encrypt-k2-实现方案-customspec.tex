@@ -78,7 +78,9 @@ CANN / tikicpulib / CAModel & 编译与运行环境 \\
 \begin{enumerate}
   \item 行 2：从 \texttt{ek\_pke[0:768]} 解码 \(\hat t\in R_q^2\)，在 compute launch 内完成。
   \item 行 3--7：取 \(\rho=\texttt{ek\_pke[768:800]}\)，对 \((j,p)\in\{0,1\}^2\) 生成 \(\hat A[j,p]\)，GM 锁定为 \texttt{[4,256] int32}。
-  \item 行 8--15：用 \(\eta=2\) 从 \texttt{coins} 采样 \(r\Vert e_1\Vert e_2\) 共 5 个 poly；GM 锁定为 \texttt{[5,256]}。
+  \item 行 8--15：从 \texttt{coins} 采样 \(r\Vert e_1\Vert e_2\) 共 5 个 poly（GM 锁定 \texttt{[5,256]}）：
+        \(r\) 用 \(\eta_1=3\)（PRF 192B/行），\(e_1\Vert e_2\) 用 \(\eta_2=2\)（PRF 128B/行；GM 行 stride 统一 192B，XOF 前缀性质）。
+        背景：2026-07-27 glue-c 相对 liboqs Encaps \(c\) 缺项根因曾为 5 行全走 \(\eta=2\)；按参数卡补缺。
   \item 行 16--18：\(\hat r=\mathrm{NTT}(r)\)；\(\hat u_j=\sum_p \hat A[j,p]\circ\hat r_p\)；\(\widehat{tr}=\sum_p \hat t_p\circ\hat r_p\)。
   \item 行 19--21：对 \(\hat u_0,\hat u_1,\widehat{tr}\) 与一空槽执行真 \textbf{INTT batch=4}；得到 \(u_0,u_1,v\) 后分别加 \(e_1\) 与 \(e_2+\mu(m)\)。
   \item 行 22：\(c_1=\mathrm{ByteEncode}_{10}(\mathrm{Compress}_{10}(u))\)，\(c_2=\mathrm{ByteEncode}_{4}(\mathrm{Compress}_{4}(v))\)，输出 \(c=c_1\Vert c_2\)。
@@ -154,7 +156,7 @@ API / 路线 & 不采用原因 \\
 \midrule
 解码 \(\hat t\)、取 \(\rho\) & compute 内 ByteDecode12 + 指针切片 & 部分向量 & unpack 标量缺口沿用 D14 \\
 采样 \(\hat A[4]\) & AIV\_ONLY + XOF/rej & 100\% 设备 & 2+2；无零垫 \\
-采样 \(r\Vert e_1\Vert e_2[5]\) & AIV\_ONLY + CBD \(\eta=2\) & 100\% 设备 & 真实 5 poly \\
+采样 \(r\Vert e_1\Vert e_2[5]\) & AIV\_ONLY + CBD \(\eta_1{=}3\)/\(\eta_2{=}2\) & 100\% 设备 & \(r\) 2 行 η1；$e$ 3 行 η2 \\
 NTT / 内积 / INTT batch4 & MIX + \apiname{Mmad} & 100\% 设备 & NTT 内无 Gather；空槽不写假 poly 语义 \\
 Compress/ByteEncode \(d=10/4\) & 统一整数压缩 + pack & 部分向量 & pack 尾部标量缺口沿用 D14 \\
 \bottomrule

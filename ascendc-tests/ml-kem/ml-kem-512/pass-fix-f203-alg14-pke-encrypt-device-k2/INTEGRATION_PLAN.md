@@ -15,11 +15,14 @@
 rho <- ek_pke[768:800]
 forall (j,p) in {0,1}^2:
   a_hat[j,p] <- SampleNTT(rho || byte(j) || byte(p))      # 4 poly
-forall n in [0,4]:
-  poly_n <- SamplePolyCBD_eta2(PRF(coins, n))
-r[0..1] <- poly_0..1
-e1[0..1] <- poly_2..3
-e2 <- poly_4
+forall n in [0,1]:
+  r[n] <- SamplePolyCBD_eta1(PRF_eta1(coins, n))           # η1=3，PRF 192B
+forall n in [2,3]:
+  e1[n-2] <- SamplePolyCBD_eta2(PRF_eta2(coins, n))        # η2=2，PRF 128B
+e2 <- SamplePolyCBD_eta2(PRF_eta2(coins, 4))
+
+# 注（2026-07-27 glue-c）：曾误 5 行全 η2，导致相对 liboqs Encaps c 全错；按参数卡 η1=3/η2=2 补缺。
+# GM prf 行 stride 统一 192B（XOF 前缀：squeeze(192)[:128]==squeeze(128)）。
 
 # compute+tail（launch 2，MIX blockDim=1）
 t_hat <- ByteDecode_12(ek_pke[0:768])

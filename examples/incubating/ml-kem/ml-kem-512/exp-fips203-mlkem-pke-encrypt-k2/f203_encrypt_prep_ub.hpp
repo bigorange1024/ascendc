@@ -5,9 +5,10 @@
  * 流水线位置（行 3–15）：
  *   1. 自 ek_pke GM 读 ρ[32]（偏移 768）
  *   2. BuildAHat16ShardWithUb：本 block 分片 SampleNTT → a_hat_gm
- *   3. 仅 block0：LoadCoins → PRF×5 → CBD×5 → re_gm
+ *   3. 仅 block0：LoadCoins → PRF×5（行 stride 192）→ 混合 CBD（η1×2+η2×3）→ re_gm
  *
  * 背景：对齐 k2 B4-B6 已绿 prep 组件；ρ 自 ek_pke 尾 32B，不经 G(d)。
+ * 2026-07-27：r 必须 η1=3（参数卡）；曾全 η=2 导致 liboqs Encaps c 不对齐。
  * UB 复用：shakeX/Len/Staging 先服务 Â，再给 PRF；prfYQue 兼作 aHatQue / CBD rowQue。
  *
  * 与 golden：output a_hat / re 对拍；prf_out 为中间态。
@@ -52,9 +53,9 @@ __aicore__ inline void LoadCoinsFromGm(const __gm__ uint8_t *coins_gm, uint8_t c
  * @param coins_gm    GM 输入 coins[32]
  * @param blockIdx    双 AIV 分片：0→poly 0–1，1→2–3；PRF/CBD 仅 block0
  * @param a_hat_gm    输出 Â[4,256] int32
- * @param prf_out_gm  PRF 中间态 [5,128] uint8（block0 写）
+ * @param prf_out_gm  PRF 中间态 [5,192] uint8（block0 写；η2 行前 128B 有效）
  * @param re_gm       输出 r‖e₁‖e₂ [5,256] int32
- * @param tiling_gm   SHAKE tiling（设备每 nonce 覆盖 batch=1）
+ * @param tiling_gm   SHAKE tiling（设备每 nonce 覆盖 batch=1；outLen=192）
  */
 __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, const __gm__ uint8_t *coins_gm,
                                                   uint32_t blockIdx, __gm__ int32_t *a_hat_gm,
@@ -105,7 +106,7 @@ __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, c
                                                       shakeStagingBuf, prfYQue);
         F203_ENCRYPT_PREP_PIPE_ALL();
 
-        F203EncryptReCbd::SamplePolyCbd2BatchReWithUb(prf_out_gm, re_gm, scratchBuf, prfYQue);
+        F203EncryptReCbd::SamplePolyCbdMixedBatchReWithUb(prf_out_gm, re_gm, scratchBuf, prfYQue);
     }
 
     F203_ENCRYPT_PREP_PIPE_ALL();
