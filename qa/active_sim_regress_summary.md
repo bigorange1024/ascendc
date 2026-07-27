@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-27（新增 **ML-KEM-512 W3 D20 KEM Encaps** Cloud SIM tick；W0–W2 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
+| **刷新** | 2026-07-27（新增 **ML-KEM-512 W3 D19/D20 KEM** Cloud SIM tick；W0–W2 + W3 D19/D20 已登记；ML-KEM-768 全表沿用 07-26；Decaps CT k4 行沿用 07-24） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -48,7 +48,7 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 
 ## ML-KEM-512（k=2）积木 — W0 / W1 / W2 / W3
 
-> Cloud / `SIM_DIRECT=1` / Ascend910B4（2026-07-27）。512 W0/W1 积木探针、W2 PKE device 与 W3 D20 Encaps；正确性优先，非生产性能基线。
+> Cloud / `SIM_DIRECT=1` / Ascend910B4（2026-07-27）。512 W0/W1 积木探针、W2 PKE device 与 W3 D19 KeyGen / D20 Encaps；正确性优先，非生产性能基线。
 > 路径根：[`ascendc-tests/ml-kem/ml-kem-512/`](../ascendc-tests/ml-kem/ml-kem-512/INDEX.md)。
 
 | ID | 目录 | SIM tick（默认） | 备注 | 来源 |
@@ -63,6 +63,7 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | **D14** | [`pass-fix-f203-alg14-pke-encrypt-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg14-pke-encrypt-device-k2/) | **338153** | 2 launch；prep Â[4]+re[5]；compute INTT polyvec4 `u0,u1,v,空槽` + d10/d4 pack；c=768 golden PASS | STATUS 2026-07-27 |
 | **D15** | [`pass-fix-f203-alg15-pke-decrypt-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg15-pke-decrypt-device-k2/) | **168975** | 1 fused launch；dk=768+c=768；c1=2×320、c2=128；m golden PASS | STATUS 2026-07-27 |
 | **D20** | [`pass-fix-f203-alg20-kem-encaps-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg20-kem-encaps-device-k2/) | **394978** | 2 launch；KEM head `G(m‖H(ek))` + D14 k2 Encrypt；c/K golden PASS | STATUS 2026-07-27 |
+| **D19** | [`pass-fix-f203-alg19-kem-keygen-device-k2`](../ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg19-kem-keygen-device-k2/) | **320247** | 2 launch；D13 k2 prep+compute；Alg.16 tail embedded；ek_kem=800B、dk_kem=1632B golden PASS | STATUS 2026-07-27 |
 
 ---
 
