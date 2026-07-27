@@ -47,10 +47,12 @@
 │                             # 换机：bash scripts/clone-thirdparty.sh（默认 build liboqs）
 ├── ascendc-tests/            # 平台功能探针（见 INDEX.md）
 │   └── ml-kem/
+│       ├── ml-kem-512/       # ML-KEM-512 活跃探针（W0 + W1 B4 已绿）
 │       ├── ml-kem-1024/      # ML-KEM-1024 活跃探针（frozen 仍在 frozen/）
 │       └── ml-kem-768/       # ML-KEM-768 探针（W0–W3 全绿）
 ├── examples/
 │   ├── incubating/ml-kem/ml-kem-1024/exp-*/   # 研究中（按参数组）
+│   ├── incubating/ml-kem/ml-kem-512/           # ML-KEM-512 incubating 壳（写码须 customspec）
 │   ├── incubating/ml-kem/ml-kem-768/exp-*/    # 768 incubating（W4+glue 已绿）
 │   └── stable/ml-kem/ml-kem-1024/stable-*/    # 定型（按参数组；无 768）
 ├── src/  include/  Makefile  # 普通 C（唯一 main：src/main.c）
@@ -89,7 +91,7 @@
 | KEM Decaps（交付） | **定型** [`stable-fips203-mlkem-kem-decaps-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/)（`#交付#` + **T19i SIM 3**；tick **1050620**）；预研副本 [`exp-…`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-k4/)；基线 [`pass-fix-…-decaps-device-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/)；`scripts/` 默认 |
 | KEM Decaps（CT 专题） | [`stable-…-decaps-ct-k4`](examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/) · [`exp-…-decaps-ct-k4`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-decaps-ct-k4/) · [`pass-fix-…-decaps-device-ct-k4`](ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)（`research/formal-lang-dag`；第7章 CT / 五指标；**非** scripts 默认） |
 | **ML-KEM-768（k=3）** | **有条件完成至 incubating**：探针 W0–W3 + E13–E21ct + AscendC-only RT；参数卡 [`fips203-mlkem768-parameter-card.md`](docs/specs/fips203-mlkem768-parameter-card.md)；**无** stable-768；纪要 [`2026-07-27`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md) |
-| **ML-KEM-512（k=2）** | **P0/P1 已定稿，W0 B1/B2/B3a/B3b 已绿**：B2 [`pass-fix-f203-byteencode-decode-d-k2`](ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-byteencode-decode-d-k2/) CPU/SIM ✓（enc4 **5407** / dec4 **9340** / enc10 **6629** / dec10 **6561** / enc12 **17613**）；B3a/B3b SIM **11377** / **13566**；禁 stable-512；下一步 W1 |
+| **ML-KEM-512（k=2）** | **P0/P1 已定稿，W0 全绿，W1 B4 已绿**：B2 [`pass-fix-f203-byteencode-decode-d-k2`](ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-byteencode-decode-d-k2/) CPU/SIM ✓（enc4 **5407** / dec4 **9340** / enc10 **6629** / dec10 **6561** / enc12 **17613**）；B3a/B3b SIM **11377** / **13566**；B4 [`pass-fix-f203-alg7-sample-ntt-k2`](ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg7-sample-ntt-k2/) SIM **80235** + 2×2 matrix CPU ✓；禁 stable-512；下一步 W1 B5/B6 |
 | Host 随机 | 已正确性 PKE/KEM：**默认** [`fips203_host_rng`](library/shared/fips203_host_rng/) SHA3/SHAKE 派生；`SEED_D=` 定点可覆盖 |
 | KEM 三分项 | **Alg.19/20/21** device+stable **均已绿**（交付 Decaps **无 `-ct`**）；办公室↔liboqs：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)（urandom→同字节喂 AscendC；**CPU+SIM 全绿**）；correctness×3 **已冻结**；见 [`ascendc-tests/INDEX.md`](ascendc-tests/INDEX.md) · [`qa/TODO.md`](qa/TODO.md) |
 | 统一整数 Compress/Decompress | exp [`exp-fips203-compress-unified-int-vec-k4`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-compress-unified-int-vec-k4/) · [`exp-fips203-decompress-unified-int-vec-k4`](examples/incubating/ml-kem/ml-kem-1024/exp-fips203-decompress-unified-int-vec-k4/)（customspec）；生产路径已迁入 stable PKE Encrypt/Decrypt；**PKE round-trip PASS** |

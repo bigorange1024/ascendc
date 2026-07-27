@@ -16,7 +16,7 @@ SEED_D_DEFAULT = 20260619
 
 
 def derand_bytes_from_seed(seed_d: int, kyber_k: int = 4) -> bytes:
-    """SEED_D → d[32]。域前缀按参数组分离（1024→k4，768→k3），默认 k=4 保持既有契约。"""
+    """SEED_D → d[32]。域前缀按参数组分离（512→k2，768→k3，1024→k4），默认 k=4 保持既有契约。"""
     if kyber_k not in (2, 3, 4):
         raise ValueError(f"unsupported kyber_k={kyber_k}")
     msg = f"exp-mlkem-f203-2s1e-k{kyber_k}:SEED_D={seed_d}".encode()
