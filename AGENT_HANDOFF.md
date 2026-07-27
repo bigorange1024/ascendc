@@ -13,9 +13,10 @@
 |----|------|
 | **分支** | **`research/formal-lang-dag`** · PR [#12](https://github.com/bigorange1024/ascendc/pull/12)（已合入 `main` @ `854a6d5`；research 仍活跃） |
 | **768** | incubating + glue **有条件完成**；禁 stable-768 |
-| **512** | **计划 + 参数卡草案已成文，待用户锁 §决议** |
+| **512** | **P0 决议已锁**；KEM liboqs 胶水已可切 512/768/1024（冒烟绿）；目录壳/写码未开 |
 | **512 计划** | [`docs/research/MLKEM-512-从0到exp完整实现计划.md`](docs/research/MLKEM-512-从0到exp完整实现计划.md) |
 | **512 参数卡** | [`docs/specs/fips203-mlkem512-parameter-card.md`](docs/specs/fips203-mlkem512-parameter-card.md) |
+| **liboqs KEM RT** | `MLKEM_PARAM=512\|768\|1024`；冒烟 `bash scripts/smoke_liboqs_kem_params.sh`；768 真交叉：`USE_LIBOQS=1 bash scripts/exp_kem768_liboqs_roundtrip.sh` |
 | **当日纪要** | [`qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md)（含 512 起草节） |
 
 ### 512 草案默认（待确认）
@@ -28,7 +29,7 @@ S-1 单 cube；T-B2 polyvec4；`-k2`；CBD‑η3 新积木；保留 D19–D21+CT
 
 | 项 | 说明 |
 |----|------|
-| **T512** | 用户勾选参数卡 §0 / 计划 §9 → 落 P0 目录壳与 sizes/helper → P1 定稿 → W0 |
+| **T512** | 落 P0 目录壳 / `check_mlkem512_sizes.sh` → P1 定稿 → W0（KEM liboqs 胶水已就绪） |
 | T768-post | 可选；非挡 512 |
 | stable-768/512 | 仅 `#交付#` |
 
@@ -37,8 +38,8 @@ S-1 单 cube；T-B2 polyvec4；`-k2`；CBD‑η3 新积木；保留 D19–D21+CT
 ## ★ Smoke
 
 ```bash
+bash scripts/smoke_liboqs_kem_params.sh
 bash scripts/check_mlkem768_sizes.sh
-test -f docs/research/MLKEM-512-从0到exp完整实现计划.md
 test -f docs/specs/fips203-mlkem512-parameter-card.md
 test ! -d examples/stable/ml-kem/ml-kem-512
 ```
