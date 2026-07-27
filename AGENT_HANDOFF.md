@@ -12,7 +12,7 @@
 | 项 | 状态 |
 |----|------|
 | **分支** | **`research/formal-lang-dag`** · PR [#12](https://github.com/bigorange1024/ascendc/pull/12)（已合入 `main` @ `854a6d5`；research 仍活跃） |
-| **768** | incubating + glue **有条件完成**；禁 stable-768 |
+| **768** | incubating + glue **有条件完成**；**真 liboqs 交叉 RT 已绿**（`USE_LIBOQS=1` CPU×1+SIM×1）；禁 stable-768 |
 | **512** | **P0 决议已锁**；KEM liboqs 胶水已可切 512/768/1024（冒烟绿）；目录壳/写码未开 |
 | **512 计划** | [`docs/research/MLKEM-512-从0到exp完整实现计划.md`](docs/research/MLKEM-512-从0到exp完整实现计划.md) |
 | **512 参数卡** | [`docs/specs/fips203-mlkem512-parameter-card.md`](docs/specs/fips203-mlkem512-parameter-card.md) |
