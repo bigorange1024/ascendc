@@ -16,7 +16,7 @@
 | **768** | **有条件完成至 incubating**（禁 stable-768） |
 | **1024 Encaps `m`** | 默认 **`os.urandom(32)`**；禁默认可全 0 |
 | **用语** | **缺项** / **补缺** |
-| **额度经验** | [`docs/engineering/Cloud-Agent额度与验收分层.md`](docs/engineering/Cloud-Agent额度与验收分层.md)（**不改** ML-KEM 流程） |
+| **额度经验** | Rule **3/6/7** + Skill **1/2**；见 [`Cloud-Agent额度与验收分层.md`](docs/engineering/Cloud-Agent额度与验收分层.md) |
 
 ### glue-c（已闭环）
 
