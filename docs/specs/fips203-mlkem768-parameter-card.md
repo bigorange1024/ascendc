@@ -229,7 +229,7 @@ c = c1 ‖ c2                              # du*k*n/8 + dv*n/8 = 960+128 = 1088
 - [x] T-B / C-1 / `-k3` / CT / PKE exp 锁定
 - [x] 目录壳 + INDEX
 - [x] registry 骨架 → incubating 补绿
-- [x] P1 补洞与必建表（另文）
+- [x] P1 缺项对照（补洞图）与必建表（另文）
 - [x] P2、W0–W1：积木 B1–B6
 - [x] P2、W2：§3.2 / D13–D15
 - [x] P2、W3：§3.3 / D19–D21[+ct]

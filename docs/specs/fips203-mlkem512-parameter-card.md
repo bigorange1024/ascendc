@@ -148,7 +148,7 @@ c = c1 ‖ c2                              # 640+128 = 768
 - [ ] S-1 / T-B2 / `-k2` / CT / PKE exp / liboqs 交叉锁定
 - [ ] 目录壳 + INDEX
 - [ ] registry 骨架
-- [ ] P1 补洞与必建表
+- [ ] P1 缺项对照（补洞图）与必建表
 - [ ] P2、W0–W3 探针全绿
 - [ ] P3、W4 incubating 全绿
 - [ ] P3、glue：AscendC RT + liboqs-512 KAT
