@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-27（**512 W0 B3b CBD‑η3 已绿**；下一刀 W0 剩余 B1/B2/B3a）
+> **最后刷新**：2026-07-27（**512 P0+P1 已落**；**W0 B3b CBD‑η3 CPU+SIM 绿**）
 
 ---
 
@@ -11,16 +11,12 @@
 
 | 项 | 状态 |
 |----|------|
-| **分支** | **`research/formal-lang-dag`**（与 `main` 对齐后推进 512） |
-| **768** | incubating + glue **有条件完成**；真 liboqs 交叉已绿；禁 stable-768 |
-| **512** | **P0+P1 完成；W0 B3b 已绿**：`pass-fix-f203-alg8-cbd-eta3-k2` CPU+SIM PASS（tick **13566**） |
-| **授权** | `$规格说明书$` + `【预研代码】`（2026-07-27） |
-| **用语** | **缺项** / **补缺** / **补缺图**；禁「洞 / 补洞」 |
+| **分支** | **`research/formal-lang-dag`** @ `b0c95a4` |
+| **768** | incubating + glue 有条件完成；禁 stable-768 |
+| **512** | **P0+P1 完成**；W0 **B3b CBD‑η3** `pass-fix-f203-alg8-cbd-eta3-k2` **CPU+SIM PASS**（tick **13566**） |
+| **授权** | `$规格说明书$` + `【预研代码】` |
+| **用语** | **缺项** / **补缺**；禁「洞 / 补洞」 |
 | **当日纪要** | [`qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md) |
-
-### 512 已锁默认
-
-S-1；T-B2 polyvec4；`-k2`；CBD‑η3 缺项；D19–D21+CT；PKE exp；liboqs-512 交叉必达；禁零垫 / 禁 stable-512。
 
 ---
 
@@ -28,9 +24,9 @@ S-1；T-B2 polyvec4；`-k2`；CBD‑η3 缺项；D19–D21+CT；PKE exp；liboqs
 
 | 项 | 说明 |
 |----|------|
-| **T512 W0** | B1/B2/B3a（B3b `pass-fix-f203-alg8-cbd-eta3-k2` 已绿） |
-| W4 | 先写 `*-customspec.*` 再动 `exp-…-k2` |
-| stable | 仅 `#交付#` |
+| **T512 W0** | B1 Compress · B2 ByteEncode · B3a CBD‑η2（k=2 packing） |
+| W1 | SampleNTT 2×2 · polyvec4 NTT · Multiply/Inner |
+| W4 | **先** `*-customspec.*` 再 `exp-…-k2` |
 
 ---
 
@@ -38,17 +34,15 @@ S-1；T-B2 polyvec4；`-k2`；CBD‑η3 缺项；D19–D21+CT；PKE exp；liboqs
 
 ```bash
 bash scripts/check_mlkem512_sizes.sh
-bash scripts/smoke_liboqs_kem_params.sh
-test -f docs/specs/fips203-mlkem512-p1-gap-and-cases.md
-test -d ascendc-tests/ml-kem/ml-kem-512
-test -d ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg8-cbd-eta3-k2
-test ! -d examples/stable/ml-kem/ml-kem-512
+cd ascendc-tests/ml-kem/ml-kem-512/pass-fix-f203-alg8-cbd-eta3-k2
+bash run.sh -r cpu -v Ascend910B4
+SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
 
 ---
 
 ## ★ 勿做
 
-- 建 stable-512；从 `**/frozen/**` 抄实现；零垫  
+- 建 stable-512；frozen 抄码；零垫  
 - 无 customspec 改 `examples/incubating/ml-kem/ml-kem-512/`  
-- 擅自改已锁参数；另造方法论用语（须用 **缺项/补缺**）
+- 擅自改已锁参数；另造用语
