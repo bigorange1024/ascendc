@@ -47,7 +47,7 @@
 
 ## 依据
 
-- A：`fix-…-decaps-correctness` `STATUS.md`；`docs/research/形式语言DAG预研讨论纪要.md` §4  
+- A：`fix-…-decaps-correctness` `STATUS.md`；`docs/research/形式语言与自动机预研讨论纪要.md` §4  
 - B：`999d357` / `a7d9286`；`qa/2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md`
 
 
