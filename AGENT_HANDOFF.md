@@ -3,7 +3,7 @@
 > **用途**：公司与家里 Agent 的**唯一**短交接面；**每日**任务结束前覆盖刷新（不堆历史章节）。
 > **Cloud / 任意 coding agent 入口**：根 [`AGENTS.md`](AGENTS.md)。
 > **详案**：`qa/YYYY-MM/` 当日纪要 · `docs/notes/` 定稿 · `docs/research/` 调研草稿 · 各目录 `INDEX.md` / `STATUS.md`。
-> **最后刷新**：2026-07-27（**768 有条件完成至 incubating + glue**；正确性/性能已汇报；复盘入 qa；文档/索引刷新）
+> **最后刷新**：2026-07-27（**768 有条件完成至 incubating + glue**；**教材第8章**已成文；正确性/性能已汇报）
 
 ---
 
@@ -17,6 +17,7 @@
 | **incubating-768** | **W4 + glue 已完成**：E13–E15、E19–E21ct 均有 customspec + CPU/SIM；registry 已补；[`scripts/exp_kem768_liboqs_roundtrip.sh`](scripts/exp_kem768_liboqs_roundtrip.sh) **AscendC-only** CPU×1+SIM×1 PASS |
 | **stable-768** | **本阶段不建**（须 `#交付#`） |
 | **当日纪要** | [`qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md) |
+| **教材** | 第8章（`sec:mlkem768`）已写入形式方法教材草案 PDF |
 
 ### 用户决议（摘要）
 

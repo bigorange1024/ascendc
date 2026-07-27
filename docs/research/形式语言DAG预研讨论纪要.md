@@ -104,8 +104,9 @@
 - [x] KeyGen / Encaps：事后闭包表 + 合法边 / 禁止边复盘（教材第6章；含轨迹对照与欠债）  
 - [ ] KeyGen：若汇报需要，再压一页「合法派生」简图（非本轮阻塞）  
 - [x] Decaps：方法论前瞻闭包 → 实现验收 → 第7章判决（2026-07-24：`pass-fix-…-decaps-device-ct-k4` CPU+SIM PASS；强成功；后补 `-ct` 改名/压测/注释）  
+- [x] ML-KEM-768：参数卡→W0–W4+glue → 第8章完整复盘（2026-07-27：有条件完成至 incubating；禁零垫；AscendC-only RT）  
 - [ ] correctness 对照实验设计落成可执行协议  
-- [ ] 结论稳定后再考虑迁 `docs/notes/` 或挂钩 Rule/Skill  
+- [ ] 结论稳定后再考虑迁 `docs/notes/` 或挂钩 Rule/Skill（含 768 奇数 k 分核定稿）  
 
 ---
 
@@ -165,3 +166,4 @@
 | 2026-07-25 | **第7章去翻译腔**：叙述改口语教材口吻（结论不变） |
 | 2026-07-25 | **第7章成文**：扩写 `sec:forward`（任务链、文书代码、测试、B↔C 对照、方法论效果）；PDF 已编
 | 2026-07-24 | **merge origin/main → research**：交付 Decaps 无 `-ct` 与 CT 专题 `-ct` 并存；scripts 默认指交付树 |
+| 2026-07-27 | **第8章成文**：ML-KEM-768 分析→计划→W0–W4+glue→有条件完成至 incubating；PDF 已编；阅读地图/摘要已挂 |

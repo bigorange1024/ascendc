@@ -114,6 +114,7 @@
 
 \textbf{压力测试床}：ML-KEM-1024 链上的 \texttt{pke.keygen} / \texttt{kem.keygen} / \texttt{kem.encaps}，
 并以 \texttt{kem.decaps} 为理论前瞻试金石；\texttt{*-correctness-*} 作为「只求正确、不计优化」的对照组标本。
+另用真 \textbf{ML-KEM-768}（$k=3$）做参数组迁移复盘（第~\ref{sec:mlkem768}~章）：检验「先锁参数卡再按波次补洞」能否走到 incubating，而不是把 1024 零垫改名。
 \end{abstract}
 
 \tableofcontents
@@ -145,7 +146,7 @@
   特例引出 & 工程故事 $\to$ 图与语法树 & 完备公式 \\
   套公式 & 用数学\textbf{复述}已见现象 & 证明 \\
   改公式 & 缺口反过来改理论 & 为漂亮删工程事实 \\
-  套别例 & Encaps 复盘（第~\ref{sec:replay}~章）；Decaps 前瞻+判决（第~\ref{sec:forward}~章已做） & 一次塞太多缺口 \\
+  套别例 & Encaps 复盘（第~\ref{sec:replay}~章）；Decaps 前瞻+判决（第~\ref{sec:forward}~章）；768 参数组迁移（第~\ref{sec:mlkem768}~章） & 一次塞太多缺口 \\
   迭代方法论 & 门禁与流程收敛 & 急进 Rule/Skill \\
   成型后 & 证明、可解释性 & 过早锁死抽象 \\
   \bottomrule
@@ -160,6 +161,7 @@
   \item 第~\ref{sec:math}--\ref{sec:gates}~章：\textbf{装进工程对象与门禁}
         （用第~3~章数学对象作算法参数，逐步推出节点/边/证书与写码许可判定）；
   \item 第~\ref{sec:replay}--\ref{sec:forward}~章：\textbf{复盘与前瞻}（用理论看实现）；
+  \item 第~\ref{sec:mlkem768}~章：\textbf{ML-KEM-768 完整复盘}（分析$\to$计划$\to$实现/测试/修改$\to$结果）；
   \item 第~\ref{sec:correctness}~章：\textbf{correctness 对照组}；
   \item 第~\ref{sec:open}~章：未决议事项与维护约定。
 \end{enumerate}
@@ -4455,6 +4457,385 @@ B 是对照实验副本（\texttt{-ct}）。
 \end{enumerate}
 
 
+
+% ============================================================
+\section{套别例：ML-KEM-768 从分析到 incubating 的完整复盘}
+\label{sec:mlkem768}
+
+第~\ref{sec:hook}--\ref{sec:forward}~章讲的是 \textbf{ML-KEM-1024}（$k=4$）这条主链：
+先有特例，再抽理论，再用 Decaps 当试金石。
+这一章换一块石头：真做 \textbf{ML-KEM-768}（$k=3$），从\textbf{分析}、\textbf{计划}、\textbf{实现与测试}、\textbf{改错}，一直写到\textbf{结果与判决}。
+
+读者带走三句话就够：
+\begin{enumerate}
+  \item 768 不是「把 1024 的 $k$ 改成 3」；奇数维会逼出一整套分核与 I/O 重锁。
+  \item 有效路径是\textbf{先锁参数卡与波次}，再积木$\to$device$\to$incubating$\to$胶水；禁零垫、禁抄 \texttt{frozen/}。
+  \item 判决是\textbf{有条件完成至 incubating}：CPU+SIM 与 AscendC-only roundtrip 绿；
+        本阶段不建 stable-768，也不宣称 liboqs-768 交叉已齐。
+\end{enumerate}
+
+仓库锚点（查数字与 STATUS 时用，不必背路径）：
+参数卡 \repo{docs/specs/fips203-mlkem768-parameter-card.md}；
+计划 \repo{docs/research/MLKEM-768-从0到exp完整实现计划.md}；
+探针树 \repo{ascendc-tests/ml-kem/ml-kem-768/}；
+incubating \repo{examples/incubating/ml-kem/ml-kem-768/}；
+当日收尾 \repo{qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md}。
+细 tick 见 \repo{qa/active_sim_regress_summary.md}。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=4.5mm and 5mm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\small,
+              minimum width=2.4cm, minimum height=0.72cm},
+  a/.style={box, fill=blue!8},
+  b/.style={box, fill=orange!12},
+  c/.style={box, fill=green!12},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[a] (ana) {分析\\差异与禁令};
+  \node[a, right=of ana] (plan) {计划\\参数卡+波次};
+  \node[b, right=of plan] (w0) {W0--W1\\积木};
+  \node[b, below=10mm of w0] (w2) {W2--W3\\device};
+  \node[b, below=of w2] (w4) {W4\\incubating};
+  \node[c, right=18mm of w2] (glue) {glue\\registry+RT};
+  \node[c, below=of glue] (ver) {判决\\有条件完成};
+
+  \draw[arr] (ana) -- (plan);
+  \draw[arr] (plan) -- (w0);
+  \draw[arr] (w0) -- (w2);
+  \draw[arr] (w2) -- (w4);
+  \draw[arr] (w4) -| (glue);
+  \draw[arr] (glue) -- (ver);
+  \node[font=\footnotesize, text=gray!55!black, above=2mm of plan]
+    {先文书、后写码；每波 CPU+SIM};
+\end{tikzpicture}
+\caption{第~8~章总览：768 不是改参冒充，而是「锁卡$\to$波次$\to$绿线$\to$判决」}
+\label{fig:ch8-overview}
+\end{figure}
+
+\subsection{为什么拿 768 当第二块试金石}
+\label{sec:mlkem768-why}
+
+第~\ref{sec:forward}~章的压力主要在\textbf{接缝}：Decrypt、Encrypt、FO 多父汇合，先交闭包表再写码。
+768 的压力换到另一处：\textbf{参数组迁移}——同一套算法叙事，换一组 $(k,d_u,d_v)$ 与字节契约，
+方法论还认不认得「哪些能继承、哪些必须重做」？
+
+若允许「末 poly 置零凑成 4/8」，工程上往往能先绿一把，但语义已经不是真 768，
+而且会把日后真正奇数维布局的坑藏起来。用户锁定的前提是：\textbf{禁止零垫}；后缀用 \texttt{-k3}；
+本阶段终点停在 incubating（PKE$\times$3 + KEM$\times$3 + decaps-ct），\textbf{不}建 stable-768。
+
+\subsection{怎么分析：相对 1024，洞在哪里}
+\label{sec:mlkem768-analysis}
+
+先把 FIPS~203 与 liboqs 宏对拍清楚（长度已用脚本核过）：
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.2cm}L{3.2cm}L{3.2cm}L{3.6cm}@{}}
+  \toprule
+  项 & ML-KEM-768 & ML-KEM-1024 & 工程含义 \\
+  \midrule
+  $k$ & \textbf{3}（奇数） & 4 & 分核难均分；禁 pad \\
+  $(d_u,d_v)$ & \textbf{10,4} & 11,5 & Compress/pack 重做 \\
+  $|ek|$ / $|dk_{\mathrm{KEM}}|$ / $|c|$ & 1184 / 2400 / 1088 & 1568 / 3168 / 1568 & 一切 I/O 重锁 \\
+  $\hat A$ & $3\times3$（9 poly） & $4\times4$（16） & prep 分片重推 \\
+  噪声批 & polyvec\textbf{6}（$s\Vert e$） & polyvec8 & 不能复用 8 路常量 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+再画「可继承 vs 必须重做」（只记策略，不抄 1024 源码当规格）：
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.4cm}L{4.2cm}L{5.6cm}@{}}
+  \toprule
+  能力块 & 策略 & 为何 \\
+  \midrule
+  SHAKE / Keccak 设备 & \textbf{继承} API & 改长度/次数即可 \\
+  NTT 数学契约 & \textbf{继承数学} & 设备布局按 $k=3$ 重做 \\
+  polyvec8 / k4 内积几何 & \textbf{不作实现模板} & 只借不变量叙述 \\
+  Compress/ByteEncode & \textbf{树内自建}（C-1） & 主路径 $d\in\{10,4\}$ \\
+  FO / $G$/$H$/$J$ & \textbf{继承算法} & stash 与密文长重锁 \\
+  CPU/SIM 工程壳 & \textbf{继承} & camodel、超时、run.sh 习惯 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+分析阶段的硬结论只有一条：\textbf{形状常数不能从 k4 默默搬过来}。
+遇阻就停、回参数卡；不许为了编译过而改已锁的 $M$/$N$/分核。
+
+\subsection{怎么计划：参数卡、决议与波次}
+\label{sec:mlkem768-plan}
+
+计划拆成四段（文书先行，写码后置）：
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{1.4cm}L{5.8cm}L{6cm}@{}}
+  \toprule
+  阶段 & 产出 & 退出 \\
+  \midrule
+  P0 & 参数卡 + CT 长度 + 分核选项 + 目录壳 + registry 骨架 & 用户锁决议 \\
+  P1 & 补洞图 + 必建用例表（含 PKE exp 与 CT） & 表定稿 \\
+  P2 & W0--W3 探针全绿 & 每波 CPU+\texttt{SIM\_DIRECT=1} sim \\
+  P3 & W4 incubating + roundtrip & 有条件完成（本阶段） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{用户决议（2026-07-26，写进参数卡）}
+\begin{enumerate}
+  \item 分核主路线 \textbf{T-B}：噪声侧 polyvec6；$\hat A$ \textbf{独立 prep}；拒绝 pad-to-4/8。
+  \item \textbf{保留} KEM device D19--D21；\textbf{要求} reject/CT（D21ct 与 E21ct）。
+  \item \textbf{PKE exp 必做}（E13--E15），不只做 KEM。
+  \item 命名后缀 \texttt{-k3}；本阶段\textbf{不}建 stable-768。
+\end{enumerate}
+
+\paragraph{数值 tiling 后来也锁进卡里}
+例如：InnerProduct AIV \textbf{2+1}（不是 $P/2$）；$\hat A[9]$ prep 分片 \textbf{5+4}；
+Encrypt INTT \textbf{batch4}（真 4，不垫成 8）；D21 默认 \texttt{decaps\_1session}，
+D21ct 默认 \texttt{decaps\_2session}。这些数字一旦入卡，实现阶段\textbf{禁止}擅自改参绕过。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=7mm and 8mm,
+  w/.style={draw, rounded corners=2pt, align=center, font=\small,
+            minimum width=2.1cm, minimum height=0.85cm, fill=blue!6},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  \node[w] (w0) {W0\\B1--B3};
+  \node[w, right=of w0] (w1) {W1\\B4--B6};
+  \node[w, right=of w1] (w2) {W2\\D13--D15};
+  \node[w, right=of w2] (w3) {W3\\D19--D21ct};
+  \node[w, below=12mm of w2] (w4) {W4\\E13--E21ct};
+  \node[w, fill=green!12, right=of w4] (g) {glue\\registry+RT};
+
+  \draw[arr] (w0) -- (w1);
+  \draw[arr] (w1) -- (w2);
+  \draw[arr] (w2) -- (w3);
+  \draw[arr] (w2) -- (w4);
+  \draw[arr] (w3) |- (w4);
+  \draw[arr] (w4) -- (g);
+  \draw[arr, gray!70] (w0.south) |- ++(0,-0.55) -| (w2.south);
+  \node[font=\footnotesize, text=gray!60!black, below=1mm of w0.south west, anchor=north west]
+    {B1/B2 在 D14/D15 pack 前必须绿};
+\end{tikzpicture}
+\caption{波次依赖（有汇合）：积木喂 PKE，PKE+KEM device 再汇入 incubating}
+\label{fig:ch8-waves}
+\end{figure}
+
+Skill 节奏与仓规一致：探针可走预研；进 \texttt{examples/incubating/} 写码前须有活跃 \texttt{*-customspec.*}；
+本阶段不触发 \texttt{\#交付\#}。
+
+\subsection{怎么实现：按波次落码}
+\label{sec:mlkem768-impl}
+
+每一波固定同一条流水（门禁，不是口号）：
+\begin{quote}
+分析形状/同步/I/O $\to$
+写 INTEGRATION\_PLAN 或 customspec $\to$
+实现 $\to$
+\texttt{bash run.sh -r cpu -v Ascend910B4} $\to$
+\texttt{SIM\_DIRECT=1 bash run.sh -r sim -v Ascend910B4} $\to$
+打勾 STATUS + 当日 \texttt{qa/} 追加。
+\end{quote}
+
+\textbf{合法代码来源}：活跃 1024 树的\textbf{模式}（launch 编排、自包含习惯、注释密度）+ 参数卡几何；
+\textbf{禁止}从 \texttt{**/frozen/**} 抄实现或把 frozen customspec 当依据。
+1024 迁入 \texttt{ml-kem/ml-kem-1024/} 之后，768 落在并列的 \texttt{ml-kem/ml-kem-768/}，避免在 1024 目录里改 $k$ 冒充。
+
+\paragraph{W0（编码压缩）}
+B1 Compress/Decompress $d_u{=}10,d_v{=}4$；B2 ByteEncode/Decode（含 d=12 密钥域）；
+B3 CBD $\eta{=}2$ 的 polyvec6 打包。这一波主要证明「768 树能挂住定点与长度」，算法大多可继承。
+
+\paragraph{W1（采样与 NTT，最高风险）}
+B4 SampleNTT 覆盖 $(i,j)\in\{0,1,2\}^2$；B5 Stage1--3 真 polyvec6（S1--S3 禁 Gather）；
+B6 MultiplyNTTs + InnerProduct（$P{=}3$，AIV \textbf{2+1}）。
+这里最容易出现「先 pad 成 4 再说」的诱惑——计划里把它写成\textbf{停问条件}：一冒头就停，回参数卡，不偷偷改。
+
+\paragraph{W2（PKE device）}
+D13 KeyGen（2 launch：prep $\hat A$ 5+4 + compute polyvec6）；
+D14 Encrypt（2 launch；INTT batch4；d10/d4 pack；$|c|{=}1088$）；
+D15 Decrypt（fused 1 launch）。
+从活跃 k4 device \textbf{复制结构再改几何}，不是 fork frozen。
+一例真实返工：prep 队列按 PRF-Y 分配的 UB，复用给 $\hat a$ 时越界——扩大队列容量，\textbf{不}改 GM 锁定形状。
+
+\paragraph{W3（KEM device + CT）}
+D19 在 D13 上接 Alg.16 尾；D20 接 D14；D21 接 D15 + 重加密 + FO（交付默认单 session）；
+D21ct 走双 session，专门压拒绝路径。
+正确性口径：accept 与 Encaps 的 $K$ 字节一致；reject 必须是 $J(z\Vert c)$，且与 accept 不等。
+
+\paragraph{W4（incubating）}
+先 customspec（含 PDF），再自包含复制 device$\to$\texttt{exp-*}。
+顺序：E13--E15（PKE）$\to$ E19--E21ct（KEM）。
+每个 exp 目录实体化 \texttt{compute/}/\texttt{scripts/} 等，避免运行时软链指回探针；
+\texttt{vendor\_sync.sh} 只做本树存在性检查，不从 k4/frozen 覆盖。
+
+\paragraph{glue}
+六份 \texttt{fips203-mlkem768-*-baseline-registry.md} 按绿线补登记（诚实标未跑项）；
+新增 \repo{scripts/exp_kem768_liboqs_roundtrip.sh}：默认 E19$\to$E20$\to$E21，并抽检 reject。
+脚本名带 liboqs，\textbf{当前实现是 AscendC-only}——仓内 helper 仍按 1024 尺寸写死；名实分离写进脚本头与纪要，避免假绿「交叉」。
+
+\subsection{怎么测，以及测挂了怎么改}
+\label{sec:mlkem768-test}
+
+\paragraph{验收矩阵（最小）}
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.6cm}L{1.4cm}L{2.2cm}L{6cm}@{}}
+  \toprule
+  对象 & CPU & SIM\_DIRECT & 备注 \\
+  \midrule
+  B1--B6 & $\checkmark$ & $\checkmark$ & B5/B6 须有 ref \\
+  D13--D15 & $\checkmark$ & $\checkmark$ & I/O golden；PKE RT 脚本可选后补 \\
+  D19--D21ct & $\checkmark$ & $\checkmark$ & ct：reject$\neq$accept \\
+  E13--E21ct & $\checkmark$ & $\checkmark$ & 须活跃 customspec \\
+  roundtrip & $\checkmark$ & $\checkmark$ & AscendC-only；含 reject 抽检 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+声称通过前：同用例目录双模式都绿；用例根无 stray dump；默认即全量路径（不要求用户手搓一串「与 default 相同」的 export）。
+
+\paragraph{典型坑与改法（过程证据，不是荣誉墙）}
+\begin{enumerate}
+  \item \textbf{嵌套路径}：1024/768 迁入 \texttt{ml-kem/} 后，encode12 等脚本向上找共享件的层数错了——按新树修正 walk-up。
+  \item \textbf{derand 字符残留}：注释改成 k3 后，设备侧标志字符仍停在 \texttt{'4'}——改回 \texttt{'3'}，并对拍重跑。
+  \item \textbf{host/device 双用符号}：把 dual-use 的 \texttt{GetPRange} 放进 host 头导致 SIM 链接炸——改为 kernel \texttt{Init} 内联。
+  \item \textbf{奇数行均分幻觉}：Inner 若写成 $P/2$ 会 silently 错分；卡上写死 \textbf{2+1}。
+  \item \textbf{INTT 假 batch8}：Encrypt 侧禁止「垫成 8 再跑 k4 路径」；真 \textbf{batch4}。
+  \item \textbf{exp SIM 缺本地 multiply include}：\texttt{MULTIPLY\_DIR} 未传入 E20 CMake——补本地头路径。
+  \item \textbf{roundtrip 名实}：保留计划里的脚本名，但正文与脚本头写清「非 liboqs 交叉」，避免验收口径漂移。
+\end{enumerate}
+
+这些修改有一个共同点：\textbf{修工程接缝或实现 bug，不改已锁语义参数}。
+参数有歧义就停；这和第~\ref{sec:gates}~章「缺项未清不许宣称交付」是同一类纪律。
+
+\subsection{结果如何}
+\label{sec:mlkem768-result}
+
+\paragraph{完成口径}
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.2cm}L{10cm}@{}}
+  \toprule
+  层 & 状态 \\
+  \midrule
+  探针 W0--W3 & CPU + \texttt{SIM\_DIRECT=1} sim 全绿（含 D21ct accept/reject） \\
+  incubating W4 & E13--E15、E19--E21ct：均有 customspec；CPU+SIM 全绿 \\
+  glue & registry 补绿；AscendC-only roundtrip CPU$\times$1+SIM$\times$1 PASS \\
+  stable-768 & \textbf{未建}（须日后 \texttt{\#交付\#}） \\
+  liboqs-768 交叉 / NPU & \textbf{未做}（挂 T768-post，非本阶段门禁） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{正确性（黑盒 I/O）}
+各用例对拍 $\mathrm{max}=0$；CT reject $=J(z\Vert c)$ 且 $\neq$ accept；
+KEM 闭环（KeyGen$\to$Encaps$\to$Decaps）在 AscendC 树上绿。
+\textbf{没有}宣称：与参考 C 源码同构、或已通过 liboqs-768 交叉 KAT。
+
+\paragraph{性能（SIM Total tick，Cloud / Ascend910B4，非 msprof）}
+作登记对照，\textbf{不是}优化 SLA。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.4cm}L{3.2cm}L{3.2cm}L{4.4cm}@{}}
+  \toprule
+  能力 & 768 ($k{=}3$) & 1024 ($k{=}4$) 量级 & 读法 \\
+  \midrule
+  D13 KeyGen & 373426 & $\sim$54万（stable） & 维数更小，tick 更低 \\
+  D14 Encrypt & 507605 & $\sim$63万 & 同左 \\
+  D15 Decrypt & 222032 & $\sim$28万 & 同左 \\
+  D19 / D20 & 510775 / 592129 & $\sim$70万 / $\sim$72万 & 同左 \\
+  D21 / D21ct & 818285 / $\sim$82--83万 & $\sim$104万量级 & 同左 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+相对同结构 k4 device，768 大约低 \textbf{18\%--31\%}，方向「活少了」的预期；
+E* 与对应 D* 同量级（incubating 未另开性能叙事）。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[x=0.9cm, y=0.62cm]
+  \draw[thick, -{Stealth}] (0,0) -- (11.5,0) node[right, font=\footnotesize] {SIM Total tick（$\times 10^{5}$）};
+  \foreach \x in {0,2,...,10} {
+    \draw (\x,0.08) -- (\x,-0.08) node[below, font=\scriptsize] {\x};
+  }
+  \fill[blue!45] (0,0.45) rectangle (3.734,1.05);
+  \node[font=\footnotesize, anchor=west] at (0.08,0.75) {D13 $\approx 3.73$};
+  \fill[blue!45] (0,1.35) rectangle (5.076,1.95);
+  \node[font=\footnotesize, anchor=west] at (0.08,1.65) {D14 $\approx 5.08$};
+  \fill[blue!45] (0,2.25) rectangle (2.220,2.85);
+  \node[font=\footnotesize, anchor=west] at (0.08,2.55) {D15 $\approx 2.22$};
+  \fill[orange!55] (0,3.15) rectangle (5.108,3.75);
+  \node[font=\footnotesize, anchor=west] at (0.08,3.45) {D19 $\approx 5.11$};
+  \fill[orange!55] (0,4.05) rectangle (5.921,4.65);
+  \node[font=\footnotesize, anchor=west] at (0.08,4.35) {D20 $\approx 5.92$};
+  \fill[orange!55] (0,4.95) rectangle (8.183,5.55);
+  \node[font=\footnotesize, anchor=west] at (0.08,5.25) {D21 $\approx 8.18$};
+  \node[font=\scriptsize, align=left, anchor=west] at (0,-1.15) {
+    自然量条形图：越长 tick 越多。用于登记，不当作「已经优化完」的证明。
+  };
+\end{tikzpicture}
+\caption{768 device 代表 SIM tick（Cloud 登记值）}
+\label{fig:ch8-ticks}
+\end{figure}
+
+\subsection{完整复盘：什么有效，什么仍欠}
+\label{sec:mlkem768-verdict}
+
+\paragraph{有效路径}
+\begin{enumerate}
+  \item \textbf{先锁卡再写码}：T-B、I/O 长度、§3.1--§3.3 tiling、CT/PKE exp 范围一次写清，后面波次少扯皮。
+  \item \textbf{波次门禁}：积木$\to$PKE$\to$KEM$\to$exp$\to$glue；每波双绿才往下走（用户可按波授权，也可一并授权剩余波次）。
+  \item \textbf{奇数维写死}：2+1、polyvec6、batch4、$\hat A[9]$ 分片——把「均分幻觉」挡在卡外。
+  \item \textbf{活跃树复制 + 自包含}：只借 1024 模式，不碰 frozen；exp 实体化目录，避免软链漂移。
+\end{enumerate}
+
+\paragraph{和 Decaps 试金石（第~\ref{sec:forward}~章）比，同与不同}
+\begin{center}
+\small
+\begin{tabular}{@{}L{3cm}L{5.5cm}L{5.5cm}@{}}
+  \toprule
+  & 第~7~章 Decaps & 第~8~章 768 \\
+  \midrule
+  压力点 & 多父接缝 + FO/拒绝 & 参数组迁移 + 奇数维分核 \\
+  先交什么 & $\mathrm{CT}_{\mathrm{decaps}}$ & 参数卡 + P1 必建表 \\
+  对照臂 & A correctness / C 交付 & 1024 模式（禁抄 frozen） \\
+  终点 & 可到 stable（另线） & \textbf{刻意停在 incubating} \\
+  方法论用处 & 先表后码压缩搜索 & 先卡后波次挡住零垫捷径 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{仍欠（诚实列出）}
+\begin{itemize}
+  \item liboqs-768 helper / device 交叉 KAT；D14$\leftrightarrow$D15 独立 PKE roundtrip 脚本；
+  \item stable-768（须用户 \texttt{\#交付\#}）；
+  \item NPU 真机；把「奇数 $k$ 分核」升格进 \texttt{docs/notes/} 定稿（过程仍留 research）。
+\end{itemize}
+
+\paragraph{一句话判决}
+\textbf{有条件完成（至 incubating）}：
+真 $k{=}3$ 从参数卡走到探针与 incubating，并闭合 AscendC-only KEM roundtrip；
+先锁卡与禁零垫这套门禁\textbf{有用}。
+它\textbf{不}代替 stable 晋级，也\textbf{不}证明 liboqs 交叉或 NPU；
+脚本名里的 liboqs 字样，目前还不能当成交叉证据读。
+
+\subsection{本章小结}
+\label{sec:mlkem768-summary}
+
+\begin{enumerate}
+  \item 768 复盘证明：方法论下一刀可以是「换参数组」，不必只围着同一条 1024 Decaps 接缝打转。
+  \item 分析$\to$计划$\to$波次实现$\to$双模式验收$\to$改接缝不改锁参——这条链跑通了（图~\ref{fig:ch8-overview}、\ref{fig:ch8-waves}）。
+  \item 结果：W0--W4+glue 绿；tick 见图~\ref{fig:ch8-ticks}；稳定与交叉仍明示未做。
+  \item 回扣第~\ref{sec:gates}~章：缺项与锁参歧义就停；假绿（名实不符的 roundtrip）要写进文书，不能靠文件名装扮。
+\end{enumerate}
+
 % ============================================================
 \section{对照组：\texttt{correctness} 标本的意义}
 \label{sec:correctness}
@@ -4509,9 +4890,10 @@ C 人工指导的交付 device/stable（无 \texttt{-ct}）。
 \begin{enumerate}
   \item \textbf{已完成（第~\ref{sec:replay}~章）}：KeyGen / Encaps 事后 $\mathrm{CT}$、三类边实例、四组问题复盘结论与欠债清单；
   \item \textbf{已完成（第~\ref{sec:forward}~章）}：Decaps 前瞻 $\mathrm{CT}$ $\to$ 实现/测试 $\to$ 与 A/C 臂对照 $\to$ 方法论效果判决（强成功相对 A；不取代 C）；
-  \item 按第~\ref{sec:forward}~章反馈，必要时回改第~\ref{sec:mathbg}--\ref{sec:gates}~章定义（只记欠债；假绿/工具化门禁仍欠）；
+  \item \textbf{已完成（第~\ref{sec:mlkem768}~章）}：ML-KEM-768 分析$\to$计划$\to$W0--W4+glue$\to$有条件完成至 incubating（禁零垫；AscendC-only RT）；
+  \item 按第~\ref{sec:forward}/\ref{sec:mlkem768}~章反馈，必要时回改第~\ref{sec:mathbg}--\ref{sec:gates}~章定义（只记欠债；假绿/工具化门禁仍欠）；
   \item correctness 对照实验写成可执行协议（与第~\ref{sec:correctness}~章及五指标表对齐；细表可续）；
-  \item 结论稳了之后，再考虑迁到 \texttt{docs/notes/}。
+  \item 768 特有结论（奇数 $k$ 分核等）稳定后，再考虑迁到 \texttt{docs/notes/}。
 \end{enumerate}
 
 \subsection{文档与分支约定}
