@@ -11,7 +11,7 @@
 | 模式 | 命令 | 结果 |
 |------|------|------|
 | CPU | `bash run.sh -r cpu -v Ascend910B4` | `[cmp] c max=0` → `[SUCCESS] full encrypt: c matches golden` |
-| SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | `[cmp] c max=0`；Total tick **338153**；2 launch；用例根目录 **0 stray dump** |
+| SIM | `SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4` | `[cmp] c max=0`；Total tick **365995**（glue-c 后）；2 launch；用例根目录 **0 stray dump** |
 
 ## 生产路径
 
@@ -25,7 +25,8 @@ CPU 仍保留分段调试路径（prep + ntt_y + at_jp + intt_e1 + pack），不
 ## 关键不变量
 
 - `a_hat` 为 **4** poly；`re` 为 **5** poly；`ek_pke` 为 **800B**；`c` 为 **768B**。
-- Encrypt noise 使用 **η=2**：`r[2] || e1[2] || e2[1]`，禁止补到 6/8 行。
+- Encrypt noise：**r←η1=3**（2 poly）、**e₁‖e₂←η2=2**（3 poly）；禁止补到 6/8 行。
+  （2026-07-27 glue-c：曾误 5 行全 η2，已按参数卡补缺。）
 - INTT 采用 polyvec4 物理几何：S0 `[8,256] int8`、mat_c `[32,128]`、AIV 连续 **2+2**；语义槽为 `u0,u1,v,空槽`。
 - golden 由本目录 `scripts/host_golden/` 本地生成，derand 前缀为 k2 参数卡锁定串；只验 I/O 等价。
 - `output/` 仅保留 `c.bin`；`u/v/a_hat/re` 为设备内部中间态，不作为交付 I/O。
