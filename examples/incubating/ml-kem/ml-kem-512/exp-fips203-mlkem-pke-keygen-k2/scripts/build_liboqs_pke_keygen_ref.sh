@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# 用例内 KeyGen-only 黑盒：编译本目录 liboqs_pke_keygen_ref.c → liboqs_pke_keygen_ref
+# 勿与仓根 scripts/liboqs_pke_ref_mlkem1024（全 PKE）混淆。
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROBE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${PROBE_DIR}/../.." && pwd)"
+LIBOQS_ROOT="${LIBOQS_ROOT:-${REPO_ROOT}/thirdparty/liboqs}"
+LIBOQS_BUILD="${LIBOQS_BUILD:-${LIBOQS_ROOT}/build}"
+OUT_BIN="${SCRIPT_DIR}/liboqs_pke_keygen_ref"
+LIBOQS_LIB="${LIBOQS_BUILD}/lib/liboqs.so"
+LIBOQS_LINK=(-L"${LIBOQS_BUILD}/lib" -Wl,-rpath,"${LIBOQS_BUILD}/lib" -loqs)
+if [ ! -f "${LIBOQS_LIB}" ]; then
+    if [ -f "${LIBOQS_BUILD}/lib/liboqs.a" ]; then
+        LIBOQS_LIB="${LIBOQS_BUILD}/lib/liboqs.a"
+        LIBOQS_LINK=("${LIBOQS_LIB}" -lpthread)
+    else
+        echo "[build_liboqs_pke_ref] missing ${LIBOQS_BUILD}/lib/liboqs.so or liboqs.a" >&2
+        exit 1
+    fi
+fi
+gcc -O2 -Wall -Wextra \
+    -I"${LIBOQS_BUILD}/include" \
+    "${SCRIPT_DIR}/liboqs_pke_keygen_ref.c" \
+    "${LIBOQS_LINK[@]}" \
+    -o "${OUT_BIN}"
+echo "[build_liboqs_pke_ref] OK: ${OUT_BIN}"
