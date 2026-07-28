@@ -11,6 +11,9 @@
  *
  * KeyGen 走 OQS_KEM_ml_kem_1024_keypair_derand（与 kat_liboqs 一致）；
  * Encrypt/Decrypt 走 mlkem-native C 参考 indcpa_enc/dec（FIPS PKE 层）。
+ *
+ * 链接：indcpa_* 在 liboqs.so 内为 hidden，须由 build_liboqs_pke_ref_mlkem1024.sh
+ * 把 ml_kem_1024_ref .o + fips202 shim + liboqs-internal.a 链进本二进制（T18）。
  */
 #include <oqs/oqs.h>
 

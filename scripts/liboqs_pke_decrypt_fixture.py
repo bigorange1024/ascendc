@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-liboqs_pke_decrypt_fixture.py — Decrypt KAT 夹具（规避 liboqs_pke_ref_mlkem1024 encrypt/decrypt 链接问题）。
+liboqs_pke_decrypt_fixture.py — Decrypt KAT 夹具（历史绕过 T18；2026-07-28 起 PKE ref 已可直链 encrypt/decrypt，本夹具仍可用）。
 
 流程：
   1. liboqs keygen（OQS_KEM_ml_kem_1024_keypair_derand）→ ek/dk

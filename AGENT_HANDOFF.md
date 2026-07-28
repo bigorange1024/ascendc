@@ -2,17 +2,23 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-07-27（**为换 Cloud Agent**：后续主攻文档完善 + 512 代码审阅修补；上下文已过长）
+> **最后刷新**：2026-07-28（**T18 关闭**：`liboqs_pke_ref_mlkem1024` 链接已修；下一刀仍为 512 文档/代码审阅）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：`research/formal-lang-dag`（与 `main` 对齐于 **`0f8b2d4`**；开新改动先 `git pull`）。  
-2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs）。  
-3. **下一任务方向**（用户已定）：**继续做文档 + 完善代码**——重点是 **ML-KEM-512 审阅与收尾**，不是新开参数组、不是 stable 晋级。  
-4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → 当日纪要 [`qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md`](qa/2026-07/2026-07-27-768收尾复盘与文档刷新.md)（搜「512」「glue-c」「额度」）。  
+1. 分支：优先看当前 PR / `research/formal-lang-dag`；开新改动先 `git pull`。  
+2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
+3. **下一任务方向**：**ML-KEM-512 审阅与收尾**（文档 + 小修）；非 stable 晋级。  
+4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-07/2026-07-28-T18-PKE-ref链接修复.md`](qa/2026-07/2026-07-28-T18-PKE-ref链接修复.md) / 27 日纪要。  
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
+
+### 刚关闭
+
+| 项 | 说明 |
+|----|------|
+| **T18** | PKE helper encrypt/decrypt 链接：链 `ml_kem_1024_ref` `.o` + fips202 shim + `liboqs-internal.a`；**非改名问题** |
 
 ---
 

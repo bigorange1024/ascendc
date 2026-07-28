@@ -162,6 +162,8 @@ bash scripts/build-liboqs.sh
 ```
 
 产出：`thirdparty/liboqs/build/lib/liboqs.so`（或 `.a`）+ `scripts/liboqs_kem_ref` / `liboqs_pke_ref_mlkem1024`（兼容软链 `liboqs_pke_ref`）。  
+
+**PKE ref（`liboqs_pke_ref_mlkem1024`）链接注意**：liboqs 默认 `-fvisibility=hidden`，`indcpa_enc/dec` 与 `OQS_SHA3_*_absorb_once` **不进** `.so` dynsym；构建脚本须保留完整 build 树中的 `ml_kem_1024_ref` / `pqclean_shims` `.o` 与 `liboqs-internal.a`（见 `build_liboqs_pke_ref_mlkem1024.sh`；T18 已关）。仅拷贝 `liboqs.so` 不够。  
 历史说明见 `qa/2026-06/2026-06-08-Rule-Skill落地与FIPS203-204终极目标.md` §liboqs。
 
 ---
