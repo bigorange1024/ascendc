@@ -97,18 +97,29 @@ if [ -z "${INSTALL_PREFIX}" ]; then
     INSTALL_PREFIX="${CURRENT_DIR}/out_${BUILD_PROFILE}_${RUN_MODE}"
 fi
 
-if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
-    # shellcheck source=/dev/null
-    source "${HOME}/ascendc/scripts/env.sh"
-    _ASCEND_INSTALL_PATH="${CANN_HOME}"
-elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
+# CANN：统一 ${REPO_ROOT}/scripts/env.sh（多候选 + 回写 CANN_HOME）；禁止写死 ~/ascendc
+set +e
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/env.sh"
+_env_rc=$?
+set -e
+if [ "${_env_rc}" -ne 0 ]; then
+    echo "[ERROR] source ${REPO_ROOT}/scripts/env.sh failed (rc=${_env_rc})" >&2
+    exit 1
+fi
+if [ -n "${ASCEND_INSTALL_PATH:-}" ]; then
     _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH}"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash"
-elif [ -d "$HOME/Ascend/cann" ]; then
-    _ASCEND_INSTALL_PATH="$HOME/Ascend/cann"
+elif [ -n "${CANN_HOME:-}" ] && [ -d "${CANN_HOME}" ]; then
+    _ASCEND_INSTALL_PATH="${CANN_HOME}"
+elif [ -n "${ASCEND_HOME_PATH:-}" ] && [ -d "${ASCEND_HOME_PATH}" ]; then
+    _ASCEND_INSTALL_PATH="${ASCEND_HOME_PATH}"
 else
-    _ASCEND_INSTALL_PATH="/usr/local/Ascend/ascend-toolkit/latest"
+    echo "[ERROR] CANN_HOME / ASCEND_HOME_PATH 未设置" >&2
+    exit 1
+fi
+if ! command -v ccec >/dev/null 2>&1; then
+    echo "[ERROR] 未找到 ccec。CANN_HOME=${CANN_HOME:-}" >&2
+    exit 1
 fi
 export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
@@ -116,10 +127,20 @@ export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
 set -euo pipefail
 
+# 实机 ACL 设备号：npu 缺省 1；SIM 强制 0
+if [ "${RUN_MODE}" = "npu" ]; then
+    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+elif [ "${RUN_MODE}" = "sim" ]; then
+    export ASCEND_DEVICE_ID=0
+fi
+
 if [ "${RUN_MODE}" = "sim" ]; then
     export SIM_DIRECT="${SIM_DIRECT:-1}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
+    echo "[npu] ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID}  CANN=${_ASCEND_INSTALL_PATH}"
 fi
 
 echo "[kem_decaps ${LABEL}] RUN_MODE=${RUN_MODE} profile=${BUILD_PROFILE} SIM_HOST_MODE=${ASCENDC_SIM_HOST_MODE:-} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"

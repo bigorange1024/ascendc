@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-07-31（**T2-npu-env P0 已合入**：`env.sh`/`add_custom`；`ASCEND_DEVICE_ID` 缺省 **1**；借入机拉 main 测 `-r npu`）
+> **最后刷新**：2026-07-31（**T2-npu-env**：PKE×3 + **KEM×4** device 运行配置已合入；借入机对各目录 `-r npu`）
 
 ---
 
@@ -24,7 +24,7 @@
 
 | 项 | 说明 |
 |----|------|
-| **T2-npu-env** | **P0 已扩**：`add_custom` + toy-mix + **PKE device 三探针**（alg13 keygen / alg14 encrypt / alg15 decrypt）。口径：`REPO_ROOT/env.sh`；`ASCEND_DEVICE_ID` 实机缺省 1、SIM=0。借入机对各目录 `bash run.sh -r npu -v Ascend910B4` |
+| **T2-npu-env** | **已扩至 KEM×4**：alg19 keygen / alg20 encaps / alg21 decaps / alg21-ct。口径同前；WSL 四用例 cpu+SIM 已绿。借入机继续对各目录 `bash run.sh -r npu -v Ascend910B4` |
 
 ---
 
