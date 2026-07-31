@@ -18,10 +18,7 @@ if [ -z "${REPO_ROOT}" ] || [ ! -d "${REPO_ROOT}/scripts" ]; then
   echo "[ERROR] cannot locate repo root from ${CASE_DIR}" >&2
   exit 1
 fi
-if [ ! -d "${REPO_ROOT}/library/shared" ]; then
-    REPO_ROOT="$(cd "${CASE_DIR}/../../.." && pwd)"
-fi
-TESTS="${REPO_ROOT}/ascendc-tests"
+TESTS="${REPO_ROOT}/ascendc-tests/ml-kem/ml-kem-1024"
 NTT_SRC="${TESTS}/pass-fix-f203-stage123-ntt-intt-polyvec8-vec"
 ALG11_SRC="${TESTS}/pass-fix-f203-alg11-12-multiplyntts-k4"
 IP_SRC="${TESTS}/pass-fix-f203-alg11-12-innerproduct-k4"

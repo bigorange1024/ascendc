@@ -12,7 +12,20 @@
 # G4 compute 段：本目录 compute/ 内核，mixPass=0 单 launch（选项已锁定）。
 set -e
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
+REPO_ROOT="$(
+  _d="${CURRENT_DIR}"
+  while [ "${_d}" != "/" ]; do
+    if [ -f "${_d}/AGENTS.md" ] && [ -d "${_d}/scripts" ]; then
+      printf '%s\n' "${_d}"
+      break
+    fi
+    _d="$(dirname "${_d}")"
+  done
+)"
+if [ -z "${REPO_ROOT}" ] || [ ! -d "${REPO_ROOT}/scripts" ]; then
+  echo "[ERROR] cannot locate repo root from ${CURRENT_DIR}" >&2
+  exit 1
+fi
 COMPUTE_IO="${CURRENT_DIR}/compute_io"
 OUT_INSTALL="${CURRENT_DIR}/out_compute"
 BUILD_DIR="${CURRENT_DIR}/build_compute"
@@ -38,9 +51,9 @@ export ALG11_VEC_VARIANT=2
 export ALG11_VEC_OPTS=1
 export ALG11_MEM_OPS=1
 
-if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
+if [ -f "${REPO_ROOT}/scripts/env.sh" ]; then
     # shellcheck source=/dev/null
-    source "${HOME}/ascendc/scripts/env.sh"
+    source "${REPO_ROOT}/scripts/env.sh"
     _ASCEND="${CANN_HOME}"
 elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
     _ASCEND="${ASCEND_INSTALL_PATH}"
@@ -48,6 +61,11 @@ elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/seten
     source "${_ASCEND}/bin/setenv.bash"
 else
     _ASCEND="${ASCEND_TOOLKIT_HOME:-/usr/local/Ascend/ascend-toolkit/latest}"
+fi
+if [ "${RUN_MODE}" = "npu" ]; then
+    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+elif [ "${RUN_MODE}" = "sim" ]; then
+    export ASCEND_DEVICE_ID=0
 fi
 
 if [ "${RUN_MODE}" = "sim" ]; then

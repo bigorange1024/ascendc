@@ -20,6 +20,7 @@
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
 #include "aclrtlaunch_f203_decrypt_device_fused.h"
+#include <cstdlib>
 #else
 #include "tikicpulib.h"
 #ifndef GM_ADDR
@@ -124,9 +125,13 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     AscendC::GmFree(softSyncGm);
     return 0;
 #else
-    /* ---- SIM / NPU：ACL 分配 + H2D/D2H ---- */
+    /* ---- SIM / NPU：ACL 分配 + H2D/D2H ----
+     * 设备号：读 ASCEND_DEVICE_ID；缺省 1（借入多卡）。SIM 由 run.sh 强制 export=0。 */
     CHECK_ACL(aclInit(nullptr));
-    int32_t deviceId = 0;
+    int32_t deviceId = 1;
+    if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
+        deviceId = static_cast<int32_t>(std::atoi(envDev));
+    }
     CHECK_ACL(aclrtSetDevice(deviceId));
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));

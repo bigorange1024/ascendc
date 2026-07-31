@@ -24,7 +24,7 @@
 
 | 项 | 说明 |
 |----|------|
-| **T2-npu-env** | **P0 已合入**（`env.sh` + `add_custom` + **`pass-toy-mix-s123-byteencode-k2`**）：`ASCEND_DEVICE_ID` 实机缺省 1、SIM 强制 0。借入机：`git pull` 后对两目录分别 `bash run.sh -r npu -v Ascend910B4`。见 [NPU真机环境说明 §3.2](docs/engineering/NPU真机环境说明.md) |
+| **T2-npu-env** | **P0 已扩**：`add_custom` + toy-mix + **PKE device 三探针**（alg13 keygen / alg14 encrypt / alg15 decrypt）。口径：`REPO_ROOT/env.sh`；`ASCEND_DEVICE_ID` 实机缺省 1、SIM=0。借入机对各目录 `bash run.sh -r npu -v Ascend910B4` |
 
 ---
 

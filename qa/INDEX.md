@@ -12,7 +12,7 @@
 
 ### 2026-07-31 — [借入 NPU 机体检回填 · 910B4 / CANN 9.1.0-beta.3](2026-07/2026-07-31-借入NPU机体检回填.md)
 
-关键字：**aarch64** · `/usr/local/Ascend/cann`→**9.1.0-beta.3** · **toolkit/latest≡cann（二次订正）** · tikicpulib **有 910B*** · source 后 **CANN_HOME 空须回写** · 版本偏斜 · T2-npu-env 待改码
+关键字：**aarch64** · cann→**9.1.0-beta.3** · toolkit/latest≡cann · **CANN_HOME 回写** · add_custom/toy-mix/**PKE×3** 上板 env · `ASCEND_DEVICE_ID` 缺省 1
 
 ### 2026-07-30 — [实机 NPU 环境排查方案 · `add_custom` 上板适配清单](2026-07/2026-07-30-实机NPU环境排查与add_custom适配清单.md)
 

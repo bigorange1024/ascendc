@@ -26,7 +26,19 @@ CAND_PAIRS = XOF_BYTES // 3
 
 CASE = Path(__file__).resolve().parent.parent.parent
 # 集成探针：LUT 头取仓库级 thirdparty/ntt_onnx（本探针不 vendored compute/ntt_r 子树）。
-LUT_HDR = CASE / "../../thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+# 用例在 ascendc-tests/ml-kem/ml-kem-1024/… 下，勿写死 ../../thirdparty（会落到 ml-kem/）。
+def _repo_root(start: Path) -> Path:
+    cur = start.resolve()
+    for p in [cur, *cur.parents]:
+        if (p / "AGENTS.md").is_file() and (p / "scripts").is_dir():
+            return p
+    raise FileNotFoundError(f"cannot locate repo root from {start}")
+
+
+LUT_HDR = (
+    _repo_root(CASE)
+    / "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+)
 
 GAMMAS = np.array(
     [
