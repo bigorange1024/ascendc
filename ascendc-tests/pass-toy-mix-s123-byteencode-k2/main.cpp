@@ -18,6 +18,7 @@
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
 #include "aclrtlaunch_mmad_custom.h"
+#include <cstdlib>
 #else
 #include "tikicpulib.h"
 #ifndef GM_ADDR
@@ -112,9 +113,13 @@ int32_t main(int32_t argc, char *argv[])
     /* SIM/NPU 路径：acl 初始化 → 建流 → 分配 Host/Device 双份缓冲（out/src/ws）
      * → 读输入文件到 Host 缓冲 → Host→Device 拷入 → ACLRT_LAUNCH_KERNEL 下发
      * → 同步 → Device→Host 拷回 → 落盘。tiling 结构体本身走 Host 侧内存直接传参
-     * （ACLRT_LAUNCH_KERNEL 按值传递 TilingData，无需显式拷到 Device）。 */
+     * （ACLRT_LAUNCH_KERNEL 按值传递 TilingData，无需显式拷到 Device）。
+     * 设备号：读 ASCEND_DEVICE_ID；缺省 1（借入多卡约定）。SIM 由 run.sh 强制 export=0。 */
     CHECK_ACL(aclInit(nullptr));
-    int32_t deviceId = 0;
+    int32_t deviceId = 1;
+    if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
+        deviceId = static_cast<int32_t>(std::atoi(envDev));
+    }
     CHECK_ACL(aclrtSetDevice(deviceId));
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
