@@ -92,28 +92,44 @@ if [ -z "${INSTALL_PREFIX}" ]; then
 fi
 
 # CANN：WSL 常见 ~/Ascend/cann 或 ~/ascendc/scripts/env.sh
-if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
-    # shellcheck source=/dev/null
-    source "${HOME}/ascendc/scripts/env.sh"
-    _ASCEND_INSTALL_PATH="${CANN_HOME}"
-elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
+# CANN：统一 ${REPO_ROOT}/scripts/env.sh（多候选 set_env + 回写 CANN_HOME）；禁止写死 ~/ascendc，
+# 否则仓库不在 $HOME/ascendc 的机器（如借入实机）会静默落到错误的 toolkit。
+# 保存/恢复 errexit：本段靠返回码判断 source 结果，不改变脚本原有的 set -e 状态。
+_had_errexit=0
+case $- in *e*) _had_errexit=1 ;; esac
+set +e
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/env.sh"
+_env_rc=$?
+[ "${_had_errexit}" = "1" ] && set -e
+if [ "${_env_rc}" -ne 0 ]; then
+    echo "[ERROR] source ${REPO_ROOT}/scripts/env.sh failed (rc=${_env_rc})" >&2
+    exit 1
+fi
+if [ -n "${ASCEND_INSTALL_PATH:-}" ]; then
     _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH}"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash"
-elif [ -d "$HOME/Ascend/cann" ]; then
-    _ASCEND_INSTALL_PATH="$HOME/Ascend/cann"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash"
-elif [ -d "$HOME/Ascend/ascend-toolkit/latest" ]; then
-    _ASCEND_INSTALL_PATH="$HOME/Ascend/ascend-toolkit/latest"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash"
+elif [ -n "${CANN_HOME:-}" ] && [ -d "${CANN_HOME}" ]; then
+    _ASCEND_INSTALL_PATH="${CANN_HOME}"
+elif [ -n "${ASCEND_HOME_PATH:-}" ] && [ -d "${ASCEND_HOME_PATH}" ]; then
+    _ASCEND_INSTALL_PATH="${ASCEND_HOME_PATH}"
 else
-    _ASCEND_INSTALL_PATH="/usr/local/Ascend/ascend-toolkit/latest"
+    echo "[ERROR] CANN_HOME / ASCEND_HOME_PATH 未设置" >&2
+    exit 1
+fi
+if ! command -v ccec >/dev/null 2>&1; then
+    echo "[ERROR] 未找到 ccec。CANN_HOME=${CANN_HOME:-}" >&2
+    exit 1
 fi
 export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
+
+# 实机 ACL 设备号：npu 缺省 1（借入多卡避开物理 0）；SIM 强制 0（CAModel 仅设备 0）
+if [ "${RUN_MODE}" = "npu" ]; then
+    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+elif [ "${RUN_MODE}" = "sim" ]; then
+    export ASCEND_DEVICE_ID=0
+fi
 
 # 须在 source setenv 之后再 set -e（setenv 内可能有非零 grep）
 set -euo pipefail
@@ -182,7 +198,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
 fi
 
 # cwd=CURRENT_DIR：kernel-run-timeout 再 source camodel 用 $(pwd)；二进制用相对路径
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kem_encaps_bbit
+# 默认直跑（等价于原 kernel-run-timeout.sh）；RUN_WITH_MSPROF=1 时在 sim/npu 下走 msprof op。
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel ./ascendc_kem_encaps_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}" || true

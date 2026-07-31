@@ -3,13 +3,17 @@
 gen_data.py — Alg.20 Encaps device-k4：ek + m + LUT + golden(c/K) + CPU golden_v。
 
 m：外部 32B（M_HEX / M_FILE / 默认 urandom）。coins 仅作 Encrypt 参考 golden，不喂设备生产路径。
+
+golden 后端（2026-07-31）：c/K 交 library/shared/f203_kem_ref，**liboqs 优先，缺失则回落**
+  仓内 PKE Encrypt golden（stable Encrypt 的 golden_c.golden_encrypt）+ G(m‖H(ek))。
+  背景：借入实机装不了 thirdparty/liboqs，原先硬依赖会让本探针直接跑不起来；m 仍为 urandom，
+  未改任何锁定参数。
 """
 from __future__ import annotations
 
 import hashlib
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
@@ -30,9 +34,11 @@ STABLE_ENC = REPO / "examples" / "stable" / "ml-kem" / "ml-kem-1024" / "stable-f
 HOST_GOLDEN = STABLE_ENC / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))
+sys.path.insert(0, str(REPO / "library" / "shared" / "f203_kem_ref"))
 
 from f203_ref_common import K, N, Q, embed_message, load_lut_t_i8, stage123_transform  # noqa: E402
 import golden_c as gc  # noqa: E402
+import kem_ref  # noqa: E402
 
 EK_DEFAULT = (
     REPO / "ascendc-tests" / "ml-kem" / "ml-kem-1024" / "pass-fix-f203-alg19-kem-keygen-device-k4" / "output" / "ek_kem.bin"
@@ -108,13 +114,16 @@ def main() -> None:
     v = ((v.astype(np.int64) + e2.astype(np.int64)) % Q).astype(np.int32)
     v.tofile(inp / "golden_v.bin")
 
-    ref = REPO / "scripts" / "liboqs_kem_ref"
-    if not ref.is_file():
-        subprocess.check_call(["bash", str(REPO / "scripts" / "build_liboqs_kem_ref.sh")])
-    subprocess.check_call(
-        [str(ref), "encaps", str(inp / "ek_kem.bin"), str(golden / "c.bin"), str(golden / "K.bin"), m.hex()]
+    # golden c/K：liboqs 优先；无 liboqs 时用 gc.golden_encrypt（与 stable Encrypt 同一份已验证参考）
+    src = kem_ref.kem_encaps(
+        ek,
+        m,
+        golden / "c.bin",
+        golden / "K.bin",
+        pke_encrypt=gc.golden_encrypt,
+        ek_path=inp / "ek_kem.bin",
     )
-    print(f"[gen_data] ek←{ek_src.name} m={m.hex()[:16]}… golden c/K via liboqs")
+    print(f"[gen_data] ek←{ek_src.name} m={m.hex()[:16]}… golden c/K via {src}")
 
 
 if __name__ == "__main__":

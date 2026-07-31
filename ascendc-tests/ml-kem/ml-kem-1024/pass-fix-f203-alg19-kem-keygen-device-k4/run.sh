@@ -20,6 +20,10 @@
 #   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
+#
+# msprof 性能采集（须显式指定，非默认；默认不产生任何 prof/OPPROF 文件）:
+#   RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 实机 msprof op → prof_npu/<bin>/
+#   可调项见 scripts/msprof_run.sh
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
@@ -48,8 +52,9 @@ STABLE_KEYGEN="${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-ml
 SCRIPTS_PREP="${CURRENT_DIR}/scripts/prep"
 INSTALL_PREFIX=""
 mkdir -p "${CURRENT_DIR}/scripts"
-ln -sfn "${STABLE_KEYGEN}/scripts/compute" "${CURRENT_DIR}/scripts/compute"
-ln -sfn "${STABLE_KEYGEN}/thirdparty" "${CURRENT_DIR}/thirdparty"
+# -r：生成**相对**软链，换机（实机 / Cloud / WSL 仓库路径各不相同）后无需重写，git 工作区也不会被污染
+ln -sfnr "${STABLE_KEYGEN}/scripts/compute" "${CURRENT_DIR}/scripts/compute"
+ln -sfnr "${STABLE_KEYGEN}/thirdparty" "${CURRENT_DIR}/thirdparty"
 
 export SEED_D="${SEED_D:-20260619}"
 export KEM_KEYGEN_VERIFY="${KEM_KEYGEN_VERIFY:-1}"
@@ -228,7 +233,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi
 
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" "${CURRENT_DIR}/ascendc_kem_keygen_bbit"
+# 默认直跑（等价 kernel-run-timeout.sh）；仅 RUN_WITH_MSPROF=1 时在 sim/npu 下走 msprof op。
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel "${CURRENT_DIR}/ascendc_kem_keygen_bbit"
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

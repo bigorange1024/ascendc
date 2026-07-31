@@ -7,17 +7,22 @@ FIPS：$m$ 为输入；$r$ 仅作 Host 参考派生（golden_v / 对照），不
 customspec：stable-fips203-mlkem-kem-encaps-k4-实现方案-customspec.*
 registry：docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md
 
+golden 后端（2026-07-31）：ek 自举与 c/K 均交 library/shared/f203_kem_ref，**liboqs 优先，
+  缺失则回落**仓内已验证参考（PKE KeyGen 借 stable KEM KeyGen 的 keygen_golden；
+  PKE Encrypt 用本目录 host_golden 的 golden_c.golden_encrypt）。背景：借入实机装不了
+  thirdparty/liboqs，原先硬依赖会让本算子直接跑不起来；m 仍默认 urandom，未改锁定参数。
+
 环境覆盖：
   EK_KEM_SRC=路径   固定公钥（KAT stash）
   M_FILE / M_HEX / M_DEFAULT_HEX  控制 m（默认 os.urandom；禁止默认可全 0）
   SEED_D=int         缺 ek 时 derand 造钥
   KEEP_EK=1          复用已有 input/ek_kem.bin
+  KEM_GOLDEN_BACKEND=python  强制走回落路径（自检用）；KEM_GOLDEN_CROSS=1 两条路径互校
 """
 from __future__ import annotations
 
 import hashlib
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -39,9 +44,13 @@ HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_se_sample"))
+sys.path.insert(0, str(REPO / "library" / "shared" / "f203_kem_ref"))
+# 回落路径的 PKE KeyGen golden：借 stable KEM KeyGen 算子（自带 vendored LUT，不依赖 thirdparty/）
+STABLE_KEM_KG = REPO / "examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/scripts"
 
 from f203_ref_common import K, N, Q, embed_message, load_lut_t_i8, stage123_transform  # noqa: E402
 import golden_c as gc  # noqa: E402
+import kem_ref  # noqa: E402
 from golden_se_sampling import derand_bytes_from_seed  # noqa: E402
 
 EK_BYTES = 1568
@@ -87,17 +96,35 @@ def _gen_luts(inp: Path) -> None:
     _lut_planar_stacked(lut_intt, False).tofile(inp / "lut_intt_odd_stacked.bin")
 
 
-def _ensure_liboqs_ref() -> Path:
-    """保证 scripts/liboqs_kem_ref 可执行（缺则 build）。"""
-    ref = REPO / "scripts" / "liboqs_kem_ref"
-    if not ref.is_file():
-        subprocess.check_call(["bash", str(REPO / "scripts" / "build_liboqs_kem_ref.sh")])
-    return ref
+def _make_pke_keygen(seed_d: int):
+    """
+    造 kem_ref 回落路径要的 PKE KeyGen golden：d(32B) → (ek_pke 1568B, dk_pke 1536B)。
+
+    stable KEM KeyGen 的 keygen_golden 以 seed_d 为入口（内部同样 d = derand_bytes_from_seed），
+    故闭包 seed_d 并断言 d 一致；仅在无 liboqs 时才真正加载，避免正常机器多载一棵脚本树。
+    """
+
+    def _pke_keygen(d: bytes) -> "tuple[bytes, bytes]":
+        if d != derand_bytes_from_seed(seed_d):
+            raise SystemExit("[gen_data] d 与 SEED_D 不一致，拒绝生成 golden")
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "stable_kem_keygen_golden", STABLE_KEM_KG / "keygen_golden.py"
+        )
+        if spec is None or spec.loader is None:
+            raise SystemExit(f"[gen_data] 无法加载 {STABLE_KEM_KG / 'keygen_golden.py'}")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        kg = mod.build_full_keygen(seed_d)
+        return kg["ek_pke"].tobytes(), kg["dk_pke"].tobytes()
+
+    return _pke_keygen
 
 
 def _bootstrap_ek(inp: Path, golden: Path) -> bytes:
     """
-    缺省造 ek：liboqs keygen_derand(d‖z from SEED_D)；或 EK_KEM_SRC / KEEP_EK。
+    缺省造 ek：KEM keygen_derand(d‖z from SEED_D)（liboqs 优先，缺失回落）；或 EK_KEM_SRC / KEEP_EK。
 
     @return ek_kem 原始字节（1568B）
     """
@@ -115,10 +142,9 @@ def _bootstrap_ek(inp: Path, golden: Path) -> bytes:
     d = derand_bytes_from_seed(seed_d)
     z = derand_z_from_seed(seed_d)
     kem_seed = d + z
-    ref = _ensure_liboqs_ref()
     ek_path = golden / "_bootstrap_ek_kem.bin"
     dk_path = golden / "_bootstrap_dk_kem.bin"
-    subprocess.check_call([str(ref), "keygen", str(ek_path), str(dk_path), kem_seed.hex()])
+    kem_ref.kem_keygen(kem_seed, ek_path, dk_path, pke_keygen=_make_pke_keygen(seed_d))
     return ek_path.read_bytes()
 
 
@@ -168,12 +194,17 @@ def main() -> None:
     v = ((v.astype(np.int64) + e2.astype(np.int64)) % Q).astype(np.int32)
     v.tofile(inp / "golden_v.bin")
 
-    # 黑盒 oracle：liboqs encaps_derand(ek, m) → golden c/K（I/O 等价验收）
-    ref = _ensure_liboqs_ref()
-    subprocess.check_call(
-        [str(ref), "encaps", str(inp / "ek_kem.bin"), str(golden / "c.bin"), str(golden / "K.bin"), m.hex()]
+    # 黑盒 oracle：encaps_derand(ek, m) → golden c/K（I/O 等价验收）
+    # liboqs 优先；无 liboqs 时回落 G(m‖H(ek)) + 本目录 host_golden 的 PKE Encrypt
+    src = kem_ref.kem_encaps(
+        ek,
+        m,
+        golden / "c.bin",
+        golden / "K.bin",
+        pke_encrypt=gc.golden_encrypt,
+        ek_path=inp / "ek_kem.bin",
     )
-    print(f"[gen_data] ek ready m={m.hex()[:16]}… golden c/K via liboqs encaps_derand")
+    print(f"[gen_data] ek ready m={m.hex()[:16]}… golden c/K via {src} encaps_derand")
 
 
 if __name__ == "__main__":

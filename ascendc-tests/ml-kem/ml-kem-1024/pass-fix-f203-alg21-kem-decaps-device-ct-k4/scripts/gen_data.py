@@ -6,7 +6,7 @@ gen_data.py — Alg.21 Decaps **全链** golden 与 input 生成（device 探针
 
 ### 合法路径（默认，KEM_DECAPS_REJECT 未设或为 0）
 1. 从 stash 读 ek_kem / dk_kem（或 EK_KEM_SRC / DK_KEM_SRC）。
-2. liboqs encaps(ek, m) → input/c.bin + golden/K.bin（共享密钥 K）。
+2. KEM encaps(ek, m) → input/c.bin + golden/K.bin（共享密钥 K）。
 3. 用 G(m,h) 得 coins，按 Encrypt 参考链算 **golden_v**（INTT(tr̂)+μ+e₂），供 CPU pack 对拍。
 4. 写 m_prime_ref.bin、coins.bin、LUT 等全链 input。
 
@@ -15,9 +15,15 @@ gen_data.py — Alg.21 Decaps **全链** golden 与 input 生成（device 探针
 
 ### Gate E3 拒绝路径（KEM_DECAPS_REJECT=1）
 1. 写随机或 C_SRC 指定的**假密文** c（1568B），几乎必然 Decrypt 失败。
-2. golden/K.bin = liboqs Decaps(dk, c) ≡ J(z‖c)（FIPS 203 Alg.21 拒绝分支）。
+2. golden/K.bin = J(z‖c)（FIPS 203 Alg.21 拒绝分支）；有 liboqs 时再跑一遍 Decaps 交叉确认相等。
 3. 写 golden/mode_reject 标记；golden_v 填占位零（拒绝路径不要求 c' 正确）。
 4. liboqs Decaps API **不暴露**内部重加密 c'；E3 验收对象是最终 **K**，非 c'。
+
+## golden 后端（2026-07-31）
+c/K 交 library/shared/f203_kem_ref：**liboqs 优先，缺失则回落**仓内已验证参考
+（G(m‖H(ek)) + stable Encrypt 的 golden_c.golden_encrypt；拒绝分支纯 SHAKE256）。
+背景：借入实机装不了 thirdparty/liboqs，原先硬依赖会让本探针直接跑不起来。
+例外：外部 C_SRC 且未给 K_ENC_SRC 时需完整 Decaps（重加密比对），回落不覆盖，须有 liboqs。
 
 ## 路径解析（device 探针）
 ROOT = 本用例目录；REPO = ascendc-tests 的上一级（仓库根）。
@@ -27,7 +33,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -51,9 +56,11 @@ STABLE_ENC = REPO / "examples" / "stable" / "ml-kem" / "ml-kem-1024" / "stable-f
 HOST_GOLDEN = STABLE_ENC / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))
+sys.path.insert(0, str(REPO / "library" / "shared" / "f203_kem_ref"))
 
 from f203_ref_common import K, N, Q, embed_message, load_lut_t_i8, stage123_transform  # noqa: E402
 import golden_c as gc  # noqa: E402
+import kem_ref  # noqa: E402
 
 # KeyGen stash 默认位置（可由 KEM_KEYPAIR_STASH 覆盖）
 STASH = Path(os.environ.get("KEM_KEYPAIR_STASH", str(REPO / "output" / "kem_keypair_stash")))
@@ -75,14 +82,6 @@ def g_mh(m: bytes, h: bytes) -> tuple[bytes, bytes]:
 def _j_zc(z: bytes, c: bytes) -> bytes:
     """Alg.21 拒绝路径：J(z, c) = SHAKE256(z ‖ c, 256)。"""
     return hashlib.shake_256(z + c).digest(32)
-
-
-def _ensure_liboqs_ref() -> Path:
-    """确保 liboqs_kem_ref 可执行存在（缺则调 build 脚本）。"""
-    ref = REPO / "scripts" / "liboqs_kem_ref"
-    if not ref.is_file():
-        subprocess.check_call(["bash", str(REPO / "scripts" / "build_liboqs_kem_ref.sh")])
-    return ref
 
 
 def _lut_planar_stacked(lut: np.ndarray, even: bool) -> np.ndarray:
@@ -132,9 +131,11 @@ def main() -> None:
     ek_path = Path(os.environ.get("EK_KEM_SRC", str(STASH / "ek_kem.bin")))
     dk_path = Path(os.environ.get("DK_KEM_SRC", str(STASH / "dk_kem.bin")))
     if not ek_path.is_file() or not dk_path.is_file():
-        print(f"[gen_data] missing stash ek/dk: {ek_path} {dk_path}", file=sys.stderr)
-        print("  run: bash scripts/kem_keypair_stash_bootstrap.sh", file=sys.stderr)
-        sys.exit(2)
+        # stash 落在 output/（不入 git），新机器/借入实机首跑时不存在。
+        # 与其 exit 2 让用例跑不起来，不如按 SEED_D derand 现造一对（与 KeyGen 用例同式）。
+        # 需固定钥时仍可 EK_KEM_SRC / DK_KEM_SRC 或先跑 kem_keypair_stash_bootstrap.sh。
+        print(f"[gen_data] stash 缺 ek/dk（{ek_path}），改用 SEED_D derand 自举密钥对")
+        ek_path, dk_path = kem_ref.bootstrap_keypair(golden)
 
     ek = ek_path.read_bytes()
     dk = dk_path.read_bytes()
@@ -142,7 +143,6 @@ def main() -> None:
     # dk 布局：末 64B = h(32) ‖ z(32)（Alg.19 KeyGen 输出）
     h = dk[3104:3136]
     z = dk[3136:3168]
-    ref = _ensure_liboqs_ref()
 
     reject = os.environ.get("KEM_DECAPS_REJECT", "0") == "1"
     # 全链 input 公共段：dk、ek、h、z、LUT
@@ -161,17 +161,23 @@ def main() -> None:
         assert len(c) == CT_BYTES
         (inp / "c.bin").write_bytes(c)
 
-        # golden K 以 liboqs Decaps 为准（应与 J(z‖c) 一致）
-        subprocess.check_call([str(ref), "decaps", str(dk_path), str(inp / "c.bin"), str(golden / "K.bin")])
-        k_liboqs = (golden / "K.bin").read_bytes()
+        # 拒绝分支的期望 K 本就是 J(z‖c)（纯 SHAKE256，无需任何外部库）。
+        # 有 liboqs 时仍跑一遍 Decaps 做权威交叉，二者必须一致；无 liboqs 时直接落 J(z‖c)。
         k_j = _j_zc(z, c)
-        if k_liboqs != k_j:
-            print("[gen_data] BUG: liboqs Decaps(dk,c_bad) != J(z||c)", file=sys.stderr)
-            sys.exit(3)
+        if kem_ref.liboqs_ref() is not None:
+            kem_ref.kem_decaps(dk, c, golden / "K.bin", dk_path=dk_path, c_path=inp / "c.bin")
+            k_liboqs = (golden / "K.bin").read_bytes()
+            if k_liboqs != k_j:
+                print("[gen_data] BUG: liboqs Decaps(dk,c_bad) != J(z||c)", file=sys.stderr)
+                sys.exit(3)
+            k_src = "liboqs Decaps≡J(z||c)"
+        else:
+            (golden / "K.bin").write_bytes(k_j)
+            k_src = "J(z||c)（无 liboqs，纯 SHAKE256）"
         (golden / "K_reject.bin").write_bytes(k_j)
         (golden / "mode_reject").write_text("1\n", encoding="utf-8")
         _write_cpu_golden_v_placeholder(inp, ek)
-        print(f"[gen_data] REJECT c=urandom/C_SRC prefix={c[:8].hex()}… golden K=liboqs Decaps≡J(z||c)")
+        print(f"[gen_data] REJECT c=urandom/C_SRC prefix={c[:8].hex()}… golden K={k_src}")
         return
 
     # ══════════ 合法路径：encaps → 全链 golden ══════════
@@ -185,18 +191,21 @@ def main() -> None:
     assert len(m) == M_BYTES
 
     if os.environ.get("C_SRC"):
-        # 外部给定合法 c（如 roundtrip）；golden K 可来自 K_ENC_SRC 或 liboqs Decaps
+        # 外部给定合法 c（如 roundtrip）；golden K 可来自 K_ENC_SRC 或 Decaps
+        # 注：不带 K_ENC_SRC 的这条分支需要完整 Decaps（含重加密比对），回落路径不覆盖 →
+        # 无 liboqs 时 kem_ref 会给出可操作报错；roundtrip 脚本本身也依赖 liboqs 产 c。
         c = Path(os.environ["C_SRC"]).read_bytes()
         assert len(c) == CT_BYTES
         (inp / "c.bin").write_bytes(c)
         if os.environ.get("K_ENC_SRC"):
             (golden / "K.bin").write_bytes(Path(os.environ["K_ENC_SRC"]).read_bytes())
+            k_src = "K_ENC_SRC"
         else:
-            subprocess.check_call([str(ref), "decaps", str(dk_path), str(inp / "c.bin"), str(golden / "K.bin")])
+            k_src = kem_ref.kem_decaps(dk, c, golden / "K.bin", dk_path=dk_path, c_path=inp / "c.bin")
     else:
-        # 标准：liboqs encaps 同时生成 c 与 K
-        subprocess.check_call(
-            [str(ref), "encaps", str(ek_path), str(inp / "c.bin"), str(golden / "K.bin"), m.hex()]
+        # 标准：encaps 同时生成 c 与 K（liboqs 优先；无 liboqs 回落 G(m‖H(ek)) + PKE Encrypt golden）
+        k_src = kem_ref.kem_encaps(
+            ek, m, inp / "c.bin", golden / "K.bin", pke_encrypt=gc.golden_encrypt, ek_path=ek_path
         )
 
     # m' 参考（正确 Decrypt 应恢复 m）；coins 供 golden_v 计算
@@ -217,7 +226,7 @@ def main() -> None:
     v.tofile(inp / "golden_v.bin")
 
     (golden / "mode_reject").unlink(missing_ok=True)
-    print(f"[gen_data] full-chain dk←{dk_path.name} m={m.hex()[:16]}… golden K via liboqs encaps")
+    print(f"[gen_data] full-chain dk←{dk_path.name} m={m.hex()[:16]}… golden K via {k_src}")
 
 
 if __name__ == "__main__":

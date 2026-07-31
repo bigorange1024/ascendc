@@ -9,6 +9,7 @@ Compress/ByteEncode、Alg.11 basemul、消息嵌入等。仅作 golden I/O oracl
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 from pathlib import Path
 
@@ -25,8 +26,8 @@ XOF_BYTES = 672
 CAND_PAIRS = XOF_BYTES // 3
 
 CASE = Path(__file__).resolve().parent.parent.parent
-# 集成探针：LUT 头取仓库级 thirdparty/ntt_onnx（本探针不 vendored compute/ntt_r 子树）。
-# 用例在 ascendc-tests/ml-kem/ml-kem-1024/… 下，勿写死 ../../thirdparty（会落到 ml-kem/）。
+
+
 def _repo_root(start: Path) -> Path:
     cur = start.resolve()
     for p in [cur, *cur.parents]:
@@ -35,10 +36,42 @@ def _repo_root(start: Path) -> Path:
     raise FileNotFoundError(f"cannot locate repo root from {start}")
 
 
-LUT_HDR = (
-    _repo_root(CASE)
-    / "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
-)
+_LUT_REL = "include/mlkem/stable/transpose_mlkem_luts_i8.h"
+
+
+def _resolve_lut_hdr() -> Path:
+    """定位 transpose LUT 头（golden 唯一需要的第三方表）。
+
+    本探针不 vendored compute/ntt_r 子树，故须外部取表。按序取首个存在者：
+      1. `F203_LUT_HDR` 环境变量 — 换机/排错时手工指定；
+      2. 仓库根 `thirdparty/ntt_onnx/` — 私有仓 clone，**不入 git**（WSL/办公机有）；
+      3. stable PKE KeyGen 交付树内 vendored 副本 — **随 git 分发**，是未 clone
+         私有 ntt_onnx 的环境（如借入实机）的兜底；本探针 prep/ 本来就 vendor_sync
+         自同一棵 stable KeyGen 树，依赖方向一致。
+    三条都不在时抛错并列出候选，避免留下 pathlib.read_text 的裸 FileNotFoundError。
+    """
+    repo = _repo_root(CASE)
+    env_hdr = os.environ.get("F203_LUT_HDR", "")
+    cands = [Path(env_hdr)] if env_hdr else []
+    cands += [
+        repo / "thirdparty/ntt_onnx" / _LUT_REL,
+        repo
+        / "examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4"
+        / "thirdparty/ntt_onnx"
+        / _LUT_REL,
+    ]
+    for c in cands:
+        if c.is_file():
+            return c
+    raise FileNotFoundError(
+        "找不到 transpose_mlkem_luts_i8.h；候选："
+        + " | ".join(str(c) for c in cands)
+        + "。私有 thirdparty/ntt_onnx 未 clone 时请跑 scripts/clone-thirdparty.sh，"
+        "或用 F203_LUT_HDR 指定头文件路径。"
+    )
+
+
+LUT_HDR = _resolve_lut_hdr()
 
 GAMMAS = np.array(
     [

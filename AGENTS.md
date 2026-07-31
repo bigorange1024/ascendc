@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-07-27（**换 Agent**：先读 AGENT_HANDOFF——512 文档+代码审阅；research=main@0f8b2d4）
+**最后刷新**：2026-07-31（**换 Agent**：先读 AGENT_HANDOFF「★ 接手清单」——1024 上机口径已推 main，下一刀是实机 `-r npu` 回填）
 
 ---
 
@@ -29,6 +29,10 @@ bash scripts/clone-thirdparty.sh
 # 仅补编：bash scripts/build-liboqs.sh
 # 只 clone 不编：BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 ```
+
+**例外（2026-07-31）**：**1024 的 7 探针 + 7 stable** 已可在**完全没有 `thirdparty/`** 的机器上跑
+（借入 NPU 实机即此场景）——KEM golden 自动回落 python 实现并在日志标 `via python`。
+但**权威交叉仍需 liboqs**，装得上就装；`liboqs` 在位时用 `KEM_GOLDEN_CROSS=1` 可两路逐字节互校。
 
 ---
 
@@ -97,7 +101,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 | 现象 | 归属 | Agent 该怎么做 |
 |------|------|----------------|
-| `gen_data` / verify 缺 `liboqs` / `liboqs_kem_ref` | **thirdparty** | 跑 `bash scripts/clone-thirdparty.sh` 或 `bash scripts/build-liboqs.sh`；修好后重跑 **CPU** |
+| `gen_data` / verify 缺 `liboqs` / `liboqs_kem_ref` | **thirdparty** | 跑 `bash scripts/clone-thirdparty.sh` 或 `bash scripts/build-liboqs.sh`；修好后重跑 **CPU**。**1024 的 14 个用例例外**：应自动回落 python 而**不该**报这个错，报了就是 `library/shared/f203_kem_ref` 的 bug |
 | `libge_common_base.so: undefined symbol: …InternalSwap…` / 启动即 `Floating point exception` | **dump 桩遮蔽真库 / DumpManager FPE**（与 liboqs 无关） | **已在 `scripts/sim_env.sh` 修复**（非 WSL 自动不装桩 + `CAMODEL_SKIP_ADX_WORK_PATH=1`）；标准 `run.sh -r sim` 直接跑。成因/覆盖开关见 [`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md) |
 | Cloud 无 CANN | 环境 | 可读代码/写规格；**勿假绿** SIM |
 
@@ -124,11 +128,12 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 
 ## 6. 当前主线（摘要；细节以 HANDOFF 为准）
 
-- **目录**：1024 / 768 / 512 分别在 `…/ml-kem/ml-kem-{1024,768,512}/`（**无** stable-768 / stable-512）  
-- **512 状态**：**有条件完成至 incubating** — W0–W4+glue 全绿（含 liboqs-512 Encaps `c`/`K`）；glue-c：`r←η1=3`；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md)  
-- **768 状态**：**有条件完成至 incubating** — 探针 W0–W3 + incubating W4 + AscendC-only RT 全绿  
-- **1024 Encaps**：默认 `m=urandom`（禁默认可全 0）  
-- **下一刀**：stable-512 / stable-768 须用户 `#交付#`；可选 D20 tick 重登；仓级 T23 / T21 / T2-npu  
+- **目录**：1024 / 768 / 512 分别在 `…/ml-kem/ml-kem-{1024,768,512}/`（**无** stable-768 / stable-512） 
+- **512 状态**：**有条件完成至 incubating** — W0–W4+glue 全绿（含 liboqs-512 Encaps `c`/`K`）；glue-c：`r←η1=3`；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md) 
+- **768 状态**：**有条件完成至 incubating** — 探针 W0–W3 + incubating W4 + AscendC-only RT 全绿 
+- **1024 Encaps**：默认 `m=urandom`（禁默认可全 0） 
+- **1024 上机（2026-07-31）**：7 探针 + 7 stable 全部 `${REPO_ROOT}/scripts/env.sh` + `ASCEND_DEVICE_ID`（npu 缺省 1 / SIM 强制 0）+ `msprof_run.sh`（默认不采集）；**无 thirdparty 亦可跑**（LUT 三级回退 + [`library/shared/f203_kem_ref`](library/shared/f203_kem_ref/kem_ref.py) 的 KEM golden 回落与密钥对自举）。详见 [`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) §4.1–4.3 
+- **下一刀**：实机 `-r npu` 回填（P0）；stable-512 / stable-768 须用户 `#交付#`；可选 D20 tick 重登；仓级 T23 / T21 
 - **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)  
 - **512 / 768 RT**：[`scripts/exp_kem512_liboqs_roundtrip.sh`](scripts/exp_kem512_liboqs_roundtrip.sh) · [`scripts/exp_kem768_liboqs_roundtrip.sh`](scripts/exp_kem768_liboqs_roundtrip.sh)
 

@@ -36,6 +36,11 @@
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #   bash run.sh -r npu -v Ascend910B4       # 真机；ASCEND_DEVICE_ID 缺省 1（SIM 强制 0）
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
+#
+# msprof 性能采集（须显式指定，非默认；默认不产生任何 prof/OPPROF 文件）:
+#   RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 实机 msprof op → prof_npu/<bin>/
+#   RUN_WITH_MSPROF=1 bash run.sh -r sim -v Ascend910B4   # CAModel msprof op simulator（很慢）
+#   可调 MSPROF_LAUNCH_COUNT_NPU / MSPROF_AIC_METRICS_NPU 等，见 scripts/msprof_run.sh
 # CANN：source ${REPO_ROOT}/scripts/env.sh（勿写死 ~/ascendc）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -215,7 +220,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi
 
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" "${CURRENT_DIR}/ascendc_keygen_bbit"
+# 默认直跑（等价 kernel-run-timeout.sh）；仅 RUN_WITH_MSPROF=1 时在 sim/npu 下走 msprof op。
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel "${CURRENT_DIR}/ascendc_keygen_bbit"
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

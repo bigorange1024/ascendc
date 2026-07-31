@@ -2,16 +2,17 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-07-31（**T2-npu-env**：PKE×3 + **KEM×4** device 运行配置已合入；借入机对各目录 `-r npu`）
+> **最后刷新**：2026-07-31（**T2-npu-env**：1024 探针×7 + stable×7 上机口径；`msprof_run.sh`；KEM golden 去 liboqs 硬依赖）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：优先看当前 PR / `research/formal-lang-dag`；开新改动先 `git pull`。  
+1. 分支：**`main`**（2026-07-31 晚已推 1024 上机口径）；开新改动先 `git pull`。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
-3. **下一任务方向**：**ML-KEM-512 审阅与收尾**（文档 + 小修）；非 stable 晋级。  
-4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-07/2026-07-28-T18-PKE-ref链接修复.md`](qa/2026-07/2026-07-28-T18-PKE-ref链接修复.md) / 27 日纪要。  
+   —— 注意：**1024 的 14 个用例现在没有 liboqs 也能跑**（KEM golden 会回落 python），但**有 liboqs 才有权威交叉**，Cloud 仍建议装。  
+3. **下一任务方向**：见下「★ 接手清单」。用户口头指定优先级时以用户为准。  
+4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-07/2026-07-31-借入NPU机体检回填.md`](qa/2026-07/2026-07-31-借入NPU机体检回填.md)（**当日全量真相**）。  
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
 
 ### 刚关闭
@@ -24,7 +25,25 @@
 
 | 项 | 说明 |
 |----|------|
-| **T2-npu-env** | **已扩至 KEM×4**：alg19 keygen / alg20 encaps / alg21 decaps / alg21-ct。口径同前；WSL 四用例 cpu+SIM 已绿。借入机继续对各目录 `bash run.sh -r npu -v Ascend910B4` |
+| **T2-npu-env** | **1024 全覆盖**：探针 PKE×3+KEM×4 与 **stable 七算子**都走 `${REPO_ROOT}/scripts/env.sh`、`ASCEND_DEVICE_ID` npu 缺省 1 / SIM 强制 0。借入机对各目录 `bash run.sh -r npu -v Ascend910B4` 即可，无需先装 thirdparty |
+| **实机 msprof** | `RUN_WITH_MSPROF` 原只在 `add_custom` 生效 → 抽出 [`scripts/msprof_run.sh`](scripts/msprof_run.sh)，接入 14 个用例；**默认不采集**，`RUN_WITH_MSPROF=1` 才在 sim/npu 走 `msprof op`，产物落 `prof_<mode>/<bin>/` |
+| **零 thirdparty golden** | LUT 头三级回退（env → 仓库根私有 → 交付树 vendored）；KEM 侧新增 [`library/shared/f203_kem_ref/kem_ref.py`](library/shared/f203_kem_ref/kem_ref.py)：liboqs 优先，缺失回落仓内已验证 PKE golden + SHA3，Decaps stash 缺失按 `SEED_D` 自举。`KEM_GOLDEN_CROSS=1` 实测两路逐字节一致 |
+
+---
+
+## ★ 接手清单（2026-07-31 晚交接；按此挑，勿另起大工程）
+
+**刚落地的一版**（main，已推）：1024 的 **7 探针 + 7 stable** 全部对齐上机口径；KEM golden 去掉
+liboqs 硬依赖；用例软链相对化。WSL 三轮全绿证据见当日 qa §11.6，**勿重跑整树**。
+
+| 优先 | 项 | 做什么 | 注意 |
+|------|----|--------|------|
+| **P0** | 实机 `-r npu` 回填 | 用户在借入机逐目录跑 `bash run.sh -r npu -v Ascend910B4`（设备号缺省 1）；Agent 侧负责**读 log 定位**、修问题、补当日 qa | 实机**无 thirdparty**：KEM 应打印 `golden … via python`；若报缺 `liboqs_kem_ref` 说明回落没走通，属 bug |
+| **P1** | **T2-npu-link** | 512 / 768 / incubating 剩 12 处 `ln -sfn` 绝对路径 → `ln -sfnr` | 改哪档就把哪档 CPU 跑一遍自验；别一次性改完不验 |
+| **P1** | 512 / 768 上机口径 | 若用户要在实机跑 512/768，比照 1024 做同样四件事：`env.sh` / `ASCEND_DEVICE_ID` / `msprof_run.sh` / golden 去 thirdparty | 1024 的 `run.sh` env 段可直接作模板；KEM golden 复用 `library/shared/f203_kem_ref`（现仅接了 1024，k=2/3 需按参数差清单确认） |
+| **P2** | 512 审阅收尾 | 原下一刀（见下节 A/B），未开工 | 与上面的 NPU 线互不冲突，看用户当次指令 |
+
+**别做**：`#交付#` stable-512/768（须用户点名）；把 1024 那套 env 改动往 frozen 树里搬。
 
 ---
 
@@ -58,9 +77,9 @@
 
 ---
 
-## ★ 下一刀（文档 + 代码完善；默认 P0）
+## ★ 下一刀（512 审阅收尾；现降为接手清单 P2）
 
-用户尚未仔细审 512 实现。新 Agent **默认做审阅型收尾**，按用户当次指令收窄。
+用户尚未仔细审 512 实现。若用户未指定 NPU 线，**默认做审阅型收尾**，按用户当次指令收窄。
 
 ### A. 文档（优先、省额度）
 
@@ -120,6 +139,14 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 # 512 glue（交叉）
 USE_LIBOQS=1 bash scripts/exp_kem512_liboqs_roundtrip.sh
+
+# 1024 实机（借入机；设备号缺省 1，无需装 thirdparty）
+bash run.sh -r npu -v Ascend910B4
+RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 非默认：要 msprof 报告时才加
+
+# 1024 KEM golden 后端自检（非默认）
+KEM_GOLDEN_BACKEND=python bash run.sh -r cpu -v Ascend910B4   # 强制回落
+KEM_GOLDEN_CROSS=1        bash run.sh -r cpu -v Ascend910B4   # liboqs ≡ python 逐字节
 ```
 
 会话结束前：刷新**本文件** + 当日 `qa/` + 动过的 `INDEX.md`。

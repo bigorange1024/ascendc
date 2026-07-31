@@ -5,7 +5,8 @@
 @brief pass-fix-f203-alg14-pke-encrypt-device-k4 — 全链 Encrypt golden 生成（自包含）。
 
 流水线（INTEGRATION_PLAN §4.1、§8）：
-  * 锁死 SEED_D=20260619；输入/golden_c 优先复用 correctness，缺失则 host_golden 自生成
+  * 锁死 SEED_D=20260619；输入/golden_c 默认由 host_golden 本地生成
+    （ENCRYPT_REUSE_STABLE_INPUT=1 才复用 stable Encrypt 产物并交叉校验）
   * 本地派生 LUT 与 golden_v（CPU 分段注入；SIM 全设备不需 v）
   * Alg.14 产物仅 c（golden/c.bin）；u/v 为中间量
 输出：input/{ek_pke,m,coins,lut_*,golden_v}.bin、golden/c.bin
@@ -35,9 +36,28 @@ from f203_ref_common import (  # noqa: E402
 import golden_c as gc  # noqa: E402
 
 SEED_D = 20260619
-# 可选：复用 stable Encrypt 已生成的 input/golden（缺失则本地生成）
-_CORR = os.path.normpath(
-    os.path.join(_CASE_DIR, "..", "..", "examples", "stable", "stable-fips203-mlkem-pke-encrypt-k4")
+
+
+def _repo_root(start: str) -> str:
+    """向上找含 AGENTS.md + scripts/ 的仓库根（用例已嵌套到 ml-kem/ml-kem-1024/ 下）。"""
+    cur = os.path.abspath(start)
+    while True:
+        if os.path.isfile(os.path.join(cur, "AGENTS.md")) and os.path.isdir(os.path.join(cur, "scripts")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            raise FileNotFoundError(f"cannot locate repo root from {start}")
+        cur = parent
+
+
+# 可选复用 stable Encrypt 的 input/golden：默认 **关闭**。
+# 背景：stable 树的 input/ 是运行期产物（roundtrip 脚本会写入随机 fixture），
+# 复用会让本探针的锁定 SEED_D 语义随上次跑过什么而漂移；故默认一律本地按 SEED_D 生成，
+# 仅在显式 ENCRYPT_REUSE_STABLE_INPUT=1 时才复用并与本地重算交叉校验。
+_REUSE_STABLE = os.environ.get("ENCRYPT_REUSE_STABLE_INPUT", "0") == "1"
+_CORR = os.path.join(
+    _repo_root(_CASE_DIR),
+    "examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4",
 )
 _LOCKED_INPUTS = ("ek_pke.bin", "m.bin", "coins.bin")
 _EK_BYTES = 1568
@@ -67,7 +87,9 @@ def _gen_lut_bins(inp: str) -> None:
 
 
 def _corr_inputs_ready() -> bool:
-    """stable encrypt 探针是否已有 ek/m/coins。"""
+    """是否走 stable encrypt 的 ek/m/coins（须显式开 _REUSE_STABLE 且文件齐）。"""
+    if not _REUSE_STABLE:
+        return False
     corr_in = os.path.join(_CORR, "input")
     return all(os.path.isfile(os.path.join(corr_in, name)) for name in _LOCKED_INPUTS)
 
@@ -77,7 +99,7 @@ def _corr_golden_ready() -> bool:
 
 
 def _copy_locked_inputs(inp: str) -> None:
-    """从 correctness/stable 复制锁定输入。"""
+    """从 stable Encrypt 交付树复制锁定输入。"""
     corr_in = os.path.join(_CORR, "input")
     for name in _LOCKED_INPUTS:
         shutil.copyfile(os.path.join(corr_in, name), os.path.join(inp, name))
@@ -98,17 +120,17 @@ def _gen_locked_inputs_local(inp: str) -> None:
 
 
 def _ensure_locked_inputs(inp: str) -> str:
-    """返回来源标签：'correctness' | 'local'。"""
+    """返回来源标签：'stable' | 'local'（默认 local，见 _REUSE_STABLE 注释）。"""
     if _corr_inputs_ready():
         _copy_locked_inputs(inp)
-        return "correctness"
-    print(f"[gen_data] correctness 输入缺失，本地生成 SEED_D={SEED_D}（ek/m/coins）")
+        return "stable"
+    print(f"[gen_data] 本地生成锁定输入 SEED_D={SEED_D}（ek/m/coins）")
     _gen_locked_inputs_local(inp)
     return "local"
 
 
 def _write_golden_c(gold: str, ek: bytes, m: bytes, coins: bytes, prefer_corr: bool) -> tuple[bytes, str]:
-    """写 golden/c.bin；若复用 correctness 则与本地 golden_encrypt 交叉校验。"""
+    """写 golden/c.bin；若复用 stable 产物则与本地 golden_encrypt 交叉校验。"""
     dst = os.path.join(gold, "c.bin")
     if prefer_corr and _corr_golden_ready():
         src = os.path.join(_CORR, "output", "golden_c.bin")
@@ -117,8 +139,8 @@ def _write_golden_c(gold: str, ek: bytes, m: bytes, coins: bytes, prefer_corr: b
             golden_c_bytes = f.read()
         c_ref = bytes(gc.golden_encrypt(ek, m, coins))
         if c_ref != golden_c_bytes:
-            raise SystemExit("[gen_data] 一致性失败：本地重算 c != correctness golden_c.bin")
-        return golden_c_bytes, "correctness"
+            raise SystemExit("[gen_data] 一致性失败：本地重算 c != stable golden_c.bin")
+        return golden_c_bytes, "stable"
     c_ref = bytes(gc.golden_encrypt(ek, m, coins))
     with open(dst, "wb") as f:
         f.write(c_ref)
@@ -158,7 +180,7 @@ def main() -> None:
         raise SystemExit(f"[gen_data] bad sizes ek={len(ek)} m={len(m)} coins={len(coins)}")
 
     # —— c 与 CPU 用 v ——
-    _c_bytes, src_c = _write_golden_c(gold, ek, m, coins, prefer_corr=(src_in == "correctness"))
+    _c_bytes, src_c = _write_golden_c(gold, ek, m, coins, prefer_corr=(src_in == "stable"))
 
     v = _compute_golden_v(ek, m, coins)
     v.tofile(os.path.join(inp, "golden_v.bin"))

@@ -30,6 +30,7 @@
 #include "tiling_host.hpp"
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <cstdio>
 
@@ -229,7 +230,11 @@ int32_t main(int32_t argc, char *argv[])
     const size_t trHatNttSize = tiling::n * sizeof(int32_t);
 
     CHECK_ACL(aclInit(nullptr));
-    int32_t deviceId = 0;
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 1（借入实机多卡，避开物理 0）。SIM 由 run.sh 强制 export=0。
+    int32_t deviceId = 1;
+    if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
+        deviceId = static_cast<int32_t>(std::atoi(envDev));
+    }
     CHECK_ACL(aclrtSetDevice(deviceId));
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));

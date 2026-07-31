@@ -61,7 +61,17 @@ def main() -> None:
         lines.append("};")
         return lines
 
+    # 头注释须与仓内已提交的 .h 逐字一致：否则每跑一次用例都会把人工补写的中文说明冲掉，
+    # 造成 git 工作区莫名变脏（实机上尤其容易被误当成改动）。
     body = [
+        "",
+        "/** 反交错 ROM：与 interleave 互逆；SampleNTT 向量路径 Gather 索引表。 */",
+        "/**",
+        " * 本文件在 KeyGen 流水线中的位置：Launch 1 Alg.7 SampleNTT（Â）：XOF/拒绝采样/ROM。",
+        " * 对齐：FIPS 203 Alg.13 / ML-KEM-1024（k=4）。",
+        " * 与 golden 关系：仅 I/O 等价验收；禁止把 Host/参考源码当作 AscendC 实现规格。",
+        " * 文件：prep/alg7/f203_alg7_deinterleave_rom.h",
+        " */",
         "/**",
         " * @file f203_alg7_deinterleave_rom.h",
         f" * @brief Alg.7 xof {XOF_BYTES}B → c0/c1/c2[{NPAIRS}] Gather 字节索引（自动生成）。",

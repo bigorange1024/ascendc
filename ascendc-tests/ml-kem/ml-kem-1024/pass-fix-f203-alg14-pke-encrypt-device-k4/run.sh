@@ -16,7 +16,7 @@
 #
 # 调试（须显式指定，非默认）:
 #   ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4   # 强制 rm build/out 全量重编
-#   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4              # 走 msprof + OPPROF_*（慢）
+#   RUN_WITH_MSPROF=1 bash run.sh -r sim -v Ascend910B4         # msprof + OPPROF_*（很慢）
 #   改 F203_* / ALG11_* 编译开关后须 FORCE_REBUILD=1（stamp 含主要宏）
 #
 # 多环境分流（scripts/runtime_env.sh）：
@@ -24,6 +24,10 @@
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #   bash run.sh -r npu -v Ascend910B4       # 真机；ASCEND_DEVICE_ID 缺省 1（SIM 强制 0）
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
+#
+# msprof 性能采集（须显式指定，非默认；默认不产生任何 prof/OPPROF 文件）:
+#   RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 实机 msprof op → prof_npu/<bin>/
+#   可调项见 scripts/msprof_run.sh
 # CANN：source ${REPO_ROOT}/scripts/env.sh（勿写死 ~/ascendc）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -208,7 +212,10 @@ else
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-600}"
 fi
 
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit
+# 默认直跑（等价 kernel-run-timeout.sh）；仅 RUN_WITH_MSPROF=1 时在 sim/npu 下走 msprof op。
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel ./ascendc_kernels_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

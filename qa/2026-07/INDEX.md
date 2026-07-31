@@ -8,7 +8,7 @@
 
 | 日期 | 文件 | 关键字 |
 |------|------|--------|
-| 2026-07-31 | [2026-07-31-借入NPU机体检回填.md](2026-07-31-借入NPU机体检回填.md) | **§3.2** · T2-npu-env：add_custom + toy + **PKE×3** + **KEM×4** 运行配置 · WSL cpu/sim 绿 · 借入机 `-r npu` |
+| 2026-07-31 | [2026-07-31-借入NPU机体检回填.md](2026-07-31-借入NPU机体检回填.md) | **§3.2** · T2-npu-env：add_custom+toy+**1024 探针×7+stable×7** · **§10** `msprof_run.sh`（默认不采集）· Encrypt LUT 三级候选 · **§11** KEM golden 去 liboqs（`f203_kem_ref` 回落 + 密钥对自举）· 软链相对化 · WSL 14 用例 CPU（零 thirdparty / 正常）+ SIM 全绿 |
 | 2026-07-30 | [2026-07-30-实机NPU环境排查与add_custom适配清单.md](2026-07-30-实机NPU环境排查与add_custom适配清单.md) | **借用实机只读体检** · `set_env.sh` 定位 · **`env.sh` 硬编码 P0** · `main.cpp` deviceId · `verify-cann.sh` 非 WSL 降 WARN · **本轮仅落文档** · T2-npu-env |
 | 2026-07-29 | [2026-07-29-汇报采用CASE002-v4与对照页版式.md](2026-07-29-汇报采用CASE002-v4与对照页版式.md) | **采用 v4** · Cloud vs v4 差距 · 对照页条形图 · **待汇报后回填** |
 | 2026-07-28 | [2026-07-28-T18-PKE-ref链接修复.md](2026-07-28-T18-PKE-ref链接修复.md) | **T18 关闭** · indcpa hidden · PKE ref 链 `.o`+shim+`internal.a` · Cloud KEM RT |

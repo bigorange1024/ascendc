@@ -97,19 +97,44 @@ source "${REPO_ROOT}/scripts/runtime_env.sh"
 export ASCENDC_CASE_SUPPORTS_NPU="${ASCENDC_CASE_SUPPORTS_NPU:-1}"
 runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 
-if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
-    # shellcheck source=/dev/null
-    source "${HOME}/ascendc/scripts/env.sh"
-    _ASCEND_INSTALL_PATH="${CANN_HOME}"
-elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
+# CANN：统一 ${REPO_ROOT}/scripts/env.sh（多候选 set_env + 回写 CANN_HOME）；禁止写死 ~/ascendc，
+# 否则仓库不在 $HOME/ascendc 的机器（如借入实机）会静默落到错误的 toolkit。
+# 保存/恢复 errexit：本段靠返回码判断 source 结果，不改变脚本原有的 set -e 状态。
+_had_errexit=0
+case $- in *e*) _had_errexit=1 ;; esac
+set +e
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/env.sh"
+_env_rc=$?
+[ "${_had_errexit}" = "1" ] && set -e
+if [ "${_env_rc}" -ne 0 ]; then
+    echo "[ERROR] source ${REPO_ROOT}/scripts/env.sh failed (rc=${_env_rc})" >&2
+    exit 1
+fi
+if [ -n "${ASCEND_INSTALL_PATH:-}" ]; then
     _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH}"
-elif [ -d "$HOME/Ascend/ascend-toolkit/latest" ]; then
-    _ASCEND_INSTALL_PATH="$HOME/Ascend/ascend-toolkit/latest"
+elif [ -n "${CANN_HOME:-}" ] && [ -d "${CANN_HOME}" ]; then
+    _ASCEND_INSTALL_PATH="${CANN_HOME}"
+elif [ -n "${ASCEND_HOME_PATH:-}" ] && [ -d "${ASCEND_HOME_PATH}" ]; then
+    _ASCEND_INSTALL_PATH="${ASCEND_HOME_PATH}"
 else
-    _ASCEND_INSTALL_PATH=/usr/local/Ascend/ascend-toolkit/latest
+    echo "[ERROR] CANN_HOME / ASCEND_HOME_PATH 未设置" >&2
+    exit 1
+fi
+if ! command -v ccec >/dev/null 2>&1; then
+    echo "[ERROR] 未找到 ccec。CANN_HOME=${CANN_HOME:-}" >&2
+    exit 1
 fi
 export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
+export CANN_HOME="${_ASCEND_INSTALL_PATH}"
+
+# 实机 ACL 设备号：npu 缺省 1（借入多卡避开物理 0）；SIM 强制 0（CAModel 仅设备 0）
+if [ "${RUN_MODE}" = "npu" ]; then
+    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+elif [ "${RUN_MODE}" = "sim" ]; then
+    export ASCEND_DEVICE_ID=0
+fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
     export SIM_DIRECT="${SIM_DIRECT:-1}"
@@ -187,7 +212,15 @@ else
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-600}"
 fi
 
-/usr/bin/time -f '[wall_sec] %e' bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
+# 默认：/usr/bin/time 包 kernel-run-timeout.sh，wall_sec 记入 output/run_metrics.txt（tick 台账依赖此行）。
+# RUN_WITH_MSPROF=1：改走 msprof op（sim/npu），此时 wall_sec 不可比，故不再写 run_metrics.txt。
+if [ "${RUN_WITH_MSPROF:-0}" = "1" ]; then
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/msprof_run.sh"
+    msprof_run_kernel ./ascendc_kernels_bbit
+else
+    /usr/bin/time -f '[wall_sec] %e' bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
+fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

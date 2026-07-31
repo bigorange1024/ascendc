@@ -54,12 +54,18 @@ def main() -> None:
         raise SystemExit(f"idx len {len(idx)} != {OUT_LEN}")
 
     out_h = Path(__file__).resolve().parents[2] / "prep" / "alg7" / "f203_alg7_interleave_rom.h"
+    # 头注释与常量注释须与仓内已提交的 .h 逐字一致：否则每跑一次用例都会把人工补写的中文说明
+    # 冲掉，造成 git 工作区莫名变脏（实机上尤其容易被误当成改动）。
     lines = [
         "/**",
         " * @file f203_alg7_interleave_rom.h",
-        f" * @brief Alg.7 rej：d1[{NPAIRS}]||d2[{NPAIRS}] scratch → stream[{OUT_LEN}] Gather 字节索引（自动生成）。",
+        f" * @brief Alg.7 交错 ROM：d1[{NPAIRS}]||d2[{NPAIRS}] scratch → stream[{OUT_LEN}] Gather 字节索引。",
         " *",
-        " * 生成：scripts/gen_alg7_interleave_rom.py",
+        " * ## 流水线位置",
+        " * Launch 1 SampleNTT（Â）向量路径；将线性 lane 映射为向量友好布局，设备只读。",
+        " *",
+        " * ## 对齐与 golden",
+        " * FIPS 203 Alg.13 / ML-KEM-1024（k=4）；由 `scripts/prep/gen_alg7_interleave_rom.py` 生成。",
         " */",
         "#pragma once",
         "",
@@ -67,9 +73,12 @@ def main() -> None:
         "",
         "namespace F203Alg7 {",
         "",
+        "/** 交错后字节流长度：d1||d2 各 224 → 448 */",
         f"constexpr uint32_t kInterleaveStreamLen = {OUT_LEN}U;",
+        "/** ROM 表项数（与 stream 等长，每项为 Gather 字节偏移） */",
         f"constexpr uint32_t kInterleaveRomLen = {OUT_LEN}U;",
         "",
+        "/** Gather 字节索引：偶位取 d1、奇位取 d2 交错布局 */",
         "constexpr int32_t kAlg7InterleaveReorderByte[kInterleaveRomLen] = {",
     ]
     # 每行 8 个索引，便于 diff 阅读

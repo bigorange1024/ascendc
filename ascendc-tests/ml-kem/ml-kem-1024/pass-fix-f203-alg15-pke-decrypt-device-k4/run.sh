@@ -23,6 +23,10 @@
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
 #   bash run.sh -r npu -v Ascend910B4       # 真机；ASCEND_DEVICE_ID 缺省 1（SIM 强制 0）
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
+#
+# msprof 性能采集（须显式指定，非默认；默认不产生任何 prof/OPPROF 文件）:
+#   RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 实机 msprof op → prof_npu/<bin>/
+#   开启后墙钟由 msprof 报告给出，output/run_metrics.txt 不再是 /usr/bin/time 的 [wall_sec]
 # CANN：source ${REPO_ROOT}/scripts/env.sh（勿写死 ~/ascendc）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -155,7 +159,15 @@ if [ "${RUN_MODE}" = "sim" ]; then
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi
 
-/usr/bin/time -f '[wall_sec] %e' bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
+# 默认（非 msprof）保持 /usr/bin/time 计墙钟并写 output/run_metrics.txt；
+# RUN_WITH_MSPROF=1 时改由 msprof op 托管进程，墙钟由 msprof 自己的报告给出。
+if [ "${RUN_WITH_MSPROF:-0}" = "1" ]; then
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/msprof_run.sh"
+    msprof_run_kernel ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
+else
+    /usr/bin/time -f '[wall_sec] %e' bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
+fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

@@ -203,6 +203,68 @@ bash run.sh -r npu -v Ascend910B4
 
 ---
 
+## 4.1 实机性能采集：`RUN_WITH_MSPROF=1`（默认关闭）
+
+**教训（2026-07-31 实机首轮）**：`RUN_WITH_MSPROF` 原先**只有 `add_custom/run.sh` 实现**，
+ML-KEM 探针一律直跑二进制，实机上设了该变量也**静默无产物**。现已抽出共用包装
+[`scripts/msprof_run.sh`](../../scripts/msprof_run.sh)，接入 PKE×3 + KEM×4 探针。
+
+| 命令 | 行为 |
+|------|------|
+| `bash run.sh -r npu -v Ascend910B4` | **默认**：直跑，等价 `kernel-run-timeout.sh`，**不产** prof/OPPROF |
+| `RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4` | `msprof op` → `<用例>/prof_npu/<bin>/`（`OPPROF_*` 在其内） |
+| `RUN_WITH_MSPROF=1 bash run.sh -r sim -v Ascend910B4` | `msprof op simulator`，很慢；仅需要仿真侧 tick 明细时用 |
+| `RUN_WITH_MSPROF=1 … -r cpu` | 告警并退回直跑（CPU 孪生无硬件计数器） |
+
+多 launch 的 device session（KeyGen / Decaps 等）默认只采 `MSPROF_LAUNCH_COUNT_NPU=8` 个
+launch，不够时调大；指标集 `MSPROF_AIC_METRICS_NPU` 等其余旋钮见脚本头注释。
+真机**不会**打印 CAModel 的 `Total tick`，实机耗时以 msprof 报告为准。
+
+已接入：**PKE×3 + KEM×4 探针**与 **stable 七算子**（`pke-{keygen,encrypt,decrypt}`、
+`kem-{keygen,encaps,decaps,decaps-ct}`）。`pke-decrypt` 默认仍走 `/usr/bin/time` 写
+`output/run_metrics.txt`（tick 台账依赖），仅 `RUN_WITH_MSPROF=1` 时改走 msprof。
+
+---
+
+## 4.2 实机无 `thirdparty/`：golden 如何出（2026-07-31）
+
+**约束**：借入机不便安装 `thirdparty/`（`liboqs`、私有 `ntt_onnx` 均没有），但要求**每个用例
+单独跑都能跑通**。
+
+| 依赖 | 处置 |
+|------|------|
+| NTT LUT 头（`transpose_mlkem_luts_i8.h`） | 三级回退：`F203_LUT_HDR` → 仓库根私有 `thirdparty/ntt_onnx` → **各交付树内 vendored 副本**（随 git 分发）。见 §10.2 教训 |
+| KEM golden（`scripts/liboqs_kem_ref`） | **[`library/shared/f203_kem_ref/kem_ref.py`](../../library/shared/f203_kem_ref/kem_ref.py)**：liboqs 优先；缺失回落仓内已验证 PKE golden + SHA3 组装 KEM 层 |
+| Decaps 密钥对 stash（`output/kem_keypair_stash/`，不入 git） | 缺失时按 `SEED_D`（缺省 20260619）derand **现造一对**；固定钥仍可 `EK_KEM_SRC`/`DK_KEM_SRC` |
+
+```bash
+KEM_GOLDEN_BACKEND=python bash run.sh -r cpu -v Ascend910B4   # 强制回落自检（非默认）
+KEM_GOLDEN_CROSS=1        bash run.sh -r cpu -v Ascend910B4   # liboqs 与回落逐字节互校（非默认）
+```
+
+日志会打印 golden 实际来源（`via liboqs` / `via python`），**不允许**在看不到来源的情况下报通过。
+**回落不覆盖**：外部 `C_SRC` 且未给 `K_ENC_SRC` 的 Decaps（需完整重加密比对）——此路径本就依赖
+liboqs 产密文，脚本会给出可操作报错而非静默假绿。
+
+**WSL 验证方式**：临时移走 `thirdparty/`、`scripts/liboqs_*_ref`、`output/kem_keypair_stash`
+后跑全部 14 个用例 CPU，全绿方可认为实机可用。
+
+**已验（2026-07-31，WSL 910B4）**：零 thirdparty CPU **14/14**（KEM 均标 `via python`）；
+正常环境 CPU **14/14**（`KEM_GOLDEN_CROSS=1`：KeyGen `ek,dk`、Encaps `c,K` 两路逐字节相同）；
+成批 SIM **14/14**、用例根 stray dump 全 0。逐例耗时见当日 qa §11.6。
+
+## 4.3 用例内软链一律相对（2026-07-31）
+
+KEM 用例靠软链复用 PKE 交付树的 `thirdparty/` 与 `scripts/{host_golden,compute}`。原先 `run.sh`
+用 `ln -sfn` 写**绝对**路径，仓库路径一换（Cloud `/workspace` ↔ WSL `$HOME/ascendc` ↔ 实机任意
+目录）就每跑一次重写一次，`git status` 平白出现改动。1024 的 5 个 `run.sh` 已改
+**`ln -sfnr`**，同一份相对链在三种环境通用。
+
+512 / 768 / incubating 尚有 12 处 `ln -sfn` 未改（`qa/TODO.md` **T2-npu-link**）——功能不坏
+（每次跑会重写成本机路径），但换机后同样脏工作区。
+
+---
+
 ## 5. 硬禁令
 
 | 禁止 | 原因 |

@@ -32,6 +32,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
 #endif
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -126,7 +127,11 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
 #else
     /* ---- SIM / NPU：ACL 分配 + H2D/D2H ---- */
     CHECK_ACL(aclInit(nullptr));
-    int32_t deviceId = 0;
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 1（借入实机多卡，避开物理 0）。SIM 由 run.sh 强制 export=0。
+    int32_t deviceId = 1;
+    if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
+        deviceId = static_cast<int32_t>(std::atoi(envDev));
+    }
     CHECK_ACL(aclrtSetDevice(deviceId));
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));

@@ -4,18 +4,19 @@ gen_data.py — Alg.19 KEM KeyGen 的 host golden 生成器（黑盒 oracle，�
 
 用途（仅 KEM_KEYGEN_VERIFY=1 / 对拍路径）：
   用与 device 一致的 d/z 域分离消息，拼 64B kem_seed=d‖z，
-  再调仓库 scripts/liboqs_kem_ref keypair_derand，写出
-  output/golden_ek_kem.bin、golden_dk_kem.bin。
+  交 library/shared/f203_kem_ref 产出 output/golden_ek_kem.bin、golden_dk_kem.bin。
 
-禁止：把本脚本逻辑当作 AscendC 必须复刻的实现；生产默认 run.sh
-  不依赖 liboqs（见 SELF_CONTAINED.md）。
+golden 后端（2026-07-31）：**liboqs 优先，缺失则回落**本用例的 keygen_golden（PKE KeyGen）
+  + H/拼装。背景：借入实机装不了 thirdparty/liboqs，原先硬依赖会让 KEM 用例直接跑不起来。
+  两条路径对同一 SEED_D 必须给出逐字节相同的 ek/dk；日志打印实际来源。
+
+禁止：把本脚本逻辑当作 AscendC 必须复刻的实现。
 """
 from __future__ import annotations
 
 import hashlib
 import os
 import struct
-import subprocess
 import sys
 from pathlib import Path
 
@@ -32,15 +33,16 @@ ROOT = Path(__file__).resolve().parent.parent
 # examples/incubating/exp-*/ → 仓库根
 REPO = _ascendc_repo_root(ROOT)
 FIPS203_SE = REPO / "library/shared/fips203_se_sample"
-sys.path.insert(0, str(FIPS203_SE))
+KEM_REF = REPO / "library/shared/f203_kem_ref"
+for _p in (FIPS203_SE, KEM_REF):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 from golden_se_sampling import derand_bytes_from_seed  # noqa: E402
+import kem_ref  # noqa: E402
 
 EK_KEM_BYTES = 1568
 DK_KEM_BYTES = 3168
 # 定点复现可 export SEED_D=20260619；默认见 resolve_host_seed_d.py（SHA3 派生）
-
-BUILD_REF = REPO / "scripts/build_liboqs_kem_ref.sh"
-REF_BIN = REPO / "scripts/liboqs_kem_ref"
 
 
 def derand_z_from_seed(seed_d: int) -> bytes:
@@ -49,16 +51,27 @@ def derand_z_from_seed(seed_d: int) -> bytes:
     return hashlib.sha3_256(msg).digest()
 
 
-def _ensure_ref() -> Path:
-    """确保 liboqs_kem_ref 可执行存在；缺失则跑仓库构建脚本。"""
-    if REF_BIN.is_file():
-        return REF_BIN
-    subprocess.check_call(["bash", str(BUILD_REF)])
-    return REF_BIN
+def _make_pke_keygen(seed_d: int):
+    """
+    造 kem_ref 回落路径要的 PKE KeyGen golden：d(32B) → (ek_pke 1568B, dk_pke 1536B)。
+
+    本用例的 keygen_golden 以 seed_d 为入口（内部同样 d = derand_bytes_from_seed(seed_d)），
+    故这里闭包住 seed_d，并断言传入的 d 与之一致，避免 d 与 seed_d 走岔产出错 golden。
+    """
+
+    def _pke_keygen(d: bytes) -> "tuple[bytes, bytes]":
+        if d != derand_bytes_from_seed(seed_d):
+            raise SystemExit("[gen_data] d 与 SEED_D 不一致，拒绝生成 golden")
+        import keygen_golden
+
+        kg = keygen_golden.build_full_keygen(seed_d)
+        return kg["ek_pke"].tobytes(), kg["dk_pke"].tobytes()
+
+    return _pke_keygen
 
 
 def main() -> None:
-    """写 seed_d.bin，并生成 golden ek/dk（liboqs derand）。"""
+    """写 seed_d.bin，并生成 golden ek/dk（liboqs 优先，缺失回落本地 PKE KeyGen）。"""
     from resolve_host_seed_d import resolve_host_seed_d
 
     seed_d, how = resolve_host_seed_d()
@@ -74,13 +87,11 @@ def main() -> None:
     inp.mkdir(exist_ok=True)
     (inp / "seed_d.bin").write_bytes(struct.pack("<I", seed_d))
 
-    ref = _ensure_ref()
     ek_path = out_dir / "golden_ek_kem.bin"
     dk_path = out_dir / "golden_dk_kem.bin"
-    hex_seed = kem_seed.hex()
-    subprocess.check_call([str(ref), "keygen", str(ek_path), str(dk_path), hex_seed])
+    src = kem_ref.kem_keygen(kem_seed, ek_path, dk_path, pke_keygen=_make_pke_keygen(seed_d))
 
-    print(f"[gen_data] SEED_D={seed_d} via={how} golden ek_kem/dk_kem via liboqs derand (64B d||z)")
+    print(f"[gen_data] SEED_D={seed_d} via={how} golden ek_kem/dk_kem via {src} derand (64B d||z)")
 
 
 if __name__ == "__main__":

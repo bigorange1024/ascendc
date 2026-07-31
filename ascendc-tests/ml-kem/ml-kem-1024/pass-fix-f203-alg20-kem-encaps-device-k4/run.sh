@@ -10,7 +10,11 @@
 #
 # 调试（非默认）:
 #   KEM_ENCAPS_FORCE_REBUILD=1 …
-#   SIM_DIRECT=0 …（msprof）
+#
+# msprof 性能采集（须显式指定，非默认；默认不产生任何 prof/OPPROF 文件）:
+#   RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 实机 msprof op → prof_npu/<bin>/
+#   RUN_WITH_MSPROF=1 bash run.sh -r sim -v Ascend910B4   # CAModel msprof op simulator（很慢）
+#   可调项见 scripts/msprof_run.sh
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 _ORIG_ARGS=("$@")
@@ -39,8 +43,9 @@ fi
 STABLE_ENCRYPT="${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4"
 
 mkdir -p "${CURRENT_DIR}/scripts"
-ln -sfn "${STABLE_ENCRYPT}/scripts/host_golden" "${CURRENT_DIR}/scripts/host_golden"
-ln -sfn "${STABLE_ENCRYPT}/thirdparty" "${CURRENT_DIR}/thirdparty"
+# -r：生成**相对**软链，换机（实机 / Cloud / WSL 仓库路径各不相同）后无需重写，git 工作区也不会被污染
+ln -sfnr "${STABLE_ENCRYPT}/scripts/host_golden" "${CURRENT_DIR}/scripts/host_golden"
+ln -sfnr "${STABLE_ENCRYPT}/thirdparty" "${CURRENT_DIR}/thirdparty"
 
 export KEM_ENCAPS_VERIFY="${KEM_ENCAPS_VERIFY:-1}"
 export KEM_ENCAPS_SKIP_REBUILD="${KEM_ENCAPS_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-1}}"
@@ -178,7 +183,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi
 
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" "${CURRENT_DIR}/ascendc_kem_encaps_bbit"
+# 默认直跑（等价 kernel-run-timeout.sh）；仅 RUN_WITH_MSPROF=1 时在 sim/npu 下走 msprof op。
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel "${CURRENT_DIR}/ascendc_kem_encaps_bbit"
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}" || true

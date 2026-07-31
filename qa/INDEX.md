@@ -12,7 +12,7 @@
 
 ### 2026-07-31 — [借入 NPU 机体检回填 · 910B4 / CANN 9.1.0-beta.3](2026-07/2026-07-31-借入NPU机体检回填.md)
 
-关键字：**aarch64** · cann→**9.1.0-beta.3** · toolkit/latest≡cann · **CANN_HOME 回写** · add_custom/toy-mix/**PKE×3**/**KEM×4** 上板 env · `ASCEND_DEVICE_ID` 缺省 1 · WSL cpu+sim 绿
+关键字：**aarch64** · cann→**9.1.0-beta.3** · toolkit/latest≡cann · **CANN_HOME 回写** · add_custom/toy-mix/**1024 探针×7**/**stable×7** 上板 env · `ASCEND_DEVICE_ID` 缺省 1 · **`scripts/msprof_run.sh`**（默认不采集）· **零 thirdparty 可跑**：Encrypt LUT 三级候选 + **`library/shared/f203_kem_ref`**（liboqs 优先 / python 回落 / 密钥对自举）· 软链 `ln -sfnr` 相对化 · WSL 14 用例 CPU×2 轮 + SIM 全绿
 
 ### 2026-07-30 — [实机 NPU 环境排查方案 · `add_custom` 上板适配清单](2026-07/2026-07-30-实机NPU环境排查与add_custom适配清单.md)
 

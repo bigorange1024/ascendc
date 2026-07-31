@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -39,9 +38,11 @@ REPO = _ascendc_repo_root(ROOT)
 HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 sys.path.insert(0, str(HOST_GOLDEN))
 sys.path.insert(0, str(REPO / "library" / "shared" / "fips203_host_rng"))
+sys.path.insert(0, str(REPO / "library" / "shared" / "f203_kem_ref"))
 
 from f203_ref_common import K, N, Q, embed_message, load_lut_t_i8, stage123_transform  # noqa: E402
 import golden_c as gc  # noqa: E402
+import kem_ref  # noqa: E402
 
 STASH = Path(os.environ.get("KEM_KEYPAIR_STASH", str(REPO / "output" / "kem_keypair_stash")))
 EK_BYTES = 1568
@@ -86,9 +87,9 @@ def main() -> None:
     ek_path = Path(os.environ.get("EK_KEM_SRC", str(STASH / "ek_kem.bin")))
     dk_path = Path(os.environ.get("DK_KEM_SRC", str(STASH / "dk_kem.bin")))
     if not ek_path.is_file() or not dk_path.is_file():
-        print(f"[gen_data] missing stash ek/dk: {ek_path} {dk_path}", file=sys.stderr)
-        print("  run: bash scripts/kem_keypair_stash_bootstrap.sh", file=sys.stderr)
-        sys.exit(2)
+        # stash 落在 output/（不入 git），新机器/借入实机首跑时不存在 → 按 SEED_D derand 现造一对
+        print(f"[gen_data_phase_e] stash 缺 ek/dk（{ek_path}），改用 SEED_D derand 自举密钥对")
+        ek_path, dk_path = kem_ref.bootstrap_keypair(golden)
 
     ek = ek_path.read_bytes()
     dk = dk_path.read_bytes()
@@ -104,11 +105,9 @@ def main() -> None:
         m = os.urandom(M_BYTES)
     assert len(m) == M_BYTES
 
-    ref = REPO / "scripts" / "liboqs_kem_ref"
-    if not ref.is_file():
-        subprocess.check_call(["bash", str(REPO / "scripts" / "build_liboqs_kem_ref.sh")])
-    subprocess.check_call(
-        [str(ref), "encaps", str(ek_path), str(inp / "c.bin"), str(golden / "K.bin"), m.hex()]
+    # golden c/K：liboqs 优先；无 liboqs 时回落 G(m‖H(ek)) + 本目录 host_golden 的 PKE Encrypt
+    k_src = kem_ref.kem_encaps(
+        ek, m, inp / "c.bin", golden / "K.bin", pke_encrypt=gc.golden_encrypt, ek_path=ek_path
     )
 
     (inp / "ek_kem.bin").write_bytes(ek)
@@ -133,7 +132,7 @@ def main() -> None:
     v = ((v.astype(np.int64) + e2.astype(np.int64)) % Q).astype(np.int32)
     v.tofile(inp / "golden_v.bin")
 
-    print(f"[gen_data_phase_e] ek←{ek_path.name} m={m.hex()[:16]}… golden K via liboqs encaps")
+    print(f"[gen_data_phase_e] ek←{ek_path.name} m={m.hex()[:16]}… golden K via {k_src} encaps")
 
 
 if __name__ == "__main__":
