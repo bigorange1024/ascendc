@@ -43,6 +43,11 @@ runtime_env_cann_home() {
     printf '%s' "${HOME}/Ascend/ascend-toolkit/latest"
     return 0
   fi
+  # 借入 NPU 等：/usr/local/Ascend/cann → cann-x.y（与 ascend-toolkit/latest 常等价）
+  if [[ -d /usr/local/Ascend/cann ]]; then
+    printf '%s' /usr/local/Ascend/cann
+    return 0
+  fi
   if [[ -d /usr/local/Ascend/ascend-toolkit/latest ]]; then
     printf '%s' /usr/local/Ascend/ascend-toolkit/latest
     return 0

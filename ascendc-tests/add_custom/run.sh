@@ -24,8 +24,21 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 # env.sh 内可能有 grep|cut 空匹配；在 pipefail 下会误杀，故临时关 -e
 set +e
 # shellcheck source=/dev/null
-source "${HOME}/ascendc/scripts/env.sh"
+source "${REPO_ROOT}/scripts/env.sh"
+_env_rc=$?
 set -euo pipefail
+if [[ "${_env_rc}" -ne 0 ]]; then
+  echo "[ERROR] source ${REPO_ROOT}/scripts/env.sh failed (rc=${_env_rc})" >&2
+  exit 1
+fi
+if [[ -z "${CANN_HOME:-}" || ! -d "${CANN_HOME}" ]]; then
+  echo "[ERROR] CANN_HOME 未设置或不是目录（env.sh 须回写）。当前='${CANN_HOME:-}'" >&2
+  exit 1
+fi
+if ! command -v ccec >/dev/null 2>&1; then
+  echo "[ERROR] 未找到 ccec（CANN toolkit 未正确 source）。CANN_HOME=${CANN_HOME}" >&2
+  exit 1
+fi
 
 RUN_MODE="cpu"
 DEVICE="${ASCEND_DEVICE:-Ascend910B4}"
@@ -193,7 +206,8 @@ setup_sim_env() {
   export CAMODEL_LOG_PATH="${SCRIPT_DIR}/sim_log"
   rm -rf "${CAMODEL_LOG_PATH}"
   mkdir -p "${CAMODEL_LOG_PATH}"
-  export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+  # CAModel 仅逻辑设备 0；强制覆盖，避免 shell 里残留的 ASCEND_DEVICE_ID=1（npu 缺省）弄挂仿真
+  export ASCEND_DEVICE_ID=0
 }
 
 sim_progress_watch() {
@@ -212,11 +226,13 @@ sim_progress_watch() {
 
 setup_npu_env() {
   export LD_LIBRARY_PATH="${CANN_HOME}/lib64:${LD_LIBRARY_PATH}"
+  export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+  echo "[npu] ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID}  CANN_HOME=${CANN_HOME}"
 }
 
 require_msprof() {
   if ! command -v msprof >/dev/null 2>&1; then
-    echo "ERROR: 未找到 msprof，请先 source ~/ascendc/scripts/env.sh" >&2
+    echo "ERROR: 未找到 msprof，请先 source ${REPO_ROOT}/scripts/env.sh" >&2
     exit 1
   fi
 }
@@ -391,6 +407,7 @@ SIM_DIRECT（仅 sim）：
 
 Env:
   ASCEND_DEVICE=Ascend910B4
+  ASCEND_DEVICE_ID=1      # 仅 -r npu 缺省 1（SIM 缺省 0；借入多卡避开物理 0）
   MSPROF_AIC_METRICS_SIM / MSPROF_LAUNCH_COUNT_SIM
   MSPROF_TIMEOUT_MIN=60   MSPROF_WALL_TIMEOUT_SEC=1800
   RUN_WITH_MSPROF=1       # npu 模式走 msprof op

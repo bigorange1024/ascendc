@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-07-28（**T18 关闭**：`liboqs_pke_ref_mlkem1024` 链接已修；下一刀仍为 512 文档/代码审阅）
+> **最后刷新**：2026-07-31（**T2-npu-env P0 已合入**：`env.sh`/`add_custom`；`ASCEND_DEVICE_ID` 缺省 **1**；借入机拉 main 测 `-r npu`）
 
 ---
 
@@ -19,6 +19,12 @@
 | 项 | 说明 |
 |----|------|
 | **T18** | PKE helper encrypt/decrypt 链接：链 `ml_kem_1024_ref` `.o` + fips202 shim + `liboqs-internal.a`；**非改名问题** |
+
+### 待办快照（新增，非本阶段主线）
+
+| 项 | 说明 |
+|----|------|
+| **T2-npu-env** | **P0 已合入**：`scripts/env.sh` 多候选+回写 `CANN_HOME`；`runtime_env` 含 `/usr/local/Ascend/cann`；`add_custom` 用 `REPO_ROOT`；**`ASCEND_DEVICE_ID` 缺省 1**。借入机：`git pull` → `cd ascendc-tests/add_custom && bash run.sh -r npu -v Ascend910B4`。体检见 [NPU真机环境说明 §3.2](docs/engineering/NPU真机环境说明.md) |
 
 ---
 

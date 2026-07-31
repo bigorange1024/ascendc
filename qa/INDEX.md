@@ -10,6 +10,14 @@
 
 ## 按时间（新→旧）
 
+### 2026-07-31 — [借入 NPU 机体检回填 · 910B4 / CANN 9.1.0-beta.3](2026-07/2026-07-31-借入NPU机体检回填.md)
+
+关键字：**aarch64** · `/usr/local/Ascend/cann`→**9.1.0-beta.3** · **toolkit/latest≡cann（二次订正）** · tikicpulib **有 910B*** · source 后 **CANN_HOME 空须回写** · 版本偏斜 · T2-npu-env 待改码
+
+### 2026-07-30 — [实机 NPU 环境排查方案 · `add_custom` 上板适配清单](2026-07/2026-07-30-实机NPU环境排查与add_custom适配清单.md)
+
+关键字：**借用实机只读体检（不装/不改/不 sudo）** · `find set_env.sh` + 反推 `CANN_HOME` · **`scripts/env.sh` 写死 `~/Ascend/cann` = 唯一上机即挂点** · `main.cpp` `deviceId=0` · `verify-cann.sh` 非 WSL 须降 WARN · **本轮仅落文档不改码** · T2-npu-env
+
 ### 2026-07-29 — [汇报采用 CASE-002 v4 · Cloud 稿差距复盘](2026-07/2026-07-29-汇报采用CASE002-v4与对照页版式.md)
 
 关键字：**采用 v4** · Cloud 合稿=工程复盘 vs v4=领导短讲 · 对照页条形图缺口 · **待明日汇报后回填**

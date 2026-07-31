@@ -6,6 +6,7 @@
 #include "data_utils.h"
 #ifndef __CCE_KT_TEST__
 #include "acl/acl.h"
+#include <cstdlib>
 extern void add_custom_do(uint32_t coreDim, void* l2ctrl, void* stream, uint8_t* x, uint8_t* y, uint8_t* z);
 #else
 #include "tikicpulib.h"
@@ -34,9 +35,14 @@ int32_t main(int32_t argc, char* argv[])
     AscendC::GmFree((void*)y);
     AscendC::GmFree((void*)z);
 #else
+    // 实机设备号：读 ASCEND_DEVICE_ID，缺省 1（借入多卡机常避开 0；可用 env 覆盖）
+    // 背景：办公室 WSL 无卡走 CPU 孪生；SIM/NPU 路径才进本分支。结论：缺省 1。未采用：硬编码 0。
     CHECK_ACL(aclInit(nullptr));
     aclrtContext context;
-    int32_t deviceId = 0;
+    int32_t deviceId = 1;
+    if (const char* envDev = std::getenv("ASCEND_DEVICE_ID")) {
+        deviceId = static_cast<int32_t>(std::atoi(envDev));
+    }
     CHECK_ACL(aclrtSetDevice(deviceId));
     CHECK_ACL(aclrtCreateContext(&context, deviceId));
     aclrtStream stream = nullptr;
