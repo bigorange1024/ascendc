@@ -226,7 +226,7 @@ sim_progress_watch() {
 
 setup_npu_env() {
   export LD_LIBRARY_PATH="${CANN_HOME}/lib64:${LD_LIBRARY_PATH}"
-  export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+  export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
   echo "[npu] ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID}  CANN_HOME=${CANN_HOME}"
 }
 
@@ -407,7 +407,7 @@ SIM_DIRECT（仅 sim）：
 
 Env:
   ASCEND_DEVICE=Ascend910B4
-  ASCEND_DEVICE_ID=1      # 仅 -r npu 缺省 1（SIM 缺省 0；借入多卡避开物理 0）
+  ASCEND_DEVICE_ID=1      # 仅 -r npu 缺省 0（SIM 缺省 0；device1 复跑曾死锁，避让时再 =1）
   MSPROF_AIC_METRICS_SIM / MSPROF_LAUNCH_COUNT_SIM
   MSPROF_TIMEOUT_MIN=60   MSPROF_WALL_TIMEOUT_SEC=1800
   RUN_WITH_MSPROF=1       # npu 模式走 msprof op

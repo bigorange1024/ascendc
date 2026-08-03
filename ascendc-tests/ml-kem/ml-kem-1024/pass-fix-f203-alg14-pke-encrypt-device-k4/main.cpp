@@ -212,8 +212,8 @@ int32_t main(int32_t argc, char *argv[])
     const size_t trHatNttSize = tiling::n * sizeof(int32_t);
 
     CHECK_ACL(aclInit(nullptr));
-    // 设备号：读 ASCEND_DEVICE_ID；缺省 1（借入多卡）。SIM 由 run.sh 强制 export=0。
-    int32_t deviceId = 1;
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（借入机 device1 复跑曾死锁；避让时再 export）。SIM 由 run.sh 强制 export=0。
+    int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }

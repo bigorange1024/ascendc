@@ -188,8 +188,8 @@ bash run.sh -r npu -v Ascend910B4
 |---|---|---|---|
 | **P0** | [`scripts/env.sh`](../../scripts/env.sh) `:4,18` | ~~默认 `~/Ascend/cann`~~ → **已改（2026-07-31）** | 多候选 + `ASCEND_TOOLKIT_ENV_FILE`；source 后用 `ASCEND_HOME_PATH` 回写 `CANN_HOME` |
 | **P0** | [`scripts/runtime_env.sh`](../../scripts/runtime_env.sh) | ~~无 `/usr/local/Ascend/cann`~~ → **已加** | 在 `ascend-toolkit/latest` 前插入 `/usr/local/Ascend/cann` |
-| **P0** | [`add_custom/main.cpp`](../../ascendc-tests/add_custom/main.cpp) `:39` | ~~`deviceId = 0`~~ → **已改** | 读 `ASCEND_DEVICE_ID`，**缺省 1**（借入多卡约定；`ASCEND_DEVICE_ID=0` 可覆盖） |
-| **P0** | [`add_custom/run.sh`](../../ascendc-tests/add_custom/run.sh) `:27` | ~~`${HOME}/ascendc`~~ → **已改** | `${REPO_ROOT}/scripts/env.sh` + `ccec`/`CANN_HOME` 校验；export `ASCEND_DEVICE_ID` 缺省 1 |
+| **P0** | [`add_custom/main.cpp`](../../ascendc-tests/add_custom/main.cpp) `:39` | ~~`deviceId = 0`~~ → 曾改缺省 1 → **08-03 改回 0** | 读 `ASCEND_DEVICE_ID`，**缺省 0**（device1 复跑死锁；需避让时再 export=1） |
+| **P0** | [`add_custom/run.sh`](../../ascendc-tests/add_custom/run.sh) `:27` | ~~`${HOME}/ascendc`~~ → **已改** | `${REPO_ROOT}/scripts/env.sh` + 校验；export `ASCEND_DEVICE_ID` **缺省 0** |
 | **P1** | [`scripts/verify-cann.sh`](../../scripts/verify-cann.sh) | 写死 `x86_64-linux` | `uname -m` → `aarch64-linux` 等；simulator 缺失 → WARN（本机可不跑 sim） |
 | **P1** | `add_custom` CPU | 曾误判无 910B* | **可试** `-r cpu`；失败再记。上板主路径仍是 npu |
 | **P1** | `add_custom/run.sh` npu | driver `LD_LIBRARY_PATH` | 本机 ldconfig 已有 hal → 补路径可选；仍 export `ASCEND_DEVICE_ID` |
@@ -262,6 +262,23 @@ KEM 用例靠软链复用 PKE 交付树的 `thirdparty/` 与 `scripts/{host_gold
 
 512 / 768 / incubating 尚有 12 处 `ln -sfn` 未改（`qa/TODO.md` **T2-npu-link**）——功能不坏
 （每次跑会重写成本机路径），但换机后同样脏工作区。
+
+## 4.4 实机设备号：缺省改回 0（2026-08-03）
+
+**教训**：为「借入多卡避开物理 0」曾把 npu **`ASCEND_DEVICE_ID` 缺省设为 1**。借入机实测：
+
+| 设备 | encaps 连跑两遍 |
+|------|-----------------|
+| **1**（旧缺省） | 第 1 遍绿，第 2 遍卡在 `f203_encrypt_l18_l19` 的 `SynchronizeStream`（CrossCore） |
+| **0** | 两遍都绿 |
+
+故 1024 探针×7、stable×7、`add_custom`、toy-mix：**npu 缺省改回 0**；SIM 仍强制 0。
+若物理 0 被占用，再**显式** `ASCEND_DEVICE_ID=1`，并知该卡可能复跑挂（详见当日 qa）。
+
+```bash
+bash run.sh -r npu -v Ascend910B4              # 默认设备 0
+ASCEND_DEVICE_ID=1 bash run.sh -r npu -v Ascend910B4   # 非默认：避让 0 时
+```
 
 ---
 

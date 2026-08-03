@@ -127,9 +127,9 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 实机 ACL 设备号：npu 缺省 1（借入多卡避开物理 0）；SIM 强制 0（CAModel 仅设备 0）
+# 实机 ACL 设备号：npu 缺省 0（借入机 device1 上 l18_l19 复跑死锁；避让时再 ASCEND_DEVICE_ID=1）；SIM 强制 0（CAModel 仅设备 0）
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi

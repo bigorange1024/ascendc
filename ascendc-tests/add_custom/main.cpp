@@ -35,11 +35,11 @@ int32_t main(int32_t argc, char* argv[])
     AscendC::GmFree((void*)y);
     AscendC::GmFree((void*)z);
 #else
-    // 实机设备号：读 ASCEND_DEVICE_ID，缺省 1（借入多卡机常避开 0；可用 env 覆盖）
-    // 背景：办公室 WSL 无卡走 CPU 孪生；SIM/NPU 路径才进本分支。结论：缺省 1。未采用：硬编码 0。
+    // 实机设备号：读 ASCEND_DEVICE_ID，缺省 0（借入机 device1 上 l18_l19 复跑死锁；避让物理 0 时再 export）
+    // 背景：办公室 WSL 无卡走 CPU 孪生；SIM/NPU 路径才进本分支。结论：缺省 0。未采用：硬编码 1（该卡复跑挂）。
     CHECK_ACL(aclInit(nullptr));
     aclrtContext context;
-    int32_t deviceId = 1;
+    int32_t deviceId = 0;
     if (const char* envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }

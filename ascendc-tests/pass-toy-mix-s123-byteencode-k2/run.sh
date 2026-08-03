@@ -9,7 +9,7 @@
 # 多环境分流（scripts/runtime_env.sh）：
 #   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
-#   bash run.sh -r npu -v Ascend910B4       # 真机；ASCEND_DEVICE_ID 缺省 1（SIM 强制 0）
+#   bash run.sh -r npu -v Ascend910B4       # 真机；ASCEND_DEVICE_ID 缺省 0（SIM 强制 0）
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 # CANN：source ${REPO_ROOT}/scripts/env.sh（勿写死 ~/ascendc）
 CURRENT_DIR=$(
@@ -77,9 +77,9 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export ASCEND_CANN_PACKAGE_PATH="${_ASCEND_INSTALL_PATH}"
 export TOY_MIX_PASS="${TOY_MIX_PASS:-0}"
-# 实机 ACL 设备号：npu 缺省 1；SIM 强制 0（CAModel 仅设备 0）
+# 实机 ACL 设备号：npu 缺省 0；SIM 强制 0（CAModel 仅设备 0）
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-1}"
+    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi

@@ -2,7 +2,7 @@
 
 **本 INDEX 的重点**：用**关键字 + 短句**概括**每一天**的讨论，便于定位当月纪要；细节见 `qa/YYYY-MM/YYYY-MM-DD-<关键词>.md`。
 
-遗留总表：[TODO.md](TODO.md)。当月目录：[2026-07/INDEX.md](2026-07/INDEX.md)、[2026-06/INDEX.md](2026-06/INDEX.md)、[2026-05/INDEX.md](2026-05/INDEX.md)。
+遗留总表：[TODO.md](TODO.md)。当月目录：[2026-08/INDEX.md](2026-08/INDEX.md)、[2026-07/INDEX.md](2026-07/INDEX.md)、[2026-06/INDEX.md](2026-06/INDEX.md)、[2026-05/INDEX.md](2026-05/INDEX.md)。
 
 正式交付文档见 `docs/`。
 
@@ -10,9 +10,13 @@
 
 ## 按时间（新→旧）
 
+### 2026-08-03 — [实机 device1 上 l18_l19 复跑死锁 · 缺省 ASCEND_DEVICE_ID 改回 0](2026-08/2026-08-03-实机device1-l18复跑死锁.md)
+
+关键字：stable 二次卡在 **`f203_encrypt_l18_l19` SynchronizeStream** · 隔离 **A=device1 复跑挂 / B=device0 可连跑** · npu 缺省设备号 **1→0**（避让时再显式 `ASCEND_DEVICE_ID=1`）
+
 ### 2026-07-31 — [借入 NPU 机体检回填 · 910B4 / CANN 9.1.0-beta.3](2026-07/2026-07-31-借入NPU机体检回填.md)
 
-关键字：**aarch64** · cann→**9.1.0-beta.3** · toolkit/latest≡cann · **CANN_HOME 回写** · add_custom/toy-mix/**1024 探针×7**/**stable×7** 上板 env · `ASCEND_DEVICE_ID` 缺省 1 · **`scripts/msprof_run.sh`**（默认不采集）· **零 thirdparty 可跑**：Encrypt LUT 三级候选 + **`library/shared/f203_kem_ref`**（liboqs 优先 / python 回落 / 密钥对自举）· 软链 `ln -sfnr` 相对化 · WSL 14 用例 CPU×2 轮 + SIM 全绿
+关键字：**aarch64** · cann→**9.1.0-beta.3** · toolkit/latest≡cann · **CANN_HOME 回写** · add_custom/toy-mix/**1024 探针×7**/**stable×7** 上板 env · `ASCEND_DEVICE_ID` 缺省曾为 1（**08-03 改回 0**）· **`scripts/msprof_run.sh`**（默认不采集）· **零 thirdparty 可跑**：Encrypt LUT 三级候选 + **`library/shared/f203_kem_ref`** · 软链 `ln -sfnr` 相对化 · WSL 14 用例 CPU×2 轮 + SIM 全绿
 
 ### 2026-07-30 — [实机 NPU 环境排查方案 · `add_custom` 上板适配清单](2026-07/2026-07-30-实机NPU环境排查与add_custom适配清单.md)
 
