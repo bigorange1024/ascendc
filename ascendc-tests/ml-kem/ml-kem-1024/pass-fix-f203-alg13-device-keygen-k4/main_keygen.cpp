@@ -41,6 +41,7 @@
 
 #ifndef __CCE_KT_TEST__
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_mmad_custom.h"
 extern "C" void f203_keygen_prep_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *seed_d_gm,
                                     uint8_t *a_hat_gm, uint8_t *prf_out_gm, uint8_t *src_gm, uint8_t *rho_gm,
@@ -248,13 +249,15 @@ int32_t main(int32_t argc, char *argv[])
     AscendC::GmFree(wsGm);
 #else
     // ========== ACL / SIM / NPU 路径：Host 暂存 + Device GM ==========
-    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（借入机 device1 复跑曾死锁；避让时再 export）。SIM 由 run.sh 强制 export=0。
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；挂死/Ctrl+C 后同卡可能被污染，见 acl_session）。SIM 由 run.sh 强制 export=0。
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }
     CHECK_ACL(aclrtSetDevice(deviceId));
+    // 早退 / SIGINT / SIGTERM 均会 ResetDevice+Finalize，减轻同卡污染
+    ascendc_acl::DeviceGuard aclGuard(deviceId);
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
 
@@ -306,10 +309,19 @@ int32_t main(int32_t argc, char *argv[])
     // Host 填 seed + LUT，再 H2D
     std::memcpy(seedHost, &seed_d, kSeedBytes);
     std::memset(wsHost, 0, wsFileSize);
+    // NPU/SIM：LUT 读失败不得静默继续（全 0 workspace → 错密钥）。
     rs = lutFileSize;
-    ReadFile("./input/lut_even_stacked.bin", rs, wsHost + tiling::LUT_EVEN_STACKED, lutFileSize);
+    if (!ReadFile("./input/lut_even_stacked.bin", rs, wsHost + tiling::LUT_EVEN_STACKED, lutFileSize) ||
+        rs != lutFileSize) {
+        std::cerr << "[FAIL] read input/lut_even_stacked.bin\n";
+        return 10;
+    }
     rs = lutFileSize;
-    ReadFile("./input/lut_odd_stacked.bin", rs, wsHost + tiling::LUT_ODD_STACKED, lutFileSize);
+    if (!ReadFile("./input/lut_odd_stacked.bin", rs, wsHost + tiling::LUT_ODD_STACKED, lutFileSize) ||
+        rs != lutFileSize) {
+        std::cerr << "[FAIL] read input/lut_odd_stacked.bin\n";
+        return 10;
+    }
     CHECK_ACL(aclrtMemcpy(seedDev, kSeedBytes, seedHost, kSeedBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(shakeTilingDev, kShakeTilingBytes, &shakeTilingHost, kShakeTilingBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(wsDev, wsFileSize, wsHost, wsFileSize, ACL_MEMCPY_HOST_TO_DEVICE));
@@ -375,8 +387,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFreeHost(skHost));
     CHECK_ACL(aclrtFreeHost(wsHost));
     CHECK_ACL(aclrtDestroyStream(stream));
-    CHECK_ACL(aclrtResetDevice(deviceId));
-    CHECK_ACL(aclFinalize());
+    // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）
 #endif
     return 0;
 }

@@ -168,7 +168,8 @@ npu-smi info | sed -n '/Process/,$p'     # 有他人进程就别抢 0 号卡
 
 **未改代码时的手工上板**
 
-> **已实施（2026-07-31）**：P0 已合入 — `scripts/env.sh` 多候选 + source 后回写 `CANN_HOME`；`add_custom/run.sh` 用 `REPO_ROOT`；`main.cpp` / `run.sh` 的 **`ASCEND_DEVICE_ID` 缺省为 1**。
+> **已实施（2026-07-31）**：P0 已合入 — `scripts/env.sh` 多候选 + source 后回写 `CANN_HOME`；`add_custom/run.sh` 用 `REPO_ROOT`。  
+> **设备号（2026-08-03 订正）**：npu `ASCEND_DEVICE_ID` 缺省 **0**（常规默认）。曾误推「device1 坏卡」；实为挂死脏退污染同卡——见 §4.4。
 
 ```bash
 cd <repo>/ascendc-tests/add_custom
@@ -263,22 +264,35 @@ KEM 用例靠软链复用 PKE 交付树的 `thirdparty/` 与 `scripts/{host_gold
 512 / 768 / incubating 尚有 12 处 `ln -sfn` 未改（`qa/TODO.md` **T2-npu-link**）——功能不坏
 （每次跑会重写成本机路径），但换机后同样脏工作区。
 
-## 4.4 实机设备号：缺省改回 0（2026-08-03）
+## 4.4 实机设备号与「同卡污染」（2026-08-03 订正）
 
-**教训**：为「借入多卡避开物理 0」曾把 npu **`ASCEND_DEVICE_ID` 缺省设为 1**。借入机实测：
+**错误推论（已废弃）**：换成 device 0 能连跑 →「device 1 硬件不行」。  
+**正确推论**：device 0 只是**没被刚才失败/卡死的进程碰过**；污染在**同一 `ASCEND_DEVICE_ID`** 上累积。
 
-| 设备 | encaps 连跑两遍 |
-|------|-----------------|
-| **1**（旧缺省） | 第 1 遍绿，第 2 遍卡在 `f203_encrypt_l18_l19` 的 `SynchronizeStream`（CrossCore） |
-| **0** | 两遍都绿 |
+因果链（用户实测）：
 
-故 1024 探针×7、stable×7、`add_custom`、toy-mix：**npu 缺省改回 0**；SIM 仍强制 0。
-若物理 0 被占用，再**显式** `ASCEND_DEVICE_ID=1`，并知该卡可能复跑挂（详见当日 qa）。
+1. 先跑 alg19/20/21/21-ct：KeyGen **结果不对**；Encaps/Decaps **卡在 `l18_l19` 的 SynchronizeStream**；
+2. 卡死进程被 Ctrl+C / `timeout` 杀掉时，若未 `aclFinalize`，驱动侧会话残留；
+3. 再跑 stable 同卡 → 继续卡在同一类 MIX 核。
+
+代码缺口与处置：
+
+| 缺口 | 处置 |
+|------|------|
+| `aclInit` 后早退不 Finalize | [`library/shared/acl_session/acl_session.hpp`](../../library/shared/acl_session/acl_session.hpp) `DeviceGuard` |
+| SIGINT/SIGTERM 无钩子 | 同上，信号里尽力 Reset+Finalize |
+| timeout 124 / SIGKILL | `kernel-run-timeout.sh` 打印污染警告；SIGKILL **无法**清设备 → 须 `npu-smi` 查残留或对该卡 reset |
+
+npu **`ASCEND_DEVICE_ID` 缺省仍为 0**（Ascend 常规默认，不是「1 号卡坏了」的结论）。换卡只能**绕开已污染的卡**，不能代替 Finalize。
 
 ```bash
-bash run.sh -r npu -v Ascend910B4              # 默认设备 0
-ASCEND_DEVICE_ID=1 bash run.sh -r npu -v Ascend910B4   # 非默认：避让 0 时
+bash run.sh -r npu -v Ascend910B4
+# 挂死杀进程后：
+npu-smi info | sed -n '/Process/,$p'
+# 再跑前确认无残留；必要时对该卡 reset
 ```
+
+**仍待查（主因，非污染本身）**：alg19 KeyGen 为何错结果；alg20/21 **第一次**为何卡在 `l18_l19`（污染只解释连环挂）。
 
 ---
 

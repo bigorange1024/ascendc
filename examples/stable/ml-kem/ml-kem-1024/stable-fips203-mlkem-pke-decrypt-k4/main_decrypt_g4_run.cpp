@@ -19,6 +19,7 @@
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_decrypt_device_fused.h"
 #else
 #include "tikicpulib.h"
@@ -127,12 +128,14 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
 #else
     /* ---- SIM / NPU：ACL 分配 + H2D/D2H ---- */
     CHECK_ACL(aclInit(nullptr));
-    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（2026-08-03：借入机 device 1 上 l18_l19 复跑 CrossCore 死锁；需避让物理 0 时再 export ASCEND_DEVICE_ID）。SIM 由 run.sh 强制 export=0。
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；探针挂死脏退后同卡会连环挂，见 acl_session；需换卡时再 export）。SIM 由 run.sh 强制 export=0。
     int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }
     CHECK_ACL(aclrtSetDevice(deviceId));
+    // 早退 / SIGINT / SIGTERM 均会 ResetDevice+Finalize，减轻同卡污染
+    ascendc_acl::DeviceGuard aclGuard(deviceId);
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
 
@@ -204,8 +207,7 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     CHECK_ACL(aclrtFree(softSyncDev));
     CHECK_ACL(aclrtFreeHost(tilingHost));
     CHECK_ACL(aclrtDestroyStream(stream));
-    CHECK_ACL(aclrtResetDevice(deviceId));
-    CHECK_ACL(aclFinalize());
+    // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）
     return 0;
 #endif
 }

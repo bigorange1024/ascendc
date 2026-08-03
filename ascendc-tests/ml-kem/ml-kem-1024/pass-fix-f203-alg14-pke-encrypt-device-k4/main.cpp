@@ -36,6 +36,7 @@ extern void GenerateTiling(TilingData &data);
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_encrypt_at_jp.h"
 #include "aclrtlaunch_f203_encrypt_intt_e1.h"
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
@@ -212,12 +213,14 @@ int32_t main(int32_t argc, char *argv[])
     const size_t trHatNttSize = tiling::n * sizeof(int32_t);
 
     CHECK_ACL(aclInit(nullptr));
-    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（借入机 device1 复跑曾死锁；避让时再 export）。SIM 由 run.sh 强制 export=0。
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；挂死/Ctrl+C 后同卡可能被污染，见 acl_session）。SIM 由 run.sh 强制 export=0。
     int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }
     CHECK_ACL(aclrtSetDevice(deviceId));
+    // 早退 / SIGINT / SIGTERM 均会 ResetDevice+Finalize，减轻同卡污染
+    ascendc_acl::DeviceGuard aclGuard(deviceId);
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
 
@@ -348,8 +351,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFreeHost(wsHost));
     CHECK_ACL(aclrtFreeHost(cHost));
     CHECK_ACL(aclrtDestroyStream(stream));
-    CHECK_ACL(aclrtResetDevice(deviceId));
-    CHECK_ACL(aclFinalize());
+    // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）
 #endif
     return 0;
 }

@@ -16,4 +16,17 @@ source "${_REPO_ROOT}/scripts/camodel_sim_log.sh" "$(pwd)"
 BIN="$1"
 shift
 BUDGET="${KERNEL_COMPUTE_BUDGET_SEC:-120}"
-exec timeout --foreground "${BUDGET}" "${BIN}" "$@"
+# 用 timeout 包一层：挂死时先 SIGTERM（host 侧 DeviceGuard 可 Finalize），仍不退再 SIGKILL。
+# SIGKILL 无法跑清理 → 同 ASCEND_DEVICE_ID 可能被驱动残留污染；杀死后须 npu-smi 看进程，
+# 必要时对该卡 reset，再跑下一例（见 qa/2026-08-03）。
+set +e
+timeout --foreground "${BUDGET}" "${BIN}" "$@"
+rc=$?
+set -e
+if [ "${rc}" -eq 124 ]; then
+  echo "[kernel-run-timeout] budget ${BUDGET}s exceeded (exit 124)。若刚 Ctrl+C/超时杀的是 NPU 进程：" >&2
+  echo "  1) npu-smi info | sed -n '/Process/,\$p'  确认无残留" >&2
+  echo "  2) 同 ASCEND_DEVICE_ID 上勿立刻开下一例；必要时对该卡 reset" >&2
+  echo "  3) 换一张未被污染的卡只是绕开，不是根治" >&2
+fi
+exit "${rc}"

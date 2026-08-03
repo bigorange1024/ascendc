@@ -41,6 +41,7 @@
 
 #ifndef __CCE_KT_TEST__
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_mmad_custom.h"
 extern "C" void f203_keygen_prep_do(uint32_t blockDim, void *l2ctrl, void *stream, uint8_t *seed_d_gm,
                                     uint8_t *a_hat_gm, uint8_t *prf_out_gm, uint8_t *src_gm, uint8_t *rho_gm,
@@ -249,12 +250,14 @@ int32_t main(int32_t argc, char *argv[])
 #else
     // ========== ACL / SIM / NPU 路径：Host 暂存 + Device GM ==========
     CHECK_ACL(aclInit(nullptr));
-    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（2026-08-03：借入机 device 1 上 l18_l19 复跑 CrossCore 死锁；需避让物理 0 时再 export ASCEND_DEVICE_ID）。SIM 由 run.sh 强制 export=0。
+    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；探针挂死脏退后同卡会连环挂，见 acl_session；需换卡时再 export）。SIM 由 run.sh 强制 export=0。
     int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }
     CHECK_ACL(aclrtSetDevice(deviceId));
+    // 早退 / SIGINT / SIGTERM 均会 ResetDevice+Finalize，减轻同卡污染
+    ascendc_acl::DeviceGuard aclGuard(deviceId);
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
 
@@ -375,8 +378,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFreeHost(skHost));
     CHECK_ACL(aclrtFreeHost(wsHost));
     CHECK_ACL(aclrtDestroyStream(stream));
-    CHECK_ACL(aclrtResetDevice(deviceId));
-    CHECK_ACL(aclFinalize());
+    // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）
 #endif
     return 0;
 }

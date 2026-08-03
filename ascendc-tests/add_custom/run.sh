@@ -407,7 +407,7 @@ SIM_DIRECT（仅 sim）：
 
 Env:
   ASCEND_DEVICE=Ascend910B4
-  ASCEND_DEVICE_ID=1      # 仅 -r npu 缺省 0（SIM 缺省 0；device1 复跑曾死锁，避让时再 =1）
+  ASCEND_DEVICE_ID=1      # 仅 -r npu 缺省 0（SIM 缺省 0；换卡不能代替 Finalize）
   MSPROF_AIC_METRICS_SIM / MSPROF_LAUNCH_COUNT_SIM
   MSPROF_TIMEOUT_MIN=60   MSPROF_WALL_TIMEOUT_SEC=1800
   RUN_WITH_MSPROF=1       # npu 模式走 msprof op

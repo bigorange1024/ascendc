@@ -114,7 +114,7 @@ int32_t main(int32_t argc, char *argv[])
      * → 读输入文件到 Host 缓冲 → Host→Device 拷入 → ACLRT_LAUNCH_KERNEL 下发
      * → 同步 → Device→Host 拷回 → 落盘。tiling 结构体本身走 Host 侧内存直接传参
      * （ACLRT_LAUNCH_KERNEL 按值传递 TilingData，无需显式拷到 Device）。
-     * 设备号：读 ASCEND_DEVICE_ID；缺省 0（借入机 device1 复跑曾死锁；避让时再 export）。SIM 由 run.sh 强制 export=0。 */
+     * 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；挂死/Ctrl+C 后同卡可能被污染，见 acl_session）。SIM 由 run.sh 强制 export=0。 */
     CHECK_ACL(aclInit(nullptr));
     int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {

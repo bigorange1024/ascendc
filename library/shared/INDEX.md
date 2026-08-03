@@ -11,6 +11,7 @@
 | [`fips203_host_rng/`](fips203_host_rng/) | Host `SEED_D` / `m` / `coins`：**定点** `SEED_D=` 可覆盖；默认 SHA3/SHAKE 派生（examples PKE/KEM 正确性后用例） |
 | [`fips203_se_sample/`](fips203_se_sample/) | FIPS 203 采样参考 C + **`golden_se_sampling.py`**（`sample_poly_cbd2` / **`sample_poly_cbd3`**；`SEED_D`→`src` Host golden） |
 | [`f203_kem_ref/`](f203_kem_ref/) | **KEM 层 golden 后端** `kem_ref.py`：KeyGen/Encaps/Decaps 与密钥对自举；**liboqs 优先，缺失回落**仓内已验证 PKE golden + SHA3（`KEM_GOLDEN_BACKEND=python` 强制回落、`KEM_GOLDEN_CROSS=1` 两路互校）。供无 thirdparty 的实机跑 KEM 用例 |
+| [`acl_session/`](acl_session/) | Host **`DeviceGuard`**：`aclInit` 后早退 / SIGINT / SIGTERM 必 `ResetDevice`+`Finalize`，减轻「挂死杀进程 → 同卡后续全挂」的驱动残留污染 |
 | [`merged_kyber_fixed_poly.py`](merged_kyber_fixed_poly.py) | Kyber 固定 poly 脚本 |
 | [`stage2_debug_print.hpp`](stage2_debug_print.hpp) | Stage2 调试打印 |
 

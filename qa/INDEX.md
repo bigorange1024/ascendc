@@ -12,7 +12,7 @@
 
 ### 2026-08-03 — [实机 device1 上 l18_l19 复跑死锁 · 缺省 ASCEND_DEVICE_ID 改回 0](2026-08/2026-08-03-实机device1-l18复跑死锁.md)
 
-关键字：stable 二次卡在 **`f203_encrypt_l18_l19` SynchronizeStream** · 隔离 **A=device1 复跑挂 / B=device0 可连跑** · npu 缺省设备号 **1→0**（避让时再显式 `ASCEND_DEVICE_ID=1`）
+关键字：stable/探针卡在 **`l18_l19` SynchronizeStream** · **订正**：device0 能跑≠device1 坏，是**同卡脏退污染** · 前置 alg19 错 + alg20/21 卡死 · **`DeviceGuard` + LUT 硬失败 + `F203_L18_TRACE`**（Cloud 按纪要 §4 接手）
 
 ### 2026-07-31 — [借入 NPU 机体检回填 · 910B4 / CANN 9.1.0-beta.3](2026-07/2026-07-31-借入NPU机体检回填.md)
 

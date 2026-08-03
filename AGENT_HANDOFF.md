@@ -2,17 +2,17 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-08-03（实机：**device1 上 l18_l19 复跑死锁** → npu `ASCEND_DEVICE_ID` 缺省 **1→0**）
+> **最后刷新**：2026-08-03（**订正**：同卡污染 ≠ device1 坏卡；`DeviceGuard` + KeyGen LUT 硬失败 + `F203_L18_TRACE`）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：**`main`**（2026-07-31 晚已推 1024 上机口径）；开新改动先 `git pull`。  
+1. 分支：**`main`**（本轮 ACL/LUT/trace 已推；先 `git pull`）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
    —— 注意：**1024 的 14 个用例现在没有 liboqs 也能跑**（KEM golden 会回落 python），但**有 liboqs 才有权威交叉**，Cloud 仍建议装。  
-3. **下一任务方向**：见下「★ 接手清单」。用户口头指定优先级时以用户为准。  
-4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-07/2026-07-31-借入NPU机体检回填.md`](qa/2026-07/2026-07-31-借入NPU机体检回填.md)（**当日全量真相**）。  
+3. **下一任务方向**：见下「★ 接手清单」与 [`qa/2026-08/2026-08-03-实机device1-l18复跑死锁.md`](qa/2026-08/2026-08-03-实机device1-l18复跑死锁.md) **§4**。用户口头指定优先级时以用户为准。  
+4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → 上条当日纪要。  
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
 
 ### 刚关闭
@@ -25,26 +25,25 @@
 
 | 项 | 说明 |
 |----|------|
-| **T2-npu-env** | **1024 全覆盖**：探针×7 + stable×7 走 `${REPO_ROOT}/scripts/env.sh`；**npu `ASCEND_DEVICE_ID` 缺省 0**（08-03：device1 复跑 l18_l19 死锁，已改回）；SIM 强制 0；`msprof_run.sh` 默认不采集。借入机：`bash run.sh -r npu -v Ascend910B4`，无需 thirdparty |
-| **实机复跑（08-03）** | 旧缺省 device **1**：encaps/encrypt/decaps 第 2 遍卡在 `l18_l19` SynchronizeStream；**device 0 可连跑**。勿再默认 1；避让时才显式 `ASCEND_DEVICE_ID=1` |
-| **实机 msprof** | `RUN_WITH_MSPROF` 原只在 `add_custom` 生效 → 抽出 [`scripts/msprof_run.sh`](scripts/msprof_run.sh)，接入 14 个用例；**默认不采集**，`RUN_WITH_MSPROF=1` 才在 sim/npu 走 `msprof op`，产物落 `prof_<mode>/<bin>/` |
-| **零 thirdparty golden** | LUT 头三级回退（env → 仓库根私有 → 交付树 vendored）；KEM 侧新增 [`library/shared/f203_kem_ref/kem_ref.py`](library/shared/f203_kem_ref/kem_ref.py)：liboqs 优先，缺失回落仓内已验证 PKE golden + SHA3，Decaps stash 缺失按 `SEED_D` 自举。`KEM_GOLDEN_CROSS=1` 实测两路逐字节一致 |
+| **T2-npu-env** | **1024 全覆盖**：探针×7 + stable×7 走 `${REPO_ROOT}/scripts/env.sh`；npu `ASCEND_DEVICE_ID` 缺省 **0**（常规默认）；SIM 强制 0；`msprof_run.sh` 默认不采集 |
+| **同卡污染（08-03 订正）** | **不是**「device1 坏卡」。探针挂死/Ctrl+C/`timeout` 未 Finalize → **同卡**连环挂；换卡只绕开。已加 [`acl_session::DeviceGuard`](library/shared/acl_session/acl_session.hpp) |
+| **alg19 错结果** | NPU 路径曾**静默吞 LUT ReadFile 失败**（已改硬失败）；实机须 `FORCE_REBUILD` 复验是否仍 max≠0 |
+| **alg20/21 首次卡 `l18_l19`** | 主因未关；实机 `F203_L18_TRACE=1` 看 fused-trace 槽位 |
+| **实机 msprof** | `RUN_WITH_MSPROF=1` 才采集；见 [`scripts/msprof_run.sh`](scripts/msprof_run.sh) |
+| **零 thirdparty golden** | LUT 三级回退；[`f203_kem_ref`](library/shared/f203_kem_ref/kem_ref.py) |
 
 ---
 
-## ★ 接手清单（2026-07-31 晚交接；按此挑，勿另起大工程）
-
-**刚落地的一版**（main，已推）：1024 的 **7 探针 + 7 stable** 全部对齐上机口径；KEM golden 去掉
-liboqs 硬依赖；用例软链相对化。WSL 三轮全绿证据见当日 qa §11.6，**勿重跑整树**。
+## ★ 接手清单（2026-08-03 订正后）
 
 | 优先 | 项 | 做什么 | 注意 |
 |------|----|--------|------|
-| **P0** | 实机 `-r npu` 回填 | 用户在借入机逐目录跑 `bash run.sh -r npu -v Ascend910B4`（**设备号缺省 0**）；Agent 读 log / 补 qa | 无 thirdparty 时 KEM 应标 `via python`；**勿**再默认 `ASCEND_DEVICE_ID=1`（该卡复跑挂） |
-| **P1** | **T2-npu-link** | 512 / 768 / incubating 剩 12 处 `ln -sfn` 绝对路径 → `ln -sfnr` | 改哪档就把哪档 CPU 跑一遍自验；别一次性改完不验 |
-| **P1** | 512 / 768 上机口径 | 若用户要在实机跑 512/768，比照 1024 做同样四件事：`env.sh` / `ASCEND_DEVICE_ID` / `msprof_run.sh` / golden 去 thirdparty | 1024 的 `run.sh` env 段可直接作模板；KEM golden 复用 `library/shared/f203_kem_ref`（现仅接了 1024，k=2/3 需按参数差清单确认） |
-| **P2** | 512 审阅收尾 | 原下一刀（见下节 A/B），未开工 | 与上面的 NPU 线互不冲突，看用户当次指令 |
+| **P0** | 探针主因 | 干净卡上**单跑** alg19（看 max / LUT 日志）→ 再单跑 alg20 `F203_L18_TRACE=1` | **勿**在已污染卡上排主因；杀进程后 `npu-smi` Process |
+| **P0** | 提交/推送 | 仅当用户明确要求：DeviceGuard + LUT 检查 + L18 trace + 文档订正 | 无授权不 commit/push |
+| **P1** | **T2-npu-link** | 512 / 768 / incubating 剩 12 处 `ln -sfn` → `ln -sfnr` | 改哪档验哪档 |
+| **P2** | 512 审阅收尾 | 见下节 | 与 NPU 线互不冲突 |
 
-**别做**：`#交付#` stable-512/768（须用户点名）；把 1024 那套 env 改动往 frozen 树里搬。
+**别做**：把「device1 坏」写回文档；`#交付#` stable-512/768（须用户点名）；从 frozen 抄码。
 
 ---
 
