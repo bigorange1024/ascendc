@@ -12,7 +12,7 @@
 
 ### 2026-08-05 — [l18_l19 卡死初步诊断 · 实机最小实验（≤4 刀）](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md)
 
-关键字：Encaps/Decaps 卡在 **`f203_encrypt_l18_l19` SynchronizeStream** · 收束 **MIX CrossCore**（非 pack/FO）· 假设序 **污染→GATE 4/8→INTT 1/3→NTT** · **`F203_L18_TRACE` 槽位读法** · 禁止未读 trace 改 FSM
+关键字：Encaps/Decaps 卡在 **`f203_encrypt_l18_l19` SynchronizeStream** · 收束 **MIX CrossCore**（非 pack/FO）· 假设序 **污染→GATE 4/8→INTT 1/3→NTT** · **`F203_L18_TRACE` 槽位读法** · 禁止未读 trace 改 FSM · **附录**：他仓 Cloud 纯装 CANN 通过；**禁持久 shell source set_env.sh**（已写入 Cursor-Cloud 说明）
 
 ### 2026-08-03 — [实机 device1 上 l18_l19 复跑死锁 · 缺省 ASCEND_DEVICE_ID 改回 0](2026-08/2026-08-03-实机device1-l18复跑死锁.md)
 
