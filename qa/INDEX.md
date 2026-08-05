@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-08-05 — [l18_l19 卡死初步诊断 · 实机最小实验（≤4 刀）](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md)
+
+关键字：Encaps/Decaps 卡在 **`f203_encrypt_l18_l19` SynchronizeStream** · 收束 **MIX CrossCore**（非 pack/FO）· 假设序 **污染→GATE 4/8→INTT 1/3→NTT** · **`F203_L18_TRACE` 槽位读法** · 禁止未读 trace 改 FSM
+
 ### 2026-08-03 — [实机 device1 上 l18_l19 复跑死锁 · 缺省 ASCEND_DEVICE_ID 改回 0](2026-08/2026-08-03-实机device1-l18复跑死锁.md)
 
 关键字：stable/探针卡在 **`l18_l19` SynchronizeStream** · **订正**：device0 能跑≠device1 坏，是**同卡脏退污染** · 前置 alg19 错 + alg20/21 卡死 · **`DeviceGuard` + LUT 硬失败 + `F203_L18_TRACE`**（Cloud 按纪要 §4 接手）

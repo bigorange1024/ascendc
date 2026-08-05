@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-08-03（**订正**：同卡污染 ≠ device1 坏卡；`DeviceGuard` + KeyGen LUT 硬失败 + `F203_L18_TRACE`）
+> **最后刷新**：2026-08-05（`l18_l19` 卡死**初步诊断冻结** + ≤4 刀实机实验；见当日 qa）
 
 ---
 
@@ -11,7 +11,7 @@
 1. 分支：**`main`**（本轮 ACL/LUT/trace 已推；先 `git pull`）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
    —— 注意：**1024 的 14 个用例现在没有 liboqs 也能跑**（KEM golden 会回落 python），但**有 liboqs 才有权威交叉**，Cloud 仍建议装。  
-3. **下一任务方向**：见下「★ 接手清单」与 [`qa/2026-08/2026-08-03-实机device1-l18复跑死锁.md`](qa/2026-08/2026-08-03-实机device1-l18复跑死锁.md) **§4**。用户口头指定优先级时以用户为准。  
+3. **下一任务方向**：用户可上板时按 [`qa/2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md`](qa/2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md) **E0–E2** 带回 `[l18-trace]`；污染背景见 [08-03 纪要](qa/2026-08/2026-08-03-实机device1-l18复跑死锁.md)。**未读 trace 禁改 FSM**。  
 4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → 上条当日纪要。  
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
 
@@ -28,7 +28,7 @@
 | **T2-npu-env** | **1024 全覆盖**：探针×7 + stable×7 走 `${REPO_ROOT}/scripts/env.sh`；npu `ASCEND_DEVICE_ID` 缺省 **0**（常规默认）；SIM 强制 0；`msprof_run.sh` 默认不采集 |
 | **同卡污染（08-03 订正）** | **不是**「device1 坏卡」。探针挂死/Ctrl+C/`timeout` 未 Finalize → **同卡**连环挂；换卡只绕开。已加 [`acl_session::DeviceGuard`](library/shared/acl_session/acl_session.hpp) |
 | **alg19 错结果** | NPU 路径曾**静默吞 LUT ReadFile 失败**（已改硬失败）；实机须 `FORCE_REBUILD` 复验是否仍 max≠0 |
-| **alg20/21 首次卡 `l18_l19`** | 主因未关；实机 `F203_L18_TRACE=1` 看 fused-trace 槽位 |
+| **alg20/21 首次卡 `l18_l19`** | **诊断已冻结**（08-05）：卡在 MIX CrossCore，非 pack/FO；假设序污染→GATE→INTT→NTT；待 E0–E2 trace |
 | **实机 msprof** | `RUN_WITH_MSPROF=1` 才采集；见 [`scripts/msprof_run.sh`](scripts/msprof_run.sh) |
 | **零 thirdparty golden** | LUT 三级回退；[`f203_kem_ref`](library/shared/f203_kem_ref/kem_ref.py) |
 
@@ -38,8 +38,8 @@
 
 | 优先 | 项 | 做什么 | 注意 |
 |------|----|--------|------|
-| **P0** | 探针主因 | 干净卡上**单跑** alg19（看 max / LUT 日志）→ 再单跑 alg20 `F203_L18_TRACE=1` | **勿**在已污染卡上排主因；杀进程后 `npu-smi` Process |
-| **P0** | 提交/推送 | 仅当用户明确要求：DeviceGuard + LUT 检查 + L18 trace + 文档订正 | 无授权不 commit/push |
+| **P0** | **l18 卡死定位** | 干净卡：E0=PKE Encrypt → E1=Encaps `F203_L18_TRACE=1` → E2=同卡再跑 Encaps | 带回末行 `[l18-trace]`；对照 08-05 纪要 §3–§4；**勿先改 FSM** |
+| **P1** | alg19 错结果 | 干净卡 `KEM_KEYGEN_FORCE_REBUILD=1`；看 max / LUT 硬失败日志 | **独立线**；勿用错密钥直接解释 CrossCore |
 | **P1** | **T2-npu-link** | 512 / 768 / incubating 剩 12 处 `ln -sfn` → `ln -sfnr` | 改哪档验哪档 |
 | **P2** | 512 审阅收尾 | 见下节 | 与 NPU 线互不冲突 |
 

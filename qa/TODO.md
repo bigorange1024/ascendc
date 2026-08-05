@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-08-03（npu `ASCEND_DEVICE_ID` 缺省 1→0：借入机 device1 上 l18_l19 复跑死锁）
+**最近刷新**：2026-08-05（`l18_l19` 卡死初步诊断 + 最小实机实验表；见当日 qa）
 
 ---
 
@@ -36,7 +36,8 @@
 | **P0** | **T768-post** | ML-KEM-768 可选后续：device KAT 加压、D14↔D15 PKE RT、stable-768（须 `#交付#`） | **KEM liboqs 交叉 RT 已绿**（2026-07-27：`USE_LIBOQS=1` CPU×1+SIM×1）；其余仍可选；禁 stable-768 |
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
-| **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境 |
+| **P0** | **T2-npu-l18** | Encaps/Decaps 实机卡在 `l18_l19` SynchronizeStream：按 [2026-08-05 纪要](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md) E0–E2（`F203_L18_TRACE`）收证据；**未读 trace 禁改 FSM** | **诊断已冻结**；待干净卡 trace |
+| **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境；先关 T2-npu-l18 |
 | **P1** | **T2-npu-env** | 实机 env 适配（`env.sh` 回写 CANN_HOME、`run.sh` REPO_ROOT、`ASCEND_DEVICE_ID`） | **已合入**：1024 探针×7+stable×7；`msprof_run.sh`；零 thirdparty；**08-03**：npu 缺省设备号 **改回 0**（device1 上 l18_l19 复跑死锁，见当日 qa） |
 | **P2** | **T2-npu-link** | 512 / 768 / incubating 用例 `run.sh` 里 12 处 `ln -sfn` 仍写**绝对**路径（git 存的多为 Cloud `/workspace/…`），跑一次就把工作区弄脏 | 1024 五处已改 `ln -sfnr`（相对链）；其余留待各自任务顺带改并自验 |
 | — | **T2a** | 写 `docs/specs/fips203-mlkem1024-keygen-plan.md` | 待开工 |
