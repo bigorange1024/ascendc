@@ -18,6 +18,21 @@
 
 ## 非显然的坑（Cloud VM 特有）
 
+- **禁止在 Cloud Agent「主/持久 shell」里 `source set_env.sh`，也禁止写进 `~/.bashrc`。**  
+  （2026-08-05 他仓 Cloud 实测：全新 VM 纯装 CANN 9.0.0 后踩坑。）  
+  `set_env.sh` 会改写 `PYTHONPATH` / `LD_LIBRARY_PATH` 指向 CANN 自带 Python/`.so`，导致系统
+  `python3`/`pip3` 直接崩（`Fatal Python error: <no Python frame>`），并拖死 Agent 的命令执行通道
+  （exec-daemon 结果上报失败、shell 卡死）。  
+  **正确姿势**：只在按需子 shell 里 source，跑完即弃：
+  ```bash
+  bash -lc 'source ~/Ascend/cann/set_env.sh && <ccec / 编译 / SIM 命令>'
+  # 或实际路径：source ~/Ascend/cann-9.0.0/set_env.sh
+  ```
+  本仓用例通常由 `run.sh` → `scripts/env.sh` 在**子进程**内加载 CANN，Agent 持久 shell 保持干净即可。  
+  WSL 本地交互式终端全局 source 一般没事；**Cloud Agent 与工具链共用持久 shell，全局 source 必挂。**  
+  若已污染：从 `~/.bashrc` 删掉 `source …/set_env.sh`，新开 shell，并 `unset PYTHONPATH`、检查
+  `LD_LIBRARY_PATH` 是否仍指向 `~/Ascend/...`。
+
 - **`/etc/ascend_install.info` 必须存在且含 `Driver_Install_Path_Param=` 行。** 两个原因：
   1. `scripts/sim_env.sh` 要求该文件存在，否则 SIM 的 `aclInit` 失败并直接报错。
   2. `~/Ascend/cann/set_env.sh` 会执行 `driver_install_path_param=$(grep -iw driver_install_path_param /etc/ascend_install.info | cut ...)`。
