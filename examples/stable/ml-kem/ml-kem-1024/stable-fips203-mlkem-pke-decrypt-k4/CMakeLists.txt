@@ -28,6 +28,8 @@ set(ALG11_INC "${TEST_ROOT}/compute/alg11")
 set(SU_DOT_INC "${TEST_ROOT}/compute/su_dot")
 set(FINAL_INC "${TEST_ROOT}/compute/final")
 set(TAIL_C1_INC "${TEST_ROOT}/compute/compress1_byteencode1")
+# Host SIM/NPU：main_decrypt_g4_run.cpp 依赖 acl_session（library/shared）
+set(SHARED_INC "${REPO_ROOT}/library/shared")
 
 set(RUN_MODE "npu" CACHE STRING "cpu/sim/npu")
 set(SOC_VERSION "Ascend910B4" CACHE STRING "system on chip type")
@@ -65,7 +67,7 @@ endif()
 add_executable(ascendc_kernels_bbit ${TEST_ROOT}/main_decrypt.cpp ${TEST_ROOT}/main_decrypt_g4_run.cpp)
 
 set(_INCLUDES ${TEST_ROOT} ${G4_FULL_INC} ${UNPACK_INC} ${PREP_DECODE_INC} ${NTT_U_INC} ${INTT_W_INC} ${ALG11_INC} ${SU_DOT_INC} ${FINAL_INC} ${TAIL_C1_INC}
-    ${CMAKE_INSTALL_PREFIX}/include)
+    ${SHARED_INC} ${CMAKE_INSTALL_PREFIX}/include)
 
 target_include_directories(ascendc_kernels_bbit PRIVATE ${_INCLUDES})
 

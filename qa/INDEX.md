@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-08-12 — [main 拉取 · decrypt SHARED_INC 修复 · stable×7 全绿](2026-08/2026-08-12-main拉取与冒烟.md)
+
+关键字：`SHARED_INC`/`acl_session` · stable decrypt SIM 编译修复 · **1024 stable×7 CPU+SIM PASS** · 已推 main
+
 ### 2026-08-05 — [l18_l19 卡死初步诊断 · 实机最小实验（≤4 刀）](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md)
 
 关键字：Encaps/Decaps 卡在 **`f203_encrypt_l18_l19` SynchronizeStream** · 收束 **MIX CrossCore**（非 pack/FO）· 假设序 **污染→GATE 4/8→INTT 1/3→NTT** · **`F203_L18_TRACE` 槽位读法** · 禁止未读 trace 改 FSM · **附录**：他仓 Cloud 纯装 CANN 通过；**禁持久 shell source set_env.sh**（已写入 Cursor-Cloud 说明）
