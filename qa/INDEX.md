@@ -10,6 +10,14 @@
 
 ## 按时间（新→旧）
 
+### 2026-08-19 — [教材 KEM 清单 · 实机测准 · npu/msprof 对齐](2026-08/2026-08-19-教材KEM清单与实机测准.md)
+
+关键字：**表 A 14 档** · **§8 逐步指令与顺序** · **`MSPROF_MODE=app`** · **`npu_kem_one_trip.sh`** · **kernel_details 求和**
+
+### 2026-08-18 — [实机 NPU 脚本套件 · 卡死恢复 · Decaps msprof 分段](2026-08/2026-08-18-实机NPU脚本套件与卡死恢复.md)
+
+关键字：**`npu_kem_real_machine_suite.sh`** · **`npu_device_map` 分卡 stable=1 / examples=2 / tests=3** · **`npu_card_guard`/`npu_run_case`** · Decaps **D/E msprof 分段** · 无 liboqs · **alg15→stable run 对齐** · 默认 **SKIP_L18_RISK**
+
 ### 2026-08-12 — [main 拉取 · decrypt SHARED_INC 修复 · stable×7 全绿](2026-08/2026-08-12-main拉取与冒烟.md)
 
 关键字：`SHARED_INC`/`acl_session` · stable decrypt SIM 编译修复 · **1024 stable×7 CPU+SIM PASS** · 已推 main

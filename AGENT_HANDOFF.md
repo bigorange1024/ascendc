@@ -2,16 +2,16 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-08-12（decrypt `SHARED_INC` 已修并推 main；**1024 stable×7 CPU+SIM 全绿**）
+> **最后刷新**：2026-08-19（教材 KEM 14 档清单 + npu/msprof 对齐；见 [`qa/2026-08/2026-08-19-教材KEM清单与实机测准.md`](qa/2026-08/2026-08-19-教材KEM清单与实机测准.md)）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：**`main`**（本轮 ACL/LUT/trace 已推；先 `git pull`）。  
+1. 分支：**`main`**（实机脚本在本地；用户搬码前未必已 push）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
    —— 注意：**1024 的 14 个用例现在没有 liboqs 也能跑**（KEM golden 会回落 python），但**有 liboqs 才有权威交叉**，Cloud 仍建议装。  
-3. **下一任务方向**：用户可上板时按 [`qa/2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md`](qa/2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md) **E0–E2** 带回 `[l18-trace]`；污染背景见 [08-03 纪要](qa/2026-08/2026-08-03-实机device1-l18复跑死锁.md)。**未读 trace 禁改 FSM**。  
+3. **借入实机 NPU**：先全部 **stable（卡 1）** 再 **examples（卡 2）** 再 **ascendc-tests（卡 3）**。教材 KEM 性能：[`scripts/npu_kem_textbook_perf.sh`](scripts/npu_kem_textbook_perf.sh)（清单 [`docs/research/教材KEM实机测量清单.md`](docs/research/教材KEM实机测量清单.md)）。冒烟/分卡入口仍 [`scripts/npu_kem_real_machine_suite.sh`](scripts/npu_kem_real_machine_suite.sh)。搬码前可 `NPU_SUITE_DRY_RUN=1`。  
 4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → 上条当日纪要。  
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
 
@@ -25,7 +25,7 @@
 
 | 项 | 说明 |
 |----|------|
-| **T2-npu-env** | **1024 全覆盖**：探针×7 + stable×7 走 `${REPO_ROOT}/scripts/env.sh`；npu `ASCEND_DEVICE_ID` 缺省 **0**（常规默认）；SIM 强制 0；`msprof_run.sh` 默认不采集 |
+| **T2-npu-env** | **1024 全覆盖**：探针×7 + stable×7 走 `${REPO_ROOT}/scripts/env.sh`；npu **按树分卡** stable=**1** / examples=**2** / tests=**3**（[`npu_device_map.sh`](scripts/npu_device_map.sh)）；SIM 强制 0；`msprof_run.sh` 默认不采集 |
 | **同卡污染（08-03 订正）** | **不是**「device1 坏卡」。探针挂死/Ctrl+C/`timeout` 未 Finalize → **同卡**连环挂；换卡只绕开。已加 [`acl_session::DeviceGuard`](library/shared/acl_session/acl_session.hpp) |
 | **alg19 错结果** | NPU 路径曾**静默吞 LUT ReadFile 失败**（已改硬失败）；实机须 `FORCE_REBUILD` 复验是否仍 max≠0 |
 | **alg20/21 首次卡 `l18_l19`** | **诊断已冻结**（08-05）：卡在 MIX CrossCore，非 pack/FO；假设序污染→GATE→INTT→NTT；待 E0–E2 trace |
@@ -77,7 +77,15 @@
 
 ---
 
-## ★ 下一刀（512 审阅收尾；现降为接手清单 P2）
+## ★ 下一刀（实机一次搬码；512 审阅仍为 P2）
+
+**P0（用户当次）**：借入机 **一条命令** — [`scripts/npu_kem_one_trip.sh`](scripts/npu_kem_one_trip.sh)（诊断 E1/E2 + 验收 + 教材 14 档 + 探针；自动 `BRING_BACK.tar.gz`）。清单：[`docs/engineering/实机一次搬码验收清单.md`](docs/engineering/实机一次搬码验收清单.md)。
+
+搬码前（无 NPU）：`NPU_ONE_TRIP_MANIFEST=1` 与 `NPU_SUITE_DRY_RUN=1 bash scripts/npu_kem_one_trip.sh`  
+实机：`unset ASCEND_DEVICE_ID && bash scripts/npu_kem_one_trip.sh`  
+带回：`output/npu_one_trip/latest/BRING_BACK.tar.gz`（含 `[l18-trace]` + `STATUS.md`）
+
+仅填教材表、不要 E1 时可：`bash scripts/npu_kem_textbook_perf.sh`（仍建议先 E1 再 Encaps msprof）。
 
 用户尚未仔细审 512 实现。若用户未指定 NPU 线，**默认做审阅型收尾**，按用户当次指令收窄。
 
@@ -140,9 +148,11 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 # 512 glue（交叉）
 USE_LIBOQS=1 bash scripts/exp_kem512_liboqs_roundtrip.sh
 
-# 1024 实机（借入机；设备号缺省 0，无需装 thirdparty）
-bash run.sh -r npu -v Ascend910B4
-# 非默认：物理 0 被占用时才 ASCEND_DEVICE_ID=1（该卡曾复跑死锁）
+# 1024 实机（借入机；按树分卡 1/2/3，无需装 thirdparty）
+# 推荐一次搬码：scripts/npu_kem_one_trip.sh（见 docs/engineering/实机一次搬码验收清单.md）
+# 或分 phase：scripts/npu_kem_real_machine_suite.sh
+bash run.sh -r npu -v Ascend910B4   # 未 export 时：stable→1 / incubating→2 / 探针→3
+# 显式覆盖：ASCEND_DEVICE_ID=0 bash run.sh -r npu …
 RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4   # 非默认：要 msprof 报告时才加
 
 # 1024 KEM golden 后端自检（非默认）

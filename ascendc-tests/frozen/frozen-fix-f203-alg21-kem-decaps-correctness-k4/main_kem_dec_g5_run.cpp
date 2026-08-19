@@ -31,6 +31,7 @@
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_decrypt_g4_prep.h"
 #include "aclrtlaunch_f203_decrypt_g4_chain_ntt.h"
 #include "aclrtlaunch_f203_kem_dec_chain_intt.h"
@@ -282,7 +283,7 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     if (ret != 0) {
         return 37;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "g5e_prep_ntt_decode_batch"));
     DECAPS_TRACE_DONE("decode_t_hat");
 
     {
@@ -301,7 +302,7 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     if (ret != 0) {
         return 38;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_at_r5"));
     DECAPS_TRACE_DONE("at_r5");
 
     CHECK_ACL(aclrtMemset(dev.trPaddedDev, dstFileBytes, 0, dstFileBytes));
@@ -313,7 +314,7 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     if (ret != 0) {
         return 39;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_intt_u"));
     DECAPS_TRACE_DONE("intt#1(u)");
     DECAPS_TRACE_SUBMIT("intt#2(tr)");
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, dev.trTimeDev, dev.trPaddedDev, dev.inttEncWsDev,
@@ -321,7 +322,7 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     if (ret != 0) {
         return 40;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_intt_tr"));
     DECAPS_TRACE_DONE("intt#2(tr)");
 
     uint8_t *e1Dev = dev.reDev + F203_R_POLYVEC_BYTES;
@@ -332,7 +333,7 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     if (ret != 0) {
         return 41;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_g4_noise"));
     DECAPS_TRACE_DONE("g4_noise");
 
     DECAPS_TRACE_SUBMIT("kem_dec_pack");
@@ -341,7 +342,7 @@ static int LaunchPhaseEReencryptAndFo(aclrtStream stream, PhaseEDevBuf &dev, uin
     if (ret != 0) {
         return 42;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_pack"));
     DECAPS_TRACE_DONE("kem_dec_pack");
 #undef DECAPS_TRACE_SUBMIT
 #undef DECAPS_TRACE_DONE
@@ -771,27 +772,27 @@ int run_decaps_session(const uint8_t *dk_kem, const uint8_t *c_in, const uint8_t
         if (ret != 0) {
             return 30;
         }
-        CHECK_ACL(aclrtSynchronizeStream(stream));
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_g4_prep"));
 
         ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_chain_ntt)(kG4BlockDim, stream, uDev, sHatDev, uHatDev, wHatDev,
                                                              wPaddedDev, nttWsDev, g4TilingHost);
         if (ret != 0) {
             return 31;
         }
-        CHECK_ACL(aclrtSynchronizeStream(stream));
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_g4_chain_ntt"));
 
         ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_chain_intt)(kG4BlockDim, stream, vDev, wPaddedDev, wTimeDev, mDev,
                                                            inttWsDev, g4TilingHost);
         if (ret != 0) {
             return 32;
         }
-        CHECK_ACL(aclrtSynchronizeStream(stream));
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_chain_intt"));
 
         ret = ACLRT_LAUNCH_KERNEL(f203_kem_dec_g)(kKemGBlockDim, stream, mDev, hDev, KprimeDev, coinsDev);
         if (ret != 0) {
             return 33;
         }
-        CHECK_ACL(aclrtSynchronizeStream(stream));
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_g"));
     }
 
 #ifndef ASCENDC_CPU_DEBUG

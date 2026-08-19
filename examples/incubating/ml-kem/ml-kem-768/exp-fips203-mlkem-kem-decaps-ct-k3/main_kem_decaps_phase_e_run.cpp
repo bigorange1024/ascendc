@@ -33,6 +33,7 @@ extern void GenerateTiling(TilingData &data);
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
 #include "aclrtlaunch_f203_kem_dec_phase_e_prep.h"
 #else
@@ -295,7 +296,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     std::fprintf(stderr, "[kem-dec-e] launch prep G(m'||h)+EncryptPrep\n");
     ACLRT_LAUNCH_KERNEL(f203_kem_dec_phase_e_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, hDev, kPrimeDev, coinsDev,
                                                    aHatDev, prfDev, reDev, prepTilingDev);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_phase_e_prep"));
 
     std::memset(wsHost, 0, wsSize);
     if (!LoadNttLutHost(wsHost, lutBytes) || !LoadInttLutHostFused(wsHost, lutBytes)) {
@@ -312,7 +313,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
                                               tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cPrimeDev,
                                               nullptr, cInDev, zDev, kPrimeDev, kOutDev);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_l18_l19"));
 
     CHECK_ACL(aclrtMemcpy(cPrimeHost, cBytes, cPrimeDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(K_out, kKBytes, kOutDev, kKBytes, ACL_MEMCPY_DEVICE_TO_HOST));

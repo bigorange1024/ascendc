@@ -271,6 +271,12 @@ runtime_env_dispatch() {
       # auto 落 sim：默认 SIM_DIRECT=1（省 msprof）；调用方已 export SIM_DIRECT 则保留
       if [[ "${RUN_MODE}" = "sim" ]]; then
         export SIM_DIRECT="${SIM_DIRECT:-1}"
+        export ASCEND_DEVICE_ID=0
+        echo "[runtime_env] SIM 强制 ASCEND_DEVICE_ID=0"
+      elif [[ "${RUN_MODE}" = "npu" ]]; then
+        # shellcheck source=/dev/null
+        source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/npu_device_map.sh"
+        npu_device_map_apply "$(cd "$(dirname "${self}")" && pwd)"
       fi
       ;;
     cpu | sim | npu)
@@ -279,6 +285,17 @@ runtime_env_dispatch() {
       RUN_MODE="$(runtime_env_resolve_mode "${want}")" || exit $?
       export RUN_MODE
       echo "[runtime_env] resolved RUN_MODE=${RUN_MODE}"
+      # npu：按用例树分卡（stable=1 / examples=2 / tests=3）；sim：CAModel 仅设备 0
+      _runtime_env_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+      if [[ "${RUN_MODE}" = "npu" ]]; then
+        # shellcheck source=/dev/null
+        source "${_runtime_env_dir}/npu_device_map.sh"
+        npu_device_map_apply "$(cd "$(dirname "${self}")" && pwd)"
+      elif [[ "${RUN_MODE}" = "sim" ]]; then
+        export ASCEND_DEVICE_ID=0
+        echo "[runtime_env] SIM 强制 ASCEND_DEVICE_ID=0"
+      fi
+      unset _runtime_env_dir
       ;;
     *)
       echo "[runtime_env] ERROR: bad RUN_MODE=${want}" >&2

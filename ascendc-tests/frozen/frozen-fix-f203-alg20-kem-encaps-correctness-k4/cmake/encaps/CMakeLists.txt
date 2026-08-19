@@ -4,7 +4,19 @@ project(Ascend_c)
 
 get_filename_component(ENC_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(TEST_ROOT "${ENC_ROOT}/vendor/pke_encrypt")
-get_filename_component(REPO_ROOT "${ENC_ROOT}/../.." ABSOLUTE)
+get_filename_component(_ASCENDC_WALK "${CMAKE_CURRENT_LIST_DIR}" ABSOLUTE)
+set(REPO_ROOT "")
+while(NOT REPO_ROOT)
+  if(EXISTS "${_ASCENDC_WALK}/AGENTS.md" AND IS_DIRECTORY "${_ASCENDC_WALK}/scripts")
+    set(REPO_ROOT "${_ASCENDC_WALK}")
+  else()
+    get_filename_component(_ASCENDC_PARENT "${_ASCENDC_WALK}/.." ABSOLUTE)
+    if(_ASCENDC_PARENT STREQUAL _ASCENDC_WALK)
+      message(FATAL_ERROR "cannot locate ascendc repo root from ${CMAKE_CURRENT_LIST_DIR}")
+    endif()
+    set(_ASCENDC_WALK "${_ASCENDC_PARENT}")
+  endif()
+endwhile()
 set(KEM_DIR "${ENC_ROOT}/kem")
 set(PREP_AHAT_INC "${TEST_ROOT}/prep/a_hat")
 set(PREP_ALG7_INC "${TEST_ROOT}/prep/a_hat/alg7")
@@ -20,6 +32,7 @@ set(AT_R5_INC "${TEST_ROOT}/compute/at_r5")
 set(COMPUTE_FROZEN_INC "${TEST_ROOT}/compute/frozen")
 set(SHAKE_XOF_INC "${REPO_ROOT}/library/shared/shake_xof_kernel")
 set(KECCAK_INC "${REPO_ROOT}/library/shared/keccak_f1600_kernel")
+set(SHARED_INC "${REPO_ROOT}/library/shared")
 
 set(RUN_MODE "npu" CACHE STRING "cpu/sim/npu")
 set(SOC_VERSION "Ascend910B4" CACHE STRING "system on chip type")
@@ -83,7 +96,7 @@ add_executable(ascendc_kem_encaps_bbit ${ENC_ROOT}/main_kem_encaps.cpp ${ENC_ROO
 
 set(_PREP_INCLUDES ${ENC_ROOT} ${TEST_ROOT} ${PREP_AHAT_INC} ${PREP_ALG7_INC} ${PREP_RE_INC} ${PREP_CBD_INC}
     ${PREP_DECODE_INC} ${NTT_R_INC} ${ALG11_INC} ${INTT_INC} ${G4_INC} ${PACK_INC} ${AT_R5_INC}
-    ${COMPUTE_FROZEN_INC} ${KEM_DIR} ${SHAKE_XOF_INC} ${KECCAK_INC} ${CMAKE_INSTALL_PREFIX}/include)
+    ${COMPUTE_FROZEN_INC} ${KEM_DIR} ${SHAKE_XOF_INC} ${KECCAK_INC} ${SHARED_INC} ${CMAKE_INSTALL_PREFIX}/include)
 
 target_include_directories(ascendc_kem_encaps_bbit PRIVATE ${_PREP_INCLUDES})
 

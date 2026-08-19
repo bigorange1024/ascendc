@@ -10,12 +10,15 @@
 #   cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r npu -v Ascend910B4          # 仅真机
+#   RUN_WITH_MSPROF=1 MSPROF_MODE=app … -r npu  # 整进程 profiling + [npu_launch]
 #
 # 调试（非默认）:
 #   KEM_DECAPS_PHASEE_ONLY=1 …
 #   KEM_DECAPS_REJECT=1 …
 #   ASCENDC_SIM_HOST_MODE=decaps_2session …
 #   KEM_DECAPS_FORCE_REBUILD=1 …
+#   默认直跑结束会打印 [run_metrics] wall_sec=… 并写入 output/run_metrics.txt
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd "${CURRENT_DIR}"
@@ -132,9 +135,11 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 实机 ACL 设备号：npu 缺省 0（挂死/Ctrl+C 后同卡可能污染；换卡只是绕开，根治见 DeviceGuard）；SIM 强制 0（CAModel 仅设备 0）
+# 实机 ACL 设备号：npu 按树分卡（stable=1 / examples=2 / tests=3，见 npu_device_map.sh）；显式 ASCEND_DEVICE_ID 优先。SIM 强制 0
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi

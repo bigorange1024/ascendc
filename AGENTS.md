@@ -7,7 +7,7 @@
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-08-03（npu `ASCEND_DEVICE_ID` 缺省改回 **0**：借入机 device1 上 l18_l19 复跑死锁）
+**最后刷新**：2026-08-18（npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0）
 
 ---
 
@@ -132,8 +132,8 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 - **512 状态**：**有条件完成至 incubating** — W0–W4+glue 全绿（含 liboqs-512 Encaps `c`/`K`）；glue-c：`r←η1=3`；见 [`AGENT_HANDOFF.md`](AGENT_HANDOFF.md) 
 - **768 状态**：**有条件完成至 incubating** — 探针 W0–W3 + incubating W4 + AscendC-only RT 全绿 
 - **1024 Encaps**：默认 `m=urandom`（禁默认可全 0） 
-- **1024 上机（2026-07-31 / 08-03）**：7 探针 + 7 stable 全部 `${REPO_ROOT}/scripts/env.sh` + `ASCEND_DEVICE_ID`（**npu 缺省 0** / SIM 强制 0；曾缺省 1，借入机 device1 上 `l18_l19` 复跑死锁已改回）+ `msprof_run.sh`（默认不采集）；**无 thirdparty 亦可跑**（LUT 三级回退 + [`library/shared/f203_kem_ref`](library/shared/f203_kem_ref/kem_ref.py)）。详见 [`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) §4.1–4.4 
-- **下一刀**：实机 `-r npu` 用默认设备 0 做二次连跑确认；stable-512 / stable-768 须用户 `#交付#`；可选 D20 tick 重登；仓级 T23 / T21 
+- **1024 上机（2026-07-31 / 08-18）**：7 探针 + 7 stable 走 `${REPO_ROOT}/scripts/env.sh`；npu **按树分卡**（[`npu_device_map.sh`](scripts/npu_device_map.sh)：stable=**1** / examples=**2** / tests=**3**；SIM 强制 0）。入口 [`npu_kem_real_machine_suite.sh`](scripts/npu_kem_real_machine_suite.sh)。`msprof_run.sh` 默认不采集；**无 thirdparty 亦可跑**。详见 [`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) §4.1–4.5 
+- **下一刀**：借入机 `SKIP_L18_RISK=0 bash scripts/npu_kem_textbook_perf.sh`（教材 14 档，分卡 1→2→3）；stable-512 / stable-768 须用户 `#交付#` 
 - **办公室 KEM 回归（1024）**：[`scripts/stable_kem_liboqs_roundtrip.sh`](scripts/stable_kem_liboqs_roundtrip.sh)  
 - **512 / 768 RT**：[`scripts/exp_kem512_liboqs_roundtrip.sh`](scripts/exp_kem512_liboqs_roundtrip.sh) · [`scripts/exp_kem768_liboqs_roundtrip.sh`](scripts/exp_kem768_liboqs_roundtrip.sh)
 

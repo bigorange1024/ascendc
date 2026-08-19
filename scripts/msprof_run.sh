@@ -13,24 +13,77 @@
 #   source "${REPO_ROOT}/scripts/msprof_run.sh"
 #   msprof_run_kernel "${CURRENT_DIR}/ascendc_keygen_bbit"
 #
-# 采集（须显式指定，非默认）：
-#   RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4    # 实机 msprof op
+# 采集（须显式指定，非默认；教材套件 npu 默认打开）：
+#   RUN_WITH_MSPROF=1 MSPROF_MODE=app bash run.sh -r npu -v Ascend910B4
 #   RUN_WITH_MSPROF=1 bash run.sh -r sim -v Ascend910B4    # CAModel msprof op simulator（很慢）
 #
+# MSPROF_MODE（npu）：
+#   app — 默认（教材/KEM）：`msprof --application` 对**真实进程跑一遍**，csv 里每个 KernelLaunch 一行
+#   op  — 旧路径 `msprof op --launch-count`：把二进制当「单个 op 重放」；KEM 多 launch **不要**用这个当整算子时间
+#
 # 可调环境变量：
+#   MSPROF_MODE              npu 采集模式，默认 app
 #   MSPROF_AIC_METRICS_NPU   实机指标集，默认 PipeUtilization,MemoryUB,Memory
 #   MSPROF_AIC_METRICS_SIM   仿真指标集，默认 PipeUtilization（simulator 仅支持少数几个）
-#   MSPROF_LAUNCH_COUNT_NPU  实机采集的 launch 数，默认 8（多 launch 的 device session 需调大）
+#   MSPROF_LAUNCH_COUNT_NPU  仅 MODE=op：实机 launch-count，默认 64（盖住 correctness 多段）
 #   MSPROF_LAUNCH_COUNT_SIM  仿真采集的 launch 数，默认 1
 #   MSPROF_TIMEOUT_MIN       msprof 自身 --timeout，单位分钟，默认 60
 #   MSPROF_WALL_TIMEOUT_SEC  外层墙钟超时秒数，默认 1800；0 = 不限制
 #   MSPROF_OUTPUT_DIR        采集根目录，默认 $(pwd)/prof_<RUN_MODE>
 #   MSPROF_SOC_VERSION       simulator 的 --soc-version，默认取 SIM_DEVICE / SOC_VERSION / Ascend910B4
+#   MSPROF_RUN_METRICS       默认 1：直跑 tee 到 output/run_metrics.txt 并打印 [run_metrics] 摘要
+#   MSPROF_RUN_METRICS_FILE  默认 $(pwd)/output/run_metrics.txt
+# 墙钟来源：scripts/kernel-run-timeout.sh 结束行 `[wall_sec]`（不依赖 /usr/bin/time）。
+# 多 launch 真值：采集成功后调用 npu_msprof_summarize.py（kernel_details 求和 + host JSONL）。
 
 _MSPROF_RUN_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# 直跑（默认路径）：完全交给 kernel-run-timeout.sh，保持预算与 CAModel 日志行为一致。
+# 从 run_metrics.txt 提取墙钟 / SIM Total tick，打印一行摘要（实机 npu 通常只有 wall_sec）。
+_msprof_emit_run_metrics_summary() {
+    local metrics_file="$1"
+    if [ ! -f "${metrics_file}" ]; then
+        return 0
+    fi
+    local mode="${RUN_MODE:-cpu}"
+    local wall tick_sum tick_lines
+    wall="$(grep -E '^\[wall_sec\]' "${metrics_file}" 2>/dev/null | tail -1 | awk '{print $2}')"
+    tick_lines="$(grep -E 'Total tick:' "${metrics_file}" 2>/dev/null | wc -l | tr -d ' ')"
+    if [ "${tick_lines:-0}" -gt 0 ]; then
+        tick_sum="$(grep -E 'Total tick:' "${metrics_file}" | awk -F: '{gsub(/ /,"",$2); s+=$2} END {print s+0}')"
+    else
+        tick_sum=""
+    fi
+    if [ -n "${wall}" ]; then
+        echo "[run_metrics] RUN_MODE=${mode} wall_sec=${wall} log=${metrics_file}"
+    else
+        echo "[run_metrics] RUN_MODE=${mode} log=${metrics_file}（未解析到 [wall_sec]）"
+    fi
+    if [ "${mode}" = "sim" ] && [ -n "${tick_sum}" ] && [ "${tick_sum}" != "0" ]; then
+        echo "[run_metrics] sim_total_tick=${tick_sum} (${tick_lines} launch)"
+    elif [ "${mode}" = "npu" ]; then
+        echo "[run_metrics] 实机无 CAModel Total tick；逐 launch 见 [npu_launch]；csv 见 RUN_WITH_MSPROF=1"
+        local jsonl="${NPU_LAUNCH_METRICS_FILE:-$(pwd)/output/npu_launch_metrics.jsonl}"
+        if [ -f "${jsonl}" ]; then
+            python3 "${_MSPROF_RUN_REPO_ROOT}/scripts/npu_msprof_summarize.py" --jsonl "${jsonl}" --metrics "${metrics_file}" "$(pwd)" 2>/dev/null || true
+        fi
+    fi
+}
+
+# 直跑（默认路径）：kernel-run-timeout.sh（自带 [wall_sec]）+ 可选 tee 台账。
 _msprof_run_direct() {
+    mkdir -p "$(pwd)/output"
+    export NPU_LAUNCH_METRICS_FILE="${NPU_LAUNCH_METRICS_FILE:-$(pwd)/output/npu_launch_metrics.jsonl}"
+    : >"${NPU_LAUNCH_METRICS_FILE}" 2>/dev/null || true
+    if [ "${MSPROF_RUN_METRICS:-1}" = "1" ]; then
+        local metrics_file="${MSPROF_RUN_METRICS_FILE:-$(pwd)/output/run_metrics.txt}"
+        mkdir -p "$(dirname "${metrics_file}")"
+        set -o pipefail
+        bash "${_MSPROF_RUN_REPO_ROOT}/scripts/kernel-run-timeout.sh" "$@" 2>&1 | tee "${metrics_file}"
+        local rc=${PIPESTATUS[0]}
+        set +o pipefail
+        _msprof_emit_run_metrics_summary "${metrics_file}"
+        return "${rc}"
+    fi
     bash "${_MSPROF_RUN_REPO_ROOT}/scripts/kernel-run-timeout.sh" "$@"
 }
 
@@ -74,6 +127,10 @@ msprof_run_kernel() {
     # shellcheck source=/dev/null
     source "${_MSPROF_RUN_REPO_ROOT}/scripts/camodel_sim_log.sh" "$(pwd)"
 
+    mkdir -p "$(pwd)/output"
+    : >"$(pwd)/output/npu_launch_metrics.jsonl" 2>/dev/null || true
+    export NPU_LAUNCH_METRICS_FILE="${NPU_LAUNCH_METRICS_FILE:-$(pwd)/output/npu_launch_metrics.jsonl}"
+
     local -a cmd
     if [ "${mode}" = "sim" ]; then
         local soc="${MSPROF_SOC_VERSION:-${SIM_DEVICE:-${SOC_VERSION:-Ascend910B4}}}"
@@ -87,24 +144,77 @@ msprof_run_kernel() {
             --launch-count="${MSPROF_LAUNCH_COUNT_SIM:-1}"
             --timeout="${MSPROF_TIMEOUT_MIN:-60}"
         )
+        cmd+=("$@")
     else
-        echo "[msprof_run] msprof op (device=${ASCEND_DEVICE_ID:-n/a}) → ${prof_out}"
+        local npu_mode="${MSPROF_MODE:-app}"
+        local metrics="${MSPROF_AIC_METRICS_NPU:-PipeUtilization,MemoryUB,Memory}"
+        local app_cmd="${bin}"
+        if [ "$#" -gt 0 ]; then
+            printf -v app_cmd '%q ' "${bin}" "$@"
+            app_cmd="${app_cmd% }"
+        fi
+        if [ "${npu_mode}" = "op" ]; then
+            echo "[msprof_run] MODE=op msprof op launch-count=${MSPROF_LAUNCH_COUNT_NPU:-64} (device=${ASCEND_DEVICE_ID:-n/a}) → ${prof_out}"
+            echo "[msprof_run] WARN: op 模式是单 op 重放；KEM 多 launch 请改 MSPROF_MODE=app，并以 kernel_details 求和为准"
+            cmd=(
+                msprof op "${bin}"
+                --output="${prof_out}"
+                --aic-metrics="${metrics}"
+                --launch-count="${MSPROF_LAUNCH_COUNT_NPU:-64}"
+            )
+            cmd+=("$@")
+        else
+            echo "[msprof_run] MODE=app msprof --application (device=${ASCEND_DEVICE_ID:-n/a}) → ${prof_out}"
+            echo "[msprof_run] 整进程一次采集；逐 kernel 以 kernel_details.csv 为准，勿信终端单行 task duration"
+            cmd=(
+                msprof
+                --application="${app_cmd}"
+                --output="${prof_out}"
+            )
+            # 部分 CANN 接受 --aic-metrics；不支持时下面失败再回退 op
+            if [ -n "${metrics}" ]; then
+                cmd+=(--aic-metrics="${metrics}")
+            fi
+        fi
+    fi
+
+    local rc=0
+    local wall="${MSPROF_WALL_TIMEOUT_SEC:-1800}"
+    local t0 t1 wall_sec
+    t0="$(date +%s.%N 2>/dev/null || date +%s)"
+    _msprof_exec() {
+        if [ "${wall}" != "0" ] && command -v timeout >/dev/null 2>&1; then
+            timeout --foreground "${wall}" "$@"
+        else
+            "$@"
+        fi
+    }
+    if ! _msprof_exec "${cmd[@]}"; then
+        rc=$?
+    fi
+    # npu app 模式若本机 msprof 不认 --application，回退 op（仍解析 csv；并警告）
+    if [ "${rc}" -ne 0 ] && [ "${mode}" = "npu" ] && [ "${MSPROF_MODE:-app}" != "op" ]; then
+        echo "[msprof_run] WARN: app+aic-metrics 退出 ${rc}，重试不带 --aic-metrics" >&2
+        cmd=(msprof --application="${app_cmd:-${bin}}" --output="${prof_out}")
+        rc=0
+        _msprof_exec "${cmd[@]}" || rc=$?
+    fi
+    if [ "${rc}" -ne 0 ] && [ "${mode}" = "npu" ] && [ "${MSPROF_MODE:-app}" != "op" ]; then
+        echo "[msprof_run] WARN: app 模式仍失败 rc=${rc}，回退 msprof op（请核对 csv 是否覆盖全部 launch）" >&2
         cmd=(
             msprof op "${bin}"
             --output="${prof_out}"
             --aic-metrics="${MSPROF_AIC_METRICS_NPU:-PipeUtilization,MemoryUB,Memory}"
-            --launch-count="${MSPROF_LAUNCH_COUNT_NPU:-8}"
+            --launch-count="${MSPROF_LAUNCH_COUNT_NPU:-64}"
         )
+        cmd+=("$@")
+        rc=0
+        _msprof_exec "${cmd[@]}" || rc=$?
     fi
-    cmd+=("$@")
-
-    local rc=0
-    local wall="${MSPROF_WALL_TIMEOUT_SEC:-1800}"
-    if [ "${wall}" != "0" ] && command -v timeout >/dev/null 2>&1; then
-        timeout --foreground "${wall}" "${cmd[@]}" || rc=$?
-    else
-        "${cmd[@]}" || rc=$?
-    fi
+    t1="$(date +%s.%N 2>/dev/null || date +%s)"
+    wall_sec="$(awk -v s="${t0}" -v e="${t1}" 'BEGIN { printf "%.3f", (e - s) + 0 }')"
+    echo "[wall_sec] ${wall_sec}"
+    echo "[msprof_run] wall_sec=${wall_sec} rc=${rc}"
     if [ "${rc}" -ne 0 ]; then
         echo "[msprof_run] ERROR: msprof 退出码 ${rc}（124=墙钟超时 MSPROF_WALL_TIMEOUT_SEC=${wall}s）" >&2
         return "${rc}"
@@ -118,5 +228,9 @@ msprof_run_kernel() {
     else
         echo "[msprof_run] OK: ${csv_count} 个 csv 于 ${prof_out}"
         find "${prof_out}" -maxdepth 1 -name 'OPPROF_*' 2>/dev/null || true
+        python3 "${_MSPROF_RUN_REPO_ROOT}/scripts/npu_msprof_summarize.py" \
+            --prof "${prof_out}" \
+            --jsonl "${NPU_LAUNCH_METRICS_FILE:-$(pwd)/output/npu_launch_metrics.jsonl}" \
+            "$(pwd)" || true
     fi
 }

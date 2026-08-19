@@ -21,7 +21,7 @@
 # 多环境分流（scripts/runtime_env.sh）：
 #   bash run.sh -r auto -v Ascend910B4      # 单档最优 npu>sim>cpu（≠完整验收）
 #   bash run.sh -r verify -v Ascend910B4    # cpu → SIM_DIRECT sim [→ npu，非WSL]
-#   bash run.sh -r npu -v Ascend910B4       # 真机；ASCEND_DEVICE_ID 缺省 0（SIM 强制 0）
+#   bash run.sh -r npu -v Ascend910B4       # 真机；未设 ASCEND_DEVICE_ID 时 tests→3（SIM 强制 0）
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 #
 # msprof 性能采集（须显式指定，非默认；默认不产生任何 prof/OPPROF 文件）:
@@ -111,19 +111,23 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 实机 ACL 设备号：npu 缺省 0；SIM 强制 0
+# 实机 ACL 设备号：npu 按树分卡（见 npu_device_map.sh）；SIM 强制 0
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi
 
 if [ "${RUN_MODE}" = "sim" ]; then
-    export SIM_DIRECT=1
+    export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-900}"
+    export SIM_DIRECT="${SIM_DIRECT:-1}"
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
 elif [ "${RUN_MODE}" = "npu" ]; then
+    export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-600}"
     export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
     echo "[npu] ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID}  CANN=${_ASCEND_INSTALL_PATH}"
 fi
@@ -159,15 +163,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi
 
-# 默认（非 msprof）保持 /usr/bin/time 计墙钟并写 output/run_metrics.txt；
-# RUN_WITH_MSPROF=1 时改由 msprof op 托管进程，墙钟由 msprof 自己的报告给出。
-if [ "${RUN_WITH_MSPROF:-0}" = "1" ]; then
-    # shellcheck source=/dev/null
-    source "${REPO_ROOT}/scripts/msprof_run.sh"
-    msprof_run_kernel ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
-else
-    /usr/bin/time -f '[wall_sec] %e' bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
-fi
+# 默认：msprof_run_kernel（与 stable 一致；RUN_WITH_MSPROF=1 走 msprof op）
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel ./ascendc_kernels_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

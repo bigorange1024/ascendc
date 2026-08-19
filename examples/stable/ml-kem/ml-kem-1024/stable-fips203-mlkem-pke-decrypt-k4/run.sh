@@ -129,9 +129,11 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 实机 ACL 设备号：npu 缺省 0（挂死/Ctrl+C 后同卡可能污染；换卡只是绕开，根治见 DeviceGuard）；SIM 强制 0（CAModel 仅设备 0）
+# 实机 ACL 设备号：npu 按树分卡（stable=1 / examples=2 / tests=3，见 npu_device_map.sh）；显式 ASCEND_DEVICE_ID 优先。SIM 强制 0
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi
@@ -212,15 +214,10 @@ else
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-600}"
 fi
 
-# 默认：/usr/bin/time 包 kernel-run-timeout.sh，wall_sec 记入 output/run_metrics.txt（tick 台账依赖此行）。
-# RUN_WITH_MSPROF=1：改走 msprof op（sim/npu），此时 wall_sec 不可比，故不再写 run_metrics.txt。
-if [ "${RUN_WITH_MSPROF:-0}" = "1" ]; then
-    # shellcheck source=/dev/null
-    source "${REPO_ROOT}/scripts/msprof_run.sh"
-    msprof_run_kernel ./ascendc_kernels_bbit
-else
-    /usr/bin/time -f '[wall_sec] %e' bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" ./ascendc_kernels_bbit 2>&1 | tee "${CURRENT_DIR}/output/run_metrics.txt"
-fi
+# 默认：msprof_run.sh 直跑时写 output/run_metrics.txt 并打印 [run_metrics] 摘要；RUN_WITH_MSPROF=1 走 msprof。
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel ./ascendc_kernels_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

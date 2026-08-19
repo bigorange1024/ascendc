@@ -24,6 +24,7 @@
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_encrypt_prep_a_hat.h"
 #include "aclrtlaunch_f203_kem_enc_prep_re.h"
 #include "aclrtlaunch_f203_encrypt_ntt_r.h"
@@ -369,7 +370,7 @@ int run_g5_sim_full(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *
         return 33;
     }
     // 同步：等 prep_a_hat/decode_t_hat 完成，否则下面 D2H 拼 matM 时 aHat/tHat 可能未写完（§2.3 病根 2）
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "g5_prep_ntt_decode_batch"));
 
 #if defined(F203_FUNCKEY_EXPERIMENT)
     // funckey 实验：at_r5 已从 KERNEL_FILES 移除（FUNCKEY=1 时），不 launch；fake [u_hat | tr_hat] = 0。
@@ -410,7 +411,7 @@ int run_g5_sim_full(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *
         std::fprintf(stderr, "[g5_sim] at_r5 launch ret=%u\n", ret);
         return 34;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_at_r5"));
 #endif
 
 #if !defined(F203_FUNCKEY_EXPERIMENT)
@@ -424,14 +425,14 @@ int run_g5_sim_full(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *
         std::fprintf(stderr, "[g5_sim] INTT u launch ret=%u\n", ret);
         return 35;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_intt_u"));
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_intt)(kInttBlockDim, stream, trTimeDev, trPaddedDev, inttWsDev,
                                                  inttTilingHost);
     if (ret != 0) {
         std::fprintf(stderr, "[g5_sim] INTT tr launch ret=%u\n", ret);
         return 36;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_intt_tr"));
     uint8_t *e1Dev = reDev + F203_R_POLYVEC_BYTES;
     uint8_t *e2Dev = reDev + F203_R_POLYVEC_BYTES + F203_E1_POLYVEC_BYTES;
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_g4_noise)(kG4NoiseBlockDim, stream, uTimeDev, e1Dev, trTimeDev, e2Dev,
@@ -440,13 +441,13 @@ int run_g5_sim_full(const uint8_t *ek, const uint8_t *seed_host, const uint8_t *
         std::fprintf(stderr, "[g5_sim] g4_noise launch ret=%u\n", ret);
         return 37;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_g4_noise"));
     ret = ACLRT_LAUNCH_KERNEL(f203_encrypt_pack)(kPackBlockDim, stream, uTimeDev, vDev, cDev);
     if (ret != 0) {
         std::fprintf(stderr, "[g5_sim] pack launch ret=%u\n", ret);
         return 38;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_pack"));
     CHECK_ACL(aclrtMemcpy(c_out, F203_CT_PKE_BYTES, cDev, F203_CT_PKE_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(K_out, F203KemEnc::kSharedSecretBytes, KDev, F203KemEnc::kSharedSecretBytes,
                           ACL_MEMCPY_DEVICE_TO_HOST));

@@ -1,0 +1,16 @@
+# 表 A：教材填表默认 14 档（# 卡 路径相对仓库根）
+# 1  stable KeyGen
+1	examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4
+2	examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4
+3	examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4
+4	examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4
+5	examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3
+6	examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3
+7	examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-k3
+8	examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3
+9	examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-keygen-k2
+10	examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-encaps-k2
+11	examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-decaps-k2
+12	examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-decaps-ct-k2
+13	ascendc-tests/frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4
+14	ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4

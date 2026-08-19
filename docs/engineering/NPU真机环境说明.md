@@ -169,11 +169,11 @@ npu-smi info | sed -n '/Process/,$p'     # 有他人进程就别抢 0 号卡
 **未改代码时的手工上板**
 
 > **已实施（2026-07-31）**：P0 已合入 — `scripts/env.sh` 多候选 + source 后回写 `CANN_HOME`；`add_custom/run.sh` 用 `REPO_ROOT`。  
-> **设备号（2026-08-03 订正）**：npu `ASCEND_DEVICE_ID` 缺省 **0**（常规默认）。曾误推「device1 坏卡」；实为挂死脏退污染同卡——见 §4.4。
+> **设备号（2026-08-18）**：npu 未设 `ASCEND_DEVICE_ID` 时按树分卡（stable=**1** / examples=**2** / tests=**3**，见 [`npu_device_map.sh`](../../scripts/npu_device_map.sh)）。SIM 强制 0。08-03 订正仍成立：device1 能挂 ≠ 硬件坏，是**同卡脏退**——见 §4.4。
 
 ```bash
 cd <repo>/ascendc-tests/add_custom
-# 缺省用逻辑设备 1；若要用 0：ASCEND_DEVICE_ID=0 bash run.sh -r npu -v Ascend910B4
+# add_custom ∈ ascendc-tests → 缺省卡 3；覆盖：ASCEND_DEVICE_ID=0 bash run.sh -r npu …
 bash run.sh -r npu -v Ascend910B4
 # 可选对照：bash run.sh -r cpu -v Ascend910B4
 ```
@@ -189,8 +189,8 @@ bash run.sh -r npu -v Ascend910B4
 |---|---|---|---|
 | **P0** | [`scripts/env.sh`](../../scripts/env.sh) `:4,18` | ~~默认 `~/Ascend/cann`~~ → **已改（2026-07-31）** | 多候选 + `ASCEND_TOOLKIT_ENV_FILE`；source 后用 `ASCEND_HOME_PATH` 回写 `CANN_HOME` |
 | **P0** | [`scripts/runtime_env.sh`](../../scripts/runtime_env.sh) | ~~无 `/usr/local/Ascend/cann`~~ → **已加** | 在 `ascend-toolkit/latest` 前插入 `/usr/local/Ascend/cann` |
-| **P0** | [`add_custom/main.cpp`](../../ascendc-tests/add_custom/main.cpp) `:39` | ~~`deviceId = 0`~~ → 曾改缺省 1 → **08-03 改回 0** | 读 `ASCEND_DEVICE_ID`，**缺省 0**（device1 复跑死锁；需避让时再 export=1） |
-| **P0** | [`add_custom/run.sh`](../../ascendc-tests/add_custom/run.sh) `:27` | ~~`${HOME}/ascendc`~~ → **已改** | `${REPO_ROOT}/scripts/env.sh` + 校验；export `ASCEND_DEVICE_ID` **缺省 0** |
+| **P0** | [`add_custom/main.cpp`](../../ascendc-tests/add_custom/main.cpp) `:39` | 读 `ASCEND_DEVICE_ID` | 未设时由 `run.sh`/`npu_device_map` 注入；C++ 仍缺省 0（仅当 env 未设） |
+| **P0** | [`add_custom/run.sh`](../../ascendc-tests/add_custom/run.sh) `:27` | ~~`${HOME}/ascendc`~~ → **已改** | `${REPO_ROOT}/scripts/env.sh`；npu 走 `npu_device_map`（tests→**3**） |
 | **P1** | [`scripts/verify-cann.sh`](../../scripts/verify-cann.sh) | 写死 `x86_64-linux` | `uname -m` → `aarch64-linux` 等；simulator 缺失 → WARN（本机可不跑 sim） |
 | **P1** | `add_custom` CPU | 曾误判无 910B* | **可试** `-r cpu`；失败再记。上板主路径仍是 npu |
 | **P1** | `add_custom/run.sh` npu | driver `LD_LIBRARY_PATH` | 本机 ldconfig 已有 hal → 补路径可选；仍 export `ASCEND_DEVICE_ID` |
@@ -212,18 +212,50 @@ ML-KEM 探针一律直跑二进制，实机上设了该变量也**静默无产�
 
 | 命令 | 行为 |
 |------|------|
-| `bash run.sh -r npu -v Ascend910B4` | **默认**：直跑，等价 `kernel-run-timeout.sh`，**不产** prof/OPPROF |
-| `RUN_WITH_MSPROF=1 bash run.sh -r npu -v Ascend910B4` | `msprof op` → `<用例>/prof_npu/<bin>/`（`OPPROF_*` 在其内） |
+| `bash run.sh -r npu -v Ascend910B4` | **默认**：直跑 `kernel-run-timeout.sh`，结束打印 **`[wall_sec] <秒>`** 与 `[kernel-run-timeout] wall_sec=…`（kernel+host，不含 cmake/gen_data）；**不产** prof/OPPROF |
+| `RUN_WITH_MSPROF=1 MSPROF_MODE=app bash run.sh -r npu -v Ascend910B4` | **默认教材口径**：`msprof --application` 对真实进程采集一遍 → `<用例>/prof_npu/<bin>/`；打印 `[npu_launch]`；csv 用 `npu_msprof_summarize.py` 按 kernel **求和** |
+| `RUN_WITH_MSPROF=1 MSPROF_MODE=op bash run.sh -r npu -v Ascend910B4` | 旧 `msprof op --launch-count`（单 op 重放）；**不要**当整条 KEM 时间 |
 | `RUN_WITH_MSPROF=1 bash run.sh -r sim -v Ascend910B4` | `msprof op simulator`，很慢；仅需要仿真侧 tick 明细时用 |
 | `RUN_WITH_MSPROF=1 … -r cpu` | 告警并退回直跑（CPU 孪生无硬件计数器） |
 
-多 launch 的 device session（KeyGen / Decaps 等）默认只采 `MSPROF_LAUNCH_COUNT_NPU=8` 个
-launch，不够时调大；指标集 `MSPROF_AIC_METRICS_NPU` 等其余旋钮见脚本头注释。
-真机**不会**打印 CAModel 的 `Total tick`，实机耗时以 msprof 报告为准。
+多 launch 的 KEM（KeyGen 2 / Encaps 2 / Decaps 3 / correctness 更多）**不要**用 msprof 终端那一行 task duration 代表整算子。
+默认 `MSPROF_MODE=app` 对真实进程采一遍；设备真值是 `kernel_details*.csv` 各行之和（[`npu_msprof_summarize.py`](../../scripts/npu_msprof_summarize.py) 打印 `[msprof_kernel]`）。
+Host 侧每次 `aclrtSynchronizeStream` 另打 `[npu_launch]`（`output/npu_launch_metrics.jsonl`）。
+`MSPROF_MODE=op` 的 `--launch-count` 仅作 app 失败回退。
 
-已接入：**PKE×3 + KEM×4 探针**与 **stable 七算子**（`pke-{keygen,encrypt,decrypt}`、
-`kem-{keygen,encaps,decaps,decaps-ct}`）。`pke-decrypt` 默认仍走 `/usr/bin/time` 写
-`output/run_metrics.txt`（tick 台账依赖），仅 `RUN_WITH_MSPROF=1` 时改走 msprof。
+已接入：PKE×3 + KEM 探针 / **stable 七算子** / 教材 14 档 KEM。`msprof_run.sh` 默认把 kernel 日志 tee 到 `output/run_metrics.txt`。
+
+### 4.5 实机一键套件（2026-08-18）
+
+借入机搬码后优先用 [`scripts/npu_kem_real_machine_suite.sh`](../../scripts/npu_kem_real_machine_suite.sh)。**按树分卡**（[`npu_device_map.sh`](../../scripts/npu_device_map.sh)）：**stable→1**、**examples（incubating）→2**、**ascendc-tests→3**；SIM 仍强制 0。显式 `ASCEND_DEVICE_ID` 覆盖。
+
+推荐顺序：**先全部 stable（卡 1）→ 再 examples（卡 2）→ 再探针（卡 3）**，避免探针卡死污染 stable 卡。
+
+| 命令 | 含义 | 默认卡 |
+|------|------|--------|
+| `NPU_SUITE_DRY_RUN=1 NPU_SUITE_PHASE=stable bash scripts/…` | 搬码后先 dry-run 确认分卡（无需 NPU） | — |
+| `SKIP_L18_RISK=0 NPU_SUITE_PHASE=stable bash scripts/…` | 1024 stable 七算子 | 1 |
+| `NPU_SUITE_PHASE=examples bash scripts/…` | 1024 incubating | 2 |
+| `NPU_SUITE_PHASE=probes_safe bash scripts/…` | alg13/14/15/19（不含 alg20/21） | 3 |
+| `NPU_SUITE_PHASE=msprof_decrypt bash scripts/…` | Decaps **Phase-D** msprof | 1 |
+| `NPU_SUITE_PHASE=msprof_decaps_e bash scripts/…` | Decaps **Phase-E** msprof | 1 |
+| `SKIP_L18_RISK=0 NPU_SUITE_PHASE=e1 bash scripts/…` | Encaps + `F203_L18_TRACE`（**高风险**；卡 1 须干净） | 1 |
+
+配套：[`npu_run_case.sh`](../../scripts/npu_run_case.sh)、[`npu_card_guard.sh`](../../scripts/npu_card_guard.sh)、[`npu_kem_msprof_report.sh`](../../scripts/npu_kem_msprof_report.sh)。
+
+详述：**[`qa/2026-08/2026-08-18-实机NPU脚本套件与卡死恢复.md`](../../qa/2026-08/2026-08-18-实机NPU脚本套件与卡死恢复.md)**。
+
+### 4.6 教材 KEM 14 档（2026-08-19）
+
+清单与口径：[`docs/research/教材KEM实机测量清单.md`](../research/教材KEM实机测量清单.md)。
+
+```bash
+unset ASCEND_DEVICE_ID
+NPU_SUITE_DRY_RUN=1 bash scripts/npu_kem_textbook_perf.sh
+SKIP_L18_RISK=0 bash scripts/npu_kem_textbook_perf.sh   # 实机；默认开 msprof app
+```
+
+配套：[`npu_kem_textbook_perf.sh`](../../scripts/npu_kem_textbook_perf.sh)、[`npu_case_env.sh`](../../scripts/npu_case_env.sh)。768/512/1024 incubating 与 frozen correctness 的 `run.sh` 已对齐 stable 的 `env.sh` + 分卡 + `msprof_run_kernel`。
 
 ---
 
@@ -283,7 +315,7 @@ KEM 用例靠软链复用 PKE 交付树的 `thirdparty/` 与 `scripts/{host_gold
 | SIGINT/SIGTERM 无钩子 | 同上，信号里尽力 Reset+Finalize |
 | timeout 124 / SIGKILL | `kernel-run-timeout.sh` 打印污染警告；SIGKILL **无法**清设备 → 须 `npu-smi` 查残留或对该卡 reset |
 
-npu **`ASCEND_DEVICE_ID` 缺省仍为 0**（Ascend 常规默认，不是「1 号卡坏了」的结论）。换卡只能**绕开已污染的卡**，不能代替 Finalize。
+npu **未设 `ASCEND_DEVICE_ID` 时按树分卡**（08-18）：stable=1、examples=2、tests=3；SIM 仍强制 0。换卡只能**绕开已污染的卡**，不能代替 Finalize。同卡污染机制见上（08-03 订正仍成立：不是「1 号卡硬件坏」）。
 
 ```bash
 bash run.sh -r npu -v Ascend910B4

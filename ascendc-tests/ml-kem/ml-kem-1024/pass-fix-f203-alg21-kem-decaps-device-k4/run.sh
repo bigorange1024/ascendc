@@ -132,9 +132,11 @@ export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
 set -euo pipefail
 
-# 实机 ACL 设备号：npu 缺省 0；SIM 强制 0
+# 实机 ACL 设备号：npu 按树分卡（见 npu_device_map.sh）；SIM 强制 0
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi

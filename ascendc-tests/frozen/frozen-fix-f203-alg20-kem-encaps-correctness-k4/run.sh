@@ -8,6 +8,8 @@
 # Usage（默认 = 生产全量 + golden 对拍，无需额外 env）：
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r npu -v Ascend910B4          # 仅真机；WSL 由 runtime_env 拒绝
+#   RUN_WITH_MSPROF=1 MSPROF_MODE=app … -r npu  # 整进程 profiling + kernel_details；逐 launch 见 [npu_launch]
 #
 # 默认行为（2026-07-03）：
 #   KEM_ENCAPS_VERIFY=1        — 对拍 golden_c/K
@@ -32,6 +34,7 @@
 #   WSL 禁止 -r npu；说明见 docs/engineering/NPU真机环境说明.md
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "${CURRENT_DIR}"
 
 _ORIG_ARGS=("$@")
 # KAT 批测 quiet：log → output/kat_liboqs_kem_encaps.log
@@ -41,7 +44,20 @@ if [ "${KEM_ENCAPS_KAT:-0}" = "1" ]; then
     exec >>"${CURRENT_DIR}/output/kat_liboqs_kem_encaps.log" 2>&1
 fi
 
-REPO_ROOT="$(cd "${CURRENT_DIR}/../.." && pwd)"
+REPO_ROOT="$(
+  _d="${CURRENT_DIR}"
+  while [ "${_d}" != "/" ]; do
+    if [ -f "${_d}/AGENTS.md" ] && [ -d "${_d}/scripts" ]; then
+      printf '%s\n' "${_d}"
+      break
+    fi
+    _d="$(dirname "${_d}")"
+  done
+)"
+if [ -z "${REPO_ROOT}" ] || [ ! -d "${REPO_ROOT}/scripts" ]; then
+  echo "[ERROR] cannot locate repo root from ${CURRENT_DIR}" >&2
+  exit 1
+fi
 INSTALL_PREFIX=""
 export SEED_D="${SEED_D:-20260619}"
 export KEM_ENCAPS_VERIFY="${KEM_ENCAPS_VERIFY:-1}"
@@ -95,32 +111,11 @@ if [ ! -f "${EK_KEM_SRC}" ]; then
     exit 2
 fi
 
-if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
-    # shellcheck source=/dev/null
-    source "${HOME}/ascendc/scripts/env.sh"
-    _ASCEND_INSTALL_PATH="${CANN_HOME}"
-elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
-    _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH}"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash"
-elif [ -d "$HOME/Ascend/ascend-toolkit/latest" ]; then
-    _ASCEND_INSTALL_PATH="$HOME/Ascend/ascend-toolkit/latest"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash" 2>/dev/null || true
-else
-    _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH:-/usr/local/Ascend/ascend-toolkit/latest}"
-fi
+# CANN + 分卡 + npu lib64：与 1024 stable run.sh 对齐（禁止 ${HOME}/ascendc 写死）
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/npu_case_env.sh"
+npu_case_bootstrap || exit 1
 
-export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
-export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
-export CANN_HOME="${_ASCEND_INSTALL_PATH}"
-
-if [ "${RUN_MODE}" = "sim" ]; then
-    export SIM_DIRECT=1
-    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
-elif [ "${RUN_MODE}" = "cpu" ]; then
-    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
-fi
 
 _build_stamp="${BUILD_DIR}/.kem_encaps_run_mode"
 _build_tag="${BUILD_PROFILE}:${RUN_MODE}:extseed=${KEM_ENC_EXT_SEED}"
@@ -185,7 +180,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
 fi
 
 echo "[run.sh] kernel RUN_MODE=${RUN_MODE} budget_sec=${KERNEL_COMPUTE_BUDGET_SEC}"
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" "${CURRENT_DIR}/ascendc_kem_encaps_bbit"
+# 默认直跑；RUN_WITH_MSPROF=1 时 npu 走 MSPROF_MODE=app 整进程采集
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel ./ascendc_kem_encaps_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}"

@@ -246,12 +246,12 @@ int32_t main(int32_t argc, char *argv[])
 
     f203_keygen_prep_do(kPrepBlockDim, nullptr, stream, seedDev, aHatDev, prfDev, srcDev, rhoDev, xDev, lenDev, wsSeDev,
                         shakeTilingDev);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_keygen_prep"));
 
     // L2：stable mmad + F203_KEM_KEYGEN_TAIL 内嵌尾；ek 与 ek_kem 同缓冲
     ACLRT_LAUNCH_KERNEL(mmad_custom)(kMmadBlockDim, stream, dstDev, tHatDev, ekPolyDev, skDev, srcDev, aHatDev, wsDev,
                                      &vecTilingHost, rhoDev, ekPkeDev, seedDev, dkKemDev);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "mmad_custom"));
 
     CHECK_ACL(aclrtMemcpy(ekPkeHost, ekPkeBytes, ekPkeDev, ekPkeBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(dkKemHost, F203KemKg::kDkKemBytes, dkKemDev, F203KemKg::kDkKemBytes, ACL_MEMCPY_DEVICE_TO_HOST));

@@ -32,6 +32,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <sys/stat.h>
 #include <thread>
 
 #include "acl/acl.h"
@@ -121,6 +122,50 @@ private:
     void (*prevTerm_)(int) = SIG_DFL;
 };
 
+/** 进程内 KernelLaunch 序号（NPU/SIM host 逐 launch 计时用）。 */
+inline std::atomic<int> g_launch_seq{0};
+
+/**
+ * 把一次 stream 同步写成 `[npu_launch]` 行 + JSONL。
+ * 文件默认 `./output/npu_launch_metrics.jsonl`，可用 `NPU_LAUNCH_METRICS_FILE` 覆盖。
+ * stdout 行会被 `msprof_run.sh` tee 进 `output/run_metrics.txt`。
+ */
+inline void EmitLaunchMetric(const char *name, double durationUs, aclError rc)
+{
+    const int seq = g_launch_seq.fetch_add(1, std::memory_order_relaxed) + 1;
+    const char *nm = (name != nullptr && name[0] != '\0') ? name : "unnamed";
+    std::fprintf(stdout, "[npu_launch] seq=%d name=%s duration_us=%.1f rc=%d\n", seq, nm, durationUs,
+                 static_cast<int>(rc));
+    std::fflush(stdout);
+
+    const char *path = std::getenv("NPU_LAUNCH_METRICS_FILE");
+    if (path == nullptr || path[0] == '\0') {
+        path = "./output/npu_launch_metrics.jsonl";
+    }
+    // 尽力建 output/；失败仍保留 stdout 行。
+    (void)mkdir("output", 0755);
+    FILE *fp = std::fopen(path, "a");
+    if (fp != nullptr) {
+        std::fprintf(fp, "{\"seq\":%d,\"name\":\"%s\",\"duration_us\":%.1f,\"rc\":%d}\n", seq, nm, durationUs,
+                     static_cast<int>(rc));
+        std::fclose(fp);
+    }
+}
+
+/**
+ * KernelLaunch 之后的同步 + 逐 launch 计时。
+ * 同 stream 上多次 launch 各调一次，得到每段 host 可见墙钟（含 ACL）；
+ * 设备侧逐 kernel 仍以 msprof `kernel_details.csv` 为准。
+ */
+inline aclError TimedSynchronizeStream(aclrtStream stream, const char *launchName)
+{
+    const auto t0 = std::chrono::steady_clock::now();
+    const aclError e = aclrtSynchronizeStream(stream);
+    const auto us = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count();
+    EmitLaunchMetric(launchName, us, e);
+    return e;
+}
+
 /** 环境开关：值为 "1" 时为真（如 F203_L18_TRACE=1）。 */
 inline bool EnvFlagOn(const char *name)
 {
@@ -176,6 +221,20 @@ inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, 
     }
     syncer.join();
     return syncRc.load(std::memory_order_acquire);
+}
+
+/**
+ * 与 SynchronizeStreamMaybeTrace 相同，额外打 `[npu_launch]`。
+ * l18 卡住时 trace 仍走 stderr；duration_us 含等待时间（卡死则接近超时预算）。
+ */
+inline aclError TimedSynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, int32_t *traceHost, int nStages,
+                                                const char *launchName, int pollMs = 500)
+{
+    const auto t0 = std::chrono::steady_clock::now();
+    const aclError e = SynchronizeStreamMaybeTrace(stream, traceDev, traceHost, nStages, pollMs);
+    const auto us = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count();
+    EmitLaunchMetric(launchName != nullptr ? launchName : "l18_l19", us, e);
+    return e;
 }
 
 }  // namespace ascendc_acl

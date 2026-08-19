@@ -132,9 +132,11 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 实机 ACL 设备号：npu 缺省 0（挂死/Ctrl+C 后同卡可能污染；换卡只是绕开，根治见 DeviceGuard）；SIM 强制 0（CAModel 仅设备 0）
+# 实机 ACL 设备号：npu 按树分卡（stable=1 / examples=2 / tests=3，见 npu_device_map.sh）；显式 ASCEND_DEVICE_ID 优先。SIM 强制 0
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi

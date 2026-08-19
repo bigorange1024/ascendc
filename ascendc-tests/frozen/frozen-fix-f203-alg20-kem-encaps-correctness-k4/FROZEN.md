@@ -25,5 +25,6 @@ FIPS 203 **Alg.20 ML-KEM.Encaps**（k=4）**正确性 / oracle 路标**：vendor
 ## Agent 规则
 
 - **可进入**只读本 `FROZEN.md` / `STATUS.md`
-- **禁止**抄 `vendor/` / kernel；**禁止**跑本目录 CI；**禁止**作 `ENCAPS_DIR` 默认
+- **禁止**抄 `vendor/` / kernel；**禁止**作 `ENCAPS_DIR` 默认
+- **2026-08-19 用户授权例外**：为借入实机测教材 A 臂，**原地**改 `run.sh` / host 计时壳（对齐 stable npu + `MSPROF_MODE=app` + `[npu_launch]`）。仍**禁止**把 kernel/vendor 抄出活跃树。
 - 历史 `vendor_sync_from_alg14_encrypt.sh` 仅归档自用；**禁止**为新工作复活 sync

@@ -184,7 +184,7 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     ACLRT_LAUNCH_KERNEL(f203_decrypt_device_fused)
     (kBlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev, uHatDev, wHatDev, wPaddedDev, wTimeDev, mDev, nttWsDev,
      inttWsDev, softSyncDev, tilingHost);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_device_fused"));
     CHECK_ACL(aclrtMemcpy(m_out, F203_MSG_BYTES, mDev, F203_MSG_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
 
     CHECK_ACL(aclrtFree(dkDev));

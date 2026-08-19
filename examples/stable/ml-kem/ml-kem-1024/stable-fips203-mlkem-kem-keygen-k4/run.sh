@@ -17,6 +17,7 @@
 #   KEM_KEYGEN_FORCE_REBUILD=1 … # 强制重编
 #   KEM_KEYGEN_VERIFY=0 …        # 跳过 liboqs golden（仅尺寸检查）
 #   bash run.sh -r npu …         # 仅真机；WSL 由 runtime_env 拒绝
+#   RUN_WITH_MSPROF=1 MSPROF_MODE=app … -r npu  # 整进程 profiling + [npu_launch]
 #
 # 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 
@@ -127,9 +128,11 @@ export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export CANN_HOME="${_ASCEND_INSTALL_PATH}"
 
-# 实机 ACL 设备号：npu 缺省 0（挂死/Ctrl+C 后同卡可能污染；换卡只是绕开，根治见 DeviceGuard）；SIM 强制 0（CAModel 仅设备 0）
+# 实机 ACL 设备号：npu 按树分卡（stable=1 / examples=2 / tests=3，见 npu_device_map.sh）；显式 ASCEND_DEVICE_ID 优先。SIM 强制 0
 if [ "${RUN_MODE}" = "npu" ]; then
-    export ASCEND_DEVICE_ID="${ASCEND_DEVICE_ID:-0}"
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi

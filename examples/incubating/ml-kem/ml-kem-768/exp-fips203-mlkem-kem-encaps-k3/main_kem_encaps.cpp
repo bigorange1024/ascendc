@@ -27,6 +27,7 @@ extern void GenerateTiling(TilingData &data);
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_encrypt_at_jp.h"
 #include "aclrtlaunch_f203_encrypt_intt_e1.h"
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
@@ -312,7 +313,7 @@ int32_t main(int32_t argc, char *argv[])
     std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep (ek+m -> K,coins,a_hat,re)\n");
     ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, coinsDev, aHatDev, prfDev,
                                            reDev, prepTilingDev);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
 
     // LUT 装入 ws（NTT + INTT 段）后 H2D
     std::memset(wsHost, 0, wsSize);
@@ -331,7 +332,7 @@ int32_t main(int32_t argc, char *argv[])
     ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
                                               tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cDev,
                                               nullptr);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_l18_l19"));
 
     CHECK_ACL(aclrtMemcpy(cHost, cBytes, cDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(kHost, kKBytes, kDev, kKBytes, ACL_MEMCPY_DEVICE_TO_HOST));

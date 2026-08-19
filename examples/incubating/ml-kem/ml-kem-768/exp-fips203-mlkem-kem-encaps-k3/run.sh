@@ -7,12 +7,15 @@
 # Usage（默认全量）:
 #   bash run.sh -r cpu -v Ascend910B4
 #   bash run.sh -r sim -v Ascend910B4
+#   bash run.sh -r npu -v Ascend910B4          # 仅真机；WSL 由 runtime_env 拒绝
+#   RUN_WITH_MSPROF=1 MSPROF_MODE=app … -r npu  # 整进程 profiling + kernel_details；逐 launch 见 [npu_launch]
 #
 # 调试（非默认）:
 #   KEM_ENCAPS_FORCE_REBUILD=1 …
 #   SIM_DIRECT=0 …（msprof）
 
 CURRENT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+cd "${CURRENT_DIR}"
 _ORIG_ARGS=("$@")
 
 # 批测 quiet：log → output/kat_kem_encaps_k3.log
@@ -75,31 +78,12 @@ if [ -z "${INSTALL_PREFIX}" ]; then
     INSTALL_PREFIX="${CURRENT_DIR}/out_${BUILD_PROFILE}_${RUN_MODE}"
 fi
 
-if [ -f "${HOME}/ascendc/scripts/env.sh" ]; then
-    # shellcheck source=/dev/null
-    source "${HOME}/ascendc/scripts/env.sh"
-    _ASCEND_INSTALL_PATH="${CANN_HOME}"
-elif [ -n "${ASCEND_INSTALL_PATH:-}" ] && [ -f "${ASCEND_INSTALL_PATH}/bin/setenv.bash" ]; then
-    _ASCEND_INSTALL_PATH="${ASCEND_INSTALL_PATH}"
-    # shellcheck source=/dev/null
-    source "${_ASCEND_INSTALL_PATH}/bin/setenv.bash"
-elif [ -d "$HOME/Ascend/cann" ]; then
-    _ASCEND_INSTALL_PATH="$HOME/Ascend/cann"
-else
-    _ASCEND_INSTALL_PATH="/usr/local/Ascend/ascend-toolkit/latest"
-fi
-export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
-export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
-export CANN_HOME="${_ASCEND_INSTALL_PATH}"
-
-# 须在 source setenv 之后再 set -e：setenv 内 grep -q 失败会误杀本脚本
+# CANN + 分卡 + npu lib64：与 1024 stable run.sh 对齐（禁止 ${HOME}/ascendc 写死）
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/npu_case_env.sh"
+npu_case_bootstrap || exit 1
 set -euo pipefail
 
-if [ "${RUN_MODE}" = "sim" ]; then
-    export SIM_DIRECT="${SIM_DIRECT:-1}"
-elif [ "${RUN_MODE}" = "cpu" ]; then
-    export LD_LIBRARY_PATH="${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:${LD_LIBRARY_PATH:-}"
-fi
 
 echo "[kem_encaps exp-k3] RUN_MODE=${RUN_MODE} profile=${BUILD_PROFILE} BUDGET_SEC=${KERNEL_COMPUTE_BUDGET_SEC}"
 
@@ -152,7 +136,10 @@ if [ "${RUN_MODE}" = "sim" ]; then
     source "${REPO_ROOT}/scripts/camodel_sim_log.sh" "${CURRENT_DIR}"
 fi
 
-bash "${REPO_ROOT}/scripts/kernel-run-timeout.sh" "${CURRENT_DIR}/ascendc_kem_encaps_bbit"
+# 默认直跑；RUN_WITH_MSPROF=1 时 npu 走 MSPROF_MODE=app 整进程采集
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/scripts/msprof_run.sh"
+msprof_run_kernel ./ascendc_kem_encaps_bbit
 
 if [ "${RUN_MODE}" = "sim" ]; then
     camodel_sim_collect_stray "${CURRENT_DIR}" || true
