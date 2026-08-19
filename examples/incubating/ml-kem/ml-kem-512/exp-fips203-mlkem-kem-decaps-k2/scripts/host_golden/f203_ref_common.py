@@ -37,8 +37,10 @@ def _repo_root() -> Path:
     raise RuntimeError(f"cannot locate repo root from {CASE}")
 
 
-# 集成探针：LUT 头取仓库级 thirdparty/ntt_onnx（本探针不 vendored compute/ntt_r 子树）。
-LUT_HDR = _repo_root() / "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+# host golden LUT：优先本用例 compute/ntt_u vendored 副本，其次仓库级 thirdparty/ntt_onnx。
+_LUT_VENDORED = CASE / "compute/ntt_u/thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+_LUT_REPO = _repo_root() / "thirdparty/ntt_onnx/include/mlkem/stable/transpose_mlkem_luts_i8.h"
+LUT_HDR = _LUT_VENDORED if _LUT_VENDORED.is_file() else _LUT_REPO
 
 GAMMAS = np.array(
     [

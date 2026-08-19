@@ -12,7 +12,7 @@
 
 ### 2026-08-19 — [教材 KEM 清单 · 实机测准 · npu/msprof 对齐](2026-08/2026-08-19-教材KEM清单与实机测准.md)
 
-关键字：**表 A 14 档** · **§8 逐步指令与顺序** · **`MSPROF_MODE=app`** · **`npu_kem_one_trip.sh`** · **kernel_details 求和**
+关键字：**表 A 14 档** · **§8 逐步指令** · **§9 Cloud Decaps 清理** · **`npu_kem_one_trip.sh`** · **kernel_details 求和**
 
 ### 2026-08-18 — [实机 NPU 脚本套件 · 卡死恢复 · Decaps msprof 分段](2026-08/2026-08-18-实机NPU脚本套件与卡死恢复.md)
 

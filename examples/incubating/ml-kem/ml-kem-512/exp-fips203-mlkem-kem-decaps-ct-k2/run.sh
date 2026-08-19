@@ -36,15 +36,12 @@ if [ -z "${REPO_ROOT}" ] || [ ! -d "${REPO_ROOT}/scripts" ]; then
 fi
 
 mkdir -p "${CURRENT_DIR}/scripts"
-STABLE_ENCRYPT="${CURRENT_DIR}"
-ln -sfn "${STABLE_ENCRYPT}/scripts/host_golden" "${CURRENT_DIR}/scripts/host_golden"
-# D14 k2 不 vendored `thirdparty`；host golden 会向上找到仓库级 thirdparty。
-# 若未来 D14 增加局部 thirdparty，再链接；否则清掉旧 k4 复制遗留的坏软链。
-if [ -e "${STABLE_ENCRYPT}/thirdparty" ]; then
-    ln -sfn "${STABLE_ENCRYPT}/thirdparty" "${CURRENT_DIR}/thirdparty"
-else
-    rm -f "${CURRENT_DIR}/thirdparty"
-fi
+# NOTE:
+#   本目录自身已包含 scripts/host_golden；无需额外 symlink。
+#   之前的实现把 scripts/host_golden 链接到自身，容易产生自引用 symlink
+#   （如 scripts/host_golden/host_golden -> .../scripts/host_golden），会影响检索/导入/排障。
+rm -f "${CURRENT_DIR}/scripts/host_golden/host_golden" 2>/dev/null || true
+# D14 k2 不 vendored `thirdparty`；host golden 会向上找到仓库级 thirdparty（或 Cloud 已准备好）。
 
 export KEM_DECAPS_VERIFY="${KEM_DECAPS_VERIFY:-1}"
 export KEM_DECAPS_SKIP_REBUILD="${KEM_DECAPS_SKIP_REBUILD:-${KEM_SKIP_REBUILD:-1}}"
@@ -160,6 +157,10 @@ else
     echo "[kem_decaps] skip rebuild (stamp=${_build_tag})"
 fi
 
+# 避免 CPU/SIM 连跑时复用旧工件导致“CPU red / SIM green”偶发对账失败：
+#   - verify 只比 output/K.bin vs golden/K.bin，但 Phase-E CPU twin 还会读 input/golden_v.bin
+#   - 每次都让 gen_data 产出一套干净 input/golden/output
+rm -rf "${CURRENT_DIR}/input" "${CURRENT_DIR}/golden" "${CURRENT_DIR}/output"
 python3 "${CURRENT_DIR}/scripts/${GEN_SCRIPT}"
 
 export LD_LIBRARY_PATH="${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"

@@ -195,6 +195,8 @@ else
     echo "[kem_decaps] skip rebuild (stamp=${_build_tag})"
 fi
 
+# 避免 CPU/SIM 连跑时复用旧工件导致“CPU red / SIM green”偶发对账失败
+rm -rf "${CURRENT_DIR}/input" "${CURRENT_DIR}/golden" "${CURRENT_DIR}/output"
 python3 "${CURRENT_DIR}/scripts/${GEN_SCRIPT}"
 
 export LD_LIBRARY_PATH="${INSTALL_PREFIX}/lib:${INSTALL_PREFIX}/lib64:${_ASCEND_INSTALL_PATH}/lib64:${LD_LIBRARY_PATH:-}"
