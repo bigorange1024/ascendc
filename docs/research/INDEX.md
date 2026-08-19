@@ -24,7 +24,7 @@
 | [MLKEM-512-从0到exp完整实现计划.md](MLKEM-512-从0到exp完整实现计划.md) | 真 k=2 + **单 AI Core**；**有条件完成至 incubating**（W0–W4+glue；glue-c `r←η1=3`）；用语：缺项/补缺；权威卡见 `docs/specs/fips203-mlkem512-parameter-card.md` |
 | [MLKEM-768-从0到exp完整实现计划.md](MLKEM-768-从0到exp完整实现计划.md) | 真 k=3 从 0→exp；**有条件完成至 incubating**（W0–W4+glue）；权威表见 `docs/specs/fips203-mlkem768-*` |
 | [教材与调研文档写作指导.md](教材与调研文档写作指导.md) | **写文档口味**：文风、图示、指标表达；大版本后同步刷新 |
-| [从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex](从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex) / [PDF](从已验证能力到合法派生-面向Agent预研的形式方法教材草案.pdf) | **专题唯一长文**（无日期、持续修订）：第6–7章 1024 复盘/前瞻；**第8章 ML-KEM-768 完整复盘**（2026-07-27：分析→计划→实现/测试/修改→有条件完成） |
+| [从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex](从已验证能力到合法派生-面向Agent预研的形式方法教材草案.tex) / [PDF](从已验证能力到合法派生-面向Agent预研的形式方法教材草案.pdf) | **专题唯一长文**（无日期、持续修订）：第6–7章 1024 复盘/前瞻；第8章 ML-KEM-768；第9章对照实验；**第10章总结**（主要结论、未证命题；2026-08-19 文风修订） |
 | [形式语言与自动机预研讨论纪要.md](形式语言与自动机预研讨论纪要.md) | **专题唯一纪要**（持续刷新）：讨论过程与约定；正文以教材草案 PDF 为准 |
 | [2026-07-15-T19a-KEM-Encaps-device要点.md](2026-07-15-T19a-KEM-Encaps-device要点.md) | Alg.20 Encaps device（T19a）锁定要点与验收；详案仍以探针 INTEGRATION_PLAN 为准 |
 | [2026-07-24-Decaps-correctness与CT五指标对照.md](2026-07-24-Decaps-correctness与CT五指标对照.md) | Alg.21 Decaps：**五指标** A correctness vs B CT 路径（精简对照；不比 token） |

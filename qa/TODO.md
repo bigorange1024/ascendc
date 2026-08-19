@@ -2,7 +2,7 @@
 
 跨会话跟踪未关闭事项。刷新时须同步：**当日** `qa/YYYY-MM/YYYY-MM-DD-….md`（同日仅一篇，追加章节）+ **`qa/YYYY-MM/INDEX.md`** + **本文件**。
 
-**最近刷新**：2026-08-19（教材 KEM 14 档清单 + 实机 npu/msprof 对齐；见当日 qa）
+**最近刷新**：2026-08-19（main 合入 research；教材第9章对照实验成文；SIM 14 档重测进行中）
 
 ---
 
@@ -26,10 +26,14 @@
 
 ## 打开项（按优先级）
 
-主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**）；768 / 512 incubating+glue 均有条件完成（禁 stable-768 / stable-512）。打开项：T512（仅 `#交付#`）/ T768-post / NPU / T23 / SHA3hp / T-WebViz。
+主线 **ML-KEM 六算子 stable 已齐**（交付 Decaps **无 `-ct`**）；768 / 512 incubating+glue 均有条件完成（禁 stable-768 / stable-512）。打开项：同事向讲义 / 底层首用例月级耗时 / 跨域（ML-DSA）/ T512（仅 `#交付#`）/ T768-post / NPU / T23 / SHA3hp / T-WebViz。
 
 | 优先级 | ID | 事项 | 状态 |
 |--------|-----|------|------|
+| **P1** | **T-colleague-brief** | **同事向方法论讲义**：讲 $\mathrm{Dep}^*$ / 缺项 / $\mathrm{CT}$ / 写码许可；与领导 v4 短讲分轨。先定中文 title/abstract（2026-08-18）；**材料未做** | **打开** |
+| **P1** | **T-bootstrap** | 领导问：**最早底层实现用例**那几个月能否压。当前方法**超出范围**；对照 [`reasoning-graph-skill`](https://github.com/bigorange1024/reasoning-graph-skill)（**似乎**能对上，未验证） | **打开**；勿承诺已解决 |
+| **P1** | **T7** | **FIPS 204 / ML-DSA**：作为方法论**跨域样例**（领导第二问） | **打开**（从「后阶段」升格）；其它领域场景仍在找 |
+| — | **T-lead-brief** | 领导短讲 CASE-002 v4 + 教材草案 | **关闭**（2026-08-18：已讲、效果不错；效率/token 满意） |
 | — | **T-WebViz** | **方法论网页可视化**：参考领导用 DAG 网页展示研究/解决问题过程的思路，探索用网页更直观展示本方法论（依赖 DAG、门禁流、闭包演化等）；待拍板技术路线（静态 HTML / D3.js / 其它） | **低优先级，实现完成后再规划**（2026-07-27） |
 | **P0** | **T6f** | Alg.19 KeyGen **CPU flaky**（历史一次 FAIL/复跑 PASS；`ek_kem[768]`=`t_hat` 后半） | **隔离后 8 次未再现**；疑共享 build 混链；不加脚本重试；再现则 FORCE_REBUILD 再定位 |
 | **P0** | **T512** | ML-KEM-512：**W4+glue 完成**；禁 stable-512 | **现：文档+代码审阅完善**（见 HANDOFF）；`#交付#` 才 stable |
@@ -45,7 +49,6 @@
 | — | **T12** | exp-k4 增强：liboqs 系数对照、mixPass profiling、NPU | 非阻塞 |
 | — | **T3** | 他人 AscendC 代码引入流程 | 待定 |
 | — | **T4** | 换机后可选重编 liboqs（OpenSSL） | 可选 |
-| — | **T7** | FIPS 204 / ML-DSA | 后阶段 |
 
 ### T19 — KEM device-k4 ↔ stable PKE 布局对齐（拆分）
 

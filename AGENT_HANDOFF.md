@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-08-19（教材 KEM 14 档清单 + npu/msprof 对齐；见 [`qa/2026-08/2026-08-19-教材KEM清单与实机测准.md`](qa/2026-08/2026-08-19-教材KEM清单与实机测准.md)）
+> **最后刷新**：2026-08-19（main 合入 research；教材第9章对照实验成文 + SIM 14 档重测；NPU 见 [`qa/2026-08/2026-08-19-教材KEM清单与实机测准.md`](qa/2026-08/2026-08-19-教材KEM清单与实机测准.md)）
 
 ---
 
@@ -11,8 +11,8 @@
 1. 分支：**`main`**（实机脚本在本地；用户搬码前未必已 push）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
    —— 注意：**1024 的 14 个用例现在没有 liboqs 也能跑**（KEM golden 会回落 python），但**有 liboqs 才有权威交叉**，Cloud 仍建议装。  
-3. **借入实机 NPU**：先全部 **stable（卡 1）** 再 **examples（卡 2）** 再 **ascendc-tests（卡 3）**。教材 KEM 性能：[`scripts/npu_kem_textbook_perf.sh`](scripts/npu_kem_textbook_perf.sh)（清单 [`docs/research/教材KEM实机测量清单.md`](docs/research/教材KEM实机测量清单.md)）。冒烟/分卡入口仍 [`scripts/npu_kem_real_machine_suite.sh`](scripts/npu_kem_real_machine_suite.sh)。搬码前可 `NPU_SUITE_DRY_RUN=1`。  
-4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → 上条当日纪要。  
+3. **工作分支**：`research/formal-lang-dag`（已 fast-forward 合入 `main@718590c`）。教材第9章对照实验：**SIM tick 表已填**；NPU 14 档待实机 [`scripts/npu_kem_one_trip.sh`](scripts/npu_kem_one_trip.sh)（清单 [`docs/research/教材KEM实机测量清单.md`](docs/research/教材KEM实机测量清单.md)）。  
+4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-08/2026-08-19-教材第9章对照实验提纲.md`](qa/2026-08/2026-08-19-教材第9章对照实验提纲.md) + 当日 KEM 纪要。
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
 
 ### 刚关闭
@@ -20,6 +20,7 @@
 | 项 | 说明 |
 |----|------|
 | **T18** | PKE helper encrypt/decrypt 链接：链 `ml_kem_1024_ref` `.o` + fips202 shim + `liboqs-internal.a`；**非改名问题** |
+| **领导短讲** | CASE-002 v4：**已讲、效果不错**（08-18 回填）；合稿衔接片仍是已取代草稿 |
 
 ### 待办快照（新增，非本阶段主线）
 
@@ -57,6 +58,7 @@
 | **glue-c（已闭环）** | Encrypt 曾误 5 行全 η2；已补 **`r←η1=3` / `e←η2=2`**（PRF 行 stride 192） |
 | **用语** | 只用 **缺项 / 补缺**（勿造同义词） |
 | **额度纪律** | Rule **3/6/7** + Skill **1/2** → [`docs/engineering/Cloud-Agent额度与验收分层.md`](docs/engineering/Cloud-Agent额度与验收分层.md) |
+| **领导遗留** | 方法对「有绿灯之后」有效；**第一块绿灯几个月**另论。跨域样例=**ML-DSA**；其它场景未定 |
 
 ### 512 关键路径
 

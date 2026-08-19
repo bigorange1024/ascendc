@@ -22,7 +22,19 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-REPO = ROOT.parent.parent
+
+
+def _find_repo(start: Path) -> Path:
+    """上溯到含 AGENTS.md 的仓库根（frozen 子树不能用 parent.parent，会落到 ascendc-tests/）。"""
+    p = start
+    while p != p.parent:
+        if (p / "AGENTS.md").is_file() and (p / "scripts").is_dir():
+            return p
+        p = p.parent
+    raise SystemExit(f"[gen_data] cannot locate repo root from {start}")
+
+
+REPO = _find_repo(ROOT)
 HOST_GOLDEN = ROOT / "scripts" / "host_golden"
 EK_BYTES = 1568
 CT_BYTES = 1568

@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |----|------|
-| **刷新** | 2026-07-27（**512 glue-c**：D14/E14/E20 tick 重登；1024 Encaps 禁默认全 0 `m`；W0–W3 + W4+glue 已登记） |
+| **刷新** | 2026-08-19（教材第9章 **14 档顺序 SIM 回归**；Cloud / `SIM_DIRECT=1` / Ascend910B4） |
 | **平台** | Ascend910B4 / CAModel（`Total tick`，非 msprof） |
 | **口径** | 各目录 **默认配置** 验收 tick；多档 `d` 在备注展开；stub / 未记为 `n/a`；Decaps 合法路径默认 `decaps_2session`（CT）或交付 STATUS 口径 |
 | **来源优先级** | `STATUS.md` 验收行 → `INDEX.md` → customspec / qa 纪要 |
@@ -75,16 +75,18 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | [`stable-fips203-mlkem-pke-keygen-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/) | **542393** | Alg.13；2 launch；KAT ✓ | STATUS 2026-06-29 |
 | [`stable-fips203-mlkem-pke-encrypt-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/) | **627590** | Alg.14；SIM 主参考 | STATUS |
 | [`stable-fips203-mlkem-pke-decrypt-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/) | **283290** | Alg.15 | STATUS |
-| [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/) | **706633** | Alg.19；2 launch；`#交付#`；roundtrip 复测 Cloud **691727** / WSL **700879** | STATUS + rt 2026-07-20 |
-| [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/) | **721119** | Alg.20；SIM 2；`#验收#`；roundtrip 复测 Cloud **720048** / WSL **719417** | STATUS + rt 2026-07-20 |
-| [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/) | **1041906**（D**286865**+E**755041**） | Alg.21 **交付**（无 `-ct`）；**T19i** SIM **3**；登记取 Cloud 端到端全绿 `20260720_102426_216972`；T19i 单算子验收曾 **1050620**；WSL 单独 Decaps **1041521**（D**286698**+E**754823**）；[`stable_kem_liboqs_roundtrip.sh`](../scripts/stable_kem_liboqs_roundtrip.sh) | STATUS + rt 2026-07-20 |
-| [`stable-fips203-mlkem-kem-decaps-ct-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/) | **1050646**（D**286866**+E**763780**） | Alg.21 **CT 专题**；Cloud / `SIM_DIRECT=1` / `decaps_2session`；合法 `K` max=0；拒绝 SIM≈D**286679**+E**763735**；KAT CPU×10+SIM×3 / roundtrip CPU+SIM 全绿；**非** `scripts/` 默认 | STATUS 2026-07-24 |
+| [`stable-fips203-mlkem-kem-keygen-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4/) | **714427** | Alg.19；2 launch；2026-08-19 ch9 顺序重测（原 **706633**，Δ **+7794**）；roundtrip 历史 Cloud **691727** / WSL **700879** | ch9 2026-08-19 |
+| [`stable-fips203-mlkem-kem-encaps-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/) | **720966** | Alg.20；SIM 2；2026-08-19 ch9 重测（原 **721119**，Δ **-153**）；roundtrip 历史 Cloud **720048** / WSL **719417** | ch9 2026-08-19 |
+| [`stable-fips203-mlkem-kem-decaps-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4/) | **1050610**（D**286881**+E**763729**） | Alg.21 **交付**；2026-08-19 ch9 重测（原 **1041906**，Δ **+704**）；14 档连跑 CPU 首跑 verify FAIL(max≈216)，单档 FORCE_REBUILD 后 CPU+SIM 绿 | ch9 2026-08-19 |
+| [`stable-fips203-mlkem-kem-decaps-ct-k4`](../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-ct-k4/) | **1050962**（D**287161**+E**763801**） | Alg.21 **CT**；2026-08-19 ch9 重测（原 **1050646**，Δ **+316**）；连跑 CPU 首跑 FAIL，FORCE_REBUILD 后绿 | ch9 2026-08-19 |
 
 > **KEM↔liboqs roundtrip（2026-07-20）**：Cloud 端到端 CPU+SIM 全绿（fixture `output/stable_kem_liboqs_rt/20260720_102426_216972/`）。WSL 同脚本：CPU 全绿；连续 SIM 偶发 Decaps `tcache`（见当日纪要）；同 fixture 单独 Decaps SIM 仍绿（fixture `…/20260720_185052_42894/`）。
 
 > **2026-07-24 Decaps CT**：`-ct` 三树合法 SIM 合计均约 **1.05M**（D≈**287k**+E≈**764k**）；拒绝路径同量级。交付无 `-ct` 行**不**用 CT 数覆盖。详见 [`qa/2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md`](2026-07/2026-07-24-第7章CT与Decaps-device-PASS.md)。
 
 > **2026-07-20**：`probe-f203-alg{19,20,21}-*-correctness-k4` **已冻结**（见 [`frozen/INDEX.md`](../ascendc-tests/frozen/INDEX.md)）；**勿**再跑 / 勿作回归默认。历史 tick 仅见各 `FROZEN.md`。
+>
+> **2026-08-19 教材第9章 A 臂（用户授权例外）**：[`frozen-fix-f203-alg20-kem-encaps-correctness-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg20-kem-encaps-correctness-k4/) **1023756**（原 qa **1029501**，Δ **-5745**）；[`frozen-fix-f203-alg21-kem-decaps-correctness-k4`](../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/) **1432249**（D**448884**+E**983365**；原 qa **985313**，Δ **+446936**——vendor 多 launch / 2-session 与 2026-07 登记不可直接比）。fixture 自 stable KeyGen；frozen alg20 `gen_data.py` REPO 根上溯已修。详 [`qa/ch9_sim_regress_20260819.tsv`](ch9_sim_regress_20260819.tsv)。
 
 ---
 
@@ -95,10 +97,14 @@ W2 device：D13/D14/D15 已登记；ML-KEM-768 PKE 三段 device 均 CPU+SIM 绿
 | [`exp-fips203-mlkem-pke-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-keygen-k3/) | **373429** | ML-KEM-768 E13；2 launch；prep 5+4 + compute polyvec6；ek/dk golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-encrypt-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-encrypt-k3/) | **507633** | ML-KEM-768 E14；2 launch；Â[9]+re[7]；INTT batch4；c golden PASS | STATUS 2026-07-26 |
 | [`exp-fips203-mlkem-pke-decrypt-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-pke-decrypt-k3/) | **222073** | ML-KEM-768 E15；1 fused launch；dk/c→m；m golden PASS | STATUS 2026-07-26 |
-| [`exp-fips203-mlkem-kem-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3/) | **510867** | ML-KEM-768 E19；2 launch；E13/D19 geometry + Alg.16 tail；ek_kem/dk_kem golden PASS | STATUS 2026-07-26 |
-| [`exp-fips203-mlkem-kem-encaps-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3/) | **590261** | ML-KEM-768 E20；2 launch；KEM head + E14/D20 geometry；c/K golden PASS | STATUS 2026-07-26 |
-| [`exp-fips203-mlkem-kem-decaps-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-k3/) | accept **820230**（D**221059** + E**599171**）；reject **822500**（D**220692** + E**601808**） | ML-KEM-768 E21；delivery 默认 `decaps_1session`；K golden PASS；reject `K=J(z‖c)` | STATUS 2026-07-26 |
-| [`exp-fips203-mlkem-kem-decaps-ct-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3/) | accept **826115**（D**220727** + E**605388**）；reject **825836**（D**220787** + E**605049**） | ML-KEM-768 E21ct；CT 默认 `decaps_2session`；accept K max=0；reject `K=J(z‖c)` 且 `reject≠accept` | STATUS 2026-07-26 |
+| [`exp-fips203-mlkem-kem-keygen-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-keygen-k3/) | **510661** | ML-KEM-768 E19；2026-08-19 ch9（原 **510867**，Δ **-206**） | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-encaps-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-encaps-k3/) | **589979** | ML-KEM-768 E20；2026-08-19 ch9（原 **590261**，Δ **-282**） | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-decaps-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-k3/) | accept **832585**（D**220625** + E**611960**）；reject 未重测 | ML-KEM-768 E21；2026-08-19 ch9（原 accept **820230**，Δ **+12355**）；delivery `decaps_1session` | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-decaps-ct-k3`](../examples/incubating/ml-kem/ml-kem-768/exp-fips203-mlkem-kem-decaps-ct-k3/) | accept **817392**（D**220636** + E**596756**）；reject 未重测 | ML-KEM-768 E21ct；2026-08-19 ch9（原 accept **826115**，Δ **-8723**）；`decaps_2session` | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-keygen-k2`](../examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-keygen-k2/) | **319641** | ML-KEM-512 E19；2026-08-19 ch9（原 **320247**，Δ **-606**） | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-encaps-k2`](../examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-encaps-k2/) | **430542** | ML-KEM-512 E20；2026-08-19 ch9（原 **427927**，Δ **+2615**） | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-decaps-k2`](../examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-decaps-k2/) | accept **600898**（D**163172** + E**433827**）；reject 未重测 | ML-KEM-512 E21；main@2f64127 后 CPU+SIM 复验 PASS（2026-08-19；原 ch9 CPU FAIL 为工件残留） | ch9 2026-08-19 |
+| [`exp-fips203-mlkem-kem-decaps-ct-k2`](../examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-kem-decaps-ct-k2/) | accept **602572**（D**162958** + E**439614**）；reject 未重测 | ML-KEM-512 E21ct；2026-08-19 ch9（原 **570707**，Δ **+31865**）；`decaps_2session` | ch9 2026-08-19 |
 | [`exp-fips203-mlkem-pke-keygen-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-keygen-k4/) | 542393 | 已晋级 stable；副本同量级 | STATUS→stable |
 | [`exp-fips203-mlkem-pke-encrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-encrypt-k4/) | 627614 | 已晋级；晋级前 SIM | STATUS |
 | [`exp-fips203-mlkem-pke-decrypt-k4`](../examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-pke-decrypt-k4/) | 283290 | 已晋级 | STATUS |

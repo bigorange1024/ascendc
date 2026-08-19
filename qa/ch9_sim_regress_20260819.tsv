@@ -1,0 +1,15 @@
+#	路径简称	CPU	SIM PASS?	Total tick	D tick	E tick	旧 Total	Δ Total	备注
+1	stable-kem-keygen-k4	PASS	PASS	714427	n/a	n/a	706633	+7794	2 launch；K max=0；无 stray
+2	stable-kem-encaps-k4	PASS	PASS	720966	n/a	n/a	721119	-153	2 launch；c/K max=0
+3	stable-kem-decaps-k4	PASS	PASS	1050610	286881	763729	1041906	+704	首跑 FAIL 为工件残留；main@2f64127 后连跑 CPU×2 PASS（2026-08-19 复验）
+4	stable-kem-decaps-ct-k4	PASS	PASS	1050962	287161	763801	1050646	+316	CPU 首跑 FAIL 后 FORCE_REBUILD PASS；decaps_2session
+5	exp-kem-keygen-k3	PASS	PASS	510661	n/a	n/a	510867	-206	2 launch
+6	exp-kem-encaps-k3	PASS	PASS	589979	n/a	n/a	590261	-282	2 launch
+7	exp-kem-decaps-k3	PASS	PASS	832585	220625	611960	820230	+12355	decaps_1session；E 段 +12.8k
+8	exp-kem-decaps-ct-k3	PASS	PASS	817392	220636	596756	826115	-8723	decaps_2session
+9	exp-kem-keygen-k2	PASS	PASS	319641	n/a	n/a	320247	-606	2 launch
+10	exp-kem-encaps-k2	PASS	PASS	430542	n/a	n/a	427927	+2615	glue-c 后登记 427927
+11	exp-kem-decaps-k2	PASS	PASS	600898	163172	433827	571206	+25793	main@2f64127 修 host_golden/工件清理后 CPU+SIM 复验 PASS（2026-08-19；原 ch9 CPU FAIL）
+12	exp-kem-decaps-ct-k2	PASS	PASS	602572	162958	439614	570707	+31865	decaps_2session
+13	frozen-alg20-encaps-k4	PASS	PASS	1023756	n/a	n/a	1029501	-5745	需 stable KeyGen ek 作 fixture；gen_data REPO 根已修
+14	frozen-alg21-decaps-k4	PASS	PASS	1432249	448884	983365	985313	+446936	vendor 2-session；旧登记口径不同（见备注）

@@ -162,7 +162,8 @@
         （用第~3~章数学对象作算法参数，逐步推出节点/边/证书与写码许可判定）；
   \item 第~\ref{sec:replay}--\ref{sec:forward}~章：\textbf{复盘与前瞻}（用理论看实现）；
   \item 第~\ref{sec:mlkem768}~章：\textbf{ML-KEM-768 完整复盘}（分析$\to$计划$\to$实现/测试/修改$\to$结果）；
-  \item 第~\ref{sec:correctness}~章：\textbf{correctness 对照组}；
+  \item 第~\ref{sec:correctness}~章：\textbf{对照实验}（Decaps 三路线 A/B/C；SIM tick 与 NPU 实机档位）；
+  \item 第~\ref{sec:summary}~章：\textbf{总结}（主要结论、未证命题、接手工作的最小步骤）；
   \item 第~\ref{sec:open}~章：未决议事项与维护约定。
 \end{enumerate}
 
@@ -4807,7 +4808,7 @@ E* 与对应 D* 同量级（incubating 未另开性能叙事）。
   \midrule
   压力点 & 多父接缝 + FO/拒绝 & 参数组迁移 + 奇数维分核 \\
   先交什么 & $\mathrm{CT}_{\mathrm{decaps}}$ & 参数卡 + P1 必建表 \\
-  对照臂 & A correctness / C 交付 & 1024 模式（禁抄 frozen） \\
+  对照路线 & A correctness / C 交付 & 1024 模式（禁抄 frozen） \\
   终点 & 可到 stable（另线） & \textbf{刻意停在 incubating} \\
   方法论用处 & 先表后码压缩搜索 & 先卡后波次挡住零垫捷径 \\
   \bottomrule
@@ -4839,7 +4840,7 @@ E* 与对应 D* 同量级（incubating 未另开性能叙事）。
 \begin{itemize}
   \item \textbf{以前}：公司 Agent 与家里 Agent \textbf{各自}去做 Encaps 的 \texttt{correctness} 路线。
         两边大约各用掉\textbf{一天}墙钟；合计直接吃掉当月 Cursor Pro+ 订阅配额的大约\textbf{三分之二}。
-        过程形态接近第~\ref{sec:forward}~章臂 A：没有先交闭包、没有禁源纪律、没有波次停问——
+        过程形态接近第~\ref{sec:forward}~章路线 A：没有先交闭包、没有禁源纪律、没有波次停问——
         主要在开放文本空间里搜「怎样才能对」。
   \item \textbf{昨晚（768）}：从计划到测试完成（参数卡$\to$W0--W4+glue），
         配额使用大约从 \textbf{41\%} 走到 \textbf{55\%}（增量约十四个百分点）；
@@ -4874,43 +4875,465 @@ E* 与对应 D* 同量级（incubating 未另开性能叙事）。
 \end{enumerate}
 
 % ============================================================
-\section{对照组：\texttt{correctness} 标本的意义}
+\section{对照实验：三路线读法、SIM 与实机}
 \label{sec:correctness}
 
-\subsection{为何保留 correctness}
-\texttt{*-correctness-*} 在\textbf{完全不考虑优化}的前提下，只追求能跑、结果对：
-多 kernel launch、多搬运与同步——这是「一定能搭出正确积木」的保守拼法，
-性能谈不上，后续 P0/P1 的工程优化也几乎接不进去。
+第~7~章已经把 correctness 的预热做完：先交 $\mathrm{CT}$，再写码，再看它和 A/C 是否对上。
+这一章换个顺序：把对照协议写成表，把证据按 Decaps 的 A/B/C 三条线落下去。
+你仍要看 A 路线“开放探索”带来的信息；但先把 Decaps 的三条线规矩对齐。Encaps、KeyGen 与参数组迁移的对照另放一张表。
+SIM 只做一件：记下 CAModel 的 \texttt{Total tick}；实机不靠“一行 duration”，而是按 msprof 的 \texttt{kernel\_details} 求和（见下文）。
 
-它还记下了一段真实的 Agent 过程：故意不给确定的拼装路线时，
-探索成本极高（失败、卡死、回退；短时间内曾烧掉大量 token），最后只得到「结果正确」的代码。
+\subsection{三路线口径与积木来源}
+\label{sec:ch9-arms}
 
-\subsection{在方法论里扮演什么角色}
+最怕的误读：把 tick 差直接当成“方法论更快”。
+所以开头先把一句话写明白：这些积木是谁的、接缝由谁补。
+
 \begin{center}
-\begin{tabular}{@{}L{3cm}L{11cm}@{}}
+\small
+\begin{tabular}{@{}L{1.2cm}L{3.2cm}L{4.2cm}L{4.8cm}@{}}
   \toprule
-  角色 & 含义 \\
+  路线 & 是什么 & 加解密积木 & 接缝 / 集成 \\
   \midrule
-  正确性锚 & 下界存在性：积木搭得出来，I/O 也对得上 \\
-  结构反例 & 展示「只求对」会长成怎样的 launch/同步膨胀 \\
-  过程对照 & 没有确定路线时，搜索要付多大代价 \\
-  实验基线 & 和方法论 Agent、人工指导路径三方比较 \\
+  \textbf{A} &
+  correctness 探索标本 &
+  Encrypt/Decrypt \textbf{也是} correctness 栈 &
+  无确定路线；vendor 多 launch \\
+  \textbf{B} &
+  方法论实现（\texttt{-ct} 树） &
+  \textbf{后来优化的} stable 积木 &
+  接缝由方法论（$\mathrm{CT}$+门禁）补齐 \\
+  \textbf{C} &
+  人工指导交付（无 \texttt{-ct}） &
+  \textbf{同一批}优化积木 &
+  集成由维护者指导；脚本默认指这里 \\
   \bottomrule
 \end{tabular}
 \end{center}
 
-\textbf{纪律}：correctness 是\textbf{基线标本}，不是活跃实现模板；可读、可对拍、可对比，\textbf{禁止}当抄码来源（和 frozen「出门不带码」同一条规矩）。
+\noindent 三个轴怎么读：
+\begin{itemize}
+  \item \textbf{A 对 \{B,C\}}：开放探索 + 未优化栈，过程/结构/tick 里到底哪里更“贵”；
+  \item \textbf{B 对 C}：同一批优化积木上，方法论集成和人工指导差在哪（第~7~章已给结论）；
+  \item 关键提醒：B 相对 A 的 tick 差，不要一口气全记到方法论账上。积木代差和 launch 结构差分开看。
+\end{itemize}
 
-\subsection{建议比较的几条轴}
+\paragraph{为何不测 KeyGen correctness 作 A 路线}
+KeyGen 长期在维护者指导下打磨，Agent 几乎没有「不给路线、任意探索」的历史——
+拿它当开放探索标本没有说服力。
+实机表不跑 \texttt{frozen-fix-f203-alg19-kem-keygen-correctness-k4}，也不为 PKE KeyGen 另立 correctness 档。
+Encaps/Decaps 的 correctness 仍然测（\#13、\#14），因为这两段才有可回溯的探索成本记录。
+
+\paragraph{A 路线的使用限制（与 frozen 一致）}
+A 路线目录在 \texttt{ascendc-tests/frozen/}：可读、可对拍、可填表；
+不得当活跃实现模板或抄码来源（出门不带码）。
+
+\subsection{过程与结构：Decaps 五指标（摘要）}
+\label{sec:ch9-five-metrics}
+
+Decaps 的过程对照怎么做，表里已经写过：见 \texttt{docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md}。
+本章只摘结论，不展开。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{4.5cm}cc@{}}
+  \toprule
+  指标（二元 0/1；假绿次数越少越好） & A correctness & B CT$\to$stable \\
+  \midrule
+  先表后码 & 0 & 1 \\
+  非法边是否实际拦住 & 0 & 1 \\
+  假绿/误判次数（整数） & $\geq 3$ & 3 \\
+  最终可交付形态 & 0（标本+vendor） & 1 \\
+  失败路径验收有据 & 1 & 1 \\
+  \midrule
+  二元项合计（满分 4） & 1 & 4 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent B 相对 A 在「先表 / 拦非法 / 可交付」三项上 +3；假绿次数一样——
+$\mathrm{CT}$ 没有消灭假绿，只是把失败从「整路线乱飘」收成「门禁缝隙里的几次可数误判」。
+C 路线过程噪声和 B 同量级（第~7~章有记录），本章不再重复 token 对账，两侧均无完整数据。
+
+\subsection{主轴：1024 Decaps 三路线 SIM tick}
+\label{sec:ch9-decaps-sim}
+
+平台：Ascend910B4 / CAModel，\texttt{SIM\_DIRECT=1}，合法 accept 路径。
+Decaps 的 tick 按 Phase-D + Phase-E 两段记，合计取两段之和（非 msprof）。
+本次口径按 \texttt{qa/ch9\_sim\_regress\_20260819.tsv} 的 2026-08-19 顺序回归（不并行 SIM）。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{1cm}L{2.2cm}L{4.8cm}rrr@{}}
+  \toprule
+  路线 & 角色 & 路径（简称） &
+  \multicolumn{1}{c}{合计} &
+  \multicolumn{1}{c}{D} &
+  \multicolumn{1}{c}{E} \\
+  \midrule
+A &
+  correctness &
+  \texttt{frozen-…-decaps-correctness-k4} &
+  \textbf{1432249} & 448884 & 983365 \\
+  B &
+  方法论 \texttt{-ct} &
+  \texttt{stable-…-decaps-ct-k4} &
+  \textbf{1050962} & 287161 & 763801 \\
+  C &
+  交付（无 \texttt{-ct}） &
+  \texttt{stable-…-decaps-k4} &
+  \textbf{1050610} & 286881 & 763729 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 旧 qa 里 A 的登记是 \textbf{985313}，和本次 \textbf{1432249} 不能直接比：
+vendor 多 launch，还多了 2-session 的 Phase-E；口径与 2026-07 不同。
+所以表内 A 只是“当前口径下怎么记”，不拿它当 A/B 的倍数胜场。
+
+\noindent\textbf{怎么读（不作倍数宣称）}
 \begin{enumerate}
-  \item \textbf{过程}：token / 轮次 / 回退；有没有先交闭包表；非法边有没有被拦住；
-  \item \textbf{结构}：launch 数、同步点、lemma 复用、接缝是否写清楚；
-  \item \textbf{结果}：CPU+SIM；SIM tick 相对 correctness 是几倍。
+  \item \textbf{B $\approx$ C}：合计同量级，D/E 分段也同量级。
+        这和第~7~章的判决一致——B 不必“打赢”C。
+        两者差别来自 \texttt{decaps\_2session} 这种 CT 保底拆法，而不是 kernel 级优化。
+  \item \textbf{A 对 \{B,C\}}：按本次 vendor 路径，A 合计高于 B/C，
+        符合「多段 G4/G5 + 多 sync、没有接 P0/P1 优化」的结构。
+        但旧口径 985313 和本次不可混算；真正要看“探索更贵”，主要证据在过程五指标和下一节 Encaps。
+  \item \textbf{结构小结}：B/C 是融合 device 链（3 launch）；A 是 vendor 标本链。
+        14 档连跑时 stable Decaps 的 CPU 偶发 verify FAIL，单档加 \texttt{FORCE\_REBUILD} 可恢复（见 \texttt{active\_sim\_regress\_summary}）。
 \end{enumerate}
-三档：A 旧式无路线探索 $\sim$ correctness；B 新方法论下的 Agent（本章 \texttt{-ct} 树）；
-C 人工指导的交付 device/stable（无 \texttt{-ct}）。
-第~\ref{sec:forward}~章已给出一轮证据：B 明显好过 A（强成功），且\textbf{不必}打赢 C 的性能/1-session 定标；
-五指标精简表见 \texttt{docs/research/2026-07-24-Decaps-correctness与CT五指标对照.md}。
+
+\paragraph{性能分析}
+只看 1024 Decaps 主轴，可以先得出三点。
+第一，\textbf{真正吃 tick 的是 Phase-E，不是 Phase-D}。
+B、C 两条路线里，D 段都在 28.7 万上下，E 段都在 76.4 万上下；
+也就是说，重加密、比较密文、算 FO 尾巴这一段才是全链的大头。
+这和实现结构是一致的：Phase-D 主要承接现成 Decrypt，真正把多块能力接成一条 KEM 链的是 Phase-E。
+
+第二，\textbf{B 和 C 的差距很小，说明方法论并没有额外引入明显的运行时包袱}。
+如果第~7~章的方法论只是“写文书时更整齐”，而实现时多出一大截冗余搬运或同步，这里就该在 E 段看出明显拉开；
+现在没有看到这种现象。B 比 C 略高，但量级上仍贴得很近，符合“CT 路线主要改变写码顺序和接缝纪律，不额外改坏内核结构”的预期。
+
+第三，\textbf{A 明显更重，但这个“更重”主要是结构代价，不是单个 kernel 算得慢}。
+A 路线的差距并不是某一段数值突然异常，而是 vendor 多 launch、两段 session、同步点更多，最后把总开销一层层垒高。
+所以这里真正要带走的结论不是“correctness 的某个算子实现差”，而是“只求先跑通的拼装方式，会把整条链的结构成本抬上去”。
+
+\subsection{Encaps 与 KeyGen：A 路线只和 C 比}
+\label{sec:ch9-encaps-keygen}
+
+Encaps 没有方法论 \texttt{-ct} 树，没有 Encaps-ct 专题；KeyGen 只有 C 路线（见 §\ref{sec:ch9-arms}）。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{1cm}L{2.4cm}L{5.2cm}r@{}}
+  \toprule
+  算子 & 路线 & 路径 & SIM Total tick \\
+  \midrule
+  Encaps & A &
+  \texttt{frozen-…-encaps-correctness-k4} &
+  \textbf{1023756} \\
+  Encaps & C &
+  \texttt{stable-…-encaps-k4} &
+  \textbf{720966} \\
+  KeyGen & C &
+  \texttt{stable-…-keygen-k4} &
+  \textbf{714427} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 数据同为 2026-08-19 顺序回归。Encaps A 明显高于 C（$\sim 1.42\times$），
+和「vendor G5 + 多 launch、未接 P0/P1」的结构相符——
+这是 tick 维度上最干净的 A/C 对照。
+ A 路线 Encaps 需要拿 stable KeyGen 的 \texttt{ek} 做 fixture（frozen \texttt{gen\_data} 里的 REPO 根上溯已修）。
+KeyGen 只记 C 路线交付 tick，作为 768/512 迁移附表的参照列。
+
+\paragraph{性能分析}
+Encaps 这一组比 Decaps 更适合拿来做“路线差异”的直观看法。
+原因很简单：这里只有 A 和 C，两边都在做同一件事，表意更干净。
+A 比 C 高出约四成，不必再拆 D/E，就已经能看出 correctness 路线的结构负担。
+这也解释了为什么本章把 Encaps 当成 A/C 对照里最干净的一组：它不像 Decaps 那样还夹着 FO 和多阶段接缝，不容易被“哪一段更复杂”分散视线。
+
+KeyGen 这里只放 C 的数，不拿来做 A/C 对照，原因前面已经说过：KeyGen 没有同样可信的开放探索史。
+它在这一节的作用更像一个锚点：给 768/512 的迁移表一个 1024 参照列，方便读者判断“换参数组以后，整条链大体往哪个方向走”。
+
+\subsection{参数组迁移附表：768 / 512（incubating）}
+\label{sec:ch9-migrate}
+
+768/512 不进 Decaps 三路线主叙事，但用同一口径登记「换 $k$ 之后 tick 的方向」，
+避免和 1024 的主对照混在一起说。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{2.2cm}rrrr@{}}
+  \toprule
+  能力 &
+  \multicolumn{1}{c}{768 ($k{=}3$)} &
+  \multicolumn{1}{c}{512 ($k{=}2$)} &
+  \multicolumn{1}{c}{1024 C 量级} &
+  方向 \\
+  \midrule
+  KeyGen &
+  510661 & 319641 & 714427 &
+  $k\downarrow$ tick $\downarrow$ \\
+  Encaps &
+  589979 & 430542 & 720966 &
+  同左 \\
+  Decaps（C, accept） &
+  832585 & 600898\textsuperscript{†} & 1050610 &
+  同左 \\
+  Decaps（B, accept） &
+  817392 & 602572 & 1050962 &
+  B/C 仍同量级 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textsuperscript{†}512 E21：2026-08-19 回归曾 CPU 红、SIM 绿；根因为 host 侧 \texttt{host\_golden} 自引用与工件残留（非算子），\texttt{main@2f64127} 已修，复验 CPU+SIM 均 PASS。
+768 Decaps E 段相对 7 月登记上浮约 $1\text{--}4\%$，E 段主导，详见 \texttt{ch9\_sim\_regress} 备注。
+
+\paragraph{性能分析}
+迁移表里最稳定的一条趋势是：\textbf{$k$ 变小，整条 KEM 的 tick 也跟着往下走}。
+KeyGen、Encaps、Decaps 三类能力在 1024、768、512 三档上都保持了这个方向，
+说明这里看到的主要还是“问题规模缩小以后，算的东西确实少了”，而不是某一档碰巧吃到了特殊优化。
+
+但这张表也提醒我们：\textbf{不能把“方向对了”误写成“缩放很线性”}。
+例如 768 与 512 的 Decaps，差距主要还是压在 E 段，而不是 D 段；
+换句话说，参数组变了以后，真正敏感的仍是“重加密 + FO”这一侧，而不是解密那一侧。
+这和前面的 1024 主轴分析是连上的：Decaps 的主导成本从来不是平均摊在各段上的。
+
+另外，512 E21 曾在 2026-08-19 回归中出现“SIM 绿、CPU 红”，已确认为 host 工件残留而非算子问题；\texttt{main@2f64127} 修复后 CPU 与 SIM 均已复验通过。
+因此 512 这一档的 tick 登记可以按正常口径使用，不再单独挂“正确性待查”。
+
+\subsection{对 liboqs 单线程 ref（测量协议）}
+\label{sec:ch9-liboqs}
+
+对照对象是上表的 KEM 算子（PKE 单算子若引用只标 SIM，实机不测）。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.5cm}L{9.5cm}@{}}
+  \toprule
+  项 & 约定 \\
+  \midrule
+  参考实现 & liboqs \textbf{0.15.0} ML-KEM ref，单线程，与 golden 同输入字节 \\
+  度量 & Host 墙钟（进程级）；不与 SIM tick 直接换算倍数 \\
+  交叉 & \texttt{KEM\_GOLDEN\_CROSS=1} 两路 golden 互校；roundtrip 脚本先 urandom$\to$liboqs 再喂 AscendC \\
+  现状 & 成表对账尚未系统跑完；第~7~章 roundtrip 已证 I/O 一致，数值栏留空 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{实机 NPU 十四档}
+\label{sec:ch9-npu-slot}
+
+2026-08-19 合入 \texttt{main} 的套件：
+\texttt{scripts/npu\_kem\_textbook\_perf.sh}、\texttt{scripts/npu\_kem\_one\_trip.sh}，
+清单见 \texttt{docs/research/教材KEM实机测量清单.md}。
+实机数字取 \texttt{MSPROF\_MODE=app} 下 \texttt{kernel\_details*.csv} 各行 Task Duration \textbf{求和}
+（\texttt{[msprof\_kernel\_total]}）——终端一行 duration 和 \texttt{msprof op --launch-count} 都不能代替整条 KEM。
+
+\begin{center}
+\small
+\begin{tabular}{@{}clL{5.8cm}r@{}}
+  \toprule
+  \# & 组 & 算子（路径根下简称） & NPU $\sum$kernel \\
+  \midrule
+  1 & C & \texttt{stable-…-keygen-k4} & \textit{待实机} \\
+  2 & C & \texttt{stable-…-encaps-k4} & \textit{待实机} \\
+  3 & C & \texttt{stable-…-decaps-k4} & \textit{待实机} \\
+  4 & B & \texttt{stable-…-decaps-ct-k4} & \textit{待实机} \\
+  5--8 & 768 & E19/E20/E21/E21ct & \textit{待实机} \\
+  9--12 & 512 & 同上 $k{=}2$ & \textit{待实机} \\
+  13 & A & \texttt{frozen-…-encaps-correctness-k4} & \textit{待实机} \\
+  14 & A & \texttt{frozen-…-decaps-correctness-k4} & \textit{待实机} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 跑法（借入 910B4）：\texttt{unset ASCEND\_DEVICE\_ID \&\& bash scripts/npu\_kem\_one\_trip.sh}；
+带回 \texttt{BRING\_BACK.tar.gz} 后填上表，和 SIM 对照「方向是否一致」——
+不作「SIM 是 NPU 的几分之一」这类换算。
+
+\subsection{本章小结}
+\label{sec:ch9-summary}
+
+\begin{enumerate}
+  \item 把三路线口径和积木来源写死，防止 tick 差被误读成方法论的性能胜场。
+  \item 过程证据：五指标表支持「B 相对 A 强成功」；假绿没有消灭；C 和 B 过程同量级。
+  \item SIM 证据：Encaps A 明显高于 C；Decaps B$\approx$C，A（vendor 路径）高于 B/C；旧 qa 的 Decaps A 数和本次口径不同，不可混比。
+  \item 768/512 附表用 14 档顺序回归刷新；512 E21 曾 CPU 红（工件残留），\texttt{main@2f64127} 后已复验 CPU+SIM 绿。
+\end{enumerate}
+
+% ============================================================
+\section{总结：主要结论、未证命题与后续工作}
+\label{sec:summary}
+
+读完全书，读者应能回答三件事：
+\textbf{（1）}这套形式方法约束的是什么；
+\textbf{（2）}在 ML-KEM 这一检验案例上，哪些命题已有可核对证据，哪些尚未证明；
+\textbf{（3）}新接手的协作者至少应遵循哪些步骤，以免重复既往失误。
+本章只做收束，不引入新定义；论证细节仍见前文各章与 \texttt{qa/} 纪要。
+
+\subsection{全书在回答什么}
+
+第~\ref{sec:hook}~章从一个已经交付的 KEM.KeyGen 实例出发，提出四组问题：
+\textbf{依据什么}在已有 PKE 能力之上构造 KEM；
+\textbf{如何}避免 Agent 在开放生成中擅自引入未经证实的中间层；
+\textbf{何时}一个能力顶点方可被后续任务引用；
+\textbf{如何}与「只求正确、不计优化」的对照路线比较，而不把 tick 差异误读为方法论的全面优越性。
+
+后文以三件数学工具（依赖闭包、合法拼装、作业过程自动机）将上述问题形式化，
+再给出节点、边、证书与门禁算法（第~\ref{sec:math}--\ref{sec:gates}~章），
+并在 Decaps 验证案例（第~\ref{sec:forward}~章）、768 参数组迁移（第~\ref{sec:mlkem768}~章）
+与对照实验（第~\ref{sec:correctness}~章）中以可核对证据检验这些对象是否够用。
+
+本稿的总旨不变：把「先验证底层、再合法组合高层」的工程直觉，
+整理为\textbf{可讲授、可检查、可对照}的预研规范——
+面向一般的 Agent 协作场景，而不限于 ML-KEM 算子清单。
+
+\subsection{各章脉络：从实例到结论}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{1.4cm}L{3.6cm}L{7.8cm}@{}}
+  \toprule
+  章 & 功能 & 读者应带走 \\
+  \midrule
+  2 &
+  完整实例 &
+  交付物形态；四组问题的来源 \\
+  3--5 &
+  工具与门禁 &
+  $\mathrm{Dep}^*$、$\Gamma$、$\mathrm{Forbidden}$、闭包表及写码许可的判定 \\
+  6 &
+  1024 复盘 &
+  KeyGen/Encaps 可\textbf{事后}用理论复述；历史事实$\neq$当时已按门禁执行 \\
+  7 &
+  Decaps 前瞻 &
+  「先交 $\mathrm{CT}$ 再写码」的正例；相对路线 A 过程指标明显优于开放探索；相对路线 C 未能替代人工优化主线 \\
+  8 &
+  768 迁移 &
+  换参数组仍可走「锁参$\to$波次$\to$验收通过」；有条件完成至 incubating \\
+  9 &
+  对照实验 &
+  三路线口径事先约定；SIM tick 入表；过程、结构与性能分维度解读 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 上述安排遵循\textbf{从特殊到一般}：
+先在 Decaps 上检验门禁是否可执行，再在 768 上检验参数组迁移是否仍须完整波次，
+最后用 14 档 SIM 回归固定对照口径（第~\ref{sec:correctness}~章），
+以免单次测量较快被误写为方法论在性能上全面更优。
+
+\subsection{已有证据支持的主要结论}
+
+下表只列\textbf{结论性表述及其证据出处}；数值与提交记录不在此重复展开。
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.4cm}L{2.6cm}L{7.4cm}@{}}
+  \toprule
+  对象 & 结论 & 证据（回指） \\
+  \midrule
+  理论对已完成实例的复述能力 &
+  \textbf{充分} &
+  第~\ref{sec:replay}~章：KeyGen/Encaps 事后 $\mathrm{CT}$、三类边实例 \\
+  Decaps 方法论验证（相对路线 A） &
+  \textbf{目标基本达成} &
+  第~\ref{sec:forward}~章：先表后码、禁止引用 frozen 实现、拒绝路径纳入验收 \\
+  Decaps 相对人工交付路线 C &
+  \textbf{未能替代} &
+  第~\ref{sec:forward}~章、第~\ref{sec:correctness}~章：B$\approx$C 的 tick；脚本默认仍指向 C \\
+  ML-KEM-768 incubating &
+  \textbf{有条件完成} &
+  第~\ref{sec:mlkem768}~章：W0--W4+glue 验收通过；stable/liboqs/NPU 未做 \\
+  ML-KEM-512 incubating &
+  \textbf{有条件完成} &
+  \texttt{AGENT\_HANDOFF}；512 E21 宿主侧工件残留已修复（\texttt{main@2f64127}） \\
+  对照实验（过程维度） &
+  \textbf{B 优于 A} &
+  第~\ref{sec:ch9-five-metrics}~节五指标；名实不符的通过次数未降为零 \\
+  对照实验（性能维度） &
+  \textbf{未能证方法论更优} &
+  第~\ref{sec:ch9-decaps-sim}~节：Decaps B$\approx$C；Encaps 路线 A 高于 C 主要来自积木代差 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{解读结论时的两条约定}
+\begin{enumerate}
+  \item \textbf{正确性}：三路线在合法路径上均满足 I/O 对拍——方法论并未产生「密码学意义上更正确」的结果。
+  \item \textbf{性能}：SIM tick、NPU \texttt{kernel\_details} 求和、进程 \texttt{wall\_sec} 为三层测量口径（第~\ref{sec:ch9-npu-slot}~节）；
+        某一层的差异不能直接等同于「方法论更快」。
+\end{enumerate}
+
+\subsection{尚未证明或刻意留空的命题}
+
+下列事项如实标为\textbf{未证、未对账或后置}，避免把个别图表误读为全面优胜。
+
+\begin{itemize}
+  \item \textbf{相对路线 C 的性能与默认路径}：B 的 SIM tick 未短于 C；双 session 为保底策略，不是优化意义上的改进（第~\ref{sec:forward}~章、图~\ref{fig:ch7-tick}）。
+  \item \textbf{名实不符的通过是否已消除}：否。B 线仍记录此类次数；验收脚本漏检（如 verify 在应失败时须非零退出）属于实验中的附带发现，不等于门禁已工具化（第~\ref{sec:forward-tests}~节）。
+  \item \textbf{Token 与人月成本}：五指标对照约定两侧均不比较 token 倍数；768 一节中的配额感受仅为序数级印象，不作倍数宣称（第~\ref{sec:mlkem768-aside}~节）。
+  \item \textbf{实机 NPU 与 liboqs 单线程对照栏}：第~\ref{sec:correctness}~章表结构已建立，数值待实机测量与对账；SIM 不能替代 NPU。
+  \item \textbf{门禁写入 Rule/Skill 后的强制执行}：本稿止于算法与叙述层面；Agent 仍可能绕过 $\mathrm{Forbidden}$（第~\ref{sec:replay-verdict}~章遗留项）。
+  \item \textbf{超出 ML-KEM 的一般理论}：Petri 网、属性文法、可判定性等仍刻意后置（第~\ref{sec:open}~节）。
+\end{itemize}
+
+\subsection{新协作者的最小工作步骤}
+
+若时间有限，至少应完成下列七步：
+
+\begin{enumerate}
+  \item \textbf{阅读索引}：\texttt{README.md} $\to$ \texttt{AGENTS.md} $\to$ 各活跃 \texttt{INDEX.md}；
+        \texttt{frozen/} 目录只读关闭说明，不得将其源码迁入活跃树。
+  \item \textbf{写码前提交闭包表}：目标顶点 $T$、$\mathrm{Dep}^*(T)$、$\mathrm{Missing}_\Gamma(T)$、接缝与 $\mathrm{Forbidden}$ 是否命中——缺项未清则不写码（第~\ref{sec:gates}~章）。
+  \item \textbf{参数歧义则暂停}：形状、tiling、launch 与会话语义不一致时，先与用户确认，不以改参换取表面通过（与第~\ref{sec:mlkem768}~章同一规范）。
+  \item \textbf{双模式验收}：同用例须 CPU 与 \texttt{SIM\_DIRECT=1} sim 均过；声称完成时检查用例根目录无多余 dump。
+  \item \textbf{golden 仅验 I/O}：不得把参考实现逻辑逐行复刻进 AscendC；对拍失败时须先核对 golden 同源、权威交叉与跨核同步（仓库 Rule）。
+  \item \textbf{对照实验先对齐口径}：填表前确认 A/B/C 的积木来源与 launch 约定（第~\ref{sec:ch9-arms}~节）；tick 差异分过程、结构、性能三维解读。
+  \item \textbf{结论须附证据}：使用「有条件完成 / 阻塞 / 需再讨论」等状态词，并指向 diff、\texttt{run.sh} 日志或表号，不用形容词代替论证。
+\end{enumerate}
+
+\noindent 本清单\textbf{不}替代 \texttt{.cursor/rules/} 与场景 Skill；发生冲突时以 Rule 与用户当次指令为准。
+
+\subsection{与仓库其它文档的分工}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{3.6cm}L{9.8cm}@{}}
+  \toprule
+  位置 & 内容 \\
+  \midrule
+  本教材（\texttt{docs/research/}） &
+  方法论叙述、对照协议、结论与未证命题；持续修订 \\
+  \texttt{docs/notes/} &
+  定稿技术总结（密码/NTT/AscendC 原理）；原理优先 \\
+  \texttt{qa/} &
+  按日纪要、SIM 回归表、实机测量口径；证据流水账 \\
+  \texttt{examples/} / \texttt{ascendc-tests/} &
+  活跃实现与探针；customspec 约束（incubating/stable） \\
+  \texttt{.cursor/rules/} &
+  Agent 硬约束；修改须用户确认 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+讨论过程见 \texttt{形式语言与自动机预研讨论纪要.md}；
+\textbf{正文结论以本 PDF 各章小结与本节表格为准}，纪要仅供追溯。
+
+\subsection{本章小结}
+\label{sec:summary-end}
+
+\begin{enumerate}
+  \item 全书阐明：如何将「已验证能力上的合法派生」形式化为可检查对象，并在 ML-KEM 上以 Decaps、768 迁移与 14 档回归加以检验。
+  \item \textbf{已支持}：理论可复述已完成实例；Decaps 相对路线 A 过程指标明显优于开放探索；相对路线 C 未能替代人工主线；768/512 有条件完成至 incubating。
+  \item \textbf{未证或后置}：相对 C 的性能优势、名实不符通过的消除、token 对账、NPU/liboqs 成表、门禁工具化、一般抽象理论。
+  \item 新协作者：读 INDEX、交闭包表、锁参、双模式验收、三路线分维读 tick、结论附证据。
+  \item 下一章（第~\ref{sec:open}~节）列出\textbf{尚未决}的形式化选项与文档维护约定，不将开放问题表述为已关闭。
+\end{enumerate}
 
 % ============================================================
 \section{未决议事项、日程与维护}
@@ -4926,10 +5349,11 @@ C 人工指导的交付 device/stable（无 \texttt{-ct}）。
 \subsection{近期填空顺序（仍然是「先特殊、后一般」）}
 \begin{enumerate}
   \item \textbf{已完成（第~\ref{sec:replay}~章）}：KeyGen / Encaps 事后 $\mathrm{CT}$、三类边实例、四组问题复盘结论与欠债清单；
-  \item \textbf{已完成（第~\ref{sec:forward}~章）}：Decaps 前瞻 $\mathrm{CT}$ $\to$ 实现/测试 $\to$ 与 A/C 臂对照 $\to$ 方法论效果判决（强成功相对 A；不取代 C）；
+  \item \textbf{已完成（第~\ref{sec:forward}~章）}：Decaps 前瞻 $\mathrm{CT}$ $\to$ 实现/测试 $\to$ 与 A/C 路线对照 $\to$ 方法论效果判决（强成功相对 A；不取代 C）；
   \item \textbf{已完成（第~\ref{sec:mlkem768}~章）}：ML-KEM-768 分析$\to$计划$\to$W0--W4+glue$\to$有条件完成至 incubating（禁零垫；AscendC-only RT）；
   \item 按第~\ref{sec:forward}/\ref{sec:mlkem768}~章反馈，必要时回改第~\ref{sec:mathbg}--\ref{sec:gates}~章定义（只记欠债；假绿/工具化门禁仍欠）；
-  \item correctness 对照实验写成可执行协议（与第~\ref{sec:correctness}~章及五指标表对齐；细表可续）；
+  \item \textbf{已完成（第~\ref{sec:correctness}~章）}：对照实验章——Decaps 三路线、Encaps/KeyGen 对照、768/512 附表；SIM tick 已填；NPU/liboqs 实机栏待实机/对账；
+  \item \textbf{已完成（第~\ref{sec:summary}~章）}：全书总结——主要结论、未证命题、新协作者最小步骤；
   \item 768 特有结论（奇数 $k$ 分核等）稳定后，再考虑迁到 \texttt{docs/notes/}。
 \end{enumerate}
 
