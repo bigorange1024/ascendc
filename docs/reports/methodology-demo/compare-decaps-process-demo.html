@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="google" content="notranslate"/>
+<title>有界推进 ‖ 无序探索 · 密钥解封</title>
+<style>
+:root{
+  --navy:#1f4e79;--deep:#143252;--ink:#22384c;--muted:#5c6b7a;
+  --line:#d7e0ea;--soft:#f2f5f8;--ok:#2e7d4f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;color:var(--ink);background:#e8eef4}
+body{display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+.top{
+  flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:.55rem 1rem;
+  padding:.45rem .85rem;background:#fff;border-bottom:3px solid var(--navy);
+}
+.top h1{margin:0;font-size:.98rem;color:var(--deep);font-weight:700}
+.top .sub{margin:0;font-size:.68rem;color:var(--muted);line-height:1.35;flex:1 1 14rem}
+button{
+  appearance:none;border:1px solid #c5d2e0;background:#fff;color:#16324f;
+  font:inherit;font-size:.78rem;font-weight:700;padding:.38rem .95rem;border-radius:4px;cursor:pointer;
+}
+button.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.badge{
+  font-size:.62rem;padding:.12rem .45rem;border-radius:3px;background:var(--soft);
+  border:1px solid var(--line);color:var(--muted);white-space:nowrap;
+}
+.badge strong{color:var(--ok)}
+.split{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:0}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:1px solid var(--line);background:#fff}
+.pane:last-child{border-right:none}
+.pane-h{
+  flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;
+  padding:.32rem .65rem;background:linear-gradient(180deg,#eef3f8,#fff);border-bottom:1px solid var(--line);
+}
+.pane-h b{font-size:.78rem;color:var(--deep)}
+.pane-h span{font-size:.62rem;color:var(--muted)}
+.pane iframe{flex:1;width:100%;border:0;min-height:0;background:#fff}
+.gate{
+  position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+  background:rgba(20,40,70,.45);backdrop-filter:blur(3px);
+}
+.gate[hidden]{display:none!important}
+.gate-card{
+  background:#fff;border-radius:10px;padding:1.2rem 1.6rem;text-align:center;
+  box-shadow:0 12px 40px rgba(20,50,80,.25);border:1px solid var(--line);
+}
+.gate-card button{font-size:1rem;padding:.7rem 1.8rem}
+body.cinema .top .sub{display:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>密钥解封 · 有界推进 ‖ 无序探索</h1>
+  <p class="sub">左右同时播放 · 能力生长节拍相同 · 解封含解密+重加密核对，过程通常长于封装</p>
+  <span class="badge">就绪 <strong id="readyN">0</strong>/2</span>
+  <button class="pri" type="button" id="btnStart" disabled>开始演示</button>
+  <button type="button" id="btnReset" disabled>重来</button>
+</header>
+<div class="split">
+  <section class="pane">
+    <div class="pane-h">
+      <b>有界推进</b>
+      <span>先结束 · 105 万拍</span>
+    </div>
+    <iframe id="frBounded" title="有界推进 · 密钥解封" src="bounded-decaps-process-demo.html?cinema=1&amp;embed=1"></iframe>
+  </section>
+  <section class="pane">
+    <div class="pane-h">
+      <b>无序探索</b>
+      <span>更长 · 143 万拍</span>
+    </div>
+    <iframe id="frUnordered" title="无序探索 · 密钥解封" src="unordered-decaps-process-demo.html?cinema=1&amp;embed=1"></iframe>
+  </section>
+</div>
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <button class="pri" type="button" id="gateBtn" disabled>开始演示</button>
+  </div>
+</div>
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const cinema = qs.get('cinema') === '1';
+  const autoMode = qs.get('auto') === '1';
+  if (cinema) document.body.classList.add('cinema');
+
+  const frB = document.getElementById('frBounded');
+  const frU = document.getElementById('frUnordered');
+  const readyN = document.getElementById('readyN');
+  const btnStart = document.getElementById('btnStart');
+  const btnReset = document.getElementById('btnReset');
+  const gate = document.getElementById('gate');
+  const gateBtn = document.getElementById('gateBtn');
+
+  const ready = { bounded: false, unordered: false };
+
+  function updateReady(){
+    const n = (ready.bounded?1:0) + (ready.unordered?1:0);
+    readyN.textContent = String(n);
+    const ok = n === 2;
+    btnStart.disabled = !ok;
+    gateBtn.disabled = !ok;
+    btnReset.disabled = !ok;
+  }
+
+  function postBoth(type){
+    const msg = { type: type };
+    try { frB.contentWindow && frB.contentWindow.postMessage(msg, '*'); } catch (_) {}
+    try { frU.contentWindow && frU.contentWindow.postMessage(msg, '*'); } catch (_) {}
+  }
+
+  function startBoth(){
+    gate.hidden = true;
+    postBoth('demo-play');
+    btnStart.disabled = true;
+  }
+
+  function resetBoth(){
+    postBoth('demo-reset');
+    gate.hidden = false;
+    btnStart.disabled = !(ready.bounded && ready.unordered);
+  }
+
+  window.addEventListener('message', (ev)=>{
+    const d = ev && ev.data;
+    if (!d || d.type !== 'demo-ready') return;
+    if (d.role === 'bounded') ready.bounded = true;
+    if (d.role === 'unordered') ready.unordered = true;
+    updateReady();
+    if (autoMode && ready.bounded && ready.unordered) {
+      setTimeout(startBoth, 350);
+    }
+  });
+
+  function markLoaded(role){
+    return function(){
+      if (role === 'bounded') ready.bounded = true;
+      if (role === 'unordered') ready.unordered = true;
+      updateReady();
+    };
+  }
+  frB.addEventListener('load', markLoaded('bounded'));
+  frU.addEventListener('load', markLoaded('unordered'));
+
+  btnStart.addEventListener('click', startBoth);
+  gateBtn.addEventListener('click', startBoth);
+  btnReset.addEventListener('click', resetBoth);
+  updateReady();
+})();
+</script>
+</body>
+</html>

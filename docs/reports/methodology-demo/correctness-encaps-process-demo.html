@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="google" content="notranslate"/>
+<title>无序探索 · 密钥封装</title>
+<style>
+:root{
+  --navy:#1f4e79;--deep:#143252;--ink:#22384c;--muted:#5c6b7a;
+  --line:#d7e0ea;--soft:#f2f5f8;--ok:#2e7d4f;--ok-s:#eaf3ee;
+  --ghost:#9aa7b3;--gap:#c9a227;--gap-s:#faf6e8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;color:var(--ink);background:#fff}
+body{display:flex;flex-direction:column;min-height:100vh}
+.top{padding:.55rem 1rem .45rem;border-bottom:3px solid var(--navy)}
+.top h1{margin:0;font-size:1.02rem;color:var(--deep)}
+.top .sub{margin:.15rem 0 0;font-size:.7rem;color:var(--muted);max-width:58rem;line-height:1.38}
+.bar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.35rem 1rem;background:var(--soft);border-bottom:1px solid var(--line)}
+button{appearance:none;border:1px solid #c5d2e0;background:#fff;color:#16324f;font:inherit;font-size:.74rem;font-weight:700;padding:.32rem .7rem;border-radius:3px;cursor:pointer}
+button.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.meters{display:flex;flex-wrap:wrap;gap:.35rem .55rem;margin-left:auto;font-size:.65rem;color:var(--muted)}
+.meters .chip{padding:.12rem .38rem;border-radius:3px;background:#fff;border:1px solid var(--line)}
+.stage{padding:.25rem 1rem .2rem;min-height:1.7rem}
+.stage .idx{font-size:.64rem;font-weight:700;color:var(--ok)}
+.stage h2{margin:.04rem 0 0;font-size:.82rem;color:#16324f}
+.stage p{margin:.04rem 0 0;font-size:.68rem;color:var(--muted)}
+.main{flex:1;display:grid;grid-template-columns:12rem minmax(0,1fr);gap:.4rem;padding:.3rem .5rem .45rem;min-height:0}
+.panel{border:1px solid var(--line);border-radius:4px;background:#fff;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ph{padding:.32rem .45rem;border-bottom:1px solid var(--line);font-size:.7rem;font-weight:700;background:#fafcfd}
+.twrap{overflow:auto;flex:1}
+table{width:100%;border-collapse:collapse;font-size:.56rem}
+th,td{padding:.14rem .22rem;border-bottom:1px solid #e8eef4;text-align:left}
+th{position:sticky;top:0;background:var(--soft);color:var(--muted);z-index:1}
+tr.ok td{background:var(--ok-s)}
+tr.gap td{background:var(--gap-s);color:#7a6520}
+tr.disc td{color:#8a949e;background:#f7f9fb}
+tr.goal td{background:var(--ok-s);font-weight:700}
+.gwrap{position:relative;flex:1;min-height:460px;background:linear-gradient(180deg,#f7fafc,#fff 38%)}
+svg.g{width:100%;height:100%;display:block;min-height:460px}
+.band-lab{font-size:7px;fill:#8a9aab;font-weight:600}
+.node circle{transition:opacity .28s,transform .28s}
+.node text{font-size:8.5px;font-weight:700;fill:#22384c;pointer-events:none}
+.node .s{font-size:6px;fill:#5c6b7a}
+.node.base circle,.node.goal.on circle{fill:var(--ok-s);stroke:var(--ok);stroke-width:2}
+.node.gap circle,.node.goal.pending circle{fill:var(--gap-s);stroke:var(--gap);stroke-width:2}
+.node.hide{opacity:0;transform:scale(.25)}
+.node.pulse circle{filter:drop-shadow(0 0 5px rgba(46,125,79,.45))}
+.node.gap-pulse circle{filter:drop-shadow(0 0 5px rgba(201,162,39,.5))}
+.edge{fill:none;stroke-linecap:round;transition:opacity .25s}
+.edge.base{stroke:var(--ok);stroke-width:1.5;opacity:.8}
+.edge.gap{stroke:var(--gap);stroke-width:1.3;stroke-dasharray:4 3;opacity:.85}
+.legend{position:absolute;left:.4rem;bottom:.4rem;z-index:3;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:4px;padding:.3rem .4rem;font-size:.56rem;line-height:1.4;max-width:11rem}
+.legend b{display:block;font-size:.6rem;color:var(--deep);margin-bottom:.1rem}
+.legend .row{display:flex;align-items:center;gap:.3rem;margin:.1rem 0}
+.legend .sw{border-radius:50%;width:.5rem;height:.5rem;border:2px solid;flex-shrink:0}
+.legend .sw.base{background:var(--ok-s);border-color:var(--ok)}
+.legend .sw.gap{background:var(--gap-s);border-color:var(--gap)}
+.legend .ln{width:1rem;border-top:2px solid;flex-shrink:0}
+.legend .ln.base{border-color:var(--ok)}
+.legend .ln.gap{border-top-style:dashed;border-color:var(--gap)}
+.call{position:absolute;right:.4rem;top:.35rem;max-width:11rem;padding:.25rem .4rem;border-radius:4px;font-size:.58rem;line-height:1.3;border:1px solid var(--line);background:#fff;z-index:2}
+.call.ok{border-color:#c5e0d0;background:var(--ok-s);color:#1e5a38}
+.call.gap{border-color:#e8d9a0;background:var(--gap-s);color:#7a6520}
+.foot{padding:.2rem 1rem .35rem;font-size:.62rem;color:var(--ghost);border-top:1px solid var(--line)}
+/* cinema：保留能力列表 + 实验图 */
+body.cinema .top,body.cinema .bar,body.cinema .foot{display:none!important}
+body.cinema .main{grid-template-columns:13rem 1fr;padding:.25rem;gap:.35rem;height:calc(100vh - 3rem)}
+body.cinema .stage{padding:.45rem 1rem .35rem;background:linear-gradient(180deg,#eef3f8,#fff);border-bottom:1px solid var(--line);min-height:2.8rem}
+body.cinema .ph{font-size:.68rem}
+body.cinema .gwrap{min-height:0}
+body.cinema svg.g{min-height:0}
+/* 并排页 iframe：收紧表宽、占满高度、隐藏本页开播罩（由父页同步开播） */
+body.embed.cinema .main{grid-template-columns:9.2rem 1fr;height:100vh;padding:.2rem;gap:.25rem}
+body.embed.cinema .stage{min-height:2.2rem;padding:.3rem .55rem}
+body.embed .start-overlay{display:none!important}
+.start-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;background:rgba(247,250,252,.92);z-index:5}
+.start-overlay.hidden{display:none!important}
+.start-overlay button{font-size:1rem;padding:.65rem 2.2rem;border-radius:6px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>无序探索 · 密钥封装</h1>
+  <div class="sub">边试边堆 · 清单只增 · 终态臃肿但也能绿 · 约 <strong>103 万</strong> 拍</div>
+</header>
+<div class="bar">
+  <button class="pri" id="btnPlay" type="button">播放</button>
+  <button id="btnReset" type="button">重来</button>
+  <div class="meters">
+    <span class="chip">清单 <strong id="mInv">0</strong></span>
+    <span class="chip">图上 <strong id="mGraph">0</strong></span>
+    <span class="chip">回退 <strong id="mRb">0</strong></span>
+    <span class="chip">拍数 <strong id="mTick">0</strong></span>
+  </div>
+</div>
+<div class="stage">
+  <div class="idx" id="sIdx">就绪</div>
+  <h2 id="sTitle">点击「开始演示」</h2>
+  <p id="sSub">绿=已证 · 黄=试探 · 完成后全绿（图仍臃肿）</p>
+</div>
+<div class="main">
+  <article class="panel">
+    <div class="ph">能力列表</div>
+    <div class="twrap"><table><thead><tr><th>#</th><th>能力</th><th>状态</th></tr></thead><tbody id="invBody"></tbody></table></div>
+  </article>
+  <article class="panel">
+    <div class="ph">实验图 · 目标在顶</div>
+    <div class="gwrap">
+      <div class="start-overlay" id="startOverlay">
+        <button class="pri" id="btnStart" type="button">开始演示</button>
+      </div>
+      <div class="call ok" id="call">图例见左下</div>
+      <div class="legend">
+        <b>图例（两色）</b>
+        <div class="row"><span class="sw base"></span>已证 / 保留（绿）</div>
+        <div class="row"><span class="sw gap"></span>试探 / 缺项（黄）</div>
+        <div class="row"><span class="ln base"></span>已证依赖（绿实线）</div>
+        <div class="row"><span class="ln gap"></span>试探边（黄虚线）</div>
+      </div>
+      <svg class="g" id="svg" viewBox="0 0 720 460" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </article>
+</div>
+<footer class="foot">本路线试探更多 · 与有界推进并排时会更晚结束 · 约 103 万拍</footer>
+
+<script>
+(function(){
+  /* 与 bounded 共用：每个能力生长节拍一致；本文件步数更多 → 同时播时有界更早结束 */
+  const CAP_MS = 550;
+  /* 开局底座拍数与有界一致；终态仍落到无序登记值 */
+  const TICK_GOAL = 1029406, TICK_MAX = 1100000, TICK_ENC = 627590;
+  const CX = 360, W = 720, GOAL_Y = 22;
+  /* L0–L6 等距层带：同层节点必须落在同一 y，禁止游离高度 */
+  const LAY = [
+    {y:405,l:'0'},{y:348,l:'1'},{y:291,l:'2'},{y:234,l:'3'},
+    {y:177,l:'4'},{y:120,l:'5'},{y:70,l:'6'}
+  ];
+  /* xAt 仅作调试辅助；正式 play 用手工非均分 x，避免左右镜面对称 */
+  function xAt(i,n,pad){
+    pad=pad==null?100:pad;
+    if(n<=1) return CX;
+    if(n===2) return i===0 ? CX-150 : CX+150;
+    if(n===3) return [CX-200, CX, CX+200][i];
+    return pad+(W-2*pad)*i/(n-1);
+  }
+  const qs = new URLSearchParams(location.search);
+  const cinema = qs.get('cinema') === '1';
+  const embed = qs.get('embed') === '1';
+  const autoMode = !embed && (qs.get('auto') === '1' || qs.get('record') === '1');
+
+  let nodes={}, edges=[], inv=[], seq=0, playing=false, timers=[];
+  let counters={inv:0, graph:0, rb:0, tick:0, caps:0};
+
+  const $=id=>document.getElementById(id);
+  function wait(ms){ return new Promise(r=>timers.push(setTimeout(r,ms))); }
+  function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+  function showStart(){ $('startOverlay').classList.remove('hidden'); $('btnStart').disabled=false; }
+  function hideStart(){ $('startOverlay').classList.add('hidden'); }
+  function stage(i,t,s){ $('sIdx').textContent=i; $('sTitle').textContent=t; $('sSub').textContent=s||''; }
+  function call(c,h){ $('call').className='call '+c; $('call').innerHTML=h; }
+  function meters(){
+    $('mInv').textContent=counters.inv;
+    $('mGraph').textContent=counters.graph;
+    $('mRb').textContent=counters.rb;
+    $('mTick').textContent=counters.tick.toLocaleString();
+  }
+  function bumpTick(n){ counters.tick=Math.min(TICK_GOAL, counters.tick+n); meters(); }
+  function recount(){
+    counters.graph=Object.values(nodes).filter(n=>n.onGraph&&!n.hide&&n.id!=='encaps').length;
+    counters.inv=inv.filter(r=>!r._ph).length;
+    meters();
+  }
+
+  function addInv(key,name,status,cls){
+    if(inv.length===1&&inv[0]._ph) inv=[];
+    inv.push({key:key||('r'+seq),seq:++seq,name,status,cls:cls||'ok'});
+    recount(); renderInv();
+  }
+  function setInv(key,status,cls){
+    const row=inv.find(r=>r.key===key);
+    if(!row) return;
+    row.status=status; row.cls=cls;
+    recount(); renderInv();
+  }
+  function addNode(id,spec){
+    nodes[id]=Object.assign({id,onGraph:true,hide:false,pulse:false,sm:false},spec);
+    recount(); render();
+  }
+  function addEdge(from,to,kind){
+    const a=nodes[from], b=nodes[to];
+    /* 同层不连：避免横向蛛网；依赖只保留跨层（向上汇聚） */
+    if(a&&b&&Math.abs((a.y||0)-(b.y||0))<8) return;
+    const key=from+'->'+to;
+    const existing=edges.find(e=>e.key===key);
+    if(existing){ existing.kind=kind||'base'; }
+    else edges.push({key,from,to,kind:kind||'base'});
+    render();
+  }
+  function removeFromGraph(ids){
+    ids.forEach(id=>{
+      if(!nodes[id]) return;
+      nodes[id].onGraph=false; nodes[id].hide=true;
+    });
+    edges=edges.filter(e=>!ids.includes(e.from)&&!ids.includes(e.to));
+    counters.rb++;
+    recount(); render();
+  }
+
+  /** 图上只留「能走到目标」的节点；列表仍保留未采用/未汇入行 */
+  function pruneUnreachable(goalId){
+    const reach=new Set([goalId]);
+    let changed=true;
+    while(changed){
+      changed=false;
+      edges.forEach(e=>{
+        if(!reach.has(e.to)||reach.has(e.from)) return;
+        const n=nodes[e.from];
+        if(n&&n.onGraph&&!n.hide){ reach.add(e.from); changed=true; }
+      });
+    }
+    Object.values(nodes).forEach(n=>{
+      if(n.id===goalId||!n.onGraph||n.hide) return;
+      if(!reach.has(n.id)){ n.onGraph=false; n.hide=true; }
+    });
+    edges=edges.filter(e=>{
+      const a=nodes[e.from], b=nodes[e.to];
+      return a&&b&&a.onGraph&&!a.hide&&b.onGraph&&!b.hide;
+    });
+    recount(); render();
+  }
+
+  /** 终态：汇入边齐 → 剪孤点 → 全绿 */
+  function finalizeGraph(){
+    edges=edges.map(e=>({...e,kind:'base'}));
+    Object.values(nodes).forEach(n=>{
+      if(!n.onGraph||n.hide) return;
+      if(n.id==='encaps'){ n.on=true; n.sub='完成'; }
+      else { n.kind='base'; }
+    });
+    pruneUnreachable('encaps');
+    recount(); render();
+  }
+
+  function renderInv(){
+    const tb=$('invBody');
+    const rows=inv.filter(r=>!r._ph);
+    tb.innerHTML=rows.length?rows.map(r=>`<tr class="${r.cls}"><td>${r.seq}</td><td>${r.name}</td><td>${r.status}</td></tr>`).join(''):'<tr><td colspan="3" style="color:#9aa7b3">（空）</td></tr>';
+    tb.parentElement.parentElement.scrollTop=99999;
+  }
+
+  function render(){
+    const svg=$('svg'); svg.innerHTML='';
+    const gB=document.createElementNS('http://www.w3.org/2000/svg','g');
+    LAY.forEach((band,i)=>{
+      const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x','48'); rect.setAttribute('y',String(band.y-22));
+      rect.setAttribute('width',String(W-48)); rect.setAttribute('height','44');
+      rect.setAttribute('fill',i%2?'#fff':'#f4f7fa'); gB.appendChild(rect);
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('class','band-lab'); t.setAttribute('x','6'); t.setAttribute('y',String(band.y+2));
+      t.textContent='L'+band.l; gB.appendChild(t);
+    });
+    svg.appendChild(gB);
+
+    const gE=document.createElementNS('http://www.w3.org/2000/svg','g');
+    edges.forEach(e=>{
+      const a=nodes[e.from], b=nodes[e.to];
+      if(!a||!b||!a.onGraph||!b.onGraph||a.hide||b.hide) return;
+      const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      const mid=(a.y+b.y)/2;
+      p.setAttribute('d',`M${a.x},${a.y-10} C${a.x},${mid} ${b.x},${mid} ${b.x},${b.y+10}`);
+      p.setAttribute('class','edge '+(e.kind||'base'));
+      gE.appendChild(p);
+    });
+    svg.appendChild(gE);
+
+    const gN=document.createElementNS('http://www.w3.org/2000/svg','g');
+    Object.values(nodes).forEach(n=>{
+      if(!n.onGraph&&n.id!=='encaps') return;
+      if(n.hide&&n.id!=='encaps') return;
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('transform',`translate(${n.x},${n.y})`);
+      let cls='node '+(n.kind||'base');
+      if(n.hide) cls+=' hide';
+      if(n.pulse) cls+= n.kind==='gap'?' gap-pulse':' pulse';
+      if(n.id==='encaps') cls='node goal'+(n.on?' on':' pending');
+      g.setAttribute('class',cls);
+      const cir=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      cir.setAttribute('r',String(n.r||(n.sm?10:12)));
+      const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+      tx.setAttribute('text-anchor','middle'); tx.setAttribute('y','3'); tx.textContent=n.label;
+      const sx=document.createElementNS('http://www.w3.org/2000/svg','text');
+      sx.setAttribute('class','s'); sx.setAttribute('text-anchor','middle'); sx.setAttribute('y','18');
+      sx.textContent=n.sub||'';
+      g.appendChild(cir); g.appendChild(tx); if(n.sub) g.appendChild(sx);
+      gN.appendChild(g);
+    });
+    svg.appendChild(gN);
+  }
+
+  function xTrial(layer,side,j){ return CX+side*(90+layer*20)+(j||0); }
+
+  /** 统一节拍：先标「缺项」，再替换为「已证」或「未采用」 */
+  async function grow(id, layer, side, label, sub, resolve, edgeFrom, tickAdd, jitter){
+    // resolve: 'ok' | 'disc'  （已证 | 未采用）
+    counters.caps++;
+    const name = label+(sub?(' · '+sub):'');
+    addInv(id, name, '缺项', 'gap');
+    addNode(id,{x:xTrial(layer,side,jitter),y:LAY[layer].y,kind:'gap',label,sub:sub||'',sm:label.length>6,pulse:true});
+    if(edgeFrom){
+      (Array.isArray(edgeFrom)?edgeFrom:[edgeFrom]).forEach(f=>addEdge(f,id,'gap'));
+    }
+    await wait(CAP_MS*0.4);
+    if(resolve==='disc'){
+      setInv(id,'未采用','disc');
+      if(nodes[id]){ nodes[id].onGraph=false; nodes[id].hide=true; nodes[id].pulse=false; }
+      edges=edges.filter(e=>e.from!==id&&e.to!==id);
+      counters.rb++;
+      bumpTick(tickAdd||10000);
+      recount(); render();
+    } else {
+      setInv(id,'已证','ok');
+      if(nodes[id]){ nodes[id].kind='base'; nodes[id].pulse=false; nodes[id].onGraph=true; nodes[id].hide=false; }
+      edges.filter(e=>e.to===id||e.from===id).forEach(e=>{ e.kind='base'; });
+      bumpTick(tickAdd||18000);
+      render(); recount();
+    }
+    await wait(CAP_MS*0.6);
+  }
+
+  async function keep(id, layer, x, label, sub, froms, tickAdd){
+    counters.caps++;
+    const name = label+(sub?(' · '+sub):'');
+    addInv(id, name, '缺项', 'gap');
+    addNode(id,{x,y:LAY[layer].y,kind:'gap',label,sub:sub||'',sm:label.length>6,pulse:true});
+    (froms||[]).forEach(f=>addEdge(f,id,'gap'));
+    await wait(CAP_MS*0.4);
+    setInv(id,'已证','ok');
+    if(nodes[id]){ nodes[id].kind='base'; nodes[id].pulse=false; }
+    edges.filter(e=>e.to===id||e.from===id).forEach(e=>{ e.kind='base'; });
+    bumpTick(tickAdd||22000);
+    render(); recount();
+    await wait(CAP_MS*0.6);
+  }
+
+  /** 自定义 y：用于 L4 之上的收口链，保证入边来自更下方节点 */
+  async function growAt(id, x, y, label, sub, resolve, froms, tickAdd){
+    counters.caps++;
+    const name = label+(sub?(' · '+sub):'');
+    addInv(id, name, '缺项', 'gap');
+    addNode(id,{x,y,kind:'gap',label,sub:sub||'',sm:label.length>6,pulse:true});
+    (froms||[]).forEach(f=>addEdge(f,id,'gap'));
+    await wait(CAP_MS*0.4);
+    if(resolve==='disc'){
+      setInv(id,'未采用','disc');
+      if(nodes[id]){ nodes[id].onGraph=false; nodes[id].hide=true; nodes[id].pulse=false; }
+      edges=edges.filter(e=>e.from!==id&&e.to!==id);
+      counters.rb++;
+      bumpTick(tickAdd||10000);
+      recount(); render();
+    } else {
+      setInv(id,'已证','ok');
+      if(nodes[id]){ nodes[id].kind='base'; nodes[id].pulse=false; }
+      edges.filter(e=>e.to===id||e.from===id).forEach(e=>{ e.kind='base'; });
+      bumpTick(tickAdd||18000);
+      render(); recount();
+    }
+    await wait(CAP_MS*0.6);
+  }
+
+  /** 逐条挂到收口；目标节点若仍是缺项则保持黄 */
+  async function attachOne(from,to,note){
+    if(!nodes[from]||!nodes[to]) return;
+    if(nodes[from].hide||!nodes[from].onGraph) return;
+    const pending=nodes[to].kind==='gap';
+    addEdge(from,to, pending?'gap':'base');
+    if(note) call('gap',note);
+    await wait(CAP_MS*0.38);
+    if(!pending){
+      edges.filter(e=>e.from===from&&e.to===to).forEach(e=>{ e.kind='base'; });
+    }
+    render();
+  }
+
+  /** 先落缺项点（保持黄），旁支挂完再用 proveNode 变绿 */
+  async function spawnPending(id, x, y, label, sub, froms, tickAdd){
+    counters.caps++;
+    const name=label+(sub?(' · '+sub):'');
+    addInv(id, name, '缺项', 'gap');
+    addNode(id,{x,y,kind:'gap',label,sub:sub||'',sm:label.length>6,pulse:true});
+    (froms||[]).forEach(f=>addEdge(f,id,'gap'));
+    bumpTick(tickAdd||12000);
+    render(); recount();
+    await wait(CAP_MS*0.45);
+  }
+  async function proveNode(id){
+    setInv(id,'已证','ok');
+    if(nodes[id]){ nodes[id].kind='base'; nodes[id].pulse=false; }
+    edges.filter(e=>e.to===id||e.from===id).forEach(e=>{ e.kind='base'; });
+    render(); recount();
+    await wait(CAP_MS*0.4);
+  }
+
+  /** 与有界同一套开局底座：一次上图（已证），不逐个 CAP */
+  function seedProven(items, tick){
+    items.forEach(it=>{
+      counters.caps++;
+      addNode(it.id,{x:it.x,y:LAY[it.layer].y,kind:'base',label:it.label,sub:it.sub||'',sm:(it.label||'').length>6});
+      (it.froms||[]).forEach(f=>addEdge(f,it.id,'base'));
+      addInv(it.id, it.invName||it.label, '已证', 'ok');
+    });
+    if(tick!=null){ counters.tick=tick; }
+    meters(); render(); renderInv(); recount();
+  }
+
+  function reset(){
+    clearTimers(); playing=false;
+    nodes={}; edges=[]; inv=[{_ph:true}]; seq=0;
+    counters={inv:0,graph:0,rb:0,tick:0,caps:0};
+    addNode('encaps',{x:CX,y:GOAL_Y,kind:'goal',r:14,label:'密钥封装',sub:'目标',on:false,onGraph:true});
+    $('btnPlay').disabled=false; $('btnStart').disabled=false;
+    showStart();
+    stage('就绪','无序探索','绿=已证 · 黄=试探 · 终态全绿但图臃肿');
+    call('ok','能力列表在左');
+    renderInv(); render(); meters();
+  }
+
+  async function play(){
+    if(playing) return;
+    playing=true; $('btnPlay').disabled=true; $('btnStart').disabled=true;
+    hideStart(); clearTimers();
+    nodes={}; edges=[]; inv=[]; seq=0;
+    counters={inv:0,graph:0,rb:0,tick:0,caps:0};
+    addNode('encaps',{x:CX,y:GOAL_Y,kind:'goal',r:14,label:'密钥封装',sub:'目标',on:false,onGraph:true});
+    render(); meters();
+    const beat=async(i,t,s)=>{ stage(i,t,s); await wait(CAP_MS*0.6); };
+
+    /* 布局：同层同 y，但 x 故意不均分——无序探索应显得歪、不对称 */
+    await beat('①','已有能力一次就位','预处理 · 计算 · 加密 · 公钥 · 明文');
+    seedProven([
+      {id:'prep0',x:155,layer:0,label:'预处理',sub:'已有',invName:'预处理'},
+      {id:'comp0',x:305,layer:0,label:'计算核',sub:'已有',invName:'核心计算'},
+      {id:'enc',x:520,layer:0,label:'加密',sub:'已验证',invName:'公钥加密'},
+      {id:'ek',x:172,layer:1,label:'公钥',sub:'输入',invName:'公钥',froms:['enc']},
+      {id:'m',x:488,layer:1,label:'明文',sub:'输入',invName:'明文消息',froms:['prep0']}
+    ], TICK_ENC);
+    addEdge('ek','encaps','gap'); addEdge('m','encaps','gap');
+    call('ok','底座与有界相同 · L0→L1<br/>下面开始乱探');
+    await wait(CAP_MS*0.5);
+
+    await beat('①','试探：整链套现成模板','缺项 → 未采用');
+    await growAt('stab', 640, LAY[1].y, '整链套模板','试探','disc',['enc'],8000);
+
+    await beat('②','封装头 · 多路试探','自下而上 · 槽位偏斜');
+    await growAt('hostm', 80, LAY[2].y, '主机拼消息','禁止','disc',['m'],10000);
+    /* L2：左密右疏 · 故意不等距 */
+    await growAt('sha3x', 238, LAY[2].y, '双份哈希','重复','ok',['ek'],14000);
+    await growAt('H', 105, LAY[2].y, '公钥摘要','必要','ok',['ek'],16000);
+    await growAt('kem6', 80, LAY[2].y, '六核分片','多余','disc',['m'],12000);
+    call('gap','黄→未采用 / 已证');
+    await growAt('G', 338, LAY[2].y, '密钥衍生','必要','ok',['ek','m'],18000);
+
+    await beat('③','加密路径 · 过层过补','试用靠边 · 保留入偏斜槽');
+    await growAt('g5only', 80, LAY[2].y, '仅向量半链','试探','disc',['enc'],14000);
+    await growAt('batch', 502, LAY[2].y, '大批次','负优化','ok',['enc'],16000);
+    await growAt('gather', 640, LAY[2].y, '行交织重排','待修','disc',['enc'],14000);
+    await growAt('extsd', 628, LAY[2].y, '扩展种子','剖面','ok',['m'],15000);
+    if(nodes.batch) nodes.batch.sub='保留';
+    if(nodes.extsd) nodes.extsd.sub='保留';
+    if(nodes.sha3x) nodes.sha3x.sub='保留';
+    call('ok','过补留在 L2（不对称）');
+    await wait(CAP_MS*0.45);
+
+    await beat('③','细节堆进主链','同层一平面 · x 不规则');
+    await growAt('a_hat', 118, LAY[3].y, '矩阵采样','必要','ok',['G','enc','batch'],26000);
+    await growAt('prep_re', 268, LAY[3].y, '预处理','并入','ok',['G','prep0'],28000);
+    await growAt('decode', 448, LAY[3].y, '公钥解码','必要','ok',['H','enc','sha3x'],24000);
+    await growAt('re_cbd', 598, LAY[3].y, '噪声采样','必要','ok',['m','prep0','extsd'],26000);
+    await growAt('ntt', 178, LAY[4].y, '数论变换','必要','ok',['a_hat'],30000);
+    await growAt('mmad', 505, LAY[4].y, '矩阵乘','必要','ok',['a_hat','re_cbd','comp0'],32000);
+    await growAt('pack', 372, LAY[5].y, '打包','必要','ok',['mmad','decode','prep_re','ntt'],28000);
+    call('ok','主链已按层铺开 · 还缺接到目标');
+    await wait(CAP_MS*0.4);
+
+    await beat('④','冲向目标 · 多次落空','不在高层落黄点 · 只试拉线');
+    async function tryDirect(id, label, froms){
+      counters.caps++;
+      addInv(id, label+' · 直达试探', '缺项', 'gap');
+      /* 老问题：高层闪现缺项圆点 → 改为只从已有节点拉黄线到目标 */
+      (froms||[]).forEach(f=>addEdge(f,'encaps','gap'));
+      call('gap',label+' → 目标？');
+      await wait(CAP_MS*0.55);
+      setInv(id,'未采用','disc');
+      const fs=new Set(froms||[]);
+      edges=edges.filter(e=>!(e.to==='encaps'&&e.kind==='gap'&&fs.has(e.from)));
+      counters.rb++;
+      bumpTick(12000);
+      recount(); render();
+      await wait(CAP_MS*0.35);
+    }
+    await tryDirect('d_pack','跳过收口直连',['pack']);
+    await tryDirect('d_mmad','跳过乘加直连',['mmad']);
+    await tryDirect('d_prep','预处理当封装',['prep_re']);
+    await tryDirect('d_g','衍生当封装',['G']);
+    call('gap','直连全失败 · 需要探出新能力');
+
+    await beat('⑤','探出新能力：封装收口','先黄缺项 · 挂完旁支再变绿');
+    await spawnPending('sink', 298, LAY[6].y, '封装收口','新能力',['pack'],16000);
+    call('gap','收口仍是缺项 · 逐条并入旁支');
+    await wait(CAP_MS*0.25);
+    await attachOne('mmad','sink','矩阵乘 → 收口');
+    await attachOne('batch','sink','过补：大批次 → 收口');
+    await attachOne('extsd','sink','过补：扩展种子 → 收口');
+    await attachOne('sha3x','sink','过补：双份哈希 → 收口');
+    call('ok','旁支已齐 · 收口现已证');
+    await proveNode('sink');
+    await wait(CAP_MS*0.35);
+
+    await beat('⑥','新能力接到目标','封装收口 → 密钥封装');
+    addEdge('sink','encaps','gap');
+    call('gap','用新能力黄线接到目标');
+    await wait(CAP_MS*0.7);
+    finalizeGraph();
+    counters.tick=TICK_GOAL;
+    addInv('encaps','密钥封装验收','缺项','gap');
+    await wait(CAP_MS*0.35);
+    setInv('encaps','已证','goal');
+    meters(); render();
+    call('ok','多次落空 → 探出「封装收口」→ 再接到目标<br/>约 <b>103 万</b> 拍');
+    stage('完成','目标已绿 · 图仍臃肿','新能力 → 目标');
+
+    await wait(CAP_MS*1.2);
+    playing=false; $('btnPlay').disabled=false; $('btnStart').disabled=false;
+  }
+
+  $('btnPlay').onclick=()=>play();
+  $('btnReset').onclick=()=>reset();
+  $('btnStart').onclick=()=>play();
+  if(cinema){ document.body.classList.add('cinema'); document.title='无序探索'; }
+  if(embed){ document.body.classList.add('embed'); }
+  window.addEventListener('message', (ev)=>{
+    const t=ev&&ev.data&&ev.data.type;
+    if(t==='demo-play'){ if(!playing) play(); }
+    if(t==='demo-reset'){ reset(); }
+  });
+  try{ window.parent&&window.parent!==window&&window.parent.postMessage({type:'demo-ready',role:'correctness'},'*'); }catch(_){}
+  reset();
+  if(autoMode) setTimeout(()=>play(), cinema?600:400);
+})();
+</script>
+</body>
+</html>

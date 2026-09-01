@@ -7,9 +7,16 @@
 | [汇报_有界推进与绿灯底座_v4提案.pptx](汇报_有界推进与绿灯底座_v4提案.pptx) | **采用稿（CASE-002 v4）**：6 页；本地 Agent 提案已入库 |
 | [CASE-002_有界推进与绿灯底座.md](CASE-002_有界推进与绿灯底座.md) | 案例归档：目标、改稿过程、口径、结构、可复用结论 |
 | [方法论对照页版式.md](方法论对照页版式.md) | CASE-002 第 4 页版式：上性能条 A/B/C、中代价条 A/B、下维度表；主视觉条形图 |
+| [methodology-demo/compare-encaps-process-demo.html](methodology-demo/compare-encaps-process-demo.html) | **密钥封装** · 有界 ‖ 无序 并排 |
+| [methodology-demo/compare-decaps-process-demo.html](methodology-demo/compare-decaps-process-demo.html) | **密钥解封** · 有界 ‖ 无序 并排（过程通常长于封装） |
+| [methodology-demo/bounded-encaps-process-demo.html](methodology-demo/bounded-encaps-process-demo.html) | 封装 · 有界推进 |
+| [methodology-demo/correctness-encaps-process-demo.html](methodology-demo/correctness-encaps-process-demo.html) | 封装 · 无序探索 |
+| [methodology-demo/bounded-decaps-process-demo.html](methodology-demo/bounded-decaps-process-demo.html) | 解封 · 有界推进 |
+| [methodology-demo/unordered-decaps-process-demo.html](methodology-demo/unordered-decaps-process-demo.html) | 解封 · 无序探索 |
+| [methodology-demo/README.md](methodology-demo/README.md) | 方法论 demo 索引 |
 | [Agent预研形式方法-方法论精髓与效果-简报.tex](Agent预研形式方法-方法论精髓与效果-简报.tex) / [PDF](Agent预研形式方法-方法论精髓与效果-简报.pdf) | **研究汇报 Beamer**（2026-07-27）：无封面、14 页；摘抄教材 Def/Thm/图/表 |
 | [从已验证能力到合法派生——面向Agent 的预研开发形式方法.pptx](从已验证能力到合法派生——面向Agent%20的预研开发形式方法.pptx) | **新稿**（2026-08-26）：从已验证能力到合法派生，面向 Agent 的预研开发形式方法 |
-| [汇报_有界推进与绿灯底座_合稿衔接片.pptx](汇报_有界推进与绿灯底座_合稿衔接片.pptx) · [生成脚本](gen_ai_bounded_search_briefing_pptx.py) | **已取代草稿**（Cloud 打磨稿）：勿再当主稿迭代；仅保留至 v4 入库后可删 |
+| ~~汇报_有界推进与绿灯底座_合稿衔接片.pptx~~ | **已删**（2026-09-01）；生成脚本 `gen_ai_bounded_search_briefing_pptx.py` 仅作历史参考，勿再当主稿 |
 
 ---
 

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN" translate="no">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="google" content="notranslate"/>
+<title>有界推进 · 密钥解封</title>
+<style>
+:root{
+  --navy:#1f4e79;--deep:#143252;--ink:#22384c;--muted:#5c6b7a;
+  --line:#d7e0ea;--soft:#f2f5f8;--ok:#2e7d4f;--ok-s:#eaf3ee;
+  --ghost:#9aa7b3;--gap:#c9a227;--gap-s:#faf6e8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;color:var(--ink);background:#fff}
+body{display:flex;flex-direction:column;min-height:100vh}
+.top{padding:.55rem 1rem .45rem;border-bottom:3px solid var(--navy)}
+.top h1{margin:0;font-size:1.02rem;color:var(--deep)}
+.top .sub{margin:.15rem 0 0;font-size:.7rem;color:var(--muted);max-width:58rem;line-height:1.38}
+.bar{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;padding:.35rem 1rem;background:var(--soft);border-bottom:1px solid var(--line)}
+button{appearance:none;border:1px solid #c5d2e0;background:#fff;color:#16324f;font:inherit;font-size:.74rem;font-weight:700;padding:.32rem .7rem;border-radius:3px;cursor:pointer}
+button.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+button:disabled{opacity:.4;cursor:not-allowed}
+.meters{display:flex;flex-wrap:wrap;gap:.35rem .55rem;margin-left:auto;font-size:.65rem;color:var(--muted)}
+.meters .chip{padding:.12rem .38rem;border-radius:3px;background:#fff;border:1px solid var(--line)}
+.stage{padding:.25rem 1rem .2rem;min-height:1.7rem}
+.stage .idx{font-size:.64rem;font-weight:700;color:var(--ok)}
+.stage h2{margin:.04rem 0 0;font-size:.82rem;color:#16324f}
+.stage p{margin:.04rem 0 0;font-size:.68rem;color:var(--muted)}
+.main{flex:1;display:grid;grid-template-columns:12rem minmax(0,1fr);gap:.4rem;padding:.3rem .5rem .45rem;min-height:0}
+.panel{border:1px solid var(--line);border-radius:4px;background:#fff;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.ph{padding:.32rem .45rem;border-bottom:1px solid var(--line);font-size:.7rem;font-weight:700;background:#fafcfd}
+.twrap{overflow:auto;flex:1}
+table{width:100%;border-collapse:collapse;font-size:.56rem}
+th,td{padding:.14rem .22rem;border-bottom:1px solid #e8eef4;text-align:left}
+th{position:sticky;top:0;background:var(--soft);color:var(--muted);z-index:1}
+tr.ok td{background:var(--ok-s)}
+tr.gap td{background:var(--gap-s);color:#7a6520}
+tr.goal td{background:var(--ok-s);font-weight:700}
+.gwrap{position:relative;flex:1;min-height:400px;background:linear-gradient(180deg,#f7fafc,#fff 38%)}
+svg.g{width:100%;height:100%;display:block;min-height:400px}
+.band-lab{font-size:7px;fill:#8a9aab;font-weight:600}
+.node circle{transition:opacity .28s,transform .28s}
+.node text{font-size:8.5px;font-weight:700;fill:#22384c;pointer-events:none}
+.node .s{font-size:6px;fill:#5c6b7a}
+.node.base circle,.node.goal.on circle{fill:var(--ok-s);stroke:var(--ok);stroke-width:2}
+.node.gap circle,.node.goal.pending circle{fill:var(--gap-s);stroke:var(--gap);stroke-width:2}
+.node.pulse circle{filter:drop-shadow(0 0 5px rgba(46,125,79,.45))}
+.node.gap-pulse circle{filter:drop-shadow(0 0 5px rgba(201,162,39,.5))}
+.edge{fill:none;stroke-linecap:round;transition:opacity .25s}
+.edge.base{stroke:var(--ok);stroke-width:1.5;opacity:.8}
+.edge.gap{stroke:var(--gap);stroke-width:1.3;stroke-dasharray:4 3;opacity:.85}
+.legend{position:absolute;left:.4rem;bottom:.4rem;z-index:3;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:4px;padding:.3rem .4rem;font-size:.56rem;line-height:1.4;max-width:11rem}
+.legend b{display:block;font-size:.6rem;color:var(--deep);margin-bottom:.1rem}
+.legend .row{display:flex;align-items:center;gap:.3rem;margin:.1rem 0}
+.legend .sw{border-radius:50%;width:.5rem;height:.5rem;border:2px solid;flex-shrink:0}
+.legend .sw.base{background:var(--ok-s);border-color:var(--ok)}
+.legend .sw.gap{background:var(--gap-s);border-color:var(--gap)}
+.legend .ln{width:1rem;border-top:2px solid;flex-shrink:0}
+.legend .ln.base{border-color:var(--ok)}
+.legend .ln.gap{border-top-style:dashed;border-color:var(--gap)}
+.call{position:absolute;right:.4rem;top:.35rem;max-width:11rem;padding:.25rem .4rem;border-radius:4px;font-size:.58rem;line-height:1.3;border:1px solid var(--line);background:#fff;z-index:2}
+.call.ok{border-color:#c5e0d0;background:var(--ok-s);color:#1e5a38}
+.call.gap{border-color:#e8d9a0;background:var(--gap-s);color:#7a6520}
+.foot{padding:.2rem 1rem .35rem;font-size:.62rem;color:var(--ghost);border-top:1px solid var(--line)}
+body.cinema .top,body.cinema .bar,body.cinema .foot{display:none!important}
+body.cinema .main{grid-template-columns:13rem 1fr;padding:.25rem;gap:.35rem;height:calc(100vh - 3rem)}
+body.cinema .stage{padding:.45rem 1rem .35rem;background:linear-gradient(180deg,#eef3f8,#fff);border-bottom:1px solid var(--line);min-height:2.8rem}
+body.cinema .ph{font-size:.68rem}
+body.cinema .gwrap,body.cinema svg.g{min-height:0}
+/* 并排页 iframe：收紧表宽、占满高度、隐藏本页开播罩（由父页同步开播） */
+body.embed.cinema .main{grid-template-columns:9.2rem 1fr;height:100vh;padding:.2rem;gap:.25rem}
+body.embed.cinema .stage{min-height:2.2rem;padding:.3rem .55rem}
+body.embed .start-overlay{display:none!important}
+.start-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;background:rgba(247,250,252,.92);z-index:5}
+.start-overlay.hidden{display:none!important}
+.start-overlay button{font-size:1rem;padding:.65rem 2.2rem;border-radius:6px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>有界推进 · 密钥解封</h1>
+  <div class="sub">已有能力就位 → 按规格画出全部缺项与路径 → 黄线变绿补缺 → 验收 · 约 <strong>105 万</strong> 拍</div>
+</header>
+<div class="bar">
+  <button class="pri" id="btnPlay" type="button">播放</button>
+  <button id="btnReset" type="button">重来</button>
+  <div class="meters">
+    <span class="chip">能力步 <strong id="mCaps">0</strong></span>
+    <span class="chip">拍数 <strong id="mTick">0</strong></span>
+  </div>
+</div>
+<div class="stage">
+  <div class="idx" id="sIdx">就绪</div>
+  <h2 id="sTitle">点击「开始演示」</h2>
+  <p id="sSub">绿=已证 · 黄=缺项 · 完成后全绿</p>
+</div>
+<div class="main">
+  <article class="panel">
+    <div class="ph">能力列表</div>
+    <div class="twrap"><table><thead><tr><th>#</th><th>能力</th><th>状态</th></tr></thead><tbody id="invBody"></tbody></table></div>
+  </article>
+  <article class="panel">
+    <div class="ph">实验图 · 目标在顶</div>
+    <div class="gwrap">
+      <div class="start-overlay" id="startOverlay">
+        <button class="pri" id="btnStart" type="button">开始演示</button>
+      </div>
+      <div class="call ok" id="call">能力列表在左</div>
+      <div class="legend">
+        <b>图例（两色）</b>
+        <div class="row"><span class="sw base"></span>已证（绿）</div>
+        <div class="row"><span class="sw gap"></span>缺项（黄）</div>
+        <div class="row"><span class="ln base"></span>已证依赖（绿实线）</div>
+        <div class="row"><span class="ln gap"></span>待补（黄虚线）</div>
+      </div>
+      <svg class="g" id="svg" viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </article>
+</div>
+<footer class="foot">比封装多一段解密+重加密核对 · 约 105 万拍</footer>
+
+<script>
+(function(){
+  const CAP_MS = 550;
+  const TICK_GOAL = 1050610, TICK_SEED = 650000;
+  const CX = 360, W = 720, GOAL_Y = 34;
+  const LAY = [{y:338,l:'0'},{y:278,l:'1'},{y:218,l:'2'},{y:158,l:'3'},{y:98,l:'4'}];
+  const qs = new URLSearchParams(location.search);
+  const cinema = qs.get('cinema') === '1';
+  const embed = qs.get('embed') === '1';
+  const autoMode = !embed && (qs.get('auto') === '1' || qs.get('record') === '1');
+
+  let nodes={}, edges=[], inv=[], seq=0, playing=false, timers=[];
+  let counters={caps:0, tick:0};
+
+  const $=id=>document.getElementById(id);
+  function wait(ms){ return new Promise(r=>timers.push(setTimeout(r,ms))); }
+  function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
+  function showStart(){ $('startOverlay').classList.remove('hidden'); $('btnStart').disabled=false; }
+  function hideStart(){ $('startOverlay').classList.add('hidden'); }
+  function stage(i,t,s){ $('sIdx').textContent=i; $('sTitle').textContent=t; $('sSub').textContent=s||''; }
+  function call(c,h){ $('call').className='call '+c; $('call').innerHTML=h; }
+  function meters(){ $('mCaps').textContent=counters.caps; $('mTick').textContent=counters.tick.toLocaleString(); }
+  function bumpTick(n){ counters.tick=Math.min(TICK_GOAL,counters.tick+n); meters(); }
+
+  function addInv(key,name,status,cls){
+    if(inv.length===1&&inv[0]._ph) inv=[];
+    inv.push({key:key||('r'+seq),seq:++seq,name,status,cls});
+    renderInv();
+  }
+  function setInv(key,status,cls){
+    const row=inv.find(r=>r.key===key);
+    if(!row) return;
+    row.status=status; row.cls=cls;
+    renderInv();
+  }
+  function addNode(id,spec){
+    nodes[id]=Object.assign({id,onGraph:true,pulse:false,sm:false},spec);
+    render(); meters();
+  }
+  function addEdge(from,to,kind){
+    const a=nodes[from], b=nodes[to];
+    /* 同层不连：避免横向蛛网；依赖只保留跨层（向上汇聚） */
+    if(a&&b&&Math.abs((a.y||0)-(b.y||0))<8) return;
+    const key=from+'->'+to;
+    if(!edges.find(e=>e.key===key)) edges.push({key,from,to,kind:kind||'base'});
+    render();
+  }
+  function hideNode(id){ if(nodes[id]){ nodes[id].onGraph=false; render(); } }
+  function dropGapEdge(from,to){
+    edges=edges.filter(e=>!(e.from===from&&e.to===to&&e.kind==='gap'));
+    render();
+  }
+  /** 图上只留「能走到目标」的节点；列表仍可保留未汇入/未采用行 */
+  function pruneUnreachable(goalId){
+    const reach=new Set([goalId]);
+    let changed=true;
+    while(changed){
+      changed=false;
+      edges.forEach(e=>{
+        if(!reach.has(e.to)||reach.has(e.from)) return;
+        const n=nodes[e.from];
+        if(n&&n.onGraph&&!n.hide){ reach.add(e.from); changed=true; }
+      });
+    }
+    Object.values(nodes).forEach(n=>{
+      if(n.id===goalId||!n.onGraph||n.hide) return;
+      if(!reach.has(n.id)){ n.onGraph=false; n.hide=true; }
+    });
+    edges=edges.filter(e=>{
+      const a=nodes[e.from], b=nodes[e.to];
+      return a&&b&&a.onGraph&&!a.hide&&b.onGraph&&!b.hide;
+    });
+    render();
+  }
+  /** 验收：入目标边数不变，只把黄边/黄点变绿；不删路径、不改拓扑 */
+  function finalizeGraph(){
+    edges.forEach(e=>{ e.kind='base'; });
+    Object.values(nodes).forEach(n=>{
+      if(!n.onGraph||n.hide||n.id==='decaps') return;
+      if(n.kind==='gap'){ n.kind='base'; n.pulse=false; }
+    });
+    if(nodes.decaps){ nodes.decaps.on=true; nodes.decaps.sub='完成'; }
+    render();
+  }
+
+  /** 把已画在图上的缺项就地证绿（不删点、不改入目标边） */
+  async function provePlanned(id, tickAdd){
+    counters.caps++;
+    setInv(id,'已证','ok');
+    if(nodes[id]){ nodes[id].kind='base'; nodes[id].pulse=true; nodes[id].sub='已证'; }
+    edges.filter(e=>e.to===id||e.from===id).forEach(e=>{ e.kind='base'; });
+    bumpTick(tickAdd||10000);
+    render();
+    await wait(CAP_MS*0.35);
+    if(nodes[id]) nodes[id].pulse=false;
+    render();
+    await wait(CAP_MS*0.45);
+  }
+
+  /** 补缺中途发现的新能力：必须落在某一实层 y（与同层能力平行），经跨层边接入；禁止层间悬空 */
+  async function placeNewThenWire(id,x,y,label,sub,invName,froms,toIds,tickAdd){
+    counters.caps++;
+    addInv(id, invName, '缺项', 'gap');
+    addNode(id,{x,y,kind:'gap',label,sub:sub||'新能力',sm:label.length>6,pulse:true});
+    (froms||[]).forEach(f=>addEdge(f,id,'gap'));
+    await wait(CAP_MS*0.4);
+    setInv(id,'已证','ok');
+    if(nodes[id]){ nodes[id].kind='base'; nodes[id].pulse=false; nodes[id].sub='已证'; }
+    edges.filter(e=>e.to===id||e.from===id).forEach(e=>{ e.kind='base'; });
+    (toIds||[]).forEach(t=>addEdge(id,t,'gap'));
+    bumpTick(tickAdd||12000);
+    render();
+    await wait(CAP_MS*0.5);
+  }
+
+  /** 已有且必用的能力：一次性上图+列表（已证），不逐个 CAP */
+  function seedProven(items, tick){
+    items.forEach(it=>{
+      counters.caps++;
+      addNode(it.id,{x:it.x,y:LAY[it.layer].y,kind:'base',label:it.label,sub:it.sub||'',sm:(it.label||'').length>6});
+      (it.froms||[]).forEach(f=>addEdge(f,it.id,'base'));
+      addInv(it.id, it.invName||it.label, '已证', 'ok');
+    });
+    if(tick!=null){ counters.tick=tick; }
+    meters(); render(); renderInv();
+  }
+
+  function renderInv(){
+    const tb=$('invBody');
+    const rows=inv.filter(r=>!r._ph);
+    tb.innerHTML=rows.length?rows.map(r=>`<tr class="${r.cls}"><td>${r.seq}</td><td>${r.name}</td><td>${r.status}</td></tr>`).join(''):'<tr><td colspan="3" style="color:#9aa7b3">（空）</td></tr>';
+    tb.parentElement.parentElement.scrollTop=99999;
+  }
+
+  function render(){
+    const svg=$('svg'); svg.innerHTML='';
+    const gB=document.createElementNS('http://www.w3.org/2000/svg','g');
+    LAY.forEach((band,i)=>{
+      const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x','54'); rect.setAttribute('y',String(band.y-24));
+      rect.setAttribute('width',String(W-54)); rect.setAttribute('height','48');
+      rect.setAttribute('fill',i%2?'#fff':'#f4f7fa'); gB.appendChild(rect);
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('class','band-lab'); t.setAttribute('x','8'); t.setAttribute('y',String(band.y+2));
+      t.textContent='L'+band.l; gB.appendChild(t);
+    });
+    svg.appendChild(gB);
+    const gE=document.createElementNS('http://www.w3.org/2000/svg','g');
+    edges.forEach(e=>{
+      const a=nodes[e.from], b=nodes[e.to];
+      if(!a||!b||!a.onGraph||!b.onGraph) return;
+      const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      const mid=(a.y+b.y)/2;
+      p.setAttribute('d',`M${a.x},${a.y-10} C${a.x},${mid} ${b.x},${mid} ${b.x},${b.y+10}`);
+      p.setAttribute('class','edge '+(e.kind||'base'));
+      gE.appendChild(p);
+    });
+    svg.appendChild(gE);
+    const gN=document.createElementNS('http://www.w3.org/2000/svg','g');
+    Object.values(nodes).forEach(n=>{
+      if(!n.onGraph&&n.id!=='decaps') return;
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('transform',`translate(${n.x},${n.y})`);
+      let cls='node '+(n.kind||'base');
+      if(n.pulse) cls+=n.kind==='gap'?' gap-pulse':' pulse';
+      if(n.id==='decaps') cls='node goal'+(n.on?' on':' pending');
+      g.setAttribute('class',cls);
+      const cir=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      cir.setAttribute('r',String(n.r||12));
+      const tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+      tx.setAttribute('text-anchor','middle'); tx.setAttribute('y','3'); tx.textContent=n.label;
+      const sx=document.createElementNS('http://www.w3.org/2000/svg','text');
+      sx.setAttribute('class','s'); sx.setAttribute('text-anchor','middle'); sx.setAttribute('y','19');
+      sx.textContent=n.sub||'';
+      g.appendChild(cir); g.appendChild(tx); if(n.sub) g.appendChild(sx);
+      gN.appendChild(g);
+    });
+    svg.appendChild(gN);
+  }
+
+  function reset(){
+    clearTimers(); playing=false;
+    nodes={}; edges=[]; inv=[{_ph:true}]; seq=0; counters={caps:0,tick:0};
+    addNode('decaps',{x:CX,y:GOAL_Y,kind:'goal',r:14,label:'密钥解封',sub:'目标',on:false,onGraph:true});
+    $('btnPlay').disabled=false; $('btnStart').disabled=false;
+    showStart();
+    stage('就绪','有界推进','绿=已证 · 黄=缺项 · 完成后全绿');
+    call('ok','能力列表在左');
+    renderInv(); render(); meters();
+  }
+
+  async function play(){
+    if(playing) return;
+    playing=true; $('btnPlay').disabled=true; $('btnStart').disabled=true;
+    hideStart(); clearTimers();
+    nodes={}; edges=[]; inv=[]; seq=0; counters={caps:0,tick:0};
+    addNode('decaps',{x:CX,y:GOAL_Y,kind:'goal',r:14,label:'密钥解封',sub:'目标',on:false,onGraph:true});
+    render(); meters();
+    const beat=async(i,t,s)=>{ stage(i,t,s); await wait(CAP_MS*0.6); };
+
+    /* ① 只放已有能力；不连入目标 */
+    await beat('①','已有能力就位','解密 · 加密 · 计算核 · 私钥 · 密文');
+    /* 只放路径上会用到的底座；不用的能力不上图、不进列表 */
+    seedProven([
+      {id:'dec',x:CX-70,layer:0,label:'解密',sub:'已验证',invName:'私钥解密'},
+      {id:'enc',x:CX,layer:0,label:'加密',sub:'已验证',invName:'公钥加密（复用）'},
+      {id:'comp',x:CX+70,layer:0,label:'计算核',sub:'已有',invName:'核心计算'},
+      {id:'dk',x:CX-55,layer:1,label:'私钥',sub:'输入',invName:'私钥',froms:['dec']},
+      {id:'ct',x:CX+55,layer:1,label:'密文',sub:'输入',invName:'密文',froms:['enc']}
+    ], TICK_SEED);
+    call('ok','底座 3+2 已绿<br/>尚未画入目标路径');
+    await wait(CAP_MS*0.5);
+
+    /* ② 按规格列出全部缺项 + 画全路径；入目标锁定 2 条 */
+    await beat('②','按规格列出缺项并画全路径','入目标 2 条黄线 · 可反推到底座');
+    addNode('phD',{x:CX-80,y:LAY[2].y,kind:'gap',label:'解密段',sub:'缺项',sm:true,pulse:true});
+    addNode('phE',{x:CX-20,y:LAY[2].y,kind:'gap',label:'重加密',sub:'缺项',sm:true,pulse:true});
+    addNode('fo',{x:CX+40,y:LAY[2].y,kind:'gap',label:'密钥核对',sub:'缺项',sm:true,pulse:true});
+    addNode('join',{x:CX+95,y:LAY[2].y,kind:'gap',label:'两段并入',sub:'缺项',sm:true,pulse:true});
+    addNode('sDec',{x:CX-50,y:LAY[3].y,kind:'gap',label:'解密调度',sub:'缺项',sm:true,pulse:true});
+    addNode('sFo',{x:CX+50,y:LAY[4].y,kind:'gap',label:'核对调度',sub:'缺项',sm:true,pulse:true});
+    addEdge('dec','phD','gap'); addEdge('dk','phD','gap'); addEdge('ct','phD','gap');
+    addEdge('enc','phE','gap'); addEdge('dk','phE','gap');
+    addEdge('ct','fo','gap'); addEdge('enc','fo','gap');
+    addEdge('comp','join','gap'); addEdge('ct','join','gap');
+    addEdge('join','sDec','gap'); addEdge('phD','sDec','gap');
+    addEdge('sDec','sFo','gap'); addEdge('phE','sFo','gap'); addEdge('fo','sFo','gap');
+    /* 入目标：自始至终恰好 2 条（解密调度 + 核对调度） */
+    addEdge('sDec','decaps','gap');
+    addEdge('sFo','decaps','gap');
+    ['phD','phE','fo','join','sDec','sFo'].forEach(id=>{
+      addInv(id, nodes[id].label, '缺项', 'gap');
+    });
+    call('gap','缺项与路径已齐<br/>入目标 2 条 · 可反推');
+    await wait(CAP_MS);
+    ['phD','phE','fo','join','sDec','sFo'].forEach(id=>{ if(nodes[id]) nodes[id].pulse=false; });
+    render();
+
+    await beat('③','补缺 1/6 · 解密段','就地证绿');
+    await provePlanned('phD',22000);
+
+    await beat('③','发现新能力 · 双会话隔离','落入 L2（与解密段等平行），再跨层接到解密调度');
+    /* L2 与 phD/phE/fo/join 平行；边：dk(L1)→sess(L2)→sDec(L3) */
+    await placeNewThenWire('sess', CX-145, LAY[2].y, '双会话隔离', '新能力', '双会话隔离', ['dk'], ['sDec'], 16000);
+    call('ok','新能力已挂上<br/>再继续补调度');
+
+    await beat('③','补缺 2/6 · 重加密','就地证绿');
+    await provePlanned('phE',24000);
+
+    await beat('③','补缺 3/6 · 密钥核对','就地证绿');
+    await provePlanned('fo',20000);
+
+    await beat('③','补缺 4/6 · 两段并入','就地证绿');
+    await provePlanned('join',18000);
+
+    await beat('④','补缺 5/6 · 解密调度','入目标左边黄→绿');
+    await provePlanned('sDec',20000);
+    call('ok','入目标仍是 2 条<br/>左线已绿');
+
+    await beat('④','补缺 6/6 · 核对调度','入目标右边黄→绿');
+    await provePlanned('sFo',20000);
+    call('ok','入目标 2 条均已绿<br/>拓扑未改');
+
+    await beat('⑤','验收通过','目标点亮 · 全绿');
+    finalizeGraph();
+    counters.tick=TICK_GOAL;
+    inv.forEach(r=>{ if(r.status==='缺项'){ r.status='已证'; r.cls='ok'; } });
+    addInv('decaps','密钥解封验收','缺项','gap');
+    await wait(CAP_MS*0.35);
+    setInv('decaps','已证','goal');
+    renderInv();
+    call('ok','全绿 · 约 <b>105 万</b> 拍<br/>入目标始终 2 条');
+    stage('完成','交付就绪','路径拓扑未变 · 只黄变绿');
+
+    await wait(CAP_MS*1.0);
+    playing=false; $('btnPlay').disabled=false; $('btnStart').disabled=false;
+  }
+
+  $('btnPlay').onclick=()=>play();
+  $('btnReset').onclick=()=>reset();
+  $('btnStart').onclick=()=>play();
+  if(cinema){ document.body.classList.add('cinema'); document.title='有界推进 · 解封'; }
+  if(embed){ document.body.classList.add('embed'); }
+  window.addEventListener('message', (ev)=>{
+    const t=ev&&ev.data&&ev.data.type;
+    if(t==='demo-play'){ if(!playing) play(); }
+    if(t==='demo-reset'){ reset(); }
+  });
+  try{ window.parent&&window.parent!==window&&window.parent.postMessage({type:'demo-ready',role:'bounded'},'*'); }catch(_){}
+  reset();
+  if(autoMode) setTimeout(()=>play(), cinema?600:400);
+})();
+</script>
+</body>
+</html>
