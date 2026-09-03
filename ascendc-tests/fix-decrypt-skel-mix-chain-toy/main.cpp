@@ -1,17 +1,24 @@
 /**
  * @file main.cpp
- * @brief Decrypt 握手骨架 toy Host：装填 GM、清零 softSync、**单趟** MIX launch、落盘 out。
+ * @brief Decrypt 握手骨架 toy Host：装填 GM、初始化 softSync、**单趟** MIX launch、落盘 out。
  *
  * GM：out[64B] / src[64B 占位] / ws[S0|LUT|MAT_C|STUB] / softSync[64B，前 2×int32]；
- * LUT=I₃₂ 由 host 预填。launch 前 **必须** 将 softSyncGm 清零（F-host-zeros-softsync）。
+ * LUT=I₃₂ 由 host 预填。
+ *
+ * softSync 初始化（运行时 env `SKEL_SOFTSYNC_PREFILL`，非 cmake 宏；测 J-dirty-softsync-hang-vs-race）：
+ *   - 0（默认）：launch 前清零（F-host-zeros-softsync 生产定式）
+ *   - 1：launch 前把 softSync int32[2] **都写成 1**（脏非零）→ AIV1 跳过自旋（误放行），**不是** hang 注入
+ * 设备侧 SoftSync 逻辑不改；本 Host 开关不打开任何 OMIT_*。
  * 验收不对算法正确性，只要求 kernel 跑完且 out 含约定 magic（SKELDEC1）。
  */
 #include "data_utils.h"
 #include "tiling.h"
+#include <cstdlib>
+#include <cstdint>
+#include <cstdio>
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
 #include "aclrtlaunch_mmad_custom.h"
-#include <cstdlib>
 #else
 #include "tikicpulib.h"
 #ifndef GM_ADDR
@@ -21,13 +28,54 @@ extern "C" void mmad_custom(GM_ADDR out, GM_ADDR src, GM_ADDR ws, GM_ADDR softSy
 #endif
 
 /**
- * 主流程：读 tiling/src/lut → 清零 softSync → 1 次 MIX launch → 写 output/out.bin。
+ * 读运行时 env `SKEL_SOFTSYNC_PREFILL`（默认 0）。
+ * @return 0=清零；1=预填 int32 脏值 1；非法值时 stderr 提示并当 0
+ */
+static int SoftSyncPrefillMode()
+{
+    const char *env = std::getenv("SKEL_SOFTSYNC_PREFILL");
+    if (env == nullptr || env[0] == '\0' || (env[0] == '0' && env[1] == '\0')) {
+        return 0;
+    }
+    if (env[0] == '1' && env[1] == '\0') {
+        return 1;
+    }
+    std::fprintf(stderr, "[WARN] SKEL_SOFTSYNC_PREFILL must be 0 or 1, got '%s'; treat as 0\n", env);
+    return 0;
+}
+
+/**
+ * Host 侧初始化 softSync 缓冲（64B；有效语义为前 2×int32）。
+ * @param softSyncHost host 缓冲指针
+ * @param softSyncSize 分配字节数（tiling::kSoftSyncBytes）
+ * @param prefill 0=全零；1=两槽均写 int32(1)，其余字节仍 0
+ *
+ * 背景：TASK-012 测脏哨兵 vs hang；结论预期两档均绿（脏非零≠SIM hang）。
+ */
+static void InitSoftSyncHost(uint8_t *softSyncHost, size_t softSyncSize, int prefill)
+{
+    for (size_t i = 0; i < softSyncSize; ++i) {
+        softSyncHost[i] = 0;
+    }
+    if (prefill == 1) {
+        // 脏非零：slot0/slot1 写成 1，使 AIV1 SoftSync 自旋条件已满足（误放行），非 hang
+        auto *slots = reinterpret_cast<int32_t *>(softSyncHost);
+        slots[0] = 1;
+        slots[1] = 1;
+    }
+}
+
+/**
+ * 主流程：读 tiling/src/lut → 按 SKEL_SOFTSYNC_PREFILL 初始化 softSync → 1 次 MIX launch → 写 output/out.bin。
  * @return 0 成功；非 0 文件 I/O 失败
  */
 int32_t main(int32_t argc, char *argv[])
 {
     (void)argc;
     (void)argv;
+
+    const int softSyncPrefill = SoftSyncPrefillMode();
+    std::printf("SKEL_SOFTSYNC_PREFILL=%d\n", softSyncPrefill);
 
     size_t tilingSize = 64;
     static_assert(sizeof(TilingData) <= 64, "");
@@ -58,10 +106,8 @@ int32_t main(int32_t argc, char *argv[])
     if (!ok) {
         return 10;
     }
-    // softSync 必须清零，否则 AIV1 自旋可能误放行或死等脏值
-    for (size_t i = 0; i < softSyncSize; ++i) {
-        softSync[i] = 0;
-    }
+    // softSync：默认清零；SKEL_SOFTSYNC_PREFILL=1 时两槽写 1（脏哨兵≠hang，见文件头）
+    InitSoftSyncHost(softSync, softSyncSize, softSyncPrefill);
     ICPU_RUN_KF(mmad_custom, blockDim, out, src, ws, softSync, *tiling);
 
     ok = WriteFile("./output/out.bin", out, outFileSize);
@@ -112,12 +158,10 @@ int32_t main(int32_t argc, char *argv[])
     }
     CHECK_ACL(aclrtMemcpy(wsDevice, wsFileSize, wsHost, wsFileSize, ACL_MEMCPY_HOST_TO_DEVICE));
 
-    // softSyncGm：Host launch 前必须清零（生产定式）
+    // softSyncGm：默认清零（生产定式）；PREFILL=1 脏写 int32[2]=1（TASK-012 / J-dirty-softsync-hang-vs-race）
     CHECK_ACL(aclrtMallocHost((void **)(&softSyncHost), softSyncSize));
     CHECK_ACL(aclrtMalloc((void **)&softSyncDevice, softSyncSize, ACL_MEM_MALLOC_HUGE_FIRST));
-    for (size_t i = 0; i < softSyncSize; ++i) {
-        softSyncHost[i] = 0;
-    }
+    InitSoftSyncHost(softSyncHost, softSyncSize, softSyncPrefill);
     CHECK_ACL(aclrtMemcpy(softSyncDevice, softSyncSize, softSyncHost, softSyncSize, ACL_MEMCPY_HOST_TO_DEVICE));
 
     // 唯一 MIX launch（禁止滥增 launch）

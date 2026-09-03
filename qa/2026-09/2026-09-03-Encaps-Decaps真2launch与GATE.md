@@ -269,13 +269,9 @@ F203_ENCAPS_SPLIT_PREP=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
 | 计划 | [`graph_tests/DECRYPT_HANG_PLAN.md`](../../graph_tests/DECRYPT_HANG_PLAN.md) |
 | 握手 | SoftSync slot0/1（AIV1 自旋）→ 双 AIV SET(4) → AIC 入口 Wait(4)/Set(8) → NTT 1/3 → slot1 → 第二轮 GATE → INTT 1/3（无 flag 2） |
 | 借入 Encaps | 缺 SET(4) 可 SIM 124；**双 Cube 不是充分 hang 因**（已 retracted，勿再当第一刀） |
-| 下一刀 | **TASK-012** Host softSync 预填 0/1（脏≠hang） |
-| 上机 | **仍禁止**全量 Decrypt NPU |
+| 下一刀 | 候选：**设备 TRACE**（先 SIM）；勿默认上 Decrypt NPU |
+| 上机 | **仍禁止**默认全量 Decrypt NPU |
 
-**TASK-009（同日）**：合法握手 SIM **绿**；`OMIT_SET4=1` **124**。
+**TASK-009..012（同日）**：合法绿；两轮/仅 R2 缺 SET(4)→**124**；空 while / 脏 softSync **SIM 仍绿**。
 
-**TASK-010（同日）**：`OMIT_SLOT0=1` SIM **仍绿** — 空 while 非 SIM hang 代理。
-
-**TASK-011（同日）**：`OMIT_SET4_R2=1`（仅第二轮缺 SET(4)）→ **124**（wall 60.1s）；默认仍绿。`J-omit-slot1-hangs-after-ntt` → **verified**。
-
-**状态词**：Decrypt hang T0–T3 **有条件完成**（差 T4 + 实机）；已有 CrossCore 挂死机制沉积，不是空图谱。
+**状态词**：Decrypt hang SIM CrossCore 层 **有条件完成**（差 TRACE + 实机）；已有机制沉积，不是空图谱。

@@ -62,11 +62,11 @@ AIC: 入口 WAIT(4)→SET(8) → WAIT(1) MMAD SET(3) → WAIT(4)→SET(8) → WA
 | **T1** | `J-omit-set4-hangs-decrypt` | **已完成** TASK-009 B：OMIT_SET4 → **124**（verified） |
 | **T2** | `J-omit-slot0-spin-hangs` | **TASK-010 SIM 未挂**（rc=0 wall 3.6s；宏已生效）→ **retracted（SIM）**；空 while 不是 SIM hang 代理 |
 | **T3** | `J-omit-slot1-hangs-after-ntt` | **已完成** TASK-011：仅第二轮省略 SET(4) → **124** |
-| **T4** | `J-dirty-softsync-hang-vs-race` | **TASK-012**：Host 预填 softSync 0/1（预期都绿；脏≠hang） |
-| **T5** | 拉长 stub prep 仍绿 | 支持「忙等≠死锁」 |
+| **T4** | `J-dirty-softsync-hang-vs-race` | **已完成** TASK-012：PREFILL=0/1 **均绿**（脏≠hang） |
+| **T5** | 拉长 stub prep 仍绿 | 可选；优先级低于 TRACE |
 | 勿排 | `J-dual-cube-sufficient-hang` | **已 retracted** |
 
-T0–T3 已沉（含失败：空 while 非 SIM hang）。T4 进行中。**仍不准**请用户跑全量 Decrypt NPU。
+T0–T4 齐。SIM 上挂死充分因子 = **CrossCore 缺 SET(4)**（两轮或仅第二轮）。空 while / 脏哨兵 **不是** SIM hang 代理。下一候选：**设备 TRACE 层标记**（`D-next-device-trace-marks`）。**仍不准**默认请用户跑全量 Decrypt NPU。
 
 ---
 

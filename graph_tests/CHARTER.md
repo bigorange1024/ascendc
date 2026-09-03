@@ -115,13 +115,13 @@
 | 项 | 状态 |
 |----|------|
 | Encrypt hang 图 | TASK-001..007 已沉；等 NPU Hostμ |
-| **Decrypt hang 图** | T0–T3 已沉；缺 SET(4)/仅 R2 缺 SET(4)→124；空 while 非 SIM 代理 |
-| Decrypt 骨架 toy | TASK-009..011 有 FB；**TASK-012** 脏 softSync |
-| graph_tests | **012 进行中** |
+| **Decrypt hang 图** | **T0–T4 齐**；CrossCore 缺 SET(4)⇒124；空/脏 SoftSync 非 SIM hang |
+| Decrypt 骨架 toy | TASK-009..012 闭环 |
+| graph_tests | 下一候选 TRACE |
 | Decaps K 图 | TASK-008 SIM 绿；与 hang 正交 |
 | Git | 干活 subagent 禁止自主推送 |
 
-**下一刀**：`TASK-012` — Host softSync 预填 0/1（脏≠hang）。
+**下一刀候选**：Decrypt 设备 TRACE 层标记（先 SIM）；**不要**默认请用户上 Decrypt NPU。
 
 ---
 

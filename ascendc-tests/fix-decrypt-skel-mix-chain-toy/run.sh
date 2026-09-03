@@ -1,10 +1,14 @@
 #!/bin/bash
 # fix-decrypt-skel-mix-chain-toy：Decrypt fused 握手骨架 toy（SoftSync + 两轮 GATE + stub Cube）
 #
-# Usage（默认 = 合法握手，OMIT_SET4=0 且 OMIT_SLOT0=0 且 OMIT_SET4_R2=0）：
+# Usage（默认 = 合法握手，OMIT_*=0，SOFTSYNC_PREFILL=0）：
 #   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 #   # 等价显式：
-#   SKEL_OMIT_SET4_R2=0 SKEL_OMIT_SET4=0 SKEL_OMIT_SLOT0=0 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   SKEL_SOFTSYNC_PREFILL=0 SKEL_OMIT_SET4_R2=0 SKEL_OMIT_SET4=0 SKEL_OMIT_SLOT0=0 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#
+# Host softSync 预填（运行时 env，非 cmake；TASK-012 / J-dirty-softsync-hang-vs-race；两档均预期绿）：
+#   SKEL_SOFTSYNC_PREFILL=0 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4   # 清零（默认）
+#   SKEL_SOFTSYNC_PREFILL=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4   # int32[2] 都写 1（脏误放行≠hang）
 #
 # 故障注入（预期 timeout 124；可降预算；OMIT_SET4 / OMIT_SLOT0 / OMIT_SET4_R2 三者互斥）：
 #   KERNEL_COMPUTE_BUDGET_SEC=60 SKEL_OMIT_SET4=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
@@ -14,6 +18,7 @@
 # KERNEL_COMPUTE_BUDGET_SEC 默认 180（防挂死，非性能定标）
 # CANN：source ${REPO_ROOT}/scripts/env.sh
 # SKEL_OMIT_*：编译期宏（cmake -D）；同时开多个则报错退出
+# SKEL_SOFTSYNC_PREFILL：仅 Host 运行时；勿与 OMIT_* 叠开测 hang
 CURRENT_DIR=$(
     cd $(dirname ${BASH_SOURCE:-$0})
     pwd
@@ -119,7 +124,13 @@ if [ "${_OMIT_ON}" -gt 1 ]; then
     echo "[ERROR] SKEL_OMIT_SET4 / SKEL_OMIT_SLOT0 / SKEL_OMIT_SET4_R2 互斥；同时为 1 的不得超过一个（got SET4=${SKEL_OMIT_SET4} SLOT0=${SKEL_OMIT_SLOT0} SET4_R2=${SKEL_OMIT_SET4_R2}）" >&2
     exit 1
 fi
-echo "SKEL_OMIT_SET4=${SKEL_OMIT_SET4} SKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0} SKEL_OMIT_SET4_R2=${SKEL_OMIT_SET4_R2}"
+# SKEL_SOFTSYNC_PREFILL：Host 运行时；0=清零（默认）；1=脏写 int32[2]=1（预期仍绿，非 hang）
+export SKEL_SOFTSYNC_PREFILL="${SKEL_SOFTSYNC_PREFILL:-0}"
+if [ "${SKEL_SOFTSYNC_PREFILL}" != "0" ] && [ "${SKEL_SOFTSYNC_PREFILL}" != "1" ]; then
+    echo "[ERROR] SKEL_SOFTSYNC_PREFILL must be 0 or 1, got: ${SKEL_SOFTSYNC_PREFILL}" >&2
+    exit 1
+fi
+echo "SKEL_OMIT_SET4=${SKEL_OMIT_SET4} SKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0} SKEL_OMIT_SET4_R2=${SKEL_OMIT_SET4_R2} SKEL_SOFTSYNC_PREFILL=${SKEL_SOFTSYNC_PREFILL}"
 
 set -e
 rm -rf build out

@@ -11,7 +11,7 @@ title: "ML-KEM Decrypt 卡死 · 推理图谱"
 
 review:
   last_reviewed: "2026-09-03"
-  note: "T0–T3：缺 SET(4)/仅第二轮缺 SET(4) 均可 SIM 124；空 while SoftSync 非 SIM 代理；下一刀 T4 脏 softSync"
+  note: "T0–T4 齐：缺 SET(4)/R2 缺 SET(4)→124；空 while/脏 softSync 非 SIM hang；可选下一刀 TRACE 标记"
 
 config:
   required_fields: [domain]
@@ -377,11 +377,11 @@ nodes:
     kind: inference
     derivation: defeasible
     title: "未清零的 softSync 更常导致误放行而非自旋挂"
-    statement: "Host 不清零时：残留非 0 使 AIV1 跳过等待（正确性/竞态）；残留 0 才与清零等价。把「脏 GM」当 hang 充分条件前须用 toy 分残留 0/非0"
-    deps: [F-host-zeros-softsync, F-softsync-two-slots]
-    status: unverified
+    statement: "Host 预填 softSync=1 时 AIV1 跳过自旋（误放行路径），SIM 上仍正常结束；预填 0 同清零亦绿。脏非零哨兵不是 SIM hang 充分条件"
+    deps: [F-host-zeros-softsync, F-softsync-two-slots, F-dirty-softsync-prefill1-sim-pass]
+    status: verified
     basis: experiment
-    evidence: "待 HOST_SKIP_ZERO / 预填 1 对照"
+    evidence: "FB-TASK-012：PREFILL=0/1 均 rc=0 wall≈3.9/4.1s"
 
   - id: J-prep-scalar-not-sufficient-hang
     domain: impl
@@ -564,13 +564,50 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀：Host 不清零 / 预填 softSync 对照"
-    statement: "测 J-dirty-softsync-hang-vs-race：Host 预填 slot=1 更像误放行（仍绿或错放行）；预填 0 像清零。禁止用空 while 硬凑 hang。SIM only"
+    title: "（已完成）Host 不清零 / 预填 softSync 对照"
+    statement: "SKEL_SOFTSYNC_PREFILL=0/1 两档 SIM 均绿；脏非零≠hang"
     deps: [F-host-zeros-softsync, J-dirty-softsync-hang-vs-race, J-sim-empty-gm-spin-not-hang, D-sim-enough-before-npu]
-    status: active
+    status: inactive
+    evidence: "FB-TASK-012 PASS"
+    replaced_by: D-next-device-trace-marks
     targets: [Q-hang-which-layer]
 
+  - id: F-dirty-softsync-prefill1-sim-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "Decrypt toy：Host 预填 softSync=1 后 SIM 仍绿"
+    statement: "SKEL_SOFTSYNC_PREFILL=1 时 launch 前 int32[2] 均为 1，SIM 正常结束 rc=0、wall 4.078s、magic 过；与 PREFILL=0（wall 3.860s）同量级"
+    repro: "cd ascendc-tests/fix-decrypt-skel-mix-chain-toy && SKEL_SOFTSYNC_PREFILL=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FB-TASK-012.md；decrypt-skel-toy-dirty1.log"
+
+  - id: D-next-device-trace-marks
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀候选：Decrypt toy / 生产 fused 加层标记 TRACE"
+    statement: "SIM 上 CrossCore 缺 SET(4) 已双档 124；SoftSync 空/脏哨兵非 SIM hang 代理。若要逼近实机挂在哪一层，下一刀给 toy 或生产 fused 加可 Host 读出的段标记（仿 Encaps F203_L18_TRACE），仍先 SIM 再谈 NPU"
+    deps: [F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, F-omit-slot0-no-hang-sim, F-dirty-softsync-prefill1-sim-pass, F-no-device-trace, D-sim-enough-before-npu]
+    status: active
+    targets: [Q-hang-which-layer, Q-root-cause]
+
+  - id: D-sim-crosscore-layer-deposited
+    domain: method
+    kind: decision
+    by: agent
+    title: "SIM 已沉积 Decrypt CrossCore GATE 挂死机制"
+    statement: "合法握手绿 + 两轮/仅第二轮缺 SET(4)⇒124 已入库；空 while 与脏 softSync 不是 SIM hang 充分条件。未加 TRACE 前不请用户上机全量 Decrypt"
+    deps: [F-decrypt-skel-legal-sim-pass, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, J-sim-empty-gm-spin-not-hang, J-dirty-softsync-hang-vs-race, D-sim-enough-before-npu]
+    status: active
+
 changelog:
+  - date: "2026-09-03"
+    change: |
+      TASK-012：F-dirty-softsync-prefill1-sim-pass；J-dirty-softsync-hang-vs-race→verified；
+      D-next-dirty-softsync→inactive；D-next-device-trace-marks / D-sim-crosscore-layer-deposited active。
   - date: "2026-09-03"
     change: |
       TASK-011：F-decrypt-omit-set4-r2-hangs-sim；J-omit-slot1-hangs-after-ntt→verified；
