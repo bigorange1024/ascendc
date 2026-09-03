@@ -2,24 +2,25 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-03（TASK-007/008 闭环；**等用户 NPU**：Encaps Hostμ + Decaps A/B/C）
+> **最后刷新**：2026-09-03（**Decrypt hang 单独开图 + TASK-009**；Encaps 等 NPU 不挡本线）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：**`cursor/kem-2launch-sticky-1534`**（未授权勿推送）。  
-2. Encaps：**Host 折 μ** SIM 绿；clean P0 探针 SIM 绿；**粘性等 NPU**。  
-3. Decaps：**Cloud 默认 SIM 仍绿**（TASK-008）；K=131 **专攻 NPU**（H4）。  
-4. 图谱：encrypt / decrypt 两份 yaml；章程 `graph_tests/CHARTER.md`。
+1. 分支：**`cursor/kem-2launch-sticky-1534`**。  
+2. **当前主控焦点 = PKE Decrypt 卡死**，不是再请用户上机 Encaps/Decrypt。  
+3. 三张图：**Encrypt hang** / **Decrypt hang** / **Decaps K=131** — 禁止混图。  
+4. 干活：主控设计；**同时仅一个 subagent**；SIM only。
 
 ### 待办快照
 
 | 项 | 说明 |
 |----|------|
-| **P0** | 用户 NPU：Encaps 默认 Hostμ 加压 + `F203_HOST_FOLD_MU=0` 对照 |
-| **P0** | 用户 NPU：Decaps 默认 + A/B/C；红样本 K vs J(z‖c) |
-| **P1** | clean Encrypt P1（真 at_jp/INTT）— 可排期，勿与 NPU 反馈抢 |
+| **P0** | **TASK-009**：`fix-decrypt-skel-mix-chain-toy` 合法握手 SIM 绿 + `OMIT_SET4` 预期 124；收 FB 刷新 `rg-kem-decrypt-hang.yaml` |
+| **P0** | Decrypt hang 下一刀：OMIT_SLOT0 / slot1（见 `DECRYPT_HANG_PLAN.md` T2/T3） |
+| **P1** | Encaps：用户有空再 NPU Hostμ；**不要**用它顶替 Decrypt toy |
+| **P1** | Decaps K=131：与 hang 正交；勿在 hang TASK 里改 |
 
 ---
 
@@ -27,27 +28,34 @@
 
 | 项 | 状态 |
 |----|------|
-| Encaps Hostμ | SIM 绿；`D-await-npu-host-mu` |
-| clean P0 | `fix-encrypt-clean-hostmu-2launch` SIM 绿（~3.6s）；`F-clean-p0-sim-pass` |
-| Decaps | SIM 绿 max=0；K=accept≠J；`D-user-npu-abc` |
-| graph_tests | TASK-001..008 闭环（007/008 已 FB） |
+| **Decrypt hang 图** | W0：`docs/rg-kem-decrypt-hang.yaml`；计划 `graph_tests/DECRYPT_HANG_PLAN.md` |
+| **Decrypt hang 现场** | 用户：`prod input = dk_pke + c + lut_*` 之后卡死 → **PKE fused**，非 K=131 |
+| Decrypt toy | **尚未建**（TASK-009） |
+| Encaps Hostμ | SIM 绿；`D-await-npu-host-mu`（**非本线阻塞**） |
+| Decaps K | TASK-008 SIM 绿 max=0；另图 |
+| graph_tests | TASK-001..008 闭环；**009 进行中** |
+
+Decrypt fused 握手（须 toy 同构）：SoftSync slot0 → SET(4)/WAIT(8) → stub NTT 1/3 → slot1 → SET(4)/WAIT(8) → stub INTT 1/3（无 flag 2）；AIC 入口 Wait(4)。
+
+已借入 Encaps：**缺 SET(4)⇒SIM 124**；**双 Cube 不是充分 hang 因**。
 
 ---
 
-## ★ 下一刀（用户 NPU）
+## ★ 下一刀（Cloud / subagent，不是用户 NPU）
 
 ```bash
-# Encaps Host μ
-cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4
-KEM_ENCAPS_FORCE_REBUILD=1 bash run.sh -r npu -v Ascend910B4
-# 连跑勿每轮 FORCE；对照 F203_HOST_FOLD_MU=0
-
-# Decaps（FORCE 一次后）
-cd ../stable-fips203-mlkem-kem-decaps-k4
-KEM_DECAPS_FORCE_REBUILD=1 bash run.sh -r npu -v Ascend910B4
-# A/B/C 见 DECRYPT_K131_PLAN / qa§6；红则比 K vs J(z||c)
+# 主控已下发；subagent 在用例目录串行 SIM（禁并行）
+# cd ascendc-tests/fix-decrypt-skel-mix-chain-toy
+# SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+# KERNEL_COMPUTE_BUDGET_SEC=60 SKEL_OMIT_SET4=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 ```
 
-可选一并上机：`ascendc-tests/fix-encrypt-clean-hostmu-2launch`（P0 magic）。
+**不要**把下面当成 Decrypt hang 的下一刀：
 
-**不自主推送**。
+```bash
+# ❌ 未沉 toy 机制前不要请用户跑
+cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4
+bash run.sh -r npu -v Ascend910B4
+```
+
+干活 subagent **不自主推送**。

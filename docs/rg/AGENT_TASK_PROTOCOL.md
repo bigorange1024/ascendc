@@ -1,6 +1,9 @@
 # 主控 ↔ Subagent 协议（Encrypt 卡死排查）
 
-图谱真理源：[`../rg-kem-encrypt-hang.yaml`](../rg-kem-encrypt-hang.yaml)  
+图谱真理源（按 TASK 元数据 `graph:` 字段）：
+- Encaps hang：[`../rg-kem-encrypt-hang.yaml`](../rg-kem-encrypt-hang.yaml)
+- **Decrypt hang**：[`../rg-kem-decrypt-hang.yaml`](../rg-kem-decrypt-hang.yaml)
+- Decaps K：[`../rg-kem-decrypt-k131.yaml`](../rg-kem-decrypt-k131.yaml)  
 工具：`thirdparty/reasoning-graph-skill-master/scripts/`  
 实验根：`graph_tests/` · 探针根：`ascendc-tests/`  
 **总章程**：[`../../graph_tests/CHARTER.md`](../../graph_tests/CHARTER.md)  

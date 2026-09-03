@@ -12,7 +12,7 @@
 
 ### 2026-09-03 — [Encaps/Decaps 真 2-launch · GATE · prep∈MIX](2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)
 
-关键字：**prep_ntt|l18** · **GATE 4/8** · TRACE **`0/16` 空** · Host 折 μ SIM 绿 · **等 NPU** · **clean Encrypt P0** · **Decaps 图谱 W1** · 勿升 notes
+关键字：**prep_ntt|l18** · **GATE 4/8** · TRACE **`0/16` 空** · Host 折 μ SIM 绿 · **Decrypt hang 单独开图** · 勿升 notes
 
 ### 2026-09-02 — [实机 l18 粘性 · TRACE 107002 · 安全拆分（当日 3-launch）](2026-09/2026-09-02-实机l18粘性与TRACE-107002.md)
 

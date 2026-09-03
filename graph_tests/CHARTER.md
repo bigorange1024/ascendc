@@ -1,39 +1,44 @@
-# graph_tests 总章程 — Encrypt 卡死排查（勿忘）
+# graph_tests 总章程 — MIX 卡死排查（Encrypt / Decrypt）
 
-> **本文件是本排查线的人读真理源之一**（与图谱并列）。主控 / 新会话 / subagent 开工前必读。  
+> **本文件是排查线的人读真理源之一**（与图谱并列）。主控 / 新会话 / subagent 开工前必读。  
 > **最后刷新**：2026-09-03  
-> **Git**：不得自主 `commit` / `push` / 开分支；仅用户当次明确授权才可。
+> **Git**：干活 subagent 不得自主 `commit` / `push`；主控按当次授权处理。
 
 ---
 
 ## 1. 用户要我做的事（总任务）
 
+三张图、三条线，**禁止混成一张交差**：
+
+| 线 | 图谱 | 近程 |
+|----|------|------|
+| Encaps 粘性 | `docs/rg-kem-encrypt-hang.yaml` | Hostμ SIM 绿；等 NPU；clean P0 已绿 |
+| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | **当前主控焦点**：toy 沉 SoftSync/GATE 机制，**未沉前不上机** |
+| Decaps K≠0 | `docs/rg-kem-decrypt-k131.yaml` | Cloud SIM 仍绿；K 错与 hang 正交 |
+
 ### 1.1 最终目标
 
-在 **NPU 实机**上跑通 Encrypt：
-
-- **不再卡死**在 `l18_l19`（及同类 MIX 挂点：`prep_ntt` / `ntt_y` 等）
-- **正确性通过**（golden / 权威交叉）
-
-对照：KeyGen 实机未出同类卡死；先改 **Encrypt**，Decaps（含 K=131）另线。
+- **Encrypt**：NPU 上不再卡死在 `l18_l19` / `prep_ntt` 等，且正确性通过。  
+- **Decrypt hang**：NPU 上 `stable-fips203-mlkem-pke-decrypt-k4` fused 能跑完且 `m` 对拍。  
+- **Decaps K**：另图；不要把 hang TASK 写成修 K=131。
 
 ### 1.2 当前近程目标（未达最终前）
 
-1. **不要**再以 stable 全量 Encaps + 大量哈希的慢 SIM 当主迭代路径。  
-2. 在 **`ascendc-tests/`** 新建轻量探针：模仿 Encrypt **任务链骨架**（stub/轻量哈希、NTT、INTT、内积、encoding 等串接）。  
-3. **不对算法正确性**；只要能**正常跑完**，且 **SIM 明显更快**。  
-4. 用探针 / `graph_tests` 实验去验证图谱假说，逼近实机根因。  
-5. **实验成功标准**：结论与改法必须能导向解决 **Encrypt 运行卡死**（不是「toy 自己绿了就交差」）。  
-6. **实机**：用户可代跑；主控须先 **SIM 充分**再请上机。  
-7. **当前进度（2026-09-03）**：TASK-001..006 闭环；stable Encaps 默认 Host 折 μ **SIM 绿**；**等用户 NPU 加压**（`D-await-npu-host-mu`）。  
-8. **等 NPU 期间**：clean Encrypt 重写（`ENCRYPT_CLEAN_REWRITE.md` / TASK-007 P0）；Decaps K=131 另图（`DECRYPT_K131_PLAN.md` / TASK-008 排队）。
+1. **不要**用 stable 全量慢 SIM 当 hang 主迭代。  
+2. **Decrypt hang（当前）**：`fix-decrypt-skel-mix-chain-toy` 模仿 fused **SoftSync + 两轮 GATE + stub Cube**；故障注入沉积挂死机制。  
+3. Encrypt hang toy 已绿（缺 SET(4)⇒124）；不再空转全量 Encaps。  
+4. **不对算法正确性**；要能跑完或按设计 124。  
+5. **实验成功标准**：导向消除 **对应线** 的运行卡死（Decrypt hang 或 Encaps hang），不是 toy 自洽绿交差。  
+6. **实机**：SIM 充分沉机制后再请上机；Decrypt hang **现在还不够格上机**。  
+7. Encaps：TASK-001..007 闭环；Hostμ SIM 绿；clean P0 绿。  
+8. Decaps K=131：TASK-008 SIM 绿；与 hang 分图。
 
 ### 1.3 推理图谱（主控职责）
 
 | 项 | 路径 / 约定 |
 |----|-------------|
-| 图谱 yaml | [`docs/rg-kem-encrypt-hang.yaml`](../docs/rg-kem-encrypt-hang.yaml) |
-| Viewer HTML | [`docs/rg-kem-encrypt-hang.html`](../docs/rg-kem-encrypt-hang.html)（本地打开；**不自主推送**换公网链） |
+| 图谱 yaml | Encrypt hang / **Decrypt hang** / Decaps K 三份，见 [`INDEX.md`](INDEX.md) |
+| Viewer HTML | 同名 `.html`（本地打开） |
 | 工具 skill | `thirdparty/reasoning-graph-skill-master/`（**不**拷进 `.cursor/skills/`） |
 | 协议模板 | [`docs/rg/AGENT_TASK_PROTOCOL.md`](../docs/rg/AGENT_TASK_PROTOCOL.md) |
 | 谁写图 | **仅主控**刷新；subagent 默认可读、默认不改 yaml |
@@ -44,7 +49,7 @@
 
 | 必须收 | 禁止收 / 禁止当推荐 |
 |--------|---------------------|
-| 服务 **Encrypt 卡死 debug** 的断言 | 无关闲聊、流程导游、与本 bug 无关内容 |
+| 服务 **当前 TASK 所属 hang 线** debug 的断言 | 无关闲聊、把 K=131 写进 hang 图、把 Encaps 热修当 Decrypt 充分解 |
 | **失败实验 / 证伪假说 / 回退方案**（`retracted` / `inactive` + 证据） | 只沉淀「对拍绿」成功路径 |
 | SIM / 实机可复现观测、合法同步约束 | 把「逐步外搬 GM」「滥增 Host launch」「标量碎写」等**严重伤效率/性能**的 correctness 捷径标成 **active 推荐**（负面对照可 `inactive` 留痕） |
 
@@ -59,8 +64,9 @@
 | 目录 | 用途 |
 |------|------|
 | `graph_tests/` | 图谱假说的**小实验**（用户授权新建）；工单 inbox/outbox |
-| `ascendc-tests/<探针>/` | Encrypt **任务链骨架 toy**（主近程交付物） |
-| stable Encaps | **非**当前主改码场；全量慢 SIM 不作日常迭代 |
+| `ascendc-tests/fix-encrypt-skel-mix-chain-toy/` | Encrypt 骨架 toy（已绿；缺 SET(4)⇒124） |
+| `ascendc-tests/fix-decrypt-skel-mix-chain-toy/` | **Decrypt fused 握手 toy**（TASK-009 起） |
+| stable Encaps / PKE Decrypt | **非**日常改码场；全量慢 SIM 不作 hang 迭代 |
 
 ---
 
@@ -108,13 +114,13 @@
 
 | 项 | 状态 |
 |----|------|
-| 初始图谱 W0 | 已建；`rg_validate` OK；含失败路径与入库门禁 |
-| `graph_tests/` | 已建；章程本文件 + 规则 |
-| Encrypt 骨架 toy | **尚未**建；待首个 TASK |
-| 实机粘性根因 | **未闭环**（`Q-root-cause` open） |
-| Git 推送 | **禁止自主推送** |
+| Encrypt hang 图 | TASK-001..007 已沉；等 NPU Hostμ |
+| **Decrypt hang 图** | **W0 已建**；`Q-root-cause` open |
+| Decrypt 骨架 toy | **尚未**建；**TASK-009** |
+| Decaps K 图 | TASK-008 SIM 绿；与 hang 正交 |
+| Git | 干活 subagent 禁止自主推送 |
 
-**下一刀**：主控下发 `TASK-001`（建 `ascendc-tests` Encrypt 骨架 toy，SIM 通跑、快于全量），严格单工 + 时限。
+**下一刀**：`TASK-009` — 建 Decrypt fused 握手 toy（合法绿 + 缺 SET(4) 预期 124）。
 
 ---
 
