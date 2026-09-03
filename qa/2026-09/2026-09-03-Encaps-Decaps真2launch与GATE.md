@@ -254,7 +254,7 @@ F203_ENCAPS_SPLIT_PREP=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
 
 **TASK-008（同日）**：FORCE+SIM_DIRECT 默认 Decaps **仍绿**（`chain_ntt`/`prep_ntt`；K max=0；wall≈284s）；诊断 K=accept≠J(z‖c)。→ **H4 优先**；下一刀用户 NPU 正交 A/B/C + 红样本 K vs J。
 
-**状态词**：Encaps 热修 / clean P0 / Decaps Cloud SIM **有条件完成**（差 NPU）。Decrypt hang **未完成**（仅 W0 图谱，缺 toy）。
+**状态词**：Encaps 热修 / clean P0 / Decaps Cloud SIM **有条件完成**（差 NPU）。Decrypt hang T0–T1 **有条件完成**（差 T2+NPU）。
 
 ---
 
@@ -269,7 +269,9 @@ F203_ENCAPS_SPLIT_PREP=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
 | 计划 | [`graph_tests/DECRYPT_HANG_PLAN.md`](../../graph_tests/DECRYPT_HANG_PLAN.md) |
 | 握手 | SoftSync slot0/1（AIV1 自旋）→ 双 AIV SET(4) → AIC 入口 Wait(4)/Set(8) → NTT 1/3 → slot1 → 第二轮 GATE → INTT 1/3（无 flag 2） |
 | 借入 Encaps | 缺 SET(4) 可 SIM 124；**双 Cube 不是充分 hang 因**（已 retracted，勿再当第一刀） |
-| 下一刀 | **TASK-009** `fix-decrypt-skel-mix-chain-toy`：合法绿 + `OMIT_SET4` 预期 124 |
-| 上机 | **禁止**在 T0–T2 机制未沉前请用户跑全量 Decrypt NPU |
+| 下一刀 | **TASK-010** `SKEL_OMIT_SLOT0`：AIV0 不写哨兵 → 预期 124 |
+| 上机 | **禁止**在 T2 未沉前请用户跑全量 Decrypt NPU |
 
-**状态词**：Decrypt hang 图谱 W0 **有条件完成**（差 toy/SIM）。
+**TASK-009（同日）**：`fix-decrypt-skel-mix-chain-toy` A 合法握手 SIM **绿**（wall 3.934s，magic `SKELDEC1`/`0x04`，tick 20735）；B `OMIT_SET4=1` **rc=124**（budget 60s）。`J-omit-set4-hangs-decrypt` / `J-hang-needs-handshake-break` → **verified**。
+
+**状态词**：Decrypt hang T0–T1 **有条件完成**（差 T2 SoftSync 层 + 实机）。

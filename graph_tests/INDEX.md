@@ -5,7 +5,7 @@
 | 线 | 图谱 | 状态 |
 |----|------|------|
 | Encaps 粘性 | `docs/rg-kem-encrypt-hang.yaml` | Hostμ SIM 绿；**clean P0 绿**；等 NPU |
-| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | **W0**；**TASK-009** 建握手 toy；**未沉机制不上机** |
+| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | toy **A绿/B124**（TASK-009）；机制沉积中；**未沉满不上机** |
 | Decaps K | `docs/rg-kem-decrypt-k131.yaml` | TASK-008 SIM 仍绿；与 hang 正交 |
 
 ## 设计
@@ -21,4 +21,5 @@
 | TASK-001..006 | 闭环（Encrypt hang） |
 | TASK-007 | **PASS**（clean P0）；FB 已交 |
 | TASK-008 | **PASS**（Decaps K SIM 基线）；与 hang 正交 |
-| **TASK-009** | **进行中**：`fix-decrypt-skel-mix-chain-toy` |
+| **TASK-009** | **PASS**：A magic≈3.9s；OMIT_SET4 **124** |
+| **TASK-010** | **进行中**：`SKEL_OMIT_SLOT0` |

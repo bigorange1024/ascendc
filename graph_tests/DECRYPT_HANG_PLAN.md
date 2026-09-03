@@ -58,15 +58,15 @@ AIC: 入口 WAIT(4)→SET(8) → WAIT(1) MMAD SET(3) → WAIT(4)→SET(8) → WA
 
 | 顺序 | 假说 | 预期 |
 |------|------|------|
-| **T0** | 合法握手 stub 链 | SIM **绿**、快、magic |
-| **T1** | `J-omit-set4-hangs-decrypt` | 合法 SoftSync 后 **省略 SET(4)** → **124** |
-| **T2** | `J-omit-slot0-spin-hangs` | AIV0 不 Arrive(slot0) → **124** |
+| **T0** | 合法握手 stub 链 | **已完成** TASK-009 A：SIM 绿 wall 3.934s magic `SKELDEC1` |
+| **T1** | `J-omit-set4-hangs-decrypt` | **已完成** TASK-009 B：OMIT_SET4 → **124**（verified） |
+| **T2** | `J-omit-slot0-spin-hangs` | **TASK-010**：AIV0 不 Arrive(slot0) → **124** |
 | **T3** | `J-omit-slot1-hangs-after-ntt` | 第一轮 Cube 后缺 slot1/SET(4) → **124** |
 | **T4** | `J-dirty-softsync-hang-vs-race` | 预填 1 更像误放行；预填 0 像清零 |
 | **T5** | 拉长 stub prep 仍绿 | 支持「忙等≠死锁」 |
 | 勿排 | `J-dual-cube-sufficient-hang` | **已 retracted** |
 
-未完成 T0–T2 的 SIM 沉积，**不准**把「请到 NPU 跑全量 Decrypt」写成下一刀。
+T0–T1 已沉；**未完成 T2 前仍不准**请用户跑全量 Decrypt NPU。
 
 ---
 

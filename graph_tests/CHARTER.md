@@ -115,12 +115,12 @@
 | 项 | 状态 |
 |----|------|
 | Encrypt hang 图 | TASK-001..007 已沉；等 NPU Hostμ |
-| **Decrypt hang 图** | **W0 已建**；`Q-root-cause` open |
-| Decrypt 骨架 toy | **尚未**建；**TASK-009** |
+| **Decrypt hang 图** | W1：缺 SET(4) **已 verified**；`Q-root-cause` open |
+| Decrypt 骨架 toy | **已建**；TASK-009 A 绿 / B 124；**TASK-010** 缺 slot0 |
 | Decaps K 图 | TASK-008 SIM 绿；与 hang 正交 |
 | Git | 干活 subagent 禁止自主推送 |
 
-**下一刀**：`TASK-009` — 建 Decrypt fused 握手 toy（合法绿 + 缺 SET(4) 预期 124）。
+**下一刀**：`TASK-010` — `SKEL_OMIT_SLOT0` 预期 124（SoftSync 前置层）。
 
 ---
 
