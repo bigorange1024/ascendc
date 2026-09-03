@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-03（Encaps/Decaps **真 2-launch** 默认；Cloud SIM 全绿）
+> **最后刷新**：2026-09-03（实机：Encaps FORCE 后仍 3–5 轮粘死；拆双 Cube **未消粘**）
 
 ---
 
@@ -10,11 +10,10 @@
 
 1. 分支：**`main`**（改动在工作区；**未授权勿 commit/push**）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs）。  
-3. **今日 P0 真相**：Encaps + Decaps Phase-E 默认 **`prep_ntt` → `l18(ySrc=nullptr)`**（真 2 Host launch / 每 MIX 一轮 Cube）；Phase-D 默认 **`chain_ntt` → `chain_intt`**。  
-4. 回退：`F203_ENCAPS_SPLIT_PREP` / `F203_DECAPS_SPLIT_PREP`（旧 3-launch）；旧双 Cube：`F203_*_FUSED*`。  
-5. Cloud SIM：**Encaps PASS**、**Decaps full D+E PASS**（见 [`qa/2026-09/2026-09-03-…`](qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)）。  
-6. 实机粘性：**未声称已消**；须单卡 reset + `FORCE_REBUILD` 后再加压。  
-7. 关键修复：Encrypt prep∈MIX **可行**；同核 NTT 前须 **SoftSync + GATE(4/8)**（缺 GATE 曾 c 全错）。
+3. **今日 P0 真相**：Encaps/Decaps 默认 2-launch 已上分支；Cloud SIM 绿。  
+4. **实机（2026-09-03）**：`FORCE_REBUILD` 后 Encaps 仍约 3–5 轮卡死、**位置同改前** → **拆双 Cube 未消粘性**；Decaps 另见 `K max=131`。详 [`qa/2026-09-03-…` §6](qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)。  
+5. 分支：`cursor/kem-2launch-sticky-1534`（勿只拉 main）。  
+6. 写 AscendC 前：Rule + engineering-notes。
 
 ### 刚关闭
 

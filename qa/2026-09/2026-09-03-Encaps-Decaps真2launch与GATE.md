@@ -122,3 +122,38 @@ F203_DECRYPT_FUSED=1 F203_DECAPS_FUSED_L18=1 bash run.sh -r npu -v Ascend910B4
 | B 绿、默认红 | Phase-E `prep_ntt` 实机 |
 | C 绿、默认红 | 2-launch 接缝；C 若也红则 fixture/环境 |
 | 默认日志已是 chain+prep_ntt 且 CPU 绿 | NPU 同步/可见性（SoftSync/GATE） |
+
+### 实机续报（Encaps 粘性未消）
+
+| 观察 | 解读 |
+|------|------|
+| `FORCE_REBUILD=1` 后 Encaps 仍多轮卡死 | 分别约 **5 / 3 / 4** 次后挂；**卡死位置与改前相同**（仍在第二段 compute / `l18` 一带，而非「拆双 Cube 即消」） |
+| 含义 | **否定**「仅把单 MIX 双 Cube 拆成两 launch 即可消除 Encaps 粘性」作为充分条件；Cloud SIM 绿 ≠ 实机粘性闭环 |
+| 仍成立 | 不加 FORCE → 吃旧 fused → 必挂；FORCE 后至少能跑完若干轮且曾 PASS |
+
+**修订假设（待验，勿升 notes）**：
+
+1. 粘性可能在 **第二次 MIX launch（l18 / INTT+at_jp）** 或 **跨次 run 的设备残留**，不单是「同核两轮 Cube」。  
+2. 或 `prep_ntt` 首轮 Cube 仍留下与旧 fused 同类的设备态。  
+3. TRACE 假 107002 已修，真挂时应能靠 `F203_L18_TRACE=1` 看卡在 sync 前是否有 stage。
+
+**建议下一刀（实机）**：
+
+```bash
+# 1）确认挂时最后一行 launch 名（prep_ntt vs l18）
+KEM_ENCAPS_FORCE_REBUILD=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4   # 连跑至挂
+
+# 2）对照：Host 3-launch（无 prep∈MIX）是否同样 N 轮挂
+F203_ENCAPS_SPLIT_PREP=1 bash run.sh -r npu -v Ascend910B4
+
+# 3）对照：旧 fused 是否仍挂（基线）
+F203_ENCAPS_FUSED_L18=1 bash run.sh -r npu -v Ascend910B4
+
+# 4）对照：stable KeyGen 多轮是否挂（已知 2-launch、无 Encaps l18）
+```
+
+| 若 | 则 |
+|----|----|
+| 默认与 SPLIT_PREP 都在 l18 挂 | 焦点在 **l18/INTT 段或第二 MIX**，与 prep_ntt 无关 |
+| 仅默认挂、SPLIT 不挂 | 焦点在 **prep_ntt / Encrypt prep∈MIX** 残留 |
+| KeyGen 多轮不挂、Encaps 挂 | 更像 Encaps/l18 特有，非「凡 MIX 必粘」 |
