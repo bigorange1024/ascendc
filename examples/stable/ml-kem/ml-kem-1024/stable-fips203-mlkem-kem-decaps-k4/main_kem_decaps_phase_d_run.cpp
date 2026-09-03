@@ -1,12 +1,15 @@
 /**
  * @file main_kem_decaps_phase_d_run.cpp
- * @brief Phase-D Host：launch `f203_decrypt_device_fused`（编译期引用 stable Decrypt / 本树 shim）。
+ * @brief Phase-D Host：Decrypt（Alg.15）→ m'。
  *
- * 背景（CT / qa）：
- *   - Alg.18 行 1–4 切分不另开 launch：dk_pke = dk_kem[0:1536)；ek/h/z 留给全链 Host 偏移给 Phase-E。
- *   - SIM：本函数完整 aclInit→launch→aclFinalize，供 `decaps_2session` 对照路径与 Phase-E 隔离 session。
+ * ## Launch（2026-09-03，2-launch 安全路径，缓解多跑粘性）
+ * - **默认**：
+ *   1) `f203_decrypt_g4_chain_ntt`：prep + NTT 一轮 Cube + su_dot/pad
+ *   2) `f203_decrypt_g4_chain_intt`：INTT 一轮 Cube + Compress₁/Encode₁
+ * - **旧单核双 Cube**：`F203_DECRYPT_FUSED=1` → `f203_decrypt_device_fused`
  *
- * 与 golden：本段只产出 m'；最终 K 对拍在 Phase-E 之后。
+ * Alg.18 行 1–4：dk_pke = dk_kem[0:1536)。SIM 本段自含 aclInit…Finalize。
+ * 与 golden：本段只产出 m'。
  */
 #include "main_kem_decaps_phase_d_run.hpp"
 
@@ -24,11 +27,18 @@
 #include "acl/acl.h"
 #include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_decrypt_device_fused.h"
+#include "aclrtlaunch_f203_decrypt_g4_chain_intt.h"
+#include "aclrtlaunch_f203_decrypt_g4_chain_ntt.h"
 #else
 #include "tikicpulib.h"
 #ifndef GM_ADDR
 #define GM_ADDR int8_t *
 #endif
+extern "C" __global__ __aicore__ void f203_decrypt_g4_chain_ntt(
+    GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm,
+    GM_ADDR wPaddedGm, GM_ADDR nttWsGm, GM_ADDR softSyncGm, TilingData tiling);
+extern "C" __global__ __aicore__ void f203_decrypt_g4_chain_intt(GM_ADDR vGm, GM_ADDR wPaddedGm, GM_ADDR wTimeGm,
+                                                                 GM_ADDR mGm, GM_ADDR inttWsGm, TilingData tiling);
 extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
     GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm,
     GM_ADDR wPaddedGm, GM_ADDR wTimeGm, GM_ADDR mGm, GM_ADDR nttWsGm, GM_ADDR inttWsGm, GM_ADDR softSyncGm,
@@ -48,10 +58,9 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
 
 namespace {
 
-constexpr uint32_t kBlockDim = 1U;       // Decrypt fused 单 block
-constexpr size_t kSoftSyncBytes = 64U;   // CrossCore soft sync 占位
+constexpr uint32_t kBlockDim = 1U;
+constexpr size_t kSoftSyncBytes = 64U;
 
-/** 将 even/odd LUT 填入 workspace 约定偏移（NTT 与 INTT 各一份 ws）。 */
 void FillNttWs(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, const uint8_t *lut_odd)
 {
     std::memset(ws, 0, wsBytes);
@@ -59,7 +68,6 @@ void FillNttWs(uint8_t *ws, size_t wsBytes, const uint8_t *lut_even, const uint8
     std::memcpy(ws + tiling::LUT_ODD_STACKED, lut_odd, tiling::lutEvenOddFileBytes);
 }
 
-/** Decrypt fused 默认 tiling：n、k、mixPass=3（生产全量）。 */
 TilingData MakeTiling()
 {
     TilingData t{};
@@ -67,6 +75,16 @@ TilingData MakeTiling()
     t.kPolys = static_cast<int32_t>(tiling::kK);
     t.mixPass = 3;
     return t;
+}
+
+bool DecryptFusedOn()
+{
+#ifndef ASCENDC_CPU_DEBUG
+    return ascendc_acl::EnvFlagOn("F203_DECRYPT_FUSED");
+#else
+    const char *v = std::getenv("F203_DECRYPT_FUSED");
+    return v != nullptr && v[0] == '1' && v[1] == '\0';
+#endif
 }
 
 }  // namespace
@@ -77,11 +95,10 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
 {
     using namespace tiling;
     const TilingData tilingData = MakeTiling();
-    // 行 1–4：仅把前缀当作 dk_pke 上传（H2D 1536B）
     const uint8_t *dk_pke = dk_kem;
+    const bool fused = DecryptFusedOn();
 
 #ifdef ASCENDC_CPU_DEBUG
-    // —— CPU 孪生：GmAlloc + ICPU_RUN_KF ——
     uint8_t *dkGm = (uint8_t *)AscendC::GmAlloc(F203_DK_PKE_BYTES);
     uint8_t *cGm = (uint8_t *)AscendC::GmAlloc(F203_CT_PKE_BYTES);
     uint8_t *mGm = (uint8_t *)AscendC::GmAlloc(F203_MSG_BYTES);
@@ -103,8 +120,16 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     FillNttWs(inttWsGm, wssize, lut_intt_even, lut_intt_odd);
 
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
-    ICPU_RUN_KF(f203_decrypt_device_fused, kBlockDim, dkGm, cGm, uGm, vGm, sHatGm, uHatGm, wHatGm, wPaddedGm,
-                wTimeGm, mGm, nttWsGm, inttWsGm, softSyncGm, tilingData);
+    if (fused) {
+        std::fprintf(stderr, "[kem-dec-d] CPU fused (F203_DECRYPT_FUSED=1)\n");
+        ICPU_RUN_KF(f203_decrypt_device_fused, kBlockDim, dkGm, cGm, uGm, vGm, sHatGm, uHatGm, wHatGm, wPaddedGm,
+                    wTimeGm, mGm, nttWsGm, inttWsGm, softSyncGm, tilingData);
+    } else {
+        std::fprintf(stderr, "[kem-dec-d] CPU safe 2-launch (prep+ntt | intt)\n");
+        ICPU_RUN_KF(f203_decrypt_g4_chain_ntt, kBlockDim, dkGm, cGm, uGm, vGm, sHatGm, uHatGm, wHatGm, wPaddedGm,
+                    nttWsGm, softSyncGm, tilingData);
+        ICPU_RUN_KF(f203_decrypt_g4_chain_intt, kBlockDim, vGm, wPaddedGm, wTimeGm, mGm, inttWsGm, tilingData);
+    }
     std::memcpy(m_out, mGm, F203_MSG_BYTES);
 
     AscendC::GmFree(dkGm);
@@ -122,15 +147,12 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     AscendC::GmFree(softSyncGm);
     return 0;
 #else
-    // —— SIM/NPU：独立 ACL session ——
     CHECK_ACL(aclInit(nullptr));
-    // 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；探针挂死脏退后同卡会连环挂，见 acl_session；需换卡时再 export）。SIM 由 run.sh 强制 export=0。
     int32_t deviceId = 0;
     if (const char *envDev = std::getenv("ASCEND_DEVICE_ID")) {
         deviceId = static_cast<int32_t>(std::atoi(envDev));
     }
     CHECK_ACL(aclrtSetDevice(deviceId));
-    // 早退 / SIGINT / SIGTERM 均会 ResetDevice+Finalize，减轻同卡污染
     ascendc_acl::DeviceGuard aclGuard(deviceId);
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
@@ -170,7 +192,6 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     CHECK_ACL(aclrtMemcpy(dkDev, F203_DK_PKE_BYTES, dk_pke, F203_DK_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(cDev, F203_CT_PKE_BYTES, c, F203_CT_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     {
-        // softSync 清零；NTT/INTT workspace 填 LUT 后 H2D
         std::vector<uint8_t> zeros(kSoftSyncBytes, 0);
         CHECK_ACL(aclrtMemcpy(softSyncDev, kSoftSyncBytes, zeros.data(), kSoftSyncBytes, ACL_MEMCPY_HOST_TO_DEVICE));
         std::vector<uint8_t> wsHost(wssize, 0);
@@ -180,11 +201,25 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
         CHECK_ACL(aclrtMemcpy(inttWsDev, wssize, wsHost.data(), wssize, ACL_MEMCPY_HOST_TO_DEVICE));
     }
 
-    std::fprintf(stderr, "[kem-dec-d] launch f203_decrypt_device_fused (dk_kem prefix)\n");
-    ACLRT_LAUNCH_KERNEL(f203_decrypt_device_fused)
-    (kBlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev, uHatDev, wHatDev, wPaddedDev, wTimeDev, mDev, nttWsDev,
-     inttWsDev, softSyncDev, tilingHost);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_device_fused"));
+    if (!fused) {
+        std::fprintf(stderr, "[kem-dec-d] launch 1 f203_decrypt_g4_chain_ntt (prep+NTT, one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_chain_ntt)
+        (kBlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev, uHatDev, wHatDev, wPaddedDev, nttWsDev, softSyncDev,
+         tilingHost);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_g4_chain_ntt"));
+
+        std::fprintf(stderr, "[kem-dec-d] launch 2 f203_decrypt_g4_chain_intt (INTT+tail, one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_decrypt_g4_chain_intt)
+        (kBlockDim, stream, vDev, wPaddedDev, wTimeDev, mDev, inttWsDev, tilingHost);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_g4_chain_intt"));
+    } else {
+        std::fprintf(stderr, "[kem-dec-d] launch f203_decrypt_device_fused (F203_DECRYPT_FUSED=1)\n");
+        ACLRT_LAUNCH_KERNEL(f203_decrypt_device_fused)
+        (kBlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev, uHatDev, wHatDev, wPaddedDev, wTimeDev, mDev, nttWsDev,
+         inttWsDev, softSyncDev, tilingHost);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_decrypt_device_fused"));
+    }
+
     CHECK_ACL(aclrtMemcpy(m_out, F203_MSG_BYTES, mDev, F203_MSG_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
 
     CHECK_ACL(aclrtFree(dkDev));
@@ -202,7 +237,6 @@ int RunKemDecapsPhaseD(const uint8_t *dk_kem, const uint8_t *c, const uint8_t *l
     CHECK_ACL(aclrtFree(softSyncDev));
     CHECK_ACL(aclrtFreeHost(tilingHost));
     CHECK_ACL(aclrtDestroyStream(stream));
-    // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）
     return 0;
 #endif
 }

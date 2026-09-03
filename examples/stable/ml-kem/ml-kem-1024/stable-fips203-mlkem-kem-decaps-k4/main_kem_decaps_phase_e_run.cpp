@@ -2,9 +2,12 @@
  * @file main_kem_decaps_phase_e_run.cpp
  * @brief Phase-E Host 编排：G(m'‖h) + Encrypt compute + 设备 FO → K（全链 / Phase-E-only 共用）。
  *
- * 平台分叉（锁参，勿擅自改 launch 数）：
- *   - SIM：prep → 单核 `f203_encrypt_l18_l19`（内联 pack+FO，T19i，共 2 次设备 launch）；
- *   - CPU：prep → ntt_y → at_jp → intt_e1 → 读 golden_v → pack_fo（分段便于孪生调试）。
+ * 平台分叉（2026-09-03，每 MIX 一轮 Cube）：
+ *   - SIM/NPU **默认 2 Host launch**：prep_ntt | l18(ySrc=null)+FO
+ *   - 回退 3-launch：`F203_DECAPS_SPLIT_PREP=1` → AIV prep | ntt_y | l18+FO
+ *   - 旧融合：`F203_DECAPS_FUSED_L18=1`
+ *   - CPU：prep → ntt_y → at_jp → intt_e1 → 读 golden_v → pack_fo
+ * Phase-D 另见 `main_kem_decaps_phase_d_run.cpp`（Decrypt prep 轻，默认真 2-launch）。
  *
  * 数据面要点：
  *   - Encrypt LUT：`./input/lut_ntt_*` 与 `lut_intt_*`；
@@ -36,7 +39,9 @@ extern void GenerateTiling(TilingData &data);
 #include "acl/acl.h"
 #include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
+#include "aclrtlaunch_f203_encrypt_ntt_y.h"
 #include "aclrtlaunch_f203_kem_dec_phase_e_prep.h"
+#include "aclrtlaunch_f203_kem_dec_phase_e_prep_ntt.h"
 #else
 #include "tikicpulib.h"
 #include "alg11_gammas.h"
@@ -216,10 +221,11 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     AscendC::GmFree(ws);
     return 0;
 #else
-    // ========== SIM/NPU：独立 session；prep + l18_l19（内联 pack+FO）==========
+    // ========== SIM/NPU：独立 session；默认 prep_ntt | l18(ySrc=null, FO) ==========
     constexpr size_t mBytes = kMBytes;
     const size_t uTrSize = tiling::uTrFileBytes;
     const size_t trHatNttSize = tiling::n * sizeof(int32_t);
+    constexpr size_t kSoftSyncBytes = 64U;
 
     CHECK_ACL(aclInit(nullptr));
     // 设备号：读 ASCEND_DEVICE_ID；缺省 0（标准默认；探针挂死脏退后同卡会连环挂，见 acl_session；需换卡时再 export）。SIM 由 run.sh 强制 export=0。
@@ -268,6 +274,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     uint8_t *vDev = nullptr;
     uint8_t *cPrimeDev = nullptr;
     uint8_t *tHatDev = nullptr;
+    uint8_t *softSyncDev = nullptr;
 
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&ekPkeDev), kEkBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&coinsDev), kCoinsSize, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -289,6 +296,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&uDev), uSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&vDev), vSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&cPrimeDev), cBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&softSyncDev), kSoftSyncBytes, ACL_MEM_MALLOC_HUGE_FIRST));
 
     CHECK_ACL(aclrtMemcpy(ekPkeDev, kEkBytes, ek, kEkBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(mDev, mBytes, m_prime, mBytes, ACL_MEMCPY_HOST_TO_DEVICE));
@@ -299,11 +307,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     CHECK_ACL(aclrtMemset(kPrimeDev, kKBytes, 0, kKBytes));
     CHECK_ACL(aclrtMemset(kOutDev, kKBytes, 0, kKBytes));
     CHECK_ACL(aclrtMemcpy(prepTilingDev, prepTilingBytes, prepTilingPinned, prepTilingBytes, ACL_MEMCPY_HOST_TO_DEVICE));
-
-    std::fprintf(stderr, "[kem-dec-e] launch prep G(m'||h)+EncryptPrep\n");
-    ACLRT_LAUNCH_KERNEL(f203_kem_dec_phase_e_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, hDev, kPrimeDev, coinsDev,
-                                                   aHatDev, prfDev, reDev, prepTilingDev);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_phase_e_prep"));
+    CHECK_ACL(aclrtMemset(softSyncDev, kSoftSyncBytes, 0, kSoftSyncBytes));
 
     std::memset(wsHost, 0, wsSize);
     if (!LoadNttLutHost(wsHost, lutBytes) || !LoadInttLutHostFused(wsHost, lutBytes)) {
@@ -315,12 +319,46 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     uint8_t *e1Dev = reDev + F203EncryptFull::kReE1ByteOff;
     uint8_t *e2Dev = reDev + F203EncryptFull::kReE2ByteOff;
 
-    // T19i：l18_l19 内联 pack + FO → K；不再单独 launch fo_only（SIM 3 launch 全链）
-    std::fprintf(stderr, "[kem-dec-e] launch l18_l19 (inline pack + FO -> K)\n");
-    ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
-                                              tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cPrimeDev,
-                                              nullptr, cInDev, zDev, kPrimeDev, kOutDev);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_l18_l19"));
+    // 默认：prep_ntt | l18；回退 3-launch；旧双 Cube 融合。
+    const bool fusedL18 = ascendc_acl::EnvFlagOn("F203_DECAPS_FUSED_L18");
+    const bool splitPrep = ascendc_acl::EnvFlagOn("F203_DECAPS_SPLIT_PREP");
+    if (fusedL18) {
+        std::fprintf(stderr, "[kem-dec-e] launch 1 f203_kem_dec_phase_e_prep (F203_DECAPS_FUSED_L18=1)\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_dec_phase_e_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, hDev, kPrimeDev,
+                                                       coinsDev, aHatDev, prfDev, reDev, prepTilingDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_phase_e_prep"));
+        std::fprintf(stderr, "[kem-dec-e] launch 2 f203_encrypt_l18_l19 FUSED (NTT+INTT in one MIX)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev,
+                                                  ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cPrimeDev, nullptr, cInDev, zDev, kPrimeDev, kOutDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_l18_l19"));
+    } else if (splitPrep) {
+        std::fprintf(stderr, "[kem-dec-e] F203_DECAPS_SPLIT_PREP=1：3-launch 回退\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_dec_phase_e_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, hDev, kPrimeDev,
+                                                       coinsDev, aHatDev, prfDev, reDev, prepTilingDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_phase_e_prep"));
+
+        std::fprintf(stderr, "[kem-dec-e] launch 2 f203_encrypt_ntt_y (one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_y)(1, stream, yHatDev, yDev, wsDev, tilingPinned);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_ntt_y"));
+
+        std::fprintf(stderr, "[kem-dec-e] launch 3 f203_encrypt_l18_l19 (ySrc=null+FO, one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, /*ySrc*/ nullptr, yHatDev, uNttDev, uTrDev,
+                                                  aHatDev, ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cPrimeDev, nullptr, cInDev, zDev, kPrimeDev, kOutDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_l18_l19"));
+    } else {
+        std::fprintf(stderr, "[kem-dec-e] launch 1 f203_kem_dec_phase_e_prep_ntt (prep+NTT, one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_dec_phase_e_prep_ntt)
+        (1, stream, ekPkeDev, mDev, hDev, kPrimeDev, coinsDev, aHatDev, prfDev, reDev, prepTilingDev, yHatDev, wsDev,
+         softSyncDev, tilingPinned);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_dec_phase_e_prep_ntt"));
+        std::fprintf(stderr, "[kem-dec-e] launch 2 f203_encrypt_l18_l19 (ySrc=null+FO)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, /*ySrc*/ nullptr, yHatDev, uNttDev, uTrDev,
+                                                  aHatDev, ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cPrimeDev, nullptr, cInDev, zDev, kPrimeDev, kOutDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_l18_l19"));
+    }
 
     CHECK_ACL(aclrtMemcpy(cPrimeHost, cBytes, cPrimeDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(K_out, kKBytes, kOutDev, kKBytes, ACL_MEMCPY_DEVICE_TO_HOST));
@@ -346,6 +384,7 @@ int RunKemDecapsPhaseE(const uint8_t *ek, const uint8_t *m_prime, const uint8_t 
     CHECK_ACL(aclrtFree(uDev));
     CHECK_ACL(aclrtFree(vDev));
     CHECK_ACL(aclrtFree(cPrimeDev));
+    CHECK_ACL(aclrtFree(softSyncDev));
     CHECK_ACL(aclrtFreeHost(tilingPinned));
     CHECK_ACL(aclrtFreeHost(prepTilingPinned));
     CHECK_ACL(aclrtFreeHost(wsHost));

@@ -8,9 +8,16 @@
  * customspec：stable-fips203-mlkem-kem-encaps-k4-实现方案-customspec.*
  * registry：docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md
  *
- * Launch 拓扑（锁定）：
- *   - SIM：2 次（prep → f203_encrypt_l18_l19 内联 pack）；仅 L2 后一次 SynchronizeStream
- *   - CPU：5 次（prep → ntt_y → at_jp → intt_e1 → pack）；v 用 golden_v 注入（辅助正确性）
+ * Launch 拓扑（2026-09-03，每 MIX 一轮 Cube；缓解实机粘性）：
+ *   - SIM/NPU **默认 2 Host launch**：
+ *       1) `f203_kem_enc_prep_ntt`（头+Â/CBD + NTT，一轮 Cube）
+ *       2) `f203_encrypt_l18_l19(ySrc=nullptr)`（at_jp+INTT+pack，再一轮 Cube）
+ *   - 回退 3-launch：`F203_ENCAPS_SPLIT_PREP=1` → AIV prep | ntt_y | l18
+ *   - 诊断：`F203_ENCAPS_PREP_MIX_ONLY=1` → MIX 仅 prep（skipNtt）| ntt_y | l18
+ *   - 旧双 Cube：`F203_ENCAPS_FUSED_L18=1` → AIV prep → 整核 l18（含 NTT）
+ *   - CPU：5 次（prep → ntt_y → at_jp → intt_e1 → pack）；v 用 golden_v
+ *
+ * 背景：用户要求 2 Host launch（prep 无 Cube 并入首轮 Cube）；Decrypt Phase-D 同构已绿。
  */
 #include "ascendc_build_mode.hpp"
 #include "data_utils.h"
@@ -40,6 +47,7 @@ extern void GenerateTiling(TilingData &data);
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
 #include "aclrtlaunch_f203_encrypt_ntt_y.h"
 #include "aclrtlaunch_f203_kem_enc_prep.h"
+#include "aclrtlaunch_f203_kem_enc_prep_ntt.h"
 #else
 #include "tikicpulib.h"
 #include "alg11_gammas.h"
@@ -295,7 +303,9 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *tHatDev = nullptr;
     uint8_t *traceDev = nullptr;
     int32_t *traceHost = nullptr;
+    uint8_t *softSyncDev = nullptr;
     constexpr int kFusedTraceStages = 16;
+    constexpr size_t kSoftSyncBytes = 64U;
     const bool l18Trace = ascendc_acl::EnvFlagOn("F203_L18_TRACE");
 
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&ekPkeDev), kEkBytes, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -314,6 +324,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&uDev), uSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&vDev), vSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&cDev), cBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&softSyncDev), kSoftSyncBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     if (l18Trace) {
         CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&traceDev),
                               static_cast<size_t>(kFusedTraceStages) * sizeof(int32_t), ACL_MEM_MALLOC_HUGE_FIRST));
@@ -338,33 +349,77 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMemset(rDev, kCoinsSize, 0, kCoinsSize));
     CHECK_ACL(aclrtMemset(kDev, kKBytes, 0, kKBytes));
     CHECK_ACL(aclrtMemcpy(prepTilingDev, prepTilingBytes, prepTilingPinned, prepTilingBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemset(softSyncDev, kSoftSyncBytes, 0, kSoftSyncBytes));
 
-    // Launch 1：KEM 头 + prep
-    std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep (ek+m -> K,r,A-hat,y||e)\n");
-    ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev,
-                                           reDev, prepTilingDev);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
-
-    // LUT 装入 ws（NTT + INTT 段）后 H2D
+    // LUT 装入（NTT+INTT）；默认先 AIV prep，再按路径 launch Cube
     std::memset(wsHost, 0, wsSize);
     if (!LoadNttLutHost(wsHost, lutBytes) || !LoadInttLutHostFused(wsHost, lutBytes)) {
         return 20;
     }
     CHECK_ACL(aclrtMemcpy(wsDev, wsSize, wsHost, wsSize, ACL_MEMCPY_HOST_TO_DEVICE));
 
-    // re 切片零拷贝：y（0）、e₁（4096）、e₂（8192）
     uint8_t *yDev = reDev + F203EncryptFull::kReYByteOff;
     uint8_t *e1Dev = reDev + F203EncryptFull::kReE1ByteOff;
     uint8_t *e2Dev = reDev + F203EncryptFull::kReE2ByteOff;
 
-    // Launch 2：l18_l19（compute + e₂+=μ + 内联 tail pack → c）
-    // 调试（非默认）：F203_L18_TRACE=1 时传 traceGm，卡住时 stderr 打印已到达的 FusedTraceStage 下标。
-    std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_l18_l19 (compute + inline pack -> c)\n");
-    ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
-                                              tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cDev,
-                                              traceDev);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
-                                                              "f203_encrypt_l18_l19"));
+    const bool fusedL18 = ascendc_acl::EnvFlagOn("F203_ENCAPS_FUSED_L18");
+    const bool splitPrep = ascendc_acl::EnvFlagOn("F203_ENCAPS_SPLIT_PREP");
+    const bool prepMixOnly = ascendc_acl::EnvFlagOn("F203_ENCAPS_PREP_MIX_ONLY");
+    if (fusedL18) {
+        std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep (F203_ENCAPS_FUSED_L18=1)\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev,
+                                               reDev, prepTilingDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
+        std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_l18_l19 FUSED (NTT+INTT in one MIX)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev,
+                                                  ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cDev, traceDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                                  "f203_encrypt_l18_l19"));
+    } else if (splitPrep) {
+        std::fprintf(stderr, "[kem-enc] F203_ENCAPS_SPLIT_PREP=1：3-launch 回退（AIV prep|ntt|l18）\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev,
+                                               reDev, prepTilingDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
+
+        std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_ntt_y (one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_y)(1, stream, yHatDev, yDev, wsDev, tilingPinned);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_ntt_y"));
+
+        std::fprintf(stderr, "[kem-enc] launch 3 f203_encrypt_l18_l19 (ySrc=null: at_jp+INTT+pack, one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, /*ySrc*/ nullptr, yHatDev, uNttDev, uTrDev,
+                                                  aHatDev, ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cDev, traceDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                                  "f203_encrypt_l18_l19"));
+    } else {
+        if (prepMixOnly) {
+            /* softSync[2]=1 → 核内 skipNtt；slot0/1 仍须 0 */
+            int32_t softHost[16] = {};
+            softHost[2] = 1;
+            CHECK_ACL(aclrtMemcpy(softSyncDev, kSoftSyncBytes, softHost, kSoftSyncBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+            std::fprintf(stderr, "[kem-enc] DIAG F203_ENCAPS_PREP_MIX_ONLY=1：MIX 仅 prep，再 ntt_y|l18\n");
+        } else {
+            std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep_ntt (prep+NTT, one Cube)\n");
+        }
+        ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep_ntt)
+        (1, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev, reDev, prepTilingDev, yHatDev, wsDev, softSyncDev,
+         tilingPinned);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep_ntt"));
+
+        if (prepMixOnly) {
+            std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_ntt_y (one Cube)\n");
+            ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_y)(1, stream, yHatDev, yDev, wsDev, tilingPinned);
+            CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_ntt_y"));
+        }
+
+        std::fprintf(stderr, "[kem-enc] launch %s f203_encrypt_l18_l19 (ySrc=null)\n", prepMixOnly ? "3" : "2");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, /*ySrc*/ nullptr, yHatDev, uNttDev, uTrDev,
+                                                  aHatDev, ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cDev, traceDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                                  "f203_encrypt_l18_l19"));
+    }
 
     CHECK_ACL(aclrtMemcpy(cHost, cBytes, cDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(kHost, kKBytes, kDev, kKBytes, ACL_MEMCPY_DEVICE_TO_HOST));
@@ -392,6 +447,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFree(uDev));
     CHECK_ACL(aclrtFree(vDev));
     CHECK_ACL(aclrtFree(cDev));
+    CHECK_ACL(aclrtFree(softSyncDev));
     if (traceDev != nullptr) {
         CHECK_ACL(aclrtFree(traceDev));
     }

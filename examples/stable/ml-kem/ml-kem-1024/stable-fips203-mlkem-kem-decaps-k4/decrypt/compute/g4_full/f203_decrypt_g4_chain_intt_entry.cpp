@@ -1,10 +1,13 @@
 /**
  * @file f203_decrypt_g4_chain_intt_entry.cpp
- * @brief Decrypt 多 launch 调试路径 Launch-3：INTT(ŵ) → Compress₁/ByteEncode₁ → m。
+ * @brief Phase-D 默认 Launch-2：INTT(ŵ) → Compress₁/ByteEncode₁ → m（每 MIX 一轮 Cube）。
  *
  * 尾段用 decrypt_device::extract_m_compress1_byteencode1（向量 Compress + 标量 Encode）。
- * 生产路径为 1-kernel fused；本入口供分段对拍。
+ * 2026-09-03：与 `f203_decrypt_g4_chain_ntt`（prep+NTT）配对，共 **2 launch**；
+ * 旧 fused：`F203_DECRYPT_FUSED=1`。
  * golden I/O：写出 m[32]，与 golden_m.bin 对拍。
+ *
+ * 未采用：3-launch（prep 单独）— prep 无 Cube（用户 2026-09-03）。
  */
 #include "f203_decrypt_intt_w_impl.hpp"
 #include "f203_decrypt_layout.h"

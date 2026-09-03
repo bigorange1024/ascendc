@@ -19,6 +19,11 @@
  * - ST_IP_AIV_DONE(4)：双 AIV 完成 at_jp/INTT-S1 后 **双端 SET**（禁止仅 subBlock0 SET）。
  * - ST_AT_JP_GATE(8)：AIC 确认内积段结束，释放 INTT Stage2 的 AIC MMAD。
  *
+ * ## 安全拆分（2026-09-02，对齐 Encaps / KeyGen「每 MIX 一轮 Cube」）
+ * - Host 先独立 launch `f203_encrypt_ntt_y`，再对本核传 `ySrc==nullptr` → `skipNtt`：
+ *   跳过行 18 NTT CrossCore，仅跑 at_jp + INTT + pack(+FO)，本 launch 只含一轮 Cube。
+ * - 对照旧融合：`F203_DECAPS_FUSED_L18=1` 时 Host 传真实 ySrc，本核仍跑完整双 Cube。
+ *
  * ## pack 分片
  * `tail_pack_shard_gm(uOut,vOut,cGm,subBlockID)`：各 AIV 按 subBlockID 写 c' 片段到 GM；
  * 双 AIV 均完成后须 `SyncAll<isAIVOnly>` 再 FO（PipeBarrier 不能等对端 AIV）。
@@ -206,7 +211,7 @@ __aicore__ inline void PrefixEmbedMuIntoE2Gm(GM_ADDR mGm, GM_ADDR e2Gm, int32_t 
  * Alg.14 行 18–24 融合 MIX 入口（Decaps 探针：含 pack + 可选同核 FO）。
  *
  * @param uOut/vOut INTT 后 u/v 系数 GM（加 e₁/e₂ 前由 merge 写出，再加噪）
- * @param ySrc/yHat NTT 段源/ŷ 输出
+ * @param ySrc/yHat NTT 段源/ŷ；`ySrc==nullptr` 时跳过本核 NTT（Host 已先跑 ntt_y，ŷ 已在 yHat）
  * @param uNtt/uTr 内积 NTT 域 / pad-8 驻留 UB 的 GM 镜像（调试）
  * @param aHat/ekPke/tHat/trHatNtt at_jp 与 t̂ 解码相关 GM
  * @param mGm 消息 m'；e1/e2 噪声；ws workspace；tiling 瓦片参数
@@ -227,18 +232,23 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
     const int32_t subBlockID = static_cast<int32_t>(AscendC::GetSubBlockIdx());
     const auto coeffN = static_cast<uint32_t>(tiling.tileLength);
     FsmState st;
+    // Host 安全路径：先独立 launch ntt_y，再本核 ySrc==nullptr 跳过 NTT，
+    // 使每个 MIX launch 只含一轮 Cube 握手（对齐 KeyGen / Encaps）。
+    const bool skipNtt = (ySrc == nullptr);
 
     if (aic) {
         /* ═══════════════ AIC 分支：仅 MMAD + CrossCore 握手 ═══════════════ */
 
-        /* ── 行 18 NTT Stage2：WAIT split(1) → MMAD → SET pack(3) ── */
-        st = ST_NTT_AIV_SPLIT;
-        FsmWait(st, aic, subBlockID);
-        st = ST_NTT_AIC_MMAD;
-        AicMmadRound(ws, coeffN, LUT_NTT_EVEN_TOP, LUT_NTT_ODD_TOP, static_cast<uint16_t>(nttMRowsLogic));
-        FusedTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
-        st = ST_NTT_AIV_PACK;
-        FsmSet(st, aic, subBlockID);
+        if (!skipNtt) {
+            /* ── 行 18 NTT Stage2：WAIT split(1) → MMAD → SET pack(3) ── */
+            st = ST_NTT_AIV_SPLIT;
+            FsmWait(st, aic, subBlockID);
+            st = ST_NTT_AIC_MMAD;
+            AicMmadRound(ws, coeffN, LUT_NTT_EVEN_TOP, LUT_NTT_ODD_TOP, static_cast<uint16_t>(nttMRowsLogic));
+            FusedTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
+            st = ST_NTT_AIV_PACK;
+            FsmSet(st, aic, subBlockID);
+        }
 
         /* 内积阶段 AIC 空转：直至双 AIV SET ST_IP_AIV_DONE(4) */
         st = ST_IP_AIV_DONE;
@@ -267,38 +277,40 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
         }
         AscendC::PipeBarrier<PIPE_ALL>();
 
-        /* ── 行 18 NTT Stage1：y → workspace S0 ── */
-        {
-            st = ST_NTT_AIV_SPLIT;
-            AivK8Split splitNtt(subBlockID, coeffN);
-            splitNtt.Init(ws + S0, ySrc);
-            splitNtt.Process();
-            KYBER_PIPE_ALL();
-            FsmSet(st, aic, subBlockID);
-            FusedTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
-        }
+        if (!skipNtt) {
+            /* ── 行 18 NTT Stage1：y → workspace S0 ── */
+            {
+                st = ST_NTT_AIV_SPLIT;
+                AivK8Split splitNtt(subBlockID, coeffN);
+                splitNtt.Init(ws + S0, ySrc);
+                splitNtt.Process();
+                KYBER_PIPE_ALL();
+                FsmSet(st, aic, subBlockID);
+                FusedTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
+            }
 
-        /* ── 行 18 NTT Pack：独立 TPipe 作用域，避免与 merge 争用 UB ── */
-        {
-            st = ST_NTT_AIV_PACK;
-            FsmWait(st, aic, subBlockID);
-            AivK8PackMatCPlanar packNtt(subBlockID, coeffN);
-            packNtt.Init(ws + MAT_C_PLANAR, ws + MAT_C_TMP_LO_EVEN, ws + MAT_C_TMP_LO_ODD, ws + MAT_C_TMP_HI_EVEN,
-                          ws + MAT_C_TMP_HI_ODD);
-            packNtt.Process();
-            KYBER_PIPE_ALL();
-        }
-        {
-            // RouteA：平面 mat_c → ŷ_hat 写 yHat GM
-            AivK8RouteAMod mergeNtt(subBlockID, coeffN);
-            mergeNtt.Init(yHat, ws + MAT_C_PLANAR);
-            mergeNtt.Process();
-            KYBER_PIPE_ALL();
-        }
-        FusedTraceMark(traceGm, TR_AIV_NTT_YHAT, aic, subBlockID);
+            /* ── 行 18 NTT Pack：独立 TPipe 作用域，避免与 merge 争用 UB ── */
+            {
+                st = ST_NTT_AIV_PACK;
+                FsmWait(st, aic, subBlockID);
+                AivK8PackMatCPlanar packNtt(subBlockID, coeffN);
+                packNtt.Init(ws + MAT_C_PLANAR, ws + MAT_C_TMP_LO_EVEN, ws + MAT_C_TMP_LO_ODD, ws + MAT_C_TMP_HI_EVEN,
+                              ws + MAT_C_TMP_HI_ODD);
+                packNtt.Process();
+                KYBER_PIPE_ALL();
+            }
+            {
+                // RouteA：平面 mat_c → ŷ_hat 写 yHat GM
+                AivK8RouteAMod mergeNtt(subBlockID, coeffN);
+                mergeNtt.Init(yHat, ws + MAT_C_PLANAR);
+                mergeNtt.Process();
+                KYBER_PIPE_ALL();
+            }
+            FusedTraceMark(traceGm, TR_AIV_NTT_YHAT, aic, subBlockID);
 
-        /* ★ SYNC-ŷ：内积读 ŷ 前须保证 NTT pack 全完 */
-        KYBER_PIPE_ALL();
+            /* ★ SYNC-ŷ：内积读 ŷ 前须保证 NTT pack 全完 */
+            KYBER_PIPE_ALL();
+        }
 
         /* ── 行 18/19 内积段：kP=5，uTr pad→8 驻留 UB，接 INTT k=8 ── */
         {
