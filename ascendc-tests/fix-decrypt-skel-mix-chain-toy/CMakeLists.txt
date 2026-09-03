@@ -26,12 +26,19 @@ if(NOT SKEL_OMIT_SET4 STREQUAL "0" AND NOT SKEL_OMIT_SET4 STREQUAL "1")
 endif()
 message(STATUS "SKEL_OMIT_SET4=${SKEL_OMIT_SET4}")
 
-# SKEL_OMIT_SLOT0：1=AIV0 不写 SoftSync slot0 哨兵（故障注入）；默认 0；与 OMIT_SET4 互斥（run.sh）
+# SKEL_OMIT_SLOT0：1=AIV0 不写 SoftSync slot0 哨兵（故障注入）；默认 0；与 OMIT_SET4 / OMIT_SET4_R2 互斥（run.sh）
 set(SKEL_OMIT_SLOT0 "0" CACHE STRING "Fault inject: AIV0 omit SoftSyncArrive slot0 write (0/1)")
 if(NOT SKEL_OMIT_SLOT0 STREQUAL "0" AND NOT SKEL_OMIT_SLOT0 STREQUAL "1")
     message(FATAL_ERROR "SKEL_OMIT_SLOT0 must be 0 or 1, got: ${SKEL_OMIT_SLOT0}")
 endif()
 message(STATUS "SKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0}")
+
+# SKEL_OMIT_SET4_R2：1=仅第二轮 GATE(slot1) 不 SET(4)；默认 0；与 OMIT_SET4 / OMIT_SLOT0 互斥（run.sh）
+set(SKEL_OMIT_SET4_R2 "0" CACHE STRING "Fault inject: omit AIV Set(4) only GATE round2/slot1 (0/1)")
+if(NOT SKEL_OMIT_SET4_R2 STREQUAL "0" AND NOT SKEL_OMIT_SET4_R2 STREQUAL "1")
+    message(FATAL_ERROR "SKEL_OMIT_SET4_R2 must be 0 or 1, got: ${SKEL_OMIT_SET4_R2}")
+endif()
+message(STATUS "SKEL_OMIT_SET4_R2=${SKEL_OMIT_SET4_R2}")
 
 if("${RUN_MODE}" STREQUAL "cpu")
     include(cmake/cpu_lib.cmake)
@@ -57,6 +64,7 @@ target_compile_definitions(ascendc_kernels_bbit PRIVATE
     SOC_VERSION="${SOC_VERSION}"
     SKEL_OMIT_SET4=${SKEL_OMIT_SET4}
     SKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0}
+    SKEL_OMIT_SET4_R2=${SKEL_OMIT_SET4_R2}
 )
 
 target_link_libraries(ascendc_kernels_bbit PRIVATE

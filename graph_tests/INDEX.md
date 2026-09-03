@@ -5,7 +5,7 @@
 | 线 | 图谱 | 状态 |
 |----|------|------|
 | Encaps 粘性 | `docs/rg-kem-encrypt-hang.yaml` | Hostμ SIM 绿；**clean P0 绿**；等 NPU |
-| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | T0/T1 已沉；T2 slot0 SIM **不挂**；**TASK-011** T3 |
+| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | T0/T1 已沉；T2 slot0 SIM **不挂**；**T3 R2 SET(4) 缺 → 124** |
 | Decaps K | `docs/rg-kem-decrypt-k131.yaml` | TASK-008 SIM 仍绿；与 hang 正交 |
 
 ## 设计
@@ -23,4 +23,4 @@
 | TASK-008 | **PASS**（Decaps K SIM 基线）；与 hang 正交 |
 | **TASK-009** | **PASS**：A magic≈3.9s；OMIT_SET4 **124** |
 | **TASK-010** | **PARTIAL**：`OMIT_SLOT0` SIM **未挂**（空 while 非 SIM hang 代理） |
-| **TASK-011** | **进行中**：第二轮省略 SET(4) |
+| **TASK-011** | **PASS**：默认绿≈3.4s；`OMIT_SET4_R2` → **124**（support slot1/GATE2 hang） |

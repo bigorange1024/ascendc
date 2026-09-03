@@ -9,9 +9,10 @@
  * 对齐生产 `f203_decrypt_device_fused` 的 **SoftSync + 两轮 GATE 4/8 + stub Cube** 握手；
  * **不对** ML-KEM 正确性；不实现真 unpack / su_dot / NTT。
  *
- * 编译开关（仅保留；OMIT_SET4 与 OMIT_SLOT0 互斥）：
+ * 编译开关（三者互斥，run.sh 强制）：
  *   SKEL_OMIT_SET4=0/1（默认 0）：1 → 双 AIV 两轮都不 SET(4)（故障注入，预期 SIM 124）
  *   SKEL_OMIT_SLOT0=0/1（默认 0）：1 → AIV0 不写 SoftSync slot0；AIV1 自旋；SoftSync 为 SET(4) 前置
+ *   SKEL_OMIT_SET4_R2=0/1（默认 0）：1 → 仅第二轮 GATE(slot1) 不 SET(4)；第一轮仍 SET(4)
  *
  * Cube：固定 16×32×32 int8；每段 NTT-like / INTT-like 各 1 轮 flag 1/3（INTT 不用 flag 2）。
  */

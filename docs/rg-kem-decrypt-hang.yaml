@@ -11,7 +11,7 @@ title: "ML-KEM Decrypt 卡死 · 推理图谱"
 
 review:
   last_reviewed: "2026-09-03"
-  note: "W1+T2：缺 SET(4) SIM 124 verified；缺 slot0 空 while SIM 不挂（retracted）；下一刀 T3 第二轮 SET(4)"
+  note: "T0–T3：缺 SET(4)/仅第二轮缺 SET(4) 均可 SIM 124；空 while SoftSync 非 SIM 代理；下一刀 T4 脏 softSync"
 
 config:
   required_fields: [domain]
@@ -365,12 +365,12 @@ nodes:
     domain: impl
     kind: inference
     derivation: defeasible
-    title: "NTT 后缺 slot1 Arrive/SET(4) 足以卡在第二轮 GATE"
-    statement: "第一轮 Cube 完成后，su_dot 仅 AIV0；若 slot1 不 Arrive 或第二轮不 SET(4)，AIC 在第二段 Wait(4) 死等，Host 同样看不到 kernel 返回"
-    deps: [F-two-gate-two-cube, F-softsync-two-slots]
-    status: unverified
+    title: "第一轮 Cube 后第二轮缺 SET(4) 足以卡在第二段 GATE"
+    statement: "第一轮 GATE+Cube 合法完成后，第二轮双 AIV 省略 SET(4) 时 AIC 在第二段 Wait(4) 死等，Host 看不到 kernel 返回。已在 Decrypt toy 用 SKEL_OMIT_SET4_R2 复现"
+    deps: [F-two-gate-two-cube, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim]
+    status: verified
     basis: experiment
-    evidence: "待 toy 第二轮故障注入"
+    evidence: "FB-TASK-011：R2=1 wall 60.103s rc=124；默认仍绿"
 
   - id: J-dirty-softsync-hang-vs-race
     domain: impl
@@ -540,13 +540,41 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀：第一轮 GATE 合法、第二轮省略 SET(4)"
-    statement: "SIM 能看见的下一层：slot1 之后第二段 AIC Wait(4) 缺 SET(4) 应 124。不要用空 while 再硬凑 SoftSync hang"
+    title: "（已完成）第一轮 GATE 合法、第二轮省略 SET(4)"
+    statement: "SKEL_OMIT_SET4_R2：slot0 仍 SET(4)；slot1 不 SET(4)。SIM 得 124"
     deps: [F-decrypt-omit-set4-hangs-sim, F-omit-slot0-no-hang-sim, J-omit-slot1-hangs-after-ntt, J-sim-empty-gm-spin-not-hang, D-sim-enough-before-npu]
-    status: active
+    status: inactive
+    evidence: "FB-TASK-011 PASS：默认 wall 3.439s；R2=1 rc=124"
+    replaced_by: D-next-dirty-softsync
     targets: [Q-hang-which-layer, Q-toy-repro]
 
+  - id: F-decrypt-omit-set4-r2-hangs-sim
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "Decrypt toy：仅第二轮省略 SET(4) 时 SIM 超时 124"
+    statement: "SKEL_OMIT_SET4_R2=1 时第一轮 GATE 合法并完成 stub NTT，第二轮不 SET(4)，kernel 超时 rc=124（budget 60s，wall 60.103s）"
+    repro: "cd ascendc-tests/fix-decrypt-skel-mix-chain-toy && KERNEL_COMPUTE_BUDGET_SEC=60 SKEL_OMIT_SET4_R2=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FB-TASK-011.md；decrypt-skel-toy-r2-B.log"
+
+  - id: D-next-dirty-softsync
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：Host 不清零 / 预填 softSync 对照"
+    statement: "测 J-dirty-softsync-hang-vs-race：Host 预填 slot=1 更像误放行（仍绿或错放行）；预填 0 像清零。禁止用空 while 硬凑 hang。SIM only"
+    deps: [F-host-zeros-softsync, J-dirty-softsync-hang-vs-race, J-sim-empty-gm-spin-not-hang, D-sim-enough-before-npu]
+    status: active
+    targets: [Q-hang-which-layer]
+
 changelog:
+  - date: "2026-09-03"
+    change: |
+      TASK-011：F-decrypt-omit-set4-r2-hangs-sim；J-omit-slot1-hangs-after-ntt→verified；
+      D-next-omit-set4-r2→inactive；D-next-dirty-softsync active（T4）。
   - date: "2026-09-03"
     change: |
       TASK-010：F-omit-slot0-no-hang-sim；J-omit-slot0-spin-hangs retracted（SIM）；

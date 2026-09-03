@@ -6,7 +6,7 @@
  * **不**移植 unpack / su_dot / NTT Stage1–3；只验证握手能绿 / 缺哨兵或缺 SET(4) 能挂。
  * 与 golden 无关（verify 只查 magic）。
  *
- * 握手（默认 SKEL_OMIT_SET4=0 且 SKEL_OMIT_SLOT0=0）：
+ * 握手（默认 SKEL_OMIT_SET4=0 且 SKEL_OMIT_SLOT0=0 且 SKEL_OMIT_SET4_R2=0）：
  *   AIV0 stub_prep → SoftSyncArrive(slot0)；AIV1 自旋
  *   双 AIV：SET(4)→WAIT(8)→Clear(slot0)
  *   NTT-like：SET(1) / AIC WAIT(1)+MMAD+SET(3) / AIV WAIT(3)（无 flag 2）
@@ -16,13 +16,16 @@
  *   AIV0 写 magic SKELDEC1
  *   AIC：入口 WAIT(4)→SET(8) → Cube → WAIT(4)→SET(8) → Cube
  *
- * 故障注入（互斥，run.sh 禁止同时为 1）：
+ * 故障注入（三者互斥，run.sh 禁止同时开多个）：
  *   SKEL_OMIT_SET4=1：两轮都不 SET(4) → AIC 入口 Wait(4) 死等 → 预期 SIM 124。
  *   SKEL_OMIT_SLOT0=1：AIV0 不写 s[0]=1（Arrive 空操作）；AIV1 仍 while(s[0]==0)；
  *     SoftSync 是后续 SET(4) 的前置 → AIV1 无法齐步 SET(4) → 预期 SIM 124。
  *     AIV0 仍可走 AivGateRound 的 SET(4)（本开关不打开 OMIT_SET4）。
+ *   SKEL_OMIT_SET4_R2=1：第一轮 GATE(slot0) **仍 SET(4)**；第二轮 GATE(slot1) **不 SET(4)**
+ *     → AIC 第一段放行并跑完 NTT Cube，卡在第二段 Wait(4) → 预期 SIM 124。
  *
- * 禁止：AIC Wait 期间 SyncAll；自造双向 SoftSync；真算法；滥增 Host launch。
+ * 禁止：AIC Wait 期间 SyncAll；自造双向 SoftSync；真算法；滥增 Host launch；
+ *       用空 while / volatile 硬凑 SoftSync hang。
  */
 #include "aic_func.hpp"
 #include "aiv_func.hpp"
@@ -36,6 +39,9 @@
 #endif
 #ifndef SKEL_OMIT_SLOT0
 #define SKEL_OMIT_SLOT0 0
+#endif
+#ifndef SKEL_OMIT_SET4_R2
+#define SKEL_OMIT_SET4_R2 0
 #endif
 
 /**
@@ -164,20 +170,33 @@ __aicore__ inline void AivOneCubeRound(int32_t subBlockID, GM_ADDR ws, int8_t ta
 }
 
 /**
- * 段末 GATE：双 AIV SET(4) → WAIT(8) → Clear(slot)；OMIT 则跳过 SET(4)。
+ * 段末 GATE：双 AIV SET(4) → WAIT(8) → Clear(slot)；按宏跳过 SET(4)。
  * @param softSyncGm 哨兵缓冲
- * @param slot 要 Clear 的 SoftSync 槽
+ * @param slot 要 Clear 的 SoftSync 槽（0=prep GATE，1=dot GATE）
+ *
+ * 省略 SET(4) 规则（与 run.sh 互斥一致，编译期只开其一）：
+ *   SKEL_OMIT_SET4=1     → 两轮都不 SET(4)
+ *   SKEL_OMIT_SET4_R2=1  → 仅 slot==1 不 SET(4)；slot==0 仍 SET(4)
+ *   默认                 → 两轮都 SET(4)
  */
 __aicore__ inline void AivGateRound(GM_ADDR softSyncGm, int32_t slot, int32_t subBlockID)
 {
     FsmState st;
-#if !SKEL_OMIT_SET4
+#if SKEL_OMIT_SET4
+    // 故障注入：两轮都不 SET(4) → AIC 入口 Wait(4) 死等（预期 SIM timeout 124）
+    AscendC::PipeBarrier<PIPE_ALL>();
+#elif SKEL_OMIT_SET4_R2
+    // 故障注入：仅第二轮（slot1）省略 SET(4)；第一轮仍合法放行 AIC
+    if (slot == 1) {
+        AscendC::PipeBarrier<PIPE_ALL>();
+    } else {
+        st = ST_AIV_DONE;
+        FsmSet(st);
+    }
+#else
     // 正常：双 AIV 均 SET(4)，与生产同构
     st = ST_AIV_DONE;
     FsmSet(st);
-#else
-    // 故障注入：故意不 SET(4) → AIC Wait(4) 死等（预期 SIM timeout 124）
-    AscendC::PipeBarrier<PIPE_ALL>();
 #endif
     // WAIT(8)：等 AIC 放行（OMIT 时 AIC 已挂，本侧可能一并卡住）
     st = ST_GATE;
