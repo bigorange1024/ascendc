@@ -165,3 +165,61 @@ F203_ENCAPS_FUSED_L18=1 bash run.sh -r npu -v Ascend910B4
 | SPLIT 只挂 ntt_y/l18、从不挂 AIV prep | 焦点在 **MIX+Cube**，AIV_ONLY prep 干净 |
 | **每轮 reset 不挂、累积跑挂** | 残留假说；治本靠 Finalize/reset 策略或找未释放资源 |
 | KeyGen 多轮不挂 | Encaps 特有（LUT/ws/双 launch 接缝等） |
+
+### 实机续报（SPLIT 亦挂 → 转向核内握手）
+
+用户：`F203_ENCAPS_SPLIT_PREP=1` **同样卡死**；挂点：
+
+| 最后打印 | 卡在哪（Host 语义） | 该核 CrossCore |
+|----------|---------------------|----------------|
+| `launch 2 f203_encrypt_ntt_y (one Cube)` | **ntt_y** Launch/Sync | 仅 **NTT：AIV SET(1)→AIC WAIT+MMAD→SET(3)→AIV WAIT(3)**（无 GATE、无 at_jp） |
+| `launch 3 f203_encrypt_l18_l19 (ySrc=null: at_jp+INTT+pack)` | **l18(skipNtt)** Launch/Sync | **无 NTT**；路径为 μ/at_jp → **GATE 4↔8** → **INTT 复用 1/3** |
+
+**用户判断（采纳）**：与 **几次 Host launch** 关系不大；应查 **卡住处前后组件交互**（死锁 / 缺同步）。
+
+**推论（勿升 notes）**：
+
+1. ~~Host launch 次数 / 仅拆双 Cube~~ → SPLIT=3 与默认=2 **都粘** → 降级。  
+2. ~~仅 GATE / 仅 prep∈MIX~~ → `ntt_y` **无 GATE、无 prep** 仍可挂 → 降级为充分条件。  
+3. **两挂点公因子**：`MIX_AIC_1_2` + **CrossCore `<2,PIPE_MTE2>` + flag 1/3 Cube 握手**（ntt_y 的 NTT；l18 的 INTT）。l18 另有 GATE/at_jp，但单独解释不了 ntt_y。  
+4. 与 08-05 诊断对齐：首次主因候选仍是 **设备侧 `FsmWait` 死等**（或对端未 SET）；次生是杀挂死后同卡污染。  
+5. 双 AIV 均 `SET(1/4)`、AIC 只 `WAIT` 一次：存在竞态风险；**汇合须跟 Decrypt SoftSyncArrive 定式**，且 **禁止** AIC 仍 Wait 时 `SyncAll`（索引 07-13）。Cloud 自造双向 SoftSync / SyncAll **SIM 已挂、已回退**。
+
+**下一刀（Encaps only；先定位再改码）**：
+
+```bash
+# 干净卡；挂在 l18 时必开 TRACE（看末行 stages）
+F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
+# SPLIT 下挂 l18 同样：
+F203_ENCAPS_SPLIT_PREP=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
+```
+
+| TRACE 末态（见 qa 08-05 §3–4） | 优先假设 |
+|-------------------------------|----------|
+| 空/仅 μ，无 NTT 槽（默认路径）或 skipNtt 下无 at_jp | 极早死等 / 污染 |
+| 有 at_jp start 无 IP_SIGNAL(5) | **H-atjp**（算太慢或未到 SET4） |
+| 有 5 无 6/11/12 | **H-gate** |
+| 有 12+7 无 8/9 | **H-intt（flag 1/3）** |
+| 挂在 **ntt_y**（无 TRACE） | 只能归为 **H-ntt（1/3）**；下一步给 ntt_y 加同构 trace 或 SoftSync 汇合实验 |
+
+### TRACE 实锤（默认 2-launch · l18 skipNtt）
+
+| 观测 | 解读 |
+|------|------|
+| 最后打印 `launch 2 … l18 (ySrc=null)` | 卡在 **l18** Launch/Sync |
+| `[l18-trace] stages set=0/16 :` 空 | 全程 **零** `FusedTraceMark` |
+| **删 `out*`/`*npu` 后再跑可复现** | 干净安装树也会空 TRACE 挂 → **不单是连跑 N 次粘**；首次/清产物后亦可挂 |
+| 仍是 `0/16` 不是 `0/18` | 实机仍是分支旧 TRACE；入口槽/Host 折 μ **未合入** |
+
+**编译纪律（少 FORCE）**：源码刚变才 **一次** `FORCE`；之后连跑勿 FORCE。
+
+**0/16 空含义**：AIV0 未写 15/3；AIC 疑死等 `WAIT(4)`。
+
+### 下一步计划（2026-09-03 纠偏）
+
+1. **已做**：回退 SyncAll / SoftSync / softSyncGm / 默认 recreate（违索引「AIC 已返回再用 SyncAll」；SIM 已证伪）。Encaps 源码回到分支 HEAD 干净 2-launch。  
+2. **已做**：Cloud 回退后 `cpu` + `SIM_DIRECT sim` → **`[verify] PASS`**（基线）。  
+3. **可选下一刀（须确认再写码）**：Host 折 `e₂+=μ` + 入口 TRACE 16/17；**禁止**再试汇合类同步。  
+4. **实机粘性**：与 SIM 解耦；对照 KeyGen；**本提交仅文档、无代码**。
+
+**基线结果（2026-09-03）**：回退后 SIM PASS。失败同步实验未再引入源码。
