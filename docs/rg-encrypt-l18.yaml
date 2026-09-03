@@ -1,0 +1,1009 @@
+# 推理图谱 · Encrypt / l18_l19 卡死排查
+# 用途：服务 debug 的可推翻知识 +「提假设 → 实验 → 反向审查」。
+# 工具：thirdparty/reasoning-graph-skill/scripts/rg_{validate,audit,query,render}.py --yaml 本文件
+# 准入：只收直接服务卡死/FSM/同步/定位的实现·验证·性能知识。
+# 必收：失败实验与失败经验（inactive decision + 失败教训 inference）；禁止只堆「测过绿」。
+# 禁入：方法论/组织叙事；CPU 孪生路径与 CPU 经验（本线以 SIM→NPU 为准，CPU 无参考价值）；
+#       「为绿而绿」伤性能做法（逐步 GM 外搬、堆 Host launch 等）当作推荐知识。
+
+version: 1
+title: "ML-KEM Encrypt · l18_l19 卡死 · 推理图谱"
+
+config:
+  required_fields: [domain]
+  id_prefix_by_kind: {fact: F, inference: J, decision: D, question: Q}
+  fact_provenance_values: [observation, measurement, doc, env-api]
+  inference_derivation_values: [deductive, defeasible]
+  decision_by_values: [human, agent]
+  require_repro_for_provenance: [measurement]
+
+review:
+  last_reviewed: "2026-09-03"
+  note: "初始建图；尚未派独立 subagent 语义复评"
+
+nodes:
+  # ================= domain: goals =================
+  - id: Q-ULT
+    domain: goals
+    kind: question
+    title: "用户最终验收问题"
+    statement: "NPU 实机上 Encrypt/Encaps 的 l18_l19 是否不再 SynchronizeStream 卡死，且输出与 golden/liboqs 一致？"
+    deps: [F-HANG-SYNC, F-SIM-ENCRYPT-GREEN]
+    status: open
+
+  - id: D-NEAR
+    domain: goals
+    kind: decision
+    by: human
+    title: "当前阶段近目标"
+    statement: "先在 ascendc-tests 建轻量 toy，模仿 Encrypt 任务链骨架（桩哈希+NTT/INTT/内积/encoding），不对算法正确性；以 SIM 跑完且快为验收，不以 CPU 为准"
+    deps: [J-FULL-SIM-SLOW, J-TOY-ISOLATES-FSM]
+    status: active
+    targets: [Q-ULT, Q-EMPTY-TRACE, Q-TOY-NTT, Q-TOY-GATE-INTT, Q-TOY-FUSED-L18-SKEL]
+
+  - id: D-EXP-GT-20260903-1
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第一刀实验：fix-toy-encrypt-fsm-ntt1 仅验证 MIX CrossCore flag 1/3 在 SIM 可跑完"
+    deps: [D-NEAR, F-NTT-FLAGS]
+    status: inactive
+    evidence: "已完成：F-TOY-NTT1-SIM-PASS；继任 D-EXP-GT-20260903-2"
+    targets: [Q-TOY-NTT]
+
+  - id: D-EXP-GT-20260903-2
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第二刀实验：toy 验证 GATE 4↔8 再接 INTT 复用 flag 1/3 在 SIM 可跑完"
+    deps: [D-NEAR, F-INTT-FLAGS, F-TOY-NTT1-SIM-PASS]
+    status: inactive
+    evidence: "已完成：F-TOY-GATE-INTT-SIM-PASS；继任 D-EXP-GT-20260903-3"
+    targets: [Q-TOY-GATE-INTT]
+
+  - id: D-EXP-GT-20260903-3
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第三刀：同核融合骨架 NTT1/3→GATE→INTT1/3（更近 l18），SIM 跑完并带 TRACE 槽"
+    deps: [D-NEAR, F-TOY-NTT1-SIM-PASS, F-TOY-GATE-INTT-SIM-PASS]
+    status: inactive
+    evidence: "已完成：F-TOY-L18-SKEL-SIM-PASS；AIC 标量 TRACE 假空 → GT-4"
+    targets: [Q-TOY-FUSED-L18-SKEL, Q-EMPTY-TRACE]
+
+  - id: D-EXP-GT-20260903-4
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第四刀：TRACE 改 DataCopy 写槽，使 AIC/AIV0 在 SIM 均可见，避免假空误判"
+    deps: [D-NEAR, J-FAIL-AIC-SCALAR-TRACE]
+    status: inactive
+    evidence: "已完成：F-TOY-TRACE-DATACOPY-PASS；继任 D-EXP-GT-20260903-5（用户改回 SIM 加压）"
+    targets: [Q-TOY-TRACE-DATACOPY, Q-EMPTY-TRACE]
+
+  - id: D-NPU-TRIP-TOY-SKEL1
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "偶发上机跑 pass-toy-encrypt-fsm-l18-skel1（DataCopy TRACE）以答 Q-EMPTY-TRACE；清单已写，待用户有卡时执行"
+    deps: [D-NEAR, D-NPU-TRIP-SCARCE, F-TOY-TRACE-DATACOPY-PASS, J-SIM-FUSED-L18-HANDSHAKE-OK]
+    status: inactive
+    evidence: "用户 2026-09-03：暂时无法上机、明天再说；近目标改回 SIM 多跑加压；清单仍有效 NPU-TRIP-20260903-skel1.md"
+    targets: [Q-EMPTY-TRACE, Q-ULT, Q-KEYGEN-CONTRAST]
+
+  - id: D-EXP-GT-20260903-5
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第五刀：skel1 同进程多 launch（清 TRACE→launch→Sync 循环）在 SIM 加压，看是否 SynchronizeStream 挂死"
+    deps: [D-NEAR, F-TOY-TRACE-DATACOPY-PASS, F-SIM-LAUNCH, J-NOT-LAUNCH-COUNT]
+    status: inactive
+    evidence: "已完成：F-TOY-SKEL-MULTI16-SIM-PASS；继任 D-EXP-GT-20260903-6"
+    targets: [Q-TOY-SIM-MULTI-LAUNCH-HANG]
+
+  - id: D-EXP-GT-20260903-6
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第六刀：SIM 继续加压——同进程 32 launch + 外层 3 次进程重启，搜间歇挂死"
+    deps: [D-NEAR, F-TOY-SKEL-MULTI16-SIM-PASS]
+    status: inactive
+    evidence: "已完成：F-TOY-SKEL-MULTI32x3-SIM-PASS；继任 D-EXP-GT-20260903-7（异核/两段 2-launch）"
+    targets: [Q-TOY-SIM-MULTI-LAUNCH-HANG]
+
+  - id: D-EXP-GT-20260903-7
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第七刀：toy 模仿 Encrypt 2 Host launch——先 NTT 段再 GATE+INTT 段（两段 ACLRT_LAUNCH），SIM 加压看挂死"
+    deps: [D-NEAR, F-TOY-SKEL-MULTI32x3-SIM-PASS, F-SIM-LAUNCH]
+    status: inactive
+    evidence: "已完成：F-TOY-2LAUNCH-SIM-PASS；SIM toy 尺度未挂；待用户定下一刀或明日上机"
+    targets: [Q-TOY-SIM-2LAUNCH-HANG]
+
+  - id: D-DECRYPT-SEPARATE-GRAPH
+    domain: goals
+    kind: decision
+    by: human
+    statement: "Decrypt fused 卡死另立 docs/rg-decrypt-fused.yaml 与 graph-tests/decrypt/；不再等 Encrypt 线走通再做"
+    deps: [D-WORKFLOW]
+    status: active
+    evidence: "用户 2026-09-03：须独立 decrypt 图谱 + toy 实验链，禁止空耗催上机"
+
+  - id: D-WORKFLOW
+    domain: goals
+    kind: decision
+    by: human
+    title: "主控与 subagent 分工"
+    statement: "主控负责图谱推理与实验设计；subagent 只按任务模板实现/跑测并填反馈模板"
+    deps: [D-NEAR]
+    status: active
+
+  - id: D-GRAPH-TESTS
+    domain: goals
+    kind: decision
+    by: human
+    title: "图谱假设的专用试验场"
+    statement: "授权在仓库根目录 graph-tests/ 自建小用例，专门验证图谱推理出的功能点"
+    deps: [D-NEAR]
+    status: active
+
+  # ================= domain: rg-hygiene（图谱治理，服务 debug） =================
+  - id: D-RG-DEBUG-ONLY
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "图谱只沉淀直接服务 Encrypt/l18 卡死 debug 的知识；无关内容不进图"
+    deps: [D-NEAR, F-HANG-SYNC]
+    status: active
+    targets: [Q-ULT]
+
+  - id: D-RG-FAIL-MUST-KEEP
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "失败实验与失败经验必须沉淀为 inactive/retracted 及对应失败教训节点，禁止只保留通过项"
+    deps: [D-RG-DEBUG-ONLY]
+    status: active
+
+  - id: D-RG-NO-SLOW-CORRECTNESS
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "禁止把逐步 GM 外搬、堆 Host launch、放弃融合等严重伤性能的「为绿而绿」做法沉淀为推荐实现知识"
+    deps: [D-RG-DEBUG-ONLY, J-FULL-SIM-SLOW]
+    status: active
+
+  - id: D-RG-SIM-PRIMARY
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "本线以 SIM 验证为关键、以 NPU 实机跑通为最终目标；CPU 测试及 CPU 经验不进图、不作推理依据"
+    deps: [D-RG-DEBUG-ONLY, D-NEAR]
+    status: active
+    targets: [Q-ULT, Q-TOY-NTT, Q-TOY-GATE-INTT]
+
+  - id: D-NPU-TRIP-SCARCE
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "实机拷贝机会稀缺：须 SIM 实验充分并写清上机清单后，再请用户偶发上机验证"
+    deps: [D-RG-SIM-PRIMARY]
+    status: active
+    targets: [Q-ULT]
+
+  - id: D-RG-MULTI-BRANCH-SRC
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "图谱知识来源不限当前分支；其它分支实验笔记须 fetch 后按准入沉淀，evidence 标明分支路径"
+    deps: [D-RG-DEBUG-ONLY, D-RG-FAIL-MUST-KEEP]
+    status: active
+
+  - id: D-CPU-MULTI-LAUNCH-TWIN-ONLY
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "Encrypt CPU 多 launch 仅作孪生对照，不得当作消粘或生产推荐方案写入图谱"
+    deps: [F-CPU-LAUNCH, D-RG-NO-SLOW-CORRECTNESS]
+    status: inactive
+    evidence: "被 D-RG-SIM-PRIMARY 取代：CPU 经验本线无参考价值，不再单独维护"
+
+  # ================= domain: fail-lessons（失败教训 = 一等知识） =================
+  - id: J-FAIL-INTT-FLAGS-57
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "INTT 改用 CrossCore flag 5/7 → SIM launch2 超时约 900s，该改法不可用"
+    deps: [F-INTT-FLAGS, D-INTT-FLAGS-57]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-02-实机l18粘性与TRACE-107002.md；D-INTT-FLAGS-57 inactive"
+
+  - id: J-FAIL-SYNCALL-SOFTSYNC
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "AIC 仍 Wait 时 SyncAll 或自造双向 SoftSync/recreate stream → SIM 互锁或 l18 挂"
+    deps: [F-SYNCALL-SIM-DEAD, F-SOFTSYNC-SIM-DEAD, F-SYNCALL-RULE]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md；D-SYNCALL-EXPERIMENT inactive"
+
+  - id: J-FAIL-SPLIT-AS-SUFFICIENT
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "拆同核双 Cube 或改 Host 2/3-launch 不能作为消粘充分修复"
+    deps: [J-NOT-ONLY-DUAL-CUBE, J-NOT-LAUNCH-COUNT, F-SPLIT-HANGS, F-FORCE-STICKY]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03；D-SPLIT-DUAL-CUBE-AS-FIX inactive"
+
+  - id: J-FAIL-DEL-OUT
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "删 out/output 不能可靠解除粘性；恢复手段是单卡 reset 而非清安装树"
+    deps: [F-DEL-OUT-NOT-FIX]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-02 §1"
+
+  - id: J-FAIL-ONLY-L18-STORY
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "把根因叙事收成「只卡第二段 l18」会导致漏查 prep_ntt/ntt_y，属失败定位经验"
+    deps: [J-NOT-ONLY-L18, F-FORCE-STICKY]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03 挂点交替"
+
+  # ================= domain: impl-tech =================
+  - id: F-MIX-TYPE
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "生产 Encrypt compute 核 f203_encrypt_l18_l19 为 KERNEL_TYPE_MIX_AIC_1_2（1 AIC + 2 AIV）"
+    evidence: "stable-fips203-mlkem-pke-encrypt-k4 STATUS + compute/f203_encrypt_ntt_y_kernel.cpp KERNEL_TASK_TYPE_DEFAULT"
+    deps: []
+    status: verified
+
+  - id: F-FSM-SEGMENTS
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "l18 核含六段：μ前缀、NTT(y)、at_jp、GATE 4↔8、INTT、e1/e2/pack"
+    evidence: "qa/2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md §2"
+    deps: []
+    status: verified
+
+  - id: F-NTT-FLAGS
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "NTT(y) 握手为 AIV SET(1)、AIC WAIT(1)+MMAD、AIC SET(3)、AIV WAIT(3)"
+    evidence: "qa/2026-08-05 §2；f203_encrypt_ntt_y_kernel.cpp"
+    deps: []
+    status: verified
+
+  - id: F-CC-CHANNEL
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "CrossCore 使用模板 channel <2, PIPE_MTE2>，flag 取 FsmState 值 1/2/3/4/8"
+    evidence: "qa/2026-08-05 §2；f203_encrypt_ntt_y_kernel.cpp CrossCoreWaitFlag/SetFlag"
+    deps: []
+    status: verified
+
+  - id: F-INTT-FLAGS
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "INTT 段强制复用 CrossCore flag 1/3，注释禁止再用 flag 2"
+    evidence: "qa/2026-08-05 §2；l18_l19 kernel 注释"
+    deps: []
+    status: verified
+
+  - id: F-SYNCALL-RULE
+    domain: impl-tech
+    kind: fact
+    provenance: env-api
+    basis: spec
+    statement: "MIX 下 SyncAll<isAIVOnly=true> 仅在 AIC 已返回后汇合双 AIV"
+    evidence: "library/documents/CANN-AscendC算子开发接口参考-查阅索引.md 2026-07-13 / 2026-07-20"
+    deps: []
+    status: verified
+
+  - id: F-SIM-LAUNCH
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "PKE Encrypt SIM 生产路径为 2 Host launch：prep 与随后的 l18_l19（内联 pack）"
+    evidence: "stable-fips203-mlkem-pke-encrypt-k4/main.cpp 与 STATUS.md"
+    deps: []
+    status: verified
+
+  - id: F-CPU-LAUNCH
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "PKE Encrypt 存在 CPU 多 launch 孪生路径（本线不采用为证据）"
+    evidence: "retracted 原因：用户 2026-09-03 定 SIM→NPU；CPU 经验无参考价值。源码仍有该路径见 main.cpp"
+    deps: []
+    status: retracted
+
+  - id: F-HOST-PRINT
+    domain: impl-tech
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "stderr 的 launch N 文案在 ACLRT_LAUNCH 之前打印；npu_launch duration 仅在 SynchronizeStream 返回后打印"
+    evidence: "sticky 分支 qa/2026-09-03；main_kem_encaps.cpp 打印序"
+    deps: []
+    status: verified
+
+  - id: J-HANG-MEANS-WAIT
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "最后一行停在 launch 文案且无 npu_launch duration → 卡在该核 Launch 或 SynchronizeStream，核未完成"
+    deps: [F-HOST-PRINT, F-HANG-SYNC]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md §1；qa/2026-09/2026-09-03（sticky 分支）实机续报打印序"
+
+  - id: J-PRIMARY-FSMWAIT
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "首次卡死主因候选是设备侧某次 FsmWait 永不返回（或对端未 SET），而非 pack/FO 本身"
+    deps: [F-FSM-SEGMENTS, F-NTT-FLAGS, F-HANG-SYNC, F-TRACE-EMPTY]
+    status: unverified
+    evidence: "qa/2026-08-05 §1 结论；待 toy/TRACE 正交验证"
+
+  - id: J-COMMON-FACTOR
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "ntt_y 与 l18(skipNtt) 两挂点的公因子是 MIX_AIC_1_2 + CrossCore flag 1/3 Cube 握手"
+    deps: [F-MIX-TYPE, F-CC-CHANNEL, F-NTT-FLAGS, F-INTT-FLAGS, F-SPLIT-HANGS, J-NOT-ONLY-DUAL-CUBE]
+    status: unverified
+    evidence: "qa/2026-09-03 SPLIT 续报；待 toy 单段复现"
+
+  - id: J-EMPTY-TRACE-AIV0
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "挂 l18 且 stages set=0/16 空 → AIV0 全程未写入任何 FusedTraceMark"
+    deps: [F-TRACE-EMPTY]
+    status: unverified
+    evidence: "qa/2026-09-03 TRACE 实锤"
+
+  - id: J-EMPTY-TRACE-AIC-WAIT4
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "空 TRACE 与 GATE 路径合读时，AIC 可能死等 WAIT(4)"
+    deps: [J-EMPTY-TRACE-AIV0, F-FSM-SEGMENTS]
+    status: conditional
+    evidence: "qa/2026-09-03；压着 J-EMPTY-TRACE-AIV0 未证"
+
+  - id: J-SIM-NTT13-HANDSHAKE-OK
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "在轻量 toy 条件下，Encrypt 同构的 CrossCore flag 1/3 握手本身可在 SIM 完成"
+    deps: [F-TOY-NTT1-SIM-PASS, F-NTT-FLAGS, F-MIX-TYPE]
+    status: verified
+    basis: experiment
+    evidence: "GT-20260903-1 SIM PASS；未证推广到全量 l18/NPU"
+
+  - id: J-TOY-ISOLATES-FSM
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "去掉重 SHAKE、只保留 MIX+CrossCore+轻量算子串，可在快 SIM 下隔离握手是否可完成"
+    deps: [J-FULL-SIM-SLOW, J-PRIMARY-FSMWAIT]
+    status: conditional
+    evidence: "近目标策略前提；压着 J-PRIMARY-FSMWAIT 未证"
+
+  - id: D-NO-SYNCALL-WHILE-AIC-WAIT
+    domain: impl-tech
+    kind: decision
+    by: human
+    statement: "禁止在 AIC 仍 CrossCore Wait 时对 AIV 调 SyncAll"
+    deps: [F-SYNCALL-RULE, F-SYNCALL-SIM-DEAD]
+    status: active
+
+  - id: D-FOLLOW-DECRYPT-SOFTSYNC
+    domain: impl-tech
+    kind: decision
+    by: agent
+    statement: "若需双 AIV 汇合，只跟 Decrypt SoftSyncArrive 定式，禁止自造双向 SoftSync"
+    deps: [F-SOFTSYNC-SIM-DEAD, F-SYNCALL-RULE]
+    status: active
+
+  - id: D-INTT-FLAGS-57
+    domain: impl-tech
+    kind: decision
+    by: agent
+    statement: "INTT 改用 CrossCore flag 5/7"
+    deps: [F-INTT-FLAGS]
+    status: inactive
+    evidence: "失败教训见 J-FAIL-INTT-FLAGS-57；qa/2026-09-02"
+
+  - id: D-SYNCALL-EXPERIMENT
+    domain: impl-tech
+    kind: decision
+    by: agent
+    statement: "在 AIC Wait 路径上插入 SyncAll / 自造 SoftSync / softSyncGm / 默认 recreate stream 以消粘"
+    deps: [J-COMMON-FACTOR]
+    status: inactive
+    evidence: "失败教训见 J-FAIL-SYNCALL-SOFTSYNC；qa/2026-09-03"
+
+  - id: D-SPLIT-DUAL-CUBE-AS-FIX
+    domain: impl-tech
+    kind: decision
+    by: agent
+    statement: "把同核双 Cube 拆成每 MIX 一轮 Cube（2-launch 或 3-launch）作为消粘充分修复"
+    deps: [J-NOT-ONLY-DUAL-CUBE, F-SPLIT-HANGS]
+    status: inactive
+    evidence: "失败教训见 J-FAIL-SPLIT-AS-SUFFICIENT；qa/2026-09-03"
+
+  # ================= domain: verify-test =================
+
+  - id: F-SKIP-REBUILD-OLD-FUSED
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "实机未 FORCE_REBUILD 时默认 SKIP_REBUILD 会复用旧 fused 双 Cube 二进制，表现为近乎必挂"
+    evidence: "origin/cursor/kem-2launch-sticky-1534 qa/2026-09/2026-09-03 §6：不加 FORCE≈100% 卡死"
+    deps: []
+    status: verified
+
+  - id: F-RESET-BEYOND-DEVICEGUARD
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "DeviceGuard Finalize 不足以清设备级粘性；正经恢复靠单卡 reset + 杀残留进程"
+    evidence: "origin/cursor/kem-2launch-sticky-1534 qa/2026-09-02 §1；qa/2026-08-03 同卡污染"
+    deps: []
+    status: verified
+
+  - id: J-FAIL-BAD-DEVICE-CARD
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "把连环挂归因于「某号卡硬件坏」是错误结论；应用同卡污染 + 首次 CrossCore 主因解释"
+    deps: [F-RESET-BEYOND-DEVICEGUARD, F-HANG-SYNC]
+    status: verified
+    basis: experiment
+    evidence: "origin/cursor/kem-2launch-sticky-1534 与 main 共有 qa/2026-08-03 用户订正"
+
+  - id: J-FAIL-PREP-FORBIDDEN-IN-MIX
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "「Encrypt prep 不能进 MIX」已证伪；缺的是 prep 后开 Cube 前的 GATE，不是 ban prep∈MIX"
+    deps: [F-NO-GATE-FAILS, F-WITH-GATE-PASS]
+    status: verified
+    basis: experiment
+    evidence: "origin/cursor/kem-2launch-sticky-1534 qa/2026-09-03 §3.2 PREP_MIX_ONLY PASS"
+
+  - id: F-HANG-SYNC
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "实机 Encaps/Encrypt 常在打印 launch … l18_l19 后卡在 aclrtSynchronizeStream"
+    evidence: "qa/2026-08-05 §1；用户实机反馈；qa/2026-09-02/03"
+    deps: []
+    status: verified
+
+  - id: F-CPU-MULTI-GREEN
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "WSL/CPU 上 Encaps 连跑可绿（曾用于排除 gen_data 类死锁）"
+    evidence: "retracted：用户 2026-09-03 定本线 CPU 无参考价值，不得再作卡死因果依据。原见 qa/2026-08-05 §1"
+    deps: []
+    status: retracted
+
+  - id: F-SIM-ENCRYPT-GREEN
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "stable PKE Encrypt SIM 对拍 c max=0"
+    repro: "cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "STATUS.md 验收表（本线只采信 SIM 行）"
+    deps: []
+    status: verified
+
+  - id: F-KEYGEN-OK
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "用户带着 agent 做的 PKE KeyGen 实机未出现同类卡死"
+    evidence: "用户 2026-09-03 计划说明；对照假设待系统加压"
+    deps: []
+    status: verified
+
+  - id: F-TRACE-107002
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "F203_L18_TRACE 曾因子线程未 SetDevice 报 ACL_ERROR_RT_CONTEXT_NULL"
+    repro: "F203_L18_TRACE=1 bash run.sh -r npu（修复前 sticky 路径）"
+    evidence: "qa/2026-09/2026-09-02-实机l18粘性与TRACE-107002.md；acl_session.hpp"
+    deps: []
+    status: verified
+
+  - id: F-TRACE-EMPTY
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "实机挂在 l18 且 TRACE 开启时出现 [l18-trace] stages set=0/16 空槽"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md TRACE 实锤"
+    deps: []
+    status: verified
+
+  - id: F-SPLIT-HANGS
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "F203_ENCAPS_SPLIT_PREP=1 的 3-launch 路径同样卡死，挂点可为 ntt_y 或 l18(skipNtt)"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md 实机续报"
+    deps: []
+    status: verified
+
+  - id: F-FORCE-STICKY
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "FORCE_REBUILD 后 Encaps 仍约 3–5 轮粘死；挂点可在 prep_ntt 或 l18"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md"
+    deps: []
+    status: verified
+
+  - id: F-DEL-OUT-NOT-FIX
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "删除 out/output 不能可靠恢复粘性；正经恢复靠单卡 reset + 杀残留进程"
+    evidence: "qa/2026-09/2026-09-02-实机l18粘性与TRACE-107002.md §1"
+    deps: []
+    status: verified
+
+  - id: F-SYNCALL-SIM-DEAD
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "Cloud 上在 AIC Wait 语境试 SyncAll 导致 SIM 互锁/挂死"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md 失败同步实验；已回退"
+    deps: []
+    status: verified
+
+  - id: F-SOFTSYNC-SIM-DEAD
+    domain: verify-test
+    kind: fact
+    provenance: observation
+    basis: experiment
+    statement: "Cloud 自造双向 SoftSync / softSyncGm / 默认 recreate stream 导致 SIM l18 挂"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md；已回退"
+    deps: []
+    status: verified
+
+  - id: F-NO-GATE-FAILS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "prep 与 NTT 同进 MIX 且无 GATE 时 SIM 对拍 c 失败"
+    repro: "sticky Encaps prep_ntt 无 GATE 对照"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md §3.1–3.2"
+    deps: []
+    status: verified
+
+  - id: F-WITH-GATE-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "同路径补 SoftSyncArrive 与 GATE(4/8) 后 SIM 对拍 PASS"
+    repro: "sticky Encaps prep_ntt + GATE → l18"
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md §3.2"
+    deps: []
+    status: verified
+
+  - id: J-NOT-ONLY-L18
+    domain: verify-test
+    kind: inference
+    derivation: defeasible
+    statement: "「只卡第二段 l18」不是充分条件"
+    deps: [F-FORCE-STICKY, F-HOST-PRINT]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03：挂点含 prep_ntt"
+
+  - id: J-NOT-ONLY-DUAL-CUBE
+    domain: verify-test
+    kind: inference
+    derivation: defeasible
+    statement: "「同核双 Cube」不是粘性充分条件"
+    deps: [F-FORCE-STICKY, F-SPLIT-HANGS]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03：2-launch 与 SPLIT 均仍粘"
+
+  - id: J-NOT-LAUNCH-COUNT
+    domain: verify-test
+    kind: inference
+    derivation: defeasible
+    statement: "Host launch 次数（2 vs 3）不是粘性主因"
+    deps: [F-SPLIT-HANGS, F-FORCE-STICKY]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03 用户判断采纳"
+
+  - id: J-POLLUTE-SECONDARY
+    domain: verify-test
+    kind: inference
+    derivation: defeasible
+    statement: "杀挂死后同卡连环挂是次生污染，不能单独解释干净卡首次空 TRACE 挂"
+    deps: [F-TRACE-EMPTY, F-DEL-OUT-NOT-FIX, J-EMPTY-TRACE-AIV0]
+    status: conditional
+    evidence: "qa/2026-08-05 H-pollute；qa/2026-09-03 清产物后仍空 TRACE"
+
+  - id: Q-EMPTY-TRACE
+    domain: verify-test
+    kind: question
+    statement: "空 TRACE（0/16）时设备卡在哪一次 FsmWait/SET，AIV0 为何零 mark？"
+    deps: [F-TRACE-EMPTY, J-EMPTY-TRACE-AIV0, J-EMPTY-TRACE-AIC-WAIT4]
+    status: open
+
+  - id: Q-KEYGEN-CONTRAST
+    domain: verify-test
+    kind: question
+    statement: "同卡多轮 KeyGen（有 MIX）是否永不粘，从而把问题收窄到 Encrypt/l18 特有路径？"
+    deps: [F-KEYGEN-OK, F-MIX-TYPE]
+    status: open
+
+  - id: F-TOY-NTT1-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "fix-toy-encrypt-fsm-ntt1 在 SIM 上 CrossCore flag 1/3 握手跑完，wall≈1.66s，tick 8000"
+    repro: "cd ascendc-tests/fix-toy-encrypt-fsm-ntt1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/GT-20260903-1.md；/opt/cursor/artifacts/GT-20260903-1-sim.log；STATUS.md"
+    deps: []
+    status: verified
+
+  - id: J-FAIL-DUPLICATE-INT8
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "A2 上 Duplicate 不支持 int8 作桩填充；toy 应用 SetValue 等替代"
+    deps: [F-TOY-NTT1-SIM-PASS]
+    status: verified
+    basis: experiment
+    evidence: "GT-20260903-1：首编 Duplicate(int8) 失败后改 SetValue"
+
+  - id: Q-TOY-NTT
+    domain: verify-test
+    kind: question
+    statement: "轻量 toy 上单段 NTT CrossCore flag 1/3 在 SIM 是否能跑完？"
+    deps: [D-NEAR, J-TOY-ISOLATES-FSM, F-NTT-FLAGS]
+    status: answered
+    answered_by: F-TOY-NTT1-SIM-PASS
+
+  - id: F-TOY-GATE-INTT-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "pass-toy-encrypt-fsm-gate-intt1 在 SIM 上 GATE 4↔8 后接 INTT 1/3 跑完，wall≈1.84s，tick 10911（同核跳过短 NTT）"
+    repro: "cd ascendc-tests/pass-toy-encrypt-fsm-gate-intt1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/GT-20260903-2.md；/opt/cursor/artifacts/GT-20260903-2-sim.log"
+    deps: []
+    status: verified
+
+  - id: J-SIM-GATE-INTT-OK
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "在轻量 toy、同核跳过 NTT 时，GATE 4↔8 与随后 INTT flag 1/3 可在 SIM 完成"
+    deps: [F-TOY-GATE-INTT-SIM-PASS, F-INTT-FLAGS]
+    status: verified
+    basis: experiment
+    evidence: "GT-20260903-2；未覆盖同核先 NTT1/3 再 GATE 再 INTT1/3"
+
+  - id: F-TOY-L18-SKEL-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "pass-toy-encrypt-fsm-l18-skel1 同核 NTT→GATE→INTT 在 SIM 跑完，tick 14193，wall≈3s"
+    repro: "cd ascendc-tests/pass-toy-encrypt-fsm-l18-skel1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/GT-20260903-3.md；/opt/cursor/artifacts/GT-20260903-3-sim.log"
+    deps: []
+    status: verified
+
+  - id: F-TOY-TRACE-AIV0-VISIBLE
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "同核骨架 SIM 上 AIV0 标量写 TRACE 槽 Host 可见（set 含 0–3）"
+    repro: "同上；日志 [toy-l18-trace] stages set=4/8 : 0 1 2 3"
+    evidence: "GT-20260903-3-sim.log"
+    deps: []
+    status: verified
+
+  - id: F-TOY-TRACE-AIC-SCALAR-INVISIBLE
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "同核骨架 SIM 上 AIC 用标量写 TRACE GM 槽 Host 仍读为 0（即便握手已完成）"
+    repro: "同上；AIC 槽 4/5/6 为空"
+    evidence: "GT-20260903-3 反馈"
+    deps: []
+    status: verified
+
+  - id: J-FAIL-AIC-SCALAR-TRACE
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "不得用 AIC 标量直写 GM 作为 TRACE 证据；SIM 上会假空，易误判 AIC 未推进"
+    deps: [F-TOY-TRACE-AIC-SCALAR-INVISIBLE, F-TOY-L18-SKEL-SIM-PASS]
+    status: verified
+    basis: experiment
+    evidence: "GT-20260903-3：握手完成但 AIC TRACE 槽仍 0"
+
+  - id: J-SIM-FUSED-L18-HANDSHAKE-OK
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "轻量同核 NTT1/3→GATE→INTT1/3 握手可在 SIM 完成，说明该 FSM 字面量在 SIM 非先天死锁"
+    deps: [F-TOY-L18-SKEL-SIM-PASS, F-NTT-FLAGS, F-INTT-FLAGS]
+    status: verified
+    basis: experiment
+    evidence: "GT-20260903-3；未证推广到全量 Encrypt/NPU"
+
+  - id: J-EMPTY-TRACE-NOT-TOOL-TOTAL-FAIL
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "实机 stages 0/16 全空更支持 AIV0 未执行到首 mark，而非 TRACE 槽机制整体失效"
+    deps: [F-TRACE-EMPTY, F-TOY-TRACE-AIV0-VISIBLE, F-TOY-TRACE-DATACOPY-PASS, J-EMPTY-TRACE-AIV0]
+    status: conditional
+    evidence: "SIM 上标量 AIC 假空已由 DataCopy 证伪；0/16 全空仍压 NPU 侧 J-EMPTY-TRACE-AIV0；待偶发上机 skel1"
+
+  - id: F-TOY-TRACE-DATACOPY-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "skel1 TRACE 改 DataCopy 后 SIM 上 AIV0 槽 0–3 与 AIC 槽 5/6 均非空（stages set=6/8）；槽4本跑未回显为残余观察"
+    repro: "cd ascendc-tests/pass-toy-encrypt-fsm-l18-skel1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/GT-20260903-4.md；/opt/cursor/artifacts/GT-20260903-4-sim.log；STATUS.md"
+    deps: []
+    status: verified
+
+  - id: J-TRACE-DATACOPY-MAKES-AIC-VISIBLE
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "SIM 上 AIC TRACE 须 DataCopy（或等价搬运）写槽才 Host 可见；标量直写不可信"
+    deps: [F-TOY-TRACE-DATACOPY-PASS, F-TOY-TRACE-AIC-SCALAR-INVISIBLE, J-FAIL-AIC-SCALAR-TRACE]
+    status: verified
+    basis: experiment
+    evidence: "GT-4 vs GT-3 对照；未改 stable FusedTraceMark（须用户确认）"
+
+  - id: Q-TOY-TRACE-DATACOPY
+    domain: verify-test
+    kind: question
+    statement: "将 TRACE mark 改为 DataCopy 写槽后，SIM 上 AIC 与 AIV0 槽是否都非空？"
+    deps: [F-TOY-TRACE-AIC-SCALAR-INVISIBLE, J-FAIL-AIC-SCALAR-TRACE]
+    status: answered
+    answered_by: F-TOY-TRACE-DATACOPY-PASS
+
+  - id: Q-TOY-SIM-MULTI-LAUNCH-HANG
+    domain: verify-test
+    kind: question
+    statement: "轻量同核 NTT→GATE→INTT 骨架在 SIM 上同进程连续多 launch（≥8）是否会出现 SynchronizeStream 挂死/超时？"
+    deps: [D-NEAR, F-TOY-L18-SKEL-SIM-PASS, F-SIM-LAUNCH, J-NOT-LAUNCH-COUNT]
+    status: answered
+    answered_by: F-TOY-SKEL-MULTI32x3-SIM-PASS
+    evidence: "同核 fused：16× 与 3×32 均未挂；异核 2-launch 另见 Q-TOY-SIM-2LAUNCH-HANG"
+
+  - id: F-TOY-SKEL-MULTI32x3-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "skel1 TOY_LAUNCH_REPEAT=32 串行 3 个 SIM 进程均 32/32 sync+TRACE，无挂死/超时"
+    repro: "TOY_LAUNCH_REPEAT=32 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4（×3 串行）"
+    evidence: "graph-tests/GT-20260903-6.md；/opt/cursor/artifacts/GT-20260903-6-sim.log"
+    deps: []
+    status: verified
+
+  - id: Q-TOY-SIM-2LAUNCH-HANG
+    domain: verify-test
+    kind: question
+    statement: "toy 在 SIM 上模仿 Encrypt 两段 Host launch（先 NTT 段、再 GATE+INTT 段）连续多轮是否 SynchronizeStream 挂死？"
+    deps: [D-NEAR, F-SIM-LAUNCH, F-TOY-SKEL-MULTI32x3-SIM-PASS]
+    status: answered
+    answered_by: F-TOY-2LAUNCH-SIM-PASS
+
+  - id: F-TOY-2LAUNCH-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "skel1 TOY_SPLIT_2LAUNCH=1、TOY_LAUNCH_REPEAT=16：2 进程×16 组 NTT_ONLY→GATE_INTT_ONLY 均 sync+TRACE，SIM 无挂死"
+    repro: "TOY_SPLIT_2LAUNCH=1 TOY_LAUNCH_REPEAT=16 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/GT-20260903-7.md；/opt/cursor/artifacts/GT-20260903-7-sim.log"
+    deps: []
+    status: verified
+
+  - id: J-TOY-SIM-NO-HANG-SO-FAR
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "当前 toy 尺度（同核多 launch + 两段 Host launch）在 SIM 上未复现挂死；卡死更可能依赖生产 Encrypt 路径/真机 sticky，而非轻量 FSM 字面量"
+    deps: [F-TOY-2LAUNCH-SIM-PASS, F-TOY-SKEL-MULTI32x3-SIM-PASS, J-SIM-FUSED-L18-HANDSHAKE-OK, J-PRIMARY-FSMWAIT]
+    status: conditional
+    evidence: "GT-3..7；条件：J-PRIMARY-FSMWAIT 仍 unverified（生产/NPU 未证）"
+
+  - id: F-TOY-SKEL-MULTI16-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "skel1 同进程 TOY_LAUNCH_REPEAT=16 在 SIM 上 16/16 轮 sync done+TRACE，无 SynchronizeStream 挂死（2/2 次进程）"
+    repro: "cd ascendc-tests/pass-toy-encrypt-fsm-l18-skel1 && TOY_LAUNCH_REPEAT=16 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/GT-20260903-5.md；/opt/cursor/artifacts/GT-20260903-5-sim.log"
+    deps: []
+    status: verified
+
+  - id: J-TOY-SAME-KERNEL-MULTI16-NO-HANG
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "toy 尺度「同一 fused kernel 连 launch 16 次」不足以在 SIM 复现挂死；不能据此排除 Encrypt 异核/真机 sticky"
+    deps: [F-TOY-SKEL-MULTI16-SIM-PASS, J-NOT-LAUNCH-COUNT]
+    status: verified
+    basis: experiment
+    evidence: "GT-20260903-5；未覆盖异核 prep→l18、更高轮次、NPU"
+
+  - id: Q-TOY-FUSED-L18-SKEL
+    domain: verify-test
+    kind: question
+    statement: "同核串起 NTT 1/3 → GATE 4↔8 → INTT 1/3（Encrypt l18 骨架）在 SIM 是否能跑完？"
+    deps: [F-TOY-NTT1-SIM-PASS, F-TOY-GATE-INTT-SIM-PASS, F-FSM-SEGMENTS]
+    status: answered
+    answered_by: F-TOY-L18-SKEL-SIM-PASS
+
+  - id: Q-TOY-GATE-INTT
+    domain: verify-test
+    kind: question
+    statement: "轻量 toy 上 GATE 4↔8 再接 INTT flag 1/3 在 SIM 是否能跑完？"
+    deps: [D-NEAR, J-TOY-ISOLATES-FSM, F-INTT-FLAGS, F-WITH-GATE-PASS]
+    status: answered
+    answered_by: F-TOY-GATE-INTT-SIM-PASS
+
+  # ================= domain: perf-opt =================
+  - id: F-SIM-TICK-ENCRYPT
+    domain: perf-opt
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "stable Encrypt 全链 SIM tick 约 627590（含 prep SHAKE 等）"
+    repro: "cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4 && bash run.sh -r sim -v Ascend910B4"
+    evidence: "STATUS.md 验收表 Total tick 627590"
+    deps: []
+    status: verified
+
+  - id: J-FULL-SIM-SLOW
+    domain: perf-opt
+    kind: inference
+    derivation: defeasible
+    statement: "全量 Encrypt/Encaps SIM 迭代成本过高，不适合高频 FSM 假设验证"
+    deps: [F-SIM-TICK-ENCRYPT]
+    status: verified
+    basis: heuristic
+    evidence: "用户要求改 toy 快路径；STATUS tick≈627590 为成本量级参照"
+
+  - id: D-NO-FULL-ENCRYPT-ITER
+    domain: perf-opt
+    kind: decision
+    by: human
+    statement: "本阶段禁止以改 stable 全量 Encrypt + 反复全链 SIM 作为主调试手段"
+    deps: [J-FULL-SIM-SLOW, D-NEAR]
+    status: active
+
+changelog:
+  - date: "2026-09-03"
+    change: |
+      用户要求 Decrypt 独立图谱：新增 D-DECRYPT-SEPARATE-GRAPH；
+      真理源 docs/rg-decrypt-fused.yaml + graph-tests/decrypt/。
+  - date: "2026-09-03"
+    change: |
+      GT-7 PASS：两段 Host launch×16×2 进程 SIM 未挂（F-TOY-2LAUNCH-SIM-PASS）；
+      Q-TOY-SIM-2LAUNCH-HANG answered；J-TOY-SIM-NO-HANG-SO-FAR conditional；暂未派下一刀。
+  - date: "2026-09-03"
+    change: |
+      GT-6 PASS：3×32 同核未挂（F-TOY-SKEL-MULTI32x3-SIM-PASS）；Q-TOY-SIM-MULTI-LAUNCH-HANG answered；
+      新开 Q-TOY-SIM-2LAUNCH-HANG + GT-7（两段 Host launch 模仿 Encrypt）。
+  - date: "2026-09-03"
+    change: |
+      GT-5 PASS：skel1 同进程 16×launch SIM 未挂（F-TOY-SKEL-MULTI16-SIM-PASS）；
+      J-TOY-SAME-KERNEL-MULTI16-NO-HANG；Q 仍 open；下发 GT-6（32× + 外层 3 进程）。
+  - date: "2026-09-03"
+    change: |
+      用户：暂时无法上机；toy 目的含 SIM 多跑加压看卡死。D-NPU-TRIP-TOY-SKEL1 推迟 inactive；
+      新开 Q-TOY-SIM-MULTI-LAUNCH-HANG + D-EXP-GT-20260903-5（同进程多 launch SIM）。
+  - date: "2026-09-03"
+    change: |
+      GT-20260903-4 SIM PASS：TRACE DataCopy → AIV0+AIC 槽可见（F-TOY-TRACE-DATACOPY-PASS）；
+      Q-TOY-TRACE-DATACOPY answered；暂停新开 toy；D-NPU-TRIP-TOY-SKEL1 偶发上机清单。
+  - date: "2026-09-03"
+    change: |
+      GT-20260903-3 SIM PASS：融合骨架绿；AIV0 TRACE 可见、AIC 标量 TRACE 假空（J-FAIL-AIC-SCALAR-TRACE）；
+      Q-TOY-FUSED-L18-SKEL answered；下发 GT-4 DataCopy TRACE。
+  - date: "2026-09-03"
+    change: |
+      GT-20260903-2 SIM PASS → F-TOY-GATE-INTT-SIM-PASS；Q-TOY-GATE-INTT answered；
+      新开 Q-TOY-FUSED-L18-SKEL（同核 NTT→GATE→INTT）；下发 GT-3。
+  - date: "2026-09-03"
+    change: |
+      GT-20260903-1 SIM PASS → F-TOY-NTT1-SIM-PASS；Q-TOY-NTT answered；J-SIM-NTT13-HANDSHAKE-OK；
+      J-FAIL-DUPLICATE-INT8；下发 GT-20260903-2（GATE+INTT 1/3）。
+  - date: "2026-09-03"
+    change: |
+      下发 GT-20260903-1（D-EXP-GT-20260903-1）：toy 单段 NTT flag 1/3 SIM。
+  - date: "2026-09-03"
+    change: |
+      D-RG-MULTI-BRANCH-SRC：须沉淀其它分支实验笔记；补 sticky 缺口 F-SKIP-REBUILD / F-RESET / J-FAIL-BAD-DEVICE / J-FAIL-PREP-FORBIDDEN-IN-MIX。
+  - date: "2026-09-03"
+    change: |
+      终点明确为解决 Encrypt 卡死；D-NPU-TRIP-SCARCE：SIM 充分后再偶发上机。
+  - date: "2026-09-03"
+    change: |
+      新建根目录 graph-tests/；INDEX 写死任务与图谱治理；D-GRAPH-TESTS 路径改为 graph-tests/。
+  - date: "2026-09-03"
+    change: |
+      用户：最终目标 NPU；验证关键是 SIM；CPU 测试/经验无参考价值。
+      新增 D-RG-SIM-PRIMARY；retract F-CPU-*；toy 问题与 SIM 绿节点去 CPU；J-PRIMARY 不再依赖 CPU 绿。
+  - date: "2026-09-03"
+    change: |
+      图谱治理收紧（用户）：只服务 debug；失败经验一等公民；禁止「为绿而绿」伤性能做法作推荐知识。
+      新增 domain rg-hygiene / fail-lessons：D-RG-*、J-FAIL-*。
+  - date: "2026-09-03"
+    change: |
+      初始建图：从 qa 08-05/09-02/09-03、Encrypt STATUS、API 查阅索引抽原子节点。
+      收入已证伪：仅双 Cube/仅 l18/launch 次数；失败 decision：SyncAll/SoftSync/INTT 5/7/拆双 Cube 当充分修复。
+      近目标 D-NEAR=toy 骨架；最终验收仍挂 Q-ULT。
+      未证主线：J-PRIMARY-FSMWAIT / J-COMMON-FACTOR / J-EMPTY-TRACE-* / J-TOY-ISOLATES-FSM(conditional)。

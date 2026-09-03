@@ -1,0 +1,505 @@
+# 推理图谱 · Decrypt fused（Alg.15）卡死排查
+# 用途：服务 debug 的可推翻知识 +「提假设 → toy 实验 → 反向审查」。
+# 与 Encrypt 图分离：docs/rg-encrypt-l18.yaml 不回答本线问题。
+# 工具：thirdparty/reasoning-graph-skill/scripts/rg_{validate,audit,query,render}.py --yaml 本文件
+# 准入：只收直接服务 Decrypt SynchronizeStream 卡死 / FSM / SoftSync / GATE / TRACE 的知识。
+# 必收：失败实验与失败教训；禁止只堆「测过绿」。
+# 禁入：方法论散文；CPU 孪生作证据；催上机当实验替代；把 Encrypt toy 未挂当成 Decrypt 已解。
+
+version: 1
+title: "ML-KEM Decrypt · fused kernel 卡死 · 推理图谱"
+
+config:
+  required_fields: [domain]
+  id_prefix_by_kind: {fact: F, inference: J, decision: D, question: Q}
+  fact_provenance_values: [observation, measurement, doc, env-api]
+  inference_derivation_values: [deductive, defeasible]
+  decision_by_values: [human, agent]
+  require_repro_for_provenance: [measurement]
+
+review:
+  last_reviewed: "2026-09-03"
+  note: "DGT-1..4 SIM 均 PASS；toy 尺度未复现挂死；Q-ULT / Q-HANG-LOCI / J-PRIMARY-SOFTSYNC 仍开"
+
+nodes:
+  # ================= domain: goals =================
+  - id: Q-ULT
+    domain: goals
+    kind: question
+    title: "用户最终验收问题"
+    statement: "NPU 实机上 stable-fips203-mlkem-pke-decrypt-k4 在 prod input-only（dk_pke+c+lut_*）路径是否不再 SynchronizeStream 卡死，且 m 与 golden 一致？"
+    deps: [F-USER-HANG-CLAIM, F-PROD-INPUT, F-FUSED-1KERNEL]
+    status: open
+
+  - id: D-NEAR
+    domain: goals
+    kind: decision
+    by: human
+    title: "当前阶段近目标"
+    statement: "在 ascendc-tests 建轻量 toy，隔离 Decrypt 独有骨架（AIV-AIV SoftSyncArrive + 两轮 GATE 4/8 + 同核 NTT/INTT 1/3）；不对算法正确性；以 SIM 跑完/是否挂死为验收，不以 CPU 为准；禁止把上机当第一实验手段"
+    deps: [J-ENCRYPT-TOYS-MISS-SOFTSYNC, J-HANG-NOT-REPRO-CLOUD-SIM]
+    status: active
+    targets: [Q-ULT, Q-TOY-SOFTSYNC, Q-TOY-SOFT-GATE, Q-TOY-FUSED-SKEL, Q-TOY-MULTI-LAUNCH]
+
+  - id: D-WORKFLOW
+    domain: goals
+    kind: decision
+    by: human
+    statement: "主控管图谱与实验设计；同时只派 1 个 subagent 写码/跑 SIM；禁自主 commit/push/开分支"
+    deps: [D-NEAR]
+    status: active
+
+  - id: D-GRAPH-TESTS
+    domain: goals
+    kind: decision
+    by: human
+    statement: "Decrypt 试验场为 graph-tests/decrypt/ + ascendc-tests/fix-toy-decrypt-*；不把 stable decrypt 当主调试场"
+    deps: [D-NEAR]
+    status: active
+
+  - id: D-EXP-DGT-20260903-1
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第一刀：toy 仅验证生产 SoftSyncArrive（AIV0 写 slot / AIV1 while==0）在 SIM 是否能跑完、会否 SynchronizeStream 挂死"
+    deps: [D-NEAR, F-SOFTSYNC-ARRIVE]
+    status: inactive
+    evidence: "已完成：F-TOY-SOFTSYNC-SIM-PASS；继任 D-EXP-DGT-20260903-2"
+    targets: [Q-TOY-SOFTSYNC]
+
+  - id: D-EXP-DGT-20260903-2
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第二刀：SoftSyncArrive 后再接一轮 GATE 4↔8（同构 Decrypt prep 段末握手），SIM 看是否挂死"
+    deps: [D-NEAR, F-TOY-SOFTSYNC-SIM-PASS, F-FSM-GATES]
+    status: inactive
+    evidence: "已完成：F-TOY-SOFT-GATE-SIM-PASS；继任 D-EXP-DGT-20260903-3"
+    targets: [Q-TOY-SOFT-GATE]
+
+  - id: D-EXP-DGT-20260903-3
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第三刀：同核 Decrypt 融合骨架 Soft0→GATE→NTT1/3→Soft1→GATE→INTT1/3，SIM 看是否挂死"
+    deps: [D-NEAR, F-TOY-SOFT-GATE-SIM-PASS, F-NTT-FLAGS-13, F-INTT-FLAGS-13]
+    status: inactive
+    evidence: "已完成：F-TOY-FUSED-SKEL-SIM-PASS；继任 D-EXP-DGT-20260903-4"
+    targets: [Q-TOY-FUSED-SKEL]
+
+  - id: D-EXP-DGT-20260903-4
+    domain: goals
+    kind: decision
+    by: agent
+    statement: "第四刀：fused-skel1 同进程多 launch（清 TRACE/softSync→launch→Sync）SIM 加压，搜间歇挂死"
+    deps: [D-NEAR, F-TOY-FUSED-SKEL-SIM-PASS]
+    status: inactive
+    evidence: "已完成：F-TOY-MULTI16-SIM-PASS；toy 尺度 SIM 16 launch 未挂"
+    targets: [Q-TOY-MULTI-LAUNCH]
+
+  - id: D-NO-NPU-AS-FIRST-EXP
+    domain: goals
+    kind: decision
+    by: human
+    statement: "在 SIM toy 假设未证够、失败教训未沉够之前，禁止把「请用户上机跑 stable decrypt」当作本线实验"
+    deps: [D-NEAR, D-RG-SIM-PRIMARY]
+    status: active
+    targets: [Q-ULT]
+
+  # ================= domain: rg-hygiene =================
+  - id: D-RG-DEBUG-ONLY
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "本图只沉淀直接服务 Decrypt fused 卡死 debug 的知识；Encrypt l18 细节不复制进来，只引用必要对照"
+    deps: [D-NEAR]
+    status: active
+
+  - id: D-RG-FAIL-MUST-KEEP
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "失败实验必须沉淀为 inactive/retracted + J-FAIL-*；禁止只堆通过项"
+    deps: [D-RG-DEBUG-ONLY]
+    status: active
+
+  - id: D-RG-SIM-PRIMARY
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "过程以 SIM 为关键证据；CPU 无参考价值不进图；最终盯 NPU 但不以催上机替代 SIM 实验链"
+    deps: [D-RG-DEBUG-ONLY, D-NEAR]
+    status: active
+    targets: [Q-ULT, Q-TOY-SOFTSYNC]
+
+  - id: D-RG-NO-SLOW-CORRECTNESS
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "禁止把堆 Host launch、逐步 GM 外搬、放弃融合等伤性能「为绿而绿」做法沉淀为推荐实现"
+    deps: [D-RG-DEBUG-ONLY]
+    status: active
+
+  - id: D-NO-STABLE-AS-MAIN-LAB
+    domain: rg-hygiene
+    kind: decision
+    by: human
+    statement: "stable decrypt 全链不作本阶段主试验场（SIM 已绿且 TRACE 轮询会污染对拍）；主场是 toy"
+    deps: [F-SIM-STABLE-NO-HANG, J-FAIL-TRACE-POLL-SIM-VERIFY]
+    status: active
+
+  # ================= domain: fail-lessons =================
+  - id: J-FAIL-INTT-FLAGS-57
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "INTT 改 CrossCore flag 5/7 在 Encrypt 线已导致 SIM 超时；Decrypt toy/生产 INTT 仍只用 1/3"
+    deps: [F-INTT-FLAGS-13]
+    status: verified
+    basis: experiment
+    evidence: "docs/rg-encrypt-l18.yaml J-FAIL-INTT-FLAGS-57；qa/2026-09-02"
+
+  - id: J-FAIL-SYNCALL-ON-AIC-WAIT
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "AIC 仍 CrossCore Wait 时插 SyncAll → SIM 互锁；Decrypt toy 禁止该做法"
+    deps: [F-MIX-TYPE]
+    status: verified
+    basis: experiment
+    evidence: "docs/rg-encrypt-l18.yaml J-FAIL-SYNCALL-SOFTSYNC；qa/2026-09-03"
+
+  - id: J-FAIL-TPIPE-MARK-IN-FUSED
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "在生产 fused 全链内每次 TRACE mark 新建 TPipe+DataCopy 会破坏向量流水，SIM 对拍 max≠0"
+    deps: [F-FUSED-1KERNEL]
+    status: verified
+    basis: experiment
+    evidence: "2026-09-03 Cloud：stable decrypt F203_DECRYPT_TRACE DataCopy-TPipe 路径 verify FAIL max=246；改回标量写槽后无 TRACE 时仍 PASS"
+
+  - id: J-FAIL-TRACE-POLL-SIM-VERIFY
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "Host 在 SynchronizeStream 期间 D2H 轮询 TRACE（F203_DECRYPT_TRACE=1 或 F203_L18_TRACE=1）会使 SIM 对拍失败；TRACE 仅作 NPU 定位，不作 SIM golden 验收"
+    deps: [F-SIM-STABLE-NO-HANG]
+    status: verified
+    basis: experiment
+    evidence: "2026-09-03：decrypt F203_DECRYPT_TRACE=1 SIM FAIL；encaps F203_L18_TRACE=1 SIM c.bin FAIL；同二进制无 TRACE 则 PASS"
+
+  - id: J-FAIL-ENCRYPT-TOY-AS-DECRYPT-ANSWER
+    domain: fail-lessons
+    kind: inference
+    derivation: defeasible
+    statement: "Encrypt GT-1..7 toy 未挂不能回答 Decrypt 卡死；缺 SoftSyncArrive 与双 GATE 周期"
+    deps: [J-ENCRYPT-TOYS-MISS-SOFTSYNC]
+    status: verified
+    basis: stated
+    evidence: "用户 2026-09-03：须独立 decrypt 图谱与 toy，禁止空耗等上机"
+
+  # ================= domain: impl-tech =================
+  - id: F-OP
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "目标算子 examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4（Alg.15，k=4）"
+    evidence: "用户点名；STATUS / customspec"
+    deps: []
+    status: verified
+
+  - id: F-PROD-INPUT
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "生产 input 仅 dk_pke.bin + c.bin + 4×lut_*_stacked.bin；ek/m/coins 只在 output/_gen_fixture/"
+    evidence: "scripts/gen_data.py 打印 prod input = dk_pke + c + lut_* only"
+    deps: [F-OP]
+    status: verified
+
+  - id: F-FUSED-1KERNEL
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "生产路径单 kernel f203_decrypt_device_fused；Host 一次 ACLRT_LAUNCH 后 aclrtSynchronizeStream"
+    evidence: "compute/g4_full/f203_decrypt_device_fused_entry.cpp；main_decrypt_g4_run.cpp"
+    deps: [F-OP]
+    status: verified
+
+  - id: F-MIX-TYPE
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "fused 为 KERNEL_TYPE_MIX_AIC_1_2（1 AIC + 2 AIV），blockDim=1"
+    evidence: "f203_decrypt_device_fused_entry.cpp KERNEL_TASK_TYPE_DEFAULT"
+    deps: [F-FUSED-1KERNEL]
+    status: verified
+
+  - id: F-SOFTSYNC-ARRIVE
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "SoftSyncArrive：AIV0 对 softSyncGm[slot] 标量写 1 + PipeBarrier；AIV1 while(s[slot]==0) 忙等；slot0=prep 后，slot1=su_dot+pad 后"
+    evidence: "f203_decrypt_device_fused_entry.cpp SoftSyncArrive / SoftSyncClear"
+    deps: [F-FUSED-1KERNEL, F-MIX-TYPE]
+    status: verified
+
+  - id: F-HOST-ZERO-SOFTSYNC
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "Host 启动前把 softSyncGm（int32[2]，分配 64B）H2D 清零"
+    evidence: "main_decrypt_g4_run.cpp kSoftSyncBytes 与 H2D zeros"
+    deps: [F-SOFTSYNC-ARRIVE]
+    status: verified
+
+  - id: F-FSM-GATES
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "段间 GATE：双 AIV SET(4) → AIC WAIT(4)/SET(8) → 双 AIV WAIT(8)；核内两次（prep 后、su_dot 后）"
+    evidence: "fused_entry AIC/AIV 分支 ST_AIV_DONE=4 ST_GATE=8"
+    deps: [F-FUSED-1KERNEL]
+    status: verified
+
+  - id: F-NTT-FLAGS-13
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "NTT(u)：AIV SET(1) → AIC WAIT(1)+MMAD → AIC SET(3) → AIV WAIT(3)；通道 <2,PIPE_MTE2>"
+    evidence: "fused_entry NTT 段；与 Encrypt NTT 同字面量"
+    deps: [F-FUSED-1KERNEL]
+    status: verified
+
+  - id: F-INTT-FLAGS-13
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "INTT(ŵ)：复用 flag 1/3（禁 2、禁 5/7）；AIC 无 ST_MMAD 中间 Wait"
+    evidence: "fused_entry INTT 段注释；Encrypt 同禁令"
+    deps: [F-FUSED-1KERNEL]
+    status: verified
+
+  - id: F-SOFTSYNC-VS-ENCRYPT-FAIL
+    domain: impl-tech
+    kind: fact
+    provenance: doc
+    basis: stated
+    statement: "Decrypt SoftSync 只在 AIV0↔AIV1；AIC 不同时参与该忙等。Encrypt 失败的是 AIC Wait 路径上的 SyncAll/自造 AIC-AIV SoftSync，不是本定式"
+    evidence: "docs/rg-encrypt-l18.yaml D-FOLLOW-DECRYPT-SOFTSYNC vs J-FAIL-SYNCALL-SOFTSYNC"
+    deps: [F-SOFTSYNC-ARRIVE]
+    status: verified
+
+  - id: F-USER-HANG-CLAIM
+    domain: impl-tech
+    kind: fact
+    provenance: observation
+    basis: stated
+    statement: "用户报告：prod input-only 路径上 decrypt 会卡死（SynchronizeStream 不返回）"
+    evidence: "2026-09-03 用户订正：算子 stable-fips203-mlkem-pke-decrypt-k4；非 Decaps Phase-E"
+    deps: [F-OP, F-PROD-INPUT]
+    status: verified
+
+  # ================= domain: verify-test =================
+  - id: F-SIM-STABLE-NO-HANG
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "Cloud SIM 上该 stable prod input-only 默认路径不挂：CPU+SIM PASS max=0；连续 4 次 SIM 均 SUCCESS"
+    repro: "cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4 && SEED_D=20260619 bash run.sh -r sim -v Ascend910B4"
+    evidence: "2026-09-03 Cloud：tick≈289k–301k；DECRYPT_SKIP_GEN_DATA=1 连跑 4 次均 verify PASS"
+    deps: []
+    status: verified
+
+  - id: Q-TOY-SOFTSYNC
+    domain: verify-test
+    kind: question
+    statement: "轻量 toy 上仅 AIV-AIV SoftSyncArrive（标量写 slot + AIV1 忙等）在 SIM 是否能跑完、会否挂死？"
+    deps: [D-NEAR, F-SOFTSYNC-ARRIVE]
+    status: answered
+    answered_by: F-TOY-SOFTSYNC-SIM-PASS
+
+  - id: F-TOY-SOFTSYNC-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "fix-toy-decrypt-fsm-softsync1 在 SIM 上 SoftSyncArrive 跑完：双 AIV TRACE 可见，slot0=1，tick 3979，wall≈0.83s，未 SynchronizeStream 挂死"
+    repro: "cd ascendc-tests/fix-toy-decrypt-fsm-softsync1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/decrypt/DGT-20260903-1.md；/opt/cursor/artifacts/DGT-20260903-1-sim.log；STATUS.md"
+    deps: []
+    status: verified
+
+  - id: Q-TOY-SOFT-GATE
+    domain: verify-test
+    kind: question
+    statement: "SoftSyncArrive 之后再接一轮 GATE 4↔8，SIM 是否能跑完？"
+    deps: [D-NEAR, F-SOFTSYNC-ARRIVE, F-FSM-GATES]
+    status: answered
+    answered_by: F-TOY-SOFT-GATE-SIM-PASS
+
+  - id: F-TOY-SOFT-GATE-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "fix-toy-decrypt-fsm-soft-gate1 在 SIM 上 SoftSync 后一轮 GATE 4↔8 跑完，tick 5073，wall≈1.04s，未挂"
+    repro: "cd ascendc-tests/fix-toy-decrypt-fsm-soft-gate1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/decrypt/DGT-20260903-2.md；/opt/cursor/artifacts/DGT-20260903-2-sim.log"
+    deps: []
+    status: verified
+
+  - id: Q-TOY-FUSED-SKEL
+    domain: verify-test
+    kind: question
+    statement: "同核骨架 Soft0→GATE→NTT1/3→Soft1→GATE→INTT1/3 在 SIM 单 launch 是否能跑完？"
+    deps: [D-NEAR, F-FSM-GATES, F-NTT-FLAGS-13, F-INTT-FLAGS-13]
+    status: answered
+    answered_by: F-TOY-FUSED-SKEL-SIM-PASS
+
+  - id: F-TOY-FUSED-SKEL-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "pass-toy-decrypt-fsm-fused-skel1 单 launch SIM 跑完双 SoftSync+双 GATE+NTT/INTT 1/3，tick 13056，wall≈1.84s，未 SynchronizeStream 挂死"
+    repro: "cd ascendc-tests/pass-toy-decrypt-fsm-fused-skel1 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/decrypt/DGT-20260903-3.md；/opt/cursor/artifacts/DGT-20260903-3-sim.log；TRACE 7/8（AIC prep 槽偶发未落属可见性）"
+    deps: []
+    status: verified
+
+  - id: Q-TOY-MULTI-LAUNCH
+    domain: verify-test
+    kind: question
+    statement: "Decrypt fused-skel toy 同进程多 launch 在 SIM 是否 SynchronizeStream 挂死？"
+    deps: [D-NEAR, F-TOY-FUSED-SKEL-SIM-PASS]
+    status: answered
+    answered_by: F-TOY-MULTI16-SIM-PASS
+
+  - id: F-TOY-MULTI16-SIM-PASS
+    domain: verify-test
+    kind: fact
+    provenance: measurement
+    basis: experiment
+    statement: "pass-toy-decrypt-fsm-fused-skel1 同进程 16 launch SIM 均 synchronize done，tick 181191，wall≈22.8s，未挂"
+    repro: "cd ascendc-tests/pass-toy-decrypt-fsm-fused-skel1 && TOY_LAUNCH_REPEAT=16 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    evidence: "graph-tests/decrypt/DGT-20260903-4.md；/opt/cursor/artifacts/DGT-20260903-4-sim.log"
+    deps: []
+    status: verified
+
+  - id: J-DECRYPT-TOY-SIM-NO-HANG-SO-FAR
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "Decrypt toy 尺度（SoftSync×2+GATE×2+NTT/INTT1/3，含 16 launch）SIM 暂未复现挂死；用户所述卡死更可能在生产 fused 体量或 NPU 粘性"
+    deps: [F-TOY-MULTI16-SIM-PASS, F-TOY-FUSED-SKEL-SIM-PASS, F-USER-HANG-CLAIM]
+    status: verified
+    basis: experiment
+    evidence: "DGT-1..4 均 SIM PASS；对照 F-SIM-STABLE-NO-HANG；Q-ULT 仍 open"
+
+  - id: Q-HANG-LOCI
+    domain: verify-test
+    kind: question
+    statement: "若卡死发生：是 SoftSync slot0、prep GATE、NTT Wait、SoftSync slot1、su GATE、还是 INTT Wait？"
+    deps: [F-SOFTSYNC-ARRIVE, F-FSM-GATES, F-NTT-FLAGS-13, F-INTT-FLAGS-13]
+    status: open
+
+  # ================= domain: inferences（未证 / 已证对照） =================
+  - id: J-HANG-NOT-REPRO-CLOUD-SIM
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "本 Cloud SIM 未复现用户所述 stable decrypt 挂死；真卡死更可能在 NPU/粘性/连续脏退，或 SIM 覆盖不到的 SoftSync 可见性"
+    deps: [F-SIM-STABLE-NO-HANG, F-USER-HANG-CLAIM]
+    status: verified
+    basis: experiment
+    evidence: "F-SIM-STABLE-NO-HANG vs F-USER-HANG-CLAIM"
+
+  - id: J-ENCRYPT-TOYS-MISS-SOFTSYNC
+    domain: impl-tech
+    kind: inference
+    derivation: deductive
+    statement: "Encrypt toy GT-1..7 覆盖 NTT1/3、GATE4/8、INTT1/3、多 launch、两段 Host launch，但不含 SoftSyncArrive，故不能隔离 Decrypt 独有挂点"
+    deps: [F-SOFTSYNC-ARRIVE, F-SOFTSYNC-VS-ENCRYPT-FAIL]
+    status: verified
+    basis: stated
+    evidence: "graph-tests/GT-20260903-1..7；fused_entry SoftSyncArrive"
+
+  - id: J-PRIMARY-SOFTSYNC
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "Decrypt 独有且最像永久挂的机制是 AIV1 对 softSyncGm 的 while 忙等（slot 永不置位则 SynchronizeStream 永不返回）"
+    deps: [F-SOFTSYNC-ARRIVE, J-ENCRYPT-TOYS-MISS-SOFTSYNC]
+    status: unverified
+    basis: heuristic
+    evidence: "DGT-1 SIM 未挂（F-TOY-SOFTSYNC-SIM-PASS）；忙等本身在 SIM 未复现永久挂；待 DGT-2/3 与 NPU"
+
+  - id: J-TWO-GATE-DIFF
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "Decrypt 同核两轮 GATE 4/8（NTT 前后各一）可能与 Encrypt 单轮 GATE 有不同死锁面"
+    deps: [F-FSM-GATES]
+    status: unverified
+    basis: heuristic
+    evidence: "DGT-3 双 GATE 同核 SIM 未挂（F-TOY-FUSED-SKEL-SIM-PASS）；NPU 死锁面仍未测"
+
+  - id: J-TOY-ISOLATES-SOFTSYNC
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "先做仅 SoftSync 的 toy 可以在不跑全量 Alg.15 的情况下回答「标量 busy-wait 是否在 SIM 挂」"
+    deps: [F-SOFTSYNC-ARRIVE, F-TOY-SOFTSYNC-SIM-PASS]
+    status: verified
+    basis: experiment
+    evidence: "DGT-20260903-1：隔离 toy SIM PASS，未挂"
+
+  - id: J-SOFTSYNC-ALONE-NOT-HANG-SIM
+    domain: impl-tech
+    kind: inference
+    derivation: defeasible
+    statement: "单独 SoftSyncArrive 在 SIM 不足以复现用户所述挂死；若卡死存在，须叠 GATE/NTT/INTT 或只在 NPU 出现"
+    deps: [F-TOY-SOFTSYNC-SIM-PASS, F-USER-HANG-CLAIM]
+    status: verified
+    basis: experiment
+    evidence: "DGT-1 PASS vs F-USER-HANG-CLAIM；J-PRIMARY-SOFTSYNC 仍 unverified"
+
+changelog:
+  - date: "2026-09-03"
+    change: |
+      DGT-4 SIM PASS：F-TOY-MULTI16-SIM-PASS；Q-TOY-MULTI-LAUNCH answered；
+      J-DECRYPT-TOY-SIM-NO-HANG-SO-FAR。toy 尺度 SIM 未复现挂死。下一刀勿催上机：须更近生产体量或等 NPU。
+  - date: "2026-09-03"
+    change: |
+      DGT-3 SIM PASS：F-TOY-FUSED-SKEL-SIM-PASS；Q-TOY-FUSED-SKEL answered；
+      双 Soft+双 GATE+NTT/INTT 骨架未挂。新开 Q-TOY-MULTI-LAUNCH；下发 DGT-4 多 launch 加压。
+  - date: "2026-09-03"
+    change: |
+      DGT-2 SIM PASS：F-TOY-SOFT-GATE-SIM-PASS；Q-TOY-SOFT-GATE answered；
+      一轮 GATE 未挂；J-TWO-GATE-DIFF 仍 unverified。下发 DGT-3 融合骨架。
+  - date: "2026-09-03"
+    change: |
+      DGT-1 SIM PASS：F-TOY-SOFTSYNC-SIM-PASS；Q-TOY-SOFTSYNC answered；
+      J-TOY-ISOLATES-SOFTSYNC verified；J-SOFTSYNC-ALONE-NOT-HANG-SIM；
+      J-PRIMARY-SOFTSYNC 仍 unverified（单独忙等未复现挂死）。
+      下发 D-EXP-DGT-20260903-2（SoftSync 后 GATE 4/8）。
+  - date: "2026-09-03"
+    change: |
+      用户要求独立 Decrypt debug 图谱，禁止只改 stable / 催上机。
+      初始建图：生产 fused FSM + SoftSync 事实；Cloud SIM 未复现挂死；
+      Encrypt toy 缺 SoftSync 对照；失败教训含 TPipe-mark 与 TRACE 轮询污染 SIM 对拍。
+      近目标 D-NEAR=toy 隔离 SoftSync→GATE→融合骨架；第一刀 D-EXP-DGT-20260903-1 待 SIM。
+      未证：J-PRIMARY-SOFTSYNC / J-TWO-GATE-DIFF / J-TOY-ISOLATES-SOFTSYNC。
+      最终仍挂 Q-ULT（NPU prod input-only 不卡且正确）。

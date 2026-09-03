@@ -2,50 +2,28 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-01（有界方法论演示：入目标边数锁定；合稿衔接片 pptx 已删）
+> **最后刷新**：2026-09-03（用户：Decrypt 独立图谱 + SoftSync toy；禁空耗催上机）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：**`main`**（实机脚本在本地；用户搬码前未必已 push）。  
-2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；须保留完整 build 树以便编 PKE ref）。  
-   —— 注意：**1024 的 14 个用例现在没有 liboqs 也能跑**（KEM golden 会回落 python），但**有 liboqs 才有权威交叉**，Cloud 仍建议装。  
-3. **工作分支**：`research/formal-lang-dag`（已 fast-forward 合入 `main@718590c`）。教材第9章对照实验：**SIM tick 表已填**；NPU 14 档待实机 [`scripts/npu_kem_one_trip.sh`](scripts/npu_kem_one_trip.sh)（清单 [`docs/research/教材KEM实机测量清单.md`](docs/research/教材KEM实机测量清单.md)）。  
-4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-08/2026-08-19-教材第9章对照实验提纲.md`](qa/2026-08/2026-08-19-教材第9章对照实验提纲.md) + 当日 KEM 纪要。
-5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
+1. **两条 debug 线（分开）**  
+   - Encrypt/`l18_l19`：[`docs/rg-encrypt-l18.yaml`](docs/rg-encrypt-l18.yaml)；GT-1..7 SIM 未挂。  
+   - **Decrypt fused**：**独立** [`docs/rg-decrypt-fused.yaml`](docs/rg-decrypt-fused.yaml) + [`graph-tests/decrypt/`](graph-tests/decrypt/INDEX.md)；近目标 = **SoftSync toy**（`Q-TOY-SOFTSYNC`）。  
+2. **现状**：Decrypt DGT-1..4 toy SIM **均未挂**；stable Cloud SIM 亦未复现。Encrypt toy **没有** SoftSync，不能当 Decrypt 答案。  
+3. 同时只派 1 subagent；禁自主 push/commit/开分支。  
+4. 纪要：[`qa/2026-09/2026-09-03-Encrypt卡死图谱与toy近目标.md`](qa/2026-09/2026-09-03-Encrypt卡死图谱与toy近目标.md) §19。
 
-### 刚关闭
-
-| 项 | 说明 |
-|----|------|
-| **T18** | PKE helper encrypt/decrypt 链接：链 `ml_kem_1024_ref` `.o` + fips202 shim + `liboqs-internal.a`；**非改名问题** |
-| **领导短讲** | CASE-002 v4：**已讲、效果不错**（08-18 回填）；合稿衔接片 pptx **已删**（09-01） |
-| **方法论 demo** | 有界封装/解封：①底座 ②一次画全缺项+路径（入目标 2 边锁定）③黄→绿补缺（新能力先放入）④验收；见 `docs/reports/methodology-demo/` · [`qa/2026-09/2026-09-01-…`](qa/2026-09/2026-09-01-有界演示路径拓扑与合稿衔接片删除.md) |
-
-### 待办快照（新增，非本阶段主线）
+### 待办快照
 
 | 项 | 说明 |
 |----|------|
-| **T2-npu-env** | **1024 全覆盖**：探针×7 + stable×7 走 `${REPO_ROOT}/scripts/env.sh`；npu **按树分卡** stable=**1** / examples=**2** / tests=**3**（[`npu_device_map.sh`](scripts/npu_device_map.sh)）；SIM 强制 0；`msprof_run.sh` 默认不采集 |
-| **同卡污染（08-03 订正）** | **不是**「device1 坏卡」。探针挂死/Ctrl+C/`timeout` 未 Finalize → **同卡**连环挂；换卡只绕开。已加 [`acl_session::DeviceGuard`](library/shared/acl_session/acl_session.hpp) |
-| **alg19 错结果** | NPU 路径曾**静默吞 LUT ReadFile 失败**（已改硬失败）；实机须 `FORCE_REBUILD` 复验是否仍 max≠0 |
-| **alg20/21 首次卡 `l18_l19`** | **诊断已冻结**（08-05）：卡在 MIX CrossCore，非 pack/FO；假设序污染→GATE→INTT→NTT；待 E0–E2 trace |
-| **实机 msprof** | `RUN_WITH_MSPROF=1` 才采集；见 [`scripts/msprof_run.sh`](scripts/msprof_run.sh) |
-| **零 thirdparty golden** | LUT 三级回退；[`f203_kem_ref`](library/shared/f203_kem_ref/kem_ref.py) |
+| **P0（当次）** | Decrypt toy DGT-1..4 **SIM 均未挂**；下一刀=更近生产体量，**不催上机** |
+| **Decrypt 最终** | `Q-ULT`（NPU prod input-only 不卡且 m 对拍） |
+| **Encrypt 最终** | Encrypt 图 `Q-ULT`（另线） |
 
----
-
-## ★ 接手清单（2026-08-03 订正后）
-
-| 优先 | 项 | 做什么 | 注意 |
-|------|----|--------|------|
-| **P0** | **l18 卡死定位** | 干净卡：E0=PKE Encrypt → E1=Encaps `F203_L18_TRACE=1` → E2=同卡再跑 Encaps | 带回末行 `[l18-trace]`；对照 08-05 纪要 §3–§4；**勿先改 FSM** |
-| **P1** | alg19 错结果 | 干净卡 `KEM_KEYGEN_FORCE_REBUILD=1`；看 max / LUT 硬失败日志 | **独立线**；勿用错密钥直接解释 CrossCore |
-| **P1** | **T2-npu-link** | 512 / 768 / incubating 剩 12 处 `ln -sfn` → `ln -sfnr` | 改哪档验哪档 |
-| **P2** | 512 审阅收尾 | 见下节 | 与 NPU 线互不冲突 |
-
-**别做**：把「device1 坏」写回文档；`#交付#` stable-512/768（须用户点名）；从 frozen 抄码。
+**别做**：催立刻拷机跑 stable decrypt；把 Encrypt GT 未挂写成 Decrypt 已解；未授权 commit/push。
 
 ---
 
