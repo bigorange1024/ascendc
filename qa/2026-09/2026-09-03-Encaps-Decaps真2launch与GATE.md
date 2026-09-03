@@ -269,9 +269,11 @@ F203_ENCAPS_SPLIT_PREP=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
 | 计划 | [`graph_tests/DECRYPT_HANG_PLAN.md`](../../graph_tests/DECRYPT_HANG_PLAN.md) |
 | 握手 | SoftSync slot0/1（AIV1 自旋）→ 双 AIV SET(4) → AIC 入口 Wait(4)/Set(8) → NTT 1/3 → slot1 → 第二轮 GATE → INTT 1/3（无 flag 2） |
 | 借入 Encaps | 缺 SET(4) 可 SIM 124；**双 Cube 不是充分 hang 因**（已 retracted，勿再当第一刀） |
-| 下一刀 | **TASK-010** `SKEL_OMIT_SLOT0`：AIV0 不写哨兵 → 预期 124 |
-| 上机 | **禁止**在 T2 未沉前请用户跑全量 Decrypt NPU |
+| 下一刀 | **TASK-011** 第二轮省略 SET(4) 预期 124 |
+| 上机 | **仍禁止**全量 Decrypt NPU（SIM 机制未齐；空 while 不是 SIM 代理） |
 
-**TASK-009（同日）**：`fix-decrypt-skel-mix-chain-toy` A 合法握手 SIM **绿**（wall 3.934s，magic `SKELDEC1`/`0x04`，tick 20735）；B `OMIT_SET4=1` **rc=124**（budget 60s）。`J-omit-set4-hangs-decrypt` / `J-hang-needs-handshake-break` → **verified**。
+**TASK-009（同日）**：合法握手 SIM **绿**（wall 3.934s）；`OMIT_SET4=1` **124**。缺 SET(4) **verified**。
 
-**状态词**：Decrypt hang T0–T1 **有条件完成**（差 T2 SoftSync 层 + 实机）。
+**TASK-010（同日）**：`OMIT_SLOT0=1` device 宏已生效，SIM **仍绿**（wall 3.632s）。空 `while(s[0]==0)` **不能**当 SIM hang 代理（retracted）；实机 SoftSync 死等仍 open，但**不要**用这档去上机。
+
+**状态词**：Decrypt hang T0–T1 **有条件完成**；T2 SIM 假说已撤回；差 T3 + 实机。

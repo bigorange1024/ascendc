@@ -3,10 +3,10 @@
  * @brief Decrypt fused 握手骨架 toy：单 MIX launch 串起 SoftSync + 两轮 GATE + stub Cube。
  *
  * 流水线位置：对齐生产 `f203_decrypt_device_fused_entry.cpp` 的同步顺序，
- * **不**移植 unpack / su_dot / NTT Stage1–3；只验证握手能绿 / 缺 SET(4) 能挂。
+ * **不**移植 unpack / su_dot / NTT Stage1–3；只验证握手能绿 / 缺哨兵或缺 SET(4) 能挂。
  * 与 golden 无关（verify 只查 magic）。
  *
- * 握手（默认 SKEL_OMIT_SET4=0）：
+ * 握手（默认 SKEL_OMIT_SET4=0 且 SKEL_OMIT_SLOT0=0）：
  *   AIV0 stub_prep → SoftSyncArrive(slot0)；AIV1 自旋
  *   双 AIV：SET(4)→WAIT(8)→Clear(slot0)
  *   NTT-like：SET(1) / AIC WAIT(1)+MMAD+SET(3) / AIV WAIT(3)（无 flag 2）
@@ -16,7 +16,11 @@
  *   AIV0 写 magic SKELDEC1
  *   AIC：入口 WAIT(4)→SET(8) → Cube → WAIT(4)→SET(8) → Cube
  *
- * 故障注入 SKEL_OMIT_SET4=1：两轮都不 SET(4) → AIC 入口 Wait(4) 死等 → 预期 SIM 124。
+ * 故障注入（互斥，run.sh 禁止同时为 1）：
+ *   SKEL_OMIT_SET4=1：两轮都不 SET(4) → AIC 入口 Wait(4) 死等 → 预期 SIM 124。
+ *   SKEL_OMIT_SLOT0=1：AIV0 不写 s[0]=1（Arrive 空操作）；AIV1 仍 while(s[0]==0)；
+ *     SoftSync 是后续 SET(4) 的前置 → AIV1 无法齐步 SET(4) → 预期 SIM 124。
+ *     AIV0 仍可走 AivGateRound 的 SET(4)（本开关不打开 OMIT_SET4）。
  *
  * 禁止：AIC Wait 期间 SyncAll；自造双向 SoftSync；真算法；滥增 Host launch。
  */
@@ -29,6 +33,9 @@
 
 #ifndef SKEL_OMIT_SET4
 #define SKEL_OMIT_SET4 0
+#endif
+#ifndef SKEL_OMIT_SLOT0
+#define SKEL_OMIT_SLOT0 0
 #endif
 
 /**
@@ -66,14 +73,26 @@ __aicore__ inline void FsmSet(FsmState st)
  * @param slot 0 或 1
  * @param subBlockID AIV 编号
  * 背景：F-softsync-two-slots；禁止双向汇合 / SyncAll 替代。
+ *
+ * SoftSync 是后续双 AIV SET(4)（AivGateRound）的前置：AIV1 必须先被放行才能参与 GATE。
+ * SKEL_OMIT_SLOT0=1 且 slot==0：AIV0 故意不写 s[0]（Arrive 空操作），测「忘写哨兵」；
+ * AIV1 仍 while(s[0]==0) 永久转；AIV0 仍可随后 SET(4)（勿与 OMIT_SET4 叠开）。
  */
 __aicore__ inline void SoftSyncArrive(GM_ADDR softSyncGm, int32_t slot, int32_t subBlockID)
 {
     auto *s = reinterpret_cast<__gm__ int32_t *>(softSyncGm);
     if (subBlockID == 0) {
+#if SKEL_OMIT_SLOT0
+        // 故障注入：仅 slot0 对 AIV0 空操作（不写 s[0]=1）；slot1 仍正常写哨兵
+        if (slot == 0) {
+            AscendC::PipeBarrier<PIPE_ALL>();
+            return;
+        }
+#endif
         s[slot] = 1;
         AscendC::PipeBarrier<PIPE_ALL>();
     } else {
+        // AIV1：始终自旋等哨兵；OMIT_SLOT0 时 s[0] 永 0 → 永久转（假说成功证据）
         while (s[slot] == 0) {
         }
         AscendC::PipeBarrier<PIPE_ALL>();
@@ -212,7 +231,7 @@ extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR out, GM_ADDR src, GM_A
 
         // --- stub_prep（仅形态；AIV0 写 STUB）---
         StubPrep(subBlockID, ws);
-        // SoftSync slot0：AIV0 写 1，AIV1 自旋
+        // SoftSync slot0：默认 AIV0 写 1、AIV1 自旋；OMIT_SLOT0 时 AIV0 空操作（SET(4) 前置断裂）
         SoftSyncArrive(softSyncGm, /*slot=*/0, subBlockID);
 
         // GATE #1 + Clear(slot0)

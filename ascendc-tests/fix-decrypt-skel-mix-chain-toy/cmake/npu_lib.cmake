@@ -17,5 +17,6 @@ ascendc_compile_definitions(ascendc_kernels_${RUN_MODE} PRIVATE
     SKEL_HEAVY=${SKEL_HEAVY}
     SKEL_SKIPNTT=${SKEL_SKIPNTT}
     SKEL_OMIT_SET4=${SKEL_OMIT_SET4}
+    SKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0}
     SKEL_HOST_MU=${SKEL_HOST_MU}
 )

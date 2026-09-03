@@ -60,13 +60,13 @@ AIC: 入口 WAIT(4)→SET(8) → WAIT(1) MMAD SET(3) → WAIT(4)→SET(8) → WA
 |------|------|------|
 | **T0** | 合法握手 stub 链 | **已完成** TASK-009 A：SIM 绿 wall 3.934s magic `SKELDEC1` |
 | **T1** | `J-omit-set4-hangs-decrypt` | **已完成** TASK-009 B：OMIT_SET4 → **124**（verified） |
-| **T2** | `J-omit-slot0-spin-hangs` | **TASK-010**：AIV0 不 Arrive(slot0) → **124** |
-| **T3** | `J-omit-slot1-hangs-after-ntt` | 第一轮 Cube 后缺 slot1/SET(4) → **124** |
+| **T2** | `J-omit-slot0-spin-hangs` | **TASK-010 SIM 未挂**（rc=0 wall 3.6s；宏已生效）→ **retracted（SIM）**；空 while 不是 SIM hang 代理 |
+| **T3** | `J-omit-slot1-hangs-after-ntt` | **TASK-011**：第一轮合法、第二轮省略 SET(4) → 预期 **124** |
 | **T4** | `J-dirty-softsync-hang-vs-race` | 预填 1 更像误放行；预填 0 像清零 |
 | **T5** | 拉长 stub prep 仍绿 | 支持「忙等≠死锁」 |
 | 勿排 | `J-dual-cube-sufficient-hang` | **已 retracted** |
 
-T0–T1 已沉；**未完成 T2 前仍不准**请用户跑全量 Decrypt NPU。
+T0–T1 已沉；T2 证明 **SIM 看不见空 while SoftSync hang**。下一刀 T3 用 CrossCore 第二轮缺 SET(4)。**仍不准**请用户跑全量 Decrypt NPU。
 
 ---
 

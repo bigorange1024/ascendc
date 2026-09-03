@@ -1,15 +1,17 @@
 #!/bin/bash
 # fix-decrypt-skel-mix-chain-toy：Decrypt fused 握手骨架 toy（SoftSync + 两轮 GATE + stub Cube）
 #
-# Usage（默认 = 合法握手，OMIT_SET4=0）：
+# Usage（默认 = 合法握手，OMIT_SET4=0 且 OMIT_SLOT0=0）：
 #   SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   # 等价显式：SKEL_OMIT_SLOT0=0 SKEL_OMIT_SET4=0 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 #
-# 故障注入（预期 timeout 124；可降预算；不要求 SKIPNTT）：
+# 故障注入（预期 timeout 124；可降预算；OMIT_SET4 与 OMIT_SLOT0 互斥）：
 #   KERNEL_COMPUTE_BUDGET_SEC=60 SKEL_OMIT_SET4=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+#   KERNEL_COMPUTE_BUDGET_SEC=60 SKEL_OMIT_SLOT0=1 SKEL_OMIT_SET4=0 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 #
 # KERNEL_COMPUTE_BUDGET_SEC 默认 180（防挂死，非性能定标）
 # CANN：source ${REPO_ROOT}/scripts/env.sh
-# SKEL_OMIT_SET4：编译期宏（cmake -D）
+# SKEL_OMIT_SET4 / SKEL_OMIT_SLOT0：编译期宏（cmake -D）；同时为 1 则报错退出
 CURRENT_DIR=$(
     cd $(dirname ${BASH_SOURCE:-$0})
     pwd
@@ -94,7 +96,17 @@ if [ "${SKEL_OMIT_SET4}" != "0" ] && [ "${SKEL_OMIT_SET4}" != "1" ]; then
     echo "[ERROR] SKEL_OMIT_SET4 must be 0 or 1, got: ${SKEL_OMIT_SET4}" >&2
     exit 1
 fi
-echo "SKEL_OMIT_SET4=${SKEL_OMIT_SET4}"
+# SKEL_OMIT_SLOT0 默认 0；1=AIV0 不写 SoftSync slot0（SET(4) 前置断裂）
+export SKEL_OMIT_SLOT0="${SKEL_OMIT_SLOT0:-0}"
+if [ "${SKEL_OMIT_SLOT0}" != "0" ] && [ "${SKEL_OMIT_SLOT0}" != "1" ]; then
+    echo "[ERROR] SKEL_OMIT_SLOT0 must be 0 or 1, got: ${SKEL_OMIT_SLOT0}" >&2
+    exit 1
+fi
+if [ "${SKEL_OMIT_SLOT0}" = "1" ] && [ "${SKEL_OMIT_SET4}" = "1" ]; then
+    echo "[ERROR] SKEL_OMIT_SLOT0=1 与 SKEL_OMIT_SET4=1 互斥；请只开其一" >&2
+    exit 1
+fi
+echo "SKEL_OMIT_SET4=${SKEL_OMIT_SET4} SKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0}"
 
 set -e
 rm -rf build out
@@ -105,7 +117,8 @@ cmake -B build \
     -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
     -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
     -DASCEND_CANN_PACKAGE_PATH=${_ASCEND_INSTALL_PATH} \
-    -DSKEL_OMIT_SET4=${SKEL_OMIT_SET4}
+    -DSKEL_OMIT_SET4=${SKEL_OMIT_SET4} \
+    -DSKEL_OMIT_SLOT0=${SKEL_OMIT_SLOT0}
 cmake --build build -j"${CMAKE_BUILD_JOBS:-2}"
 cmake --install build
 
