@@ -49,6 +49,7 @@
 
 按时间倒序追加（最新在上）。
 
+| 2026-09-03 | **干净 Encrypt P0（Host 2-launch + Host μ）** | 复用 `CrossCoreSetFlag`/`WaitFlag`（flag 1/3 Cube + 4/8 skipNtt GATE）、`PipeBarrier`、`DataCopy`/`Duplicate`/`Adds`/`Muls`、既有 `AicMmad`（Nd2Nz/LoadData/Mmad/Fixpipe）；**无** PrefixEmbed；无新增设备 API | [`fix-encrypt-clean-hostmu-2launch`](../../ascendc-tests/fix-encrypt-clean-hostmu-2launch/)：结构即约束；AIC Wait(4)↔双 AIV SET(4) |
 | 2026-09-03 | **Encaps/Decaps 真 2-launch（prep∈MIX+GATE）** | 复用 `CrossCoreSetFlag`/`WaitFlag`（GATE 4/8 + NTT 1/3）、`SoftSync` 标量哨兵、`PipeBarrier`、既有 `AicMmad`/`AivK8Split`/`Pack`/`RouteA`；无新增设备 API | 默认 `prep_ntt|l18`（Encaps/Phase-E）与 Phase-D `chain_ntt|intt`；SIM 证：Encrypt prep∈MIX 本身绿，缺 GATE 时同核 NTT 曾红；回退 `F203_*_SPLIT_PREP` / `F203_*_FUSED*` |
 | 2026-09-02 | **Encaps 安全拆 launch + TRACE poller** | 复用 `CrossCore*`/`ntt_y`/`l18_l19`；`ySrc==nullptr` 跳过 NTT 使每 MIX 一轮 Cube（对齐 KeyGen）；`aclrtSynchronizeStream`/`SetDevice`/`GetDevice`/`Memcpy` 复用；无新增设备 API | stable Encaps 默认 prep→ntt_y→l18(skip NTT)；`F203_ENCAPS_FUSED_L18=1` 回退；修 TRACE 107002 |
 | 2026-07-27 | **ML-KEM-512 glue-c：Encrypt re 混合 CBD η1=3/η2=2** | 无新增 AscendC API；复用已登记 `DataCopy`/`PipeBarrier`/`TPipe`/`TQue`/`TBuf` 与 D13 `SamplePolyCbd3RowSwLutUb`、既有 `SamplePolyCbd2RowSwLutUb`；PRF SHAKE squeeze 行 stride 192（η2 行前 128B 有效，XOF 前缀） | D14/D20/D21/D21ct + E14/E20/E21/E21ct：`r←η1=3`，`e₁‖e₂←η2=2`；修相对 liboqs Encaps `c` 缺项 |

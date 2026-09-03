@@ -36,6 +36,9 @@
 | NTT 内 Matmul 废弃 | [notes/NTT-Matmul路线废弃说明.md](notes/NTT-Matmul路线废弃说明.md) |
 | DataCopy / TQue | [notes/ascendc-DataCopy与数据搬运知识库.md](notes/ascendc-DataCopy与数据搬运知识库.md)、[TQue 知识库](notes/ascendc-TQue与Pipe框架知识库.md) |
 | 多核 MatMul tiling | [notes/AscendC-多核MatMul-tiling技术总结.md](notes/AscendC-多核MatMul-tiling技术总结.md) |
+| **Encrypt 卡死推理图谱** | [rg-kem-encrypt-hang.yaml](rg-kem-encrypt-hang.yaml) · [viewer HTML](rg-kem-encrypt-hang.html) · [主控↔subagent 协议](rg/AGENT_TASK_PROTOCOL.md) · 实验区 [`graph_tests/`](../graph_tests/INDEX.md) |
+| **Decaps K 错推理图谱** | [rg-kem-decrypt-k131.yaml](rg-kem-decrypt-k131.yaml) · [viewer HTML](rg-kem-decrypt-k131.html) |
+| **干净重写 Encrypt 设计** | [`graph_tests/ENCRYPT_CLEAN_REWRITE.md`](../graph_tests/ENCRYPT_CLEAN_REWRITE.md) |
 
 ---
 

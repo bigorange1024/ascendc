@@ -5,7 +5,7 @@
 # registry：docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md
 # 生产 I/O：input/{ek_kem,m,lut_*} → output/{c,K}.bin
 #   $r$ 由设备 G 写出，Host 禁止预填 $r$ 为生产契约
-# SIM：默认 prep_ntt|l18（真 2 Host launch / 2 Cube）；`F203_ENCAPS_SPLIT_PREP=1` 回退 3-launch；
+# SIM：默认 prep_ntt | Host折μ | l18（真 2 Host launch / 2 Cube）；`F203_ENCAPS_SPLIT_PREP=1` 回退 3-launch；
 #      `F203_ENCAPS_FUSED_L18=1` 旧双 Cube；`F203_ENCAPS_PREP_MIX_ONLY=1` 诊断（MIX 仅 prep）
 # CPU：5 launch（同 Encrypt 分叉；第 1 次为 kem prep）
 #
@@ -21,6 +21,7 @@
 #   F203_ENCAPS_FUSED_L18=1 …                 # 旧双 Cube 融合（对照）
 #   F203_ENCAPS_SPLIT_PREP=1 …                # 回退：AIV prep | ntt_y | l18
 #   F203_ENCAPS_PREP_MIX_ONLY=1 …             # 诊断：MIX 仅 prep → ntt_y | l18
+#   F203_HOST_FOLD_MU=0 …                     # 回退设备 PrefixEmbed μ（默认未设/=1 为 Host 折）
 #   SIM_DIRECT=0 … -r sim …                   # msprof + OPPROF_*（慢）
 #   M_FILE=… / M_HEX=… / M_DEFAULT_HEX=… / EK_KEM_SRC=…
 #   （默认 m=urandom；禁止默认可全 0。M_RANDOM 已废，勿再依赖）

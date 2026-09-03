@@ -223,3 +223,35 @@ F203_ENCAPS_SPLIT_PREP=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
 4. **实机粘性**：与 SIM 解耦；对照 KeyGen；**本提交仅文档、无代码**。
 
 **基线结果（2026-09-03）**：回退后 SIM PASS。失败同步实验未再引入源码。
+
+---
+
+## 7. 推理图谱工作流（同日续）
+
+| 项 | 说明 |
+|----|------|
+| **最终目标** | NPU 实机 Encrypt 不在 `l18_l19` 卡死且正确性通过 |
+| **当前目标** | `ascendc-tests` 轻量 toy 模仿 Encrypt 任务链（去重哈希）；快 SIM；打通图谱推理↔实验 |
+| **图谱** | [`docs/rg-kem-encrypt-hang.yaml`](../../docs/rg-kem-encrypt-hang.yaml)（`rg_validate` OK；W0；含已证伪路径） |
+| **协议** | [`docs/rg/AGENT_TASK_PROTOCOL.md`](../../docs/rg/AGENT_TASK_PROTOCOL.md) |
+| **实验区** | [`graph_tests/`](../../graph_tests/INDEX.md)（用户授权） |
+| **分工** | 主控管图谱与下发；subagent 按模板干活并反馈；默认 subagent 不改 yaml |
+| **入库门禁** | 只收服务 debug；**失败一等公民**；禁 correctness 反模式当推荐；**SIM 关键 / 不沉淀 CPU** |
+| **执行纪律** | 同时仅 1 subagent + 时限止损（`graph_tests/SUBAGENT_RULES.md`）；**不得自主推送**；总章程 `graph_tests/CHARTER.md` |
+
+**下一刀**：用户 NPU 加压默认 Host 折 μ Encaps（见 `AGENT_HANDOFF` / `D-await-npu-host-mu`）；主控据实机结果刷新图谱。
+
+---
+
+## 8. 等 NPU 期间：clean Encrypt + Decaps 图谱 W1（同日续）
+
+| 线 | 交付 |
+|----|------|
+| **clean Encrypt** | 设计 [`ENCRYPT_CLEAN_REWRITE.md`](../../graph_tests/ENCRYPT_CLEAN_REWRITE.md)；探针目标 `ascendc-tests/fix-encrypt-clean-hostmu-2launch`；**TASK-007** P0（Host μ 结构默认、skipNtt 无 PrefixEmbed、SET(4) 可达） |
+| **Decaps K** | 图谱 W1 [`rg-kem-decrypt-k131.yaml`](../../docs/rg-kem-decrypt-k131.yaml)（`rg_validate` OK）；计划 [`DECRYPT_K131_PLAN.md`](../../graph_tests/DECRYPT_K131_PLAN.md)；**TASK-008** draft 排队（等 007 释放 SIM） |
+| **关键差** | Encaps 已 Host 折 μ；**Decaps 树 l18 仍设备 PrefixEmbed**（未跟热修）— 正确定位 K=131 时勿混为一谈 |
+| **假说阶梯** | H1 FO 拒绝（K≈J(z‖c)）→ H2 Phase-D m' → H3 Phase-E → H4 仅 NPU 同步；先 Cloud Step-0 SIM |
+
+**TASK-008（同日）**：FORCE+SIM_DIRECT 默认 Decaps **仍绿**（`chain_ntt`/`prep_ntt`；K max=0；wall≈284s）；诊断 K=accept≠J(z‖c)。→ **H4 优先**；下一刀用户 NPU 正交 A/B/C + 红样本 K vs J。
+
+**状态词**：Encaps 热修 / clean P0 / Decaps Cloud SIM **有条件完成**（差 NPU）。
