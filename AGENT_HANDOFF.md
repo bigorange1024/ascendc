@@ -11,7 +11,7 @@
 1. 分支：**`cursor/kem-2launch-sticky-1534`**（勿只拉 main；未授权勿合 main）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs）。  
 3. **今日 P0 真相**：Encaps/Decaps 默认 2-launch 已上分支；Cloud SIM 绿。  
-4. **实机**：`FORCE_REBUILD` 后 Encaps 仍约 **3–5 轮**卡死、**位置同改前** → **拆双 Cube 未消粘性**；Decaps `K max=131` 另线。详 [`qa/2026-09-03-…` §6](qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)。  
+4. **实机**：`FORCE_REBUILD` 后 Encaps 仍约 **3–5 轮**卡死；挂点两种——最后打印 **`prep_ntt` 或 `l18(ySrc=null)`** → 非仅第二段；**拆双 Cube 未消粘**。Decaps `K max=131`。详 qa 09-03 §6。  
 5. 写 AscendC 前：Rule + engineering-notes。
 
 ### 刚关闭

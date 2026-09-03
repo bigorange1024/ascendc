@@ -127,33 +127,41 @@ F203_DECRYPT_FUSED=1 F203_DECAPS_FUSED_L18=1 bash run.sh -r npu -v Ascend910B4
 
 | 观察 | 解读 |
 |------|------|
-| `FORCE_REBUILD=1` 后 Encaps 仍多轮卡死 | 分别约 **5 / 3 / 4** 次后挂；**卡死位置与改前相同**（仍在第二段 compute / `l18` 一带，而非「拆双 Cube 即消」） |
-| 含义 | **否定**「仅把单 MIX 双 Cube 拆成两 launch 即可消除 Encaps 粘性」作为充分条件；Cloud SIM 绿 ≠ 实机粘性闭环 |
-| 仍成立 | 不加 FORCE → 吃旧 fused → 必挂；FORCE 后至少能跑完若干轮且曾 PASS |
+| `FORCE_REBUILD=1` 后 Encaps 仍多轮卡死 | 分别约 **5 / 3 / 4** 次后挂 |
+| **两种挂点（用户确认）** | (A) 最后打印 `launch 2 f203_encrypt_l18_l19 (ySrc=null)`；(B) 最后打印 `launch 1 f203_kem_enc_prep_ntt (prep+NTT, one Cube)` |
+| Host 打印语义（`main_kem_encaps.cpp`） | stderr `launch N …` 在 **ACLRT_LAUNCH 之前**；`[npu_launch] … duration_us=` 仅在 **SynchronizeStream 返回后** 才打。故「最后一行 = launch 文案」= 卡在该核的 **Launch 或 Sync**，该核尚未完成 |
+| (A) 含义 | launch1 已跑完（应已有 `prep_ntt` 的 `[npu_launch]`）；卡在 **l18** Launch/Sync |
+| (B) 含义 | 卡在 **prep_ntt** Launch/Sync；**尚未**打印 launch2。prep_ntt = **单 Cube** MIX → 挂点**不需要**同核双 Cube |
+| 总含义 | **否定**「只卡第二段 l18」；**否定**「拆双 Cube 即消」。更像 **跨次 run 设备态累积**，下一发 **任一 MIX** 撞脏态 |
+| 仍成立 | 不加 FORCE → 吃旧 fused → 必挂；FORCE 后能跑完若干轮且曾 PASS |
 
 **修订假设（待验，勿升 notes）**：
 
-1. 粘性可能在 **第二次 MIX launch（l18 / INTT+at_jp）** 或 **跨次 run 的设备残留**，不单是「同核两轮 Cube」。  
-2. 或 `prep_ntt` 首轮 Cube 仍留下与旧 fused 同类的设备态。  
-3. TRACE 假 107002 已修，真挂时应能靠 `F203_L18_TRACE=1` 看卡在 sync 前是否有 stage。
+1. ~~仅第二 MIX / 仅 l18~~ → **已证伪为充分条件**（(B) 可挂在单 Cube 的 prep_ntt）。  
+2. ~~仅同核双 Cube~~ → **已证伪为充分条件**（默认路径每 launch 本就一轮 Cube，仍粘）。  
+3. 优先：**跨进程/跨次 launch 的 NPU 残留**（Finalize/同卡污染/Cube·CrossCore），与「本核是否双 Cube」弱相关。  
+4. 两核都含 MIX+CrossCore；脏态下**谁先被 launch 谁挂**（故 (A)/(B) 可交替出现）。  
+5. `F203_L18_TRACE=1`：**仅 (A)** 有用；(B) 看是否打出 `prep_ntt` 的 `[npu_launch]`（无则死在该 Sync）。
 
 **建议下一刀（实机）**：
 
 ```bash
-# 1）确认挂时最后一行 launch 名（prep_ntt vs l18）
-KEM_ENCAPS_FORCE_REBUILD=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4   # 连跑至挂
+# 1）连跑至挂：记录最后一行 + 是否已打出 npu_launch duration（区分 launch 后死等 vs 未进 sync）
+KEM_ENCAPS_FORCE_REBUILD=1 F203_L18_TRACE=1 bash run.sh -r npu -v Ascend910B4
 
-# 2）对照：Host 3-launch（无 prep∈MIX）是否同样 N 轮挂
+# 2）Host 3-launch：看挂点是 ntt_y / l18 / prep（无 prep∈MIX）
 F203_ENCAPS_SPLIT_PREP=1 bash run.sh -r npu -v Ascend910B4
 
-# 3）对照：旧 fused 是否仍挂（基线）
+# 3）旧 fused 基线
 F203_ENCAPS_FUSED_L18=1 bash run.sh -r npu -v Ascend910B4
 
-# 4）对照：stable KeyGen 多轮是否挂（已知 2-launch、无 Encaps l18）
+# 4）KeyGen 多轮（有 MIX、无 Encaps l18）
+# 5）每次跑前是否单卡 reset？若「每轮 reset 则永不挂、不 reset 则 N 轮挂」→ 强支持设备残留假说
 ```
 
 | 若 | 则 |
 |----|----|
-| 默认与 SPLIT_PREP 都在 l18 挂 | 焦点在 **l18/INTT 段或第二 MIX**，与 prep_ntt 无关 |
-| 仅默认挂、SPLIT 不挂 | 焦点在 **prep_ntt / Encrypt prep∈MIX** 残留 |
-| KeyGen 多轮不挂、Encaps 挂 | 更像 Encaps/l18 特有，非「凡 MIX 必粘」 |
+| 默认在 prep_ntt **或** l18 都挂 | 跨次残留 / 凡 MIX；继续对 KeyGen、SPLIT |
+| SPLIT 只挂 ntt_y/l18、从不挂 AIV prep | 焦点在 **MIX+Cube**，AIV_ONLY prep 干净 |
+| **每轮 reset 不挂、累积跑挂** | 残留假说；治本靠 Finalize/reset 策略或找未释放资源 |
+| KeyGen 多轮不挂 | Encaps 特有（LUT/ws/双 launch 接缝等） |
