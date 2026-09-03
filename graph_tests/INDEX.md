@@ -5,7 +5,7 @@
 | 线 | 图谱 | 状态 |
 |----|------|------|
 | Encaps 粘性 | `docs/rg-kem-encrypt-hang.yaml` | Hostμ SIM 绿；**clean P0 绿**；等 NPU |
-| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | T0–T3 + TASK-012 脏 softSync 已沉（两档绿） |
+| **PKE Decrypt 卡死** | `docs/rg-kem-decrypt-hang.yaml` | **T0–T4 齐**；下一候选 TRACE |
 | Decaps K | `docs/rg-kem-decrypt-k131.yaml` | TASK-008 SIM 仍绿；与 hang 正交 |
 
 ## 设计
