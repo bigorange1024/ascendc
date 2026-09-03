@@ -176,7 +176,17 @@ inline bool EnvFlagOn(const char *name)
 /**
  * 阻塞等 stream 结束；若 traceDev 非空，每隔 pollMs 把 int32 槽位 D2H 打到 stderr，
  * 用于定位 `f203_encrypt_l18_l19` CrossCore 卡在哪一 FusedTraceStage。
- * @return aclrtSynchronizeStream 的返回码（轮询线程侧）。
+ *
+ * ## 线程模型（2026-09-02 订正）
+ * AscendCL **context 按线程绑定**。旧实现把 `aclrtSynchronizeStream` 丢到子线程、
+ * 主线程做 D2H → 子线程无 `aclrtSetDevice` → 固定 `aclError:107002`
+ *（`ACL_ERROR_RT_CONTEXT_NULL`），约一个 poll 周期（~500ms）就假失败，且打不出
+ * `[l18-trace]`。实机曾误判为「l18 立刻挂」。
+ *
+ * 现：主线程做 SynchronizeStream（与建 stream / SetDevice 同线程）；
+ * 轮询线程先 `aclrtSetDevice(当前 device)` 再 D2H。
+ *
+ * @return aclrtSynchronizeStream 的返回码（主线程）。
  */
 inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, int32_t *traceHost, int nStages,
                                             int pollMs = 500)
@@ -185,42 +195,61 @@ inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, 
         return aclrtSynchronizeStream(stream);
     }
 
-    std::atomic<aclError> syncRc{ACL_ERROR_NONE};
-    std::atomic<bool> done{false};
-    std::thread syncer([&]() {
-        syncRc.store(aclrtSynchronizeStream(stream), std::memory_order_release);
-        done.store(true, std::memory_order_release);
-    });
+    int32_t deviceId = 0;
+    if (aclrtGetDevice(&deviceId) != ACL_SUCCESS) {
+        std::fprintf(stderr, "[acl_session] SynchronizeStreamMaybeTrace: aclrtGetDevice failed；回退单线程 sync\n");
+        std::fflush(stderr);
+        return aclrtSynchronizeStream(stream);
+    }
 
-    int lastPop = -1;
-    while (!done.load(std::memory_order_acquire)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(pollMs));
-        if (done.load(std::memory_order_acquire)) {
-            break;
-        }
-        std::memset(traceHost, 0, static_cast<size_t>(nStages) * sizeof(int32_t));
-        (void)aclrtMemcpy(traceHost, static_cast<size_t>(nStages) * sizeof(int32_t), traceDev,
-                          static_cast<size_t>(nStages) * sizeof(int32_t), ACL_MEMCPY_DEVICE_TO_HOST);
-        int pop = 0;
-        for (int i = 0; i < nStages; ++i) {
-            if (traceHost[i] != 0) {
-                ++pop;
+    std::atomic<bool> done{false};
+    std::thread poller([&]() {
+        // 子线程必须自绑 device，否则 D2H 也会 107002。
+        if (aclrtSetDevice(deviceId) != ACL_SUCCESS) {
+            std::fprintf(stderr, "[acl_session] poller aclrtSetDevice(%d) failed；停止 [l18-trace] 轮询\n", deviceId);
+            std::fflush(stderr);
+            while (!done.load(std::memory_order_acquire)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(pollMs));
             }
+            return;
         }
-        if (pop != lastPop) {
-            lastPop = pop;
-            std::fprintf(stderr, "[l18-trace] stages set=%d/%d :", pop, nStages);
+        int lastPop = -1;
+        while (!done.load(std::memory_order_acquire)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(pollMs));
+            if (done.load(std::memory_order_acquire)) {
+                break;
+            }
+            std::memset(traceHost, 0, static_cast<size_t>(nStages) * sizeof(int32_t));
+            const aclError mc = aclrtMemcpy(traceHost, static_cast<size_t>(nStages) * sizeof(int32_t), traceDev,
+                                            static_cast<size_t>(nStages) * sizeof(int32_t), ACL_MEMCPY_DEVICE_TO_HOST);
+            if (mc != ACL_SUCCESS) {
+                // 核仍在跑时部分平台 D2H 会暂时失败；不刷屏、不中止 sync。
+                continue;
+            }
+            int pop = 0;
             for (int i = 0; i < nStages; ++i) {
                 if (traceHost[i] != 0) {
-                    std::fprintf(stderr, " %d", i);
+                    ++pop;
                 }
             }
-            std::fprintf(stderr, "\n");
-            std::fflush(stderr);
+            if (pop != lastPop) {
+                lastPop = pop;
+                std::fprintf(stderr, "[l18-trace] stages set=%d/%d :", pop, nStages);
+                for (int i = 0; i < nStages; ++i) {
+                    if (traceHost[i] != 0) {
+                        std::fprintf(stderr, " %d", i);
+                    }
+                }
+                std::fprintf(stderr, "\n");
+                std::fflush(stderr);
+            }
         }
-    }
-    syncer.join();
-    return syncRc.load(std::memory_order_acquire);
+    });
+
+    const aclError syncRc = aclrtSynchronizeStream(stream);
+    done.store(true, std::memory_order_release);
+    poller.join();
+    return syncRc;
 }
 
 /**
