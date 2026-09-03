@@ -87,3 +87,38 @@ CPU 孪生路径不跑 `prep_ntt`（仍五段），**不能**用 CPU PASS 验收
 5. 对照：偶发用 `F203_*_FUSED*=1` 看粘性是否复现。
 
 **未声称**：粘性已消。
+
+---
+
+## 6. 实机反馈（用户，同日续）
+
+| 观察 | 解读 |
+|------|------|
+| **不加** `FORCE_REBUILD=1` → **100% 卡死** | `run.sh` 默认 `KEM_*_SKIP_REBUILD=1`，会复用旧 `out_prod_npu` 里 **main 融合双 Cube** 二进制 → 仍走粘性路径。**不是**「新代码不加 FORCE 也必挂」 |
+| **加** FORCE 后能跑完 | 新 2-launch 二进制已上机 |
+| Encaps 多轮 **PASS** | 新 Encaps 路径正确性目前绿；粘性是否彻底消仍看更长加压 |
+| Decaps **恒 FAIL**，`K.bin max_abs_diff=131` | K 整段错（非噪声）。常见：Phase-D `m'` 错 → FO 隐式拒绝 → `K=J(z‖c)` 对不上 accept golden；或 Phase-E 重加密错 |
+
+### 假绿三问（Decaps NPU）
+
+1. golden 与本次 `gen_data` 是否同一次 run.sh？日志是否 **`chain_ntt` / `prep_ntt`**（不是 `device_fused` / 三 launch）？  
+2. 同机 **CPU** 同目录是否 PASS？  
+3. 正交对照（须 FORCE 编过一次后可改 env 再跑）：
+
+```bash
+# A：Phase-D 回 fused，E 仍默认 prep_ntt
+KEM_DECAPS_FORCE_REBUILD=1 F203_DECRYPT_FUSED=1 bash run.sh -r npu -v Ascend910B4
+
+# B：D 默认 chain，E 回 3-launch
+F203_DECAPS_SPLIT_PREP=1 bash run.sh -r npu -v Ascend910B4
+
+# C：D+E 都回 main 融合（对照「旧正确性」）
+F203_DECRYPT_FUSED=1 F203_DECAPS_FUSED_L18=1 bash run.sh -r npu -v Ascend910B4
+```
+
+| 若 | 则优先查 |
+|----|----------|
+| A 绿、默认红 | Phase-D `chain_*` 实机 |
+| B 绿、默认红 | Phase-E `prep_ntt` 实机 |
+| C 绿、默认红 | 2-launch 接缝；C 若也红则 fixture/环境 |
+| 默认日志已是 chain+prep_ntt 且 CPU 绿 | NPU 同步/可见性（SoftSync/GATE） |
