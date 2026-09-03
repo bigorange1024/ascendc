@@ -8,12 +8,11 @@
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：**`main`**（改动在工作区；**未授权勿 commit/push**）。  
+1. 分支：**`cursor/kem-2launch-sticky-1534`**（勿只拉 main；未授权勿合 main）。  
 2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs）。  
 3. **今日 P0 真相**：Encaps/Decaps 默认 2-launch 已上分支；Cloud SIM 绿。  
-4. **实机（2026-09-03）**：`FORCE_REBUILD` 后 Encaps 仍约 3–5 轮卡死、**位置同改前** → **拆双 Cube 未消粘性**；Decaps 另见 `K max=131`。详 [`qa/2026-09-03-…` §6](qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)。  
-5. 分支：`cursor/kem-2launch-sticky-1534`（勿只拉 main）。  
-6. 写 AscendC 前：Rule + engineering-notes。
+4. **实机**：`FORCE_REBUILD` 后 Encaps 仍约 **3–5 轮**卡死、**位置同改前** → **拆双 Cube 未消粘性**；Decaps `K max=131` 另线。详 [`qa/2026-09-03-…` §6](qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)。  
+5. 写 AscendC 前：Rule + engineering-notes。
 
 ### 刚关闭
 
@@ -27,7 +26,8 @@
 
 | 项 | 说明 |
 |----|------|
-| **实机加压** | 搬 2-launch + TRACE 修 → FORCE_REBUILD → 单卡 reset → Encaps↔Decaps 多轮 |
+| **实机 Encaps 粘性** | FORCE 后仍 N 轮挂；对照 SPLIT_PREP / FUSED / KeyGen；`F203_L18_TRACE=1` |
+| **实机 Decaps K≠0** | 正交 `F203_DECRYPT_FUSED` / `SPLIT_PREP` / 双 FUSED |
 | **T2-npu-env** | 按树分卡；见既有脚本 |
 | **stable-512/768** | 须用户 `#交付#` |
 
@@ -37,7 +37,8 @@
 
 | 优先 | 项 | 做什么 | 注意 |
 |------|----|--------|------|
-| **P0** | **实机验证 2-launch** | 搬码 → FORCE_REBUILD → reset → Encaps↔Decaps 加压 | 勿再默认 `FUSED_*` / `SPLIT_PREP` |
+| **P0** | **Encaps 粘性根因分诊** | TRACE + SPLIT_PREP vs 默认 vs FUSED vs KeyGen 多轮 | 已否定「只拆双 Cube 即够」 |
+| **P0** | **Decaps K=131** | `F203_DECRYPT_FUSED` / `SPLIT_PREP` / 双 FUSED | 与粘性正交 |
 | **P1** | alg19 错结果 | 干净卡复验 | **独立线** |
 | **P2** | 512 审阅 | 与 NPU 线互不冲突 | |
 
