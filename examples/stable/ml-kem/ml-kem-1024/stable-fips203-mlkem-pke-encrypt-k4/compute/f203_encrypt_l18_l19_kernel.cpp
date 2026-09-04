@@ -5,7 +5,7 @@
  * 流水线：pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4（**PASS** 基线）；μ 折叠进行 21；cGm 非空时 AIV 分片 pack。
  *
  * FSM 阶段（CrossCore 仅 AIC↔AIV）：
- *   [前缀] AIV0: μ←m；e₂ GM += μ (mod q)
+ *   [前缀] e₂+=μ：默认 Host 已折（mGm=nullptr 跳过）；调试 mGm 非空时 AIV0 PrefixEmbed
  *   行 16–17 NTT(y): …
  *   行 2 decode:     AIV0 ByteDecode₁₂(ek)→t_hat UB（默认标量 F203_BYTE_DECODE12_IMPL=0）
  *   行 18 内积:      kP=5 uTr pad→8 驻留 UB（AIV0 [û0,û1,tr̂,0]；AIV1 [û2,û3,0,0]）
@@ -196,7 +196,12 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
         st = ST_NTT_AIV_PACK;
         FsmSet(st, aic, subBlockID);
     } else {
-        /* ── 行 20/21 前缀：e₂ += μ（AIV0 一次；PipeBarrier 后双 AIV 可见更新后的 e₂ GM）── */
+        /*
+         * 行 20/21 前缀 e₂ += μ：
+         * 背景（2026-09-04 / D-next-pke-encrypt-hostmu）：生产默认 Host 在 launch 前折 μ，
+         *   传 mGm=nullptr → 本处跳过 PrefixEmbed 与 TR_AIV_MU_E2，尽快进入 NTT/at_jp→SET(4)。
+         * 调试：F203_HOST_FOLD_MU=0 时 Host 传 mGm 非空 → 仍走设备前缀。
+         */
         if (subBlockID == 0 && mGm != nullptr && e2 != nullptr) {
             PrefixEmbedMuIntoE2Gm(mGm, e2, encrypt_at_jp::kN, encrypt_at_jp::kQ);
             FusedTraceMark(traceGm, TR_AIV_MU_E2, aic, subBlockID);

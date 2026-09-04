@@ -3,7 +3,7 @@
 #
 # customspec：exp-fips203-mlkem-pke-encrypt-k4-实现方案-customspec.tex
 # prep（ek+coins→a_hat+re）+ compute+tail（→c）单 device session GM handoff：
-#   SIM：2 launch（prep → l18_l19 含 e₂+=μ 与内联 tail pack）
+#   SIM：2 launch（prep → l18_l19 内联 tail pack；默认 Host 折 e₂+=μ）
 #   CPU：5 launch（prep + ntt_y/at_jp/intt_e1 + pack；v=golden_v）
 # 生产 I/O：input/{ek_pke,m,coins,lut_*} → output/c.bin 仅密文；中间态不落盘
 # golden：SEED_D 定点可覆盖；默认 SHA3+SHAKE 派生 m/coins；本目录自包含生成（见 scripts/gen_data.py）
@@ -17,9 +17,11 @@
 # 默认行为（对齐 alg20）:
 #   ENCRYPT_SKIP_REBUILD=1   — 二进制与 RUN_MODE stamp 在则跳过 cmake
 #   CMAKE_BUILD_JOBS=2       — 限并行，WSL 友好
+#   F203_HOST_FOLD_MU=1      — 未设亦开；prep 后 Host 折 e₂+=μ，l18 mGm=null
 #
 # 调试（须显式指定，非默认）:
 #   ENCRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4   # 强制 rm build/out 全量重编
+#   F203_HOST_FOLD_MU=0 bash run.sh -r sim -v Ascend910B4       # 回退设备 PrefixEmbed μ
 #   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4              # 走 msprof + OPPROF_*（慢）
 #   bash run.sh -r npu …                                       # 仅真机；WSL 由 runtime_env 拒绝
 #   改 F203_* / ALG11_* 编译开关后须 FORCE_REBUILD=1（stamp 含主要宏）

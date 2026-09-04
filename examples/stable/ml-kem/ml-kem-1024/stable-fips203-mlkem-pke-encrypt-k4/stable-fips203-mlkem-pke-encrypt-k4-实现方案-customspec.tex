@@ -207,7 +207,13 @@ Launch2: 设备内 u,v；唯一 D2H = c[1568]
 SCRATCH: ws_compute ≈ 331776 B（含 LUT 段）
 \end{verbatim}
 
-\textbf{禁止} Host 将 \texttt{re} D2H 再拆成三个 buffer H2D。
+\textbf{禁止} Host 将 \texttt{re} 整块 D2H 再拆成三个独立 buffer H2D 冒充 handoff。
+
+\paragraph{Host 折 $\mu$（生产默认，2026-09-04）}
+Launch1 后、Launch2 前：Host 对 \texttt{re} 的 $e_2$ 切片做与设备
+\texttt{PrefixEmbedMuIntoE2Gm} I/O 等价的 $e_2+\mu\bmod q$，并向 l18 传
+\texttt{mGm=nullptr}（跳过设备前缀）。开关 \texttt{F203\_HOST\_FOLD\_MU}
+（未设或 \texttt{=1} 开；\texttt{=0} 回退设备前缀）。\textbf{不是} Host 算 $c$。
 
 \section{AI Core 规模}
 \label{sec:aicore}

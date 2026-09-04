@@ -9,12 +9,18 @@
  *
  * 生产 I/O（强制，与 golden 对拍）：
  *   输入 `ek_pke` + `m` + `coins`（+ 静态 NTT/INTT LUT）→ 设备产 **仅** c = c₁‖c₂（1568B）。
- *   Â / re(y,e₁,e₂) / u / v 等仅设备 GM handoff，**不 D2H、不落盘**。
+ *   Â / re(y,e₁,e₂) / u / v 等仅设备 GM handoff，**默认不落盘**；
+ *   例外：生产默认 Host 折 μ 时对 e₂ 切片做一次 D2H/H2D（非 Host 算 c）。
  *   golden：`scripts/gen_data.py` 生成 `golden/c.bin`；`run.sh` 对拍 `output/c.bin`。
  *
  * Launch：
- *   SIM  **2×** prep → l18_l19（含 e₂+=μ 与内联 tail pack）——生产主路径
+ *   SIM  **2×** prep → l18_l19（内联 tail pack）——生产主路径
  *   CPU  **5×** prep + ntt_y/at_jp/intt_e1 + pack（v=`golden_v` 注入，非 Alg.14 产物）
+ *
+ * μ 折叠（SIM/NPU，2026-09-04 / D-next-pke-encrypt-hostmu）：
+ *   默认 `F203_HOST_FOLD_MU=1`（未设亦开）：prep 后 Host 完成 e₂+=μ，向 l18 传 mGm=nullptr，
+ *   跳过设备 PrefixEmbed（对齐 KEM Encaps；排查 l18 空 TRACE 挂死）。
+ *   调试：`F203_HOST_FOLD_MU=0` → 设备 PrefixEmbed。
  *
  * handoff 布局：`f203_encrypt_full_layout.h`；compute tiling：`f203_encrypt_tiling.cpp`。
  */
@@ -36,6 +42,46 @@
 
 // compute 运行时 tiling（模板风格，见 f203_encrypt_tiling.cpp）
 extern void GenerateTiling(TilingData &data);
+
+namespace {
+/**
+ * 生产默认开 Host 折 μ：未设 env 或显式 `=1` → true；仅 `F203_HOST_FOLD_MU=0` → false。
+ * 背景：PKE Encrypt 实机挂在 l18；与 KEM Encaps TASK-006 同开关语义。
+ */
+bool HostFoldMuEnabled()
+{
+    const char *v = std::getenv("F203_HOST_FOLD_MU");
+    if (v == nullptr || v[0] == '\0') {
+        return true;
+    }
+    return v[0] == '1' && v[1] == '\0';
+}
+
+/**
+ * Host 侧完成与设备 `PrefixEmbedMuIntoE2Gm` I/O 等价的 `e₂ += μ (mod q)`。
+ * @param e2 长度 N=256 的 e₂ 系数缓冲（原地更新）
+ * @param m  32B 消息
+ * 前置：prep 已写出合法 e₂；调用方在 l18 launch 前 D2H/H2D。
+ */
+void HostFoldMuIntoE2InPlace(int32_t *e2, const uint8_t *m)
+{
+    constexpr int32_t kN = F203_TAIL_N;
+    constexpr int32_t kQ = F203_TAIL_Q;
+    constexpr int32_t kHalfQ = F203_TAIL_HALF_Q;
+    for (int32_t c = 0; c < kN; ++c) {
+        const int32_t byteIdx = c / 8;
+        const int32_t bitIdx = c % 8;
+        const int32_t bit = (static_cast<int32_t>(m[byteIdx]) >> bitIdx) & 1;
+        const int32_t mu = (bit != 0) ? kHalfQ : 0;
+        int32_t v = e2[c] + mu;
+        v %= kQ;
+        if (v < 0) {
+            v += kQ;
+        }
+        e2[c] = v;
+    }
+}
+}  // namespace
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
@@ -332,10 +378,26 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *e1Dev = reDev + F203EncryptFull::kReE1ByteOff;
     uint8_t *e2Dev = reDev + F203EncryptFull::kReE2ByteOff;
 
-    // Launch 2：l18_l19（compute + e₂+=μ + 内联 tail pack → c）
+    // 默认 Host 折 μ：D2H e₂ → e₂+=μ → H2D；l18 传 mGm=nullptr 跳过 PrefixEmbed
+    const bool hostFoldMu = HostFoldMuEnabled();
+    constexpr size_t kE2Bytes = static_cast<size_t>(F203_TAIL_N) * sizeof(int32_t);
+    int32_t *e2HostFold = nullptr;
+    CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&e2HostFold), kE2Bytes));
+    uint8_t *mForL18 = mDev;
+    if (hostFoldMu) {
+        CHECK_ACL(aclrtMemcpy(e2HostFold, kE2Bytes, e2Dev, kE2Bytes, ACL_MEMCPY_DEVICE_TO_HOST));
+        HostFoldMuIntoE2InPlace(e2HostFold, mHost);
+        CHECK_ACL(aclrtMemcpy(e2Dev, kE2Bytes, e2HostFold, kE2Bytes, ACL_MEMCPY_HOST_TO_DEVICE));
+        mForL18 = nullptr;
+        std::fprintf(stderr, "[full] F203_HOST_FOLD_MU=1：Host 已折 e2+=mu；l18 mGm=null\n");
+    } else {
+        std::fprintf(stderr, "[full] F203_HOST_FOLD_MU=0：设备 PrefixEmbed μ（调试）\n");
+    }
+
+    // Launch 2：l18_l19（compute + 内联 tail pack → c；μ 默认已在 Host）
     std::fprintf(stderr, "[full] launch 2 f203_encrypt_l18_l19 (compute + inline tail pack -> c)\n");
     ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
-                                              tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cDev,
+                                              tHatDev, trHatNttDev, mForL18, e1Dev, e2Dev, wsDev, tilingPinned, cDev,
                                               nullptr);
     CHECK_ACL(aclrtSynchronizeStream(stream));
 
@@ -344,6 +406,11 @@ int32_t main(int32_t argc, char *argv[])
     // Alg.14 输出仅密文 c（u/v 为设备内部中间量，不 D2H、不落盘）
     if (!WriteFile("./output/c.bin", cHost, cBytes)) {
         return 4;
+    }
+
+    if (e2HostFold != nullptr) {
+        CHECK_ACL(aclrtFreeHost(e2HostFold));
+        e2HostFold = nullptr;
     }
 
     CHECK_ACL(aclrtFree(ekPkeDev));
