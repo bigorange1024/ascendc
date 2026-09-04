@@ -72,13 +72,15 @@
 
 **NPU 测试组入口**（仅 SIM 穷尽后由主控写出）：`graph_tests/NPU_SUITE.md`（尚无则不得请上机）。
 
+### 1.5 实验落点
 
 | 目录 | 用途 |
 |------|------|
 | `graph_tests/` | 图谱假说的**小实验**（用户授权新建）；工单 inbox/outbox |
 | `ascendc-tests/fix-encrypt-skel-mix-chain-toy/` | Encrypt 骨架 toy（已绿；缺 SET(4)⇒124） |
-| `ascendc-tests/fix-decrypt-skel-mix-chain-toy/` | **Decrypt fused 握手 toy**（TASK-009 起） |
-| stable Encaps / PKE Decrypt | **非**日常改码场；全量慢 SIM 不作 hang 迭代 |
+| `ascendc-tests/fix-encrypt-clean-hostmu-2launch/` | **加法重写主线**：P0 绿 → P1…（见 `ENCRYPT_CLEAN_REWRITE.md`） |
+| `ascendc-tests/fix-decrypt-skel-mix-chain-toy/` | Decrypt fused 握手 toy |
+| stable Encaps / PKE Decrypt | **非**日常 hang 迭代主场；全量慢 SIM 不作 hang 日常刀 |
 
 ---
 

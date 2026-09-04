@@ -830,13 +830,41 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀候选：clean Encrypt PHASE-P1 真 at_jp/INTT"
-    statement: "在 P0 骨架上接入真实 at_jp/INTT/pack（library/shared，禁 frozen/PrefixEmbed）；仍 SIM 门禁；可与用户 NPU 热修并行规划但不同时 SIM"
-    deps: [F-clean-p0-sim-pass, D-clean-rewrite-encrypt, D-reject-correctness-antipattern]
+    title: "（已完成）clean Encrypt PHASE-P1a 早 TRACE"
+    statement: "P1a SIM 绿：magic out[8]=0x2A；trace AIV 0–3 非空（SET(4) 前可达可达）"
+    deps: [F-clean-p0-sim-pass, D-clean-rewrite-encrypt, D-npu-suite-only-after-sim]
+    status: inactive
+    evidence: "F-clean-p1a-sim-pass"
+    replaced_by: D-next-clean-p1b
+    targets: [Q-toy-repro, Q-root-cause]
+
+  - id: F-clean-p1a-sim-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "clean Encrypt P1a 早 TRACE SIM 绿"
+    statement: "SIM_DIRECT 下 magic+TRACE OK；[P1a-trace] stages set=4/6 : 0 1 2 3（AIV）；wall≈3.8s"
+    repro: "cd ascendc-tests/fix-encrypt-clean-hostmu-2launch && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/clean-enc-p1a-sim.log"
+
+  - id: D-next-clean-p1b
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：clean Encrypt P1b 加长 at_jp stub"
+    statement: "加法：加长 SET(4) 前 stub 工作量（仍非真内积）；SIM 绿且 OMIT_SET4⇒124 对照仍成立 → P1c"
+    deps: [F-clean-p1a-sim-pass, D-clean-rewrite-encrypt]
     status: active
     targets: [Q-toy-repro]
 
 changelog:
+  - date: "2026-09-04"
+    change: |
+      加法：P1a 早 TRACE SIM 绿（F-clean-p1a-sim-pass）；D-next-clean-p1→inactive；
+      D-next-clean-p1b active（加长 at_jp stub）。
   - date: "2026-09-04"
     change: |
       用户纠偏：禁零散上机；D-await-npu-pke-hostmu→inactive；

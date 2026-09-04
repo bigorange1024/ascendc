@@ -91,11 +91,16 @@ int32_t main(int32_t argc, char *argv[])
 
     // ---- Launch2 ----
     td->phase = tiling::kPhaseLaunch2;
+    std::memset(ws + tiling::TRACE, 0, tiling::kTraceBytes);
     ICPU_RUN_KF(mmad_custom, blockDim, out, src, ws, *td);
 
     ok = WriteFile("./output/out.bin", out, outFileSize);
     if (!ok) {
         return 14;
+    }
+    ok = WriteFile("./output/trace.bin", ws + tiling::TRACE, tiling::kTraceBytes);
+    if (!ok) {
+        return 15;
     }
     AscendC::GmFree((void *)out);
     AscendC::GmFree((void *)src);
@@ -155,9 +160,38 @@ int32_t main(int32_t argc, char *argv[])
 
     // ---- Launch2：skipNtt（设备无 PrefixEmbed）----
     tilingHost->phase = tiling::kPhaseLaunch2;
+    // P1a：清 TRACE 槽后再 launch
+    std::memset(wsHost + tiling::TRACE, 0, tiling::kTraceBytes);
+    CHECK_ACL(aclrtMemcpy(wsDevice + tiling::TRACE, tiling::kTraceBytes, wsHost + tiling::TRACE,
+                          tiling::kTraceBytes, ACL_MEMCPY_HOST_TO_DEVICE));
     ACLRT_LAUNCH_KERNEL(mmad_custom)(blockDim, stream, outDevice, srcDevice, wsDevice, tilingHost);
     CHECK_ACL(aclrtSynchronizeStream(stream));
     std::printf("[clean-enc] Launch2 (skipNtt, no PrefixEmbed) done\n");
+
+    // P1a：D2H TRACE，写 output/trace.bin；打印非空槽（服务空 TRACE 问题）
+    CHECK_ACL(aclrtMemcpy(wsHost + tiling::TRACE, tiling::kTraceBytes, wsDevice + tiling::TRACE,
+                          tiling::kTraceBytes, ACL_MEMCPY_DEVICE_TO_HOST));
+    {
+        auto *tr = reinterpret_cast<int32_t *>(wsHost + tiling::TRACE);
+        int pop = 0;
+        std::printf("[clean-enc][P1a-trace] stages set=");
+        for (int i = 0; i < tiling::kTraceStages; ++i) {
+            if (tr[i] != 0) {
+                ++pop;
+            }
+        }
+        std::printf("%d/%d :", pop, tiling::kTraceStages);
+        for (int i = 0; i < tiling::kTraceStages; ++i) {
+            if (tr[i] != 0) {
+                std::printf(" %d", i);
+            }
+        }
+        std::printf("\n");
+        std::fflush(stdout);
+        if (!WriteFile("./output/trace.bin", tr, tiling::kTraceBytes)) {
+            return 15;
+        }
+    }
 
     CHECK_ACL(aclrtMemcpy(outHost, outFileSize, outDevice, outFileSize, ACL_MEMCPY_DEVICE_TO_HOST));
     ok = WriteFile("./output/out.bin", outHost, outFileSize);

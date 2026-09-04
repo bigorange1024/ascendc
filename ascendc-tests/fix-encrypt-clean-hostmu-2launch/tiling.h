@@ -3,15 +3,10 @@
 
 /**
  * @file tiling.h
- * @brief 干净重写 Encrypt P0：Host 2-launch + **默认 Host μ** + 设备 skipNtt 无 PrefixEmbed。
+ * @brief 干净重写 Encrypt：Host 2-launch + 默认 Host μ + skipNtt 无 PrefixEmbed。
  *
- * 拓扑（graph_tests/ENCRYPT_CLEAN_REWRITE.md §3；结构即约束，无「开关才正确」路径）：
- *   Host L1：prep+NTT（一轮 Cube；无设备 μ）
- *   HostFold：始终 e₂+=μ 占位写入小缓冲（非调试开关）
- *   Host L2：skipNtt — AIC 入口 Wait(4)；AIV 无 PrefixEmbed；短 stub→双 AIV SET(4)
- *            → GATE 4↔8 → INTT-like → magic pack
- *
- * P0 不对 ML-KEM golden；verify 只查 magic。
+ * PHASE：P0 握手骨架；P1a 加 L2 早 TRACE（ws+TRACE，Host 可读）。
+ * 拓扑见 graph_tests/ENCRYPT_CLEAN_REWRITE.md。
  */
 
 #include <cstddef>
@@ -25,7 +20,7 @@ struct TilingData {
 
 namespace tiling {
 
-/** Cube：轻量 16×32×32（P0 不做 HEAVY 加压）。 */
+/** Cube：轻量 16×32×32（P0/P1a 不做 HEAVY 加压）。 */
 constexpr size_t kRows = 16;
 constexpr size_t kCols = 32;
 constexpr size_t kDim = 32;
@@ -43,14 +38,21 @@ constexpr size_t kMuFoldElems = 8;
 constexpr size_t kMuFoldBytes = kMuFoldElems * sizeof(int32_t);
 
 /**
+ * P1a 段 TRACE（L2）：Host sync 后 D2H 读；服务「空 TRACE」问题。
+ * 仅 AIV0 / AIC 写；槽位见 CleanTraceStage。
+ */
+constexpr int kTraceStages = 6;
+constexpr size_t kTraceBytes = static_cast<size_t>(kTraceStages) * sizeof(int32_t);
+
+/**
  * magic（verify）：
  *   out[0..7]  = ASCII "CLNENC01"
- *   out[8]     = 0x21（干净 2-launch + Host μ by construction）
+ *   out[8]     = 0x2A（P1a：干净 2-launch + Hostμ + 早 TRACE）
  *   out[9..63] = 0xA5
  */
 constexpr char kMagicPrefix[8] = {'C', 'L', 'N', 'E', 'N', 'C', '0', '1'};
 constexpr uint8_t kMagicFill = 0xA5;
-constexpr uint8_t kMagicCleanHostMu = 0x21;
+constexpr uint8_t kMagicCleanHostMu = 0x2A; /**< P1a 标记（P0 曾为 0x21） */
 
 /** Host 折 μ 写入 e2Fold[0] 的标记（'MU01'）；证明 launch2 前已折入。 */
 constexpr int32_t kHostMuFoldMark = 0x4D553031;
@@ -61,18 +63,30 @@ constexpr int32_t kHostMuFoldMark = 0x4D553031;
  *   [LUT]    右矩阵 B=I₃₂
  *   [MAT_C]  Cube 输出
  *   [STUB]   stub 工作区
- *   [MU_FOLD] Host 折 μ 小缓冲（L2 前 H2D；设备只读标记，不做 PrefixEmbed）
+ *   [MU_FOLD] Host 折 μ 小缓冲
+ *   [TRACE]  P1a L2 段标记 int32[kTraceStages]
  */
 constexpr size_t S0 = 0;
 constexpr size_t LUT = S0 + kABytes;
 constexpr size_t MAT_C = LUT + kLutBytes;
 constexpr size_t STUB = MAT_C + kMatCBytes;
 constexpr size_t MU_FOLD = STUB + kStubVecElems * sizeof(int32_t);
-constexpr size_t wssize = MU_FOLD + kMuFoldBytes;
+constexpr size_t TRACE = MU_FOLD + kMuFoldBytes;
+constexpr size_t wssize = TRACE + kTraceBytes;
 
 /** TilingData.phase 取值。 */
 constexpr int32_t kPhaseLaunch1 = 0;
 constexpr int32_t kPhaseLaunch2 = 1;
+
+/** L2 TRACE 槽（与 Host dump / verify 对齐）。 */
+enum CleanTraceStage : int32_t {
+    TR_AIV_BEFORE_ATJP = 0, /**< StubAtJp 前 */
+    TR_AIV_AFTER_ATJP = 1,  /**< StubAtJp 后、SET(4) 前 */
+    TR_AIV_AFTER_SET4 = 2,  /**< 双 AIV SET(4) 后 */
+    TR_AIV_AFTER_GATE = 3,  /**< Wait(8) 后 */
+    TR_AIC_AFTER_WAIT4 = 4, /**< AIC Wait(4) 返回后 */
+    TR_AIC_AFTER_GATE = 5,  /**< AIC Set(8) 后 */
+};
 
 } // namespace tiling
 
