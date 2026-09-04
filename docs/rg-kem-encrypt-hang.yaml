@@ -770,9 +770,26 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀：请用户短报加压 PKE Encrypt Hostμ"
-    statement: "Cloud SIM 已绿；请用户 FORCE 后多轮加压，一行式短报（绿/挂/末行）。禁止要长日志"
-    deps: [F-pke-encrypt-hostmu-sim-pass, F-pke-encrypt-r7-l18-20260904, D-goal-npu]
+    title: "（纠偏降级）禁止零散请测 Hostμ"
+    statement: >
+      2026-09-04 用户纠偏：不得因 Hostμ SIM 绿就请上机单测。
+      NPU 仅在 SIM 穷尽后以整份测试组交付；本节点不得再当下一刀。
+    deps: [F-pke-encrypt-hostmu-sim-pass, D-sim-enough-before-npu, D-goal-npu]
+    status: inactive
+    evidence: "用户 2026-09-04 口头；CHARTER §1.6"
+    replaced_by: D-next-clean-p1
+    targets: [Q-root-cause]
+
+  - id: D-npu-suite-only-after-sim
+    domain: method
+    kind: decision
+    by: human
+    title: "实机只收整份测试组；SIM 穷尽前不上机"
+    statement: >
+      Agent 须在 SIM/toy 上穷尽可做实验与决策树；仅当图谱能支撑
+      「如何写 Encrypt 才不卡」或明确标出「仅 NPU 可分的对照档」时，
+      才写 graph_tests/NPU_SUITE.md 请用户一次跑完并一行式短报。
+    deps: [D-sim-enough-before-npu, D-goal-npu]
     status: active
     targets: [Q-root-cause]
 
@@ -820,6 +837,10 @@ nodes:
     targets: [Q-toy-repro]
 
 changelog:
+  - date: "2026-09-04"
+    change: |
+      用户纠偏：禁零散上机；D-await-npu-pke-hostmu→inactive；
+      D-npu-suite-only-after-sim active；硬自检=不能自信重写 Encrypt 则不上机。
   - date: "2026-09-04"
     change: |
       PKE Hostμ SIM 绿：F-pke-encrypt-hostmu-sim-pass；D-next-pke-encrypt-hostmu→inactive；

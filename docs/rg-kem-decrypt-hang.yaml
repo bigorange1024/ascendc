@@ -624,10 +624,11 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀：请用户短报加压 Decrypt TRACE"
-    statement: "FORCE + F203_DECRYPT_TRACE=1 跑一轮；若挂，短报末行关键词与 stages 数字即可（禁长日志）"
+    title: "（纠偏降级）禁止零散请测 Decrypt TRACE"
+    statement: "TRACE SIM 绿不等于可零散上机；并入日后 NPU_SUITE，本节点不再当下一刀"
     deps: [F-decrypt-trace-sim-pass, F-pke-decrypt-force-r1-20260904, D-goal-npu]
-    status: active
+    status: inactive
+    evidence: "用户 2026-09-04；CHARTER §1.6"
     targets: [Q-hang-which-layer]
 
   - id: D-sim-crosscore-layer-deposited
@@ -635,15 +636,18 @@ nodes:
     kind: decision
     by: agent
     title: "SIM 已沉积 Decrypt CrossCore GATE 挂死机制"
-    statement: "合法握手绿 + 缺 SET(4)⇒124 已入库；TRACE 已上；等 NPU 短报"
+    statement: "合法握手绿 + 缺 SET(4)⇒124 已入库；TRACE 已上；粘性根因未沉，继续 SIM，勿请零散上机"
     deps: [F-decrypt-skel-legal-sim-pass, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, J-sim-empty-gm-spin-not-hang, J-dirty-softsync-hang-vs-race, F-pke-decrypt-force-r1-20260904, F-decrypt-trace-sim-pass, D-sim-enough-before-npu]
     status: active
 
 changelog:
   - date: "2026-09-04"
     change: |
+      用户纠偏：D-await-npu-decrypt-trace→inactive；禁零散 TRACE 上机。
+  - date: "2026-09-04"
+    change: |
       Decrypt TRACE SIM 绿：F-decrypt-trace-sim-pass；D-next-device-trace-marks→inactive；
-      D-await-npu-decrypt-trace active；F-no-device-trace→inactive。
+      D-await-npu-decrypt-trace active；F-no-device-trace→retracted。
   - date: "2026-09-04"
     change: |
       用户短报：PKE Decrypt FORCE 第1轮仍挂 gen_data 后；F-pke-decrypt-force-r1-20260904；
