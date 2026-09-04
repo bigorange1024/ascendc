@@ -584,13 +584,24 @@ nodes:
     basis: experiment
     evidence: "graph_tests/_outbox/FB-TASK-012.md；decrypt-skel-toy-dirty1.log"
 
+  - id: F-pke-decrypt-force-r1-20260904
+    domain: verify
+    kind: fact
+    provenance: observation
+    title: "PKE Decrypt FORCE 第1轮仍挂在 gen_data 打印后"
+    statement: "2026-09-04 用户短报：DECRYPT_FORCE_REBUILD 第1轮即挂，末行仍为 prod input = dk_pke + c + lut_* / _gen_fixture；未见 1-kernel done；老挂点未消，且不能单用「跳过重编吃旧二进制」解释"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-04-PKE-EncryptDecrypt实机短报老挂点.md"
+
   - id: D-next-device-trace-marks
     domain: method
     kind: decision
     by: agent
-    title: "下一刀候选：Decrypt toy / 生产 fused 加层标记 TRACE"
-    statement: "SIM 上 CrossCore 缺 SET(4) 已双档 124；SoftSync 空/脏哨兵非 SIM hang 代理。若要逼近实机挂在哪一层，下一刀给 toy 或生产 fused 加可 Host 读出的段标记（仿 Encaps F203_L18_TRACE），仍先 SIM 再谈 NPU"
-    deps: [F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, F-omit-slot0-no-hang-sim, F-dirty-softsync-prefill1-sim-pass, F-no-device-trace, D-sim-enough-before-npu]
+    title: "下一刀：Decrypt 生产 fused / toy 加 TRACE 段标记"
+    statement: "实机 FORCE 仍挂在 gen_data 之后。给 f203_decrypt_device_fused（及 toy）加可 Host 读出的段标记（prep SoftSync / SET(4) / NTT / slot1 / INTT），Cloud SIM 验证标记可达后再请短报；禁止再空要长日志"
+    deps: [F-pke-decrypt-force-r1-20260904, F-decrypt-omit-set4-hangs-sim, F-no-device-trace, D-sim-enough-before-npu]
     status: active
     targets: [Q-hang-which-layer, Q-root-cause]
 
@@ -599,11 +610,15 @@ nodes:
     kind: decision
     by: agent
     title: "SIM 已沉积 Decrypt CrossCore GATE 挂死机制"
-    statement: "合法握手绿 + 两轮/仅第二轮缺 SET(4)⇒124 已入库；空 while 与脏 softSync 不是 SIM hang 充分条件。未加 TRACE 前不请用户上机全量 Decrypt"
-    deps: [F-decrypt-skel-legal-sim-pass, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, J-sim-empty-gm-spin-not-hang, J-dirty-softsync-hang-vs-race, D-sim-enough-before-npu]
+    statement: "合法握手绿 + 缺 SET(4)⇒124 已入库；空/脏 SoftSync 非 SIM hang 代理。实机仍挂 → 下一刀 TRACE 定位层，非再空压全量"
+    deps: [F-decrypt-skel-legal-sim-pass, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, J-sim-empty-gm-spin-not-hang, J-dirty-softsync-hang-vs-race, F-pke-decrypt-force-r1-20260904, D-sim-enough-before-npu]
     status: active
 
 changelog:
+  - date: "2026-09-04"
+    change: |
+      用户短报：PKE Decrypt FORCE 第1轮仍挂 gen_data 后；F-pke-decrypt-force-r1-20260904；
+      D-next-device-trace-marks 升为下一刀（生产+toy TRACE）。
   - date: "2026-09-03"
     change: |
       TASK-012：F-dirty-softsync-prefill1-sim-pass；J-dirty-softsync-hang-vs-race→verified；

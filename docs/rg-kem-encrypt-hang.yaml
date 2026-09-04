@@ -720,13 +720,35 @@ nodes:
     basis: experiment
     evidence: "graph_tests/_outbox/FB-TASK-006.md；wall≈215s"
 
+  - id: F-pke-encrypt-r7-l18-20260904
+    domain: verify
+    kind: fact
+    provenance: observation
+    title: "PKE Encrypt 实机第7轮挂在 l18_l19"
+    statement: "2026-09-04 用户短报：stable PKE Encrypt 第7轮挂死，末行仍为 launch 2 f203_encrypt_l18_l19 (compute + inline tail pack -> c)；老挂点未消"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-04-PKE-EncryptDecrypt实机短报老挂点.md"
+
   - id: D-await-npu-host-mu
     domain: method
     kind: decision
     by: agent
-    title: "等待用户 NPU：验证 Host 折 μ 是否消 Encaps 粘性"
-    statement: "SIM 已充分；请用户在实机跑默认 Host 折 μ 的 Encaps 多轮加压，对照 F203_HOST_FOLD_MU=0；据结果刷新 J-real-aiv0 / D-goal-npu"
-    deps: [F-stable-host-mu-sim-pass, D-goal-npu, D-sim-enough-before-npu]
+    title: "（降级）KEM Encaps Hostμ 实机加压"
+    statement: "主线改为 PKE；KEM Hostμ 实机不挡 PKE。PKE Encrypt 第7轮仍挂 l18 且路径仍设备 PrefixEmbed"
+    deps: [F-stable-host-mu-sim-pass, F-pke-encrypt-r7-l18-20260904, D-goal-npu]
+    status: inactive
+    evidence: "用户锁定优先 PKE；2026-09-04 短报"
+    replaced_by: D-next-pke-encrypt-hostmu
+
+  - id: D-next-pke-encrypt-hostmu
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：PKE Encrypt 迁 Host 折 μ + SIM，再谈实机"
+    statement: "PKE Encrypt 仍设备 PrefixEmbedMu；将 KEM Encaps 已绿的 Host 折 μ 迁到 stable-pke-encrypt-k4（或等价结构），Cloud SIM 绿后再请用户短报加压；禁止再默认压 KEM"
+    deps: [F-pke-encrypt-r7-l18-20260904, F-stable-host-mu-sim-pass, J-empty-trace-aic-wait4, D-sim-enough-before-npu, D-goal-npu]
     status: active
     targets: [Q-root-cause]
 
@@ -774,6 +796,10 @@ nodes:
     targets: [Q-toy-repro]
 
 changelog:
+  - date: "2026-09-04"
+    change: |
+      用户短报：PKE Encrypt 第7轮仍挂 l18；F-pke-encrypt-r7-l18-20260904；
+      D-await-npu-host-mu→inactive；D-next-pke-encrypt-hostmu active（主线 PKE）。
   - date: "2026-09-03"
     change: |
       TASK-007：F-clean-p0-sim-pass；D-next-clean-p0→inactive；D-next-clean-p1 active；

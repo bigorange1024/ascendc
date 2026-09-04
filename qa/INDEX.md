@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-04 — [PKE Enc/Dec 实机短报 · 老挂点](2026-09/2026-09-04-PKE-EncryptDecrypt实机短报老挂点.md)
+
+关键字：**PKE Encrypt 第7轮 l18** · **Decrypt FORCE 第1轮 prod input** · 老挂点未消 · 极短回报
+
 ### 2026-09-03 — [Encaps/Decaps 真 2-launch · GATE · prep∈MIX](2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)
 
 关键字：**prep_ntt|l18** · **GATE 4/8** · TRACE **`0/16` 空** · Host 折 μ SIM 绿 · **Decrypt hang 单独开图** · 勿升 notes
