@@ -247,7 +247,7 @@ INTT($\hat{w}$) & flag \textbf{1/3}（\textbf{禁}复用 2）；GATE 后尾段 \
 \begin{itemize}
   \item Host：H2D \texttt{dk}/$c$/LUT/softSync；\textbf{一次} launch；D2H \textbf{仅} $m$。
   \item 核内：CrossCore GATE 4/8 + softSyncGm（AIV0/1）；\apiname{PipeBarrier} 保证 UB/GM 可见性。
-  \item 调试：\texttt{F203\_DECRYPT\_TRACE=1} 时 Host 轮询 softSync$[2..]$ 段标记（slot0/1 仍为 SoftSync；非默认）。
+  \item 调试：\texttt{F203\_DECRYPT\_TRACE=1} 时 Host 分配独立 \texttt{traceGm} 并轮询段标记（非默认）。
   \item GM 可见性：\texttt{decode\_s\_hat} / \texttt{pad\_w\_hat} \textbf{禁止}标量写 GM 再 MTE 读。
 \end{itemize}
 

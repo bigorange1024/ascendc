@@ -746,9 +746,33 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀：PKE Encrypt 迁 Host 折 μ + SIM，再谈实机"
-    statement: "PKE Encrypt 仍设备 PrefixEmbedMu；将 KEM Encaps 已绿的 Host 折 μ 迁到 stable-pke-encrypt-k4（或等价结构），Cloud SIM 绿后再请用户短报加压；禁止再默认压 KEM"
+    title: "（已完成）PKE Encrypt 迁 Host 折 μ + SIM 绿"
+    statement: "stable-pke-encrypt-k4 默认 Host 折 μ；Cloud CPU+SIM 对拍绿（c max=0；SIM wall≈125s tick≈625652）"
     deps: [F-pke-encrypt-r7-l18-20260904, F-stable-host-mu-sim-pass, J-empty-trace-aic-wait4, D-sim-enough-before-npu, D-goal-npu]
+    status: inactive
+    evidence: "F-pke-encrypt-hostmu-sim-pass；/opt/cursor/artifacts/pke-encrypt-hostmu-sim.log"
+    replaced_by: D-await-npu-pke-hostmu
+    targets: [Q-root-cause]
+
+  - id: F-pke-encrypt-hostmu-sim-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "PKE Encrypt 默认 Host 折 μ 的 SIM 对拍绿"
+    statement: "F203_HOST_FOLD_MU 默认开时 SIM_DIRECT sim 下 c max_abs_diff=0；日志见 Host 已折 e2+=mu；l18 mGm=null"
+    repro: "cd …/stable-fips203-mlkem-pke-encrypt-k4 && ENCRYPT_FORCE_REBUILD=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: [D-next-pke-encrypt-hostmu]
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/pke-encrypt-hostmu-sim.log；wall≈124.9s"
+
+  - id: D-await-npu-pke-hostmu
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：请用户短报加压 PKE Encrypt Hostμ"
+    statement: "Cloud SIM 已绿；请用户 FORCE 后多轮加压，一行式短报（绿/挂/末行）。禁止要长日志"
+    deps: [F-pke-encrypt-hostmu-sim-pass, F-pke-encrypt-r7-l18-20260904, D-goal-npu]
     status: active
     targets: [Q-root-cause]
 
@@ -796,6 +820,10 @@ nodes:
     targets: [Q-toy-repro]
 
 changelog:
+  - date: "2026-09-04"
+    change: |
+      PKE Hostμ SIM 绿：F-pke-encrypt-hostmu-sim-pass；D-next-pke-encrypt-hostmu→inactive；
+      D-await-npu-pke-hostmu active（请用户短报加压）。
   - date: "2026-09-04"
     change: |
       用户短报：PKE Encrypt 第7轮仍挂 l18；F-pke-encrypt-r7-l18-20260904；

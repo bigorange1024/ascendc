@@ -43,10 +43,9 @@ enum FsmState : uint16_t {
 };
 
 /**
- * softSyncGm：int32[16]（Host 分配 64B）。
- *   slot0/1 = prep / su_dot+pad SoftSync 哨兵；
- *   slot2..15 = 可选段 TRACE（F203_DECRYPT_TRACE=1 时 Host 轮询 softSync+2）。
+ * softSyncGm：int32[2]；slot0=prep 完成，slot1=su_dot+pad 完成。
  * AIV0 写 1；AIV1 自旋等到非 0。Host 启动前须清零。
+ * 可选 traceGm：int32[TR_COUNT] 段标记；默认 nullptr 不写。
  */
 __aicore__ inline void SoftSyncArrive(GM_ADDR softSyncGm, int32_t slot, int32_t subBlockID)
 {
@@ -70,7 +69,7 @@ __aicore__ inline void SoftSyncClear(GM_ADDR softSyncGm, int32_t slot, int32_t s
     }
 }
 
-/** 段 TRACE：写 softSyncGm[2+stage]=1（仅 AIV0 / AIC 各写自己的标记）。 */
+/** 段 TRACE：写 traceGm[stage]=1（仅 AIV0 / AIC；traceGm 可空）。 */
 enum DecTraceStage : int32_t {
     TR_AIV_PREP_DONE = 0,     /* unpack+decode 后 SoftSyncArrive(0) 前 */
     TR_AIV_GATE1_WAIT = 1,    /* 第一轮 GATE Wait(8) 完成 */
@@ -88,18 +87,17 @@ enum DecTraceStage : int32_t {
     TR_COUNT = 13,
 };
 
-__aicore__ inline void DecTraceMark(GM_ADDR softSyncGm, DecTraceStage stage, bool aic, int32_t subBlockID)
+__aicore__ inline void DecTraceMark(GM_ADDR traceGm, DecTraceStage stage, bool aic, int32_t subBlockID)
 {
-    if (softSyncGm == nullptr) {
+    if (traceGm == nullptr) {
         return;
     }
     /* AIV 仅 sub0 写；AIC 可写 */
     if (!aic && subBlockID != 0) {
         return;
     }
-    auto *s = reinterpret_cast<__gm__ int32_t *>(softSyncGm);
-    /* TRACE 从 softSync[2] 起，避开 SoftSync slot0/1 */
-    s[2 + static_cast<int32_t>(stage)] = 1;
+    auto *t = reinterpret_cast<__gm__ int32_t *>(traceGm);
+    t[static_cast<int32_t>(stage)] = 1;
 }
 
 __aicore__ inline void FsmWait(FsmState st)
@@ -148,11 +146,13 @@ __aicore__ inline void AicMmadRound(GM_ADDR ws, uint32_t coeffN)
  * @param mGm          生产输出：m[32]
  * @param nttWsGm/inttWsGm  NTT/INTT workspace（含 LUT）
  * @param softSyncGm   AIV0/AIV1 软同步哨兵
+ * @param tiling       NTT/INTT tiling
+ * @param traceGm      可选段 TRACE（int32[TR_COUNT]）；nullptr 跳过
  */
 extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
     GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm,
     GM_ADDR wPaddedGm, GM_ADDR wTimeGm, GM_ADDR mGm, GM_ADDR nttWsGm, GM_ADDR inttWsGm, GM_ADDR softSyncGm,
-    TilingData tiling)
+    TilingData tiling, GM_ADDR traceGm)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
 
@@ -169,14 +169,14 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         st = ST_GATE;
         FsmSet(st);
-        DecTraceMark(softSyncGm, TR_AIC_GATE1_SET, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIC_GATE1_SET, aic, subBlockID);
 
         /* NTT：等 Stage1 → MMAD → 通知 Stage3 */
         st = ST_SPLIT;
         FsmWait(st);
         st = ST_MMAD;
         AicMmadRound(nttWsGm, coeffN);
-        DecTraceMark(softSyncGm, TR_AIC_NTT_MMAD, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
         st = ST_PACK;
         FsmSet(st);
 
@@ -185,13 +185,13 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         st = ST_GATE;
         FsmSet(st);
-        DecTraceMark(softSyncGm, TR_AIC_GATE2_SET, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIC_GATE2_SET, aic, subBlockID);
 
         /* INTT：等 Stage1 → MMAD → 通知 Stage3（无 ST_MMAD 中间态） */
         st = ST_SPLIT;
         FsmWait(st);
         AicMmadRound(inttWsGm, coeffN);
-        DecTraceMark(softSyncGm, TR_AIC_INTT_MMAD, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIC_INTT_MMAD, aic, subBlockID);
         st = ST_PACK;
         FsmSet(st);
     } else {
@@ -204,7 +204,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             decrypt_g4::decode_s_hat_impl(dkGm, sHatGm);
             AscendC::PipeBarrier<PIPE_ALL>();
         }
-        DecTraceMark(softSyncGm, TR_AIV_PREP_DONE, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_PREP_DONE, aic, subBlockID);
         SoftSyncArrive(softSyncGm, 0, subBlockID);
 
         /* GATE：通知 AIC prep 完成，等 AIC 放行再开 NTT */
@@ -214,7 +214,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         SoftSyncClear(softSyncGm, 0, subBlockID);
         KYBER_PIPE_ALL();
-        DecTraceMark(softSyncGm, TR_AIV_GATE1_WAIT, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_GATE1_WAIT, aic, subBlockID);
 
         /* --- û ← NTT(u')：Stage1 split → AIC MMAD → Stage3 pack + RouteA merge --- */
         {
@@ -224,7 +224,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             split.Process();
             KYBER_PIPE_ALL();
             FsmSet(st);
-            DecTraceMark(softSyncGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
+            DecTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
         }
         {
             st = ST_PACK;
@@ -242,7 +242,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             merge.Process();
             KYBER_PIPE_ALL();
         }
-        DecTraceMark(softSyncGm, TR_AIV_NTT_PACK, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_NTT_PACK, aic, subBlockID);
 
         /* --- ŵ ← ⟨ŝ,û⟩ + pad 供 INTT（仅 AIV0）--- */
         if (subBlockID == 0) {
@@ -251,7 +251,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             decrypt_g4::pad_w_hat_for_intt(wPaddedGm, wHatGm);
             AscendC::PipeBarrier<PIPE_ALL>();
         }
-        DecTraceMark(softSyncGm, TR_AIV_SUDOT_DONE, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_SUDOT_DONE, aic, subBlockID);
         SoftSyncArrive(softSyncGm, 1, subBlockID);
 
         st = ST_AIV_DONE;
@@ -260,7 +260,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         SoftSyncClear(softSyncGm, 1, subBlockID);
         KYBER_PIPE_ALL();
-        DecTraceMark(softSyncGm, TR_AIV_GATE2_WAIT, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_GATE2_WAIT, aic, subBlockID);
 
         /* --- w ← INTT(ŵ_padded)：输入 wPaddedGm，输出 wTimeGm --- */
         {
@@ -271,7 +271,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         }
         st = ST_SPLIT;
         FsmSet(st);
-        DecTraceMark(softSyncGm, TR_AIV_INTT_SPLIT, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_INTT_SPLIT, aic, subBlockID);
 
         {
             st = ST_PACK;
@@ -289,13 +289,13 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             merge.Process();
             KYBER_PIPE_ALL();
         }
-        DecTraceMark(softSyncGm, TR_AIV_INTT_PACK, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_INTT_PACK, aic, subBlockID);
 
         /* --- Alg.15 行 6–7：m ← Encode₁(Compress₁(v'−w))（仅 AIV0）--- */
         if (subBlockID == 0) {
             decrypt_device::extract_m_compress1_byteencode1(vGm, wTimeGm, mGm);
         }
         AscendC::PipeBarrier<PIPE_ALL>();
-        DecTraceMark(softSyncGm, TR_AIV_TAIL_DONE, aic, subBlockID);
+        DecTraceMark(traceGm, TR_AIV_TAIL_DONE, aic, subBlockID);
     }
 }

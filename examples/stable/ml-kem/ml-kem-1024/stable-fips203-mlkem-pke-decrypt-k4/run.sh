@@ -22,7 +22,7 @@
 #
 # 调试（须显式指定，非默认）：
 #   DECRYPT_FORCE_REBUILD=1 bash run.sh -r cpu -v Ascend910B4
-#   F203_DECRYPT_TRACE=1 bash run.sh -r npu -v Ascend910B4   # softSync[2..] 段 TRACE 轮询
+#   F203_DECRYPT_TRACE=1 bash run.sh -r npu -v Ascend910B4   # 独立 traceGm 段 TRACE 轮询
 #   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4
 #   bash run.sh -r npu …                      # 仅真机；WSL 由 runtime_env 拒绝
 #   COMPRESS_1_VEC=0 / DECOMPRESS_D_VEC=0 bash run.sh ...

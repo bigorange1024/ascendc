@@ -229,12 +229,13 @@ nodes:
     domain: verify
     kind: fact
     provenance: doc
-    title: "PKE Decrypt fused 无 Encaps 级 TRACE"
-    statement: "fused 入口没有 F203_L18_TRACE / FusedTraceMark；实机只能看到 Host 打印停在 launch/sync，不能像 Encaps 那样读 0/16 空槽"
+    title: "（已证伪）PKE Decrypt fused 无 Encaps 级 TRACE"
+    statement: "历史断言「fused 无 TRACE」；2026-09-04 已加独立 traceGm + F203_DECRYPT_TRACE，本断言不再成立"
     deps: [F-case-is-pke-decrypt-fused]
-    status: verified
-    basis: spec
-    evidence: "f203_decrypt_device_fused_entry.cpp 无 TRACE 宏"
+    status: retracted
+    basis: experiment
+    evidence: "F-decrypt-trace-sim-pass"
+    retracted_by: F-decrypt-trace-sim-pass
 
   # ================= domain: impl（生产握手） =================
   - id: F-softsync-two-slots
@@ -599,22 +600,50 @@ nodes:
     domain: method
     kind: decision
     by: agent
-    title: "下一刀：Decrypt 生产 fused / toy 加 TRACE 段标记"
-    statement: "实机 FORCE 仍挂在 gen_data 之后。给 f203_decrypt_device_fused（及 toy）加可 Host 读出的段标记（prep SoftSync / SET(4) / NTT / slot1 / INTT），Cloud SIM 验证标记可达后再请短报；禁止再空要长日志"
+    title: "（已完成）Decrypt fused 加 TRACE 段标记"
+    statement: "独立 traceGm + DecTraceMark；SIM 默认绿；TRACE=1 时 SIM sync 后 dump（AIV 0–8），NPU 仍轮询"
     deps: [F-pke-decrypt-force-r1-20260904, F-decrypt-omit-set4-hangs-sim, F-no-device-trace, D-sim-enough-before-npu]
-    status: active
+    status: inactive
+    evidence: "F-decrypt-trace-sim-pass"
+    replaced_by: D-await-npu-decrypt-trace
     targets: [Q-hang-which-layer, Q-root-cause]
+
+  - id: F-decrypt-trace-sim-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "Decrypt TRACE 路径 SIM 对拍绿"
+    statement: "F203_DECRYPT_TRACE=1 时 SIM_DIRECT sim verify PASS；[dec-trace] final set=9/13 : 0..8（AIV 全段）；默认无 TRACE 亦绿"
+    repro: "cd …/stable-fips203-mlkem-pke-decrypt-k4 && DECRYPT_FORCE_REBUILD=1 F203_DECRYPT_TRACE=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/pke-decrypt-trace-sim3.log"
+
+  - id: D-await-npu-decrypt-trace
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：请用户短报加压 Decrypt TRACE"
+    statement: "FORCE + F203_DECRYPT_TRACE=1 跑一轮；若挂，短报末行关键词与 stages 数字即可（禁长日志）"
+    deps: [F-decrypt-trace-sim-pass, F-pke-decrypt-force-r1-20260904, D-goal-npu]
+    status: active
+    targets: [Q-hang-which-layer]
 
   - id: D-sim-crosscore-layer-deposited
     domain: method
     kind: decision
     by: agent
     title: "SIM 已沉积 Decrypt CrossCore GATE 挂死机制"
-    statement: "合法握手绿 + 缺 SET(4)⇒124 已入库；空/脏 SoftSync 非 SIM hang 代理。实机仍挂 → 下一刀 TRACE 定位层，非再空压全量"
-    deps: [F-decrypt-skel-legal-sim-pass, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, J-sim-empty-gm-spin-not-hang, J-dirty-softsync-hang-vs-race, F-pke-decrypt-force-r1-20260904, D-sim-enough-before-npu]
+    statement: "合法握手绿 + 缺 SET(4)⇒124 已入库；TRACE 已上；等 NPU 短报"
+    deps: [F-decrypt-skel-legal-sim-pass, F-decrypt-omit-set4-hangs-sim, F-decrypt-omit-set4-r2-hangs-sim, J-sim-empty-gm-spin-not-hang, J-dirty-softsync-hang-vs-race, F-pke-decrypt-force-r1-20260904, F-decrypt-trace-sim-pass, D-sim-enough-before-npu]
     status: active
 
 changelog:
+  - date: "2026-09-04"
+    change: |
+      Decrypt TRACE SIM 绿：F-decrypt-trace-sim-pass；D-next-device-trace-marks→inactive；
+      D-await-npu-decrypt-trace active；F-no-device-trace→inactive。
   - date: "2026-09-04"
     change: |
       用户短报：PKE Decrypt FORCE 第1轮仍挂 gen_data 后；F-pke-decrypt-force-r1-20260904；

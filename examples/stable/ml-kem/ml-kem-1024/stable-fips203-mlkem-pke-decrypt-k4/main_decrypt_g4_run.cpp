@@ -29,7 +29,7 @@
 extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
     GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm,
     GM_ADDR wPaddedGm, GM_ADDR wTimeGm, GM_ADDR mGm, GM_ADDR nttWsGm, GM_ADDR inttWsGm, GM_ADDR softSyncGm,
-    TilingData tiling);
+    TilingData tiling, GM_ADDR traceGm);
 #endif
 
 #include <cstdio>
@@ -54,10 +54,12 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size);
 namespace {
 
 constexpr uint32_t kBlockDim = 1U;
-/** softSyncGm：int32[16]/64B）；slot0/1=SoftSync，slot2..=段 TRACE。Host 须清零。 */
+/** softSyncGm：int32[2] SoftSync；Host 须清零。可选独立 traceGm。 */
 constexpr size_t kSoftSyncBytes = 64U;
-/** softSync[2..] 段 TRACE 槽数（与 fused DecTraceStage::TR_COUNT 对齐）。 */
+#ifndef ASCENDC_CPU_DEBUG
+/** 段 TRACE 槽数（与 fused DecTraceStage::TR_COUNT 对齐）。 */
 constexpr int kDecTraceStages = 13;
+#endif
 
 /**
  * 将 even/odd stacked LUT 拷入 NTT/INTT workspace 固定偏移。
@@ -109,7 +111,7 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
 
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(f203_decrypt_device_fused, kBlockDim, dkGm, cGm, uGm, vGm, sHatGm, uHatGm, wHatGm, wPaddedGm,
-                wTimeGm, mGm, nttWsGm, inttWsGm, softSyncGm, tilingData);
+                wTimeGm, mGm, nttWsGm, inttWsGm, softSyncGm, tilingData, /*traceGm*/ nullptr);
 
     std::memcpy(m_out, mGm, F203_MSG_BYTES);
 
@@ -154,6 +156,8 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     uint8_t *nttWsDev = nullptr;
     uint8_t *inttWsDev = nullptr;
     uint8_t *softSyncDev = nullptr;
+    uint8_t *traceDev = nullptr;
+    int32_t *traceHost = nullptr;
     TilingData *tilingHost = nullptr;
 
     CHECK_ACL(aclrtMalloc((void **)&cDev, F203_CT_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -172,6 +176,20 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     CHECK_ACL(aclrtMallocHost((void **)&tilingHost, sizeof(TilingData)));
     *tilingHost = tilingData;
 
+    /*
+     * 背景（2026-09-04 / D-next-device-trace-marks）：实机挂在 gen_data 后。
+     * F203_DECRYPT_TRACE=1 → 独立 traceGm + 轮询（对齐 Encaps F203_L18_TRACE）；默认 nullptr。
+     */
+    const bool decTrace = ascendc_acl::EnvFlagOn("F203_DECRYPT_TRACE");
+    if (decTrace) {
+        const size_t traceBytes = static_cast<size_t>(kDecTraceStages) * sizeof(int32_t);
+        CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&traceDev), traceBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+        CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&traceHost), traceBytes));
+        CHECK_ACL(aclrtMemset(traceDev, traceBytes, 0, traceBytes));
+        std::memset(traceHost, 0, traceBytes);
+        std::fprintf(stderr, "[decrypt] F203_DECRYPT_TRACE=1：独立 traceGm 轮询段标记\n");
+    }
+
     CHECK_ACL(aclrtMemcpy(cDev, F203_CT_PKE_BYTES, c, F203_CT_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     CHECK_ACL(aclrtMemcpy(dkDev, F203_DK_PKE_BYTES, dk, F203_DK_PKE_BYTES, ACL_MEMCPY_HOST_TO_DEVICE));
     {
@@ -186,25 +204,35 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
 
     const uint32_t ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_device_fused)(
         kBlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev, uHatDev, wHatDev, wPaddedDev, wTimeDev, mDev, nttWsDev,
-        inttWsDev, softSyncDev, tilingHost);
+        inttWsDev, softSyncDev, tilingHost, traceDev);
     if (ret != 0) {
         return 30;
     }
-    /*
-     * 背景（2026-09-04 / D-next-device-trace-marks）：实机挂在 gen_data 打印后、未见 1-kernel done。
-     * F203_DECRYPT_TRACE=1 时轮询 softSync[2..] 段标记（不改 kernel ABI）；默认关闭以免拖慢。
-     */
-    const bool decTrace = ascendc_acl::EnvFlagOn("F203_DECRYPT_TRACE");
-    int32_t *traceHost = nullptr;
     if (decTrace) {
-        CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&traceHost),
-                                  static_cast<size_t>(kDecTraceStages) * sizeof(int32_t)));
-        std::memset(traceHost, 0, static_cast<size_t>(kDecTraceStages) * sizeof(int32_t));
-        std::fprintf(stderr, "[decrypt] F203_DECRYPT_TRACE=1：轮询 softSync[2..] 段标记\n");
-        /* softSyncDev+8 跳过 slot0/1 SoftSync */
-        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(
-            stream, softSyncDev + 2 * sizeof(int32_t), traceHost, kDecTraceStages, "f203_decrypt_device_fused"));
-        CHECK_ACL(aclrtFreeHost(traceHost));
+        /* SIM：轮询子线程 + DeviceGuard teardown 曾 SEGV；改 sync 后一次性 dump。
+         * NPU：仍 TimedSynchronizeStreamMaybeTrace 轮询（挂死定位）。 */
+        if (ascendc_acl::EnvFlagOn("SIM_DIRECT")) {
+            CHECK_ACL(aclrtSynchronizeStream(stream));
+            const size_t traceBytes = static_cast<size_t>(kDecTraceStages) * sizeof(int32_t);
+            CHECK_ACL(aclrtMemcpy(traceHost, traceBytes, traceDev, traceBytes, ACL_MEMCPY_DEVICE_TO_HOST));
+            int pop = 0;
+            for (int i = 0; i < kDecTraceStages; ++i) {
+                if (traceHost[i] != 0) {
+                    ++pop;
+                }
+            }
+            std::fprintf(stderr, "[dec-trace] final set=%d/%d :", pop, kDecTraceStages);
+            for (int i = 0; i < kDecTraceStages; ++i) {
+                if (traceHost[i] != 0) {
+                    std::fprintf(stderr, " %d", i);
+                }
+            }
+            std::fprintf(stderr, "\n");
+            std::fflush(stderr);
+        } else {
+            CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kDecTraceStages,
+                                                                    "f203_decrypt_device_fused"));
+        }
     } else {
         CHECK_ACL(aclrtSynchronizeStream(stream));
     }
@@ -224,6 +252,12 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     CHECK_ACL(aclrtFree(nttWsDev));
     CHECK_ACL(aclrtFree(inttWsDev));
     CHECK_ACL(aclrtFree(softSyncDev));
+    if (traceDev != nullptr) {
+        CHECK_ACL(aclrtFree(traceDev));
+    }
+    if (traceHost != nullptr) {
+        CHECK_ACL(aclrtFreeHost(traceHost));
+    }
     CHECK_ACL(aclrtFreeHost(tilingHost));
     CHECK_ACL(aclrtDestroyStream(stream));
     // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）

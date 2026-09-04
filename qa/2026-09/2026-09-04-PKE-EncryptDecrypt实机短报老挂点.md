@@ -17,6 +17,14 @@
 - Decrypt：FORCE 仍挂 → 不是「只吃旧二进制」能解释的全部；挂在 gen_data 打印之后、未见 `1-kernel done` → 指向 fused MIX 未返回。
 - 下一刀（Cloud，先 SIM）：Decrypt 加 TRACE 段标记；Encrypt 考虑 **PKE 路径** Host 折 μ / TRACE（勿再默认压 KEM Encaps）。
 
+## Cloud 落地（同日后续）
+
+| 项 | 结果 |
+|----|------|
+| PKE Enc Hostμ | 默认开；`ENCRYPT_FORCE_REBUILD` CPU+SIM **绿**（c max=0；SIM≈125s） |
+| PKE Dec TRACE | 独立 `traceGm`；默认路径 SIM 绿；`F203_DECRYPT_TRACE=1` SIM 绿（final AIV 0–8） |
+| 下一刀 | 用户 NPU 短报：Enc Hostμ 加压；Dec `FORCE+TRACE` |
+
 ## 回报约定（强制）
 
 用户手敲：一行式短报即可；禁止再要长日志。

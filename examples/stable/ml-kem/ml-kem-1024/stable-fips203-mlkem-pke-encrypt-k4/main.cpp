@@ -43,6 +43,7 @@
 // compute 运行时 tiling（模板风格，见 f203_encrypt_tiling.cpp）
 extern void GenerateTiling(TilingData &data);
 
+#ifndef ASCENDC_CPU_DEBUG
 namespace {
 /**
  * 生产默认开 Host 折 μ：未设 env 或显式 `=1` → true；仅 `F203_HOST_FOLD_MU=0` → false。
@@ -83,7 +84,6 @@ void HostFoldMuIntoE2InPlace(int32_t *e2, const uint8_t *m)
 }
 }  // namespace
 
-#ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
 #include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_f203_encrypt_at_jp.h"
