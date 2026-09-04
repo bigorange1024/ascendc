@@ -2,39 +2,33 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-04（分支已推；**用户将代跑 Decrypt NPU**）
+> **最后刷新**：2026-09-04（用户锁定：**优先 PKE Encrypt/Decrypt 卡死**，不是 KEM）
 
 ---
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. 分支：**`cursor/kem-2launch-sticky-1534`**（已推至 `793f141`）。  
-2. Decrypt hang：**T0–T4 SIM 齐**；用户按下方清单上机。  
-3. 三张图分线；同时仅一个 subagent。
+1. 分支：**`cursor/kem-2launch-sticky-1534`**。  
+2. **主线卡死 = PKE**：`stable-…-pke-encrypt-k4` + `stable-…-pke-decrypt-k4`。  
+3. **KEM Encaps/Decaps 非本轮优先**（可共享 l18/握手教训，但上机顺序勿把 KEM 抬到 PKE 前）。  
+4. Decrypt hang 图谱/toy 已 T0–T4；Encrypt hang 图历史多采自 Encaps，**实机验收须对 PKE Encrypt 加压**。
 
 ### 待办快照
 
 | 项 | 说明 |
 |----|------|
-| **P0** | **收用户 NPU 日志**：PKE Decrypt fused 是否仍挂；贴最后 30～80 行 |
-| **P1** | 可选：toy `fix-decrypt-skel-mix-chain-toy` 合法/OMIT_SET4 对照 |
-| **P1** | Encaps Hostμ / Decaps K=131 正交 |
+| **P0** | 用户 NPU：**先 PKE Encrypt，再 PKE Decrypt**（同卡 1；各 FORCE 一次后连跑） |
+| **P1** | 收日志刷新图谱；可选 toy 对照 |
+| **P2** | KEM Encaps Hostμ / Decaps K=131 — **不挡 PKE** |
 
 ---
 
-## ★ Decrypt hang 沉积（SIM）
+## ★ 图谱与用例对应（勿混）
 
-| 实验 | 结果 |
-|------|------|
-| 合法握手 | 绿，magic `SKELDEC1` |
-| 两轮都不 SET(4) / 仅第二轮不 SET(4) | **124** |
-| 空 while / 脏 softSync | SIM **仍绿** |
-| 双 Cube 充分 hang | **retracted** |
+| 卡死线 | 实机用例 | 图谱 |
+|--------|----------|------|
+| PKE Encrypt | `examples/stable/.../stable-fips203-mlkem-pke-encrypt-k4` | `rg-kem-encrypt-hang.yaml`（机制可借；验收以 **PKE** 为准） |
+| PKE Decrypt | `examples/stable/.../stable-fips203-mlkem-pke-decrypt-k4` | `rg-kem-decrypt-hang.yaml` |
+| KEM（次优先） | kem-encaps / kem-decaps | Encaps hang 历史样本 / K=131 另图 |
 
-图谱：`docs/rg-kem-decrypt-hang.yaml` · toy：`ascendc-tests/fix-decrypt-skel-mix-chain-toy/`
-
----
-
-## ★ 用户 NPU（本轮授权）
-
-见当日对话「实机怎么测」清单：PKE `stable-fips203-mlkem-pke-decrypt-k4` 优先；`DECRYPT_FORCE_REBUILD=1` 一次后连跑勿每轮 FORCE；卡号 stable=**1** / tests=**3**。
+Decrypt SIM 沉积：合法绿；缺 SET(4)/仅 R2 缺 SET(4)→124；空/脏 SoftSync 非 SIM hang。
