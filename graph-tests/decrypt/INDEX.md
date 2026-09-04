@@ -105,6 +105,6 @@ cp /opt/cursor/artifacts/rg-decrypt-fused.html docs/rg-decrypt-fused.html
 | `DGT-20260903-2.md` | 第二刀 SoftSync+GATE — **PASS** |
 | `DGT-20260903-3.md` | 第三刀融合骨架 — **PASS** |
 | `DGT-20260903-4.md` | 第四刀多 launch — **PASS** |
-| [`NPU-TRIP-20260904-decrypt.md`](NPU-TRIP-20260904-decrypt.md) | **明日上机清单**（Decrypt toy → stable TRACE；附 Encrypt skel1） |
+| [`NPU-TRIP-20260904-decrypt.md`](NPU-TRIP-20260904-decrypt.md) | **实机测试（人话版）**：A toy→B Encrypt toy→C stable+TRACE |
 
 增删时同步本表与根 [`../INDEX.md`](../INDEX.md)。
