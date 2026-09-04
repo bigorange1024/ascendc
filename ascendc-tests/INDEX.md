@@ -52,7 +52,7 @@ ascendc-tests/
 | [**pass-toy-mix-s123-byteencode-k2/**](pass-toy-mix-s123-byteencode-k2/) | **MIX 玩具**：双 AIV S1 → Cube 64³ → UB Adds+func1（无跨 AIV） | ✓ | ✓ |
 | [**fix-encrypt-skel-mix-chain-toy/**](fix-encrypt-skel-mix-chain-toy/) | **Encrypt 骨架 toy**：skipNtt Wait(4)；`SKEL_HOST_MU` Host 折 μ / 设备 μ-stub；OMIT_SET4 挂 | — | **✓** TASK-005：HOST_MU=0/1 绿；OMIT **124** |
 | [**fix-decrypt-skel-mix-chain-toy/**](fix-decrypt-skel-mix-chain-toy/) | **Decrypt fused 握手 toy**：SoftSync+两轮 GATE+stub Cube；magic `SKELDEC1`/`0x04`；`SKEL_OMIT_SET4=1`⇒**124** | — | **✓** TASK-009：A wall≈3.9s；B budget60 **124** |
-| [**fix-encrypt-clean-hostmu-2launch/**](fix-encrypt-clean-hostmu-2launch/) | **干净 Encrypt P0**：Host 2-launch + **结构默认** Host μ；L2 skipNtt **无 PrefixEmbed**；Wait(4)↔SET(4) | — | **✓** TASK-007：magic `CLNENC01`/`0x21`；wall≈4.7s |
+| [**fix-encrypt-clean-hostmu-2launch/**](fix-encrypt-clean-hostmu-2launch/) | **干净 Encrypt 加法**：P0 握手 + **P1a 早 TRACE**；Hostμ；无 PrefixEmbed；Wait(4)↔SET(4) | — | **✓** P1a：magic/`0x2A` + TRACE AIV 0–3；下一刀 P1b |
 | [**pass-merged-kyber-mix-ntt256/**](pass-merged-kyber-mix-ntt256/) | **授权示例**：Kyber 单 poly n=256 MIX NTT；**非** FIPS Tag5T；SIM **10348** tick | ✓ | ✓ |
 
 ---
