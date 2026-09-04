@@ -54,8 +54,10 @@ bool WriteFile(const std::string &filePath, const void *buffer, size_t size);
 namespace {
 
 constexpr uint32_t kBlockDim = 1U;
-/** softSyncGm：int32[2] 哨兵（prep / su_dot+pad）；Host 须清零，否则 AIV1 自旋死等。 */
+/** softSyncGm：int32[16]/64B）；slot0/1=SoftSync，slot2..=段 TRACE。Host 须清零。 */
 constexpr size_t kSoftSyncBytes = 64U;
+/** softSync[2..] 段 TRACE 槽数（与 fused DecTraceStage::TR_COUNT 对齐）。 */
+constexpr int kDecTraceStages = 13;
 
 /**
  * 将 even/odd stacked LUT 拷入 NTT/INTT workspace 固定偏移。
@@ -188,7 +190,24 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     if (ret != 0) {
         return 30;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    /*
+     * 背景（2026-09-04 / D-next-device-trace-marks）：实机挂在 gen_data 打印后、未见 1-kernel done。
+     * F203_DECRYPT_TRACE=1 时轮询 softSync[2..] 段标记（不改 kernel ABI）；默认关闭以免拖慢。
+     */
+    const bool decTrace = ascendc_acl::EnvFlagOn("F203_DECRYPT_TRACE");
+    int32_t *traceHost = nullptr;
+    if (decTrace) {
+        CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&traceHost),
+                                  static_cast<size_t>(kDecTraceStages) * sizeof(int32_t)));
+        std::memset(traceHost, 0, static_cast<size_t>(kDecTraceStages) * sizeof(int32_t));
+        std::fprintf(stderr, "[decrypt] F203_DECRYPT_TRACE=1：轮询 softSync[2..] 段标记\n");
+        /* softSyncDev+8 跳过 slot0/1 SoftSync */
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(
+            stream, softSyncDev + 2 * sizeof(int32_t), traceHost, kDecTraceStages, "f203_decrypt_device_fused"));
+        CHECK_ACL(aclrtFreeHost(traceHost));
+    } else {
+        CHECK_ACL(aclrtSynchronizeStream(stream));
+    }
     /* 生产契约：仅回传 m；中间态不 D2H */
     CHECK_ACL(aclrtMemcpy(m_out, F203_MSG_BYTES, mDev, F203_MSG_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
 
