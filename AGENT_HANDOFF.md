@@ -24,7 +24,7 @@
 |----|------|
 | **P0（当次）** | **等用户实机打字回传 TYPE_BACK**（`ID 状态 编号…`）；**禁止**再要任何文件 |
 | **已完成** | T01–T07 **PASS**（X15）；**NPU 一次测套件已备齐**（打字反馈） |
-| **上机入口** | `bash scripts/npu_hang_rewrite_one_trip.sh` → 终端 TYPE_BACK 打回聊天 |
+| **上机入口** | 操作卡 `docs/engineering/Encrypt卡死重写-实机操作卡.md`；命令 `bash scripts/npu_hang_rewrite_one_trip.sh` → **只打字**贴 TYPE_BACK |
 | **Encrypt 最终** | NPU Encrypt 不再 SynchronizeStream 卡死且最终正确（`Q-ULT`） |
 | **非目标（本阶段）** | liboqs 对齐、性能打满、抄旧 Encrypt 修补丁 |
 
