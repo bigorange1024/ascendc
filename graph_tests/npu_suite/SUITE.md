@@ -26,7 +26,7 @@
 | [`RUNBOOK.md`](RUNBOOK.md) | NPU 按序跑、超时停、只报三位数字 |
 | [`TRACE_MASTER.md`](TRACE_MASTER.md) | 套件级 TRACE 总表（号段 + 判读） |
 | [`BRANCHING.md`](BRANCHING.md) | **主控锁**：测什么 × 反馈分支 → 下一刀推理 |
-| [`REPORT_TEMPLATE.md`](REPORT_TEMPLATE.md) | 用户手抄回报模板 |
+| [`REPORT_TEMPLATE.md`](REPORT_TEMPLATE.md) | 主控对照用打字格式（用户勿填勿回传） |
 | [`run_all_npu.sh`](run_all_npu.sh) | 实机整份串行入口（C0→C1→C2） |
 | [`run_smoke_sim.sh`](run_smoke_sim.sh) | 本地 SIM smoke（包装未坏；跳过 golden） |
 
@@ -46,4 +46,4 @@
 1. CANN 9.0 + 借入机分卡策略见 [`docs/engineering/NPU真机环境说明.md`](../../docs/engineering/NPU真机环境说明.md)。  
 2. `graph_tests/` 路径默认 **ASCEND_DEVICE_ID=0**（`npu_device_map.sh` → other）。  
 3. 每档独立编译；**禁止并行**多路 SIM/NPU kernel。  
-4. 回报只用 **三位十进制** + 卡在哪一号（见 `REPORT_TEMPLATE.md`）。
+4. 回报：用户**只在对话打字**发三位编码（例 `C1 HANG 110`）；禁止回传任何文件。
