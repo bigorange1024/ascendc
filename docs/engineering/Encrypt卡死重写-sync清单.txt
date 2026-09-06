@@ -1,6 +1,7 @@
 # Encrypt 卡死重写 — 实机 sync 清单（最小必要）
 # 用法：在开发机仓库根，把下列路径 rsync/scp 到实机同一相对路径。
 # 说明：docs/engineering/Encrypt卡死重写-实机一次测清单.md
+# 反馈：用户只能打字回传 TYPE_BACK；不要要求回传任何文件。
 
 # --- 入口脚本 ---
 scripts/npu_hang_rewrite_one_trip.sh

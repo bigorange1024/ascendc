@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-06（Encrypt 卡死重写：T01–T07 PASS（X15）；**NPU 一次测套件已备齐，等实机回传**）
+> **最后刷新**：2026-09-06（Encrypt 卡死重写：NPU 一次测套件；**用户只能打字反馈，禁要文件**）
 
 ---
 
@@ -22,13 +22,13 @@
 
 | 项 | 说明 |
 |----|------|
-| **P0（当次）** | **等用户实机一次测回传**（`FEEDBACK.md` + `BRING_BACK.tar.gz`）；按决策树开下一刀 |
-| **已完成** | T01–T07 **PASS**（X15）；**NPU 一次测套件已备齐** |
-| **上机入口** | `bash scripts/npu_hang_rewrite_one_trip.sh`；说明见 `docs/engineering/Encrypt卡死重写-实机一次测清单.md` |
+| **P0（当次）** | **等用户实机打字回传 TYPE_BACK**（`ID 状态 编号…`）；**禁止**再要任何文件 |
+| **已完成** | T01–T07 **PASS**（X15）；**NPU 一次测套件已备齐**（打字反馈） |
+| **上机入口** | `bash scripts/npu_hang_rewrite_one_trip.sh` → 终端 TYPE_BACK 打回聊天 |
 | **Encrypt 最终** | NPU Encrypt 不再 SynchronizeStream 卡死且最终正确（`Q-ULT`） |
 | **非目标（本阶段）** | liboqs 对齐、性能打满、抄旧 Encrypt 修补丁 |
 
-**别做**：复踩 5/7、Wait 中 SyncAll、自造 SoftSync、抄旧 Encrypt；同质 toys 再派；未授权 commit/push；无回传就开 enc_related。
+**别做**：复踩 5/7、Wait 中 SyncAll、自造 SoftSync、抄旧 Encrypt；同质 toys 再派；**要求用户回传文件/tar/日志**；无打字反馈就开 enc_related。
 
 ---
 
@@ -55,5 +55,5 @@
 ## ★ 下一刀
 
 1. **用户实机**：`unset ASCEND_DEVICE_ID && bash scripts/npu_hang_rewrite_one_trip.sh`  
-2. **回传后**：按 FEEDBACK 决策树分支（禁同质 toys）；必要时开 `graph-tests/enc_related/`  
-3. Git：无用户授权 **不** commit/push
+2. **用户只打字**：贴 TYPE_BACK（`N0 通` / `N8 超时 0 1 2 3` …）  
+3. **收到打字后**：按决策树分支（禁同质 toys）；必要时开 `graph-tests/enc_related/`

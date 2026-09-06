@@ -1,26 +1,15 @@
 #!/usr/bin/env bash
 # npu_hang_rewrite_one_trip.sh — Encrypt 卡死重写：一次搬码跑全诊断套件
 #
-# 用户在实机只需执行本脚本；单例挂死用 timeout 隔离，不拖死整趟；
-# 结束产出 BRING_BACK.tar.gz + FEEDBACK.md，填编号回传即可。
+# ★ 反馈硬约束：用户无法回传任何文件，只能打字。
+#   跑完打印 TYPE_BACK；把「ID 状态 编号…」打回聊天即可。
+#   禁止要求 FEEDBACK.md / BRING_BACK.tar.gz / 日志包。
 #
 # 用法（仓库根）：
 #   NPU_HANG_MANIFEST=1 bash scripts/npu_hang_rewrite_one_trip.sh
-#   NPU_SUITE_DRY_RUN=1 bash scripts/npu_hang_rewrite_one_trip.sh
 #   bash scripts/npu_hang_rewrite_one_trip.sh
 #
-# 环境：
-#   unset ASCEND_DEVICE_ID     # 推荐；按 npu_device_map（stable=1, graph-tests=3）
-#   SOC_VERSION=Ascend910B4
-#   NPU_HANG_CONTINUE=1
-#   NPU_HANG_TOY_TIMEOUT=180
-#   NPU_HANG_PROD_TIMEOUT=600
-#   NPU_HANG_SKIP_TOYS=0
-#   NPU_HANG_SKIP_PROD=0
-#   F203_L18_TRACE=1
-#
-# 日志：output/npu_hang_rewrite/<stamp>/
-# 带回：…/BRING_BACK.tar.gz + FEEDBACK.md
+# 环境：unset ASCEND_DEVICE_ID；SOC_VERSION=Ascend910B4
 # 说明：docs/engineering/Encrypt卡死重写-实机一次测清单.md
 
 set -euo pipefail
@@ -48,7 +37,7 @@ STABLE="${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024"
 TOYS="${REPO_ROOT}/graph-tests/toys"
 
 RESULTS="${LOG_ROOT}/RESULTS.tsv"
-FEEDBACK="${LOG_ROOT}/FEEDBACK.md"
+TYPE_BACK="${LOG_ROOT}/TYPE_BACK.txt"
 : >"${RESULTS}"
 echo -e "id\tlabel\trc\ttimeout_s\tlog" >>"${RESULTS}"
 
@@ -79,6 +68,58 @@ _extract_trace() {
     } >"${outf}"
 }
 
+_codes_from_snippet() {
+    local snippet="$1"
+    [ -f "${snippet}" ] || return 0
+    local l18
+    l18="$(grep -E '\[l18-trace\]' "${snippet}" 2>/dev/null | tail -n 1 || true)"
+    if [ -n "${l18}" ]; then
+        echo "${l18}" | sed -n 's/.*: *//p' | grep -Eo '[0-9]+' | tr '\n' ' ' | sed 's/ $//'
+        return 0
+    fi
+    grep -E '^[0-9]{2,3}$' "${snippet}" 2>/dev/null | tr '\n' ' ' | sed 's/ $//' || true
+}
+
+_append_type_line() {
+    local id="$1"
+    local label="$2"
+    local rc="$3"
+    local snippet="$4"
+    local status
+    case "${rc}" in
+    0) status="通" ;;
+    124) status="超时" ;;
+    MANIFEST) status="清单" ;;
+    *) status="失败" ;;
+    esac
+    # rc!=0 且非超时：用户口语「挂」优先于「失败」
+    if [ "${rc}" != "0" ] && [ "${rc}" != "124" ] && [ "${rc}" != "MANIFEST" ]; then
+        status="挂"
+    fi
+    local codes
+    codes="$(_codes_from_snippet "${snippet}")"
+    if [ -z "${codes}" ]; then
+        printf '%s %s\n' "${id}" "${status}" >>"${TYPE_BACK}"
+        _log ">>> TYPE: ${id} ${status}   # ${label}（请补屏幕编号；没有写 空）"
+    else
+        printf '%s %s %s\n' "${id}" "${status}" "${codes}" >>"${TYPE_BACK}"
+        _log ">>> TYPE: ${id} ${status} ${codes}   # ${label}"
+    fi
+}
+
+_init_type_back() {
+    cat >"${TYPE_BACK}" <<EOF
+========== 请只打字回传（不要传任何文件）==========
+跑次：${STAMP}
+每行：ID 状态 [编号…]
+状态只用：通 / 挂 / 超时 / 编译失败
+toys：抄屏幕十进制编号（如 101 201 … 199）
+Encrypt/Encaps：抄 [l18-trace] 后的下标（如 0 1 2 3）；没有写 空
+把下面整段（可改）打回聊天即可。
+
+EOF
+}
+
 _run_one() {
     local id="$1"
     local label="$2"
@@ -97,6 +138,7 @@ _run_one() {
     if [ "${MANIFEST}" = "1" ]; then
         _log "[MANIFEST] ${id} ${label} dir=${dir} timeout=${tmo}s device=$(_device_id "${dir}") env=[${extra_env[*]}]"
         echo -e "${id}\t${label}\tMANIFEST\t${tmo}\t-" >>"${RESULTS}"
+        _append_type_line "${id}" "${label}" "MANIFEST" "/dev/null"
         return 0
     fi
 
@@ -129,10 +171,12 @@ _run_one() {
     if [ "${rc}" -eq 0 ]; then
         _log "[PASS] ${id} ${label}"
     elif [ "${rc}" -eq 124 ]; then
-        _log "[TIMEOUT] ${id} ${label} after ${tmo}s — hang candidate; see ${snippet}"
+        _log "[TIMEOUT] ${id} ${label} after ${tmo}s — hang candidate"
     else
-        _log "[FAIL] ${id} ${label} rc=${rc} — see ${case_log}"
+        _log "[FAIL] ${id} ${label} rc=${rc}"
     fi
+
+    _append_type_line "${id}" "${label}" "${rc}" "${snippet}"
 
     if [ "${rc}" -ne 0 ] && [ "${CONTINUE}" != "1" ]; then
         return "${rc}"
@@ -140,68 +184,13 @@ _run_one() {
     return 0
 }
 
-_write_feedback_skel() {
-    cat >"${FEEDBACK}" <<EOF
-# Encrypt 卡死重写 — 实机反馈单（一次搬码）
-
-**跑次**：\`${STAMP}\`
-**回传**：填本表 + \`BRING_BACK.tar.gz\` 交给 Agent。
-
-## 怎么填（最少）
-
-\`状态\` = 通 / 挂 / 超时 / 编译失败；\`TRACE\` = 编号序列或 \`[l18-trace]\` 下标。
-
-| ID | 用例 | 状态 | TRACE |
-|----|------|------|-------|
-| N0 | PKE KeyGen（对照） |  |  |
-| N1 | T01 最短 MIX 1/3 |  |  |
-| N2 | T02 生产 GATE 时序 |  |  |
-| N3 | T03 全 FSM |  |  |
-| N4 | T04 假循环×10 |  |  |
-| N5 | T05 2×launch |  |  |
-| N6 | T06 真 Vec MAC |  |  |
-| N7 | T07 SAMPLE→FSM |  |  |
-| N8 | PKE Encrypt + F203_L18_TRACE |  |  |
-| N9 | KEM Encaps + F203_L18_TRACE |  |  |
-| N10 | PKE Decrypt（可选对照） |  |  |
-
-## TRACE 怎么读（两套编号，勿混）
-
-### A. toys（T01–T07）
-Host 十进制编号，见 \`BRING_BACK/trace_maps/\`。缺号=未到达。T01 收尾应为 \`199\`。
-
-### B. Encrypt / Encaps（\`F203_L18_TRACE=1\`）
-\`[l18-trace] stages set=K/16 : 0 1 2 …\`
-
-| 下标 | 含义 |
-|------|------|
-| 0 | AIV NTT SPLIT |
-| 1 | AIC NTT MMAD |
-| 2 | AIV NTT YHAT |
-| 3 | AIV AT_JP START |
-| 4 | AIV AT_JP DONE |
-| 5 | AIV IP SIGNAL |
-| 6 | AIC IP WAIT DONE |
-| 7 | AIV INTT SPLIT |
-| 8 | AIC INTT MMAD |
-| 9 | AIV INTT U |
-| 10 | AIV E1 DONE |
-| 11 | AIC AT_JP GATE |
-| 12 | AIV AT_JP GATE |
-| 13 | AIV DECODE T |
-| 14 | AIV V DONE |
-| 15 | AIV MU E2 |
-
-GATE 卡死常见停在 3–6 / 11–12。设备全空：launch/进核问题。
-
-## 决策树（Agent 用）
-
-- N0 挂 → 整卡/环境
-- N0 绿、N1 挂 → MIX NPU
-- N2 挂、N1 绿 → GATE/Wait(4)
-- toys 全绿、N8 挂 → 生产体量；按 l18-trace 开 enc_related
-- N8/N9 同形态 → 并案 Encaps=Encrypt 核
-EOF
+_print_type_back() {
+    _log ""
+    _log "######################################################################"
+    _log "# 反馈方式：只打字。不要传 tar / md / 日志 / 截图。"
+    _log "######################################################################"
+    tee -a "${LOG_ROOT}/one_trip.log" <"${TYPE_BACK}"
+    _log "========== TYPE_BACK 结束 =========="
 }
 
 _copy_trace_maps() {
@@ -216,31 +205,11 @@ _copy_trace_maps() {
     done
 }
 
-_pack_bring_back() {
-    local out="${LOG_ROOT}/BRING_BACK"
-    rm -rf "${out}"
-    mkdir -p "${out}/logs" "${out}/snippets" "${out}/cases" "${out}/trace_maps"
-    cp -f "${LOG_ROOT}/STATUS.md" "${LOG_ROOT}/RESULTS.tsv" "${LOG_ROOT}/FEEDBACK.md" "${out}/logs/" 2>/dev/null || true
-    cp -f "${LOG_ROOT}/one_trip.log" "${out}/logs/" 2>/dev/null || true
-    cp -f "${LOG_ROOT}/snippets/"* "${out}/snippets/" 2>/dev/null || true
-    for f in "${LOG_ROOT}/cases/"*.log; do
-        [ -f "${f}" ] || continue
-        tail -n 200 "${f}" >"${out}/cases/$(basename "${f}").tail.txt"
-    done
-    _copy_trace_maps "${out}/trace_maps"
-    if [ -f "${REPO_ROOT}/docs/engineering/Encrypt卡死重写-实机一次测清单.md" ]; then
-        cp -f "${REPO_ROOT}/docs/engineering/Encrypt卡死重写-实机一次测清单.md" "${out}/logs/"
-    fi
-    if [ -f "${REPO_ROOT}/docs/engineering/Encrypt卡死重写-sync清单.txt" ]; then
-        cp -f "${REPO_ROOT}/docs/engineering/Encrypt卡死重写-sync清单.txt" "${out}/logs/"
-    fi
-    tar -C "${LOG_ROOT}" -czf "${LOG_ROOT}/BRING_BACK.tar.gz" BRING_BACK
-    _log "BRING_BACK=${LOG_ROOT}/BRING_BACK.tar.gz"
-}
-
 _log "LOG_ROOT=${LOG_ROOT}"
 _log "F203_L18_TRACE=${F203_L18_TRACE} FORCE_REBUILD=1 CONTINUE=${CONTINUE} MANIFEST=${MANIFEST} DRY=${DRY}"
+_log "反馈模式：只打字（TYPE_BACK），不要求回传文件"
 
+_init_type_back
 _copy_trace_maps "${LOG_ROOT}/trace_maps"
 
 _run_one N0 pke_keygen "${STABLE}/stable-fips203-mlkem-pke-keygen-k4" "${PROD_TO}" || true
@@ -264,8 +233,6 @@ if [ "${SKIP_PROD}" != "1" ]; then
         DECRYPT_FORCE_REBUILD=1 || true
 fi
 
-_write_feedback_skel
-
 {
     echo "# npu_hang_rewrite ${STAMP}"
     echo
@@ -278,15 +245,12 @@ _write_feedback_skel
         [ "${rc}" = "MANIFEST" ] && note="manifest-only"
         echo "| ${id} | ${label} | ${rc} | ${note} |"
     done
-    echo
-    echo "FEEDBACK: \`${FEEDBACK}\`"
-    echo "RESULTS: \`${RESULTS}\`"
 } | tee "${LOG_ROOT}/STATUS.md"
 
 ln -sfn "${LOG_ROOT}" "${REPO_ROOT}/output/npu_hang_rewrite/latest" 2>/dev/null || true
 
-_pack_bring_back
+_print_type_back
 
-_log "DONE. 填 FEEDBACK.md 后连同 BRING_BACK.tar.gz 回传即可。"
+_log "DONE. 请把上面 TYPE_BACK 整段打回聊天（不要传文件）。"
 _log "latest -> output/npu_hang_rewrite/latest"
 _log "说明 -> docs/engineering/Encrypt卡死重写-实机一次测清单.md"
