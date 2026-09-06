@@ -5,24 +5,19 @@
 
 ## 当前真相
 
-- Encrypt 实机粘性挂根因 **未钉死**；SIM **不能**复现粘性挂。
-- 用户锁：ByteDecode / 正确性比对在卡死点之后，**找出挂因前不做**。
-- E01–E16 SIM 重写积木 + `graph_tests/npu_suite/`（C0/C1/C2）已齐；SIM smoke 绿。
-- **下一步**：用户按 `graph_tests/npu_suite/TOMORROW_NPU.md` 上机，填 `REPORT_TEMPLATE.md`；主控按 `BRANCHING.md` 选下一刀。
+- Encrypt 实机粘性挂根因未钉死；SIM 不能复现粘性挂。
+- **上机反馈硬约束**：用户**不能回传任何文件**，只能打字发三位编码。禁止再要 log/模板文件。
+- ByteDecode / 正确性：卡死点之后，挂因未明前不做。
+- E01–E16 + `graph_tests/npu_suite/` 已齐。
 
-## 上机入口
+## 明天上机
 
-```bash
-cd graph_tests/npu_suite
-bash run_all_npu.sh -v Ascend910B4
+用户按 `graph_tests/npu_suite/TOMORROW_NPU.md` 跑，聊天打字例如：
+
+```text
+C0 PASS
+C1 HANG 110
+C2 SKIP
 ```
 
-## 知识库 / 图谱
-
-- `docs/notes/Encrypt-实机无卡死-知识库.md`（含 §2.1 KeyGen 不挂、§2.2 编译不对称）
-- `docs/rg-encrypt-npu-hangfree.yaml` + `.html`
-
-## 禁止
-
-- 零散请测旧 Encrypt；未统一 FORCE/SKIP 的 KeyGen vs Encaps「稳」对照当根因
-- 复测 retracted；开正确性/ByteDecode 刀
+主控按 `BRANCHING.md` 选下一刀。
