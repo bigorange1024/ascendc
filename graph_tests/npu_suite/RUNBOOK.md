@@ -1,6 +1,7 @@
 # RUNBOOK — NPU 数字 TRACE 套件
 
-> 读者：借入 NPU 实机操作者。本套件**只取证挂因**，不要求 golden/KAT。
+> 读者：借入 NPU 实机操作者。本套件**只取证挂因**，不要求 golden/KAT。  
+> **上机一页纸（优先读）**：[`TOMORROW_NPU.md`](TOMORROW_NPU.md)（测什么 / 怎么测 / 怎么回报）。
 
 ---
 
