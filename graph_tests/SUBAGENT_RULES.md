@@ -60,6 +60,8 @@ abort_on: [timeout, no_progress, scope_breach, sim_hang]
 
 | TASK 类型 | deadline_min | max_retries |
 |-----------|--------------|-------------|
-| 建 toy 骨架 + 一次 SIM 冒烟 | 45–60 | 1 |
-| 单假说 graph_tests 小实验 | 20–30 | 1 |
-| 仅改同步/加 TRACE 再 SIM | 25–40 | 1 |
+| 建极简 toy + 一次 SIM | **30–40**（超时止损，勿默许拖到 60+） | 1 |
+| 单假说 graph_tests 小实验 | **20–30** | 1 |
+| 仅改同步/加 TRACE 再 SIM | **20–30** | 1 |
+
+**2026-09-06 加锁**：单实验过长 → 主控须反思任务过大或路线有坑，**禁止傻等**；已 `retracted` 路线禁止再派发现型实验。

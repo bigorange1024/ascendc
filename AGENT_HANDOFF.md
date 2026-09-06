@@ -1,22 +1,28 @@
-# Agent 交接 — 每日刷新
+# AGENT_HANDOFF
 
-> **最后刷新**：2026-09-04（加法：**P1a ✅** → **P1b**；禁零散上机）
+**日期**：2026-09-06  
+**分支**：`cursor/kem-2launch-sticky-1534`
 
----
+## 当前真相
 
-## ★ 60 秒
+- Encrypt 实机粘性挂根因 **未钉死**；SIM **不能**复现粘性挂。
+- 用户锁：ByteDecode / 正确性比对在卡死点之后，**找出挂因前不做**。
+- E01–E16 SIM 重写积木 + `graph_tests/npu_suite/`（C0/C1/C2）已齐；SIM smoke 绿。
+- **下一步**：用户按 `graph_tests/npu_suite/TOMORROW_NPU.md` 上机，填 `REPORT_TEMPLATE.md`；主控按 `BRANCHING.md` 选下一刀。
 
-1. 分支：`cursor/kem-2launch-sticky-1534`  
-2. hang 主路径 = **加法** `fix-encrypt-clean-hostmu-2launch`  
-3. **绿一档才进下一档**；SIM 穷尽前不上机  
+## 上机入口
 
-### 加法指针
+```bash
+cd graph_tests/npu_suite
+bash run_all_npu.sh -v Ascend910B4
+```
 
-| PHASE | 状态 |
-|-------|------|
-| P0 | ✅ |
-| P1a 早 TRACE | ✅ SIM 绿（AIV stages 0–3） |
-| **P1b** | **下一刀**：加长 at_jp stub |
-| P1c…P2 | 未开 |
+## 知识库 / 图谱
 
-决策树：`graph_tests/ENCRYPT_CLEAN_REWRITE.md` §4
+- `docs/notes/Encrypt-实机无卡死-知识库.md`（含 §2.1 KeyGen 不挂、§2.2 编译不对称）
+- `docs/rg-encrypt-npu-hangfree.yaml` + `.html`
+
+## 禁止
+
+- 零散请测旧 Encrypt；未统一 FORCE/SKIP 的 KeyGen vs Encaps「稳」对照当根因
+- 复测 retracted；开正确性/ByteDecode 刀

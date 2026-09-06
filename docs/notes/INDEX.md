@@ -7,6 +7,12 @@
 
 ---
 
+## Encrypt 实机无卡死（主线知识库）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-实机无卡死-知识库.md](Encrypt-实机无卡死-知识库.md) | **核心问题专属库**（失败优先）；配套 [`rg-encrypt-npu-hangfree`](../rg-encrypt-npu-hangfree.yaml) |
+
 ## ML-KEM / F203
 
 | 文件 | 说明 |

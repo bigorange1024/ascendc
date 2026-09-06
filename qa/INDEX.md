@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-06 — [Encrypt 无卡死：知识库+新图谱](2026-09/2026-09-06-Encrypt无卡死知识库与新图谱.md)
+
+关键字：**专属知识库** · **rg-encrypt-npu-hangfree** · E01–E07 toys · SHAKE+NTT+basemul+INTT · SET4 · ≠Tag5T
+
 ### 2026-09-04 — [PKE Enc/Dec 实机短报 · 老挂点](2026-09/2026-09-04-PKE-EncryptDecrypt实机短报老挂点.md)
 
 关键字：**PKE Encrypt 第7轮 l18** · **Decrypt FORCE 第1轮 prod input** · 老挂点未消 · 极短回报
