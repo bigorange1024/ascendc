@@ -1,0 +1,573 @@
+version: 1
+title: Encrypt 卡死重写 · DAG
+config:
+  required_fields:
+  - domain
+  id_prefix_by_kind:
+    fact: F
+    inference: J
+    decision: D
+    question: Q
+  fact_provenance_values:
+  - observation
+  - measurement
+  - doc
+  - env-api
+  inference_derivation_values:
+  - deductive
+  - defeasible
+  decision_by_values:
+  - human
+  - agent
+  require_repro_for_provenance:
+  - measurement
+review:
+  last_reviewed: '2026-09-06'
+  note: T07 PASS；X15；D-EXP-T07 inactive；D-STOP-DISCUSS active——停派toys等用户定战略
+nodes:
+- id: Q-ULT
+  domain: goals
+  kind: question
+  title: 最终验收
+  statement: NPU 上 Encrypt 是否不再 SynchronizeStream 卡死，且最终正确？
+  deps:
+  - F-HANG-SYNC
+  status: open
+- id: D-CORE-HANG
+  domain: goals
+  kind: decision
+  by: human
+  statement: 本阶段核心只攻卡死；liboqs 数值对齐非当前主线
+  deps:
+  - Q-ULT
+  status: active
+- id: D-METHOD
+  domain: goals
+  kind: decision
+  by: human
+  statement: 主控定实验/维护KB与图谱；subagent编码；不抄旧Encrypt；用已验NTT/SHA3/内积重拼；先toys后enc_related；SIM穷尽再上机
+  deps:
+  - D-CORE-HANG
+  status: active
+  targets:
+  - Q-ULT
+- id: D-OPS-DISCIPLINE
+  domain: goals
+  kind: decision
+  by: human
+  statement: 单刀限时不傻等；图谱已有失败路线禁止再走；每刀前沉淀并遍历KB+DAG；SIM能做的尽量做，不会了再问用户
+  deps:
+  - D-METHOD
+  status: active
+  evidence: 用户 2026-09-06
+- id: D-STEP1-KB-GRAPH
+  domain: goals
+  kind: decision
+  by: human
+  statement: 开工第一步只做知识库沉淀与图谱；完成后再下令开实验
+  deps:
+  - D-METHOD
+  status: inactive
+  evidence: 已完成；继任 D-NEAR-TOYS
+- id: D-NEAR-TOYS
+  domain: goals
+  kind: decision
+  by: human
+  statement: 近目标：graph-tests/toys 下从易到繁搭骨架（sampling→代数、2/3 launch多轮不挂）；一实验一目录
+  deps:
+  - D-METHOD
+  - F-TOY-SIM-NOT-ENOUGH
+  - D-OPS-DISCIPLINE
+  status: active
+  evidence: 用户下令开实验
+  targets:
+  - Q-ULT
+  - Q-HANG-LOCUS
+  - Q-REPRO-ON-SIM
+- id: D-EXP-T01
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T01：新树首刀——MIX 仅 NTT 同构握手 flag 1/3 + TRACE 编号；验证 graph-tests/toys 脚手架与最短握手；禁
+    GATE/INTT/抄旧Encrypt
+  deps:
+  - D-NEAR-TOYS
+  - F-FSM-CONTRACT
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BRICKS-OK
+  status: inactive
+  evidence: PASS：graph-tests/toys/T01-mix-ntt13-handshake/STATUS.md；继任 D-EXP-T02
+  targets:
+  - Q-REPRO-ON-SIM
+- id: D-EXP-T02
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T02：在 T01 1/3 之后加生产 GATE 时序——AIC 先 WAIT(4)，AIV 轻体量后双 SET(4)，AIC SET(8)，AIV
+    WAIT(8)；禁 INTT/抄旧Encrypt；墙钟≤30min
+  deps:
+  - F-T01-SIM-PASS
+  - F-GATE-SEMANTICS-DIFF
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BAN-FAKE-SOFTSYNC
+  - F-BAN-COPY-OLD-ENCRYPT
+  - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: PASS：graph-tests/toys/T02-prod-gate-timing/STATUS.md；继任 D-EXP-T03
+  targets:
+  - Q-REPRO-ON-SIM
+  - Q-HANG-LOCUS
+- id: F-HANG-SYNC
+  domain: phenomena
+  kind: fact
+  provenance: observation
+  basis: stated
+  statement: 实机常在 launch 计算核后卡在 aclrtSynchronizeStream
+  evidence: qa/2026-08-05；kb P1-P2
+  deps: []
+  status: verified
+- id: F-EMPTY-TRACE-NPU
+  domain: phenomena
+  kind: fact
+  provenance: observation
+  basis: stated
+  statement: 实机挂死时 TRACE 曾全空(0/16)，偏向 AIV0 未写到首 mark
+  evidence: rg-encrypt-l18 F-TRACE-EMPTY；kb P6
+  deps:
+  - F-HANG-SYNC
+  status: verified
+- id: F-STICKY-OLD-BIN
+  domain: phenomena
+  kind: fact
+  provenance: observation
+  basis: stated
+  statement: 未强制重建可能复用旧 fused 二进制导致近必挂
+  evidence: kb P5；旧图 F-SKIP-REBUILD
+  deps:
+  - F-HANG-SYNC
+  status: verified
+- id: F-POLLUTE-SECONDARY
+  domain: phenomena
+  kind: fact
+  provenance: observation
+  basis: stated
+  statement: 杀挂死后同卡连环挂是次生污染，不能单独解释干净卡首次挂
+  evidence: kb P4
+  deps:
+  - F-HANG-SYNC
+  status: verified
+- id: F-KEYGEN-CONTRAST
+  domain: phenomena
+  kind: fact
+  provenance: observation
+  basis: stated
+  statement: KeyGen 实机未表现同类卡死
+  evidence: kb P7
+  deps: []
+  status: verified
+- id: F-FSM-CONTRACT
+  domain: contract
+  kind: fact
+  provenance: doc
+  basis: stated
+  statement: 生产路径 CrossCore：NTT 1/3，GATE 4/8，INTT 再用 1/3；禁 5/7
+  evidence: kb §2；旧图 F-NTT-FLAGS/F-INTT-FLAGS
+  deps: []
+  status: verified
+- id: F-GATE-SEMANTICS-DIFF
+  domain: contract
+  kind: fact
+  provenance: doc
+  basis: stated
+  statement: 玩具对称 GATE（AIV先SET4）与生产（AIC已在WAIT4、AIV体量后SET4）时序不同
+  evidence: kb §2；additive L8 笔记
+  deps:
+  - F-FSM-CONTRACT
+  status: verified
+- id: F-BRICKS-OK
+  domain: contract
+  kind: fact
+  provenance: measurement
+  basis: stated
+  statement: NTT/SHA3/内积等已验积木多次无问题；卡死不归因于它们算术实现
+  evidence: 用户 2026-09-06；kb §4
+  deps: []
+  status: verified
+- id: F-BAN-INTT-57
+  domain: fail-lessons
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: INTT 改用 flag 5/7 导致挂/超时
+  evidence: kb X1
+  deps: []
+  status: verified
+- id: F-BAN-SYNCALL-IN-WAIT
+  domain: fail-lessons
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: AIC CrossCore Wait 期间 SyncAll 导致互锁/挂
+  evidence: kb X2
+  deps: []
+  status: verified
+- id: F-BAN-FAKE-SOFTSYNC
+  domain: fail-lessons
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: 自造 AIC↔AIV SoftSync/乱 recreate stream 导致挂
+  evidence: kb X3
+  deps: []
+  status: verified
+- id: F-BAN-COPY-OLD-ENCRYPT
+  domain: fail-lessons
+  kind: fact
+  provenance: doc
+  basis: stated
+  statement: 禁止照抄现有 Encrypt 实现；可读但须实验重拼
+  evidence: 用户 2026-09-06；kb X7
+  deps: []
+  status: verified
+- id: J-FAIL-LAUNCH-COUNT
+  domain: fail-lessons
+  kind: inference
+  derivation: defeasible
+  statement: 增加 Host launch 次数不是消除卡死的充分修复
+  deps:
+  - F-HANG-SYNC
+  status: verified
+  evidence: kb X4
+- id: J-FAIL-CPU-EVIDENCE
+  domain: fail-lessons
+  kind: inference
+  derivation: deductive
+  statement: CPU 通过不能作为卡死已解决或根因已排除的证据
+  deps:
+  - D-CORE-HANG
+  status: verified
+  evidence: kb X8
+- id: F-TOY-SIM-NO-HANG-LIGHT
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: 轻量 FSM toy 在 SIM 上多 launch/2-launch 未复现挂死
+  evidence: 旧 GT-5..7；kb X6
+  deps: []
+  status: verified
+- id: F-T01-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T01 新树 MIX NTT同构 1/3 握手：CPU+SIM_DIRECT 不挂；SIM 可缺 AIC mark 401 仍完成握手
+  evidence: graph-tests/toys/T01-mix-ntt13-handshake/STATUS.md；kb X13
+  deps:
+  - D-EXP-T01
+  - F-FSM-CONTRACT
+  status: verified
+- id: F-ENV-COLD-CANN
+  domain: process
+  kind: fact
+  provenance: observation
+  basis: experiment
+  statement: Cloud 冷机装 CANN 可吃掉整刀墙钟；须与实验刀拆开记账
+  evidence: T01 首刀 BLOCKED@29min；kb X11
+  deps:
+  - D-OPS-DISCIPLINE
+  status: verified
+- id: F-TOY-SIM-NOT-ENOUGH
+  domain: sim-frontier
+  kind: fact
+  provenance: observation
+  basis: stated
+  statement: 轻量 toy SIM 未挂不足以宣称生产/NPU 卡死已解
+  evidence: kb X6；J-TOY-SIM-NO-HANG-SO-FAR
+  deps:
+  - F-TOY-SIM-NO-HANG-LIGHT
+  - F-HANG-SYNC
+  status: verified
+- id: J-NEED-CLOSER-TOYS
+  domain: sim-frontier
+  kind: inference
+  derivation: defeasible
+  statement: 下一阶段须从易到繁增加生产时序与体量（非抄旧核），在 SIM 逼近卡死条件
+  deps:
+  - F-TOY-SIM-NOT-ENOUGH
+  - F-GATE-SEMANTICS-DIFF
+  - F-BRICKS-OK
+  - F-BAN-COPY-OLD-ENCRYPT
+  status: verified
+  evidence: T04 假循环×10仍绿（X14）；改多launch/真积木体量
+- id: Q-HANG-LOCUS
+  domain: sim-frontier
+  kind: question
+  statement: 卡死/空 TRACE 时设备停在哪一次 CrossCore Wait/Set？AIV0 为何零 mark？
+  deps:
+  - F-EMPTY-TRACE-NPU
+  - F-FSM-CONTRACT
+  status: open
+- id: Q-REPRO-ON-SIM
+  domain: sim-frontier
+  kind: question
+  statement: 何种玩具体量+时序能在 SIM 稳定逼近/复现挂死迹象？
+  deps:
+  - J-NEED-CLOSER-TOYS
+  - Q-HANG-LOCUS
+  status: open
+- id: F-KB-BOOTSTRAPPED
+  domain: process
+  kind: fact
+  provenance: doc
+  basis: stated
+  statement: 专属知识库 docs/notes/Encrypt-hang-rewrite-kb.md 已初建
+  evidence: docs/notes/Encrypt-hang-rewrite-kb.md
+  deps:
+  - D-STEP1-KB-GRAPH
+  status: verified
+- id: F-GRAPH-BOOTSTRAPPED
+  domain: process
+  kind: fact
+  provenance: doc
+  basis: stated
+  statement: 本 DAG 已初建，供后续每刀实验回写
+  evidence: docs/rg-encrypt-hang-rewrite.yaml
+  deps:
+  - D-STEP1-KB-GRAPH
+  - F-KB-BOOTSTRAPPED
+  status: verified
+- id: D-WAIT-USER-GO
+  domain: process
+  kind: decision
+  by: agent
+  statement: KB+图谱完成后停止；等用户下令再派 toys 实验
+  deps:
+  - F-GRAPH-BOOTSTRAPPED
+  status: inactive
+  evidence: T01–T03 PASS；当前 D-EXP-T04
+  targets:
+  - D-NEAR-TOYS
+- id: F-T02-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T02 生产 GATE 时序（AIC先WAIT4+AIV轻体量后双SET4+SET8）CPU+SIM不挂；SIM可缺401
+  evidence: graph-tests/toys/T02-prod-gate-timing/STATUS.md；主控复验 sim log exit0 tick40288
+  deps:
+  - D-EXP-T02
+  - F-GATE-SEMANTICS-DIFF
+  status: verified
+- id: D-EXP-T03
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T03：单launch闭环——T02路径后加INTT，flag复用1/3（禁5/7）；轻体量；墙钟≤25min
+  deps:
+  - F-T02-SIM-PASS
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BAN-FAKE-SOFTSYNC
+  - F-BAN-COPY-OLD-ENCRYPT
+  - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: PASS：graph-tests/toys/T03-full-fsm-ntt-gate-intt/STATUS.md；继任 D-EXP-T04
+  targets:
+  - Q-REPRO-ON-SIM
+  - Q-HANG-LOCUS
+- id: F-T03-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T03 单launch NTT+生产GATE+INTT复用1/3：CPU+SIM不挂；禁5/7已遵守；SIM可缺401
+  evidence: graph-tests/toys/T03-full-fsm-ntt-gate-intt/STATUS.md；主控复验 sim exit0 tick49387
+  deps:
+  - D-EXP-T03
+  - F-BAN-INTT-57
+  status: verified
+- id: D-EXP-T04
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T04：在T03全FSM上加大GATE段AIV体量（AIC已WAIT4）；禁5/7/SyncAll/SoftSync；墙钟≤25min；SIM单次目标<5min
+  deps:
+  - F-T03-SIM-PASS
+  - F-GATE-SEMANTICS-DIFF
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BAN-FAKE-SOFTSYNC
+  - F-BAN-COPY-OLD-ENCRYPT
+  - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: PASS：graph-tests/toys/T04-gate-volume-stress/STATUS.md；继任 D-EXP-T05；见
+    X14
+  targets:
+  - Q-REPRO-ON-SIM
+  - Q-HANG-LOCUS
+- id: F-T04-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T04 GATE假循环体量×10：CPU+SIM不挂（~60s/tick298706）；不足以SIM复现挂
+  evidence: STATUS.md；kb X14
+  deps:
+  - D-EXP-T04
+  - F-T03-SIM-PASS
+  status: verified
+- id: F-X14-FAKE-VOLUME
+  domain: fail-lessons
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: 仅加大UB假循环轮数不能在SIM逼近Encrypt卡死
+  evidence: kb X14；T04
+  deps:
+  - F-T04-SIM-PASS
+  - F-TOY-SIM-NOT-ENOUGH
+  status: verified
+- id: D-EXP-T05
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T05：Host串行2次launch，每次全FSM（轻/中体量）；验多launch多轮不挂；禁5/7；墙钟≤25min
+  deps:
+  - F-T04-SIM-PASS
+  - F-X14-FAKE-VOLUME
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BAN-FAKE-SOFTSYNC
+  - F-BAN-COPY-OLD-ENCRYPT
+  - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: PASS：graph-tests/toys/T05-multi-launch-rounds/STATUS.md；继任 D-EXP-T06
+  targets:
+  - Q-REPRO-ON-SIM
+- id: F-T05-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T05 Host串行2×launch全FSM：CPU+SIM不挂；印证轻量多launch不足复现挂(X6)
+  evidence: STATUS.md
+  deps:
+  - D-EXP-T05
+  status: verified
+- id: D-EXP-T06
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T06：GATE段AIV改真积木有界计算（Vec MAC/轻MM），AIC先WAIT4；禁假循环加码与5/7；墙钟≤25min
+  deps:
+  - F-T05-SIM-PASS
+  - F-X14-FAKE-VOLUME
+  - F-BRICKS-OK
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BAN-FAKE-SOFTSYNC
+  - F-BAN-COPY-OLD-ENCRYPT
+  - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: PASS：graph-tests/toys/T06-gate-real-brick/STATUS.md；继任 D-EXP-T07
+  targets:
+  - Q-REPRO-ON-SIM
+  - Q-HANG-LOCUS
+- id: F-T06-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T06 GATE真Vec MAC：CPU+SIM不挂；非X14空转
+  evidence: STATUS.md
+  deps:
+  - D-EXP-T06
+  status: verified
+- id: D-EXP-T07
+  domain: goals
+  kind: decision
+  by: agent
+  statement: T07：轻量sampling/哈希前置stub后接全FSM；禁抄Encrypt/5/7；墙钟≤25min
+  deps:
+  - F-T06-SIM-PASS
+  - F-BRICKS-OK
+  - F-BAN-INTT-57
+  - F-BAN-SYNCALL-IN-WAIT
+  - F-BAN-FAKE-SOFTSYNC
+  - F-BAN-COPY-OLD-ENCRYPT
+  - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: PASS：graph-tests/toys/T07-sampling-then-fsm/STATUS.md；继任 D-STOP-DISCUSS
+  targets:
+  - Q-REPRO-ON-SIM
+- id: F-T07-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T07 SAMPLE前置+全FSM：CPU+SIM不挂
+  evidence: STATUS.md
+  deps:
+  - D-EXP-T07
+  status: verified
+- id: F-X15-SIM-TOYS-EXHAUSTED
+  domain: fail-lessons
+  kind: fact
+  provenance: measurement
+  basis: experiment
+  statement: T01–T07 SIM玩具族全绿，不足以复现Encrypt SynchronizeStream卡死
+  evidence: kb X15
+  deps:
+  - F-T07-SIM-PASS
+  - F-T06-SIM-PASS
+  - F-T05-SIM-PASS
+  - F-T04-SIM-PASS
+  status: verified
+- id: D-STOP-DISCUSS
+  domain: goals
+  kind: decision
+  by: agent
+  statement: 停派同质toys；与用户讨论：NPU批测 / enc_related近生产体量 / 其它SIM维
+  deps:
+  - F-X15-SIM-TOYS-EXHAUSTED
+  - D-OPS-DISCIPLINE
+  status: active
+  evidence: 用户纪律：不会了停下讨论
+  targets:
+  - Q-ULT
+changelog:
+- date: '2026-09-06'
+  change: T07 PASS；X15；D-STOP-DISCUSS（停toys等用户）。
+- date: '2026-09-06'
+  change: T06 PASS；开 D-EXP-T07（sampling前置）。
+- date: '2026-09-06'
+  change: T05 PASS；F-T05-SIM-PASS；开 D-EXP-T06（GATE真积木）。
+- date: '2026-09-06'
+  change: T04 PASS；F-T04-SIM-PASS；F-X14-FAKE-VOLUME；开 D-EXP-T05。
+- date: '2026-09-06'
+  change: T03 PASS：F-T03-SIM-PASS；D-EXP-T03 inactive；开 D-EXP-T04（GATE体量加压）。
+- date: '2026-09-06'
+  change: T02 PASS：F-T02-SIM-PASS；D-EXP-T02 inactive；开 D-EXP-T03（NTT+GATE+INTT1/3
+    闭环）。
+- date: '2026-09-06'
+  change: 'T01 PASS：F-T01-SIM-PASS、F-ENV-COLD-CANN；D-EXP-T01 inactive；开 D-EXP-T02（生产
+    GATE 时序）。
+
+    KB 增 X11–X13 与 §3b 台账。
+
+    '
+- date: '2026-09-06'
+  change: '用户下令开实验 + 运行纪律（限时/禁复踩坑/每刀前遍历）。
+
+    D-OPS-DISCIPLINE；D-NEAR-TOYS active；D-EXP-T01；D-WAIT-USER-GO inactive。
+
+    '
+- date: '2026-09-06'
+  change: '初建：核心=卡死；方法=重拼不抄码；失败禁令入库；SIM toy 不足；
+
+    开放 Q-HANG-LOCUS / Q-REPRO-ON-SIM；D-WAIT-USER-GO。
+
+    '

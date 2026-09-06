@@ -1,13 +1,13 @@
 # graph-tests — 卡死排查 · 图谱驱动试验场
 
-> **Encrypt/l18**：本文件 + [`docs/rg-encrypt-l18.yaml`](../docs/rg-encrypt-l18.yaml)  
-> **Decrypt fused**：**另立** [`decrypt/INDEX.md`](decrypt/INDEX.md) + [`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)（用户 2026-09-03：不得等 Encrypt 走通，不得空耗催上机）  
-> **最后刷新**：2026-09-03
+> **Encrypt 卡死重写（2026-09-06 起主线）**：[`toys/`](toys/INDEX.md) · [`enc_related/`](enc_related/INDEX.md) · KB [`docs/notes/Encrypt-hang-rewrite-kb.md`](../docs/notes/Encrypt-hang-rewrite-kb.md) · 新图 [`docs/rg-encrypt-hang-rewrite.yaml`](../docs/rg-encrypt-hang-rewrite.yaml)  
+> **旧 Encrypt/l18 图（只读参考）**：[`docs/rg-encrypt-l18.yaml`](../docs/rg-encrypt-l18.yaml) + 历史 GT-*  
+> **Decrypt fused**：**另立** [`decrypt/INDEX.md`](decrypt/INDEX.md) + [`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)  
+> **最后刷新**：2026-09-06
 
-相关机读真理：[`docs/rg-encrypt-l18.yaml`](../docs/rg-encrypt-l18.yaml)  
 Decrypt 真理：[`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)  
-工具（不迁 skills）：[`thirdparty/reasoning-graph-skill/`](../thirdparty/reasoning-graph-skill/)  
-看图：http://127.0.0.1:8765/rg-encrypt-l18.html（预烘焙；改 yaml 后须重渲）
+DAG 检查：`python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-hang-rewrite.yaml`  
+（`thirdparty/reasoning-graph-skill` 若缺失则用上述脚本）
 
 **知识来源（强制）**：不限当前检出分支。须主动 `git fetch` 并阅读**其它分支**上刚做的实验笔记（尤其 `origin/cursor/kem-2launch-sticky-1534` 的 `qa/2026-09/*`、HANDOFF），按准入规则沉淀进图谱；evidence 写明分支/路径。当前工作区没有的纪要 ≠ 可以当没发生。
 

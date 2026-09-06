@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-06 — [Encrypt 卡死重写 · T01 PASS · 开 T02](2026-09/2026-09-06-Encrypt卡死重写T01与T02.md)
+
+关键字：**限时实验** · **禁复踩失败路线** · **每刀前遍历 KB+图** · **T01 1/3 握手 PASS** · **T02 生产 GATE 时序**
+
 ### 2026-09-03 — [Encrypt 卡死 · 推理图谱 · toy 近目标](2026-09/2026-09-03-Encrypt卡死图谱与toy近目标.md)
 
 关键字：**`docs/rg-encrypt-l18.yaml`** · **Decrypt 独立 `rg-decrypt-fused.yaml`** · **DGT-1 SoftSync toy** · **Q-ULT NPU 不卡+正确** · **GT-1..7 SIM 绿** · **DataCopy TRACE** · **`graph-tests/`** · 禁全量 SIM 磨 FSM · 禁空耗催上机

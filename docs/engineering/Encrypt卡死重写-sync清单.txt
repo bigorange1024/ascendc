@@ -1,0 +1,46 @@
+# Encrypt 卡死重写 — 实机 sync 清单（最小必要）
+# 用法：在开发机仓库根，把下列路径 rsync/scp 到实机同一相对路径。
+# 说明：docs/engineering/Encrypt卡死重写-实机一次测清单.md
+
+# --- 入口脚本 ---
+scripts/npu_hang_rewrite_one_trip.sh
+scripts/npu_run_case.sh
+scripts/npu_device_map.sh
+scripts/npu_card_guard.sh
+scripts/env.sh
+scripts/runtime_env.sh
+scripts/kernel-run-timeout.sh
+scripts/sim_env.sh
+scripts/camodel_sim_log.sh
+
+# --- 共用库（Encrypt TRACE / ACL）---
+library/shared/acl_session/
+
+# --- toys（T01–T07 整树）---
+graph-tests/toys/
+
+# --- stable 1024（对照 + 生产）---
+examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4/
+examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/
+examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4/
+examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/
+
+# --- 文档（可选但建议）---
+docs/engineering/Encrypt卡死重写-实机一次测清单.md
+docs/engineering/Encrypt卡死重写-sync清单.txt
+docs/notes/Encrypt-hang-rewrite-kb.md
+
+# --- 一键打包示例（开发机）---
+# tar -czf hang-rewrite-npu-pack.tgz \
+#   scripts/npu_hang_rewrite_one_trip.sh scripts/npu_run_case.sh scripts/npu_device_map.sh \
+#   scripts/npu_card_guard.sh scripts/env.sh scripts/runtime_env.sh \
+#   scripts/kernel-run-timeout.sh scripts/sim_env.sh scripts/camodel_sim_log.sh \
+#   library/shared/acl_session \
+#   graph-tests/toys \
+#   examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-keygen-k4 \
+#   examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4 \
+#   examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-decrypt-k4 \
+#   examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4 \
+#   docs/engineering/Encrypt卡死重写-实机一次测清单.md \
+#   docs/engineering/Encrypt卡死重写-sync清单.txt \
+#   docs/notes/Encrypt-hang-rewrite-kb.md
