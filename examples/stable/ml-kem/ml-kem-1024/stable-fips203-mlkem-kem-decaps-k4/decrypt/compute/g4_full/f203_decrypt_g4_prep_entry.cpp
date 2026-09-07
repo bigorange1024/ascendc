@@ -3,8 +3,7 @@
  * @brief Decrypt 多 launch 调试路径 Launch-1：unpack c + decode dk→ŝ。
  *
  * 对齐 FIPS 203 Alg.15 行 3–5 prep；中间态留设备 GM。
- * 2026-09-03：Decaps Phase-D **默认** Host 编排的第 1 launch（纯 AIV；无 Cube）；
- * 旧 fused：`F203_DECRYPT_FUSED=1`。
+ * 生产路径为 1-kernel fused（f203_decrypt_device_fused），不单独 launch 本入口。
  * golden I/O：本段不写 m；仅准备 u'/v'/ŝ 供后续 NTT/su_dot。
  */
 #include "f203_decrypt_decode_impl.hpp"

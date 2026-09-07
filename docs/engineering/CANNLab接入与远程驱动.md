@@ -79,11 +79,51 @@ R
 
 期望尾部：`[verify] KEM KeyGen overall PASS` + `[SUCCESS] ... (npu)`。
 
+### 5.1 Encaps / Decaps 粘性挂取证（~10 分钟，Agent 亲自跑）
+
+> 用途：恢复 **main 口径 stable** 后，在单卡 910B3 上**多轮 / 交叉**跑 Encaps、Decaps，亲眼看粘性挂长什么样。  
+> 不做正确性结案；挂因只记 Host 文案 / 超时 / 轮次。`FORCE_REBUILD=1` 避免旧二进制假绿。
+
+```bash
+# Cursor 侧：前台 SSH（ServerAlive），一次一把刀；CANNLab 工作树先切到目标分支并 pull
+SSH='ssh -o ServerAliveInterval=15 -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" -o StrictHostKeyChecking=accept-new -i ~/.ssh/cannlab -p 2222 developer@cannlab-npu'
+
+eval $SSH '"bash -s"' <<'R'
+set -euo pipefail
+export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64/common:${LD_LIBRARY_PATH:-}
+source /home/developer/Ascend/ascend-toolkit/set_env.sh
+cd /mnt/workspace/ascendc
+git fetch origin && git checkout cursor/kem-2launch-sticky-1534 && git pull --ff-only
+export ASCEND_DEVICE_ID=0 CANNLAB=1 CMAKE_BUILD_JOBS=8
+export KEM_ENCAPS_FORCE_REBUILD=1 KEM_DECAPS_FORCE_REBUILD=1
+ROOT=examples/stable/ml-kem/ml-kem-1024
+# 1) Encaps 多轮（墙钟紧则 TOY 式循环；每轮独立 run.sh）
+for i in 1 2 3 4 5 6 7; do
+  echo "===== ENCAPS round $i ====="
+  timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3" \
+    || { echo "ENCAPS_FAIL_OR_HANG round=$i rc=$?"; break; }
+done
+# 2) Decaps 多轮
+for i in 1 2 3 4 5 6 7; do
+  echo "===== DECAPS round $i ====="
+  timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3" \
+    || { echo "DECAPS_FAIL_OR_HANG round=$i rc=$?"; break; }
+done
+# 3) 交叉：Encaps→Decaps 再 Encaps（各 1～2 轮，看顺序是否触发）
+echo "===== CROSS encaps then decaps ====="
+timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3"
+timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3"
+echo "===== HANG_OBSERVE_DONE ====="
+R
+```
+
+也可一键：`bash scripts/cannlab/hang_observe_encaps_decaps.sh`（须已能 `ssh cannlab-npu`）。
+
 ## 6. 关键坑（务必记住）
 
 | 坑 | 现象 | 处置 |
 |----|------|------|
-| **设备号** | 卡挂成 `/dev/davinci3`，但 **ACL 逻辑设备号从 0 枚举**；仓库 `npu_device_map.sh` 会按树/节点选 1/2/3 → `aclrtSetDevice` 报 **107001 无效设备** | 单卡实例**必须显式 `ASCEND_DEVICE_ID=0`**（run.sh 会保留显式值） |
+| **设备号** | 卡挂成 `/dev/davinci3`，但 **ACL 逻辑设备号从 0 枚举**；仓库 `npu_device_map.sh` 会按树/节点选 1/2/3 → `aclrtSetDevice` 报 **107001 无效设备** | 单卡实例**必须显式 `ASCEND_DEVICE_ID=0`**（run.sh 会保留显式值）；或 `export CANNLAB=1` / `NPU_SINGLE_CARD=1` 让分卡表默认全 0 |
 | **驱动库** | `npu-smi` / ACL 报 `libc_sec.so`/`libdrvdsmi_host.so` 找不到 | 把 `/usr/local/Ascend/driver/lib64{,/driver,/common}` 加进 `LD_LIBRARY_PATH`（recipe 已含） |
 | **sshd 只听 loopback** | 首次 `sshd -p 2222` 绑到 `127.0.0.1` | 用 `-o ListenAddress=<tailscale ip>`（bootstrap 已处理） |
 | **停机** | `poweroff/halt/shutdown` 无效（容器 PID1=tini，无 systemd）；`kill -9 1` 被内核拦截 | **`sudo kill -TERM 1`**（tini 优雅退出、节点下线）；**权威停计费以控制台“关机/停止”为准** |

@@ -22,6 +22,8 @@
 
 ## 当前真相
 
+- **stable 已恢复为 `origin/main` 口径**（本分支上 Hostμ / 真2-launch 等 stable 改动已撤回；只读对照 + 上机取证用 main stable）。
+- **CANNLab 运行环境**：`npu_device_map.sh` 支持 `CANNLAB=1` / `NPU_SINGLE_CARD=1` → 全树默认 device **0**；取证脚本 `scripts/cannlab/hang_observe_encaps_decaps.sh`。
 - **知识库 + 图谱已 v2 从头刷新（cannbot 中心）**：
   - 库：`docs/notes/Encrypt-实机无卡死-知识库.md`（§0 图谱+cannbot 双开；§0.1 Skill 入口；§3.3 sync_audit SYNC-03 假阳性纪律）。
   - 图：`docs/rg-encrypt-npu-hangfree.yaml` + `.html`；`rg_validate` **OK**；升格 `D-graph-and-cannbot`；下一刀 `D-next-rxn-or-gap`。
@@ -29,11 +31,11 @@
 - **已从 main 合入 CANNLab 联机**：`docs/engineering/CANNLab接入与远程驱动.md` + `scripts/cannlab/{agent_bootstrap,agent_watchdog}.sh`。
 - NPU_SUITE 单轮 C0–C2 全绿（N7）→ B3。
 - 910B3（CANNLab）**有时限 → 未经用户明确授权不得连实机**；连则 **device id=0**。
-- R×N / 下一编码刀：等用户下令；挂因未明前不做 ByteDecode/正确性。
-- 反馈：只打字三位码 / `REPORT:`。
+- 上机优先：~10min **亲自**多轮/交叉跑 stable Encaps/Decaps 看粘性挂样貌（§5.1）；再 R×N。
+- 反馈：只打字三位码 / `REPORT:`；挂因未明前不做 ByteDecode/正确性。
 
-## 下一动作（待用户令）
+## 下一动作（待用户令 / Secrets）
 
-1. 授权上机 → 按 CANNLab 文档接入后跑 R×N（或指定刀）；写码前 cannbot `ascendc-sync-audit`，回写图谱；跑完按文档停机。  
-2. 授权继续 SIM 编码 → 按计划 §0.1 打开对应 cannbot Skill 再动 toys/enc；每刀后更新 F/J/D。  
-3. 暂停则只维护库/图，不连 910B3。
+1. Cloud Secrets 须含 `TAILSCALE_AUTHKEY` + `CANNLAB_SSH_KEY`（本 Agent 环境当前**仅**注入了 `ASCENDC_GH_PAT`）→ 用户开机 CANNLab 并跑 bootstrap → Agent 接入后跑 `hang_observe_encaps_decaps.sh`。  
+2. 授权后也可跑 R×N；写码前 cannbot audit，回写图谱；跑完控制台停机。  
+3. 无卡时 → ENCRYPT-GAP / SIM 短刀。

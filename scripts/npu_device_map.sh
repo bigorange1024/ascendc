@@ -7,6 +7,13 @@
 #   ascendc-tests/**       → 3 号卡
 #   其它路径               → 0 号卡
 #
+# 2026-09-07 · GitCode CANNLab / 单卡实例：
+#   物理上只有 1 张卡时 ACL 逻辑号仅 0；若仍按上表选 1/2/3 → aclrtSetDevice 报 107001。
+#   处置（任选其一，优先级从高到低）：
+#     1) 显式 `export ASCEND_DEVICE_ID=0`（始终优先，本函数不覆盖）
+#     2) `export NPU_SINGLE_CARD=1` 或 `export CANNLAB=1` → 全树默认改为 0
+#     3) 覆盖 `NPU_DEVICE_STABLE=0 NPU_DEVICE_EXAMPLES=0 NPU_DEVICE_TESTS=0`
+#
 # SIM / CAModel 仍强制设备 0（本脚本只用于 -r npu）。
 # 显式 `export ASCEND_DEVICE_ID=N` 始终优先，本函数不覆盖。
 #
@@ -19,9 +26,33 @@
 #   npu_device_id_for_path "/path/to/case"   # 只打印数字，不 export
 #   bash scripts/npu_device_map.sh --self-test
 
-npu_device_stable() { printf '%s\n' "${NPU_DEVICE_STABLE:-1}"; }
-npu_device_examples() { printf '%s\n' "${NPU_DEVICE_EXAMPLES:-2}"; }
-npu_device_tests() { printf '%s\n' "${NPU_DEVICE_TESTS:-3}"; }
+# 单卡 / CANNLab：未单独覆盖 NPU_DEVICE_* 时，全树默认 0。
+_npu_single_card=0
+if [ "${NPU_SINGLE_CARD:-0}" = "1" ] || [ "${CANNLAB:-0}" = "1" ]; then
+    _npu_single_card=1
+fi
+
+npu_device_stable() {
+    if [ "${_npu_single_card}" = "1" ] && [ -z "${NPU_DEVICE_STABLE+x}" ]; then
+        printf '%s\n' 0
+    else
+        printf '%s\n' "${NPU_DEVICE_STABLE:-1}"
+    fi
+}
+npu_device_examples() {
+    if [ "${_npu_single_card}" = "1" ] && [ -z "${NPU_DEVICE_EXAMPLES+x}" ]; then
+        printf '%s\n' 0
+    else
+        printf '%s\n' "${NPU_DEVICE_EXAMPLES:-2}"
+    fi
+}
+npu_device_tests() {
+    if [ "${_npu_single_card}" = "1" ] && [ -z "${NPU_DEVICE_TESTS+x}" ]; then
+        printf '%s\n' 0
+    else
+        printf '%s\n' "${NPU_DEVICE_TESTS:-3}"
+    fi
+}
 npu_device_other() { printf '%s\n' "${NPU_DEVICE_OTHER:-0}"; }
 
 # 规范化路径（尽量绝对路径，失败则原样）。
@@ -102,6 +133,18 @@ npu_device_map_self_test() {
     _expect "${root}/ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4" tests 3
     _expect "${root}/ascendc-tests/add_custom" tests 3
     _expect "${root}/scripts" other 0
+    # 单卡 / CANNLab：未显式 NPU_DEVICE_* 时全树→0
+    local saved_sc="${NPU_SINGLE_CARD-}" saved_cl="${CANNLAB-}"
+    export NPU_SINGLE_CARD=1
+    unset CANNLAB || true
+    # 重新 source 自身以刷新 _npu_single_card（函数已绑定当前 shell 变量）
+    _npu_single_card=1
+    _expect "${root}/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4" stable 0
+    _expect "${root}/ascendc-tests/add_custom" tests 0
+    unset NPU_SINGLE_CARD || true
+    _npu_single_card=0
+    if [ -n "${saved_sc}" ]; then export NPU_SINGLE_CARD="${saved_sc}"; fi
+    if [ -n "${saved_cl}" ]; then export CANNLAB="${saved_cl}"; fi
     # 显式覆盖不被 apply 改掉
     local saved="${ASCEND_DEVICE_ID-}"
     local had=0
