@@ -43,8 +43,11 @@
 
 - SIM 积木 E01–E15 + NPU_SUITE 包装 E16 ✅  
 - NPU 单轮 C0/C1/C2 全绿（N7）→ 分支 B3  
+- **知识库 + 图谱 v2 已从头刷新（cannbot 中心）**：`docs/notes/Encrypt-实机无卡死-知识库.md` + `docs/rg-encrypt-npu-hangfree.yaml`（`rg_validate` OK；`D-graph-and-cannbot` / `D-next-rxn-or-gap`）  
+- cannbot 基线：toys e01/e13/e15 + 只读 l18 已跑 `sync_audit`（SYNC-03 同侧候选假阳性，禁自动改绿核）  
 - 下一挂因刀曾拟 R×N(C2×7)；**用户暂停零散上机**；910B3 云主机已调通，**有时限，须用户明确授权再连**  
 - 正确性 / ByteDecode：挂因未明前不做  
+- **硬锁**：此后每刀实验/写码 = 遍历图谱 + 按 §0.1 打开 cannbot
 
 ---
 

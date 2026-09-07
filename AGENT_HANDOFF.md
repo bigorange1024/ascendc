@@ -13,6 +13,10 @@
 
 ## 当前真相
 
+- **知识库 + 图谱已 v2 从头刷新（cannbot 中心）**：
+  - 库：`docs/notes/Encrypt-实机无卡死-知识库.md`（§0 图谱+cannbot 双开；§0.1 Skill 入口；§3.3 sync_audit SYNC-03 假阳性纪律）。
+  - 图：`docs/rg-encrypt-npu-hangfree.yaml` + `.html`；`rg_validate` **OK**；升格 `D-graph-and-cannbot`；下一刀 `D-next-rxn-or-gap`。
+  - cannbot 基线：已对 e01/e13/e15 + 只读 l18 跑 `sync_audit.py`（产物在 `/opt/cursor/artifacts/sync-audit-*.json`）。
 - NPU_SUITE 单轮 C0–C2 全绿（N7）→ B3。
 - 910B3 云主机用户已调通；**有时限 → 未经用户明确授权不得连实机**。
 - R×N / 下一编码刀：等用户下令；挂因未明前不做 ByteDecode/正确性。
@@ -20,6 +24,6 @@
 
 ## 下一动作（待用户令）
 
-1. 授权上机 → R×N 或指定刀；写码前先跑 cannbot `ascendc-sync-audit`。  
-2. 授权继续 SIM 编码 → 按计划 §0.1 打开对应 cannbot Skill 再动 toys/enc。  
+1. 授权上机 → R×N 或指定刀；写码前先跑 cannbot `ascendc-sync-audit`，并回写图谱。  
+2. 授权继续 SIM 编码 → 按计划 §0.1 打开对应 cannbot Skill 再动 toys/enc；每刀后更新 F/J/D。  
 3. 暂停则只维护库/图，不连 910B3。

@@ -11,7 +11,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| [Encrypt-实机无卡死-知识库.md](Encrypt-实机无卡死-知识库.md) | **核心问题专属库**（失败优先）；配套 [`rg-encrypt-npu-hangfree`](../rg-encrypt-npu-hangfree.yaml) |
+| [Encrypt-实机无卡死-知识库.md](Encrypt-实机无卡死-知识库.md) | **核心问题专属库 v2（cannbot）**；配套 [`rg-encrypt-npu-hangfree`](../rg-encrypt-npu-hangfree.yaml)；实验/写码图谱+cannbot 双开 |
 
 ## ML-KEM / F203
 
