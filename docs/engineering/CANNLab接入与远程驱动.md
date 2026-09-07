@@ -100,19 +100,20 @@ ROOT=examples/stable/ml-kem/ml-kem-1024
 # 1) Encaps 多轮（墙钟紧则 TOY 式循环；每轮独立 run.sh）
 for i in 1 2 3 4 5 6 7; do
   echo "===== ENCAPS round $i ====="
-  timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3" \
+  # 猎挂默认 ~240s（Host 约 3min 即报 RUNTIME timeout）；勿默认 900
+  timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3" \
     || { echo "ENCAPS_FAIL_OR_HANG round=$i rc=$?"; break; }
 done
 # 2) Decaps 多轮
 for i in 1 2 3 4 5 6 7; do
   echo "===== DECAPS round $i ====="
-  timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3" \
+  timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3" \
     || { echo "DECAPS_FAIL_OR_HANG round=$i rc=$?"; break; }
 done
 # 3) 交叉：Encaps→Decaps 再 Encaps（各 1～2 轮，看顺序是否触发）
 echo "===== CROSS encaps then decaps ====="
-timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3"
-timeout 900 bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3"
+timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3"
+timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3"
 echo "===== HANG_OBSERVE_DONE ====="
 R
 ```

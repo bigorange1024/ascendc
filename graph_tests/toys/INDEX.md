@@ -1,1 +1,1 @@
-e01–e08 ✅；e09 Compress 执行中。主积木链（采样+代数）已齐。
+e01–e15 ✅；E17/E18 GAP ✅；**E19 EARLY 入口 TRACE SIM ✅**（见 `../EARLY_EMPTY_TRACE.md`）。

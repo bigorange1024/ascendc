@@ -63,6 +63,13 @@
 | N5 | Host 文案在 ACL launch 前打印 → 「卡在文案」= Sync 未回 | 观测 |
 | N6 | 历史多轮（约第 7 轮）可挂 | 2026-09-04 |
 | N7 | **2026-09-07**：NPU_SUITE 单轮 C0/C1/C2 均 `PASS last=111` | 用户打字 |
+| N8 | **2026-09-07 CANNLab**：Decaps 多轮可在 Phase-D `f203_decrypt_device_fused` 挂（Host 已 print launch，无 `npu_launch` 回）；随后 Encaps/`l18_l19` 亦可粘性挂 | 本机取证 `hang_observe` + hang_hunt |
+| N9 | Encaps 挂面 Host RUNTIME：`SynchronizeExecutedTask: report three minutes timeout!`（`stream_id`/`task_id`/`pendingNum=1`），发生在已 print `launch 2 f203_encrypt_l18_l19` 之后、无 duration 回之前；可重复报 3min | hang_hunt Encaps r1；证据 `hang_hunt_evidence_20260907_170641` |
+| N10 | **冷启动多轮粘性成立**：干净卡 Encaps PASS×10 后 **r11 HANG** @ `l18_l19` + RUNTIME 3min timeout（`TIMEOUT=240` 截断）。污染后亦可首轮挂（同日早波）——两现象并存 | hang_hunt_short_20260907_173539；早波 hang_observe |
+| N11 | **2026-09-07 晚波**：套件 C2×7 **全绿**（B3-clean） | `npu1_rxn`；ENCRYPT_GAP NPU-1 |
+| N12 | **E17/E18 实机×11 均绿** → l18 FSM stub（复用 1/3 vs 分离 5/6）**非**粘性充分条件 | NPU-2；削弱 H-reuse |
+| N13 | Encaps+`F203_L18_TRACE=1`：PASS×10 → **r11 HANG**；挂时 **`[l18-trace] stages set=0/16`**（空槽） | NPU-3；对齐 N2/EARLY |
+| N14 | 挂后立刻再跑 Encaps：**r1 即挂** + 空 TRACE | NPU-4；再证污染首轮 |
 
 ### 2.1 KeyGen vs Encrypt（结构差 · 可证伪）
 
@@ -108,8 +115,10 @@
 |------|------------|------|
 | toy-e01 / e13 / e15 `mmad_custom.cpp` | SYNC-03「同侧」×1 + 大量 SYNC-09（PIPE_ALL） | 单文件 MIX 分支；**未**据此判核错误；PIPE_ALL 为性能项 |
 | stable pke-encrypt `f203_encrypt_l18_l19_kernel.cpp`（只读） | 同型 SYNC-03×1 + SYNC-09 | 同上；只读对照，**不抄码** |
+| stable encaps/encrypt `compute/`（2026-09-07 复审） | SYNC-04/05@`alg11_vec_pipe.hpp:32` + 多处 SYNC-02 | SYNC-04 **仅 `ASCENDC_CPU_DEBUG`**，设备走 PipeBarrier → **降权**；SYNC-02 按 triage **非卡死** |
+| stable decaps `decrypt/compute/` | 仅 SYNC-02（stage3/su_dot）；fused CrossCore list-only 成对 | 挂点优先人工对照 SoftSync/GATE，勿用 SYNC-02 当粘性充分条件 |
 
-产物：`/opt/cursor/artifacts/sync-audit-e*.json`（本地审计日志，不进 git）。
+产物：`/tmp/sync_audit_reports/`（本地；不进 git）。
 
 ---
 
@@ -143,16 +152,25 @@
 ## 6. 目标分解与当前刀
 
 ```
-积木 SIM 绿 → NPU 单轮套件绿(N7) → [多轮粘性 R×N | ENCRYPT-GAP]
-  → 钉 Q-root-cause → 正确性（ByteDecode/KAT）→ 实机无卡死且正确
+积木/GAP toys → 上机 N11–N14 → EARLY 收窄（空 TRACE）→ E19…
+  → 钉 Q-root-cause → 正确性 → 实机无卡死且正确
 ```
 
 | 状态 | 内容 |
 |------|------|
-| **已证** | 套件覆盖的 2-launch+SET4+粘合+Â2×2 **单轮**不粘性挂（N7 / B3） |
-| **待证** | 多轮粘性（R×N C2×7）；或套件未覆盖的 Encrypt 特有结构（ENCRYPT-GAP） |
-| **下一刀** | ① 用户授权上机 → R×N；② 无卡时 → 图谱指导下 ENCRYPT-GAP **单因子**短刀（写码前 cannbot audit） |
-| **缓** | ByteDecode / 权威交叉 / 更高 k |
+| **已证** | N7–N14；H-reuse **非充分**；空 TRACE 管道可信 |
+| **EARLY 收窄** | 挂窗 ∈ AIV0 **Mark(15 μ前缀)之前**（+ AIC 多半卡在 Wait(1)）— [`EARLY_EMPTY_TRACE.md`](../../graph_tests/EARLY_EMPTY_TRACE.md) |
+| **假说序** | H-E1 PrefixEmbedMu / H-E4 多轮资源 ≻ H-E3 调度；**排除** GATE/INTT 中段 |
+| **E19** | 入口极早 TRACE stub **SIM ✅**（FEEDBACK-E19）；供日后 NPU 区分 H-E3 vs H-E1 |
+| **下一刀** | 只读加深 Prefix/TPipe；可选 E20「多轮后再跑前缀量级」；**授权后** NPU 上 E19/Encaps「Mark 挪到 Prefix 前」 |
+| **缓** | ByteDecode；禁未钉窗改 CrossCore FSM |
+
+### 6.1 父 / 子分工（用户锁）
+
+| 角色 | 做 | 不做 |
+|------|----|------|
+| **父 Agent** | 知识库与图谱、差清单、实验矩阵、反馈分支计划、分析 FEEDBACK | 不把「想到一刀上机」当进度；不亲自堆业务码 |
+| **Subagent** | 白名单路径编码、SIM、`sync_audit`、交 FEEDBACK | 不改图谱 yaml；不开并行 SIM；不擅自上机 |
 
 ---
 
@@ -162,6 +180,7 @@
 |------|------|
 | `thirdparty/cannbot-skills/ops/ascendc-sync-audit/` | 同步审计 |
 | `thirdparty/cannbot-skills/ops/ascendc-crash-debug/` | 卡死调试 |
+| `graph_tests/EARLY_EMPTY_TRACE.md` | 空 TRACE 收窄与 EARLY 实验 |
 | `graph_tests/npu_suite/` | 上机套件 |
 | `docs/rg-encrypt-npu-hangfree.yaml` | 推理 DAG |
 | 冻结 skel / clean | 只读判决；出门不带码 |
@@ -173,4 +192,8 @@
 | 日期 | 内容 |
 |------|------|
 | 2026-09-07 | **v2 从头刷新**：cannbot 工程层 + 审计快照；压缩历史台账；锁定「图谱+cannbot」双开写码 |
+| 2026-09-07 | **CANNLab 取证**：N8–N10（Decaps Phase-D / Encaps `l18_l19` Host 3min timeout / 污染 vs 冷启动）；sync_audit 复审降权 alg11 SYNC-04 |
+| 2026-09-07 | **工作法纠偏**：ENCRYPT_GAP 清单 + E17/E18 离线；仅剩上机 NPU-1…4 写清反馈分支；父定计划子编码 |
+| 2026-09-07 | **上机 NPU-1…4**：N11–N14（C2×7 绿；E17/E18 非充分；TRACE 空槽@r11；污染 r1）；下一刀 EARLY |
+| 2026-09-07 | **EARLY 收窄**：挂窗在 Mark(15)前；E19 SIM 绿；文 `EARLY_EMPTY_TRACE.md` |
 | （v1 摘要） | E01–E16 SIM；N7 单轮全绿；Host-only；正确性后置 |

@@ -31,7 +31,7 @@ nodes:
     kind: question
     title: "实机粘性挂的可操作根因？"
     statement: "何种可构造条件在 NPU 上充分导致 Encrypt 粘性挂，且能指导重写避免？"
-    deps: [F-problem, F-n7-suite-single-pass, F-sim-not-sticky]
+    deps: [F-problem, F-n7-suite-single-pass, F-sim-not-sticky, F-n9-encaps-l18-runtime-3min, F-n10-pollution-vs-cold]
     status: open
 
   - id: Q-how-to-write
@@ -230,6 +230,39 @@ nodes:
     evidence: "qa/2026-09/2026-09-07-NPU套件单轮全绿与RxN.md"
     repro: "cd graph_tests/npu_suite && bash run_all_npu.sh -v Ascend910B4"
 
+  - id: F-n8-decaps-phase-d-hang
+    domain: cause
+    kind: fact
+    provenance: measurement
+    title: "Decaps 可挂在 Phase-D decrypt_device_fused"
+    statement: "CANNLab 910B3：Decaps 多轮后 Host 已 print launch f203_decrypt_device_fused，无 npu_launch 回，TIMEOUT124"
+    deps: [F-problem, F-n1-hang-after-launch]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-07-NPU套件单轮全绿与RxN.md；hang_observe log"
+
+  - id: F-n9-encaps-l18-runtime-3min
+    domain: cause
+    kind: fact
+    provenance: measurement
+    title: "Encaps 挂面：l18_l19 + RUNTIME 3min timeout"
+    statement: "Host 已 print launch 2 f203_encrypt_l18_l19；RUNTIME SynchronizeExecutedTask report three minutes timeout（pendingNum=1）；可重复报；无 duration 回"
+    deps: [F-n1-hang-after-launch]
+    status: verified
+    basis: experiment
+    evidence: "hang_hunt_evidence_20260907_170641/ENCAPS_round1.log"
+
+  - id: F-n10-pollution-vs-cold
+    domain: cause
+    kind: fact
+    provenance: measurement
+    title: "冷启动多轮粘性 + 污染后粘性并存"
+    statement: "干净卡 Encaps PASS×10 后 r11 HANG@l18_l19+RUNTIME 3min；另 Decaps 挂/杀进程后 Encaps 可首轮即挂。两现象并存"
+    deps: [F-n8-decaps-phase-d-hang, F-n9-encaps-l18-runtime-3min]
+    status: verified
+    basis: experiment
+    evidence: "hang_hunt_short_20260907_173539；qa/2026-09-07"
+
   - id: F-sim-not-sticky
     domain: verify
     kind: fact
@@ -239,7 +272,7 @@ nodes:
     deps: [F-toys-sim-pass]
     status: verified
     basis: experiment
-    evidence: "知识库 §3.1；FEEDBACK-E01–E15"
+    evidence: "知识库 §3.1；FEEDBACK-E01–E15；2026-09-07 SIM smoke 仍绿"
     repro: "ls graph_tests/_outbox/FEEDBACK-E15.md"
 
   - id: F-omit-set4-sim-hang
@@ -310,14 +343,158 @@ nodes:
     basis: experiment
     evidence: "知识库 §3.1"
 
+  - id: F-encrypt-gap-inventory
+    domain: cause
+    kind: fact
+    provenance: analysis
+    title: "ENCRYPT-GAP 结构差已列清单"
+    statement: "套件未覆盖而 l18 有：INTT 复用 flag 1/3、GATE 4→8 语义、单 MIX NTT→IP→GATE→INTT 序等；详见 ENCRYPT_GAP.md；禁把仅 GATE/仅 stub1/3 当充分条件复测"
+    deps: [J-suite-not-enough-for-root, F-n7-suite-single-pass, F-n9-encaps-l18-runtime-3min]
+    status: verified
+    basis: stated
+    evidence: "graph_tests/ENCRYPT_GAP.md §1"
+
+  - id: D-exp-e17
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E17：l18 FSM stub + INTT 复用 1/3（SIM）"
+    statement: "单 launch MIX stub：伪 NTT 1/3 → GATE 4/8 → 伪 INTT 复用 1/3；≥8 轮 SIM + sync_audit；禁抄 Encrypt 业务"
+    deps: [F-encrypt-gap-inventory, J-use-cannbot-on-gap, D-sim-then-npu, J-retracted-sufficiency]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E17.md；/opt/cursor/artifacts/e17-default-sim.log"
+    targets: [Q-root-cause]
+
+  - id: D-exp-e18
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E18：同序但 INTT 分离 5/6（SIM）"
+    statement: "相对 E17 单因子改 INTT 通道为 5/6；SIM + sync_audit；与 E17 成对，供日后授权上机对照"
+    deps: [D-exp-e17]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E18.md；/opt/cursor/artifacts/e18-default-sim.log"
+    targets: [Q-root-cause]
+
+  - id: F-e17-e18-sim-pass
+    domain: cause
+    kind: fact
+    provenance: experiment
+    title: "E17/E18 SIM 均绿（GAP stub）"
+    statement: "复用 1/3 与分离 5/6 的 l18 同步序 stub 在 SIM×8 均可活；无真死等红线；不复现粘性"
+    deps: [D-exp-e17, D-exp-e18, F-sim-not-sticky]
+    status: verified
+    basis: experiment
+    evidence: "FEEDBACK-E17/E18"
+
+  - id: F-n11-suite-rxn-clean
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-1：C2×7 全绿（B3-clean）"
+    statement: "套件最高档 C2 多轮 7 不粘；挂因不在套件覆盖结构的多轮粘性（本机本波）"
+    deps: [F-n7-suite-single-pass]
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/npu_wave_20260907/SUMMARY.md；SUMMARY R×N C2x7:OK"
+
+  - id: F-n12-e17-e18-npu-pass
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-2：E17/E18×11 均绿"
+    statement: "l18 同步序 stub（复用1/3 与分离5/6）实机 11 轮不粘；H-reuse 作为充分条件被削弱"
+    deps: [F-e17-e18-sim-pass, F-n11-suite-rxn-clean]
+    status: verified
+    basis: experiment
+    evidence: "REPORT: E17/E18 PASS last=111"
+
+  - id: F-n13-trace-empty-r11
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-3：Encaps r11 挂且 TRACE 0/16"
+    statement: "F203_L18_TRACE=1 下 PASS×10 后 r11 挂于 launch2 l18_l19；轮询见 stages set=0/16（空槽）→ 卡点在首个 FusedTraceMark 之前或 TRACE 不可见"
+    deps: [F-n9-encaps-l18-runtime-3min, F-n10-pollution-vs-cold, D-host-trace-only-npu]
+    status: verified
+    basis: experiment
+    evidence: "npu3_encaps_trace；[l18-trace] stages set=0/16"
+
+  - id: F-n14-pollute-r1-empty
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-4：挂后首轮再挂+空 TRACE"
+    statement: "r11 挂后立刻 Encaps r1 再挂；同样 launch2 + stages 0/16"
+    deps: [F-n13-trace-empty-r11, F-n10-pollution-vs-cold]
+    status: verified
+    basis: experiment
+    evidence: "npu4_pollute run.log"
+
+  - id: J-h-reuse-not-sufficient
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "H-reuse stub 非粘性充分条件"
+    statement: "E17 与 E18 实机均绿 ⇒ 仅 NTT→GATE→INTT 复用1/3 的 stub 序不足以触发粘性；须 EARLY/业务负载/多 launch 状态等更深因子"
+    deps: [F-n12-e17-e18-npu-pass, J-retracted-sufficiency]
+    status: verified
+    basis: experiment
+    evidence: "ENCRYPT_GAP NPU-2 反馈分支「两者都绿」"
+
+  - id: J-empty-trace-before-mu-mark
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "空 TRACE ⇒ 挂窗在 AIV0 Mark(15) 之前"
+    statement: "D2H 成功且 0/16（无下标15）⇒ AIV0 未完成 PrefixEmbedMu 后的首标；AIC 亦未到 NTT_MMAD；排除 GATE/INTT 中段"
+    deps: [F-n13-trace-empty-r11, J-h-reuse-not-sufficient]
+    status: verified
+    basis: stated
+    evidence: "graph_tests/EARLY_EMPTY_TRACE.md §2"
+
+  - id: D-exp-e19
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E19：入口极早 TRACE stub（SIM）"
+    statement: "AIC/AIV0 在任何 Wait 前打入口槽；供日后 NPU 区分 H-E3 vs H-E1；禁抄 Encrypt"
+    deps: [J-empty-trace-before-mu-mark, D-sim-then-npu]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E19.md；stages set=2/16 : 0 15"
+    targets: [Q-root-cause]
+
+  - id: D-next-early-after-empty-trace
+    domain: plan
+    kind: decision
+    by: agent
+    title: "下一刀：EARLY 收窄 + E19"
+    statement: "分析已收窄到 μ 前缀前；离线 E19 + 只读 Prefix；授权后再上机入口标对照；禁盲改 FSM"
+    deps: [F-n13-trace-empty-r11, J-empty-trace-before-mu-mark, D-exp-e19, D-sim-then-npu, D-defer-correctness]
+    status: active
+    targets: [Q-root-cause]
+
+  - id: D-next-offline-gap-toys
+    domain: plan
+    kind: decision
+    by: agent
+    title: "（归档）离线 E17/E18 + 上机 NPU-1…4 已完成"
+    statement: "被 D-next-early-after-empty-trace 取代"
+    deps: [F-encrypt-gap-inventory, F-e17-e18-sim-pass]
+    status: retracted
+    targets: [Q-root-cause]
+
   - id: D-next-rxn-or-gap
     domain: plan
     kind: decision
     by: agent
-    title: "下一刀：授权则 R×N；否则 ENCRYPT-GAP 短刀"
-    statement: "用户授权 910B3 → run_rxn C2×7；无卡 → 按 J-use-cannbot-on-gap 开单因子结构 toy（禁正确性、禁抄码）"
-    deps: [J-suite-not-enough-for-root, J-use-cannbot-on-gap, D-sim-then-npu, D-defer-correctness, D-typein-feedback]
-    status: active
+    title: "（归档）曾：干净卡对照 → R×N / ENCRYPT-GAP"
+    statement: "已被 D-next-offline-gap-toys 取代：离线 GAP toys 优先；R×N 降为授权后 NPU-1"
+    deps: [J-suite-not-enough-for-root]
+    status: retracted
     targets: [Q-root-cause]
 
   - id: D-host-mu-default
@@ -344,3 +521,15 @@ changelog:
       v2 从头刷新：压缩 E01–E16 台账为 F-toys-sim-pass；
       升格 D-graph-and-cannbot；纳入 cannbot CrossCore/审计假阳性事实；
       下一刀 D-next-rxn-or-gap（R×N | ENCRYPT-GAP）。
+  - date: "2026-09-07"
+    change: |
+      CANNLab 取证入库：F-n8 Decaps Phase-D、F-n9 Encaps l18+RUNTIME 3min、
+      F-n10 污染 vs 冷启动；刷新 D-next-rxn-or-gap。
+  - date: "2026-09-07"
+    change: |
+      工作法纠偏：ENCRYPT_GAP 清单 + E17/E18 离线刀；D-next-offline-gap-toys；
+      旧 D-next-rxn-or-gap retracted；上机 NPU-1…4 规格见 ENCRYPT_GAP.md §3。
+  - date: "2026-09-07"
+    change: |
+      上机 N11–N14：C2×7 绿；E17/E18 非充分；TRACE 0/16@r11；污染 r1。
+      D-next-early-after-empty-trace；D-next-offline-gap-toys retracted。

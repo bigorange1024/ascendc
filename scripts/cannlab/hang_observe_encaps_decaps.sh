@@ -14,7 +14,10 @@ set -euo pipefail
 ROUNDS="${ROUNDS:-7}"
 SOC="${SOC:-Ascend910B3}"
 BRANCH="${BRANCH:-cursor/kem-2launch-sticky-1534}"
-TIMEOUT_SEC="${TIMEOUT_SEC:-900}"
+# 猎挂专用：Host RUNTIME 约 3min 即报 SynchronizeExecutedTask timeout。
+# 默认 240s 足够判定 HANG；勿用 900s（空烧卡时；看门狗/人工易误判「还在跑」）。
+# 仅首轮强制全量重编墙钟不够时再显式：TIMEOUT_SEC=600 …
+TIMEOUT_SEC="${TIMEOUT_SEC:-240}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/cannlab}"
 
 SSH=(ssh
