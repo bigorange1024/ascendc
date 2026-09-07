@@ -8,9 +8,22 @@
  * customspec：stable-fips203-mlkem-kem-encaps-k4-实现方案-customspec.*
  * registry：docs/specs/fips203-mlkem1024-kem-encaps-baseline-registry.md
  *
- * Launch 拓扑（锁定）：
- *   - SIM：2 次（prep → f203_encrypt_l18_l19 内联 pack）；仅 L2 后一次 SynchronizeStream
- *   - CPU：5 次（prep → ntt_y → at_jp → intt_e1 → pack）；v 用 golden_v 注入（辅助正确性）
+ * Launch 拓扑（2026-09-03，每 MIX 一轮 Cube；缓解实机粘性）：
+ *   - SIM/NPU **默认 2 Host launch**：
+ *       1) `f203_kem_enc_prep_ntt`（头+Â/CBD + NTT，一轮 Cube）
+ *       2) Host 折 `e₂+=μ`（默认）→ `f203_encrypt_l18_l19(ySrc=nullptr,mGm=nullptr)`
+ *   - 回退 3-launch：`F203_ENCAPS_SPLIT_PREP=1` → AIV prep | ntt_y | l18
+ *   - 诊断：`F203_ENCAPS_PREP_MIX_ONLY=1` → MIX 仅 prep（skipNtt）| ntt_y | l18
+ *   - 旧双 Cube：`F203_ENCAPS_FUSED_L18=1` → AIV prep → 整核 l18（含 NTT；设备 μ）
+ *   - CPU：5 次（prep → ntt_y → at_jp → intt_e1 → pack）；v 用 golden_v
+ *
+ * Host 折 μ（2026-09-03 TASK-006 / 图谱 D-next-stable-host-mu）：
+ *   - 默认 `F203_HOST_FOLD_MU=1`（未设 env 亦开）：l18(skipNtt) 前 Host 完成与设备
+ *     `PrefixEmbedMuIntoE2Gm` I/O 等价的 `e₂+=μ (mod q)`，并向核传 `mGm=nullptr`
+ *     使设备跳过前缀，双 AIV 尽快 SET(4)。
+ *   - 调试：`F203_HOST_FOLD_MU=0` → 不折，传 `mDev`，设备仍跑 PrefixEmbed。
+ *
+ * 背景：用户要求 2 Host launch（prep 无 Cube 并入首轮 Cube）；Decrypt Phase-D 同构已绿。
  */
 #include "ascendc_build_mode.hpp"
 #include "data_utils.h"
@@ -40,6 +53,7 @@ extern void GenerateTiling(TilingData &data);
 #include "aclrtlaunch_f203_encrypt_l18_l19.h"
 #include "aclrtlaunch_f203_encrypt_ntt_y.h"
 #include "aclrtlaunch_f203_kem_enc_prep.h"
+#include "aclrtlaunch_f203_kem_enc_prep_ntt.h"
 #else
 #include "tikicpulib.h"
 #include "alg11_gammas.h"
@@ -71,6 +85,49 @@ void FillPrfTiling(ShakeGeneralTilingData *t)
 {
     FillShakeTiling(t, 8U, 64U, kPrfBytesPerPoly, SHAKE256_RATE_BYTES);
     t->blockDim = 1U;
+}
+
+/**
+ * 生产默认开 Host 折 μ：未设 env 或显式 `=1` → true；仅 `F203_HOST_FOLD_MU=0` → false。
+ * 背景：TASK-006；与 EnvFlagOn（仅认 "1"）不同——本开关默认开。
+ */
+bool HostFoldMuEnabled()
+{
+    const char *v = std::getenv("F203_HOST_FOLD_MU");
+    if (v == nullptr || v[0] == '\0') {
+        return true;
+    }
+    return v[0] == '1' && v[1] == '\0';
+}
+
+/**
+ * Host 侧完成与设备 `PrefixEmbedMuIntoE2Gm` I/O 等价的 `e₂ += μ (mod q)`。
+ *
+ * 对齐设备语义：
+ *   - μ←Decompress₁(m)：coeff c 取 m[c/8] 第 (c%8) 位（LSB-first）；bit→HALF_Q / 0
+ *   - e₂[c] ← (e₂[c] + μ[c]) mod q（q=3329；负残差回正，对齐 CPU 孪生 mod_q）
+ *
+ * @param e2  长度 N=256 的 e₂ 系数缓冲（原地更新）
+ * @param m   32B 消息
+ * 前置：prep/CBD 已写出合法 e₂；调用方在 l18(skipNtt) launch 前 D2H/H2D。
+ */
+void HostFoldMuIntoE2InPlace(int32_t *e2, const uint8_t *m)
+{
+    constexpr int32_t kN = F203_TAIL_N;
+    constexpr int32_t kQ = F203_TAIL_Q;
+    constexpr int32_t kHalfQ = F203_TAIL_HALF_Q;
+    for (int32_t c = 0; c < kN; ++c) {
+        const int32_t byteIdx = c / 8;
+        const int32_t bitIdx = c % 8;
+        const int32_t bit = (static_cast<int32_t>(m[byteIdx]) >> bitIdx) & 1;
+        const int32_t mu = (bit != 0) ? kHalfQ : 0;
+        int32_t v = e2[c] + mu;
+        v %= kQ;
+        if (v < 0) {
+            v += kQ;
+        }
+        e2[c] = v;
+    }
 }
 }  // namespace
 
@@ -295,7 +352,9 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *tHatDev = nullptr;
     uint8_t *traceDev = nullptr;
     int32_t *traceHost = nullptr;
+    uint8_t *softSyncDev = nullptr;
     constexpr int kFusedTraceStages = 16;
+    constexpr size_t kSoftSyncBytes = 64U;
     const bool l18Trace = ascendc_acl::EnvFlagOn("F203_L18_TRACE");
 
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&ekPkeDev), kEkBytes, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -314,6 +373,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&uDev), uSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&vDev), vSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&cDev), cBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&softSyncDev), kSoftSyncBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     if (l18Trace) {
         CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&traceDev),
                               static_cast<size_t>(kFusedTraceStages) * sizeof(int32_t), ACL_MEM_MALLOC_HUGE_FIRST));
@@ -338,33 +398,109 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMemset(rDev, kCoinsSize, 0, kCoinsSize));
     CHECK_ACL(aclrtMemset(kDev, kKBytes, 0, kKBytes));
     CHECK_ACL(aclrtMemcpy(prepTilingDev, prepTilingBytes, prepTilingPinned, prepTilingBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+    CHECK_ACL(aclrtMemset(softSyncDev, kSoftSyncBytes, 0, kSoftSyncBytes));
 
-    // Launch 1：KEM 头 + prep
-    std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep (ek+m -> K,r,A-hat,y||e)\n");
-    ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev,
-                                           reDev, prepTilingDev);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
-
-    // LUT 装入 ws（NTT + INTT 段）后 H2D
+    // LUT 装入（NTT+INTT）；默认先 AIV prep，再按路径 launch Cube
     std::memset(wsHost, 0, wsSize);
     if (!LoadNttLutHost(wsHost, lutBytes) || !LoadInttLutHostFused(wsHost, lutBytes)) {
         return 20;
     }
     CHECK_ACL(aclrtMemcpy(wsDev, wsSize, wsHost, wsSize, ACL_MEMCPY_HOST_TO_DEVICE));
 
-    // re 切片零拷贝：y（0）、e₁（4096）、e₂（8192）
     uint8_t *yDev = reDev + F203EncryptFull::kReYByteOff;
     uint8_t *e1Dev = reDev + F203EncryptFull::kReE1ByteOff;
     uint8_t *e2Dev = reDev + F203EncryptFull::kReE2ByteOff;
 
-    // Launch 2：l18_l19（compute + e₂+=μ + 内联 tail pack → c）
-    // 调试（非默认）：F203_L18_TRACE=1 时传 traceGm，卡住时 stderr 打印已到达的 FusedTraceStage 下标。
-    std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_l18_l19 (compute + inline pack -> c)\n");
-    ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
-                                              tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cDev,
-                                              traceDev);
-    CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
-                                                              "f203_encrypt_l18_l19"));
+    const bool fusedL18 = ascendc_acl::EnvFlagOn("F203_ENCAPS_FUSED_L18");
+    const bool splitPrep = ascendc_acl::EnvFlagOn("F203_ENCAPS_SPLIT_PREP");
+    const bool prepMixOnly = ascendc_acl::EnvFlagOn("F203_ENCAPS_PREP_MIX_ONLY");
+    // 生产默认开：skipNtt 路径 Host 折 μ；fused 对照仍走设备 PrefixEmbed
+    const bool hostFoldMu = HostFoldMuEnabled();
+    constexpr size_t kE2Bytes = static_cast<size_t>(F203_TAIL_N) * sizeof(int32_t);
+    int32_t *e2HostFold = nullptr;
+    CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&e2HostFold), kE2Bytes));
+
+    /**
+     * skipNtt 路径：若 Host 折 μ，则 D2H e₂ → 原地 e₂+=μ → H2D，并向 l18 传 mGm=nullptr。
+     * @return 传给 l18 的 m 指针（折 μ 时为 nullptr，否则 mDev）
+     */
+    auto PrepareSkipNttMuAndMgm = [&]() -> uint8_t * {
+        if (!hostFoldMu) {
+            std::fprintf(stderr, "[kem-enc] F203_HOST_FOLD_MU=0：设备 PrefixEmbed μ（调试）\n");
+            return mDev;
+        }
+        // 对齐 PrefixEmbedMuIntoE2Gm：读 prep 写出的 e₂，叠 μ 后写回，供末尾 v←INTT+e₂'
+        CHECK_ACL(aclrtMemcpy(e2HostFold, kE2Bytes, e2Dev, kE2Bytes, ACL_MEMCPY_DEVICE_TO_HOST));
+        HostFoldMuIntoE2InPlace(e2HostFold, mHost);
+        CHECK_ACL(aclrtMemcpy(e2Dev, kE2Bytes, e2HostFold, kE2Bytes, ACL_MEMCPY_HOST_TO_DEVICE));
+        std::fprintf(stderr, "[kem-enc] F203_HOST_FOLD_MU=1：Host 已折 e2+=mu；l18 mGm=null\n");
+        return nullptr;
+    };
+
+    if (fusedL18) {
+        std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep (F203_ENCAPS_FUSED_L18=1)\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev,
+                                               reDev, prepTilingDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
+        // fused：设备内 NTT+μ；Host 不折（避免双重加 μ）
+        std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_l18_l19 FUSED (NTT+INTT in one MIX；设备 μ)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev,
+                                                  ekPkeDev, tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cDev, traceDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                                  "f203_encrypt_l18_l19"));
+    } else if (splitPrep) {
+        std::fprintf(stderr, "[kem-enc] F203_ENCAPS_SPLIT_PREP=1：3-launch 回退（AIV prep|ntt|l18）\n");
+        ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep)(kPrepBlockDim, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev,
+                                               reDev, prepTilingDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep"));
+
+        std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_ntt_y (one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_y)(1, stream, yHatDev, yDev, wsDev, tilingPinned);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_ntt_y"));
+
+        uint8_t *mForL18 = PrepareSkipNttMuAndMgm();
+        std::fprintf(stderr, "[kem-enc] launch 3 f203_encrypt_l18_l19 (ySrc=null: at_jp+INTT+pack, one Cube)\n");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, /*ySrc*/ nullptr, yHatDev, uNttDev, uTrDev,
+                                                  aHatDev, ekPkeDev, tHatDev, trHatNttDev, mForL18, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cDev, traceDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                                  "f203_encrypt_l18_l19"));
+    } else {
+        if (prepMixOnly) {
+            /* softSync[2]=1 → 核内 skipNtt；slot0/1 仍须 0 */
+            int32_t softHost[16] = {};
+            softHost[2] = 1;
+            CHECK_ACL(aclrtMemcpy(softSyncDev, kSoftSyncBytes, softHost, kSoftSyncBytes, ACL_MEMCPY_HOST_TO_DEVICE));
+            std::fprintf(stderr, "[kem-enc] DIAG F203_ENCAPS_PREP_MIX_ONLY=1：MIX 仅 prep，再 ntt_y|l18\n");
+        } else {
+            std::fprintf(stderr, "[kem-enc] launch 1 f203_kem_enc_prep_ntt (prep+NTT, one Cube)\n");
+        }
+        ACLRT_LAUNCH_KERNEL(f203_kem_enc_prep_ntt)
+        (1, stream, ekPkeDev, mDev, kDev, rDev, aHatDev, prfDev, reDev, prepTilingDev, yHatDev, wsDev, softSyncDev,
+         tilingPinned);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_kem_enc_prep_ntt"));
+
+        if (prepMixOnly) {
+            std::fprintf(stderr, "[kem-enc] launch 2 f203_encrypt_ntt_y (one Cube)\n");
+            ACLRT_LAUNCH_KERNEL(f203_encrypt_ntt_y)(1, stream, yHatDev, yDev, wsDev, tilingPinned);
+            CHECK_ACL(ascendc_acl::TimedSynchronizeStream(stream, "f203_encrypt_ntt_y"));
+        }
+
+        // 默认 2-launch / prepMixOnly：l18 前 Host 折 μ（可关）
+        uint8_t *mForL18 = PrepareSkipNttMuAndMgm();
+        std::fprintf(stderr, "[kem-enc] launch %s f203_encrypt_l18_l19 (ySrc=null)\n", prepMixOnly ? "3" : "2");
+        ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, /*ySrc*/ nullptr, yHatDev, uNttDev, uTrDev,
+                                                  aHatDev, ekPkeDev, tHatDev, trHatNttDev, mForL18, e1Dev, e2Dev, wsDev,
+                                                  tilingPinned, cDev, traceDev);
+        CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                                  "f203_encrypt_l18_l19"));
+    }
+
+    if (e2HostFold != nullptr) {
+        CHECK_ACL(aclrtFreeHost(e2HostFold));
+        e2HostFold = nullptr;
+    }
 
     CHECK_ACL(aclrtMemcpy(cHost, cBytes, cDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));
     CHECK_ACL(aclrtMemcpy(kHost, kKBytes, kDev, kKBytes, ACL_MEMCPY_DEVICE_TO_HOST));
@@ -392,6 +528,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFree(uDev));
     CHECK_ACL(aclrtFree(vDev));
     CHECK_ACL(aclrtFree(cDev));
+    CHECK_ACL(aclrtFree(softSyncDev));
     if (traceDev != nullptr) {
         CHECK_ACL(aclrtFree(traceDev));
     }

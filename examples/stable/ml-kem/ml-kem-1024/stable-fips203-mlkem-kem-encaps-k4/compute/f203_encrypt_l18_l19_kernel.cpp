@@ -5,15 +5,20 @@
  * 流水线：pass-fix-f203-alg14-lines2-24-encrypt-compute-tail-k4（**PASS** 基线）；μ 折叠进行 21；cGm 非空时 AIV 分片 pack。
  *
  * FSM 阶段（CrossCore 仅 AIC↔AIV）：
- *   [前缀] AIV0: μ←m；e₂ GM += μ (mod q)
+ *   [前缀] μ 折叠：fused（!skipNtt）由 AIV0 `PrefixEmbedMuIntoE2Gm`；
+ *         skipNtt 默认由 Host 折 e₂+=μ（mGm==nullptr 跳过本前缀，见 TASK-006）
  *   行 16–17 NTT(y): …
  *   行 2 decode:     AIV0 ByteDecode₁₂(ek)→t_hat UB（默认标量 F203_BYTE_DECODE12_IMPL=0）
  *   行 18 内积:      kP=5 uTr pad→8 驻留 UB（AIV0 [û0,û1,tr̂,0]；AIV1 [û2,û3,0,0]）
  *   GATE:            ST_IP_AIV_DONE=4 → ST_AT_JP_GATE=8 → 释放 INTT MMAD
  *   行 19/21 INTT:   k=8 batch → u[0..3]+e₁ / v(tr̂ 行)+e₂；flag **1/3**（禁止 flag 2）
  *
- * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable-fips203-mlkem-pke-encrypt-k4。
+ * 流水线位置：FIPS 203 Alg.14 / ML-KEM-1024（k=4）K-PKE.Encrypt；本文件属 stable Encaps vendored compute。
  * 与 golden：最终对拍 output/c.bin（中间态默认不落盘）。
+ *
+ * 注（2026-09-02）：曾试 INTT 改用 flag 5/7 隔离复用，**SIM 上 launch2 超时**；改回 1/3。
+ * 安全路径改为 Host 拆 launch（ntt_y 与 post-ntt 各一轮 Cube），见 main_kem_encaps.cpp。
+ * 注（2026-09-03 TASK-006）：skipNtt + Host 折 μ 时跳过 PrefixEmbed / TR_AIV_MU_E2，尽快 SET(4)。
  */
 #if !defined(ASCENDC_CPU_DEBUG) && ALG11_MEM_OPS == 1
 #include "f203_encrypt_alg11_rom_weak.hpp"
@@ -168,16 +173,21 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
     const int32_t subBlockID = static_cast<int32_t>(AscendC::GetSubBlockIdx());
     const auto coeffN = static_cast<uint32_t>(tiling.tileLength);
     FsmState st;
+    // Host 安全路径：先独立 launch ntt_y，再本核 ySrc==nullptr 跳过 NTT，
+    // 使每个 MIX launch 只含一轮 Cube 握手（对齐 KeyGen mmad_custom）。
+    const bool skipNtt = (ySrc == nullptr);
 
     if (aic) {
-        /* ── 行 18 NTT Stage2 ── */
-        st = ST_NTT_AIV_SPLIT;
-        FsmWait(st, aic, subBlockID);
-        st = ST_NTT_AIC_MMAD;
-        AicMmadRound(ws, coeffN, LUT_NTT_EVEN_TOP, LUT_NTT_ODD_TOP, static_cast<uint16_t>(nttMRowsLogic));
-        FusedTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
-        st = ST_NTT_AIV_PACK;
-        FsmSet(st, aic, subBlockID);
+        if (!skipNtt) {
+            /* ── 行 18 NTT Stage2 ── */
+            st = ST_NTT_AIV_SPLIT;
+            FsmWait(st, aic, subBlockID);
+            st = ST_NTT_AIC_MMAD;
+            AicMmadRound(ws, coeffN, LUT_NTT_EVEN_TOP, LUT_NTT_ODD_TOP, static_cast<uint16_t>(nttMRowsLogic));
+            FusedTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
+            st = ST_NTT_AIV_PACK;
+            FsmSet(st, aic, subBlockID);
+        }
 
         /* 内积阶段 AIC 空转，直至 AIV 完成 at_jp */
         st = ST_IP_AIV_DONE;
@@ -196,44 +206,54 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
         st = ST_NTT_AIV_PACK;
         FsmSet(st, aic, subBlockID);
     } else {
-        /* ── 行 20/21 前缀：e₂ += μ（AIV0 一次；PipeBarrier 后双 AIV 可见更新后的 e₂ GM）── */
-        if (subBlockID == 0 && mGm != nullptr && e2 != nullptr) {
+        /*
+         * 行 20/21 前缀 e₂ += μ：
+         * 背景（TASK-006 / D-next-stable-host-mu）：skipNtt 生产路径由 Host 在 launch 前折 μ，
+         *   传 mGm=nullptr → 本处跳过 PrefixEmbed 与 TR_AIV_MU_E2，双 AIV 尽快进入 at_jp→SET(4)。
+         * 未采用：在 skipNtt 上仍跑重 PrefixEmbed（实机空 TRACE 怀疑卡在 μ 前）。
+         * 调试：F203_HOST_FOLD_MU=0 时 Host 传 mGm 非空 → 仍走设备前缀。
+         * fused（!skipNtt）：始终设备 PrefixEmbed（Host 不折，避免双重加）。
+         */
+        const bool deviceDoMu = (!skipNtt) || (mGm != nullptr);
+        if (deviceDoMu && subBlockID == 0 && mGm != nullptr && e2 != nullptr) {
             PrefixEmbedMuIntoE2Gm(mGm, e2, encrypt_at_jp::kN, encrypt_at_jp::kQ);
             FusedTraceMark(traceGm, TR_AIV_MU_E2, aic, subBlockID);
         }
         AscendC::PipeBarrier<PIPE_ALL>();
 
-        /* ── 行 18 NTT Stage1 ── */
-        {
-            st = ST_NTT_AIV_SPLIT;
-            AivK8Split splitNtt(subBlockID, coeffN);
-            splitNtt.Init(ws + S0, ySrc);
-            splitNtt.Process();
-            KYBER_PIPE_ALL();
-            FsmSet(st, aic, subBlockID);
-            FusedTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
-        }
+        if (!skipNtt) {
+            /* ── 行 18 NTT Stage1 ── */
+            {
+                st = ST_NTT_AIV_SPLIT;
+                AivK8Split splitNtt(subBlockID, coeffN);
+                splitNtt.Init(ws + S0, ySrc);
+                splitNtt.Process();
+                KYBER_PIPE_ALL();
+                FsmSet(st, aic, subBlockID);
+                FusedTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
+            }
 
-        /* ── 行 18 NTT Pack（与 S3 merge 分作用域，各持独立 TPipe）── */
-        {
-            st = ST_NTT_AIV_PACK;
-            FsmWait(st, aic, subBlockID);
-            AivK8PackMatCPlanar packNtt(subBlockID, coeffN);
-            packNtt.Init(ws + MAT_C_PLANAR, ws + MAT_C_TMP_LO_EVEN, ws + MAT_C_TMP_LO_ODD, ws + MAT_C_TMP_HI_EVEN,
-                          ws + MAT_C_TMP_HI_ODD);
-            packNtt.Process();
-            KYBER_PIPE_ALL();
-        }
-        {
-            AivK8RouteAMod mergeNtt(subBlockID, coeffN);
-            mergeNtt.Init(yHat, ws + MAT_C_PLANAR);
-            mergeNtt.Process();
-            KYBER_PIPE_ALL();
-        }
-        FusedTraceMark(traceGm, TR_AIV_NTT_YHAT, aic, subBlockID);
+            /* ── 行 18 NTT Pack（与 S3 merge 分作用域，各持独立 TPipe）── */
+            {
+                st = ST_NTT_AIV_PACK;
+                FsmWait(st, aic, subBlockID);
+                AivK8PackMatCPlanar packNtt(subBlockID, coeffN);
+                packNtt.Init(ws + MAT_C_PLANAR, ws + MAT_C_TMP_LO_EVEN, ws + MAT_C_TMP_LO_ODD, ws + MAT_C_TMP_HI_EVEN,
+                              ws + MAT_C_TMP_HI_ODD);
+                packNtt.Process();
+                KYBER_PIPE_ALL();
+            }
+            {
+                AivK8RouteAMod mergeNtt(subBlockID, coeffN);
+                mergeNtt.Init(yHat, ws + MAT_C_PLANAR);
+                mergeNtt.Process();
+                KYBER_PIPE_ALL();
+            }
+            FusedTraceMark(traceGm, TR_AIV_NTT_YHAT, aic, subBlockID);
 
-        /* ★ SYNC-ŷ */
-        KYBER_PIPE_ALL();
+            /* ★ SYNC-ŷ */
+            KYBER_PIPE_ALL();
+        }
 
         /* ── 行 18/19：kP=5 内积 uTr pad→8 驻留 UB → INTT k=8 ── */
         {

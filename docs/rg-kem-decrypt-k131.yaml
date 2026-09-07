@@ -1,0 +1,271 @@
+# 推理图谱：ML-KEM Decaps K≠0（K max≈131）
+
+version: 1
+title: "ML-KEM Decaps K 错 · 推理图谱"
+
+review:
+  last_reviewed: "2026-09-03"
+  note: "W1：补 H1–H4 / A·B·C / J(z‖c) 诊断 / 与 Encaps Hostμ 差；计划见 graph_tests/DECRYPT_K131_PLAN.md"
+
+config:
+  required_fields: [domain]
+  id_prefix_by_kind: {fact: F, inference: J, decision: D, question: Q}
+  fact_provenance_values: [observation, measurement, doc, env-api]
+  inference_derivation_values: [deductive, defeasible]
+  decision_by_values: [human, agent]
+  require_repro_for_provenance: [measurement]
+
+nodes:
+  - id: D-goal-decaps-k
+    domain: method
+    kind: decision
+    by: human
+    title: "最终目标：Decaps 输出 K 与 golden 一致且可上机"
+    statement: "stable/默认 2-launch Decaps 在 SIM 与 NPU 上 K 与 accept golden 一致（max_abs_diff=0），且不引入 Encaps 类卡死"
+    deps: [F-npu-k-max-131]
+    status: active
+    targets: [Q-where-k-breaks]
+
+  - id: D-sim-first-decaps
+    domain: method
+    kind: decision
+    by: human
+    title: "本线以 SIM 为迭代门禁；不沉淀 CPU"
+    statement: "Decaps 排查迭代只认 SIM；CPU 经验不入库；最终 NPU 由用户代跑"
+    deps: [D-goal-decaps-k]
+    status: active
+
+  - id: D-orthogonal-to-sticky
+    domain: method
+    kind: decision
+    by: human
+    title: "与 Encaps 粘性正交推进"
+    statement: "Decaps K 错与 Encaps 卡死分图谱分 TASK；可并行规划但同时仅一个 subagent 执行"
+    deps: [D-goal-decaps-k]
+    status: active
+
+  - id: F-npu-k-max-131
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "实机 Decaps K max_abs_diff=131"
+    statement: "用户实机 Decaps 恒 FAIL，K.bin 相对 golden 的 max_abs_diff=131（整段错量级，非逐系数噪声）"
+    repro: "cd stable-…-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md §6"
+
+  - id: F-cloud-sim-2launch-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "Cloud 默认真 2-launch Decaps 曾 SIM 对拍绿"
+    statement: "2026-09-03 文档记载 Decaps D+E（chain_ntt + prep_ntt）在 FORCE 重编后 Cloud SIM 曾 PASS"
+    repro: "cd stable-…-kem-decaps-k4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09-03 §4；须用当前工作区复验"
+
+  - id: F-default-golden-is-accept
+    domain: verify
+    kind: fact
+    provenance: doc
+    title: "默认 Decaps golden/K 是 accept 共享密钥"
+    statement: "默认 gen_data（非 KEM_DECAPS_REJECT）写的 golden/K.bin 为合法 encaps 的 K；verify 要求 output/K 与之逐字节相等"
+    deps: []
+    status: verified
+    basis: stated
+    evidence: "scripts/gen_data.py / verify_kem_decaps.py；customspec FO 接受支"
+
+  - id: F-force-rebuild-discipline
+    domain: env
+    kind: fact
+    provenance: observation
+    title: "Decaps/Encaps 不上 FORCE 会吃旧 fused 二进制"
+    statement: "run.sh 默认 SKIP_REBUILD 时复用 out_prod_* 旧融合双 Cube；实机未 FORCE 曾 100% 卡死；正确性/粘性结论须日志确认 chain_ntt/prep_ntt"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09-03 §6"
+
+  - id: F-decaps-l18-still-device-mu
+    domain: impl
+    kind: fact
+    provenance: observation
+    title: "Decaps 树 l18 仍设备 PrefixEmbed（未跟 Encaps Hostμ）"
+    statement: "stable-…-kem-decaps-k4 的 f203_encrypt_l18_l19_kernel 在 mGm!=nullptr 时仍 PrefixEmbed；未接入 F203_HOST_FOLD_MU。与 Encaps Host 折 μ 热修不同树副本"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "decaps/.../compute/f203_encrypt_l18_l19_kernel.cpp；对照 encaps HostFold"
+
+  - id: J-k131-reject-path
+    domain: impl
+    kind: inference
+    derivation: defeasible
+    title: "H1：K≈131 像误入 FO 拒绝支"
+    statement: "相对 accept golden 的整段差且量级约 131 时，优先怀疑 FO 选了 K=J(z‖c)（因 m'/c' 错）而非 K'；须用 output/K 对 J(z‖c) 与对 accept 双比确认"
+    deps: [F-npu-k-max-131, F-default-golden-is-accept]
+    status: unverified
+    basis: experiment
+    evidence: "qa/2026-09-03 §6；DECRYPT_K131_PLAN H1"
+
+  - id: J-phase-d-mprime
+    domain: impl
+    kind: inference
+    derivation: defeasible
+    title: "H2：故障在 Phase-D → 错 m'"
+    statement: "若 A（F203_DECRYPT_FUSED=1）绿而默认红，则优先 Phase-D chain_ntt|intt / SoftSync·GATE 导致 m'≠m"
+    deps: [F-npu-k-max-131, J-k131-reject-path]
+    status: unverified
+    basis: experiment
+    evidence: "qa 正交表 A"
+
+  - id: J-phase-e-reencrypt
+    domain: impl
+    kind: inference
+    derivation: defeasible
+    title: "H3：故障在 Phase-E → 错 c' 或 FO"
+    statement: "若 B（F203_DECAPS_SPLIT_PREP=1）绿而默认红，则优先 Phase-E prep_ntt|l18+FO；兼注意 Decaps 仍设备 μ（F-decaps-l18-still-device-mu）"
+    deps: [F-npu-k-max-131, F-decaps-l18-still-device-mu, J-k131-reject-path]
+    status: unverified
+    basis: experiment
+    evidence: "qa 正交表 B"
+
+  - id: J-phase-d-vs-e
+    domain: impl
+    kind: inference
+    derivation: defeasible
+    title: "错误可能在 Phase-D chain 或 Phase-E 重加密"
+    statement: "默认 2-launch 下故障可能位于 Phase-D 或 Phase-E 或接缝；用 A/B/C 与中间量定位，不可先验归并"
+    deps: [J-phase-d-mprime, J-phase-e-reencrypt, F-cloud-sim-2launch-pass]
+    status: unverified
+    basis: experiment
+    evidence: "qa 假绿三问对照表 A/B/C；DECRYPT_K131_PLAN"
+
+  - id: J-sim-green-then-npu-sync
+    domain: impl
+    kind: inference
+    derivation: defeasible
+    title: "H4：SIM 绿则优先 NPU 同步/可见性差"
+    statement: "本工作区默认 Decaps SIM 仍 max=0，故 K=131 更像 NPU 特有跨核写读/残留可见性；须用户 A/B/C + K vs J 定位，而非先改 Cloud 算法"
+    deps: [F-sim-reverify-pass, F-npu-k-max-131]
+    status: unverified
+    basis: experiment
+    evidence: "TASK-008；H4 优先，待 NPU 正交"
+
+  - id: Q-where-k-breaks
+    domain: verify
+    kind: question
+    title: "K 错发生在 Phase-D 还是 Phase-E？"
+    statement: "在当前默认 2-launch Decaps 上，导致 K≠golden 的第一故障段是 Phase-D 还是 Phase-E（或接缝）？"
+    deps: [J-phase-d-vs-e, J-k131-reject-path]
+    status: open
+
+  - id: Q-sim-repro-now
+    domain: verify
+    kind: question
+    title: "当前工作区 SIM 是否仍绿？"
+    statement: "相对 qa 记载的 SIM 绿，当前分支默认 Decaps SIM 是否仍 max_abs_diff=0？"
+    deps: [F-cloud-sim-2launch-pass]
+    status: answered
+    answered_by: F-sim-reverify-pass
+
+  - id: Q-k-equals-jzc
+    domain: verify
+    kind: question
+    title: "出错的 K 是否等于 J(z‖c)？"
+    statement: "NPU（及若 SIM 红时）output/K 是否与 Host 算的 J(z‖c) 一致？用以确认或证伪 H1。SIM 绿样本已确认 K=accept≠J"
+    deps: [J-k131-reject-path, F-default-golden-is-accept, F-sim-k-accept-not-jzc]
+    status: open
+
+  - id: D-next-reverify-sim
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：复验默认 Decaps SIM（Step-0）"
+    statement: "FORCE_REBUILD + SIM_DIRECT 复验默认 2-launch；日志须见 chain_ntt/prep_ntt；结果写入 F-sim-reverify-* 并回答 Q-sim-repro-now"
+    deps: [F-cloud-sim-2launch-pass, F-force-rebuild-discipline, D-sim-first-decaps]
+    status: inactive
+    replaced_by: D-user-npu-abc
+    targets: [Q-sim-repro-now]
+
+  - id: F-sim-reverify-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "本工作区默认 Decaps SIM 仍绿（TASK-008）"
+    statement: "KEM_DECAPS_FORCE_REBUILD=1 + SIM_DIRECT：日志见 chain_ntt / prep_ntt / l18+FO；K.bin max_abs_diff=0；kernel wall≈284.5s"
+    repro: "cd stable-…-kem-decaps-k4 && KEM_DECAPS_FORCE_REBUILD=1 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/task008_decaps_sim_step0.log；graph_tests/_outbox/FB-TASK-008.md"
+
+  - id: F-sim-k-accept-not-jzc
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "SIM 绿样本：K=accept ≠ J(z‖c)"
+    statement: "同次 run：output/K==golden/K（accept）；相对 J(z‖c) max_abs_diff=249；未走 FO 拒绝支"
+    repro: "python diag on input/dk_kem.bin[3136:3168]+c.bin after SIM PASS"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/task008_k_vs_jzc_diag.txt"
+
+  - id: D-sim-orthogonal-if-red
+    domain: method
+    kind: decision
+    by: agent
+    title: "若 SIM 红：跑 A/B/C 分段"
+    statement: "仅当默认 SIM 红时，在 Cloud 依次跑正交 A/B/C（禁并行 SIM），刷新 J-phase-d-mprime / J-phase-e-reencrypt"
+    deps: [D-next-reverify-sim, J-phase-d-vs-e]
+    status: inactive
+    replaced_by: D-user-npu-abc
+    targets: [Q-where-k-breaks]
+
+  - id: D-diag-k-vs-jzc
+    domain: method
+    kind: decision
+    by: agent
+    title: "诊断：K 对 J(z‖c) 与 accept 双比"
+    statement: "出错样本上计算 J(z‖c) 并与 output/K、golden/K 比较；确认 H1 或证伪为「非拒绝支乱码」。SIM 基线已做；NPU 红样本须复做"
+    deps: [J-k131-reject-path, D-sim-first-decaps, F-sim-k-accept-not-jzc]
+    status: active
+    targets: [Q-k-equals-jzc]
+
+  - id: D-user-npu-abc
+    domain: method
+    kind: decision
+    by: agent
+    title: "下一刀：请用户 NPU 正交 A/B/C + K vs J"
+    statement: "Cloud 默认 SIM 已绿（F-sim-reverify-pass）；K=131 专攻 NPU。请用户 FORCE 一次后跑默认与 A/B/C，并对红样本算 K vs J(z‖c)"
+    deps: [F-sim-reverify-pass, F-sim-k-accept-not-jzc, J-sim-green-then-npu-sync, D-diag-k-vs-jzc]
+    status: active
+    targets: [Q-where-k-breaks, Q-k-equals-jzc]
+
+  - id: D-admit-failures
+    domain: method
+    kind: decision
+    by: human
+    title: "失败实验一等公民；禁 correctness 反模式"
+    statement: "证伪路径 retracted/inactive 留痕；禁止碎写 GM/滥 launch 当推荐"
+    deps: [D-goal-decaps-k]
+    status: active
+
+changelog:
+  - date: "2026-09-03"
+    change: |
+      TASK-008：F-sim-reverify-pass / F-sim-k-accept-not-jzc；Q-sim-repro-now→answered；
+      D-next-reverify-sim / D-sim-orthogonal-if-red→inactive；D-user-npu-abc active（H4 优先）。
+  - date: "2026-09-03"
+    change: |
+      W1：H1–H4、A/B/C 决策、J(z‖c) 诊断、FORCE 纪律、Decaps 仍设备 μ；
+      计划 graph_tests/DECRYPT_K131_PLAN.md；下一刀仍 D-next-reverify-sim（等 Encaps P0 子任务释放 SIM）。
+  - date: "2026-09-03"
+    change: |
+      W0：从 qa/2026-09-03 抽取 Decaps K=131 与 Cloud SIM 曾绿、FO 拒绝假说、D/E 分位；
+      下一刀 D-next-reverify-sim。

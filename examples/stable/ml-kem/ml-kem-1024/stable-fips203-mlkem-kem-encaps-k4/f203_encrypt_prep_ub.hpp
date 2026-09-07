@@ -87,8 +87,10 @@ __aicore__ inline void BuildEncryptPrepSinglePipe(const __gm__ uint8_t *ek_gm, c
 
     F203_ENCRYPT_PREP_PIPE_ALL();
 
-    // 行 8–15：仅 block0 做 PRF+CBD，避免双核写同一 re/prf
-    if (AscendC::GetBlockIdx() == 0U) {
+    // 行 8–15：仅 shard0 做 PRF+CBD，避免双核写同一 re/prf。
+    // 用参数 blockIdx（非 GetBlockIdx）：AIV_ONLY 双 block 时二者相同；
+    // MIX prep_ntt（blockDim=1）时 GetBlockIdx 恒 0，须靠 subBlock 传入的 shard 区分。
+    if (blockIdx == 0U) {
         uint8_t coins[kCoinsBytes];
         LoadCoinsFromGm(coins_gm, coins);
 

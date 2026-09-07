@@ -33,6 +33,7 @@ _copy_tree() {
 }
 _copy_tree "${SRC}/compute/g4_full" "${DST}/compute/g4_full"
 _copy_tree "${SRC}/compute/ntt_u" "${DST}/compute/ntt_u"
+_copy_tree "${SRC}/compute/intt_w" "${DST}/compute/intt_w"
 _copy_tree "${SRC}/compute/alg11" "${DST}/compute/alg11"
 _copy_tree "${SRC}/compute/su_dot" "${DST}/compute/su_dot"
 _copy_tree "${SRC}/compute/compress1_byteencode1" "${DST}/compute/compress1_byteencode1"
@@ -43,8 +44,9 @@ cp -a "${SRC}/f203_decrypt_layout.h" "${DST}/f203_decrypt_layout.h"
 
 # 去掉 stable 目录里可能存在的 thirdparty 软链/目录（合库不需要）
 find "${DST}" -name thirdparty -exec rm -rf {} + 2>/dev/null || true
-# 非 fused 的独立 entry 不进 KERNEL_FILES；删以免误用
+# 独立 NTT/INTT/su_dot 单测 entry 不进合库；g4 prep/chain_* 与 fused 均保留（Phase-D 默认 2-launch）
 rm -f "${DST}/compute/ntt_u/f203_decrypt_ntt_u_entry.cpp"
+rm -f "${DST}/compute/intt_w/f203_decrypt_intt_w_entry.cpp"
 rm -f "${DST}/compute/su_dot/f203_decrypt_su_dot_kernel.cpp"
 
 # 与 stable Encrypt 同名且可能内容分歧的 basename → dec_*（合库单 -I 必需）

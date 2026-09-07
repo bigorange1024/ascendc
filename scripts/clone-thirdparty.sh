@@ -33,6 +33,7 @@ REPOS=(
   "SHA3hp|https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git||1|第三方 AscendC Keccak/SHA3"
   "cann-ntt|https://openi.pcl.ac.cn/serial2007/cann-ntt.git||1|第三方 AscendC 前向 NTT"
   "ntt_onnx|https://github.com/bigorange1024/ntt_onnx.git||1|NTT/LUT golden（**私有仓**；Cloud 须 ASCENDC_GH_PAT / gh 认证，见 thirdparty 文档）"
+  "cannbot-skills|https://gitcode.com/cann/cannbot-skills.git||1|CANN Bot Skills（gitcode cann/cannbot-skills）"
 )
 
 should_process() {

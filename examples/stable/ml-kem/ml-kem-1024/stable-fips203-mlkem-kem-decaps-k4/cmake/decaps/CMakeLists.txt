@@ -52,6 +52,7 @@ set(SHIM_G4_FULL "${DEC_SHIM_ROOT}/compute/g4_full")
 set(SHIM_UNPACK "${DEC_SHIM_ROOT}/unpack")
 set(SHIM_PREP_DECODE "${DEC_SHIM_ROOT}/prep/decode_dk")
 set(SHIM_NTT_U "${DEC_SHIM_ROOT}/compute/ntt_u")
+set(SHIM_INTT_W "${DEC_SHIM_ROOT}/compute/intt_w")
 set(SHIM_ALG11 "${DEC_SHIM_ROOT}/compute/alg11")
 set(SHIM_SU_DOT "${DEC_SHIM_ROOT}/compute/su_dot")
 set(SHIM_TAIL_C1 "${DEC_SHIM_ROOT}/compute/compress1_byteencode1")
@@ -86,6 +87,7 @@ endif()
 # T19i：l18_l19 用 kem/ 本地覆盖（pack 尾同核 FO）
 set(ENCRYPT_KERNEL_FILES
     ${KEM_DIR}/f203_kem_dec_phase_e_prep_entry.cpp
+    ${KEM_DIR}/f203_kem_dec_phase_e_prep_ntt_entry.cpp
     ${KEM_DIR}/f203_kem_dec_pack_fo_entry.cpp
     ${COMPUTE_DIR}/f203_encrypt_ntt_y_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_at_jp_kernel.cpp
@@ -102,7 +104,7 @@ set(_DECRYPT_INCLUDES_STABLE
 )
 set(_DECRYPT_INCLUDES_SHIM
     ${DEC_SHIM_ROOT} ${SHIM_G4_FULL} ${SHIM_UNPACK} ${SHIM_PREP_DECODE}
-    ${SHIM_NTT_U} ${SHIM_ALG11} ${SHIM_SU_DOT} ${SHIM_TAIL_C1}
+    ${SHIM_NTT_U} ${SHIM_INTT_W} ${SHIM_ALG11} ${SHIM_SU_DOT} ${SHIM_TAIL_C1}
     ${KEM_DIR} ${KEM_ROOT} ${KECCAK_INC} ${SHARED_INC}
 )
 set(_ENCRYPT_INCLUDES
@@ -141,8 +143,19 @@ function(_kem_set_src_includes srcs incs)
     endforeach()
 endfunction()
 
+# Decrypt：默认 Host 2-launch（prep+NTT | INTT，每 MIX 一轮 Cube）；
+# fused 仍编入，供 F203_DECRYPT_FUSED=1 对照。独立 g4_prep 保留作调试源，不进默认 Host。
+set(_DECRYPT_CHAIN_SRCS
+    f203_decrypt_g4_chain_ntt_entry.cpp
+    f203_decrypt_g4_chain_intt_entry.cpp
+    f203_decrypt_device_fused_entry.cpp
+)
+
 if("${RUN_MODE}" STREQUAL "cpu")
-    set(DECRYPT_KERNEL_FILES ${G4_FULL_INC}/f203_decrypt_device_fused_entry.cpp)
+    set(DECRYPT_KERNEL_FILES "")
+    foreach(_f ${_DECRYPT_CHAIN_SRCS})
+        list(APPEND DECRYPT_KERNEL_FILES ${G4_FULL_INC}/${_f})
+    endforeach()
     set(KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
 
     if(NOT DEFINED ENV{CMAKE_PREFIX_PATH})
@@ -169,7 +182,15 @@ elseif("${RUN_MODE}" STREQUAL "sim" OR "${RUN_MODE}" STREQUAL "npu")
             "Decrypt shim incomplete (need dec_aiv_func.hpp). Re-run prepare_dec_shim.sh")
     endif()
 
-    set(DECRYPT_KERNEL_FILES ${SHIM_G4_FULL}/f203_decrypt_device_fused_entry.cpp)
+    set(DECRYPT_KERNEL_FILES "")
+    foreach(_f ${_DECRYPT_CHAIN_SRCS})
+        if(NOT EXISTS "${SHIM_G4_FULL}/${_f}")
+            message(FATAL_ERROR
+                "Decrypt shim missing: ${SHIM_G4_FULL}/${_f}\n"
+                "Run: bash ${KEM_ROOT}/scripts/prepare_dec_shim.sh")
+        endif()
+        list(APPEND DECRYPT_KERNEL_FILES ${SHIM_G4_FULL}/${_f})
+    endforeach()
     set(KERNEL_FILES ${DECRYPT_KERNEL_FILES} ${ENCRYPT_KERNEL_FILES})
 
     if(EXISTS ${ASCEND_CANN_PACKAGE_PATH}/compiler/tikcpp/ascendc_kernel_cmake)

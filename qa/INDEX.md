@@ -10,6 +10,26 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-07 — [NPU_SUITE 单轮全绿 · B3 → R×N](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
+
+关键字：**C0/C1/C2 PASS last=111** · **N7** · **B3** · **R×N C2×7** · Host-only · 禁正确性
+
+### 2026-09-06 — [Encrypt 无卡死：知识库+新图谱](2026-09/2026-09-06-Encrypt无卡死知识库与新图谱.md)
+
+关键字：**专属知识库** · **rg-encrypt-npu-hangfree** · E01–E07 toys · SHAKE+NTT+basemul+INTT · SET4 · ≠Tag5T
+
+### 2026-09-04 — [PKE Enc/Dec 实机短报 · 老挂点](2026-09/2026-09-04-PKE-EncryptDecrypt实机短报老挂点.md)
+
+关键字：**PKE Encrypt 第7轮 l18** · **Decrypt FORCE 第1轮 prod input** · 老挂点未消 · 极短回报
+
+### 2026-09-03 — [Encaps/Decaps 真 2-launch · GATE · prep∈MIX](2026-09/2026-09-03-Encaps-Decaps真2launch与GATE.md)
+
+关键字：**prep_ntt|l18** · **GATE 4/8** · TRACE **`0/16` 空** · Host 折 μ SIM 绿 · **Decrypt hang 单独开图** · 勿升 notes
+
+### 2026-09-02 — [实机 l18 粘性 · TRACE 107002 · 安全拆分（当日 3-launch）](2026-09/2026-09-02-实机l18粘性与TRACE-107002.md)
+
+关键字：**粘性≠out** · **`107002` CONTEXT_NULL** · TRACE 子线程未 SetDevice · 当日默认 prep|ntt|l18 · fused 嫌疑双 Cube · 终态见 09-03
+
 ### 2026-09-01 — [有界演示 · 合稿删 · 方法论两阶段收口](2026-09/2026-09-01-有界演示路径拓扑与合稿衔接片删除.md)
 
 关键字：有界演示 **入目标边数锁定** · 缺项路径一次画全 · 合稿衔接片 **已删** · 对外 **两阶段（补缺/推进）** · **约束→形式语言** · **状态→自动机** · 清单→依赖差分（阶段 1 内）· 领导向三句验收

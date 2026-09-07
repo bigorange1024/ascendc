@@ -27,6 +27,7 @@ BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 | `SHA3hp/` | 外部 clone | https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git | 默认分支（浅） | 第三方 AscendC Keccak/SHA3 | **`clone-thirdparty.sh`** |
 | `cann-ntt/` | 外部 clone | https://openi.pcl.ac.cn/serial2007/cann-ntt.git | 默认分支（浅） | 第三方 AscendC 前向 NTT | **`clone-thirdparty.sh`** |
 | `ntt_onnx/` | 外部 clone | https://github.com/bigorange1024/ntt_onnx.git（**私有**） | 默认分支（浅） | NTT/LUT golden（原 `ntt_study`） | **`clone-thirdparty.sh`** + 认证（见下） |
+| `cannbot-skills/` | 外部 clone | https://gitcode.com/cann/cannbot-skills.git | 默认分支（浅） | CANN Bot Skills（参考） | **`clone-thirdparty.sh`** |
 
 **已迁出 / 更名（勿再装回旧路径）**：
 
@@ -44,12 +45,13 @@ thirdparty/
 ├── ascend-samples/     # 昇腾官方 samples（体积大）
 ├── SHA3hp/             # 第三方 AscendC Keccak/SHA3（OpenI）
 ├── cann-ntt/           # 第三方 AscendC NTT（OpenI）
-└── ntt_onnx/           # NTT/LUT golden（GitHub bigorange1024/ntt_onnx）
+├── ntt_onnx/           # NTT/LUT golden（GitHub bigorange1024/ntt_onnx）
+└── cannbot-skills/     # CANN Bot Skills（gitcode cann/cannbot-skills）
 ```
 
 ---
 
-## 可公开 clone 的六个仓（默认脚本范围）
+## 可公开 clone 的仓（默认脚本范围）
 
 ### 命令
 
@@ -57,6 +59,7 @@ thirdparty/
 bash scripts/clone-thirdparty.sh
 # 仅拉指定项：
 ONLY=tiny_sha3,ntt_onnx bash scripts/clone-thirdparty.sh
+ONLY=cannbot-skills BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 # 已存在也强制重拉（会 rm -rf，慎用）：
 FORCE=1 bash scripts/clone-thirdparty.sh
 ```
@@ -71,6 +74,7 @@ git clone --depth 1 https://gitee.com/ascend/samples.git thirdparty/ascend-sampl
 git clone --depth 1 https://openi.pcl.ac.cn/wtUSTB/SHA3hp.git thirdparty/SHA3hp
 git clone --depth 1 https://openi.pcl.ac.cn/serial2007/cann-ntt.git thirdparty/cann-ntt
 git clone --depth 1 https://github.com/bigorange1024/ntt_onnx.git thirdparty/ntt_onnx
+git clone --depth 1 https://gitcode.com/cann/cannbot-skills.git thirdparty/cannbot-skills
 ```
 
 ### `ntt_onnx` 私有仓认证（强制保持 private）

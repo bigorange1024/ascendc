@@ -4,7 +4,9 @@
 # customspec：stable-fips203-mlkem-kem-decaps-k4-实现方案-customspec.tex
 # registry：docs/specs/fips203-mlkem1024-kem-decaps-baseline-registry.md
 # 生产 I/O：input/{dk_kem,c,lut_*} → output/K.bin（仅 K；m'/c'/K' 默认不落盘为交付）
-# SIM：3 launch（T19i）；CPU：6 launch；默认单库 + decaps_1session
+# SIM：Phase-D 默认 2-launch（prep+ntt|intt）；Phase-E 默认 prep_ntt|l18+FO（真 2 Host launch）；
+#      `F203_DECRYPT_FUSED=1` / `F203_DECAPS_FUSED_L18=1` 回旧双 Cube；
+#      `F203_DECAPS_SPLIT_PREP=1` Phase-E 回退 3-launch；CPU：6 launch；默认单库 + decaps_1session
 #
 # Usage（默认全链）:
 #   cd examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-decaps-k4
@@ -16,6 +18,9 @@
 # 调试（非默认）:
 #   KEM_DECAPS_PHASEE_ONLY=1 …
 #   KEM_DECAPS_REJECT=1 …
+#   F203_DECAPS_FUSED_L18=1 …                 # Phase-E 旧双 Cube 融合
+#   F203_DECRYPT_FUSED=1 …                    # Phase-D 旧双 Cube 融合
+#   F203_DECAPS_SPLIT_PREP=1 …                # Phase-E 回退 3-launch（AIV prep|ntt|l18）
 #   ASCENDC_SIM_HOST_MODE=decaps_2session …
 #   KEM_DECAPS_FORCE_REBUILD=1 …
 #   默认直跑结束会打印 [run_metrics] wall_sec=… 并写入 output/run_metrics.txt

@@ -58,6 +58,7 @@ endif()
 
 set(KERNEL_FILES
     ${KEM_DIR}/f203_kem_enc_prep_entry.cpp
+    ${KEM_DIR}/f203_kem_enc_prep_ntt_entry.cpp
     ${COMPUTE_DIR}/f203_encrypt_ntt_y_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_at_jp_kernel.cpp
     ${COMPUTE_DIR}/f203_encrypt_intt_e1_kernel.cpp
