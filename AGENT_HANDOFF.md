@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-06（Encrypt 卡死重写：NPU 一次测套件；**用户只能打字反馈，禁要文件**）
+> **最后刷新**：2026-09-07（X21：N0–N10 实为**秒失败**+旧脚本吞日志；须 pull 后只跑 N0 看 device/why）
 
 ---
 
@@ -22,7 +22,7 @@
 
 | 项 | 说明 |
 |----|------|
-| **P0（当次）** | **等用户实机打字回传 TYPE_BACK**（`ID 状态 编号…`）；**禁止**再要任何文件 |
+| **P0（当次）** | **X20：N0–N10 全挂 → 环境刀**；用户只跑 N0 并打字：是否超时 / 首行错误 / SOC+device |
 | **已完成** | T01–T07 **PASS**（X15）；**NPU 一次测套件已备齐**（打字反馈） |
 | **上机入口** | 操作卡 `docs/engineering/Encrypt卡死重写-实机操作卡.md`；命令 `bash scripts/npu_hang_rewrite_one_trip.sh` → **只打字**贴 TYPE_BACK |
 | **Encrypt 最终** | NPU Encrypt 不再 SynchronizeStream 卡死且最终正确（`Q-ULT`） |
@@ -54,6 +54,9 @@
 
 ## ★ 下一刀
 
-1. **用户实机**：`unset ASCEND_DEVICE_ID && bash scripts/npu_hang_rewrite_one_trip.sh`  
-2. **用户只打字**：贴 TYPE_BACK（`N0 通` / `N8 超时 0 1 2 3` …）  
-3. **收到打字后**：按决策树分支（禁同质 toys）；必要时开 `graph-tests/enc_related/`
+1. **不要**继续全套 N0–N10 / 同质 toys / 怪 Encrypt。  
+2. 用户只跑 **N0 KeyGen**（或最短 env 冒烟），打字回报：  
+   - 秒挂还是等到超时？  
+   - 屏幕首条 ERROR / ACL / preflight / cmake 关键字  
+   - `npu-smi info` 里芯片型号 + 用的 `ASCEND_DEVICE_ID`  
+3. 收到后再定：换 SOC_VERSION / 清卡 / skip-preflight / 显式 device。

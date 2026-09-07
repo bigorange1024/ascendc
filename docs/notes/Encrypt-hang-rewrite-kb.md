@@ -81,8 +81,9 @@ CrossCore 通道习惯：模板 channel 与 `PIPE_MTE2` 一类；flag 字面量 
 | X16 | KeyGen 默认每次全量重编；Encrypt/Decaps 默认 SKIP_REBUILD=1 | **工程默认不一致**；KeyGen 常新二进制 ≠ 其不卡死原因；Encrypt 跳过重编可放大「旧 bin 粘性」（X10）误判 |
 | X17 | KeyGen MIX FSM = SPLIT→MMAD→PACK（flag 1/2/3）；无 GATE 4/8、无 INTT 二段复用 | 与 Encrypt `l18_l19`「NTT + AIC 空等 AIV 大体量 + GATE4/8 + INTT」不同构；KeyGen 不卡死**不能**证明 MIX/CrossCore 无问题，只说明卡死偏 Encrypt 特有编排 |
 | X18 | 用户要一次测齐，勿点滴 | 上机入口 `npu_hang_rewrite_one_trip.sh`；**只收打字 TYPE_BACK**；禁同质 toys |
-| X19 | 用户无法回传任何文件 | 反馈通道=聊天打字；再要 tar/md/日志即违规 | 上机入口统一 `scripts/npu_hang_rewrite_one_trip.sh`（N0–N10）；**只收打字 TYPE_BACK**（禁要文件/tar/日志）；后再分支；禁同质 toys |
-| X19 | 用户无法回传任何文件 | 反馈通道=聊天打字编号；Agent/文档再提 BRING_BACK/FEEDBACK 文件即违规 |
+| X19 | 用户无法回传任何文件 | 反馈通道=聊天打字编号；再要 tar/md/日志即违规 |
+| X20 | 实机 N0–N10 曾报「全挂」（2026-09-07） | **先环境/整卡，勿归因 Encrypt** |
+| X21 | 用户澄清：N0–N10 **秒失败**；屏上**只有 FAIL**；无 ERROR/ACL/preflight/cmake/npu-smi；910B4；**未见卡号** | (1) 秒退 ≠ SynchronizeStream 卡死（真卡死多为 timeout 124）；(2) 只见 FAIL = 多半跑了 **tee 前旧套件**（日志进文件不刷屏）；(3) 旧套件仍会 `export ASCEND_DEVICE_ID`（stable→1 / toys→3），**不是**「没设就默认 0」——只是没打印；(4) 须 `git pull` 到含 tee/device/why 的提交后 **只跑 N0**，打字回 `device=` + `why=` / 末行关键字 |
 
 ---
 
@@ -169,5 +170,5 @@ CrossCore 通道习惯：模板 channel 与 `PIPE_MTE2` 一类；flag 字面量 
 已知边界：积木 OK；禁 5/7、禁 Wait 中 SyncAll、禁自造 SoftSync；禁抄旧 Encrypt；轻量 toy SIM 未挂 ≠ 已解（X6）。  
 已闭合（局部）：T01–T07（握手/GATE/全FSM/假循环×10/2×launch/真Vec MAC/SAMPLE前置）**SIM 全绿**。
 未闭合（卡死复现）：SIM 玩具线**未能**逼出 SynchronizeStream 挂；剩余主因候选在 **NPU / 生产体量与真实积木编排**（S4）。
-**主控闸门**：SIM 骨架维已穷尽 → **停派 toys**。NPU 一次测套件已备（X18/X19）；**等用户打字 TYPE_BACK** 后再决策（禁要文件、禁同质 toys）。  
+**主控闸门**：SIM 骨架维已穷尽 → **停派 toys**。NPU 一次测套件已备（X18/X19）；**实机反馈：N0–N10 全挂（X20）** → 先环境；下一刀只跑 N0 + 打字首错（禁要文件、禁同质 toys）。  
 入口：`bash scripts/npu_hang_rewrite_one_trip.sh` · 说明：`docs/engineering/Encrypt卡死重写-实机一次测清单.md`。

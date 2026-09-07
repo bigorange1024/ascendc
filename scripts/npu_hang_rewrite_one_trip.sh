@@ -108,11 +108,13 @@ _append_type_line() {
     local snippet="$4"
     local case_log="${5:-}"
     local status
+    # 状态词：通 / 超时(124) / 失败(秒退或编译/ACL 等非超时) / 清单
+    # 「失败」≠ SynchronizeStream 卡死；真卡死通常是 超时
     case "${rc}" in
     0) status="通" ;;
     124) status="超时" ;;
     MANIFEST) status="清单" ;;
-    *) status="挂" ;;
+    *) status="失败" ;;
     esac
     local codes
     codes="$(_codes_from_snippet "${snippet}")"
@@ -136,12 +138,9 @@ _init_type_back() {
     cat >"${TYPE_BACK}" <<EOF
 ========== 请只打字回传（不要传任何文件）==========
 跑次：${STAMP}
-每行：ID 状态 [编号…]
-状态只用：通 / 挂 / 超时 / 编译失败
-toys：抄屏幕十进制编号（如 101 201 … 199）
-Encrypt/Encaps：抄 [l18-trace] 后的下标（如 0 1 2 3）；没有写 空
-把下面整段（可改）打回聊天即可。
-
+每行：ID 状态 rc=… [why=…] 或 [编号…]
+状态：通 | 失败(秒退/编译/ACL…) | 超时(真像卡死) | 清单
+失败时终端会刷 device=、日志末 30 行、why=；把 why 或末行关键字打回即可（不要传文件）。
 EOF
 }
 
