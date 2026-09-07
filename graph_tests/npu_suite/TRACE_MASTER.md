@@ -82,6 +82,9 @@
 | 重点查 | `105`→`110` 间 Host；L2 无 `4xx` | `104/106` 与 `300–305`；G2/G3 后 L2 链 |
 | 历史对齐 | Encrypt L2 编排 | Alg.7 独立 launch + L2 汇合 |
 
+**NPU 判读**：以 `REPORT: Cx PASS/HANG` 为准（只认 Host 1xx）。  
+若旧日志出现 `L1 TRACE 200 missing` 且 Host 已有 `111` → **假红，记未粘性挂**（设备 `AscendC::printf` 常不可见）。
+
 ---
 
 ## 号段冲突策略

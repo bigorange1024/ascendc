@@ -33,15 +33,20 @@ def main() -> int:
     print(f"[verify] host digits: 100={c100} 101={c101} 110={c110} 111={c111} (expect {rounds})")
     if c111 != rounds or c100 != rounds or c101 != rounds or c110 != rounds:
         print("[FAIL] Host TRACE round count mismatch", file=sys.stderr)
+        last = digits[-1] if digits else "none"
+        print(f"REPORT: C0 HANG last={last}", flush=True)
         return 3
     if not os.path.isfile(OUT_BIN):
         print(f"[FAIL] missing {OUT_BIN}", file=sys.stderr)
+        print("REPORT: C0 FAIL missing_out", flush=True)
         return 4
     data = open(OUT_BIN, "rb").read()
     if len(data) < 9 or data[:8] != MAGIC or data[8] != MARK:
         print(f"[FAIL] magic mismatch: got {data[:9]!r}", file=sys.stderr)
+        print("REPORT: C0 FAIL magic", flush=True)
         return 5
     print("[SUCCESS] E01 Host TRACE × rounds + magic OK")
+    print("REPORT: C0 PASS last=111", flush=True)
     return 0
 
 

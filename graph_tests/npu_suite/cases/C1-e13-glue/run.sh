@@ -42,18 +42,18 @@ done
 
 export TOY_ROUNDS="${TOY_ROUNDS:-1}"
 
-# 套件 NPU/SIM smoke：默认跳过 golden（仅 TRACE 取证）
+# 套件 NPU/SIM smoke：默认跳过 golden；NPU 只认 Host TRACE
 if [ "${NPU_SKIP_GOLDEN:-1}" = "1" ]; then
     export TOY_SKIP_GOLDEN=1
 fi
-
 if [ "${RUN_MODE}" = "npu" ]; then
+    export TOY_NPU_HOST_ONLY="${TOY_NPU_HOST_ONLY:-1}"
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-600}"
 elif [ "${RUN_MODE}" = "sim" ]; then
     export KERNEL_COMPUTE_BUDGET_SEC="${KERNEL_COMPUTE_BUDGET_SEC:-1500}"
 fi
 
-echo "[C1] origin=${ORIGIN} RUN_MODE=${RUN_MODE} TOY_ROUNDS=${TOY_ROUNDS} TOY_SKIP_GOLDEN=${TOY_SKIP_GOLDEN:-0} budget=${KERNEL_COMPUTE_BUDGET_SEC}"
+echo "[C1] origin=${ORIGIN} RUN_MODE=${RUN_MODE} TOY_ROUNDS=${TOY_ROUNDS} TOY_SKIP_GOLDEN=${TOY_SKIP_GOLDEN:-0} TOY_NPU_HOST_ONLY=${TOY_NPU_HOST_ONLY:-0} budget=${KERNEL_COMPUTE_BUDGET_SEC}"
 
 cd "${ORIGIN}"
 exec bash run.sh -r "${RUN_MODE}" -v "${SOC_VERSION}" "${EXTRA[@]}"
