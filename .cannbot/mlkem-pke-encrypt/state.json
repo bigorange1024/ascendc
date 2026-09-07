@@ -1,11 +1,12 @@
 {
   "operator": "mlkem-pke-encrypt",
-  "workflow": "ops-direct-invoke-adapted",
+  "workflow": "graph-tests+cannbot-skills",
   "mode": "interactive",
   "updated_at": "2026-09-07",
-  "stage": "1.1-requirement-draft",
-  "completed": ["bind-playbook"],
-  "pending": ["CP1-user-confirm", "CP0-env-910B3", "CP2-design"],
+  "stage": "ER01-implement",
+  "completed": ["bind-playbook", "user-lock-plain", "sync-audit-old-l18-readonly"],
+  "pending": ["ER01-code-sim"],
   "skills_root": "thirdparty/cannbot-skills",
-  "npu_connect": "forbidden_until_user_grants"
+  "npu_connect": "forbidden_until_user_grants",
+  "core_goal": "hang-free-only"
 }

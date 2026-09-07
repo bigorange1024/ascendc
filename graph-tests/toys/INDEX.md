@@ -10,4 +10,5 @@
 | T06 | T06-gate-real-brick | **PASS** | 真 Vec MAC |
 | T07 | T07-sampling-then-fsm | **PASS** | SAMPLE 前置 |
 
-**闸门（X15）**：SIM 玩具族已穷尽结构维且全绿 → **停派**；等用户定 NPU / enc_related 战略。
+**闸门（X15）**：同质 SIM toys 已穷尽。  
+**继任（2026-09-07）**：开 [`../enc_related/`](../enc_related/INDEX.md)（ER01）；每刀用 cannbot skills。

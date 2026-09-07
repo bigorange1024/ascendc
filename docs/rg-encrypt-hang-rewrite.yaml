@@ -22,8 +22,8 @@ config:
   require_repro_for_provenance:
   - measurement
 review:
-  last_reviewed: '2026-09-06'
-  note: T07 PASS；X15；D-EXP-T07 inactive；D-STOP-DISCUSS active——停派toys等用户定战略
+  last_reviewed: '2026-09-07'
+  note: 用户锁定：图谱实验+主动用 cannbot；核心仍卡死；不 vendor；开 enc_related
 nodes:
 - id: Q-ULT
   domain: goals
@@ -534,11 +534,34 @@ nodes:
   deps:
   - F-X15-SIM-TOYS-EXHAUSTED
   - D-OPS-DISCIPLINE
+  status: inactive
+  evidence: 用户 2026-09-07 已定：继续图谱实验并引入 cannbot；继任 D-CANNBOT-ENC-RELATED
+- id: D-CANNBOT-ENC-RELATED
+  domain: goals
+  kind: decision
+  by: human
+  statement: 继续 graph-tests 图谱实验；开 enc_related 近 Encrypt 体量；每刀主动用 thirdparty/cannbot-skills（sync-audit等）；不改.cursor/skills；核心仍卡死非正确性；不擅自连910B3
+  deps:
+  - F-X15-SIM-TOYS-EXHAUSTED
+  - D-CORE-HANG
+  - D-OPS-DISCIPLINE
   status: active
-  evidence: 用户纪律：不会了停下讨论
+  evidence: 用户白话锁定 2026-09-07；见 .cannbot/mlkem-pke-encrypt/CP1-用户结论.md
+  targets:
+  - Q-ULT
+- id: D-EXP-ER01
+  domain: goals
+  kind: decision
+  by: agent
+  statement: ER01：enc_related 首刀——Encrypt形双段launch骨架（prep桩+MIX计算壳），生产GATE时序+真积木级有界体量；禁抄旧Encrypt；编码后必跑 cannbot sync_audit；验收SIM不挂（正确性非门禁）
+  deps:
+  - D-CANNBOT-ENC-RELATED
+  status: active
   targets:
   - Q-ULT
 changelog:
+- date: '2026-09-07'
+  change: 用户锁定 cannbot+图谱；D-STOP-DISCUSS inactive；D-CANNBOT-ENC-RELATED + D-EXP-ER01 active。
 - date: '2026-09-06'
   change: T07 PASS；X15；D-STOP-DISCUSS（停toys等用户）。
 - date: '2026-09-06'

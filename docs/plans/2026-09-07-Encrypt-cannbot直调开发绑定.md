@@ -42,16 +42,16 @@ cannbot 官方 `ops-direct-invoke` 假定 OpenCode/Claude 多角色 Plugin（PM 
 
 ---
 
-## 3. 与旧「卡死重写」计划的关系
+## 3. 与旧「卡死重写」计划的关系（2026-09-07 用户锁定）
 
 | 项 | 决定 |
 |----|------|
-| 最终验收 | 仍对齐 Q-ULT：**NPU 不 SynchronizeStream 卡死，且最终正确** |
-| 开发方法 | **升级为 cannbot 直调全流程**，不再只靠自研 toys 试探 |
-| 旧 Encrypt / stable | **仍冻结只读**；I/O 与 FIPS 203 可作规格参考，**禁止抄核内编排** |
-| 已有 toys T01–T07 / 对方 E* | 作 **证据与禁令输入**，不当前实现蓝本 |
-| 正确性 | 纳入 CP3；卡死门禁仍优先——未过 hang 门禁不开性能刀 |
-| 代码落点（待拍板） | 默认候选：`graph-tests/enc_related/cannbot-encrypt-*`；晋级 `examples/` 须 `$规格$`+customspec |
+| 核心 | **仍只攻卡死**；正确性延后 |
+| 方法 | **图谱实验**（`graph-tests/`）+ **主动用** cannbot skills |
+| 落点 | toys 已穷尽 → **`enc_related/`**（ER01 起） |
+| Skills | 读/跑 `thirdparty/cannbot-skills`；**不**链进 `.cursor/skills` |
+| 旧 Encrypt | 只读；可 sync_audit 对照；**禁抄核** |
+| 上机 | 910B3 未经明示不连 |
 
 ---
 
@@ -59,15 +59,7 @@ cannbot 官方 `ops-direct-invoke` 假定 OpenCode/Claude 多角色 Plugin（PM 
 
 | 步 | 状态 |
 |----|------|
-| 绑定本文 | 已写 |
-| CP1 需求草稿 | `.cannbot/mlkem-pke-encrypt/01-requirement.md` |
-| CP0 环境（910B3） | **未做**（须你授权短连或你粘贴 `npu-smi`/CANN 摘要） |
-| CP2 方案 / 编码 | 等 CP1 拍板 |
-
----
-
-## 5. 下一动作（主控）
-
-1. 用户确认 §3 落点 + 是否 vendor skills + CP1 需求草稿。  
-2. 通过后：按 `ascendc-tiling-design` + `api-crosscore-sync` 写 CP2.2 开发方案（含 flagId 账、launch 切分、禁令表）。  
-3. 编码刀：新目录 + 每刀 `sync_audit.py`；SIM 绿后再请 910B3 短窗。
+| 用户锁定 | `.cannbot/mlkem-pke-encrypt/CP1-用户结论.md` |
+| 旧核 sync_audit（只读） | `.cannbot/mlkem-pke-encrypt/tmp/sync_audit_l18_l19.json` |
+| ER01 任务书 | `graph-tests/enc_related/ER01-TASK.md` |
+| ER01 编码 | 进行中 / 待 subagent |
