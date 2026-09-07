@@ -49,4 +49,11 @@ N9 挂 空
 - toys：抄屏幕十进制编号
 - N8/N9：抄 `[l18-trace]` 后面的下标；没有就写 `空`
 
+失败时终端会打印 **device=** 与 **日志末 30 行** / `why=`。把 `why=` 或末行关键字打回即可。
+
 **不要**传 tar、日志、截图、md。
+
+若上次只看到 FAIL：先 `git pull` 再只跑 N0：
+```bash
+NPU_HANG_SKIP_TOYS=1 NPU_HANG_SKIP_PROD=1 bash scripts/npu_hang_rewrite_one_trip.sh
+```

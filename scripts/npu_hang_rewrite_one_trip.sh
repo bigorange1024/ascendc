@@ -33,6 +33,12 @@ SKIP_PROD="${NPU_HANG_SKIP_PROD:-0}"
 MANIFEST="${NPU_HANG_MANIFEST:-0}"
 DRY="${NPU_SUITE_DRY_RUN:-0}"
 
+# 用户若已显式 export ASCEND_DEVICE_ID，整趟尊重；否则每例按 device_map 重设（勿让 N0 的卡1粘到 toys）
+USER_SET_DEVICE=0
+if [ -n "${ASCEND_DEVICE_ID+x}" ]; then
+    USER_SET_DEVICE=1
+fi
+
 STABLE="${REPO_ROOT}/examples/stable/ml-kem/ml-kem-1024"
 TOYS="${REPO_ROOT}/graph-tests/toys"
 
@@ -80,27 +86,46 @@ _codes_from_snippet() {
     grep -E '^[0-9]{2,3}$' "${snippet}" 2>/dev/null | tr '\n' ' ' | sed 's/ $//' || true
 }
 
+_why_from_log() {
+    # 从用例日志抽一行「可打字」原因；无则空
+    local logf="$1"
+    [ -f "${logf}" ] || return 0
+    # 优先 ERROR / FAIL / preflight / cmake / ACL / npu
+    local line
+    line="$(grep -E 'ERROR|error:|\[FAIL\]|preflight|cmake|ACL|npu-smi|npu_guard|undefined|No such|not found|Permission|Floating point' \
+        "${logf}" 2>/dev/null | grep -v '^###' | tail -n 1 || true)"
+    if [ -z "${line}" ]; then
+        line="$(tail -n 3 "${logf}" 2>/dev/null | tr '\n' ' ' | sed 's/  */ /g' || true)"
+    fi
+    # 压成单行、截断，方便打字
+    echo "${line}" | tr '\t' ' ' | sed 's/  */ /g' | cut -c1-160
+}
+
 _append_type_line() {
     local id="$1"
     local label="$2"
     local rc="$3"
     local snippet="$4"
+    local case_log="${5:-}"
     local status
     case "${rc}" in
     0) status="通" ;;
     124) status="超时" ;;
     MANIFEST) status="清单" ;;
-    *) status="失败" ;;
+    *) status="挂" ;;
     esac
-    # rc!=0 且非超时：用户口语「挂」优先于「失败」
-    if [ "${rc}" != "0" ] && [ "${rc}" != "124" ] && [ "${rc}" != "MANIFEST" ]; then
-        status="挂"
-    fi
     local codes
     codes="$(_codes_from_snippet "${snippet}")"
-    if [ -z "${codes}" ]; then
-        printf '%s %s\n' "${id}" "${status}" >>"${TYPE_BACK}"
-        _log ">>> TYPE: ${id} ${status}   # ${label}（请补屏幕编号；没有写 空）"
+    local why=""
+    if [ "${rc}" != "0" ] && [ "${rc}" != "MANIFEST" ]; then
+        why="$(_why_from_log "${case_log}")"
+    fi
+    if [ -n "${why}" ]; then
+        printf '%s %s rc=%s why=%s\n' "${id}" "${status}" "${rc}" "${why}" >>"${TYPE_BACK}"
+        _log ">>> TYPE: ${id} ${status} rc=${rc} why=${why}"
+    elif [ -z "${codes}" ]; then
+        printf '%s %s rc=%s\n' "${id}" "${status}" "${rc}" >>"${TYPE_BACK}"
+        _log ">>> TYPE: ${id} ${status} rc=${rc}   # ${label}"
     else
         printf '%s %s %s\n' "${id}" "${status}" "${codes}" >>"${TYPE_BACK}"
         _log ">>> TYPE: ${id} ${status} ${codes}   # ${label}"
@@ -135,25 +160,34 @@ _run_one() {
     local case_log="${LOG_ROOT}/cases/${id}_${label}.log"
     local snippet="${LOG_ROOT}/snippets/${id}_${label}_trace.txt"
 
+    local device
+    device="$(_device_id "${dir}")"
+
     if [ "${MANIFEST}" = "1" ]; then
-        _log "[MANIFEST] ${id} ${label} dir=${dir} timeout=${tmo}s device=$(_device_id "${dir}") env=[${extra_env[*]}]"
+        _log "[MANIFEST] ${id} ${label} dir=${dir} timeout=${tmo}s device=${device} env=[${extra_env[*]}]"
         echo -e "${id}\t${label}\tMANIFEST\t${tmo}\t-" >>"${RESULTS}"
-        _append_type_line "${id}" "${label}" "MANIFEST" "/dev/null"
+        _append_type_line "${id}" "${label}" "MANIFEST" "/dev/null" ""
         return 0
     fi
 
-    _log "=== ${id} ${label} (timeout=${tmo}s) ==="
+    _log "=== ${id} ${label} (timeout=${tmo}s device=${device}) ==="
+    # 未显式指定时，每例按树分卡（stable=1 / graph-tests=3）
+    if [ "${USER_SET_DEVICE}" != "1" ]; then
+        export ASCEND_DEVICE_ID="${device}"
+    fi
+    _log "[device] ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID} (map=${device} user_set=${USER_SET_DEVICE})"
     local rc=0
     set +e
+    # tee：屏幕与 case_log 同步，避免「只见 FAIL、看不到原因」（打字反馈刚需）
     if [ "${DRY}" = "1" ]; then
         env "${extra_env[@]}" bash "${RUN_CASE}" --dir "${dir}" --label "${label}" --force-rebuild --dry-run \
-            >"${case_log}" 2>&1
-        rc=$?
+            2>&1 | tee "${case_log}"
+        rc=${PIPESTATUS[0]}
     else
         env "${extra_env[@]}" timeout --signal=KILL "${tmo}" \
             bash "${RUN_CASE}" --dir "${dir}" --label "${label}" --force-rebuild \
-            >"${case_log}" 2>&1
-        rc=$?
+            2>&1 | tee "${case_log}"
+        rc=${PIPESTATUS[0]}
     fi
     set -e
 
@@ -169,14 +203,20 @@ _run_one() {
 
     echo -e "${id}\t${label}\t${rc}\t${tmo}\t${case_log}" >>"${RESULTS}"
     if [ "${rc}" -eq 0 ]; then
-        _log "[PASS] ${id} ${label}"
+        _log "[PASS] ${id} ${label} device=${device}"
     elif [ "${rc}" -eq 124 ]; then
-        _log "[TIMEOUT] ${id} ${label} after ${tmo}s — hang candidate"
+        _log "[TIMEOUT] ${id} ${label} after ${tmo}s device=${device} — hang candidate"
+        _log "----- ${id} 日志末 30 行（请打字抄关键句）-----"
+        tail -n 30 "${case_log}" 2>/dev/null | tee -a "${LOG_ROOT}/one_trip.log" || true
+        _log "----- end -----"
     else
-        _log "[FAIL] ${id} ${label} rc=${rc}"
+        _log "[FAIL] ${id} ${label} rc=${rc} device=${device}"
+        _log "----- ${id} 日志末 30 行（请打字抄关键句）-----"
+        tail -n 30 "${case_log}" 2>/dev/null | tee -a "${LOG_ROOT}/one_trip.log" || true
+        _log "----- end -----"
     fi
 
-    _append_type_line "${id}" "${label}" "${rc}" "${snippet}"
+    _append_type_line "${id}" "${label}" "${rc}" "${snippet}" "${case_log}"
 
     if [ "${rc}" -ne 0 ] && [ "${CONTINUE}" != "1" ]; then
         return "${rc}"
