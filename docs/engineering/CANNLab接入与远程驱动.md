@@ -91,12 +91,15 @@ R
 | **GitHub 抖动** | 偶发 `curl github 000` | 多为瞬时；重试即可，实例出网整体可达（gitcode/pypi/github 均 200） |
 | **DERP 延迟/后台挂起** | 经 DERP 中继时 ssh 偏慢；`nohup ... &` 后台跑 `run.sh` 会让 ssh 通道**迟迟不返回** | **前台**跑 `run.sh`（加 `-o ServerAliveInterval=15`），用 `timeout` 兜底；不要在同一 ssh 里后台化再 tail |
 | **闲置节点被摘除** | 会话闲置后**本机** tailscale 节点被摘（`404 node not found`），连 CANNLab 报 SOCKS 失败 | Cursor 侧 `up --reset --authkey="$TAILSCALE_AUTHKEY"` 重注册（见 §4）；新起的 Agent 首次 `up` 不受影响 |
+| **停机后控制台“异常”** | `sudo kill -TERM 1` / 看门狗停机是**信号杀 tini**，绕过平台停止流程，控制台常显示 **“异常/error”** 而非干净“已停止” | 属预期副作用；**到控制台手动“关机/停止”再确认一次**（权威停计费）。故 SIGTERM/看门狗只当兜底，日常优先控制台关机 |
 
 ## 7. 停卡时（三选一）
 
-1. **控制台“关机/停止”**——唯一权威停止计费方式。
-2. `sudo kill -TERM 1`（Agent 或 WebIDE）——让容器退出、节点下线；计费是否停仍看控制台。
-3. **空闲看门狗**（`scripts/cannlab/agent_watchdog.sh`，bootstrap 默认拉起，`IDLE_MIN=30`）——无算力活动超时后自动执行第 2 步。
+1. **控制台“关机/停止”**——唯一权威停止计费方式，也是**唯一让实例状态干净**的方式。
+2. `sudo kill -TERM 1`（Agent 或 WebIDE）——让容器退出、节点下线；但这是信号杀 tini，绕过平台停止流程，**控制台事后常显示“异常/error”，需人工再点一次“关机/停止”确认**。
+3. **空闲看门狗**（`scripts/cannlab/agent_watchdog.sh`，bootstrap 默认拉起，`IDLE_MIN=30`）——无算力活动超时后自动执行第 2 步；同样会留“异常”态，仍需人工到控制台收尾确认。
+
+> 定位：SIGTERM/看门狗只是“人不在场时先把算力空转掐掉”的**兜底**；日常收工请**优先走控制台“关机/停止”**。
 
 ## 8. 已验证证据（2026-09-07, 910B3）
 
@@ -104,3 +107,21 @@ R
 - `examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4`：真机两 launch
   （`f203_keygen_prep` + `mmad_custom`），`ek_kem`=1568B / `dk_kem`=3168B 与 python 参考 `max=0` 逐字节一致，`[SUCCESS]`。
 - **冷启动全链自检（2026-09-07 复跑）**：全新 Cursor 会话 → `up --reset` 重注册 → `ssh cannlab-npu:2222`（新实例卡槽 `davinci6`，`ASCEND_DEVICE_ID=0`）→ 仓库 `git pull` 命中 `scripts/cannlab/`+本文档 → KeyGen 真机 `[verify] KEM KeyGen overall PASS` → `sudo kill -TERM 1` 停机、节点下线。整套 handoff 闭环可用。
+
+## 9. 多 Agent 并发约定（单卡实例）
+
+一台单卡实例（1×910B3）上，**连接能并发，但“干活”应串行**——瓶颈不在能否连上，而在单卡 + 共用工作树。
+
+| 层 | 并发 | 说明 |
+|----|------|------|
+| 连接（ssh/tailnet） | ✅ 可多个 | sshd 支持多会话，tailnet 每 Agent 一个节点；多个 Cursor Agent 同时 `ssh cannlab-npu:2222` 没问题 |
+| 工作树 `/mnt/workspace/ascendc` | ❌ 会互踩 | 默认同一 git 工作树，多方同时 `git pull`/改文件/build 到同一 `out_prod_npu/`、`input/`、`output/`、`dump/` 会互相覆盖，对拍不可信 |
+| NPU 算力（1×910B3，ACL 设备仅 0） | ⚠️ 不建议 | 多进程同时上板争 AICore/HBM、dump/profiling 路径冲突；本仓 Rule 禁并行多路 SIM，真机同理 |
+
+**默认：一次一个 Agent 跑用例。** 需要多 Agent 时按下述缓解，但**卡是硬瓶颈、跑真机仍要排队**：
+
+1. **各用独立工作树**：每 Agent `git clone` 到自己目录（如 `/mnt/workspace/ascendc-<agentX>`）或 `git worktree`，避免构建/对拍产物互相覆盖。
+2. **上板段加锁串行**：跑真机用 `flock /mnt/workspace/.npu.lock -c '... run.sh -r npu ...'`，占卡那一段串起来，谁抢到谁跑、别人等。
+3. **hostname 唯一**：多个 Cursor Agent 若都 `--hostname=cursor-agent`，MagicDNS 会重名自动加 `-1`；给每个 Agent 用唯一 hostname 或直接连 IP。
+
+**并发副作用（重要）**：**停机是全局的**——`sudo kill -TERM 1` 会停整台容器，连着的所有 Agent 一起断、正在跑的用例被打断。多 Agent 场景下**别随手 `kill -TERM 1`**，交给空闲看门狗或人工控制台收尾，避免误伤他人任务。
