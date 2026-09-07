@@ -881,11 +881,45 @@ nodes:
     kind: decision
     by: agent
     title: "等待实机数字 TRACE 回报（按 BRANCHING 推理）"
-    statement: "用户按 RUNBOOK 跑 C0→C1→C2，手抄 REPORT_TEMPLATE；主控按 BRANCHING B0–B3 定下一刀；未回报前不派正确性/ByteDecode 刀"
+    statement: "用户按 RUNBOOK 跑 C0→C1→C2；主控按 BRANCHING B0–B3 定下一刀；未回报前不派正确性/ByteDecode 刀"
     deps: [F-e16-npu-suite-sim-smoke-pass, D-defer-correctness-until-hang, D-trace-digits]
-    status: active
+    status: inactive
+    replaced_by: D-exp-rxn-c2
+    evidence: "2026-09-07 用户回报 C0/C1/C2 单轮均 PASS last=111 → B3"
     targets: [Q-root-cause]
 
+  - id: F-npu-suite-c012-single-round-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "NPU_SUITE 单轮 C0–C2 全绿（Host 111）"
+    statement: "实机单轮：C0/C1/C2 均 PASS last=111；C1 host=100,101,102,105,110,111；C2 另含 104,106。套件覆盖结构单轮不粘性挂"
+    deps: [F-e16-npu-suite-sim-smoke-pass]
+    status: verified
+    basis: experiment
+    evidence: "用户打字 2026-09-07；qa/2026-09/2026-09-07-NPU套件单轮全绿与RxN.md"
+    repro: "cd graph_tests/npu_suite && bash run_all_npu.sh -v Ascend910B4"
+
+  - id: J-suite-blocks-not-single-round-sticky
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "套件积木阶梯单轮不足以复现粘性挂"
+    statement: "2-launch+SET4+形态粘合+独立 SampleNTT Â2×2 在 NPU 单轮可跑完；粘性要么多轮触发，要么在套件未覆盖的 Encrypt 特有结构（ENCRYPT-GAP）"
+    deps: [F-npu-suite-c012-single-round-pass, J-sim-not-sticky, F-hang-l18]
+    status: unverified
+    basis: heuristic
+    evidence: "BRANCHING B3；知识库 N7"
+
+  - id: D-exp-rxn-c2
+    domain: plan
+    kind: decision
+    by: agent
+    title: "B3 下一刀：R×N（默认 C2×7）"
+    statement: "单轮全绿后查多轮粘性；run_rxn_npu.sh 默认 C2 TOY_ROUNDS=7（对齐历史第7轮挂）；仍只认 Host TRACE；禁正确性"
+    deps: [F-npu-suite-c012-single-round-pass, J-suite-blocks-not-single-round-sticky, D-defer-correctness-until-hang]
+    status: active
+    targets: [Q-root-cause]
 
   - id: D-layer-2launch-skel
     domain: plan
@@ -924,7 +958,7 @@ nodes:
     kind: question
     title: "实机粘性挂的可操作根因？"
     statement: "何种可构造条件在 NPU 上充分导致 Encrypt 粘性挂，且能指导重写避免？"
-    deps: [F-hang-l18, F-empty-trace, J-encrypt-specific, J-omit-set4-eq-sticky]
+    deps: [F-hang-l18, F-empty-trace, J-encrypt-specific, J-omit-set4-eq-sticky, F-npu-suite-c012-single-round-pass]
     status: open
 
   - id: Q-how-to-write
@@ -936,6 +970,10 @@ nodes:
     status: open
 
 changelog:
+  - date: "2026-09-07"
+    change: |
+      NPU 单轮 C0–C2 全绿（F-npu-suite-c012-single-round-pass / N7）；
+      D-await-npu-digit-report → D-exp-rxn-c2（B3 → R×N C2×7）。
   - date: "2026-09-06"
     change: |
       沉淀 KeyGen vs Encrypt 结构差与 run.sh 重编不对称（§2.1–2.2 / H-K*）。

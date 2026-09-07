@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-07 — [NPU_SUITE 单轮全绿 · B3 → R×N](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
+
+关键字：**C0/C1/C2 PASS last=111** · **N7** · **B3** · **R×N C2×7** · Host-only · 禁正确性
+
 ### 2026-09-06 — [Encrypt 无卡死：知识库+新图谱](2026-09/2026-09-06-Encrypt无卡死知识库与新图谱.md)
 
 关键字：**专属知识库** · **rg-encrypt-npu-hangfree** · E01–E07 toys · SHAKE+NTT+basemul+INTT · SET4 · ≠Tag5T

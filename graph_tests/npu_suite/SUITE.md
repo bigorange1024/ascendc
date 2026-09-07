@@ -28,6 +28,7 @@
 | [`BRANCHING.md`](BRANCHING.md) | **主控锁**：测什么 × 反馈分支 → 下一刀推理 |
 | [`REPORT_TEMPLATE.md`](REPORT_TEMPLATE.md) | 主控对照用打字格式（用户勿填勿回传） |
 | [`run_all_npu.sh`](run_all_npu.sh) | 实机整份串行入口（C0→C1→C2） |
+| [`run_rxn_npu.sh`](run_rxn_npu.sh) | **B3 下一刀**：默认 C2×7 多轮粘性 |
 | [`run_smoke_sim.sh`](run_smoke_sim.sh) | 本地 SIM smoke（包装未坏；跳过 golden） |
 
 ---

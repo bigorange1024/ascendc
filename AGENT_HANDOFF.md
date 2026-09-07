@@ -1,21 +1,24 @@
 # AGENT_HANDOFF
 
-**日期**：2026-09-06  
+**日期**：2026-09-07  
 **分支**：`cursor/kem-2launch-sticky-1534`
 
 ## 当前真相
 
-- Encrypt 实机粘性挂根因未钉死；SIM 不能复现粘性挂。
-- **上机反馈硬约束**：用户**不能回传任何文件**，只能打字发 `REPORT:` / 三位编码。
-- **NPU 只认 Host 1xx**：设备 `200/400` 常不可见；旧报 `L1 TRACE 200 missing` 在 Host 已有 `111` 时 **不是粘性挂**。
-- ByteDecode / 正确性：挂因未明前不做。
+- **NPU_SUITE 单轮全绿（N7）**：C0/C1/C2 均 `PASS last=111`（用户打字回报）。
+- 分支 **B3**（`BRANCHING.md`）：套件覆盖结构单轮不粘性挂。
+- 下一刀：**R×N（C2×7）**；若仍绿 → ENCRYPT-GAP。
+- 反馈：只打字；NPU 只认 Host 1xx。
+- ByteDecode/正确性：挂因未明前不做。
 
-## 用户 2026-09-07 回报解读
+## 请用户跑 R×N
 
-- 未见醒目 C0/C1/C2（旧 banner 弱 + 编译刷屏）；见 `NTT Test`（gen_data 噪音）后 `[FAIL] L1 TRACE 200 missing`。
-- 该 FAIL 出现前 verify **已通过 Host 序列**（含 `111`）→ **C1 未粘性挂**；假红来自设备 TRACE。
-- 已修：Host-only verify + 大字 `REPORT:` + 失败继续跑完三档。
+```bash
+git pull --ff-only origin cursor/kem-2launch-sticky-1534
+source scripts/env.sh
+cd graph_tests/npu_suite
+bash run_rxn_npu.sh -v Ascend910B4
+# 默认：仅 C2，TOY_ROUNDS=7
+```
 
-## 请用户再跑一版
-
-`git pull` 后 `bash graph_tests/npu_suite/run_all_npu.sh -v Ascend910B4`，打字发回所有 `REPORT:` / `SUMMARY` 行。
+打字发回 `REPORT:` / 是否中途 HANG（例 `HANG last=110 round=?`）。

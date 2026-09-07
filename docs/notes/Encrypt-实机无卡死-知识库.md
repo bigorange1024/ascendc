@@ -54,6 +54,7 @@
 | N4 | 删 out* / 不 FORCE 复用旧二进制：可混淆现象，**不是**根因（详见 §2.2） |
 | N5 | Host 文案在 ACL launch **之前**打印 → “卡在 launch 文案”= Sync 未回，非文案本身 |
 | N6 | 2026-09-04：PKE Encrypt 第7轮仍挂 l18（当时路径仍可能含设备侧 μ 相关逻辑）；Hostμ 热修 **SIM 绿 ≠ 已证 NPU 不挂** |
+| N7 | **2026-09-07 NPU_SUITE 单轮全绿**：C0/C1/C2 均 `PASS last=111`（Host-only）。C1 host=`100,101,102,105,110,111`；C2 另含 `104,106`。→ 套件覆盖的 2-launch+SET4+形态粘合+Â2×2 **单轮不粘性挂**；分支 **B3**（见 `BRANCHING.md`） |
 
 ### 2.1 KeyGen 为何不挂（结构对照 · 2026-09-06）
 
@@ -212,26 +213,17 @@
   → 实机无卡死且正确
 ```
 
-当前：**k=2 形态粘合 + Â 完整 2×2 SampleNTT 已可 SIM 拼装**；握手不变量已采纳；**SIM 不能复现粘性挂**；**实机根因未钉死**。用户定调（2026-09-06）：**ByteDecode/正确性比对在卡死点之后，找出卡死原因前不做**。下一刀 = **卡死根因路径 → 筹备 NPU_SUITE 数字 TRACE**（禁复踩 retracted；禁正确性刀）。  
-进行中：自底向上新开 `graph_tests/toys/toy-eNN-*`；每刀回写 §3/§4 + 刷图谱。
+当前：**NPU_SUITE 单轮 C0–C2 全绿（N7）** → 分支 **B3**；下一刀 = **R×N（建议 C2×7）** 查粘性；若仍绿 → **ENCRYPT-GAP**（只读列旧 Encrypt 独有结构差，单因子探针；仍禁抄码、禁正确性）。  
+ByteDecode/权威交叉仍暂缓。SIM 积木 E01–E15 已齐；`Q-root-cause` 未钉死。
 
 ### 实验队列（短刀；禁复踩 §3）
 
 | ID | 目录 | 要回答的新问题 | 不测什么 |
 |----|------|----------------|----------|
-| **E01–E03** | 握手 / SoftSync可选 / 阶段齐 | ✅ |
-| **E04–E07** | 真 NTT→basemul→INTT（≠Tag5T 整图已标） | ✅ |
-| **E08** | +真 CBD；采样+代数主链齐 | ✅ |
-| **E09** | +真 Compress_d(d=4) | ✅ |
-| **E10** | +真 ByteEncode_d(128B) | ✅ |
-| **E11** | +真 Decompress_1(μ) | ✅ |
-| **E12** | +k=2 多 poly 真几何 | ✅ |
-| **E13** | Encrypt 形态粘合（两段角色 + c1∥c2） | ✅ |
-| **E14** | +真 SampleNTT（Â 上排 2 poly；独立 launch） | ✅ |
-| **E15** | +Â 完整 2×2 SampleNTT | ✅ |
-| **E16** | `npu_suite/` 数字 TRACE 套件（C0/C1/C2；SIM smoke 绿） | ✅ |
-| **下一步** | 用户整份上机填 `REPORT_TEMPLATE.md` → 主控按 `BRANCHING.md` 推理 | **等待实机数字** |
-| **上机推理** | 测什么×反馈分支 → [`graph_tests/npu_suite/BRANCHING.md`](../../graph_tests/npu_suite/BRANCHING.md) | **已锁** |
+| **E01–E15** | toys | SIM 积木/粘合/Â2×2 | ✅ |
+| **E16** | `npu_suite/` | 包装+SIM smoke；**实机单轮 C0–C2 全绿（N7）** | ✅ |
+| **下一步** | **R×N**（C2×7） | 单轮绿后是否多轮才粘性挂 | **进行中/待用户跑** |
+| **若 R×N 绿** | ENCRYPT-GAP | 套件未覆盖的 Encrypt 特有结构 | 禁抄实现、禁正确性 |
 | **缓** | t̂·ByteDecode / 权威交叉 / 更高 k | **卡死点之后再做** |
 
 ---
@@ -272,3 +264,4 @@
 | 2026-09-06 | E15 PASS：Â 完整 2×2；SIM 墙钟触顶，停派下一刀待策略确认 |
 | 2026-09-06 | 用户定调：卡死优先；ByteDecode/正确性比对暂缓；开 E16 NPU_SUITE 数字 TRACE |
 | 2026-09-06 | E16 PASS：npu_suite 包装+SIM smoke；等待实机 TRACE 回报 |
+| 2026-09-07 | NPU 单轮回报：C0/C1/C2 均 PASS last=111（N7）；进 B3 → 下一刀 R×N(C2×7) |
