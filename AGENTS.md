@@ -5,9 +5,10 @@
 > **详细底线**：[`.cursor/rules/ascendc-development.mdc`](.cursor/rules/ascendc-development.mdc)  
 > **Cloud VM 环境细节**：[`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md)（非 WSL 启动/运行坑与 SIM 绕过）  
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
+> **GitCode CANNLab 真机远程驱动**：[`docs/engineering/CANNLab接入与远程驱动.md`](docs/engineering/CANNLab接入与远程驱动.md)（Tailscale 免密 + `scripts/cannlab/`；`ASCEND_DEVICE_ID=0`；容器停机 SIGTERM→tini/控制台）  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-08-18（npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0）
+**最后刷新**：2026-09-07（合入 CANNLab 远程驱动文档/脚本；npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0；CANNLab 单卡强制 **0**）
 
 ---
 
@@ -116,6 +117,7 @@ Cloud VM（非 WSL）的完整启动/运行坑与 SIM 绕过见 [`Cursor-Cloud�
 | **`AGENTS.md`** | 开任务入口、硬门禁、文档地图、**Cloud 依赖步骤**变更时 |
 | **`Cursor-Cloud环境说明.md`** | Cloud VM（非 WSL）启动/运行坑、SIM 绕过；随该环境变化刷新 |
 | **`docs/engineering/NPU真机环境说明.md`** | 三环境对照、`runtime_env.sh`、`-r auto|verify`、真机冒烟；分流策略变更时 |
+| **`docs/engineering/CANNLab接入与远程驱动.md`** | Cursor Agent 经 Tailscale 远程驱动 GitCode CANNLab 真机 NPU；接入/停机/看门狗方式变更时（脚本在 `scripts/cannlab/`） |
 | **`AGENT_HANDOFF.md`** | **每日**任务结束：当前真相 + 下一 P0（不堆历史） |
 | **`README.md`** | 顶层目录/目标/当前状态表变更时 |
 | **`qa/YYYY-MM/…`** | 当日决策与踩坑；同日只一篇 |

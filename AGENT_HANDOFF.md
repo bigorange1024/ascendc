@@ -3,6 +3,15 @@
 **日期**：2026-09-07  
 **分支**：`cursor/kem-2launch-sticky-1534`
 
+## ★ 60 秒上手（本分支）
+
+1. 分支：**`cursor/kem-2launch-sticky-1534`**（≠ PR#19 / ≠ main 教材主线叙事）。  
+2. Cloud 首次：`bash scripts/clone-thirdparty.sh`（含 liboqs；另可 `ONLY=cannbot-skills`）。  
+3. 工作方式：知识库 + `rg-encrypt-npu-hangfree` + **cannbot-skills 就地读用**（不 vendor 进 `.cursor/skills`）。  
+4. 先读本文件 → `docs/notes/Encrypt-实机无卡死-知识库.md` → `graph_tests/ENCRYPT_REWRITE_PLAN.md` §0.1。  
+5. 写 AscendC 前：Rule + cannbot `ascendc-sync-audit` / `ascendc-api-best-practices` + `ascendc-engineering-notes`。  
+6. **真机 NPU（GitCode CANNLab，Cursor Agent 远程驱动）**：见 [`docs/engineering/CANNLab接入与远程驱动.md`](docs/engineering/CANNLab接入与远程驱动.md)。需 Secrets `TAILSCALE_AUTHKEY`(reusable)+`CANNLAB_SSH_KEY`；CANNLab 开机后 WebIDE 跑一次 `scripts/cannlab/agent_bootstrap.sh`；新 Agent 侧起 tailscale(userspace)+写私钥+`ssh … developer@cannlab-npu -p 2222`。**单卡实例必须 `ASCEND_DEVICE_ID=0`**；停机用 `sudo kill -TERM 1` 或控制台“关机”（容器无 systemd，poweroff 无效）。本分支上机默认跑 `graph_tests/npu_suite/`（R×N 等），**须用户当次授权**；反馈只打字 `REPORT:`。
+
 ## 工作方式（用户锁）
 
 - **本分支 ≠ 其它分支**（勿跟 PR#19 的 T01–T07 / N0–N10 混叙事）。
@@ -17,13 +26,14 @@
   - 库：`docs/notes/Encrypt-实机无卡死-知识库.md`（§0 图谱+cannbot 双开；§0.1 Skill 入口；§3.3 sync_audit SYNC-03 假阳性纪律）。
   - 图：`docs/rg-encrypt-npu-hangfree.yaml` + `.html`；`rg_validate` **OK**；升格 `D-graph-and-cannbot`；下一刀 `D-next-rxn-or-gap`。
   - cannbot 基线：已对 e01/e13/e15 + 只读 l18 跑 `sync_audit.py`（产物在 `/opt/cursor/artifacts/sync-audit-*.json`）。
+- **已从 main 合入 CANNLab 联机**：`docs/engineering/CANNLab接入与远程驱动.md` + `scripts/cannlab/{agent_bootstrap,agent_watchdog}.sh`。
 - NPU_SUITE 单轮 C0–C2 全绿（N7）→ B3。
-- 910B3 云主机用户已调通；**有时限 → 未经用户明确授权不得连实机**。
+- 910B3（CANNLab）**有时限 → 未经用户明确授权不得连实机**；连则 **device id=0**。
 - R×N / 下一编码刀：等用户下令；挂因未明前不做 ByteDecode/正确性。
 - 反馈：只打字三位码 / `REPORT:`。
 
 ## 下一动作（待用户令）
 
-1. 授权上机 → R×N 或指定刀；写码前先跑 cannbot `ascendc-sync-audit`，并回写图谱。  
+1. 授权上机 → 按 CANNLab 文档接入后跑 R×N（或指定刀）；写码前 cannbot `ascendc-sync-audit`，回写图谱；跑完按文档停机。  
 2. 授权继续 SIM 编码 → 按计划 §0.1 打开对应 cannbot Skill 再动 toys/enc；每刀后更新 F/J/D。  
 3. 暂停则只维护库/图，不连 910B3。

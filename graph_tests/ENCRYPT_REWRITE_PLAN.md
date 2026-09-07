@@ -62,6 +62,11 @@
 
 ## 3. 上机入口（有额度且用户下令时）
 
+**联机（2026-09-07 自 main 合入）**：[`docs/engineering/CANNLab接入与远程驱动.md`](../docs/engineering/CANNLab接入与远程驱动.md)  
+Secrets：`TAILSCALE_AUTHKEY` + `CANNLAB_SSH_KEY`；CANNLab 侧 `scripts/cannlab/agent_bootstrap.sh`；Agent 侧 Tailscale userspace + SSH `developer@cannlab-npu -p 2222`；**`ASCEND_DEVICE_ID=0`**；停机 `sudo kill -TERM 1` 或控制台关机。
+
+本分支默认刀仍是 `graph_tests/npu_suite/`（如 `run_rxn_npu.sh`），**勿**默认改跑 main 的 KeyGen 冒烟，除非用户点名。
+
 - 单轮套件：`graph_tests/npu_suite/TOMORROW_NPU.md` / `run_all_npu.sh`  
 - 多轮：`run_rxn_npu.sh` 或等价 `TOY_ROUNDS=7` 跑 C2  
 - 回报：`REPORT:` / `SUMMARY` 打字即可  
