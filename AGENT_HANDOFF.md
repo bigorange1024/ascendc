@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-01（有界方法论演示：入目标边数锁定；合稿衔接片 pptx 已删）
+> **最后刷新**：2026-09-07（新增 GitCode CANNLab 真机接入：Cursor Agent 经 Tailscale 远程驱动 910B3，add_custom + ML-KEM-1024 KeyGen 真机 verify PASS；见 §60 秒上手第 6 条）
 
 ---
 
@@ -14,6 +14,7 @@
 3. **工作分支**：`research/formal-lang-dag`（已 fast-forward 合入 `main@718590c`）。教材第9章对照实验：**SIM tick 表已填**；NPU 14 档待实机 [`scripts/npu_kem_one_trip.sh`](scripts/npu_kem_one_trip.sh)（清单 [`docs/research/教材KEM实机测量清单.md`](docs/research/教材KEM实机测量清单.md)）。  
 4. 先读本文件 → [`qa/TODO.md`](qa/TODO.md) → [`qa/2026-08/2026-08-19-教材第9章对照实验提纲.md`](qa/2026-08/2026-08-19-教材第9章对照实验提纲.md) + 当日 KEM 纪要。
 5. 写 AscendC 前：Rule + [`ascendc-engineering-notes`](.cursor/skills/ascendc-engineering-notes/SKILL.md)（含 §8.1 排程）。
+6. **真机 NPU（GitCode CANNLab，Cursor Agent 远程驱动）**：见 [`docs/engineering/CANNLab接入与远程驱动.md`](docs/engineering/CANNLab接入与远程驱动.md)。需 Secrets `TAILSCALE_AUTHKEY`(reusable)+`CANNLAB_SSH_KEY`；CANNLab 开机后 WebIDE 跑一次 `scripts/cannlab/agent_bootstrap.sh`；新 Agent 侧起 tailscale(userspace)+写私钥+`ssh … developer@cannlab-npu -p 2222`。**单卡实例必须 `ASCEND_DEVICE_ID=0`**；停机用 `sudo kill -TERM 1` 或控制台“关机”（容器无 systemd，poweroff 无效）。已验证 add_custom + ML-KEM-1024 KeyGen 真机 `verify PASS`。
 
 ### 刚关闭
 
