@@ -2,7 +2,7 @@
 
 > **用途**：新 Cloud / 本地 Agent 的**唯一短真相**；本文件优先于长对话历史。  
 > **入口**：[`AGENTS.md`](AGENTS.md) → **本文件** → Rule / Skill。  
-> **最后刷新**：2026-09-07（X21：N0–N10 实为**秒失败**+旧脚本吞日志；须 pull 后只跑 N0 看 device/why）
+> **最后刷新**：2026-09-07（Encrypt：**cannbot 直调从头做**；910B3 已通但禁擅自连；等 CP1 拍板）
 
 ---
 
@@ -22,11 +22,11 @@
 
 | 项 | 说明 |
 |----|------|
-| **P0（当次）** | **X20：N0–N10 全挂 → 环境刀**；用户只跑 N0 并打字：是否超时 / 首行错误 / SOC+device |
-| **已完成** | T01–T07 **PASS**（X15）；**NPU 一次测套件已备齐**（打字反馈） |
-| **上机入口** | 操作卡 `docs/engineering/Encrypt卡死重写-实机操作卡.md`；命令 `bash scripts/npu_hang_rewrite_one_trip.sh` → **只打字**贴 TYPE_BACK |
-| **Encrypt 最终** | NPU Encrypt 不再 SynchronizeStream 卡死且最终正确（`Q-ULT`） |
-| **非目标（本阶段）** | liboqs 对齐、性能打满、抄旧 Encrypt 修补丁 |
+| **P0（当次）** | **CP1 拍板**：架构/落点/正确性节奏/Hostμ/是否 vendor cannbot skills（见 `.cannbot/mlkem-pke-encrypt/01-requirement.md` §9） |
+| **已完成** | T01–T07 SIM；cannbot 绑定计划 + 需求草稿（X22） |
+| **上机** | 910B3 已调通；**未经明示不连**；短窗只跑用户指定命令 |
+| **Encrypt 最终** | NPU 不卡死且正确；方法 = cannbot 直调全流程 |
+| **非目标（首期）** | ACLNN/图模式/性能打满；抄旧 Encrypt；擅自改根 AGENTS 的 cannbot init |
 
 **别做**：复踩 5/7、Wait 中 SyncAll、自造 SoftSync、抄旧 Encrypt；同质 toys 再派；**要求用户回传文件/tar/日志**；无打字反馈就开 enc_related。
 
@@ -54,9 +54,18 @@
 
 ## ★ 下一刀
 
-1. **不要**继续全套 N0–N10 / 同质 toys / 怪 Encrypt。  
-2. 用户只跑 **N0 KeyGen**（或最短 env 冒烟），打字回报：  
-   - 秒挂还是等到超时？  
-   - 屏幕首条 ERROR / ACL / preflight / cmake 关键字  
-   - `npu-smi info` 里芯片型号 + 用的 `ASCEND_DEVICE_ID`  
-3. 收到后再定：换 SOC_VERSION / 清卡 / skip-preflight / 显式 device。
+1. **不要**全套 N0–N10 / 同质 toys / 怪 Encrypt（X15/X21）。  
+2. 用户先确认已 pull 到含 `tee`/`device=`/`why=` 的提交，再**只跑 N0**：
+
+```bash
+cd ~/ascendc   # 或你的仓根
+git pull
+# 应能看到脚本里有 tee 与 device= 字样：
+grep -n 'tee\|device=' scripts/npu_hang_rewrite_one_trip.sh | head
+unset ASCEND_DEVICE_ID
+export SOC_VERSION=Ascend910B4
+NPU_HANG_SKIP_TOYS=1 NPU_HANG_SKIP_PROD=1 bash scripts/npu_hang_rewrite_one_trip.sh
+```
+
+3. 打字回传一行即可，例如：`N0 失败 rc=1 device=1 why=…`（把屏幕上 why= 或末几行关键字打回来）。  
+4. 若仍「只有 FAIL、无 device=」→ 说明还没拉到新脚本，先解决 git 同步，不要继续测 Encrypt。
