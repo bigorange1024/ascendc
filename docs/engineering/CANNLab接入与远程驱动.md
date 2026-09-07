@@ -52,6 +52,9 @@ sudo tailscaled --tun=userspace-networking --socks5-server=localhost:1055 \
   --socket=/var/run/tailscale/tailscaled.sock >/tmp/tailscaled.log 2>&1 &
 sleep 3
 sudo tailscale --socket=/var/run/tailscale/tailscaled.sock up --authkey="$TAILSCALE_AUTHKEY" --hostname=cursor-agent
+# 若会话闲置数十分钟后本节点被摘除（tailscaled 日志 `PollNetMap ... 404: node not found`，
+# status 里自己显示 offline），用 --reset 重新注册（authkey 仍在 env）：
+#   sudo tailscale --socket=/var/run/tailscale/tailscaled.sock up --reset --authkey="$TAILSCALE_AUTHKEY" --hostname=cursor-agent
 
 # 2) 写入 CANNLab 私钥
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
@@ -86,6 +89,8 @@ R
 | **停机** | `poweroff/halt/shutdown` 无效（容器 PID1=tini，无 systemd）；`kill -9 1` 被内核拦截 | **`sudo kill -TERM 1`**（tini 优雅退出、节点下线）；**权威停计费以控制台“关机/停止”为准** |
 | **持久性** | 重启后 tailscale/sshd 消失 | 仅 `/mnt/workspace`、`/home` 持久；每次开机重跑 `agent_bootstrap.sh` |
 | **GitHub 抖动** | 偶发 `curl github 000` | 多为瞬时；重试即可，实例出网整体可达（gitcode/pypi/github 均 200） |
+| **DERP 延迟/后台挂起** | 经 DERP 中继时 ssh 偏慢；`nohup ... &` 后台跑 `run.sh` 会让 ssh 通道**迟迟不返回** | **前台**跑 `run.sh`（加 `-o ServerAliveInterval=15`），用 `timeout` 兜底；不要在同一 ssh 里后台化再 tail |
+| **闲置节点被摘除** | 会话闲置后**本机** tailscale 节点被摘（`404 node not found`），连 CANNLab 报 SOCKS 失败 | Cursor 侧 `up --reset --authkey="$TAILSCALE_AUTHKEY"` 重注册（见 §4）；新起的 Agent 首次 `up` 不受影响 |
 
 ## 7. 停卡时（三选一）
 
@@ -98,3 +103,4 @@ R
 - `ascendc-tests/add_custom`：`-r npu` 上板对拍 `[SUCCESS] output matches golden (Ascend910B3)`。
 - `examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-keygen-k4`：真机两 launch
   （`f203_keygen_prep` + `mmad_custom`），`ek_kem`=1568B / `dk_kem`=3168B 与 python 参考 `max=0` 逐字节一致，`[SUCCESS]`。
+- **冷启动全链自检（2026-09-07 复跑）**：全新 Cursor 会话 → `up --reset` 重注册 → `ssh cannlab-npu:2222`（新实例卡槽 `davinci6`，`ASCEND_DEVICE_ID=0`）→ 仓库 `git pull` 命中 `scripts/cannlab/`+本文档 → KeyGen 真机 `[verify] KEM KeyGen overall PASS` → `sudo kill -TERM 1` 停机、节点下线。整套 handoff 闭环可用。
