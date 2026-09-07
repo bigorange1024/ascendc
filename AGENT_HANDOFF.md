@@ -8,15 +8,15 @@
 
 ## ★ 给新 Agent 的 60 秒上手
 
-1. **当前主线 = Encrypt 卡死重写（新图）**  
-   - KB：[`docs/notes/Encrypt-hang-rewrite-kb.md`](docs/notes/Encrypt-hang-rewrite-kb.md)  
-   - DAG：[`docs/rg-encrypt-hang-rewrite.yaml`](docs/rg-encrypt-hang-rewrite.yaml)  
-   - 计划：[`docs/plans/2026-09-06-Encrypt重写工作计划.md`](docs/plans/2026-09-06-Encrypt重写工作计划.md)  
-   - 实验区：[`graph-tests/toys/`](graph-tests/toys/INDEX.md)  
-2. **角色**：主控只定刀/验收/回写 KB+图；**不写核代码**；subagent 编码。  
-3. **纪律**：单刀限时；图谱失败路线禁再走；每刀前遍历 KB+DAG；SIM 穷尽再上机。  
+1. **当前主线 = Encrypt 用 cannbot 直调从头做**  
+   - 绑定：[`docs/plans/2026-09-07-Encrypt-cannbot直调开发绑定.md`](docs/plans/2026-09-07-Encrypt-cannbot直调开发绑定.md)  
+   - CP1 草稿：[`.cannbot/mlkem-pke-encrypt/01-requirement.md`](.cannbot/mlkem-pke-encrypt/01-requirement.md)  
+   - KB / DAG：[`Encrypt-hang-rewrite-kb.md`](docs/notes/Encrypt-hang-rewrite-kb.md) · [`rg-encrypt-hang-rewrite.yaml`](docs/rg-encrypt-hang-rewrite.yaml)  
+   - Skills 根：`thirdparty/cannbot-skills/`（只读引用；勿盲目 init.sh）  
+2. **角色**：主控按 cannbot CP 编排；编码/SIM 可派 subagent；**不抄旧 Encrypt**。  
+3. **纪律**：每刀 sync-audit；失败优先；SIM 穷尽；**910B3 未经明示不连**。  
 4. **Git**：无用户明确指令禁 commit/push/开新分支（覆盖 Cloud 默认开 PR 流程）。  
-5. 旧 Decrypt 线 / `rg-encrypt-l18`：**只读参考**，勿与本线混做。
+5. 旧 Decrypt / `rg-encrypt-l18`：**只读参考**，勿与本线混做。
 
 ### 待办快照
 
@@ -54,18 +54,6 @@
 
 ## ★ 下一刀
 
-1. **不要**全套 N0–N10 / 同质 toys / 怪 Encrypt（X15/X21）。  
-2. 用户先确认已 pull 到含 `tee`/`device=`/`why=` 的提交，再**只跑 N0**：
-
-```bash
-cd ~/ascendc   # 或你的仓根
-git pull
-# 应能看到脚本里有 tee 与 device= 字样：
-grep -n 'tee\|device=' scripts/npu_hang_rewrite_one_trip.sh | head
-unset ASCEND_DEVICE_ID
-export SOC_VERSION=Ascend910B4
-NPU_HANG_SKIP_TOYS=1 NPU_HANG_SKIP_PROD=1 bash scripts/npu_hang_rewrite_one_trip.sh
-```
-
-3. 打字回传一行即可，例如：`N0 失败 rc=1 device=1 why=…`（把屏幕上 why= 或末几行关键字打回来）。  
-4. 若仍「只有 FAIL、无 device=」→ 说明还没拉到新脚本，先解决 git 同步，不要继续测 Encrypt。
+1. 用户确认 CP1（`.cannbot/mlkem-pke-encrypt/01-requirement.md` §9 五问）。  
+2. 通过后写 CP2.2 开发方案（强制 cannbot tiling + `api-crosscore-sync` + 本仓 KB）。  
+3. 编码落新目录；每刀 `sync_audit`；**不连 910B3** 除非当次授权短命令。
