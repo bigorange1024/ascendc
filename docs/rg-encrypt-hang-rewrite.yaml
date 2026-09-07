@@ -556,10 +556,31 @@ nodes:
   statement: ER01：enc_related 首刀——Encrypt形双段launch骨架（prep桩+MIX计算壳），生产GATE时序+真积木级有界体量；禁抄旧Encrypt；编码后必跑 cannbot sync_audit；验收SIM不挂（正确性非门禁）
   deps:
   - D-CANNBOT-ENC-RELATED
+  status: inactive
+  evidence: PASS CPU+SIM；见 graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/STATUS.md；继任 D-EXP-ER02
+- id: F-ER01-SIM-PASS
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  statement: ER01 Encrypt外形2launch+生产GATE+真Vec MAC：CPU+SIM不挂；SIM可缺401（X13）；sync_audit 红线16条SYNC-02未否决
+  deps:
+  - D-EXP-ER01
+  status: verified
+  evidence: STATUS.md；artifacts ER01-cpu/sim.log
+- id: D-EXP-ER02
+  domain: goals
+  kind: decision
+  by: agent
+  statement: ER02：在ER01目录或旁系修 cannbot sync_audit 红线 SYNC-02（MTE2→V / V→Scalar 缺同步）；禁否决脚本候选；验收仍SIM不挂+红线清零或仅剩已记录能力边界
+  deps:
+  - F-ER01-SIM-PASS
+  - D-CANNBOT-ENC-RELATED
   status: active
   targets:
   - Q-ULT
 changelog:
+- date: '2026-09-07'
+  change: ER01 PASS；F-ER01-SIM-PASS；开 D-EXP-ER02（清 SYNC-02 红线）。
 - date: '2026-09-07'
   change: 用户锁定 cannbot+图谱；D-STOP-DISCUSS inactive；D-CANNBOT-ENC-RELATED + D-EXP-ER01 active。
 - date: '2026-09-06'

@@ -86,6 +86,7 @@ CrossCore 通道习惯：模板 channel 与 `PIPE_MTE2` 一类；flag 字面量 
 | X21 | 用户澄清：N0–N10 **秒失败**；屏上**只有 FAIL**；无 ERROR/ACL/preflight/cmake/npu-smi；910B4；**未见卡号** | (1) 秒退 ≠ SynchronizeStream 卡死（真卡死多为 timeout 124）；(2) 只见 FAIL = 多半跑了 **tee 前旧套件**（日志进文件不刷屏）；(3) 旧套件仍会 `export ASCEND_DEVICE_ID`（stable→1 / toys→3），**不是**「没设就默认 0」——只是没打印；(4) 须 `git pull` 到含 tee/device/why 的提交后 **只跑 N0**，打字回 `device=` + `why=` / 末行关键字 |
 | X22 | 用户 2026-09-07：910B3 云主机已调通但机时受限；目标改为 **充分使用 cannbot-skills 从头做 Encrypt** | 开发方法升为 cannbot 直调 CP 链（见 `docs/plans/2026-09-07-Encrypt-cannbot直调开发绑定.md`）；未经明示 **不连** 910B3；禁盲目 `init.sh` 改写根 AGENTS |
 | X23 | 用户白话澄清五问 | **图谱实验继续** + 主动用 cannbot；核心仍卡死；不 vendor；Hostμ/芯片缩写不挡路；开 `enc_related` ER01 |
+| X24 | ER01 PASS 但 sync_audit **16×SYNC-02 红线** | SIM 不挂 ≠ 同步审计干净；cannbot 纪律禁止否决红线 → 下一刀 ER02 先清 MTE2↔V/Scalar 同步，再加体量 |
 
 ---
 
