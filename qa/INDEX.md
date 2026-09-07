@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-07 — [NPU_SUITE 单轮全绿 · B3 → R×N · 库图v2/cannbot](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
+### 2026-09-07 — [NPU_SUITE · 库图v2 · CANNLab · 交接新Agent取证](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
 
-关键字：**C0/C1/C2 PASS last=111** · **N7** · **B3** · **R×N C2×7** · **知识库/图谱 v2** · **cannbot 双开** · **合入 CANNLab 联机** · Host-only · 禁正确性
+关键字：**C0/C1/C2 PASS** · **N7/B3** · **库图 v2/cannbot** · **stable←main** · **CANNLab** · **Secrets 须新VM注入** · **交接 hang_observe Encaps/Decaps**
 
 ### 2026-09-06 — [Encrypt 无卡死：知识库+新图谱](2026-09/2026-09-06-Encrypt无卡死知识库与新图谱.md)
 
