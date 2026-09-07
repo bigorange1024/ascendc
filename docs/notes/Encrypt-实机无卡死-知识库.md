@@ -2,7 +2,8 @@
 
 **焦点**：最终目标 = Encrypt **实机无卡死且正确**；当前问题 = **会卡死**。  
 **配套图谱**：[`docs/rg-encrypt-npu-hangfree.yaml`](../rg-encrypt-npu-hangfree.yaml)  
-**计划**：[`graph_tests/ENCRYPT_REWRITE_PLAN.md`](../../graph_tests/ENCRYPT_REWRITE_PLAN.md)  
+**计划**：[`graph_tests/ENCRYPT_REWRITE_PLAN.md`](../../graph_tests/ENCRYPT_REWRITE_PLAN.md)（**本分支工作方式**含 cannbot-skills）  
+**AscendC 工程层**：[`thirdparty/cannbot-skills`](../../thirdparty/cannbot-skills)（就地充分使用；不整仓进 `.cursor/skills/`）  
 **维护**：主控；短、准、常改；**失败 ≥ 成功**；禁流水账。  
 **旧材料**：`docs/rg-kem-encrypt-hang.yaml` 等只作参考，不强制合入。
 
@@ -12,11 +13,23 @@
 
 | 角色 | 职责 | 边界 |
 |------|------|------|
-| **主控** | 拥有目标与问题；维护本库+DAG；设计实验与验收；派发/回收；据结果选下一刀；决定何时上机 | 不做实验编码实现 |
-| **Subagent** | 按目标+验收执行实验（实现、跑测、回报） | 不定方向、不改图谱/本库 |
+| **主控** | 拥有目标与问题；维护本库+DAG；设计实验与验收；派发/回收；据结果选下一刀；决定何时上机；**写/改 AscendC 前按计划打开 cannbot 对应 Skill** | 不做与本刀无关的大范围抄码 |
+| **Subagent** | 按目标+验收执行实验（实现、跑测、回报）；同步/卡死须跑 cannbot 审计脚本 | 不定方向、不改图谱/本库 |
 
 各写本职所需的一切产物；**按职责分工，不按文件后缀分工**。  
 **已有代码全冻结**：只读参考，禁止改；新实验新目录。
+
+### 0.0 cannbot-skills（用户锁 · 2026-09-07）
+
+目的：用昇腾官方 CANNBot Skills **充分辅助从头做好 Encrypt**，而非当文档摆设。
+
+| 可 | 不可 |
+|----|------|
+| 就地读 `thirdparty/cannbot-skills/ops/...`；跑其 `scripts/` | 整仓 `install` 进 Cursor 盖过本仓场景 Skill |
+| 同步/卡死/API/环境/tiling 以 cannbot 为工程显微镜 | 用 Catlass/Blaze/PyPTO 主生成 Encrypt（路径不同构） |
+| 领域假说/挂因阶梯仍以本库+图谱为准 | 与 PR#19 分支混用同一套 toys 叙事 |
+
+阶段对照见计划 §0.1；卡死优先 **`ascendc-sync-audit`** + **`ascendc-crash-debug`**。
 
 ---
 
@@ -265,3 +278,4 @@ ByteDecode/权威交叉仍暂缓。SIM 积木 E01–E15 已齐；`Q-root-cause` 
 | 2026-09-06 | 用户定调：卡死优先；ByteDecode/正确性比对暂缓；开 E16 NPU_SUITE 数字 TRACE |
 | 2026-09-06 | E16 PASS：npu_suite 包装+SIM smoke；等待实机 TRACE 回报 |
 | 2026-09-07 | NPU 单轮回报：C0/C1/C2 均 PASS last=111（N7）；进 B3 → 下一刀 R×N(C2×7) |
+| 2026-09-07 | 用户锁：充分使用 `thirdparty/cannbot-skills` 从头做 Encrypt；不 vendor 草案；910B3 已通但须授权才连 |

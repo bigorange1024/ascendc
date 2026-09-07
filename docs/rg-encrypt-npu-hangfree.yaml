@@ -911,13 +911,24 @@ nodes:
     basis: heuristic
     evidence: "BRANCHING B3；知识库 N7"
 
+  - id: D-use-cannbot-skills
+    domain: method
+    kind: decision
+    by: human
+    title: "充分使用 thirdparty/cannbot-skills 做 Encrypt AscendC 工程层"
+    statement: "本分支写/改 Encrypt 相关 AscendC 前按 ENCRYPT_REWRITE_PLAN §0.1 打开 cannbot 对应 Skill（优先 sync-audit/crash-debug/api）；就地读用，不整仓拷进 .cursor/skills、不做 vendor 草案；领域路线仍以本库+本图谱为准"
+    deps: [D-goal, D-roles, D-no-copy-encrypt]
+    status: active
+    evidence: "用户 2026-09-07：目的是充分使用 cannbot 从头做好 Encrypt"
+    targets: [Q-how-to-write, Q-root-cause]
+
   - id: D-exp-rxn-c2
     domain: plan
     kind: decision
     by: agent
     title: "B3 下一刀：R×N（默认 C2×7）"
-    statement: "单轮全绿后查多轮粘性；run_rxn_npu.sh 默认 C2 TOY_ROUNDS=7（对齐历史第7轮挂）；仍只认 Host TRACE；禁正确性"
-    deps: [F-npu-suite-c012-single-round-pass, J-suite-blocks-not-single-round-sticky, D-defer-correctness-until-hang]
+    statement: "单轮全绿后查多轮粘性；run_rxn_npu.sh 默认 C2 TOY_ROUNDS=7（对齐历史第7轮挂）；仍只认 Host TRACE；禁正确性；上机须用户授权（910B3 有时限）"
+    deps: [F-npu-suite-c012-single-round-pass, J-suite-blocks-not-single-round-sticky, D-defer-correctness-until-hang, D-use-cannbot-skills]
     status: active
     targets: [Q-root-cause]
 
@@ -970,6 +981,9 @@ nodes:
     status: open
 
 changelog:
+  - date: "2026-09-07"
+    change: |
+      D-use-cannbot-skills：充分使用 thirdparty/cannbot-skills 做 Encrypt 工程层（用户锁）。
   - date: "2026-09-07"
     change: |
       NPU 单轮 C0–C2 全绿（F-npu-suite-c012-single-round-pass / N7）；
