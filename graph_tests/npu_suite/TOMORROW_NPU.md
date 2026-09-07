@@ -1,6 +1,7 @@
 # 实机上机 — 下一刀 R×N（多轮粘性）
 
 > **单轮 C0–C2 已全绿（2026-09-07）**。本页只跑多轮。  
+> **联机**：[`docs/engineering/CANNLab接入与远程驱动.md`](../../docs/engineering/CANNLab接入与远程驱动.md)（910B3 单卡 **`ASCEND_DEVICE_ID=0`**；停机见该文）。  
 > **反馈**：只打字发 `REPORT:` / `SUMMARY`；勿回传文件。
 
 ---
