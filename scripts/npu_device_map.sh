@@ -50,6 +50,10 @@ npu_device_class_for_path() {
     */ascendc-tests/* | */ascendc-tests)
         printf '%s\n' tests
         ;;
+    */graph-tests/* | */graph-tests)
+        # toys / enc_related：与 ascendc-tests 同卡，避免污染 stable
+        printf '%s\n' tests
+        ;;
     *)
         printf '%s\n' other
         ;;
@@ -100,6 +104,7 @@ npu_device_map_self_test() {
     _expect "${root}/examples/incubating/ml-kem/ml-kem-1024/exp-fips203-mlkem-kem-encaps-k4" examples 2
     _expect "${root}/examples/incubating/ml-kem/ml-kem-512/exp-fips203-mlkem-pke-encrypt-k2" examples 2
     _expect "${root}/ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4" tests 3
+    _expect "${root}/graph-tests/toys/T01-mix-ntt13-handshake" tests 3
     _expect "${root}/ascendc-tests/add_custom" tests 3
     _expect "${root}/scripts" other 0
     # 显式覆盖不被 apply 改掉

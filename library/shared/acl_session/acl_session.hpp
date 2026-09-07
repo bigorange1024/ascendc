@@ -175,15 +175,17 @@ inline bool EnvFlagOn(const char *name)
 
 /**
  * 阻塞等 stream 结束；若 traceDev 非空，每隔 pollMs 把 int32 槽位 D2H 打到 stderr，
- * 用于定位 `f203_encrypt_l18_l19` CrossCore 卡在哪一 FusedTraceStage。
+ * 用于定位 fused kernel CrossCore 卡在哪一分段。
+ * @param tag stderr 前缀（如 "[l18-trace]" / "[decrypt-trace]"）
  * @return aclrtSynchronizeStream 的返回码（轮询线程侧）。
  */
-inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, int32_t *traceHost, int nStages,
-                                            int pollMs = 500)
+inline aclError SynchronizeStreamMaybeTraceTagged(aclrtStream stream, void *traceDev, int32_t *traceHost, int nStages,
+                                                const char *tag, int pollMs = 500)
 {
     if (traceDev == nullptr || traceHost == nullptr || nStages <= 0) {
         return aclrtSynchronizeStream(stream);
     }
+    const char *prefix = (tag != nullptr && tag[0] != '\0') ? tag : "[fused-trace]";
 
     std::atomic<aclError> syncRc{ACL_ERROR_NONE};
     std::atomic<bool> done{false};
@@ -209,7 +211,7 @@ inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, 
         }
         if (pop != lastPop) {
             lastPop = pop;
-            std::fprintf(stderr, "[l18-trace] stages set=%d/%d :", pop, nStages);
+            std::fprintf(stderr, "%s stages set=%d/%d :", prefix, pop, nStages);
             for (int i = 0; i < nStages; ++i) {
                 if (traceHost[i] != 0) {
                     std::fprintf(stderr, " %d", i);
@@ -221,6 +223,17 @@ inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, 
     }
     syncer.join();
     return syncRc.load(std::memory_order_acquire);
+}
+
+/**
+ * 阻塞等 stream 结束；若 traceDev 非空，每隔 pollMs 把 int32 槽位 D2H 打到 stderr，
+ * 用于定位 `f203_encrypt_l18_l19` CrossCore 卡在哪一 FusedTraceStage。
+ * @return aclrtSynchronizeStream 的返回码（轮询线程侧）。
+ */
+inline aclError SynchronizeStreamMaybeTrace(aclrtStream stream, void *traceDev, int32_t *traceHost, int nStages,
+                                            int pollMs = 500)
+{
+    return SynchronizeStreamMaybeTraceTagged(stream, traceDev, traceHost, nStages, "[l18-trace]", pollMs);
 }
 
 /**

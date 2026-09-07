@@ -40,6 +40,7 @@
 | **P0** | **T768-post** | ML-KEM-768 可选后续：device KAT 加压、D14↔D15 PKE RT、stable-768（须 `#交付#`） | **KEM liboqs 交叉 RT 已绿**（2026-07-27：`USE_LIBOQS=1` CPU×1+SIM×1）；其余仍可选；禁 stable-768 |
 | **P1** | **T23** | **实验**：多 **AI Core** 并行跑 **stable 算子**（先 **2 Core**；每 Core 一份独立实例，乃至一轮 **round-trip**） | **待开工**；理论：**N 颗 AI Core ≈ N 路并行 stable**（与单算子内双 AIV 分片不同） |
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
+| **P0** | **T-decrypt-fused-hang** | stable decrypt prod input-only 卡死：独立图谱 [`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)；DGT-1..4 toy SIM 未挂；**禁**以催上机替代更近生产体量实验 | **打开**（2026-09-03） |
 | **P0** | **T2-npu-l18** | Encaps/Decaps 实机卡在 `l18_l19` SynchronizeStream：按 [2026-08-05 纪要](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md) E0–E2（`F203_L18_TRACE`）收证据；**未读 trace 禁改 FSM** | **诊断已冻结**；实机跑 [`scripts/npu_kem_real_machine_suite.sh`](../scripts/npu_kem_real_machine_suite.sh)（`SKIP_L18_RISK=0` + `PHASE=e1`） |
 | **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境；先关 T2-npu-l18 |
 | **P1** | **T2-npu-env** | 实机 env 适配（`env.sh` 回写 CANN_HOME、`run.sh` REPO_ROOT、`ASCEND_DEVICE_ID`） | **已合入** 1024 探针×7+stable×7；**08-18** 分卡 1/2/3；**08-19** 教材 14 档 + incubating/frozen `run.sh` 对齐 `npu_case_env` + `MSPROF_MODE=app`（[`npu_kem_textbook_perf.sh`](../scripts/npu_kem_textbook_perf.sh)） |

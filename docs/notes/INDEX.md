@@ -48,6 +48,12 @@
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
 | [AscendC多环境运行纪要.md](AscendC多环境运行纪要.md) | **WSL / Cloud / 真机**：三档 cpu|sim|npu、`runtime_env`、Clang `-Werror`、SIM dump 分轨 |
 
+## Encrypt 卡死重写（进行中）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-hang-rewrite-kb.md](Encrypt-hang-rewrite-kb.md) | **专属知识库**：只攻 SynchronizeStream 卡死；失败优先；配套 [`rg-encrypt-hang-rewrite.yaml`](../rg-encrypt-hang-rewrite.yaml) |
+
 ## 治理与模板
 
 | 文件 | 说明 |

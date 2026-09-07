@@ -11,6 +11,9 @@
 | [Cloud-Agent额度与验收分层.md](Cloud-Agent额度与验收分层.md) | Cloud 额度经验（512 案例）；**轻验/重验**；他工程省额度；**不**降低本仓出口门禁 |
 | [NPU真机环境说明.md](NPU真机环境说明.md) | WSL / Cloud / 真机对照；`scripts/runtime_env.sh`；`-r auto` / `-r verify`；WSL 禁 npu；探针接入范围；**§3.1 只读体检**、**§3.2 借入机体检回填（9.1.0-beta.3 / aarch64）**、**§4 上板适配清单**；**§4.1/`MSPROF_MODE=app` 多 launch 测准**、**§4.6 教材 14 档** |
 | [实机一次搬码验收清单.md](实机一次搬码验收清单.md) | 借入 NPU **一条命令测全**：`npu_kem_one_trip.sh` + `BRING_BACK.tar.gz`；E1 trace 在教材 Encaps 之前 |
+| [Encrypt卡死重写-实机操作卡.md](Encrypt卡死重写-实机操作卡.md) | **明天上机照着做**（测什么 / 一条命令 / 只打字 TYPE_BACK） |
+| [Encrypt卡死重写-实机一次测清单.md](Encrypt卡死重写-实机一次测清单.md) | Encrypt 卡死一次测详版：`npu_hang_rewrite_one_trip.sh`（N0–N10）；**只打字反馈** |
+| [Encrypt卡死重写-sync清单.txt](Encrypt卡死重写-sync清单.txt) | 上机最小 sync 路径列表（toys + stable 1024 四档 + 脚本） |
 | [../notes/AscendC多环境运行纪要.md](../notes/AscendC多环境运行纪要.md) | 多环境**原理纪要**（不变量、Clang/`sim_env`、门禁纪律） |
 
 ---

@@ -281,6 +281,11 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *vDev = nullptr;
     uint8_t *cDev = nullptr;
     uint8_t *tHatDev = nullptr;  // 保持 nullptr：t̂ 在 l18_l19 内 ByteDecode₁₂ 驻留 UB
+    uint8_t *traceDev = nullptr;
+    int32_t *traceHost = nullptr;
+    constexpr int kFusedTraceStages = 16;
+    // 实机卡死诊断：F203_L18_TRACE=1 时传 fused-trace 槽；挂住时 stderr 打 [l18-trace] 已到下标
+    const bool l18Trace = ascendc_acl::EnvFlagOn("F203_L18_TRACE");
 
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&ekPkeDev), kEkBytes, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&coinsDev), kCoinsSize, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -297,6 +302,15 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&uDev), uSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&vDev), vSize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&cDev), cBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    if (l18Trace) {
+        CHECK_ACL(aclrtMalloc(reinterpret_cast<void **>(&traceDev),
+                              static_cast<size_t>(kFusedTraceStages) * sizeof(int32_t), ACL_MEM_MALLOC_HUGE_FIRST));
+        CHECK_ACL(aclrtMallocHost(reinterpret_cast<void **>(&traceHost),
+                                  static_cast<size_t>(kFusedTraceStages) * sizeof(int32_t)));
+        CHECK_ACL(aclrtMemset(traceDev, static_cast<size_t>(kFusedTraceStages) * sizeof(int32_t), 0,
+                              static_cast<size_t>(kFusedTraceStages) * sizeof(int32_t)));
+        std::fprintf(stderr, "[full] F203_L18_TRACE=1：l18_l19 将轮询 fused-trace 槽位\n");
+    }
 
     size_t rs = 0;
     if (!ReadFile("./input/ek_pke.bin", rs, ekPkeHost, kEkBytes) || rs != kEkBytes) {
@@ -333,11 +347,13 @@ int32_t main(int32_t argc, char *argv[])
     uint8_t *e2Dev = reDev + F203EncryptFull::kReE2ByteOff;
 
     // Launch 2：l18_l19（compute + e₂+=μ + 内联 tail pack → c）
+    // 调试：F203_L18_TRACE=1 时传 traceGm；卡住时 stderr 打 [l18-trace] 已到 FusedTraceStage 下标
     std::fprintf(stderr, "[full] launch 2 f203_encrypt_l18_l19 (compute + inline tail pack -> c)\n");
     ACLRT_LAUNCH_KERNEL(f203_encrypt_l18_l19)(1, stream, uDev, vDev, yDev, yHatDev, uNttDev, uTrDev, aHatDev, ekPkeDev,
                                               tHatDev, trHatNttDev, mDev, e1Dev, e2Dev, wsDev, tilingPinned, cDev,
-                                              nullptr);
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+                                              traceDev);
+    CHECK_ACL(ascendc_acl::TimedSynchronizeStreamMaybeTrace(stream, traceDev, traceHost, kFusedTraceStages,
+                                                            "f203_encrypt_l18_l19"));
 
     CHECK_ACL(aclrtMemcpy(cHost, cBytes, cDev, cBytes, ACL_MEMCPY_DEVICE_TO_HOST));
 
@@ -361,6 +377,12 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFree(uDev));
     CHECK_ACL(aclrtFree(vDev));
     CHECK_ACL(aclrtFree(cDev));
+    if (traceDev != nullptr) {
+        CHECK_ACL(aclrtFree(traceDev));
+    }
+    if (traceHost != nullptr) {
+        CHECK_ACL(aclrtFreeHost(traceHost));
+    }
     CHECK_ACL(aclrtFreeHost(tilingPinned));
     CHECK_ACL(aclrtFreeHost(prepTilingPinned));
     CHECK_ACL(aclrtFreeHost(ekPkeHost));

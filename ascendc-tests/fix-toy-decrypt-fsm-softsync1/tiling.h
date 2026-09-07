@@ -1,0 +1,58 @@
+#ifndef FIX_TOY_DECRYPT_FSM_SOFTSYNC1_TILING_H
+#define FIX_TOY_DECRYPT_FSM_SOFTSYNC1_TILING_H
+
+/**
+ * @file tiling.h
+ * @brief fix-toy-decrypt-fsm-softsync1：仅 SoftSyncArrive 的轻量 MIX 玩具布局。
+ *
+ * 目标（DGT-20260903-1 / Q-TOY-SOFTSYNC）：隔离 Decrypt 独有的 AIV0 写 slot /
+ * AIV1 while==0 忙等；不对算法正确性。Cube 取 int8 最小粒度 16×32×32（与 ntt1 同）。
+ */
+
+#include <cstddef>
+#include <cstdint>
+
+/** Host→Device 运行时参数（固定 64 字节落盘）。本玩具无 mixPass 分段。 */
+struct TilingData {
+    int32_t tileLength; /**< 占位，与其它探针 tiling 对齐 */
+    int32_t reserved;   /**< 保留 */
+};
+
+namespace tiling {
+
+/** Cube：C[16,32] int32 = A[16,32] int8 @ B[32,32] int8（B=I₃₂，Host 预填）。 */
+constexpr size_t kRows = 16;
+constexpr size_t kCols = 32;
+constexpr size_t kDim = 32;
+
+constexpr size_t kS0Bytes = kRows * kDim;                       /**< 左矩阵 A：512 B int8 */
+constexpr size_t kLutBytes = kDim * kCols;                      /**< 右矩阵 B：1024 B int8 */
+constexpr size_t kMatCBytes = kRows * kCols * sizeof(int32_t);  /**< C：2048 B */
+
+/** softSyncGm：生产同构 int32[2] 语义，分配 ≥64B（F-HOST-ZERO-SOFTSYNC）。 */
+constexpr size_t kSoftSyncBytes = 64;
+constexpr int32_t kSoftSyncSlot = 0; /**< 本刀只用 slot0 */
+
+/**
+ * TRACE / out：GT-4 风格每槽 8×int32=32B。
+ *   slot0 = SoftSync 后 AIV0 完成标记
+ *   slot1 = SoftSync 后 AIV1 完成标记（证明已出 busy-wait）
+ */
+constexpr size_t kTraceAlignInts = 8;
+constexpr size_t kTraceSlots = 2;
+constexpr size_t kOutBytes = kTraceSlots * kTraceAlignInts * sizeof(int32_t); /**< 64 B */
+
+/**
+ * GM workspace（字节偏移，自 ws 起）：
+ *   [S0   ] 512 B   int8   左矩阵；本刀 Host 预填，AIC 不依赖 AIV 写
+ *   [LUT  ] 1024 B  int8   右矩阵 = I₃₂，host 预填
+ *   [MAT_C] 2048 B  int32  Cube 输出（仅占位）
+ */
+constexpr size_t S0 = 0;
+constexpr size_t LUT = S0 + kS0Bytes;
+constexpr size_t MAT_C = LUT + kLutBytes;
+constexpr size_t wssize = MAT_C + kMatCBytes;
+
+} // namespace tiling
+
+#endif

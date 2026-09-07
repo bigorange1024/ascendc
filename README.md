@@ -41,6 +41,8 @@
 │   ├── rules/                # Rule（变更须用户确认）
 │   └── skills/               # ascendc-impl-spec、pre-research、ascendc-delivery
 ├── docs/                     # 项目产出 → research/ specs/ engineering/ notes/ reports/
+│                             # 含 rg-encrypt-l18.yaml、rg-decrypt-fused.yaml（卡死推理图谱）
+├── graph-tests/              # 图谱驱动小试验（Encrypt=本目录 INDEX；Decrypt=decrypt/）
 ├── qa/                       # INDEX.md、TODO.md；日纪要仅在 YYYY-MM/YYYY-MM-DD-关键词.md
 ├── library/                  # 外部资料 + shared/（探针共用代码与 vendored 设备原语）
 ├── thirdparty/               # 外部依赖（不进 Git；见 docs/engineering/thirdparty-本地依赖.md）

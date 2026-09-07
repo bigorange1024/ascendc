@@ -25,6 +25,7 @@
 #include "f203_decrypt_decode_impl.hpp"
 #include "f203_decrypt_layout.h"
 #include "f203_decrypt_ntt_u_tiling.h"
+#include "f203_decrypt_trace.hpp"
 #include "f203_decrypt_su_dot_impl.hpp"
 #include "f203_decrypt_tail_compress1_byteencode1.hpp"
 #include "f203_decrypt_unpack_impl.hpp"
@@ -114,11 +115,12 @@ __aicore__ inline void AicMmadRound(GM_ADDR ws, uint32_t coeffN)
  * @param mGm          生产输出：m[32]
  * @param nttWsGm/inttWsGm  NTT/INTT workspace（含 LUT）
  * @param softSyncGm   AIV0/AIV1 软同步哨兵
+ * @param traceGm      可选 TRACE 槽（F203_DECRYPT_TRACE=1；nullptr 时零开销）
  */
 extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
     GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm,
     GM_ADDR wPaddedGm, GM_ADDR wTimeGm, GM_ADDR mGm, GM_ADDR nttWsGm, GM_ADDR inttWsGm, GM_ADDR softSyncGm,
-    TilingData tiling)
+    GM_ADDR traceGm, TilingData tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
 
@@ -127,12 +129,14 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
     const auto coeffN = static_cast<uint32_t>(tiling.tileLength);
     tiling.mixPass = 3;
     FsmState st;
+    using namespace f203_decrypt_trace;
 
     if (aic) {
         /* ========== AIC：两轮 MMAD（NTT + INTT），中间 GATE 与 AIV 握手 ========== */
         /* 等 prep 段 AIV 齐步 */
         st = ST_AIV_DONE;
         FsmWait(st);
+        DecryptTraceMark(traceGm, TR_AIC_PREP_GATE, aic, subBlockID);
         st = ST_GATE;
         FsmSet(st);
 
@@ -141,12 +145,14 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         st = ST_MMAD;
         AicMmadRound(nttWsGm, coeffN);
+        DecryptTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
         st = ST_PACK;
         FsmSet(st);
 
         /* 等 su_dot+pad 段 AIV 齐步 */
         st = ST_AIV_DONE;
         FsmWait(st);
+        DecryptTraceMark(traceGm, TR_AIC_SU_GATE, aic, subBlockID);
         st = ST_GATE;
         FsmSet(st);
 
@@ -154,6 +160,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         st = ST_SPLIT;
         FsmWait(st);
         AicMmadRound(inttWsGm, coeffN);
+        DecryptTraceMark(traceGm, TR_AIC_INTT_MMAD, aic, subBlockID);
         st = ST_PACK;
         FsmSet(st);
     } else {
@@ -165,8 +172,10 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             AscendC::PipeBarrier<PIPE_ALL>();
             decrypt_g4::decode_s_hat_impl(dkGm, sHatGm);
             AscendC::PipeBarrier<PIPE_ALL>();
+            DecryptTraceMark(traceGm, TR_AIV_PREP, aic, subBlockID);
         }
         SoftSyncArrive(softSyncGm, 0, subBlockID);
+        DecryptTraceMark(traceGm, TR_AIV_SOFT0, aic, subBlockID);
 
         /* GATE：通知 AIC prep 完成，等 AIC 放行再开 NTT */
         st = ST_AIV_DONE;
@@ -175,6 +184,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         SoftSyncClear(softSyncGm, 0, subBlockID);
         KYBER_PIPE_ALL();
+        DecryptTraceMark(traceGm, TR_AIV_POST_PREP_GATE, aic, subBlockID);
 
         /* --- û ← NTT(u')：Stage1 split → AIC MMAD → Stage3 pack + RouteA merge --- */
         {
@@ -184,6 +194,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             split.Process();
             KYBER_PIPE_ALL();
             FsmSet(st);
+            DecryptTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
         }
         {
             st = ST_PACK;
@@ -194,12 +205,14 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
                       nttWsGm + ::tiling::MAT_C_TMP_HI_ODD);
             pack.Process();
             KYBER_PIPE_ALL();
+            DecryptTraceMark(traceGm, TR_AIV_NTT_PACK, aic, subBlockID);
         }
         {
             AivK8RouteAMod merge(subBlockID, coeffN);
             merge.Init(uHatGm, nttWsGm + ::tiling::MAT_C_PLANAR);
             merge.Process();
             KYBER_PIPE_ALL();
+            DecryptTraceMark(traceGm, TR_AIV_NTT_MERGE, aic, subBlockID);
         }
 
         /* --- ŵ ← ⟨ŝ,û⟩ + pad 供 INTT（仅 AIV0）--- */
@@ -208,8 +221,10 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             AscendC::PipeBarrier<PIPE_ALL>();
             decrypt_g4::pad_w_hat_for_intt(wPaddedGm, wHatGm);
             AscendC::PipeBarrier<PIPE_ALL>();
+            DecryptTraceMark(traceGm, TR_AIV_SU_DOT, aic, subBlockID);
         }
         SoftSyncArrive(softSyncGm, 1, subBlockID);
+        DecryptTraceMark(traceGm, TR_AIV_SOFT1, aic, subBlockID);
 
         st = ST_AIV_DONE;
         FsmSet(st);
@@ -217,6 +232,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
         FsmWait(st);
         SoftSyncClear(softSyncGm, 1, subBlockID);
         KYBER_PIPE_ALL();
+        DecryptTraceMark(traceGm, TR_AIV_POST_SU_GATE, aic, subBlockID);
 
         /* --- w ← INTT(ŵ_padded)：输入 wPaddedGm，输出 wTimeGm --- */
         {
@@ -224,6 +240,7 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
             split.Init(inttWsGm + ::tiling::S0, wPaddedGm);
             split.Process();
             AscendC::PipeBarrier<PIPE_ALL>();
+            DecryptTraceMark(traceGm, TR_AIV_INTT_SPLIT, aic, subBlockID);
         }
         st = ST_SPLIT;
         FsmSet(st);
@@ -237,17 +254,20 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
                       inttWsGm + ::tiling::MAT_C_TMP_HI_ODD);
             pack.Process();
             KYBER_PIPE_ALL();
+            DecryptTraceMark(traceGm, TR_AIV_INTT_PACK, aic, subBlockID);
         }
         {
             AivK8RouteAMod merge(subBlockID, coeffN);
             merge.Init(wTimeGm, inttWsGm + ::tiling::MAT_C_PLANAR);
             merge.Process();
             KYBER_PIPE_ALL();
+            DecryptTraceMark(traceGm, TR_AIV_INTT_MERGE, aic, subBlockID);
         }
 
         /* --- Alg.15 行 6–7：m ← Encode₁(Compress₁(v'−w))（仅 AIV0）--- */
         if (subBlockID == 0) {
             decrypt_device::extract_m_compress1_byteencode1(vGm, wTimeGm, mGm);
+            DecryptTraceMark(traceGm, TR_AIV_EXTRACT, aic, subBlockID);
         }
         AscendC::PipeBarrier<PIPE_ALL>();
     }
