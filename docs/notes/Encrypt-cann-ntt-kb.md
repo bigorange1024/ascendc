@@ -100,7 +100,7 @@ Encrypt 需要且仓内已有（禁算子级抄码）：SHAKE/Keccak、SampleNTT
 | S9 | EN09 设备 SampleNTT 全 Â[4×4] 直喂 Matvec 不挂；tick≈755040 | **S1 闭合**；SIM 侧 Encrypt 形积木+贯通基本齐套 |
 | S10 | EN10 NPU(910B3/dev4) 跑 EN09 贯通链 **不卡死** 且全段 golden match | **真机不挂证据**（本 Host 编排路径）；非旧 l18 胖 MIX |
 | S11 | EN11 NPU 进程级连续多轮 EN09（EN11d R=8；EN11e R=200 soft=0 hang=0）**不挂** | **多轮重启 session 亦不挂** |
-| S12 | EN12 NPU sticky SampleNTT 链 R=32（run.sh）+ R=64 stress **不挂** 且 round-1 golden | **真机同 session 粘性多轮不挂**；wall(R=32)≈2.06s |
+| S12 | EN12 sticky：CPU+SIM R=16（tick≈12.0M）+ NPU R=32/64 **不挂** 且 round-1 golden | **同 session 粘性多轮**；NPU wall(R=32)≈2.06s；SetDevice 须 0（X41） |
 | X38 | 独立 AIV + shared SHAKE 串行 16 poly 控 UB | 勿抄 Encrypt/alg7 整核 |
 | X39 | 真机：MagicDNS `cannlab-npu` / `100.68.205.47:2222`；userspace TS 须 SOCKS；key 需 PEM 头；`ASCEND_DEVICE_ID=4`；SOC=`Ascend910B3`；空闲&lt;4min | 发现勿写死旧 IP；保活 ServerAlive+作业心跳 |
 | X40 | 快路径须 `LD_LIBRARY_PATH=out/lib`；校验脚本名 `verify_result.py`；禁 `pkill -f` 匹配自身 SSH 命令行；勿依赖 `/usr/bin/time` | 远程循环脚本先落地文件再 nohup |
@@ -116,6 +116,5 @@ Encrypt 需要且仓内已有（禁算子级抄码）：SHAKE/Keccak、SampleNTT
 
 ## 7. 下一刀
 
-- EN11/EN12 NPU：**PASS-NOHANG**（进程多轮 + sticky）。  
-- EN12c：R=128×5 波 sticky 加压保活中。  
-- 可选：对照旧 Encrypt l18（只读禁抄）。空闲 **&lt;4 min**。
+- EN11/EN12：**PASS-NOHANG**（SIM + NPU sticky 齐）。  
+- 可选：对照旧 Encrypt l18（只读禁抄）。NPU 作业已按用户要求停。

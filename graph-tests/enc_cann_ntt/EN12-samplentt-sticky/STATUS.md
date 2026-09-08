@@ -2,8 +2,7 @@
 
 > DAG：`D-EXP-EN12`  
 > 日期：2026-09-08  
-> 结论：**PASS-NOHANG**（CPU + SIM；同 session 粘性 R=16 SampleNTT 贯通链不挂；第 1 轮 golden match）  
-> NPU：本刀 `run.sh` 已允许 `-r npu`（默认 `ASCEND_DEVICE_ID=4`）；真机上机由主控做。
+> 结论：**PASS-NOHANG**（CPU + SIM R=16；NPU sticky R=32/64；同 session 贯通链不挂；round-1 golden match）
 
 ---
 
@@ -48,8 +47,9 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 |------|------|------|
 | CPU | 0 | wall≈**23.04s**（kernel≈13.7s）；R=16 全完成；round-1 golden **match** |
 | SIM | 0 | wall≈**2711s**（kernel≈**1881s**）；Total tick **12000090**；R=16 全完成；golden **match**；stray→`sim_log/` |
+| NPU | 0 | 910B3；`aclrtSetDevice(0)`（X41）；R=32 `run.sh` wall≈**2.06s** + R=64 stress；golden **match** |
 
-日志：`/opt/cursor/artifacts/EN12-cpu.log`、`EN12-sim.log`。
+日志：`/opt/cursor/artifacts/EN12-cpu-summary.log`、`EN12-sim-summary.log`、`EN12b-npu.log`。
 
 ## 5. sync_audit
 
