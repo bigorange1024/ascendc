@@ -1,0 +1,57 @@
+=== keepalive 2026-09-08T04:47:30Z ===
+npu-smi:
++------------------------------------------------------------------------------------------------+
+| npu-smi 25.5.0                   Version: 25.5.0                                               |
++---------------------------+---------------+----------------------------------------------------+
+| NPU   Name                | Health        | Power(W)    Temp(C)           Hugepages-Usage(page)|
+| Chip                      | Bus-Id        | AICore(%)   Memory-Usage(MB)  HBM-Usage(MB)        |
++===========================+===============+====================================================+
+| 7     910B3               | OK            | 84.8        40                0    / 0             |
+| 0                         | 0000:0A:00.0  | 0           0    / 0          3404 / 65536         |
++===========================+===============+====================================================+
++---------------------------+---------------+----------------------------------------------------+
+| NPU     Chip              | Process id    | Process name             | Process memory(MB)      |
++===========================+===============+====================================================+
+| No running processes found in NPU 7                                                            |
++===========================+===============+====================================================+
+[runtime_env] host=linux cann=1 sim=1 npu=1 case_npu=1 soc=Ascend910B4
+[runtime_env] resolved RUN_MODE=npu
+[npu_device_map] keep ASCEND_DEVICE_ID=0 (explicit; map would be tests→0)
+=== Target device: Ascend910B3 ===
+    product_type=Ascend910B3  simulator=Ascend910B3  arch=dav-c220
+=== Generate golden data ===
+-- The C compiler identification is GNU 9.4.0
+-- The CXX compiler identification is GNU 9.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- CANN device: product_type=Ascend910B3 sim=Ascend910B3 arch=dav-c220 run_mode=npu
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /mnt/workspace/ascendc-encrypt-rebuild/ascendc-tests/add_custom/build
+=== Build add_custom_npu (simulator: Ascend910B3, arch: dav-c220) ===
+[100%] Building add_custom_npu (simulator Ascend910B3)
+[100%] Built target add_custom_npu
+[OK] ./add_custom_npu
+[npu_device_map] keep ASCEND_DEVICE_ID=0 (explicit; map would be tests→0)
+[npu] ASCEND_DEVICE_ID=0  CANN_HOME=/home/developer/Ascend/cann-9.0.0
+=== Run add_custom_npu on NPU ===
+=== Compare output vs golden ===
+618fe1d6b9a729240fb9d25db04b6c3e  output/output_z.bin
+618fe1d6b9a729240fb9d25db04b6c3e  output/golden.bin
+[SUCCESS] output matches golden (Ascend910B3)
+KEEPALIVE_ADD_CUSTOM_EXIT=0 WALL_SEC=12
+total 20
+drwxrwxr-x  2 developer developer 4096 Sep  8 12:46 .
+drwxr-xr-x 11 developer developer 4096 Sep  8 12:46 ..
+-rw-------  1 developer developer 2048 Sep  8 12:46 mat_c.bin
+-rw-------  1 developer developer   64 Sep  8 12:46 out.bin
+-rw-------  1 developer developer   64 Sep  8 12:46 trace.bin
+keepalive_done utc=2026-09-08T04:48:12Z did=npu-smi+add_custom after N01 TRACE fail

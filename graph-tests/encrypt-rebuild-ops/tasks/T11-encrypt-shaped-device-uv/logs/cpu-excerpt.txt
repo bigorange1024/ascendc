@@ -1,0 +1,18 @@
+[SUCCESS][CORE_0][pid 100055] exit success!
+[SUCCESS][AIC_0][pid 100056] exit success!
+[SUCCESS][AIV_0][pid 100057] exit success!
+[SUCCESS][AIV_1][pid 100058] exit success!
+[INFO]  causal: Launch1 PREP_DONE seen
+[INFO]  causal: Launch2 NTT->MUL->GATE->INTT linked
+[INFO]  causal: device INTT+noise wrote u,v
+[INFO]  causal: AIV0 pack(u,v->c) done after UV
+[wall_sec] 0.918
+[kernel-run-timeout] wall_sec=0.918 budget=180s rc=0 bin=ascendc_kernels_bbit
+[PASS_SYNC] dual-launch causal + dual Cube + prep/pack TRACE ok
+[PASS_IO] c match
+[PASS_IO] u max_abs=0 n=1024
+[PASS_IO] v max_abs=0 n=256
+[PASS_IO] y_e1_e2_dev match
+[PASS_IO] rho_dev match
+[SUCCESS] PASS_SYNC + PASS_IO — RB-T11 shaped device-uv
+[SUCCESS] RB-T11-encrypt-shaped-device-uv (cpu)

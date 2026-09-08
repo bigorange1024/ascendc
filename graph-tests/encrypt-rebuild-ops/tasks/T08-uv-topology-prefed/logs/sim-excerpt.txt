@@ -1,0 +1,2 @@
+SOC=Ascend910B4 RUN_MODE=sim RB-T08=host-uv-topology
+[SKIP] RB-T08 无 AscendC MIX 核；RUN_MODE=sim 非本刀验收范围（Host CPU 已覆盖拓扑）

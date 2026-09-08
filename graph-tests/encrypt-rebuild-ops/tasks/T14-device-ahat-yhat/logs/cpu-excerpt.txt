@@ -1,0 +1,15 @@
+33:[SUCCESS][AIC_0][pid 115229] exit success!
+35:[SUCCESS][AIV_0][pid 115230] exit success!
+36:[SUCCESS][AIV_1][pid 115231] exit success!
+37:[INFO]  TRACE map dump (slot=magic):
+44:[INFO]  causal: SET1+WAIT3 seen
+45:[INFO]  causal: device SampleNTT(ρ) wrote Â
+46:[INFO]  causal: device NTT(y) wrote ŷ
+48:[wall_sec] 2.758
+49:[kernel-run-timeout] wall_sec=2.758 budget=600s rc=0 bin=ascendc_kernels_bbit
+50:[OK] a_hat max_abs=0 n=4096
+51:[OK] y_hat max_abs=0 n=1024
+52:[PASS_SYNC] SampleNTT+NTT(1/3) causal + Cube ok
+53:[PASS_IO] Â and ŷ match golden (device MIX)
+54:[SUCCESS] RB-T14 PASS_SYNC + PASS_IO
+55:[SUCCESS] RB-T14-device-ahat-yhat (cpu)

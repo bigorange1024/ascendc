@@ -1,0 +1,402 @@
+# Encrypt cannbot rebuild — research graph (DAG)
+# validate: python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-cannbot-rebuild.yaml
+# owner: main agent only; subagents read-only
+# companion KB: docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+version: 1
+title: Encrypt cannbot rebuild
+review:
+  last_reviewed: "2026-09-08"
+  note: "Q-ULT answered；T01–T24 NPU 双绿；T24×30 hang-stress ok=30；可选设备 Decaps"
+
+nodes:
+  - id: Q-ULT
+    kind: question
+    status: answered
+    statement: "NPU 上 Alg.14 Encrypt 不挂且 I/O 正确？积木重拼、禁抄旧 Encrypt/Encaps/Decaps。"
+    deps: []
+    evidence: "T22–T24 NPU SUCCESS + T24×30 hang-stress ok=30 fail=0；FEEDBACK T22/T23/T24；KB §B2"
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-capability-inventory.md
+      - graph-tests/encrypt-rebuild-ops/tasks/T24-encaps-decaps-roundtrip/FEEDBACK.md
+
+  - id: D-METHOD
+    kind: decision
+    status: active
+    statement: "主控 cannbot 设计实验 + 维护 KB/DAG；Task subagent 编码；主控不写核。"
+    deps: [Q-ULT]
+    targets: [Q-ULT]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-work-mode.md
+
+  - id: D-STEP1-SCAFFOLD
+    kind: decision
+    status: inactive
+    statement: "先交付能力清单、工作模式、KB、DAG；完成后再下令开实验。"
+    deps: [D-METHOD]
+    evidence: "2026-09-08 文档已落；继任 D-NEAR-FIRST-KNIFE"
+
+  - id: F-BRICKS
+    kind: fact
+    status: established
+    statement: "积木+编排已接到设备 Encaps：G1–G5 关；T22–T24 权威绿。"
+    deps: [D-METHOD]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-capability-inventory.md
+
+  - id: C-BAN-COPY
+    kind: constraint
+    status: established
+    statement: "禁抄 alg14/20/21 与 encrypt|encaps|decaps 算子树源码。"
+    deps: [D-METHOD]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: C-SYNC-AUDIT
+    kind: constraint
+    status: established
+    statement: "禁 flag5/7、SoftSync；AIC Wait 环禁 SyncAll；sync_audit 红线不得否决。"
+    deps: [D-METHOD]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: C-NTT-POLYBATCH
+    kind: constraint
+    status: established
+    statement: "NTT S1–S3：poly-batch；禁 limbsplit；禁 Gather。"
+    deps: [D-METHOD]
+    refs:
+      - docs/notes/MLKEM-NTT-实现总结.md
+
+  - id: G-MU
+    kind: gap
+    status: closed
+    statement: "G1 已关：T04 PASS。"
+    deps: [F-BRICKS]
+
+  - id: G-BD12
+    kind: gap
+    status: closed
+    statement: "G2 已关：T05 PASS。"
+    deps: [F-BRICKS]
+
+  - id: G-TOPO
+    kind: gap
+    status: closed
+    statement: "G3 已关：Host(T08)+设备 SIM(T10)+NPU(T10/T11) 双绿。"
+    deps: [F-BRICKS]
+
+  - id: X-CROSSCORE-HANG
+    kind: fail_lesson
+    status: established
+    statement: "X1：fused 已 launch 仍挂 → 先查 AIV 未 Set / AIC Wait / 非法 Sync。"
+    deps: [C-SYNC-AUDIT]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: X-EARLY-TRACE0
+    kind: fail_lesson
+    status: established
+    statement: "X2：挂时 TRACE 0/16 且 D2H 成功 ⇒ 首标前未完成；成功轮无 TRACE≠管道坏。"
+    deps: [C-SYNC-AUDIT]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: X-TIMEOUT-POLLUTE
+    kind: fail_lesson
+    status: established
+    statement: "X3：timeout 脏杀污染同 ASCEND_DEVICE_ID；勿误判卡坏。"
+    deps: [D-METHOD]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: X-NO-FORK-ENCRYPT
+    kind: fail_lesson
+    status: established
+    statement: "X5：fork 旧 Encrypt 继承同步债；拓扑在 graph-tests 新写。"
+    deps: [C-BAN-COPY]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: P-SIM-THEN-NPU
+    kind: process
+    status: established
+    statement: "SIM 为主过程证据；上机门禁：SIM 假设够 + 失败对照齐 + 半页复现。"
+    deps: [D-METHOD, X-CROSSCORE-HANG, X-EARLY-TRACE0, X-TIMEOUT-POLLUTE]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-work-mode.md
+
+  - id: P-REFRESH-KB-DAG
+    kind: process
+    status: established
+    statement: "每刀回收后主控刷新 KB（P*/X*）与本 DAG；跑 check_rg_dag.py。"
+    deps: [D-METHOD]
+
+  - id: M-SCAFFOLD-READY
+    kind: milestone
+    status: established
+    statement: "2026-09-08：四件套落地。"
+    deps: [D-STEP1-SCAFFOLD, F-BRICKS, C-BAN-COPY, C-SYNC-AUDIT, C-NTT-POLYBATCH]
+
+  - id: M-QUEUE-READY
+    kind: milestone
+    status: established
+    statement: "2026-09-08：encrypt-rebuild-ops 预写 T01–T09 + N01–N02；未派发；NPU wait。"
+    deps: [M-SCAFFOLD-READY, P-SIM-THEN-NPU, P-REFRESH-KB-DAG, X-NO-FORK-ENCRYPT]
+    refs:
+      - graph-tests/encrypt-rebuild-ops/QUEUE.md
+    targets: [D-EXP-T01, D-EXP-T04]
+
+
+  - id: X-SIM-TRACE-EMPTY
+    kind: fail_lesson
+    status: established
+    statement: "X7：SIM 上 AIC/AIV1 标量 TRACE 常空；用 causal+产物非零验收。"
+    deps: [C-SYNC-AUDIT]
+    refs:
+      - docs/notes/Encrypt-cannbot-rebuild-kb.md
+
+  - id: D-EXP-T01
+    kind: experiment
+    status: pass
+    statement: "T01 PASS：MIX flag1/3；CPU+SIM；sync_audit clean；见 X7 SIM TRACE。"
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T01-mix-ntt13-handshake/FEEDBACK.md"
+    deps: [M-QUEUE-READY, C-SYNC-AUDIT]
+    targets: [D-EXP-T02, D-EXP-T07]
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T01-mix-ntt13-handshake/TASK.md
+
+  - id: D-EXP-T02
+    kind: experiment
+    status: ready
+    statement: "T02：GATE AIC 先 Wait(4)。"
+    deps: [D-EXP-T01]
+    targets: [D-EXP-T03]
+
+  - id: D-EXP-T03
+    kind: experiment
+    status: blocked_dep
+    statement: "T03：NTT→GATE→INTT 有界握手；禁5/7。"
+    deps: [D-EXP-T02]
+    targets: [D-EXP-T08]
+
+  - id: D-EXP-T04
+    kind: experiment
+    status: pass
+    statement: "T04 PASS：μ Decompress₁；关 G-MU。"
+    deps: [M-QUEUE-READY, G-MU]
+    targets: [G-MU, D-EXP-T08]
+
+  - id: D-EXP-T05
+    kind: experiment
+    status: pass
+    statement: "T05 PASS：ByteDecode₁₂；关 G-BD12。"
+    deps: [M-QUEUE-READY, G-BD12]
+    targets: [G-BD12, D-EXP-T08]
+
+  - id: D-EXP-T06
+    kind: experiment
+    status: ready
+    statement: "T06：c₁‖c₂ pack 壳（G5）。"
+    deps: [M-QUEUE-READY, G-TOPO]
+    targets: [D-EXP-T09]
+
+  - id: D-EXP-T07
+    kind: experiment
+    status: ready
+    statement: "T07：prep 壳 coins/ek（G4）；T01 已过。"
+    deps: [D-EXP-T01, G-TOPO]
+    targets: [D-EXP-T09]
+
+  - id: D-EXP-T08
+    kind: experiment
+    status: pass
+    statement: "T08 PASS：Host 预喂求 u,v（G3 Host）。"
+    deps: [D-EXP-T03, D-EXP-T04, D-EXP-T05]
+    targets: [G-TOPO, D-EXP-T09]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T08-uv-topology-prefed/FEEDBACK.md"
+
+  - id: D-EXP-T09
+    kind: experiment
+    status: pass
+    statement: "T09 PASS：Encrypt 外形 2-launch；CPU+SIM+NPU PASS_SYNC+PASS_IO。"
+    deps: [D-EXP-T06, D-EXP-T07, D-EXP-T08]
+    targets: [D-EXP-N02, Q-ULT, D-EXP-T10]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T09-encrypt-shaped-2launch/FEEDBACK.md"
+
+  - id: D-EXP-T10
+    kind: experiment
+    status: pass
+    statement: "T10 PASS：设备 MIX 真拓扑 u,v；CPU+SIM+NPU PASS_SYNC+PASS_IO。"
+    deps: [D-EXP-T03, D-EXP-T08, D-EXP-T09]
+    targets: [G-TOPO, Q-ULT, D-EXP-T11]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T10-uv-device-mix/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T10-uv-device-mix/TASK.md
+
+  - id: D-EXP-T11
+    kind: experiment
+    status: pass
+    statement: "T11 PASS：外形 2-launch + 设备 u,v + pack；CPU+SIM+NPU。"
+    deps: [D-EXP-T09, D-EXP-T10]
+    targets: [Q-ULT, D-EXP-T12]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T11-encrypt-shaped-device-uv/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T11-encrypt-shaped-device-uv/TASK.md
+
+  - id: D-EXP-T12
+    kind: experiment
+    status: pass
+    statement: "T12 PASS：设备 Alg.9 NTT(y)→ŷ；CPU+SIM+NPU PASS_SYNC+PASS_IO。"
+    deps: [D-EXP-T03, D-EXP-T10]
+    targets: [Q-ULT, D-EXP-T13]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T12-device-ntt-y/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T12-device-ntt-y/TASK.md
+
+  - id: D-EXP-T13
+    kind: experiment
+    status: pass
+    statement: "T13 PASS：设备 SampleNTT(ρ)→Â；CPU+SIM+NPU PASS_SYNC+PASS_IO。"
+    deps: [D-EXP-T07, D-EXP-T12]
+    targets: [Q-ULT, D-EXP-T14]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T13-device-sample-ntt-a/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T13-device-sample-ntt-a/TASK.md
+
+  - id: D-EXP-T14
+    kind: experiment
+    status: pass
+    statement: "T14 PASS：设备 Â+ŷ；CPU+NPU（SIM skip，战役 NPU 优先）。"
+    deps: [D-EXP-T12, D-EXP-T13]
+    targets: [Q-ULT, D-EXP-T15]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T14-device-ahat-yhat/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T14-device-ahat-yhat/TASK.md
+
+  - id: D-EXP-T15
+    kind: experiment
+    status: pass
+    statement: "T15 PASS：设备 Â+ŷ→u,v→c；CPU+NPU（SIM skip）。"
+    deps: [D-EXP-T11, D-EXP-T14]
+    targets: [Q-ULT, D-EXP-T16]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T15-encrypt-ahat-yhat-uv-c/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T15-encrypt-ahat-yhat-uv-c/TASK.md
+
+  - id: D-EXP-T16
+    kind: experiment
+    status: pass
+    statement: "T16 PASS：设备 CBD coins→(y,e1,e2)；CPU+NPU。"
+    deps: [D-EXP-T07, D-EXP-T15]
+    targets: [Q-ULT, D-EXP-T17]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T16-device-cbd-y-e/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T16-device-cbd-y-e/TASK.md
+
+  - id: D-EXP-T17
+    kind: experiment
+    status: pass
+    statement: "T17 PASS：全设备 Encrypt（CBD+Â+ŷ→u,v→c）；CPU+NPU。"
+    deps: [D-EXP-T15, D-EXP-T16]
+    targets: [Q-ULT, D-EXP-T19]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T17-encrypt-full-device/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T17-encrypt-full-device/TASK.md
+
+  - id: D-EXP-T18
+    kind: experiment
+    status: pass
+    statement: "T18 PASS：设备 ByteDecode12(ek)→t̂；CPU+NPU。"
+    deps: [D-EXP-T05]
+    targets: [Q-ULT, D-EXP-T19]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T18-device-bytedecode12-ek/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T18-device-bytedecode12-ek/TASK.md
+
+  - id: D-EXP-T19
+    kind: experiment
+    status: pass
+    statement: "T19 PASS：Encrypt 全链含设备 Decode12；CPU+NPU。"
+    deps: [D-EXP-T17, D-EXP-T18]
+    targets: [Q-ULT, D-EXP-T20]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T19-encrypt-ek-decode-full/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T19-encrypt-ek-decode-full/TASK.md
+
+  - id: D-EXP-T20
+    kind: experiment
+    status: pass
+    statement: "T20 PASS：Encaps 外形；CPU+NPU。"
+    deps: [D-EXP-T19, D-EXP-T04]
+    targets: [Q-ULT, D-EXP-T21]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T20-encaps-shaped/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T20-encaps-shaped/TASK.md
+
+  - id: D-EXP-T21
+    kind: experiment
+    status: pass
+    statement: "T21 PASS：Encaps 设备 μ；CPU+NPU。"
+    deps: [D-EXP-T20, D-EXP-T04]
+    targets: [Q-ULT, D-EXP-T22]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T21-encaps-device-mu/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T21-encaps-device-mu/TASK.md
+
+  - id: D-EXP-T22
+    kind: experiment
+    status: pass
+    statement: "T22 PASS：Encaps 设备 G；CPU+NPU。"
+    deps: [D-EXP-T21]
+    targets: [Q-ULT, D-EXP-T23]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T22-encaps-device-G/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T22-encaps-device-G/TASK.md
+
+  - id: D-EXP-T23
+    kind: experiment
+    status: pass
+    statement: "T23 PASS：Encaps×liboqs 交叉；CPU+NPU。"
+    deps: [D-EXP-T22]
+    targets: [Q-ULT, D-EXP-T24]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T23-encaps-liboqs-cross/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T23-encaps-liboqs-cross/TASK.md
+
+  - id: D-EXP-T24
+    kind: experiment
+    status: pass
+    statement: "T24 PASS：Encaps→liboqs Decaps 往返；CPU+NPU；×30 hang-stress ok=30。"
+    deps: [D-EXP-T23]
+    targets: [Q-ULT]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T24-encaps-decaps-roundtrip/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/T24-encaps-decaps-roundtrip/TASK.md
+
+  - id: D-EXP-N00
+    kind: experiment
+    status: pass
+    statement: "N00 PASS：add_custom NPU SUCCESS；worktree ascendc-encrypt-rebuild；见 X8。"
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/N00-npu-warm-smoke/FEEDBACK.md"
+    deps: [P-SIM-THEN-NPU]
+    targets: [D-EXP-N01]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/N00-npu-warm-smoke/FEEDBACK.md"
+    refs:
+      - graph-tests/encrypt-rebuild-ops/tasks/N00-npu-warm-smoke/TASK.md
+      - graph-tests/encrypt-rebuild-ops/RHYTHM.md
+
+  - id: D-EXP-N01
+    kind: experiment
+    status: pass
+    statement: "N01 PASS：T01 NPU SUCCESS；主控直跑。"
+    deps: [D-EXP-T01, D-EXP-N00, P-SIM-THEN-NPU]
+    targets: [D-EXP-N02]
+
+  - id: D-EXP-N02
+    kind: experiment
+    status: pass
+    statement: "N02 PASS：T09 NPU 不挂 + PASS_IO；主控并行上板。"
+    deps: [D-EXP-N01, D-EXP-T09]
+    targets: [Q-ULT]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/N02-npu-encrypt-skel/FEEDBACK.md"

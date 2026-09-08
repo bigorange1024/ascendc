@@ -1,0 +1,25 @@
+[SUCCESS][CORE_0][pid 122527] exit success!
+[SUCCESS][AIC_0][pid 122528] exit success!
+[SUCCESS][AIV_0][pid 122529] exit success!
+[SUCCESS][AIV_1][pid 122530] exit success!
+[INFO]  TRACE map dump (slot=magic):
+[INFO]  causal: Launch1 PREP_DONE seen
+[INFO]  causal: device ByteDecode12(ek) wrote t_hat
+[INFO]  causal: device CBD(coins) wrote y/e
+[INFO]  causal: device SampleNTT+NTT wrote Â,ŷ
+[INFO]  causal: Launch2 CBD->AHAT/YHAT->MUL->GATE->INTT linked
+[INFO]  causal: device INTT+noise wrote u,v
+[INFO]  causal: AIV0 pack(u,v->c) done after UV
+[wall_sec] 4.650
+[kernel-run-timeout] wall_sec=4.650 budget=600s rc=0 bin=ascendc_kernels_bbit
+[PASS_SYNC] dual-launch causal + BD12 + CBD + AHAT/YHAT + dual Cube + pack TRACE ok
+[PASS_IO] c match
+[PASS_IO] u max_abs=0 n=1024
+[PASS_IO] v max_abs=0 n=256
+[PASS_IO] t_hat max_abs=0 n=1024
+[PASS_IO] a_hat max_abs=0 n=4096
+[PASS_IO] y_hat max_abs=0 n=1024
+[PASS_IO] y_e1_e2_dev match
+[PASS_IO] rho_dev match
+[SUCCESS] PASS_SYNC + PASS_IO — RB-T19 encrypt-ek-decode-full
+[SUCCESS] RB-T19-encrypt-ek-decode-full (cpu)

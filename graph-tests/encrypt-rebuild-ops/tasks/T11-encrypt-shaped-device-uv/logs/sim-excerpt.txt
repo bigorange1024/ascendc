@@ -1,0 +1,22 @@
+[INFO]  causal: Launch1 PREP_DONE seen
+[INFO]  causal: Launch2 NTT->MUL->GATE->INTT linked
+[INFO]  causal: device INTT+noise wrote u,v
+[INFO]  causal: AIV0 pack(u,v->c) done after UV
+Model RUN TIME: 423342 ms
+[INFO] Total tick: 884917
+[wall_sec] 423.971
+[kernel-run-timeout] wall_sec=423.971 budget=900s rc=0 bin=ascendc_kernels_bbit
+[WARN] TRACE[3]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[4]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[5]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[9]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[12]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[13]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[PASS_SYNC] dual-launch causal + dual Cube + prep/pack TRACE ok
+[PASS_IO] c match
+[PASS_IO] u max_abs=0 n=1024
+[PASS_IO] v max_abs=0 n=256
+[PASS_IO] y_e1_e2_dev match
+[PASS_IO] rho_dev match
+[SUCCESS] PASS_SYNC + PASS_IO — RB-T11 shaped device-uv
+[SUCCESS] RB-T11-encrypt-shaped-device-uv (sim)

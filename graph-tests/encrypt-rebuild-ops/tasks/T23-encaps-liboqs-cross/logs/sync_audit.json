@@ -1,0 +1,1256 @@
+{
+  "files_scanned": [
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/data_utils.h",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/decode12_device.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/light_cube.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/main.cpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/sample_ntt_device.hpp",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/tiling.h",
+    "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp"
+  ],
+  "event_count": 64,
+  "findings": [
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 52,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@52 后调用 CrossSet()@56（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "line": 16,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "line": 19,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 43,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 46,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+      "line": 48,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 51,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+      "line": 51,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "line": 51,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/decode12_device.hpp",
+      "line": 52,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 53,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/decode12_device.hpp",
+      "line": 55,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 58,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "line": 58,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 60,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+      "line": 61,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/sample_ntt_device.hpp",
+      "line": 61,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+      "line": 63,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+      "line": 65,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "line": 65,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+      "line": 73,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "line": 74,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/sample_ntt_device.hpp",
+      "line": 88,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 93,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "line": 102,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 102,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "line": 105,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "line": 111,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "line": 119,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "line": 125,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "line": 127,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 157,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 157,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 157,
+      "message": "同一函数连续 PipeBarrier 过多: 10 个 in __aicore__ inline void PackUvToC",
+      "detail": "行: [157, 162, 164, 167, 169, 173, 178, 180, 183, 186]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 162,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 164,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 165,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 167,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 169,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 172,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 173,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 175,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 178,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 180,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 182,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 183,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 186,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 191,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 196,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 202,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 205,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 226,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 226,
+      "message": "同一函数连续 PipeBarrier 过多: 17 个 in AscendC::DataCopy",
+      "detail": "行: [226, 238, 302, 305, 74, 105, 111, 102, 157, 165, 172, 175, 182, 191, 196, 202, 205]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 238,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 264,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 264,
+      "message": "同一函数连续 PipeBarrier 过多: 9 个 in __aicore__ inline void ComputeInttAddNoise",
+      "detail": "行: [264, 266, 272, 279, 285, 287, 289, 296, 298]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 266,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 272,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 279,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 285,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 287,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 289,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 296,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "line": 298,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 302,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "line": 305,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 102,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "func": "__aicore__ inline void RunCbd9FromPrf",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 119,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "func": "__aicore__ inline void ComputeYeeCbd",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 125,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "func": "__aicore__ inline void ComputeYeeCbd",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 127,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/cbd_device.hpp",
+      "func": "__aicore__ inline void ComputeYeeCbd",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 43,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 46,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 51,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 52,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 53,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 58,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 59,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 60,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 157,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 162,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 164,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 167,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 169,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 173,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 178,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 180,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 183,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 186,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "__aicore__ inline void PackUvToC",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 226,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 238,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 302,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 305,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/compute_custom.cpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 52,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/decode12_device.hpp",
+      "func": "__aicore__ inline void ComputeTHatDecode12",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 55,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/decode12_device.hpp",
+      "func": "__aicore__ inline void ComputeTHatDecode12",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 48,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+      "func": "__aicore__ inline void RunEncapsHeadG",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 61,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+      "func": "__aicore__ inline void RunEncapsHeadG",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 73,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/encaps_g_device.hpp",
+      "func": "__aicore__ inline void RunEncapsHeadG",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 51,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+      "func": "__aicore__ inline void ComputeMuEmbedFromM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 63,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+      "func": "__aicore__ inline void ComputeMuEmbedFromM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 65,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/mu_embed_device.hpp",
+      "func": "__aicore__ inline void ComputeMuEmbedFromM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 65,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "func": "__aicore__ inline void CopyPolyIn",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 74,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 105,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 111,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 16,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "func": "__aicore__ inline void MarkU32",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 19,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "func": "__aicore__ inline void MarkU32",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 51,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 58,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 61,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/sample_ntt_device.hpp",
+      "func": "__aicore__ inline void ComputeAHatSampleNtt",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 88,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/sample_ntt_device.hpp",
+      "func": "__aicore__ inline void ComputeAHatSampleNtt",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 93,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void CopyPolyIn",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 102,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 157,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 165,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 172,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 175,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 182,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 191,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 196,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 202,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 205,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 264,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 266,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 272,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 279,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 285,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 287,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 289,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 296,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 298,
+      "file": "graph-tests/enc_related/RB-T23-encaps-liboqs-cross/uv_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAddNoise",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

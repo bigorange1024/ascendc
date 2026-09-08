@@ -1,0 +1,18 @@
+[INFO]  Host: SynchronizeStream returned (sync 后)
+[INFO]  causal: NTT SET1+WAIT3 seen => AIC Wait(1)+CubeNTT+Set(3) completed
+[INFO]  causal: GATE SET4 after NTT => AIC Wait(4) in between (expected enter-before-Set)
+[INFO]  causal: INTT SET1+WAIT3 seen => AIC Wait(1)+CubeINTT+Set(3) completed (1/3 reused)
+[INFO]  phases: NTT(1/3) -> GATE(4) -> INTT(1/3 reuse) all linked
+[INFO] Total tick: 6118
+[kernel-run-timeout] wall_sec=3.288 budget=180s rc=0 bin=ascendc_kernels_bbit
+[WARN] TRACE[2]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[3]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[4]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[7]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[10]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[11]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[13]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[14]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[15]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[SUCCESS] NTT(1/3)+GATE(4)+INTT(1/3) causal + dual Cube — out+TRACE+mat_c ok
+[SUCCESS] RB-T03-ntt-gate-intt-bounded (sim)

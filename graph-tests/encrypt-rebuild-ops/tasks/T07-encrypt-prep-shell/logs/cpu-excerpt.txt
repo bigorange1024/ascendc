@@ -1,0 +1,5 @@
+SOC=Ascend910B4 RUN_MODE=cpu RB-T07=host-prep-only
+[prep_host] ek=1568 coins=32 ρ=32 → y/e1/e2
+[prep_host] summary={'rho_hex': '50575e656c737a81888f969da4abb2b9c0c7ced5dce3eaf1f8ff060d141b2229', 'y_shape': [4, 256], 'e1_shape': [4, 256], 'e2_shape': [256], 'y_sum': 1055279, 'e1_sum': 1098552, 'e2_sum': 279639}
+[SUCCESS] ρ←ek尾 + coins→(y,e1,e2) match golden (Host prep shell)
+[SUCCESS] RB-T07-prep-shell (cpu/host)

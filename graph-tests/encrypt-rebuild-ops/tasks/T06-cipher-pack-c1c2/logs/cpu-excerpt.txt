@@ -1,0 +1,5 @@
+[SUCCESS][CORE_0][pid 82773] exit success!
+[wall_sec] 1.050
+[kernel-run-timeout] wall_sec=1.050 budget=60s rc=0 bin=ascendc_kernels_bbit
+[SUCCESS] c[1568] matches golden (c1=1408B @0, c2=160B @1408)
+[SUCCESS] RB-T06-cipher-pack (cpu)

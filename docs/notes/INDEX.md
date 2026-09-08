@@ -48,6 +48,16 @@
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
 | [AscendC多环境运行纪要.md](AscendC多环境运行纪要.md) | **WSL / Cloud / 真机**：三档 cpu|sim|npu、`runtime_env`、Clang `-Werror`、SIM dump 分轨 |
 
+## Encrypt cannbot 重建（方法脚手架；非算子交付）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-cannbot-rebuild-capability-inventory.md](Encrypt-cannbot-rebuild-capability-inventory.md) | Alg.14/Encaps 积木；**G1–G5 已关**；禁抄索引 |
+| [Encrypt-cannbot-rebuild-work-mode.md](Encrypt-cannbot-rebuild-work-mode.md) | 主控设计 + subagent 编码；cannbot 路由；实验环 |
+| [Encrypt-cannbot-rebuild-kb.md](Encrypt-cannbot-rebuild-kb.md) | **短**知识库：反卡死拓扑 §B2；T24×30；Q-ULT answered |
+| [`docs/rg-encrypt-cannbot-rebuild.yaml`](../rg-encrypt-cannbot-rebuild.yaml) | 机读 DAG；`scripts/check_rg_dag.py` 校验 |
+| [`graph-tests/INDEX.md`](../../graph-tests/INDEX.md) | 试验场索引（一刀一目录） |
+
 ## 治理与模板
 
 | 文件 | 说明 |

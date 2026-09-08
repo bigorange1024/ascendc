@@ -1,0 +1,24 @@
+[INFO]  Host: TRACE HOST_PRE marked, launching MIX kernel (SIM/NPU)
+[INFO]  Host: SynchronizeStream returned (sync 后)
+[INFO]  TRACE map dump (slot=magic):
+[INFO]    [0] HOST_PRE        = 0x484F5354
+[INFO]    [1] AIV0_PRE_SET1   = 0xA1010001  (SET1)
+[INFO]    [2] AIV1_PRE_SET1   = 0x00000000  (SET1)
+[INFO]    [3] AIC_POST_WAIT1  = 0x00000000  (WAIT1 direct)
+[INFO]    [4] AIC_PRE_SET3    = 0x00000000  (SET3 direct)
+[INFO]    [5] AIV0_POST_WAIT3 = 0xA1030003  (after WAIT3)
+[INFO]    [6] AIV1_POST_WAIT3 = 0x00000000  (after WAIT3)
+[INFO]    [7] HOST_POST_SYNC  = 0x484F5355  (sync 后)
+[INFO]  causal: SET1 seen + WAIT3 seen => AIC WAIT1 + SET3 completed (handshake)
+[INFO] Model Stop Time: 2026-09-08 12:36:19
+Model RUN TIME: 2257.21 ms
+[INFO] Total tick: 5077
+[INFO] Model stopped successfully.
+[wall_sec] 2.890
+[kernel-run-timeout] wall_sec=2.890 budget=120s rc=0 bin=ascendc_kernels_bbit
+[WARN] TRACE[2]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[3]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[4]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[6]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[SUCCESS] SET1 / WAIT1+SET3(causal+Cube) / WAIT3 / sync 后 — out+TRACE+mat_c ok
+[SUCCESS] RB-T01-mix-ntt13-handshake (sim)
