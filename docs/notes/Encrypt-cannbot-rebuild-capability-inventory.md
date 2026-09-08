@@ -4,7 +4,7 @@
 > **参数**：\(n=256\)，\(q=3329\)，\(k=4\)，\(\eta_1=\eta_2=2\)，\(d_u=11\)，\(d_v=5\)。  
 > **禁抄**：完整 PKE Encrypt / KEM Encaps / Decaps 算子树的 kernel 与 host 编排（表末索引）。  
 > **可参考契约**：`docs/notes` 定稿、独立探针 STATUS、`library/shared` 头。  
-> **配套**：工作模式 · KB · DAG 见同前缀文件。
+> **配套**：工作模式 · KB · DAG · [反卡死拓扑总结（暂行）](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md)。
 
 ---
 

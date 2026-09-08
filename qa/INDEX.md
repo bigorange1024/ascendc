@@ -12,7 +12,7 @@
 
 ### 2026-09-08 — [Encrypt cannbot · Encaps/Encrypt 收口](2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md)
 
-关键字：**Q-ULT answered** · T22–T24 双绿 · **T24×30 不挂** · 双 launch 反卡死 · liboqs CROSS/RT · X11 aarch64 liboqs · 禁抄旧树
+关键字：**反卡死拓扑总结** · 重建 vs **stable l18** vs **KeyGen** · Q-ULT · T24×30 · 检查单指导后续
 
 ### 2026-09-01 — [有界演示 · 合稿删 · 方法论两阶段收口](2026-09/2026-09-01-有界演示路径拓扑与合稿衔接片删除.md)
 

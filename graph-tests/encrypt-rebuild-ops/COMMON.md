@@ -21,7 +21,8 @@
 - `library/shared/**` 头与契约注释  
 - 活跃分项探针 STATUS / INDEX（NTT、CBD、SampleNTT、Compress、ByteEncode/Decode_d、innerproduct、`pass-toy-mix-s123-byteencode-k2`）— **契约可参考，代码勿照抄大段**  
 - 本仓 `run.sh` / CMake 壳惯例（如 `ascendc-tests/add_custom`、上述 toy 的工程壳）  
-- cannbot：`thirdparty/cannbot-skills/ops/**`
+- cannbot：`thirdparty/cannbot-skills/ops/**`  
+- **反卡死指导（必读再开 MIX 长链）**：[`docs/notes/MIX-Encrypt-Encaps-反卡死拓扑技术总结.md`](../../docs/notes/MIX-Encrypt-Encaps-反卡死拓扑技术总结.md) §5 检查单
 
 ## cannbot（编码刀强制）
 

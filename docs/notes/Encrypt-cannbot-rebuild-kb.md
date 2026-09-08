@@ -52,17 +52,21 @@
 
 ### B2 · 反卡死拓扑（本重建核心目的）
 
-> **重写目的 = 实机不再卡死**；正确性是同路径附带验收。
+> **重写目的 = 实机不再卡死**；正确性是同路径附带验收。  
+> **定稿展开**（对照 stable / KeyGen、检查单）：[`MIX-Encrypt-Encaps-反卡死拓扑技术总结.md`](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md)（**暂行**）。
 
 | 设计 | 作用 |
 |------|------|
 | **双 launch** | Launch1 AIV-only（H/G，无 CrossCore）；Host mid-sync；Launch2 MIX Encrypt。避免单 fused 核内 AIV 未 Set / AIC 死等 |
 | **`BLOCK_DIM=1`** | 禁多 AIV 对半拆 Â / peer 交换（半边 Â、永远到不了 Set） |
-| **flag 只 1/3+4** | 避开 5/7 硬件/工具链冲突 |
-| **NPU 墙钟超时** | hang → timeout 非 0；不以 CPU 绿当不挂证据 |
-| **禁抄旧树** | 不继承旧 Encrypt/Encaps 同步债 |
+| **flag 只 1/3+4** | 避开 5/7；**不用** stable `l18` 的 flag 2 / GATE=8 |
+| **NPU 墙钟超时 + 反复压测** | hang → timeout；T24×30 `ok=30` |
+| **禁抄旧树** | 不继承 `l18_l19` 同步债 |
 
-**压测证据**：`RB-T24` 在 910B3 连续 **30×** `-r npu` → `ok=30 fail=0`（无 timeout/BLOCKED）。日志：`/mnt/workspace/encrypt-rebuild-hang-stress.log`。
+**与 stable Encaps/Encrypt**：表面同为 2 launch，实质 L2 深 FSM（含 GATE=8）+ prep AHAT 默认 2 → 实机 **卡 SynchronizeStream** 史。  
+**与 KeyGen**：同为 2 launch，但握手面短（NTT 1/2/3 + AIV SyncAll 汇合），实机主风险偏 **算错** 而非挂死 —— **不可**用 KeyGen 的 AHAT=2 反推 Encrypt 长链安全。
+
+**压测证据**：`RB-T24` 在 910B3 连续 **30×** `-r npu` → `ok=30 fail=0`。日志：`/mnt/workspace/encrypt-rebuild-hang-stress.log`。
 
 ### B3 · 运行时 / 验收（本战役）
 
@@ -162,3 +166,4 @@
 | 2026-09-08 | 初版脚手架；战役推进 T01–T24 |
 | 2026-09-08 | T23/T24 双绿；X11；Q-ULT answered |
 | 2026-09-08 | **收口刷新**：§B2 反卡死拓扑；P17×30 压测；Encaps 契约 §A2 |
+| 2026-09-08 | 链入定稿笔记 `MIX-Encrypt-Encaps-反卡死拓扑技术总结.md`；对照 stable/KeyGen |

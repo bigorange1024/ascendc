@@ -1,19 +1,27 @@
-# Encrypt 重建 · 任务总队列
+# Encrypt/Decaps 重建 · 任务总队列
 
-> **收口（2026-09-08）** · 日志：`/mnt/workspace/encrypt-rebuild-npu-loop.log` · 压测：`encrypt-rebuild-hang-stress.log`
+> 日志：`/mnt/workspace/encrypt-rebuild-npu-loop.log`
 
-## 已关闭
+## 已关闭（Encrypt/Encaps）
 
 | ID | 状态 |
 |----|------|
-| T01–T22 | 双绿（含设备 G Encaps） |
-| T23 | 双绿 · Encaps×liboqs CROSS |
-| T24 | 双绿 · Encaps→liboqs Decaps RT；**×30 不挂压测 ok=30** |
-| Q-ULT | **answered** |
+| T01–T24 | 双绿；T24×30 不挂（**liboqs** Decaps 往返） |
+| Q-ULT | answered（Encrypt/Encaps 设备路径） |
 
-## 活跃 / 可选
+## 活跃（Decrypt/Decaps · 用户安心门禁）
+
+> 用户卡死点：**Encaps↔Decaps 来回**。须设备 Decrypt + 设备 Decaps + 设备往返 NPU 压测。
+
+| ID | 状态 |
+|----|------|
+| **Q-RT-HANG** | open：设备 Encaps↔Decaps 往返 NPU 不挂？ |
+| **T25** | Decrypt 设备重建 · **本机编码中** |
+| T26 | Decaps 设备（依赖 T25 + T22 Encaps） |
+| T27 | 设备 Encaps→Decaps 往返 + NPU×N 压测 |
+
+## NPU
 
 | 轨 | 状态 |
 |----|------|
-| NPU | T06 sticky 保活（禁刷已绿 T23/T24） |
-| 可选下一刀 | 设备 Decaps（若继续）；否则停战役 |
+| 当前 | T06 sticky；T25 CPU 绿后立刻推 Decrypt |

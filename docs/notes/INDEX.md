@@ -55,6 +55,7 @@
 | [Encrypt-cannbot-rebuild-capability-inventory.md](Encrypt-cannbot-rebuild-capability-inventory.md) | Alg.14/Encaps 积木；**G1–G5 已关**；禁抄索引 |
 | [Encrypt-cannbot-rebuild-work-mode.md](Encrypt-cannbot-rebuild-work-mode.md) | 主控设计 + subagent 编码；cannbot 路由；实验环 |
 | [Encrypt-cannbot-rebuild-kb.md](Encrypt-cannbot-rebuild-kb.md) | **短**知识库：反卡死拓扑 §B2；T24×30；Q-ULT answered |
+| [MIX-Encrypt-Encaps-反卡死拓扑技术总结.md](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md) | **暂行**：重建 vs stable Encaps/Encrypt vs KeyGen；不挂原因与后续检查单 |
 | [`docs/rg-encrypt-cannbot-rebuild.yaml`](../rg-encrypt-cannbot-rebuild.yaml) | 机读 DAG；`scripts/check_rg_dag.py` 校验 |
 | [`graph-tests/INDEX.md`](../../graph-tests/INDEX.md) | 试验场索引（一刀一目录） |
 

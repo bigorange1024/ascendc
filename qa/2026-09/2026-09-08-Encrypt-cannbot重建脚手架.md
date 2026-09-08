@@ -44,3 +44,20 @@
 
 - [T23 Encaps×liboqs交叉](1edad27a-a413-4a59-b736-14b24c2ed385)  
 - [T24 Encaps→Decaps往返](f5eedb3b-49d7-4f90-a1df-c904e0170688)
+
+## 追加（同日 · 反卡死对照沉淀）
+
+- 定稿笔记：`docs/notes/MIX-Encrypt-Encaps-反卡死拓扑技术总结.md`（**暂行**）。
+- 对照结论（指导后续）：
+  - **重建**：双 launch 拆头 + flag 1/3+4 + `BLOCK_DIM=1` → NPU 不挂（×30）。
+  - **stable Encaps/Encrypt**：深 `l18`（含 GATE=8）+ prep AHAT=2 → SynchronizeStream **卡死史**。
+  - **KeyGen**：握手面短 → 实机主风险偏 **算错**，不可反推 Encrypt 长链可 AHAT=2。
+- DAG：`F-ANTI-HANG-TOPO` · `C-ANTI-HANG-CHECKLIST` · `X-STABLE-L18-HANG`；KB §B2 链入笔记。
+- 调研辅助：[对比调研](08ef480a-d7c0-46d5-a166-c391d8eb976e)。
+
+## 追加（同日 · Decrypt/Decaps 安心门禁）
+
+- 用户澄清：实机卡死出现在 **Encaps↔Decaps 来回**；仅 Encaps×30 / liboqs Decaps（T24）不够安心。
+- 新开 **Q-RT-HANG**：设备 Encaps↔Decaps 往返 NPU 不挂且 K 正确。
+- 序：T25 设备 Decrypt → T26 设备 Decaps → T27 设备往返+压测。
+- Decrypt **禁** softSync/GATE8/抄 alg15 生产 1-kernel；跟反卡死检查单。
