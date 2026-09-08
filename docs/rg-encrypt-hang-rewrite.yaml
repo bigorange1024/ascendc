@@ -562,7 +562,7 @@ nodes:
   domain: sim-frontier
   kind: fact
   provenance: measurement
-  statement: ER01 Encrypt外形2launch+生产GATE+真Vec MAC：CPU+SIM不挂；SIM可缺401（X13）；sync_audit 红线16条SYNC-02未否决
+  statement: ER01 Encrypt外形2launch+生产GATE+真Vec MAC：CPU+SIM不挂；SIM可缺401（X13）；基线 sync_audit 曾有16条SYNC-02（已由ER02清零）
   deps:
   - D-EXP-ER01
   status: verified
@@ -571,14 +571,115 @@ nodes:
   domain: goals
   kind: decision
   by: agent
-  statement: ER02：在ER01目录或旁系修 cannbot sync_audit 红线 SYNC-02（MTE2→V / V→Scalar 缺同步）；禁否决脚本候选；验收仍SIM不挂+红线清零或仅剩已记录能力边界
+  statement: ER02：在ER01目录就地修 cannbot SYNC-02（EnQue/DeQue + PipeBarrier<PIPE_V>）；禁否决脚本候选；验收SIM不挂+红线清零
   deps:
   - F-ER01-SIM-PASS
   - D-CANNBOT-ENC-RELATED
+  status: inactive
+  evidence: PASS；红线0；CPU+SIM；见 STATUS.md；artifacts ER02-*.log / ER02-sync_audit.json；继任 D-EXP-ER03
+- id: F-ER02-SYNC-CLEAN
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  statement: ER02后 sync_audit 红线0；仅剩性能SYNC-09/11已标注；CPU wall≈1.65s SIM tick≈46008 不挂
+  deps:
+  - D-EXP-ER02
+  status: verified
+  evidence: STATUS.md；/opt/cursor/artifacts/ER02-sync_audit.json
+- id: D-EXP-ER03
+  domain: goals
+  kind: decision
+  by: agent
+  statement: ER03：新目录 ER03-gate-realbrick-volume；GATE真Vec MAC 256×32；保持ER02同步；红线0+CPU/SIM
+  deps:
+  - F-ER02-SYNC-CLEAN
+  - D-CANNBOT-ENC-RELATED
+  status: inactive
+  evidence: PASS tick≈63849；见 STATUS.md；继任 D-EXP-ER04
+- id: F-ER03-VEC-VOLUME-NOT-ENOUGH
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  statement: ER03 GATE真MAC 256×32 CPU+SIM不挂（tick≈63849）；仅AIV Vec体量加压不足以CAModel复现生产挂死
+  deps:
+  - D-EXP-ER03
+  status: verified
+  evidence: ER03 STATUS；artifacts ER03-*.log
+- id: D-EXP-ER04
+  domain: goals
+  kind: decision
+  by: agent
+  statement: ER04：自ER03复制；GATE 256×32；NTT/INTT各kCubeRounds=16真Mmad；红线0+CPU/SIM
+  deps:
+  - F-ER03-VEC-VOLUME-NOT-ENOUGH
+  - D-CANNBOT-ENC-RELATED
+  status: inactive
+  evidence: PASS tick≈85889；见 STATUS.md；继任 D-EXP-ER05
+- id: F-ER04-CUBE-VOLUME-NOT-ENOUGH
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  statement: ER04 GATE256×32+Cube×16 CPU+SIM不挂（tick≈85889）；SIM上真Cube加压仍未复现挂死
+  deps:
+  - D-EXP-ER04
+  status: verified
+  evidence: ER04 STATUS；artifacts ER04-*.log
+- id: D-EXP-ER05
+  domain: goals
+  kind: decision
+  by: agent
+  statement: ER05：自ER04复制；Host PREP+COMPUTE+COMPUTE同workspace粘性双算；核体量不改；红线0+CPU/SIM
+  deps:
+  - F-ER04-CUBE-VOLUME-NOT-ENOUGH
+  - D-CANNBOT-ENC-RELATED
+  status: inactive
+  evidence: PASS tick≈164460；见 STATUS.md；继任 D-SIM-FRONTIER-PAUSE
+- id: F-ER05-STICKY-NOT-ENOUGH
+  domain: sim-frontier
+  kind: fact
+  provenance: measurement
+  statement: ER05 同ws粘性双COMPUTE CPU+SIM不挂（tick≈164460）；多launch粘性alone未复现生产挂死
+  deps:
+  - D-EXP-ER05
+  status: verified
+  evidence: ER05 STATUS；artifacts ER05-*.log
+- id: D-SIM-FRONTIER-PAUSE
+  domain: goals
+  kind: decision
+  by: agent
+  statement: 暂停enc_related同质SIM加压（体量Vec/Cube+粘性双COMPUTE均绿）；原下一优先等NPU；2026-09-08用户改定位后本节点保留为历史节奏结论
+  deps:
+  - F-ER05-STICKY-NOT-ENOUGH
+  - F-ER04-CUBE-VOLUME-NOT-ENOUGH
+  - F-ER03-VEC-VOLUME-NOT-ENOUGH
+  - F-X15-SIM-TOYS-EXHAUSTED
+  status: inactive
+  targets:
+  - Q-ULT
+- id: D-AIV-ONLY-CANN-NTT-REFACTOR
+  domain: goals
+  kind: decision
+  by: human
+  statement: 用户改定位（口述未完）：用thirdparty/cann-ntt重构AIV-only NTT与Encrypt；写码强制cannbot-skills；KB/DAG续积；NPU暂不可用不强等；细节待续讲后锁参下任务书
+  deps:
+  - D-SIM-FRONTIER-PAUSE
   status: active
+  evidence: qa/2026-09/2026-09-08-改定位AIV-only-cann-ntt口述.md；AGENT_HANDOFF.md
   targets:
   - Q-ULT
 changelog:
+- date: '2026-09-08'
+  change: 用户改定位口述未完；开 D-AIV-ONLY-CANN-NTT-REFACTOR（active）；D-SIM-FRONTIER-PAUSE→inactive 作历史。
+- date: '2026-09-07'
+  change: ER05 PASS；F-ER05-STICKY-NOT-ENOUGH；开 D-SIM-FRONTIER-PAUSE（等NPU/换维须新任务书）。
+- date: '2026-09-07'
+  change: ER04 PASS；F-ER04-CUBE-VOLUME-NOT-ENOUGH；开 D-EXP-ER05（粘性双COMPUTE）。
+- date: '2026-09-07'
+  change: ER03 PASS；F-ER03-VEC-VOLUME-NOT-ENOUGH；开 D-EXP-ER04（Cube×16 真Mmad）。
+- date: '2026-09-07'
+  change: 主控恢复分工（不写核）；下发 ER03-TASK（256×32 真MAC）；D-EXP-ER03 参数锁定。
+- date: '2026-09-07'
+  change: ER02 PASS；F-ER02-SYNC-CLEAN；D-EXP-ER02 inactive；开 D-EXP-ER03（近生产体量）。
 - date: '2026-09-07'
   change: ER01 PASS；F-ER01-SIM-PASS；开 D-EXP-ER02（清 SYNC-02 红线）。
 - date: '2026-09-07'

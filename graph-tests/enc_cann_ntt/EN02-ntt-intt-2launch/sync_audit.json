@@ -1,0 +1,86 @@
+{
+  "files_scanned": [
+    "aic_func.hpp",
+    "aiv_func.hpp",
+    "basic.hpp",
+    "mmad_custom.cpp",
+    "ntt_vec.hpp",
+    "tiling.h"
+  ],
+  "event_count": 5,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "mmad_custom.cpp",
+      "line": 24,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "mmad_custom.cpp",
+      "line": 29,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 24,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __WAIT",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "STATE",
+      "line": 25,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __WAIT",
+      "raw": "CrossCoreWaitFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 29,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __SET",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "STATE",
+      "line": 30,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __SET",
+      "raw": "CrossCoreSetFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 104,
+      "file": "ntt_vec.hpp",
+      "func": "__aicore__ inline void split_vec_int7x4",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

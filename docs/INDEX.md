@@ -23,7 +23,9 @@
 
 | 场景 | 阅读 |
 |------|------|
-| **Encrypt/l18 卡死推理图谱** | [`rg-encrypt-l18.yaml`](rg-encrypt-l18.yaml)（工具：`thirdparty/reasoning-graph-skill/`） |
+| **Encrypt × cann-ntt（当前主线）** | KB/能力/工作模式见 [`notes/Encrypt-cann-ntt-kb.md`](notes/Encrypt-cann-ntt-kb.md)；DAG [`rg-encrypt-cann-ntt.yaml`](rg-encrypt-cann-ntt.yaml)；场 [`graph-tests/enc_cann_ntt/`](../graph-tests/enc_cann_ntt/) |
+| **Encrypt hang 重写（旧线）** | [`notes/Encrypt-hang-rewrite-kb.md`](notes/Encrypt-hang-rewrite-kb.md) · [`rg-encrypt-hang-rewrite.yaml`](rg-encrypt-hang-rewrite.yaml) |
+| **Encrypt/l18 卡死推理图谱（更旧）** | [`rg-encrypt-l18.yaml`](rg-encrypt-l18.yaml)（工具：`thirdparty/reasoning-graph-skill/`） |
 | **Decrypt fused 卡死推理图谱** | [`rg-decrypt-fused.yaml`](rg-decrypt-fused.yaml)（试验场 [`graph-tests/decrypt/`](../graph-tests/decrypt/INDEX.md)） |
 | 新 Agent / 新机器 | [engineering/环境复现与开发指南.md](engineering/环境复现与开发指南.md) §12–§14；探针超时见 [engineering/内核计算超时与性能定标.md](engineering/内核计算超时与性能定标.md)；额度排程见 [engineering/Cloud-Agent额度与验收分层.md](engineering/Cloud-Agent额度与验收分层.md) |
 | **写调研草稿** | [research/INDEX.md](research/INDEX.md) |

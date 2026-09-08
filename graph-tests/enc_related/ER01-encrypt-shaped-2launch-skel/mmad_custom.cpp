@@ -19,8 +19,9 @@
  *     AIC：SET(8) 后 → WAIT(1)+极轻 Cube → SET(3)
  *     AIV：WAIT(8) 后 → 桩写 S0 → SET(1) → WAIT(3) → 完成标记
  *
- * AscendC API：CrossCoreSetFlag/WaitFlag、DataCopy、Duplicate、Mul/Add/Muls、Mmad 等
- * 复用查阅索引既有记录（GT-20260903-* / T06）；本刀无新增 API。
+ * AscendC API：CrossCoreSetFlag/WaitFlag、DataCopy、Duplicate、Mul/Add/Muls、Mmad、
+ * TQue EnQue/DeQue、PipeBarrier 等复用查阅索引（GT-20260903-* / T06 / ER01）；
+ * ER02：补齐 MTE2↔V/S 的 EnQue/DeQue 与 PipeBarrier<PIPE_V>（无新 HardEvent API）。
  */
 #include "aic_func.hpp"
 #include "aiv_func.hpp"
@@ -99,6 +100,8 @@ __aicore__ inline void ToyTraceMark(GM_ADDR traceGm, GM_ADDR ws, ToyTraceSlot sl
         pipe.InitBuffer(outQ, 1, kAlign * sizeof(int32_t));
         AscendC::LocalTensor<int32_t> t = outQ.AllocTensor<int32_t>();
         AscendC::Duplicate(t, static_cast<int32_t>(0), kAlign);
+        // ER02：V→S，Duplicate 后 SetValue 前同步（SYNC-02）
+        AscendC::PipeBarrier<PIPE_V>();
         t.SetValue(0, static_cast<int32_t>(1));
         outQ.EnQue(t);
         t = outQ.DeQue<int32_t>();

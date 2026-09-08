@@ -1,13 +1,14 @@
 # graph-tests — 卡死排查 · 图谱驱动试验场
 
-> **Encrypt 卡死重写（2026-09-06 起主线）**：[`toys/`](toys/INDEX.md) · [`enc_related/`](enc_related/INDEX.md) · KB [`docs/notes/Encrypt-hang-rewrite-kb.md`](../docs/notes/Encrypt-hang-rewrite-kb.md) · 新图 [`docs/rg-encrypt-hang-rewrite.yaml`](../docs/rg-encrypt-hang-rewrite.yaml)  
+> **Encrypt × cann-ntt（2026-09-08 起主线）**：[`enc_cann_ntt/`](enc_cann_ntt/INDEX.md) · KB [`docs/notes/Encrypt-cann-ntt-kb.md`](../docs/notes/Encrypt-cann-ntt-kb.md) · DAG [`docs/rg-encrypt-cann-ntt.yaml`](../docs/rg-encrypt-cann-ntt.yaml) · [能力清单](../docs/notes/Encrypt-cann-ntt-capability-inventory.md) · [工作模式](../docs/notes/Encrypt-cann-ntt-workmode.md)  
+> **Encrypt hang 重写（旧线 · SIM 暂停）**：[`toys/`](toys/INDEX.md) · [`enc_related/`](enc_related/INDEX.md) · [`docs/notes/Encrypt-hang-rewrite-kb.md`](../docs/notes/Encrypt-hang-rewrite-kb.md) · [`docs/rg-encrypt-hang-rewrite.yaml`](../docs/rg-encrypt-hang-rewrite.yaml)  
 > **旧 Encrypt/l18 图（只读参考）**：[`docs/rg-encrypt-l18.yaml`](../docs/rg-encrypt-l18.yaml) + 历史 GT-*  
 > **Decrypt fused**：**另立** [`decrypt/INDEX.md`](decrypt/INDEX.md) + [`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)  
-> **最后刷新**：2026-09-06
+> **最后刷新**：2026-09-08
 
 Decrypt 真理：[`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)  
-DAG 检查：`python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-hang-rewrite.yaml`  
-（`thirdparty/reasoning-graph-skill` 若缺失则用上述脚本）
+DAG 检查：`python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-cann-ntt.yaml`  
+（旧 hang 图：`--yaml docs/rg-encrypt-hang-rewrite.yaml`）
 
 **知识来源（强制）**：不限当前检出分支。须主动 `git fetch` 并阅读**其它分支**上刚做的实验笔记（尤其 `origin/cursor/kem-2launch-sticky-1534` 的 `qa/2026-09/*`、HANDOFF），按准入规则沉淀进图谱；evidence 写明分支/路径。当前工作区没有的纪要 ≠ 可以当没发生。
 

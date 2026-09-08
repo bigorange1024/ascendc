@@ -48,11 +48,19 @@
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
 | [AscendC多环境运行纪要.md](AscendC多环境运行纪要.md) | **WSL / Cloud / 真机**：三档 cpu|sim|npu、`runtime_env`、Clang `-Werror`、SIM dump 分轨 |
 
-## Encrypt 卡死重写（进行中）
+## Encrypt 卡死重写（归档可读 · SIM 加压暂停）
 
 | 文件 | 说明 |
 |------|------|
-| [Encrypt-hang-rewrite-kb.md](Encrypt-hang-rewrite-kb.md) | **专属知识库**：只攻 SynchronizeStream 卡死；失败优先；配套 [`rg-encrypt-hang-rewrite.yaml`](../rg-encrypt-hang-rewrite.yaml) |
+| [Encrypt-hang-rewrite-kb.md](Encrypt-hang-rewrite-kb.md) | **旧线知识库**：SynchronizeStream 卡死；配套 [`rg-encrypt-hang-rewrite.yaml`](../rg-encrypt-hang-rewrite.yaml) |
+
+## Encrypt × cann-ntt Host 编排（当前主线 · 2026-09-08）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-cann-ntt-capability-inventory.md](Encrypt-cann-ntt-capability-inventory.md) | Alg.14 **基础能力清单**（积木/禁抄/缺口） |
+| [Encrypt-cann-ntt-workmode.md](Encrypt-cann-ntt-workmode.md) | **工作模式**（主控/subagent/cannbot） |
+| [Encrypt-cann-ntt-kb.md](Encrypt-cann-ntt-kb.md) | **本线知识库**；配套 [`rg-encrypt-cann-ntt.yaml`](../rg-encrypt-cann-ntt.yaml)；试验场 [`graph-tests/enc_cann_ntt/`](../../graph-tests/enc_cann_ntt/) |
 
 ## 治理与模板
 

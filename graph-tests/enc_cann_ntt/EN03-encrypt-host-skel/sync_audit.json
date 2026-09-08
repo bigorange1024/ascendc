@@ -1,0 +1,142 @@
+{
+  "files_scanned": [
+    "aic_func.hpp",
+    "aiv_func.hpp",
+    "basic.hpp",
+    "enc_aiv_stub_common.hpp",
+    "enc_matvec_stub.cpp",
+    "enc_pack_stub.cpp",
+    "enc_prep_stub.cpp",
+    "mmad_custom.cpp",
+    "ntt_vec.hpp",
+    "tiling.h"
+  ],
+  "event_count": 9,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "mmad_custom.cpp",
+      "line": 25,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "mmad_custom.cpp",
+      "line": 30,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_matvec_stub.cpp",
+      "line": 46,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in <global>",
+      "detail": "行: [46, 48, 50, 41]；分析是否可合并"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 46,
+      "file": "enc_matvec_stub.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 48,
+      "file": "enc_matvec_stub.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 50,
+      "file": "enc_pack_stub.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 41,
+      "file": "enc_prep_stub.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 25,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __WAIT",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "STATE",
+      "line": 26,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __WAIT",
+      "raw": "CrossCoreWaitFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 30,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __SET",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "STATE",
+      "line": 31,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __SET",
+      "raw": "CrossCoreSetFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 104,
+      "file": "ntt_vec.hpp",
+      "func": "__aicore__ inline void split_vec_int7x4",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

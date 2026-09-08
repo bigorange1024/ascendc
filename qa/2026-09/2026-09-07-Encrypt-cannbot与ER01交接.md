@@ -1,21 +1,35 @@
-# 2026-09-07 Encrypt · cannbot + ER01 交接
+# 2026-09-07 Encrypt · cannbot + ER01/ER02 + ER03 下发
 
 ## 用户锁定
 
-- 继续 **图谱实验**；主动用 `thirdparty/cannbot-skills`（不 vendor 进 `.cursor/skills`）。
+- 继续 **图谱实验**；主动用 `thirdparty/cannbot-skills`（不 vendor）。
 - 核心仍是 **卡死**；正确性非门禁。
-- 910B3 已通但机时紧；**未经明示不连**。
-- 本轮末：推送本分支，新 Cloud Agent 接手（secrets 已更新）。
+- **分工**：主控 = 任务书 + KB + DAG + 节奏；**不写核**。Subagent = 一刀一目录编码 + CPU/SIM。
+- 禁止擅自 commit / push / 新建分支。
+- NPU 单卡串行；他机占用时本侧只做 SIM。
 
 ## 进展
 
 | 项 | 结果 |
 |----|------|
-| cannbot-skills | 登记进 `clone-thirdparty.sh` + thirdparty 文档 |
-| ER01 | **PASS** CPU+SIM；目录 `graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/` |
-| sync_audit | 16× SYNC-02 红线原样保留 → **ER02** 先清 |
-| KB | X22–X24；DAG `D-EXP-ER02` active |
+| ER01 | **PASS** |
+| ER02 | **PASS**（SYNC-02 红线 0） |
+| ER03 | **PASS**（MAC 256×32；tick≈63849；X27：仅 Vec 加压不足） |
+| ER04 | 任务书已下发：`ER04-TASK.md`（Cube×16）；subagent 编码中 |
+| KB | X22–X26 |
+| DAG | `D-EXP-ER03` active |
 
-## 下一 Agent P0
+## 滚动
 
-ER02：修 SYNC-02；复跑 audit + CPU/SIM。详见 `AGENT_HANDOFF.md`。
+| ER04 | **PASS**（Cube×16；X28） |
+| ER05 | 任务书已下发：粘性双 COMPUTE |
+
+## 主控下一动作
+
+收 ER03 反馈块 → 沉淀 STATUS/KB/DAG → 定 ER04 或停等上机。
+
+
+## ER05 收口
+
+- ER05 **PASS**（粘性双 COMPUTE；tick≈164460）→ **X29**
+- 主控开 `D-SIM-FRONTIER-PAUSE`：停同质 SIM 加压，等 NPU

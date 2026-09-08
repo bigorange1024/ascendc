@@ -7,6 +7,12 @@
  *
  * 背景（ER01 / D-EXP-ER01）：Encrypt 外形双 launch；prep 与计算壳分离。
  * 积木体量对齐 T06（有界 Vec MAC）；禁 X14 空转、禁抄 Encrypt、禁 SoftSync。
+ *
+ * ER02（D-EXP-ER02 / cannbot SYNC-02）：
+ *   - GM→UB 后统一 EnQue/DeQue（MTE2→V/S），禁止 Alloc+DataCopy 后直接算/标量读；
+ *   - Duplicate/Muls/Add（V）后若接 SetValue/GetValue（S），插 PipeBarrier<PIPE_V>；
+ *   - 输入队列用 VECIN、输出用 VECOUT（与 cannbot 标准三段流水一致）。
+ * 未采用：否决红线；HardEvent SetFlag（本刀优先 EnQue/DeQue + PIPE_V）。
  */
 
 #include "basic.hpp"
@@ -49,15 +55,25 @@ public:
     /** 读 seed → 4 轮 Muls+Add mixing → 写 SAMPLE_OUT。 */
     __aicore__ inline void Process()
     {
+        // CopyIn seed：DataCopy 后 EnQue/DeQue，清 MTE2→V/S（SYNC-02）
         AscendC::LocalTensor<int32_t> seed = seedQ_.AllocTensor<int32_t>();
-        AscendC::LocalTensor<int32_t> work = workQ_.AllocTensor<int32_t>();
         AscendC::DataCopy(seed, seedGM_, kSeedInt32);
+        seedQ_.EnQue(seed);
+        seed = seedQ_.DeQue<int32_t>();
 
+        AscendC::LocalTensor<int32_t> work = workQ_.AllocTensor<int32_t>();
         AscendC::Duplicate(work, static_cast<int32_t>(0), kWorkInt32);
+        // V→S：随后 Scalar 填尾 / 读 seed 前同步
+        AscendC::PipeBarrier<PIPE_V>();
         AscendC::DataCopy(work, seed, kSeedInt32);
+        // UB 内 DataCopy 仍记 MTE2_write；计算前再 EnQue/DeQue
+        workQ_.EnQue(work);
+        work = workQ_.DeQue<int32_t>();
         for (uint32_t i = kSeedInt32; i < kWorkInt32; ++i) {
             work.SetValue(i, seed.GetValue(i - kSeedInt32) ^ static_cast<int32_t>(subBlockID_ + i));
         }
+        // S→V：标量填尾后接 Muls/Add
+        AscendC::PipeBarrier<PIPE_ALL>();
 
         for (uint32_t round = 0; round < kMixRounds; ++round) {
             AscendC::LocalTensor<int32_t> tmp = tmpQ_.AllocTensor<int32_t>();
@@ -68,6 +84,8 @@ public:
             AscendC::PipeBarrier<PIPE_ALL>();
         }
 
+        // V→S：打包 out 前 GetValue
+        AscendC::PipeBarrier<PIPE_V>();
         AscendC::LocalTensor<int8_t> outLocal = outQ_.AllocTensor<int8_t>();
         for (uint32_t b = 0; b < tiling::kSampleOutPerAiv; ++b) {
             const uint32_t w = b / sizeof(int32_t);
@@ -88,7 +106,7 @@ public:
 private:
     int32_t subBlockID_;
     AscendC::TPipe pipe_;
-    AscendC::TQue<AscendC::TPosition::VECOUT, 1> seedQ_;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> seedQ_;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> workQ_;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> tmpQ_;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> outQ_;
@@ -118,8 +136,11 @@ public:
 
     __aicore__ inline void Process()
     {
+        // CopyIn sample → EnQue/DeQue 后再 Scalar GetValue（SYNC-02）
         AscendC::LocalTensor<int8_t> sample = sampleQ_.AllocTensor<int8_t>();
         AscendC::DataCopy(sample, sampleGM_, tiling::kSampleOutPerAiv);
+        sampleQ_.EnQue(sample);
+        sample = sampleQ_.DeQue<int8_t>();
 
         AscendC::LocalTensor<int8_t> outLocal = outQ_.AllocTensor<int8_t>();
         for (uint32_t i = 0; i < tiling::kS0PerAiv; ++i) {
@@ -136,7 +157,7 @@ public:
 private:
     int32_t subBlockID_;
     AscendC::TPipe pipe_;
-    AscendC::TQue<AscendC::TPosition::VECOUT, 1> sampleQ_;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> sampleQ_;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> outQ_;
     AscendC::GlobalTensor<int8_t> sampleGM_;
     AscendC::GlobalTensor<int8_t> s0GM_;
@@ -169,11 +190,14 @@ public:
     /**
      * 每轮：读 a/b → Muls(b,scale) → Mul → Add 累加；写回 acc。
      * 体量有界（64×8），非空转加码。
+     * ER02：每路 DataCopy 后 EnQue/DeQue，再进 V 计算。
      */
     __aicore__ inline void Process()
     {
         AscendC::LocalTensor<int32_t> acc = accQ_.AllocTensor<int32_t>();
         AscendC::DataCopy(acc, accGM_, kMacElems);
+        accQ_.EnQue(acc);
+        acc = accQ_.DeQue<int32_t>();
 
         for (uint32_t round = 0; round < kRounds; ++round) {
             AscendC::LocalTensor<int32_t> a = aQ_.AllocTensor<int32_t>();
@@ -181,7 +205,12 @@ public:
             AscendC::LocalTensor<int32_t> prod = prodQ_.AllocTensor<int32_t>();
 
             AscendC::DataCopy(a, aGM_, kMacElems);
+            aQ_.EnQue(a);
+            a = aQ_.DeQue<int32_t>();
+
             AscendC::DataCopy(b, bGM_, kMacElems);
+            bQ_.EnQue(b);
+            b = bQ_.DeQue<int32_t>();
 
             const int32_t scale = static_cast<int32_t>(1 + round + subBlockID_);
             AscendC::Muls(b, b, scale, kMacElems);
@@ -203,8 +232,8 @@ public:
 private:
     int32_t subBlockID_;
     AscendC::TPipe pipe_;
-    AscendC::TQue<AscendC::TPosition::VECOUT, 1> aQ_;
-    AscendC::TQue<AscendC::TPosition::VECOUT, 1> bQ_;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> aQ_;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> bQ_;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> prodQ_;
     AscendC::TQue<AscendC::TPosition::VECOUT, 1> accQ_;
     AscendC::GlobalTensor<int32_t> aGM_;
@@ -230,6 +259,8 @@ public:
     {
         AscendC::LocalTensor<int32_t> t = outQ_.AllocTensor<int32_t>();
         AscendC::Duplicate(t, static_cast<int32_t>(subBlockID_), kMarkElems);
+        // V→S：Duplicate 后 SetValue 前（SYNC-02）
+        AscendC::PipeBarrier<PIPE_V>();
         t.SetValue(0, static_cast<int32_t>(0xE01000 + subBlockID_));
         outQ_.EnQue(t);
         t = outQ_.DeQue<int32_t>();

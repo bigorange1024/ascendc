@@ -10,10 +10,13 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-07 — [Encrypt · cannbot + ER01 交接](2026-09/2026-09-07-Encrypt-cannbot与ER01交接.md)
+### 2026-09-08 — [Encrypt×cann-ntt 锁定 · 文档底座](2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md)
 
-关键字：**cannbot-skills** · **图谱续实验** · **ER01 PASS** · **ER02 清 SYNC-02** · **910B3 禁擅自连** · **新 Cloud 接手**
+关键字：**Host编排+迁入cann-ntt** · **EN01–EN09 SIM齐** · **EN10/EN11 NPU不挂** · **EN12 sticky进行中** · **空闲&lt;4min保活** · **禁抄PKE/KEM**
 
+### 2026-09-07 — [Encrypt · cannbot + ER01/ER02](2026-09/2026-09-07-Encrypt-cannbot与ER01交接.md)
+
+关键字：**主控/subagent** · **ER03 PASS/X27** · **ER05 PASS/X29 · SIM暂停等NPU** · **禁 commit/push**
 ### 2026-09-06 — [Encrypt 卡死重写 · T01 PASS · 开 T02](2026-09/2026-09-06-Encrypt卡死重写T01与T02.md)
 
 关键字：**限时实验** · **禁复踩失败路线** · **每刀前遍历 KB+图** · **T01 1/3 握手 PASS** · **T02 生产 GATE 时序**

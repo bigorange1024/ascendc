@@ -1,0 +1,418 @@
+# Encrypt × cann-ntt · 推理/实验 DAG
+# 配套 KB: docs/notes/Encrypt-cann-ntt-kb.md
+# 能力清单: docs/notes/Encrypt-cann-ntt-capability-inventory.md
+# 工作模式: docs/notes/Encrypt-cann-ntt-workmode.md
+# 试验场: graph-tests/enc_cann_ntt/
+# 检查: python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-cann-ntt.yaml
+# 旧 hang 图（只读）: docs/rg-encrypt-hang-rewrite.yaml
+
+title: Encrypt × cann-ntt Host编排重写 · DAG
+updated: 2026-09-08
+
+nodes:
+
+- id: Q-ULT-NOHANG
+  type: question
+  status: open
+  statement: ML-KEM-1024 Encrypt（Host多段+迁入cann-ntt NTT）在目标运行时是否绝对不卡死？
+  evidence: []
+
+- id: D-LOCK-20260908
+  type: decision
+  status: closed
+  statement: 用户锁定路线1变体：Host编排+迁入cann-ntt有用代码；1024；不卡死优先；graph-tests/enc_cann_ntt；主控不写核
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+    - qa/2026-09/2026-09-08-改定位AIV-only-cann-ntt口述.md
+
+- id: F-CAP-INVENTORY
+  type: fact
+  status: closed
+  statement: Alg.14基础能力清单已落盘（哈希/采样/NTT缺口/内积/编解码/Compress；禁算子级抄码）
+  depends_on:
+    - D-LOCK-20260908
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-capability-inventory.md
+
+- id: F-WORKMODE
+  type: fact
+  status: closed
+  statement: 工作模式清单已落盘（主控设计+cannbot；subagent编码；KB/DAG只读给subagent）
+  depends_on:
+    - D-LOCK-20260908
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-workmode.md
+
+- id: F-KB-SEED
+  type: fact
+  status: closed
+  statement: 本线KB初建（架构不变量A1–A6；继承禁令B1–B7；迁入要点C1–C5）
+  depends_on:
+    - D-LOCK-20260908
+    - F-CAP-INVENTORY
+    - F-WORKMODE
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-INHERIT-HANG-BANS
+  type: fact
+  status: closed
+  statement: 继承hang线禁令（禁INTT 5/7、Wait中SyncAll、抄旧Encrypt、否决sync红线等）；不复验当新发现
+  depends_on:
+    - D-LOCK-20260908
+  evidence:
+    - docs/notes/Encrypt-hang-rewrite-kb.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-CANN-NTT-IS-MIX-BAT
+  type: fact
+  status: closed
+  statement: 已发表cann-ntt为MIX+Cube BAT矩阵NTT；ntt_vec为digit/Barrett；非AIV-only butterfly
+  depends_on:
+    - D-LOCK-20260908
+  evidence:
+    - thirdparty/cann-ntt/README.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-ARCH-HOST-SEGMENTS
+  type: decision
+  status: closed
+  statement: Encrypt拆Host多段：Prep/Matvec/Pack偏AIV_ONLY；NTT/INTT独立短MIX launch；禁胖核GATE4/8
+  depends_on:
+    - F-KB-SEED
+    - F-INHERIT-HANG-BANS
+    - F-CANN-NTT-IS-MIX-BAT
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-DOC-BASE-READY
+  type: decision
+  status: closed
+  statement: 文档底座完成；允许主控写EN01任务书；未下发前禁止编码
+  depends_on:
+    - F-CAP-INVENTORY
+    - F-WORKMODE
+    - F-KB-SEED
+    - D-ARCH-HOST-SEGMENTS
+  evidence:
+    - graph-tests/enc_cann_ntt/INDEX.md
+
+- id: D-EXP-EN01
+  type: decision
+  status: closed
+  statement: EN01 PASS-NOHANG：迁入KEM-256正向NTT；CPU+SIM不挂；golden match；sync红线0（初扫SYNC-02已修）
+  depends_on:
+    - D-DOC-BASE-READY
+  evidence:
+    - graph-tests/enc_cann_ntt/EN01-TASK.md
+    - graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/STATUS.md
+    - graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/sync_audit.json
+
+- id: F-EN01-NTT-PORT-OK
+  type: fact
+  status: closed
+  statement: N0积木可用（作者包Kyber档迁入graph-tests）；SIM tick≈11356；X30迁入须先sync_audit
+  depends_on:
+    - D-EXP-EN01
+  evidence:
+    - graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN02
+  type: decision
+  status: closed
+  statement: EN02 PASS-NOHANG：Host NTT→INTT双launch；CPU+SIM；tick≈20685；红线0；X31 M4打包对齐
+  depends_on:
+    - F-EN01-NTT-PORT-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN02-TASK.md
+    - graph-tests/enc_cann_ntt/EN02-ntt-intt-2launch/STATUS.md
+
+- id: F-EN02-INTT-2LAUNCH-OK
+  type: fact
+  status: closed
+  statement: INTT积木+同session双launch粘性可用；可开Encrypt形Host多段桩
+  depends_on:
+    - D-EXP-EN02
+  evidence:
+    - graph-tests/enc_cann_ntt/EN02-ntt-intt-2launch/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN03
+  type: decision
+  status: closed
+  statement: EN03 PASS-NOHANG：Encrypt形Host五段桩；tick≈29824；红线0；X32桩核CPU AIV_ONLY/SIM MIX占位
+  depends_on:
+    - F-EN02-INTT-2LAUNCH-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN03-TASK.md
+    - graph-tests/enc_cann_ntt/EN03-encrypt-host-skel/STATUS.md
+
+- id: F-EN03-HOST-SKEL-OK
+  type: fact
+  status: closed
+  statement: Host五段壳可用；可换真Matvec积木
+  depends_on:
+    - D-EXP-EN03
+  evidence:
+    - graph-tests/enc_cann_ntt/EN03-encrypt-host-skel/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN04
+  type: decision
+  status: closed
+  statement: EN04 PASS-NOHANG：真Matvec接入五段壳；SIM tick≈194125；红线0；X33按笔记重写
+  depends_on:
+    - F-EN03-HOST-SKEL-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN04-TASK.md
+    - graph-tests/enc_cann_ntt/EN04-matvec-realbrick/STATUS.md
+
+- id: F-EN04-MATVEC-OK
+  type: fact
+  status: closed
+  statement: 真NTT域Matvec可独立AIV launch夹在迁入NTT/INTT之间不挂
+  depends_on:
+    - D-EXP-EN04
+  evidence:
+    - graph-tests/enc_cann_ntt/EN04-matvec-realbrick/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN05
+  type: decision
+  status: closed
+  statement: EN05 PASS-NOHANG：Prep=设备PRF+CBD η2；tick≈246253；红线0；Â仍Host；X34
+  depends_on:
+    - F-EN04-MATVEC-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN05-TASK.md
+    - graph-tests/enc_cann_ntt/EN05-prep-sample-realbrick/STATUS.md
+
+- id: F-EN05-PREP-CBD-OK
+  type: fact
+  status: closed
+  statement: 设备CBD Prep可接入五段壳；SampleNTT设备端仍开
+  depends_on:
+    - D-EXP-EN05
+  evidence:
+    - graph-tests/enc_cann_ntt/EN05-prep-sample-realbrick/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN06
+  type: decision
+  status: closed
+  statement: EN06 PASS-NOHANG：Pack Compress11/5+ByteEncode c=1568B；tick≈296054；红线0；X35
+  depends_on:
+    - F-EN05-PREP-CBD-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN06-TASK.md
+    - graph-tests/enc_cann_ntt/EN06-pack-compress-realbrick/STATUS.md
+
+- id: F-EN06-PACK-OK
+  type: fact
+  status: closed
+  statement: 五段积木形态齐（NTT/INTT/Matvec/CBD Prep/Pack）；缺段间贯通与设备SampleNTT
+  depends_on:
+    - D-EXP-EN06
+  evidence:
+    - graph-tests/enc_cann_ntt/EN06-pack-compress-realbrick/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN07
+  type: decision
+  status: closed
+  statement: EN07 PASS-NOHANG：贯通Prep.y→NTT→Matvec→INTT→Pack.u；tick≈296064；红线0；X36
+  depends_on:
+    - F-EN06-PACK-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN07-TASK.md
+    - graph-tests/enc_cann_ntt/EN07-pipeline-wired/STATUS.md
+
+- id: F-EN07-WIRED-OK
+  type: fact
+  status: closed
+  statement: Host五段主路径GM贯通可用；可做粘性多轮
+  depends_on:
+    - D-EXP-EN07
+  evidence:
+    - graph-tests/enc_cann_ntt/EN07-pipeline-wired/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN08
+  type: decision
+  status: closed
+  statement: EN08 PASS-NOHANG：贯通链R=4粘性；SIM tick≈1168427；红线0；X37
+  depends_on:
+    - F-EN07-WIRED-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN08-TASK.md
+    - graph-tests/enc_cann_ntt/EN08-wired-sticky-rounds/STATUS.md
+
+- id: F-EN08-STICKY-OK
+  type: fact
+  status: closed
+  statement: SIM上真积木贯通链粘性多轮不挂；NPU仍待验；可接设备SampleNTT
+  depends_on:
+    - D-EXP-EN08
+  evidence:
+    - graph-tests/enc_cann_ntt/EN08-wired-sticky-rounds/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-SIM-MILESTONE-EN01-08
+  type: fact
+  status: closed
+  statement: EN01–EN08构成CPU+SIM不挂的Host编排Encrypt形主路径（缺设备SampleNTT与NPU证据）
+  depends_on:
+    - F-EN08-STICKY-OK
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+    - graph-tests/enc_cann_ntt/INDEX.md
+
+- id: D-EXP-EN09
+  type: decision
+  status: closed
+  statement: EN09 PASS-NOHANG：设备SampleNTT全Â[4×4]喂Matvec；tick≈755040；红线0；X38
+  depends_on:
+    - F-SIM-MILESTONE-EN01-08
+  evidence:
+    - graph-tests/enc_cann_ntt/EN09-TASK.md
+    - graph-tests/enc_cann_ntt/EN09-samplentt-device/STATUS.md
+
+- id: F-EN09-SAMPLENTT-OK
+  type: fact
+  status: closed
+  statement: 设备SampleNTT(S1)闭合；SIM侧Encrypt形积木+贯通基本齐套
+  depends_on:
+    - D-EXP-EN09
+  evidence:
+    - graph-tests/enc_cann_ntt/EN09-samplentt-device/STATUS.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-SIM-BRICKS-COMPLETE-EN01-09
+  type: fact
+  status: closed
+  statement: EN01–EN09 CPU+SIM不挂齐套；暂停同质SIM加刀；Q-ULT待NPU
+  depends_on:
+    - F-EN09-SAMPLENTT-OK
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+    - graph-tests/enc_cann_ntt/INDEX.md
+
+- id: D-NPU-WAIT-ULT
+  type: decision
+  status: closed
+  statement: EN10已跑：NPU 910B3/dev4 上 EN09 贯通链 PASS-NOHANG+golden；见X39
+  depends_on:
+    - F-SIM-BRICKS-COMPLETE-EN01-09
+  evidence:
+    - graph-tests/enc_cann_ntt/EN10-TASK.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-EN10-NPU-NOHANG
+  type: fact
+  status: closed
+  statement: 真机Host编排Encrypt形路径SynchronizeStream未卡死；kernel wall≈2.25s；全段golden
+  depends_on:
+    - D-NPU-WAIT-ULT
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN11
+  type: decision
+  status: closed
+  statement: EN11 NPU进程级连续多轮EN09；主门禁不挂；保活加压
+  depends_on:
+    - F-EN10-NPU-NOHANG
+  evidence:
+    - graph-tests/enc_cann_ntt/EN11-TASK.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-EN11-NPU-MULTI-OK
+  type: fact
+  status: closed
+  statement: EN11d R=8 BIN全过；EN11e R=200加压；进程级多轮不挂（见S11/X40）
+  depends_on:
+    - D-EXP-EN11
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: D-EXP-EN12
+  type: decision
+  status: closed
+  statement: EN12同进程sticky SampleNTT贯通链；NPU R=32/64 PASS-NOHANG（X41 deviceId=0）
+  depends_on:
+    - F-EN11-NPU-MULTI-OK
+  evidence:
+    - graph-tests/enc_cann_ntt/EN12-TASK.md
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-EN12-NPU-STICKY-OK
+  type: fact
+  status: closed
+  statement: 真机同session sticky R=32/64不挂；round-1 golden；见S12
+  depends_on:
+    - D-EXP-EN12
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: C-NO-COPY-PKE-KEM
+  type: constraint
+  status: closed
+  statement: 禁止参考实现或照抄PKE/KEM算子级代码；准全链仅契约；frozen只读判决
+  depends_on:
+    - D-LOCK-20260908
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-capability-inventory.md
+
+- id: C-CONTROLLER-NO-KERNEL
+  type: constraint
+  status: closed
+  statement: 主控不写核；subagent按任务书编码；须用cannbot-skills设计与审计
+  depends_on:
+    - F-WORKMODE
+  evidence:
+    - docs/notes/Encrypt-cann-ntt-workmode.md
+
+edges:
+  - [D-LOCK-20260908, F-CAP-INVENTORY]
+  - [D-LOCK-20260908, F-WORKMODE]
+  - [D-LOCK-20260908, F-INHERIT-HANG-BANS]
+  - [D-LOCK-20260908, F-CANN-NTT-IS-MIX-BAT]
+  - [D-LOCK-20260908, C-NO-COPY-PKE-KEM]
+  - [F-CAP-INVENTORY, F-KB-SEED]
+  - [F-WORKMODE, F-KB-SEED]
+  - [F-WORKMODE, C-CONTROLLER-NO-KERNEL]
+  - [F-KB-SEED, D-ARCH-HOST-SEGMENTS]
+  - [F-INHERIT-HANG-BANS, D-ARCH-HOST-SEGMENTS]
+  - [F-CANN-NTT-IS-MIX-BAT, D-ARCH-HOST-SEGMENTS]
+  - [F-CAP-INVENTORY, D-DOC-BASE-READY]
+  - [F-WORKMODE, D-DOC-BASE-READY]
+  - [F-KB-SEED, D-DOC-BASE-READY]
+  - [D-ARCH-HOST-SEGMENTS, D-DOC-BASE-READY]
+  - [D-DOC-BASE-READY, D-EXP-EN01]
+  - [D-EXP-EN01, F-EN01-NTT-PORT-OK]
+  - [F-EN01-NTT-PORT-OK, D-EXP-EN02]
+  - [D-EXP-EN02, F-EN02-INTT-2LAUNCH-OK]
+  - [F-EN02-INTT-2LAUNCH-OK, D-EXP-EN03]
+  - [D-EXP-EN03, F-EN03-HOST-SKEL-OK]
+  - [F-EN03-HOST-SKEL-OK, D-EXP-EN04]
+  - [D-EXP-EN04, F-EN04-MATVEC-OK]
+  - [F-EN04-MATVEC-OK, D-EXP-EN05]
+  - [D-EXP-EN05, F-EN05-PREP-CBD-OK]
+  - [F-EN05-PREP-CBD-OK, D-EXP-EN06]
+  - [D-EXP-EN06, F-EN06-PACK-OK]
+  - [F-EN06-PACK-OK, D-EXP-EN07]
+  - [D-EXP-EN07, F-EN07-WIRED-OK]
+  - [F-EN07-WIRED-OK, D-EXP-EN08]
+  - [D-EXP-EN08, F-EN08-STICKY-OK]
+  - [F-EN08-STICKY-OK, F-SIM-MILESTONE-EN01-08]
+  - [F-SIM-MILESTONE-EN01-08, D-EXP-EN09]
+  - [D-EXP-EN09, F-EN09-SAMPLENTT-OK]
+  - [F-EN09-SAMPLENTT-OK, F-SIM-BRICKS-COMPLETE-EN01-09]
+  - [F-SIM-BRICKS-COMPLETE-EN01-09, D-NPU-WAIT-ULT]
+  - [D-NPU-WAIT-ULT, F-EN10-NPU-NOHANG]
+  - [F-EN10-NPU-NOHANG, Q-ULT-NOHANG]
+  - [F-EN10-NPU-NOHANG, D-EXP-EN11]
+  - [D-EXP-EN11, F-EN11-NPU-MULTI-OK]
+  - [F-EN11-NPU-MULTI-OK, D-EXP-EN12]
+  - [D-EXP-EN12, F-EN12-NPU-STICKY-OK]

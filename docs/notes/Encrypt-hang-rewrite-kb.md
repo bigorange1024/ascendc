@@ -4,7 +4,8 @@
 > **非目标（本阶段）**：liboqs 数值对齐、性能打满、修旧核补丁叙事。  
 > **维护纪律**：短、准、无歧义；失败优先；每刀实验后更新。流水账不进本库。  
 > **配套图谱**：[`docs/rg-encrypt-hang-rewrite.yaml`](../rg-encrypt-hang-rewrite.yaml)  
-> **计划**：[`docs/plans/2026-09-06-Encrypt重写工作计划.md`](../plans/2026-09-06-Encrypt重写工作计划.md)
+> **计划**：[`docs/plans/2026-09-06-Encrypt重写工作计划.md`](../plans/2026-09-06-Encrypt重写工作计划.md)  
+> **状态（2026-09-08）**：本库为 **hang 旧线**（ER01–05 SIM 加压暂停）。**当前主线**已切至 Host+迁入 cann-ntt：[`Encrypt-cann-ntt-kb.md`](Encrypt-cann-ntt-kb.md) · [`rg-encrypt-cann-ntt.yaml`](../rg-encrypt-cann-ntt.yaml) · [`graph-tests/enc_cann_ntt/`](../../graph-tests/enc_cann_ntt/)。本库禁令仍作继承只读。
 
 ---
 
@@ -87,6 +88,11 @@ CrossCore 通道习惯：模板 channel 与 `PIPE_MTE2` 一类；flag 字面量 
 | X22 | 用户 2026-09-07：910B3 云主机已调通但机时受限；目标改为 **充分使用 cannbot-skills 从头做 Encrypt** | 开发方法升为 cannbot 直调 CP 链（见 `docs/plans/2026-09-07-Encrypt-cannbot直调开发绑定.md`）；未经明示 **不连** 910B3；禁盲目 `init.sh` 改写根 AGENTS |
 | X23 | 用户白话澄清五问 | **图谱实验继续** + 主动用 cannbot；核心仍卡死；不 vendor；Hostμ/芯片缩写不挡路；开 `enc_related` ER01 |
 | X24 | ER01 PASS 但 sync_audit **16×SYNC-02 红线** | SIM 不挂 ≠ 同步审计干净；cannbot 纪律禁止否决红线 → 下一刀 ER02 先清 MTE2↔V/Scalar 同步，再加体量 |
+| X25 | ER02 就地修：EnQue/DeQue + `PipeBarrier<PIPE_V>` → **红线 0**；CPU+SIM 仍不挂（tick≈46008） | 红线可清且不破坏外形不挂；卡死主因仍偏生产体量/真机 → **ER03**；性能 SYNC-09/11 可后收 |
+| X26 | 主控/Subagent 分工再确认（2026-09-07） | **主控**：任务书+KB+DAG+节奏；**不写核**。**Subagent**：一刀一目录编码+CPU/SIM。用户稀缺上机 |
+| X27 | ER03：GATE 真 MAC **256×32** SIM 仍不挂（tick≈63849） | **仅 AIV Vec 体量不足以 CAModel 复现挂**；下一维 **Cube/NTT 真 Mmad 加压**（ER04）或真机（S4） |
+| X28 | ER04：GATE 256×32 + NTT/INTT **Cube×16** 仍不挂（tick≈85889） | SIM **体量维**（Vec+Cube）未逼出挂；换维 **粘性多 COMPUTE**（ER05）或等 NPU |
+| X29 | ER05：同 ws **PREP+COMPUTE×2** 仍不挂（tick≈164460） | 粘性多 launch alone 未复现挂；**enc_related SIM 加压维（体量+粘性）暂穷尽** → 停同质 SIM 刀，等 NPU（S4）或真采样/对照 hangfree |
 
 ---
 
