@@ -21,4 +21,5 @@
 - **Q-ULT answered**：T22–T24 NPU 双绿；T24×30 不挂；Encaps↔liboqs 交叉绿  
 - **T27 临时绿**：设备 Encaps↔Decaps NPU PASS（auto_gen `prep_custom` 撞名修复）  
 - **下一主线**：用户计划 **整段重写 Decrypt/Decaps**（现 T25–T27 不当长期实现）  
+- **交替**：详见根目录 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)（Cloud/Local 共用）  
 - NPU：`scripts/cannlab/which_npu.sh`（勿写死主机名）

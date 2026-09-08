@@ -70,3 +70,8 @@
 - X12：禁 `GlobalTensor::SetValue` 写业务 GM（T25/T27 已踩）。
 - 战役 `KERNEL_COMPUTE_BUDGET_SEC` 默认改 **180s**。
 - **用户决定**：稍后 **整段重写** Decrypt/Decaps；现树仅为临时。
+
+## 追加（同日 · Cloud 交替交接）
+
+- 写厚 [`AGENT_HANDOFF.md`](../../AGENT_HANDOFF.md)：P0=重写队列、硬教训（撞名/X12/反卡死/180s）、禁抄 T25–T27、Cloud 短 Prompt。
+- Local / Cloud **交替**：收工必刷 HANDOFF；无授权不另开分支、不擅自 push。

@@ -12,7 +12,7 @@
 
 ### 2026-09-08 — [Encrypt cannbot · Encaps收口 · T27撞名修复 · 待重写Decaps](2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md)
 
-关键字：**Q-ULT** · T23/T24 liboqs · **T27 NPU绿** · auto_gen **prep_custom撞名** · 507000 · **整段重写 Decrypt/Decaps** · 预算180s
+关键字：**Q-ULT** · T23/T24 liboqs · **T27 NPU绿** · auto_gen **prep_custom撞名** · 507000 · **整段重写 Decrypt/Decaps** · **Cloud交替HANDOFF** · 预算180s
 
 ### 2026-09-01 — [有界演示 · 合稿删 · 方法论两阶段收口](2026-09/2026-09-01-有界演示路径拓扑与合稿衔接片删除.md)
 
