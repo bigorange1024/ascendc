@@ -1,0 +1,40 @@
+-- Set runtime path of "/home/yuanye/ascendc/graph-tests/enc_related/RB-T26-decaps-device/out/lib/libascendc_kernels_cpu.so" to ""
+-- Installing: /home/yuanye/ascendc/graph-tests/enc_related/RB-T26-decaps-device/out/bin/ascendc_kernels_bbit
+-- Set runtime path of "/home/yuanye/ascendc/graph-tests/enc_related/RB-T26-decaps-device/out/bin/ascendc_kernels_bbit" to ""
+[gen_data] dk=3168 c=1568 golden_K via liboqs Decaps OK SEED_ENV=fixed
+[INFO]  Host: L1 dec_prep (AIV)
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 133317] exit success!
+[INFO]  Host: mid1 → L2 dec_ntt (MIX)
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 133318] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 133319] exit success!
+[SUCCESS][AIV_1][pid 133320] exit success!
+[INFO]  Host: mid2 → L3 dec_intt (MIX)
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 133321] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 133322] exit success!
+[SUCCESS][AIV_1][pid 133323] exit success!
+[INFO]  DEC TRACE: PREP=0x50524550 WAIT3_NTT=0xA1030003 NTT_DOT=0x4E545444 WAIT3_INTT=0xA1031003 EXTRACT=0x4D455854
+[INFO]  Host: L4 enc_prep G(m'||H(ek)) (AIV)
+[SUCCESS][CORE_0][pid 133324] exit success!
+[INFO]  Host: mid3 → L5 enc_compute Encrypt (MIX)
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 133325] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 133326] exit success!
+[SUCCESS][AIV_1][pid 133327] exit success!
+[INFO]  ENC TRACE: PREP=0x50524550 G=0x47303132 WAIT3_NTT=0xA1030003 GATE=0xA1040004 WAIT3_INTT=0xA1031003 PACK=0x5041434B
+[INFO]  Host select: c'==c → K=K'
+[INFO]  RB-T26 decaps device host done
+[wall_sec] 6.509
+[kernel-run-timeout] wall_sec=6.509 budget=900s rc=0 bin=ascendc_kernels_bbit
+[PASS] out magic 0x543F001A
+[PASS_IO] K == golden_K (liboqs Decaps)
+[PASS_SYNC] Decrypt PREP→NTT→INTT→EXTRACT
+[PASS_SYNC] Reenc PREP→G→NTT→GATE→INTT→PACK
+[PASS] c' == c (accept path)
+[SUCCESS] PASS_SYNC + PASS_IO — RB-T26 decaps
+[SUCCESS] RB-T26-decaps-device (cpu)

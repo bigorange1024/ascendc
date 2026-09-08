@@ -1,0 +1,984 @@
+{
+  "files_scanned": [
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/data_utils.h",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/light_cube.hpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/main.cpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_custom.cpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+    "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/tiling.h"
+  ],
+  "event_count": 49,
+  "findings": [
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 23,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@23 后调用 CrossSet()@27（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 24,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@24 后调用 CrossSet()@28（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_custom.cpp",
+      "line": 13,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 14,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 14,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in __aicore__ inline void TraceMark",
+      "detail": "行: [14, 17, 15, 18]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 15,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_custom.cpp",
+      "line": 16,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 17,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 18,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 22,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 22,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in __aicore__ inline void CrossWait",
+      "detail": "行: [22, 24, 23, 25]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 23,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 24,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 25,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 29,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 29,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in __aicore__ inline void CrossSet",
+      "detail": "行: [29, 31, 30, 32]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 30,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 31,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 32,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 60,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "line": 60,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 60,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in <global>",
+      "detail": "行: [60, 77, 80, 60]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 68,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 76,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 76,
+      "message": "同一函数连续 PipeBarrier 过多: 16 个 in AscendC::DataCopy",
+      "detail": "行: [76, 128, 130, 136, 144, 149, 155, 158, 104, 106, 111, 114, 121, 123, 128, 130]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 77,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "line": 80,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 93,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 96,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 101,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 101,
+      "message": "同一函数连续 PipeBarrier 过多: 8 个 in __aicore__ inline void ComputeInttAndExtract",
+      "detail": "行: [101, 103, 105, 107, 110, 125, 127, 129]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 103,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 104,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 105,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 106,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 107,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 110,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 111,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 114,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 121,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 123,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 125,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 127,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 128,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 128,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "line": 129,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 130,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "line": 130,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 136,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 144,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 149,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 155,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "line": 158,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 14,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 17,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 22,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 23,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 24,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 29,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 30,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 31,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 60,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 77,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 80,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 101,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 103,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 105,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 107,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 110,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 125,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 127,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 129,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/intt_device_math.hpp",
+      "func": "__aicore__ inline void ComputeInttAndExtract",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 15,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 18,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 23,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 24,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 25,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 30,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 31,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 32,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 60,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 68,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "__aicore__ inline void CopyPolyIn",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 76,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 128,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 130,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 136,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 144,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 149,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 155,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 158,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 13,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_custom.cpp",
+      "func": "__aicore__ inline void MarkU32",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 16,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_custom.cpp",
+      "func": "__aicore__ inline void MarkU32",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 93,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "__aicore__ inline void PrepUnpackDecrypt",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 96,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "__aicore__ inline void PrepUnpackDecrypt",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 104,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 106,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 111,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 114,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 121,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 123,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 128,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 130,
+      "file": "/home/yuanye/ascendc/graph-tests/enc_related/RB-T25-decrypt-device/prep_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

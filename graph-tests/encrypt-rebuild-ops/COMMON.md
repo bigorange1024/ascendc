@@ -57,7 +57,7 @@ bash run.sh -r cpu -v Ascend910B4
 
 - 主控：代码可编译即可 rsync **`-r npu`**；允许先红再修  
 - 用例根无 stray `core*.dump` / `profile_*`  
-- 墙钟：见各 TASK；超时 `blocked`，不傻等
+- 墙钟：`KERNEL_COMPUTE_BUDGET_SEC` 默认 **180s（3 分钟）**；超时=有问题，不傻等。NPU 计算段正常应远短于此（T27 实测 ~10s）
 
 ## FEEDBACK 最短格式
 

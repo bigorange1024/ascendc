@@ -414,30 +414,32 @@ nodes:
 
   - id: D-EXP-T25
     kind: experiment
-    status: ready
-    statement: "T25：设备 Decrypt（Alg.15）反卡死重建；禁 softSync/GATE8/抄 alg15 树。"
+    status: pass
+    statement: "T25 PASS：设备 Decrypt；CPU+NPU；X12 SetValue→DataCopy。"
     deps: [Q-RT-HANG, C-ANTI-HANG-CHECKLIST]
     targets: [Q-RT-HANG, D-EXP-T26]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T25-decrypt-device/FEEDBACK.md"
     refs:
       - graph-tests/encrypt-rebuild-ops/tasks/T25-decrypt-device/TASK.md
 
   - id: D-EXP-T26
     kind: experiment
-    status: blocked_dep
-    statement: "T26：设备 Decaps（重建 Decrypt + 重建 Encaps 复用）；禁抄 alg21。"
+    status: wait_npu
+    statement: "T26：设备 Decaps；CPU PASS；NPU 上板中。"
     deps: [D-EXP-T25, D-EXP-T22]
     targets: [Q-RT-HANG, D-EXP-T27]
+    evidence: "graph-tests/encrypt-rebuild-ops/tasks/T26-decaps-device/FEEDBACK.md"
     refs:
-      - graph-tests/encrypt-rebuild-ops/QUEUE.md
+      - graph-tests/encrypt-rebuild-ops/tasks/T26-decaps-device/TASK.md
 
   - id: D-EXP-T27
     kind: experiment
-    status: blocked_dep
-    statement: "T27：设备 Encaps→Decaps 往返 + NPU 反复压测不挂。"
+    status: ready
+    statement: "T27：设备 Encaps→Decaps 往返；本机编码中。"
     deps: [D-EXP-T26]
     targets: [Q-RT-HANG]
     refs:
-      - graph-tests/encrypt-rebuild-ops/QUEUE.md
+      - graph-tests/encrypt-rebuild-ops/tasks/T27-encaps-decaps-device-rt/TASK.md
 
   - id: D-EXP-N00
     kind: experiment

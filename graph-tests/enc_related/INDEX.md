@@ -22,5 +22,8 @@
 | [`RB-T22-encaps-device-G/`](RB-T22-encaps-device-G/) | T22 | T21 + 设备 (K‖r)←G(m‖H(ek))；c 与 K 对拍 |
 | [`RB-T23-encaps-liboqs-cross/`](RB-T23-encaps-liboqs-cross/) | T23 | T22 设备 Encaps × liboqs ML-KEM-1024 交叉对拍 c/K |
 | [`RB-T24-encaps-decaps-roundtrip/`](RB-T24-encaps-decaps-roundtrip/) | T24 | 设备 Encaps(c,K) → liboqs Decaps(sk,c)→K' ≡ K |
+| [`RB-T25-decrypt-device/`](RB-T25-decrypt-device/) | T25 | Alg.15 Decrypt：三 launch prep→NTT→INTT+extract → m；liboqs PKE Decrypt golden |
+| [`RB-T26-decaps-device/`](RB-T26-decaps-device/) | T26 | Alg.21 Decaps：Decrypt(T25)+Reenc(T22/23) 五 launch → K；liboqs Decaps golden |
+| [`RB-T27-encaps-decaps-device-rt/`](RB-T27-encaps-decaps-device-rt/) | T27 | 设备 Encaps→设备 Decaps 往返；K'≡K；liboqs 交叉；X12 DataCopy 写出 |
 
 运营任务书：[`../encrypt-rebuild-ops/`](../encrypt-rebuild-ops/INDEX.md)。

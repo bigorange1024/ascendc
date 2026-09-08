@@ -131,6 +131,12 @@
 - x86 `liboqs_kem_ref` 不可搬到 aarch64；worktree 现场 `build-liboqs` + `build_liboqs_kem_ref`。  
 - 库未就绪时循环 WAIT，勿 sticky 空烧。
 
+### X12 · `GlobalTensor::SetValue` 写 GM：CPU 假绿 / NPU 错数
+
+- **现象**（T25）：CPU `m≡liboqs`；NPU Stream 返回但 `m` 错；**未卡死**。  
+- **处置**：输入直读 H2D；写出 `m`/`K`/`c` 用 UB+`DataCopy`（对齐 T22 pack）；勿依赖标量 `SetValue` 镜像 GM。  
+- **铁律**：CPU 绿 ≠ NPU I/O 过。
+
 ---
 
 ## D. 成功台账（实验回写区）
@@ -142,6 +148,7 @@
 | P15 | 2026-09-08 | T23×liboqs | CPU+NPU CROSS | X11；c/K≡liboqs |
 | P16 | 2026-09-08 | T24 RT | CPU+NPU RT | Encaps→liboqs Decaps；Q-ULT |
 | P17 | 2026-09-08 | T24×30 压测 | **ok=30 fail=0** | 反卡死目的实测 |
+| P18 | 2026-09-08 | T25 Decrypt | CPU+NPU | 三 launch；X12 DataCopy |
 
 路径根：`graph-tests/enc_related/RB-T*` · 运营：`graph-tests/encrypt-rebuild-ops/`。
 

@@ -1,0 +1,11 @@
+# X12 decrypt fix re-verify 2026-09-08
+[wall_sec] 9.896
+[PASS] out magic 0x543F001B
+[PASS_IO] K_decaps == K_encaps (device RT)
+[PASS_CROSS] K_encaps == golden_K (liboqs Encaps)
+[PASS_CROSS] c_encaps == golden_c (liboqs)
+[PASS_SYNC] Encaps PREP→G→NTT→GATE→INTT→PACK
+[PASS_SYNC] Decrypt PREP→NTT→INTT→EXTRACT
+[PASS_SYNC] Reenc PREP→G→NTT→GATE→INTT→PACK
+[PASS] c' == c_encaps (accept path)
+[SUCCESS] PASS_SYNC + PASS_IO + PASS_CROSS — RB-T27 encaps→decaps RT

@@ -61,3 +61,12 @@
 - 新开 **Q-RT-HANG**：设备 Encaps↔Decaps 往返 NPU 不挂且 K 正确。
 - 序：T25 设备 Decrypt → T26 设备 Decaps → T27 设备往返+压测。
 - Decrypt **禁** softSync/GATE8/抄 alg15 生产 1-kernel；跟反卡死检查单。
+
+## 追加（同日 · T27 NPU 临时绿 + 重写意向）
+
+- T23/T24：设备 Encaps ↔ **liboqs** 交叉/往返已绿 → 正确性嫌疑在 Decrypt/Decaps。
+- T27 曾 NPU `K'≠K`：`dec_prep` launch **507000**、TRACE PREP=0、Host `c'≠c`。
+- **根因**：`decrypt/prep_custom.cpp` 与 `reenc/prep_custom.cpp` **同 basename** → auto_gen 撞车，`device_aiv.o` 只留 `enc_prep`。改名后 NPU **PASS**（`wall≈3.2s`，`c'==c`）。T26 同步改名。
+- X12：禁 `GlobalTensor::SetValue` 写业务 GM（T25/T27 已踩）。
+- 战役 `KERNEL_COMPUTE_BUDGET_SEC` 默认改 **180s**。
+- **用户决定**：稍后 **整段重写** Decrypt/Decaps；现树仅为临时。
