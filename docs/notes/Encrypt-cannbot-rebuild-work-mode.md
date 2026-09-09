@@ -23,11 +23,10 @@
 | 路径 | 职责 |
 |------|------|
 | `docs/notes/Encrypt-cannbot-rebuild-capability-inventory.md` | 积木与缺口 |
-| `docs/notes/Encrypt-cannbot-rebuild-work-mode.md` | 本文件 |
-| `docs/notes/Encrypt-cannbot-rebuild-kb.md` | **唯一**短知识库（失败优先） |
-| `docs/rg-encrypt-cannbot-rebuild.yaml` | **唯一**机读 DAG |
-| `graph-tests/` | 试验场实现：`toys/` · `bricks/` · `enc_related/` |
-| `graph-tests/encrypt-rebuild-ops/` | **任务书 / FEEDBACK / logs**；[`RHYTHM.md`](../../graph-tests/encrypt-rebuild-ops/RHYTHM.md) 双轨节奏 |
+| `docs/notes/Encrypt-cannbot-rebuild-work-mode.md` | 本文件（角色说明） |
+| `docs/notes/ascendc-engineering-kb.md` | **全工程唯一**短知识库 |
+| `docs/rg-ascendc-engineering.yaml` | **全工程唯一**机读 DAG（节点 `encrypt/*`） |
+| `graph-tests/encrypt-rebuild-ops/` | 任务书 / FEEDBACK（**仅运营**） |
 | `.cannbot/mlkem-pke-encrypt-rebuild/` | cannbot 过程件（需求/审计 JSON/state） |
 | `thirdparty/cannbot-skills/` | 只读引用；**不** vendor 进 `.cursor/skills`（除非用户当次确认） |
 
@@ -58,7 +57,8 @@
   → Task subagent 在 TASK 指定代码目录编码 + SIM（获权则 NPU）
   → 回收：FEEDBACK.md + logs/ + 实现 STATUS
   → 主控刷新 KB（成功台账 + 失败 X*）与 DAG；更新 QUEUE.md 状态
-  → python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-cannbot-rebuild.yaml
+  → python3 scripts/check_rg_dag.py --yaml docs/rg-ascendc-engineering.yaml
+  → python3 scripts/rg_viz.py
 ```
 
 任务书最小字段见 `encrypt-rebuild-ops/_templates/TASK.md`；全局禁令见 `COMMON.md`。

@@ -1,0 +1,117 @@
+{
+  "files_scanned": [
+    "graph-tests/kg_related/RB-K05-kem-tail/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/kg_related/RB-K05-kem-tail/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/kg_related/RB-K05-kem-tail/data_utils.h",
+    "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+    "graph-tests/kg_related/RB-K05-kem-tail/main.cpp"
+  ],
+  "event_count": 5,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "line": 146,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "line": 146,
+      "message": "同一函数连续 PipeBarrier 过多: 5 个 in <global>",
+      "detail": "行: [146, 172, 181, 192, 200]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "line": 172,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "line": 181,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "line": 192,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "line": 200,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 146,
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 172,
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 181,
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 192,
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 200,
+      "file": "graph-tests/kg_related/RB-K05-kem-tail/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

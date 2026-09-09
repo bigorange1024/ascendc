@@ -1,0 +1,9 @@
+# Decrypt cannbot rebuild DAG（归档指针）
+
+> **已并入** [`docs/rg-ascendc-engineering.yaml`](rg-ascendc-engineering.yaml)（节点 id 前缀 `decrypt/`）。  
+> 校验 / 可视化：
+> ```bash
+> python3 scripts/check_rg_dag.py --yaml docs/rg-ascendc-engineering.yaml
+> python3 scripts/rg_viz.py
+> ```
+> 原战役专用 yaml **不再维护**。历史内容见 git。

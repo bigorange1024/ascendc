@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+RB-K04 verify：三 launch 全链 — ek/dk ≡ liboqs；L2a/L2b TRACE mid-sync 证据。
+
+硬条件：
+  - ek_pke / dk_pke 与 golden（liboqs）逐字节一致
+  - out_l2a / out_l2b 魔数 K02: / K03:
+  - TRACE L2a/L2b：HOST_PRE/POST + AIV GATE/SET1/WAIT3 成对
+  - mat_c_l2a / mat_c_l2b 非全 0（Cube 证据）
+"""
+from __future__ import annotations
+
+import struct
+import sys
+from pathlib import Path
+
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "output"
+
+MAGIC_L2A = 0x4B30323A  # K02:
+MAGIC_L2B = 0x4B30333A  # K03:
+
+HARD_HOST = {
+    0: 0x484F5354,  # HOST_PRE
+    11: 0x484F5355,  # HOST_POST_SYNC
+}
+
+HARD_AIV_PAIRS = [
+    (1, 0xA1040004, 2, 0xA1140004, "PRE_SET4_GATE"),
+    (3, 0xA1010001, 4, 0xA1110001, "PRE_SET1"),
+    (8, 0xA1030003, 9, 0xA1130003, "POST_WAIT3"),
+]
+
+
+def _check_aiv_pair(vals, s0: int, m0: int, s1: int, m1: int, label: str) -> bool:
+    g0, g1 = vals[s0], vals[s1]
+    ok0 = g0 == m0
+    ok1 = g1 == m1
+    if not ok0 and not ok1:
+        print(
+            f"[FAIL] TRACE {label}: AIV0[{s0}]=0x{g0:08X} 且 AIV1[{s1}]=0x{g1:08X} 皆未命中",
+            file=sys.stderr,
+        )
+        return False
+    if not ok0:
+        print(f"[WARN] TRACE[{s0}] AIV0 {label} 空；已由 AIV1[{s1}] 验收")
+    if not ok1:
+        print(f"[WARN] TRACE[{s1}] AIV1 {label} 空；已由 AIV0[{s0}] 验收")
+    return True
+
+
+def _non_zero(path: Path, label: str) -> bool:
+    if not path.is_file():
+        print(f"[FAIL] missing {label}", file=sys.stderr)
+        return False
+    data = path.read_bytes()
+    if len(data) < 4 or all(b == 0 for b in data):
+        print(f"[FAIL] {label} all-zero — Cube 未写出", file=sys.stderr)
+        return False
+    return True
+
+
+def _check_trace(path: Path, tag: str) -> bool:
+    if not path.is_file():
+        print(f"[FAIL] missing {path.name}", file=sys.stderr)
+        return False
+    tr = path.read_bytes()
+    if len(tr) < 12 * 4:
+        print(f"[FAIL] {path.name} too short", file=sys.stderr)
+        return False
+    vals = list(struct.unpack_from("<12I", tr, 0))
+    ok = True
+    for slot, want in HARD_HOST.items():
+        if vals[slot] != want:
+            print(
+                f"[FAIL] {tag} TRACE[{slot}]=0x{vals[slot]:08X} expect 0x{want:08X}",
+                file=sys.stderr,
+            )
+            ok = False
+    for s0, m0, s1, m1, label in HARD_AIV_PAIRS:
+        if not _check_aiv_pair(vals, s0, m0, s1, m1, f"{tag}:{label}"):
+            ok = False
+    return ok
+
+
+def _check_out_magic(path: Path, want: int, tag: str) -> bool:
+    if not path.is_file():
+        print(f"[FAIL] missing {path.name}", file=sys.stderr)
+        return False
+    data = path.read_bytes()
+    if len(data) < 4:
+        print(f"[FAIL] {path.name} too short", file=sys.stderr)
+        return False
+    (got,) = struct.unpack_from("<I", data, 0)
+    if got != want:
+        print(f"[FAIL] {tag} out magic 0x{got:08X} != 0x{want:08X}", file=sys.stderr)
+        return False
+    print(f"[OK] {tag} out magic 0x{got:08X}")
+    return True
+
+
+def _cmp_bytes(got: Path, golden: Path, label: str) -> bool:
+    if not got.is_file() or not golden.is_file():
+        print(f"[FAIL] missing {label} or golden", file=sys.stderr)
+        return False
+    a = np.fromfile(got, dtype=np.uint8)
+    b = np.fromfile(golden, dtype=np.uint8)
+    if a.shape != b.shape:
+        print(f"[FAIL] {label} shape {a.shape} != golden {b.shape}", file=sys.stderr)
+        return False
+    mism = int(np.count_nonzero(a != b))
+    if mism != 0:
+        idx = int(np.flatnonzero(a != b)[0])
+        print(
+            f"[FAIL] {label} mism={mism}/{a.size} first@{idx} got={a[idx]} gold={b[idx]}",
+            file=sys.stderr,
+        )
+        return False
+    print(f"[OK] {label} max_abs=0 n={a.size}")
+    return True
+
+
+def main() -> int:
+    backend = "unknown"
+    bp = OUT / "cross_backend.txt"
+    if bp.is_file():
+        backend = bp.read_text(encoding="utf-8").strip().splitlines()[0] if bp.stat().st_size else "unknown"
+
+    pass_ek = _cmp_bytes(OUT / "ek_pke.bin", OUT / "golden_ek_pke.bin", "ek_pke")
+    pass_dk = _cmp_bytes(OUT / "dk_pke.bin", OUT / "golden_dk_pke.bin", "dk_pke")
+    pass_io = pass_ek and pass_dk
+    if pass_io:
+        print(f"[OK] ek/dk max=0 oracle={backend}")
+
+    pass_sync = True
+    if not _check_out_magic(OUT / "out_l2a.bin", MAGIC_L2A, "L2a"):
+        pass_sync = False
+    if not _check_out_magic(OUT / "out_l2b.bin", MAGIC_L2B, "L2b"):
+        pass_sync = False
+    if not _check_trace(OUT / "trace_l2a.bin", "L2a"):
+        pass_sync = False
+    if not _check_trace(OUT / "trace_l2b.bin", "L2b"):
+        pass_sync = False
+    if not _non_zero(OUT / "mat_c_l2a.bin", "mat_c_l2a.bin"):
+        pass_sync = False
+    if not _non_zero(OUT / "mat_c_l2b.bin", "mat_c_l2b.bin"):
+        pass_sync = False
+
+    if pass_sync:
+        print("[PASS_SYNC] 三 launch：L2a/L2b GATE+handshake + Cube ok（L1=prep）")
+    else:
+        print("[FAIL_SYNC] handshake/Cube/mid-sync evidence", file=sys.stderr)
+    if pass_io:
+        print(f"[PASS_IO] ek_pke+dk_pke match golden ({backend})")
+    else:
+        print("[FAIL_IO] ek/dk mismatch", file=sys.stderr)
+
+    if pass_sync and pass_io:
+        print(f"[SUCCESS] RB-K04 PASS_SYNC + PASS_IO oracle={backend}")
+        return 0
+    return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

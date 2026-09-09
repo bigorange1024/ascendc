@@ -1,0 +1,16 @@
+# graph-tests/dec_related
+
+> Decrypt/Decaps cannbot 重建实现目录（`RB-D*`）。  
+> 运营：[`../decrypt-rebuild-ops/`](../decrypt-rebuild-ops/INDEX.md)。  
+> **禁抄** alg15/21、T25–T27 源码。
+
+| 目录 | 刀 | 状态 |
+|------|-----|------|
+| `RB-D01-decrypt-prep/` | DRW-D01 | **PASS_CPU**（ŝ/u/v max=0；非 liboqs） |
+| `RB-D02-decrypt-ntt-dot/` | DRW-D02 | **PASS_CPU**（û/ŵ max=0；非 liboqs） |
+| `RB-D03-decrypt-intt-extract/` | DRW-D03 | **PASS_CPU**（m[32] max=0；非 liboqs） |
+| `RB-D04-decrypt-full/` | DRW-D04 | **PASS_CPU + PASS_NPU**（m≡liboqs_pke_ref） |
+| `RB-D04-decaps-G/` | DRW-K01 | **PASS_CPU + PASS_NPU**（K'/r' max=0） |
+| `RB-D05-decaps-reenc/` | DRW-K02 | **PASS_CPU + PASS_NPU**（c'≡liboqs_pke_ref） |
+| `RB-D06-decaps-fo/` | DRW-K03 | **PASS_CPU + PASS_NPU**（FO 合法+拒绝≡liboqs） |
+| `RB-D07-enc-decaps-rt/` | DRW-K04 | **PASS_CPU**（K_dec≡K_enc≡liboqs；**wait_npu×30**） |

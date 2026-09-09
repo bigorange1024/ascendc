@@ -1,0 +1,530 @@
+version: 1
+title: AscendC MIX 反卡死 · 推理图谱
+review:
+  last_reviewed: '2026-09-09'
+  note: 反卡死为重点；正确 KEM 写码经验同入库；禁战役刀号流水
+config:
+  required_fields:
+  - domain
+  id_prefix_by_kind:
+    fact: F
+    inference: J
+    decision: D
+    question: Q
+  domain_pattern: ^(goals|rg-hygiene|fail-lessons|impl-tech|verify-test|cause|keygen|kem-math|correctness)$
+  fact_provenance_values:
+  - observation
+  - measurement
+  - doc
+  - env-api
+  inference_derivation_values:
+  - deductive
+  - defeasible
+  decision_by_values:
+  - human
+  - agent
+nodes:
+- id: Q-ULT
+  domain: goals
+  kind: question
+  title: KEM 算子正确且不卡死？
+  statement: NPU 上 KeyGen/Encaps/Decaps（及重建路径）是否同时满足权威 liboqs 交叉正确，且反复加压无 SynchronizeStream 卡死？
+  deps:
+  - F-HANG-SYNC
+  - F-SIM-NOT-STICKY
+  - F-LIBOQS-IO-ORACLE
+  status: open
+- id: D-CORE-KEM-DUAL
+  domain: goals
+  kind: decision
+  by: human
+  title: 交付正确∧不卡的 KEM；反卡死为重点风险
+  statement: 图谱与 KB 服务完成 ML-KEM AscendC 算子；卡死是优先风险类，但正确性契约与写码经验必须同入库。刀号进度不进图。
+  deps:
+  - F-HANG-SYNC
+  - F-LIBOQS-IO-ORACLE
+  status: active
+  targets:
+  - Q-ULT
+  - Q-ENCRYPT-ROOT
+  - Q-KEYGEN-HANG
+  - Q-KEYGEN-CORRECT
+- id: D-CORE-HANG
+  domain: goals
+  kind: decision
+  by: human
+  title: （已修订）曾「只攻卡死」
+  statement: 旧门禁「主线只攻卡死、数值对齐不进图」已废止；由 D-CORE-KEM-DUAL 取代。本节点保留以免断边。
+  deps:
+  - D-CORE-KEM-DUAL
+  status: inactive
+  targets:
+  - Q-ULT
+- id: D-ADMIT-KEM-EXP
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: 入库=可再测的挂因∨正确性∨写码经验
+  statement: 节点须支撑挂因定位/证伪/修复，或 KEM 数学·数据契约·平台写码事实，或实验冲突后的知识刷新。禁刀号流水、目录索引、用法拼法日记。
+  deps:
+  - D-CORE-KEM-DUAL
+  status: active
+- id: D-ADMIT-HANG-ONLY
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: （已修订）曾「只收 hang debug」
+  statement: 旧「只沉淀卡死 debug」门禁已废止；由 D-ADMIT-KEM-EXP 取代。反卡死仍是重点子域。
+  deps:
+  - D-ADMIT-KEM-EXP
+  status: inactive
+- id: D-FAIL-FIRST
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: 失败/证伪一等公民
+  statement: 证伪推论标 retracted、回退方案标 inactive 并留 evidence；禁止只堆测过绿；与实验结果冲突须刷新依赖链
+  deps:
+  - D-ADMIT-KEM-EXP
+  status: active
+- id: D-REJECT-ANTIPATTERN
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: 禁把伤效率 correctness 捷径当推荐
+  statement: 滥增 Host launch、标量碎写 GM 等即使偶发对拍绿也不得标 active 推荐；仅可 inactive/retracted 留痕
+  deps:
+  - D-ADMIT-KEM-EXP
+  status: active
+- id: D-SIM-THEN-NPU
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: 结构假说先 SIM；粘性挂认 NPU
+  statement: 缺 SET 类握手断裂可在 SIM 构造；粘性/污染挂 SIM 常复现不了，须干净卡 NPU×N；CPU 不作卡死证据
+  deps:
+  - D-CORE-KEM-DUAL
+  - F-SIM-NOT-STICKY
+  status: active
+- id: F-LIBOQS-IO-ORACLE
+  domain: correctness
+  kind: fact
+  provenance: doc
+  title: 正确性=与权威 I/O 等价
+  statement: 交付正确性以同 ISA 权威实现（liboqs）字节/多项式 I/O 等价为准；golden 是 oracle，不要求设备与参考源码同构
+  deps: []
+  status: verified
+  basis: stated
+  evidence: Rule golden 门禁；MIX 反卡死总结正确性附带门禁
+- id: F-POLYBATCH
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: poly-batch：完整 poly 驻留单 AIV
+  statement: Stage2 后每个 AIV 须握有完整 poly 的 hi+lo；禁止单 poly hi/lo 分属不同 AIV（limbsplit）
+  deps: []
+  status: verified
+  basis: stated
+  evidence: docs/notes/MLKEM-NTT-实现总结.md §2
+- id: F-LIMB-LO-NOT-AND
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: limb 低位用算术而非按位与
+  statement: lo = v - (v>>6)*64；禁止 And(v,63)（负数与 pipeline 语义不同）
+  deps: []
+  status: verified
+  basis: stated
+  evidence: MLKEM-NTT-向量与标量实现指南.md §2.2
+- id: F-NTT-S123-NO-GATHER
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: NTT S1–S3 内禁 Gather
+  statement: Tag5T 三段式 NTT 内禁止 Gather；禁令不自动覆盖其后 basemul/ByteEncode
+  deps:
+  - F-POLYBATCH
+  status: verified
+  basis: stated
+  evidence: Rule ML-KEM Tag5T；实现指南 §3
+- id: F-2S1E-PLANE-MATC
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: 活跃 2s1e 用平面 mat_c
+  statement: 活跃集成线 Stage2 后 mat_c 为平面布局 + bulk DataCopy；竖堆+Gather / se_pair 交换为已冻结路线
+  deps:
+  - F-NTT-S123-NO-GATHER
+  status: verified
+  basis: stated
+  evidence: MLKEM-NTT-向量与标量实现指南.md §1
+- id: F-HALF-PRODUCT-PRE-NTT
+  domain: correctness
+  kind: fact
+  provenance: observation
+  title: prep 未可见即 NTT → 半成品
+  statement: unpack/写出未全局可见就开始 NTT(u) 会产生半成品 û（错数）；亦扩大挂死面
+  deps:
+  - F-LIBOQS-IO-ORACLE
+  status: verified
+  basis: experiment
+  evidence: MIX-Decrypt 反卡死 §1.1
+- id: F-SETVALUE-CPU-FALSE-GREEN
+  domain: correctness
+  kind: fact
+  provenance: observation
+  title: SetValue 写 GM 可 CPU 假绿
+  statement: 依赖 GlobalTensor::SetValue 写业务 GM 时 CPU 可对拍绿、NPU 错字节；业务写出须 UB+DataCopy
+  deps:
+  - F-LIBOQS-IO-ORACLE
+  status: verified
+  basis: experiment
+  evidence: X12；Decrypt I8
+- id: Q-KEYGEN-CORRECT
+  domain: keygen
+  kind: question
+  title: 重建 KeyGen 权威交叉是否正确？
+  statement: 重建 PKE/KEM KeyGen 在 NPU 上 ek/dk（及 PKE 对应输出）是否与 liboqs 字节等价？
+  deps:
+  - F-LIBOQS-IO-ORACLE
+  - D-KEYGEN-ANTI-HANG-TOPO
+  status: open
+- id: F-HANG-SYNC
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: 实机 SynchronizeStream 卡死
+  statement: Encrypt/Encaps 生产路径在 NPU 上可出现 Host 已 launch 后 aclrtSynchronizeStream 长时间不回
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: fe53 Encrypt-hang-rewrite-kb P1–P2；1534 rg-kem-encrypt-hang F-hang-l18
+- id: F-HANG-AFTER-PRINT
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: 挂在 launch 文案之后
+  statement: Host 打印 launch/l18 文案后 Sync 未回；卡点是该次 kernel 未完成
+  deps:
+  - F-HANG-SYNC
+  status: verified
+  basis: experiment
+  evidence: fe53 hang-rewrite KB P1；1534 F-host-print-before-launch
+- id: F-HANG-L18
+  domain: cause
+  kind: fact
+  provenance: observation
+  title: 挂面常落 l18_l19 / 深 GATE FSM
+  statement: 典型挂窗与 l18_l19 及 GATE 长握手相关；亦可落在 prep_ntt 等 MIX 段
+  deps:
+  - F-HANG-AFTER-PRINT
+  status: verified
+  basis: experiment
+  evidence: fe53 rg-encrypt-l18；1534 F-hang-l18 / F-hang-prep-ntt
+- id: F-TRACE-EMPTY
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: 挂时 TRACE 常空或观测不稳
+  statement: 实机挂时设备 TRACE 可为 0/16；空 TRACE 更支持 AIV 未写到首 mark / 观测路径问题，不能单独当根因
+  deps:
+  - F-HANG-AFTER-PRINT
+  status: verified
+  basis: experiment
+  evidence: fe53 hang-rewrite P6；1534 F-trace-empty-0-16
+- id: F-SIM-NOT-STICKY
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: SIM 不能复现粘性挂
+  statement: CAModel SIM 可绿或构造缺 SET→124，但不能代理实机粘性/污染挂
+  deps:
+  - F-HANG-SYNC
+  status: verified
+  basis: experiment
+  evidence: 1534 hangfree F-sim-not-sticky；fe53 decrypt-fused J-HANG-NOT-REPRO-CLOUD-SIM
+- id: F-POLLUTION
+  domain: cause
+  kind: fact
+  provenance: observation
+  title: timeout 后同卡粘性污染
+  statement: 杀挂死/timeout 后同 ASCEND_DEVICE_ID 连环挂是次生污染；不能单独解释干净卡首次挂
+  deps:
+  - F-HANG-SYNC
+  status: verified
+  basis: experiment
+  evidence: fe53 hang-rewrite P4；1534 hangfree F-n10
+- id: F-OLD-BINARY-STICKY
+  domain: cause
+  kind: fact
+  provenance: observation
+  title: 旧 fused 二进制近乎必挂
+  statement: 未 FORCE 重建时可能跑到旧 fused 二进制 → 工程粘性，须先排除
+  deps:
+  - F-HANG-SYNC
+  status: verified
+  basis: experiment
+  evidence: fe53 hang-rewrite P5；1534 F-force-vs-old-binary
+- id: F-KEYGEN-NO-STICKY-HIST
+  domain: cause
+  kind: fact
+  provenance: observation
+  title: 旧 KeyGen 未表现同类粘性挂
+  statement: 同批实机 KeyGen 多为算错；未表现为 Encrypt 式 l18 粘性挂（≠已做反卡死压测）
+  deps:
+  - F-HANG-SYNC
+  status: verified
+  basis: experiment
+  evidence: fe53 hang-rewrite P7；1534 F-keygen-no-hang
+- id: F-FLAG-13-CUBE
+  domain: impl-tech
+  kind: fact
+  provenance: doc
+  title: NTT/INTT CrossCore 用 flag 1/3
+  statement: NTT/INTT 与 AIC Cube 握手用 flag 1/3；禁改用 5/7
+  deps: []
+  status: verified
+  basis: stated
+  evidence: fe53 hang-rewrite KB §2；1534 F-flag-1-3-cube
+- id: F-GATE-4-8
+  domain: impl-tech
+  kind: fact
+  provenance: doc
+  title: l18 路径另有 GATE 4/8
+  statement: 生产 l18 at_jp 路径 AIC 先 WAIT(4)、AIV 体量后 SET(4)、再 SET/WAIT(8)；与「对称齐到再 SET4」语义不同
+  deps:
+  - F-FLAG-13-CUBE
+  status: verified
+  basis: stated
+  evidence: fe53 hang-rewrite KB §2；1534 F-gate-4-8
+- id: F-OMIT-SET4-SIM-HANG
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: 缺 SET(4) → SIM 超时 124
+  statement: 入口 Wait(4) 省略配对 SET(4)（或第二轮 GATE 缺 SET）时 SIM 可 hang/124；可操作的握手断裂充分条件
+  deps:
+  - F-GATE-4-8
+  status: verified
+  basis: experiment
+  evidence: fe53/1534 omit-set4 toys；rg-kem-decrypt-hang F-decrypt-omit-set4-*
+- id: D-NO-SYNCALL-IN-WAIT
+  domain: fail-lessons
+  kind: decision
+  by: human
+  title: 禁 AIC Wait 中 SyncAll
+  statement: AIC 仍在 CrossCore Wait 时 SyncAll → 互锁/挂；永禁
+  deps:
+  - F-HANG-L18
+  - F-OMIT-SET4-SIM-HANG
+  status: active
+  evidence: fe53 hang-rewrite X2；1534 D-forbid-syncall-while-wait
+- id: D-NO-FLAG-57
+  domain: fail-lessons
+  kind: decision
+  by: human
+  title: 永禁 CrossCore flag 5/7
+  statement: INTT 等改用 flag 5/7 → SIM 长时间超时；永禁
+  deps:
+  - F-FLAG-13-CUBE
+  status: active
+  evidence: fe53 hang-rewrite X1
+- id: D-NO-HOMEMADE-SOFTSYNC
+  domain: fail-lessons
+  kind: decision
+  by: human
+  title: 禁自造 AIC↔AIV SoftSync
+  statement: 自造 softSyncGm / 乱 recreate stream → 挂；AIV↔AIV 若需要只跟已验证 SoftSyncArrive 定式
+  deps:
+  - D-ADMIT-KEM-EXP
+  status: active
+  evidence: fe53 hang-rewrite X3；1534 D-try-homemade-softsync inactive
+- id: D-NO-FORK-ENCRYPT-L18
+  domain: fail-lessons
+  kind: decision
+  by: human
+  title: 禁照抄现 Encrypt/l18 实现
+  statement: 可读冻结树；照抄可能把死锁/粘性一并拷入
+  deps:
+  - F-HANG-L18
+  - D-ADMIT-KEM-EXP
+  status: active
+  evidence: fe53 hang-rewrite X7
+- id: J-ONLY-DUAL-CUBE-RETRACTED
+  domain: fail-lessons
+  kind: inference
+  derivation: defeasible
+  title: 「同核双 Cube 即充分挂因」已证伪
+  statement: 同核两轮 Cube 不是卡死充分条件；勿再当主因
+  deps:
+  - F-OMIT-SET4-SIM-HANG
+  status: retracted
+  basis: experiment
+  evidence: 1534 J-only-dual-cube；rg-kem-decrypt-hang J-dual-cube-sufficient-hang
+  retracted_by: F-OMIT-SET4-SIM-HANG
+- id: F-EXTRA-LAUNCH-INSUFFICIENT
+  domain: fail-lessons
+  kind: fact
+  title: 「多加 Host launch 即充分修复」已证伪
+  statement: 「多加 Host launch 即充分修复卡死」已被证伪；且属伤效率反模式，不得当推荐。
+  deps: []
+  status: retracted
+  basis: experiment
+  evidence: fe53 hang-rewrite X4；1534 J-host-launch-count
+  retracted_by: D-REJECT-ANTIPATTERN
+  provenance: observation
+- id: J-HANG-NEEDS-HANDSHAKE-BREAK
+  domain: cause
+  kind: inference
+  derivation: defeasible
+  title: 可操作挂因优先查握手断裂
+  statement: 缺 SET/Wait 失配、Wait 环内阻塞 Sync、SoftSync 断裂优先于「双 Cube/体量」叙事
+  deps:
+  - F-OMIT-SET4-SIM-HANG
+  - F-GATE-4-8
+  status: verified
+  basis: experiment
+  evidence: 1534 decrypt J-hang-needs-handshake-break
+  references:
+  - J-ONLY-DUAL-CUBE-RETRACTED
+- id: D-SHORT-CROSSCORE-SPLIT
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 跨核面要短：拆 Host launch
+  statement: 无 CrossCore 的 prep 与有 CrossCore 的 MIX 勿默认同核深融合；Host mid-sync 作屏障；重建 Encrypt 双 launch / Decrypt
+    三 launch
+  deps:
+  - F-HANG-L18
+  - J-HANG-NEEDS-HANDSHAKE-BREAK
+  status: active
+  evidence: MIX-Encrypt/Decrypt 反卡死总结 I1/I6–I7；重建路径
+- id: D-FLAG-134-ONLY
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 重建路径 flag∈{1,3,4}
+  statement: 短表：1/3 复用 + 4=GATE；不用 5/7/8 深 FSM 当默认模板
+  deps:
+  - F-FLAG-13-CUBE
+  - D-NO-FLAG-57
+  - D-SHORT-CROSSCORE-SPLIT
+  status: active
+  evidence: Encrypt/Decrypt 重建反卡死检查单
+- id: D-BLOCKDIM1
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 共享表 BLOCK_DIM=1
+  statement: Â/CBD 等全局表半写未 sync 即握手 → 可能永远到不了 Set；重建硬锁单写者
+  deps:
+  - D-SHORT-CROSSCORE-SPLIT
+  status: active
+  evidence: MIX-Encrypt 反卡死 I4
+- id: D-DECRYPT-SPLIT-NTT-INTT
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: Decrypt：prep∥NTT∥INTT 切开
+  statement: prep 与 NTT Host 屏障分隔；NTT 与 INTT 分 kernel，避免争用 flag 与半成品
+  deps:
+  - D-SHORT-CROSSCORE-SPLIT
+  status: active
+  evidence: MIX-Decrypt 反卡死 I6–I7；fe53 decrypt-fused SoftSync/GATE 面
+- id: D-NPU-STRESS
+  domain: verify-test
+  kind: decision
+  by: human
+  title: 不挂须 NPU 加压×30/×100
+  statement: 单轮绿≠不挂；中间代码×30、算子级×100；预算约 180s；干净卡
+  deps:
+  - D-SIM-THEN-NPU
+  - F-POLLUTION
+  status: active
+  evidence: Decrypt 重建加压档；Encrypt T24×30
+- id: F-REBUILD-ENCRYPT-NO-HANG
+  domain: cause
+  kind: fact
+  title: Encrypt 重建不挂（暂行）
+  statement: 短 CrossCore + 拆 launch + flag{1,3,4} + BLOCK_DIM=1 + 禁 fork l18 下，NPU 套件与×30 未再 sticky hang
+  deps:
+  - F-OMIT-SET4-SIM-HANG
+  - F-HANG-L18
+  status: verified
+  basis: experiment
+  evidence: MIX-Encrypt 反卡死 §4；graph-tests enc_related T22–T24
+  provenance: observation
+- id: F-REBUILD-DECRYPT-NO-HANG
+  domain: cause
+  kind: fact
+  title: Decrypt/Decaps 重建不挂（暂行）
+  statement: 继承 Encrypt 不变量并三/多 launch mid-sync 后，砖级与往返 NPU×30/≈100 未挂
+  deps:
+  - F-REBUILD-ENCRYPT-NO-HANG
+  - D-DECRYPT-SPLIT-NTT-INTT
+  - D-NPU-STRESS
+  status: verified
+  basis: experiment
+  evidence: MIX-Decrypt 反卡死 §4.1；dec_related D04/K04
+  provenance: observation
+- id: F-KEYGEN-MIX-SURFACE
+  domain: keygen
+  kind: fact
+  provenance: doc
+  title: KeyGen 仍有 MIX/AHAT/脏杀挂面
+  statement: 无深 l18，但存在 MIX Wait 失配、AHAT=2 半写、脏杀传染、KEM 更长链等潜在挂死面
+  deps:
+  - F-KEYGEN-NO-STICKY-HIST
+  - D-BLOCKDIM1
+  status: verified
+  basis: stated
+  evidence: MIX-Decrypt 反卡死 §4.2
+- id: D-KEYGEN-ANTI-HANG-TOPO
+  domain: keygen
+  kind: decision
+  by: human
+  title: KeyGen 重建须同时满足反卡死与权威正确
+  statement: 在反卡死约束下重拼 PKE/KEM KeyGen；正确性以 liboqs I/O 为准；禁抄算子级树；卡死门禁用干净卡 NPU×N
+  deps:
+  - F-REBUILD-DECRYPT-NO-HANG
+  - F-KEYGEN-MIX-SURFACE
+  - F-LIBOQS-IO-ORACLE
+  - F-POLYBATCH
+  status: active
+  targets:
+  - Q-KEYGEN-HANG
+  - Q-KEYGEN-CORRECT
+  evidence: KeyGen S0 2026-09-09；章程正确∧不卡
+- id: Q-ENCRYPT-ROOT
+  domain: cause
+  kind: question
+  title: Encrypt 粘性挂可操作根因？
+  statement: 何种可构造条件在 NPU 上充分导致粘性挂并指导重写？（握手断裂已部分钉；粘性充分条件仍开）
+  deps:
+  - F-HANG-L18
+  - F-SIM-NOT-STICKY
+  - J-HANG-NEEDS-HANDSHAKE-BREAK
+  status: open
+- id: Q-KEYGEN-HANG
+  domain: keygen
+  kind: question
+  title: 重建 KeyGen NPU×N 是否不挂？
+  statement: 按反卡死约束重拼的 PKE/KEM KeyGen，干净卡反复 -r npu 是否 fail=0
+  deps:
+  - D-KEYGEN-ANTI-HANG-TOPO
+  - F-KEYGEN-MIX-SURFACE
+  status: open
+changelog:
+- date: '2026-09-09'
+  change: >-
+    章程修订：反卡死为重点风险，正确 KEM 写码经验同入库。
+    D-CORE-KEM-DUAL / D-ADMIT-KEM-EXP 取代「只攻卡死」；
+    增 kem-math/correctness（poly-batch、limb、Gather 范围、liboqs I/O、假绿等）；
+    旧 D-CORE-HANG / D-ADMIT-HANG-ONLY → inactive。
+- date: '2026-09-09'
+  change: >-
+    按用户指定分支 fe53 + 1534 的图谱准入重写：
+    只积卡死/FSM/同步/证伪；剔除战役 T*/milestone/process。
+    对照源已落盘：rg-encrypt-l18.yaml、rg-encrypt-hang-rewrite.yaml、
+    rg-decrypt-fused.yaml、rg-kem-encrypt-hang.yaml、rg-kem-decrypt-hang.yaml。
+

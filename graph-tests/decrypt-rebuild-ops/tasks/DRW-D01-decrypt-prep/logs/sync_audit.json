@@ -1,0 +1,213 @@
+{
+  "files_scanned": [
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/data_utils.h",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_helpers.hpp",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/main.cpp"
+  ],
+  "event_count": 10,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 73,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 73,
+      "message": "同一函数连续 PipeBarrier 过多: 10 个 in <global>",
+      "detail": "行: [73, 76, 83, 85, 87, 89, 96, 98, 100, 102]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 76,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 83,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 85,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 87,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 89,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 96,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 98,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 100,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "line": 102,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 73,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 76,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 83,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 85,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 87,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 89,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 96,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 98,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 100,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 102,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D01-decrypt-prep/dec_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

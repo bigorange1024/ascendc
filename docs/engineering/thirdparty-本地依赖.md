@@ -28,6 +28,7 @@ BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 | `cann-ntt/` | 外部 clone | https://openi.pcl.ac.cn/serial2007/cann-ntt.git | 默认分支（浅） | 第三方 AscendC 前向 NTT | **`clone-thirdparty.sh`** |
 | `ntt_onnx/` | 外部 clone | https://github.com/bigorange1024/ntt_onnx.git（**私有**） | 默认分支（浅） | NTT/LUT golden（原 `ntt_study`） | **`clone-thirdparty.sh`** + 认证（见下） |
 | `cannbot-skills/` | 外部 clone | https://gitcode.com/cann/cannbot-skills.git | 默认分支（浅） | CANNBot Agent Skills（算子/图/推理等） | **`clone-thirdparty.sh`** |
+| `reasoning-graph-skill/` | **授权 zip** | 仓内 `thirdparty/reasoning-graph-skill-master.zip`（非公开 git） | zip 内 tag/commit | **工程推理图谱**方法论 + `rg_validate`/`rg_render`/`rg-viewer.html` | 解压见下「reasoning-graph-skill」 |
 
 **已迁出 / 更名（勿再装回旧路径）**：
 
@@ -46,8 +47,30 @@ thirdparty/
 ├── SHA3hp/             # 第三方 AscendC Keccak/SHA3（OpenI）
 ├── cann-ntt/           # 第三方 AscendC NTT（OpenI）
 ├── ntt_onnx/           # NTT/LUT golden（GitHub bigorange1024/ntt_onnx）
-└── cannbot-skills/     # CANNBot Agent Skills（GitCode cann/cannbot-skills）
+├── cannbot-skills/     # CANNBot Agent Skills（GitCode cann/cannbot-skills）
+├── reasoning-graph-skill/              # 授权推理图谱 skill（从 zip 解压）
+└── reasoning-graph-skill-master.zip    # 授权包（换机需自带；非公开 git）
 ```
+
+### reasoning-graph-skill（授权 zip · 工程推理图谱）
+
+本仓**唯一**合法的推理图谱工具链。可视化必须用其 `assets/rg-viewer.html`（经 `scripts/rg_viz.py`），**禁止**自造 Cytoscape / 套 cannbot-knowledge `okf_graph` 冒充。
+
+```bash
+# 已有 zip 时（推荐路径）
+cd thirdparty
+unzip -qo reasoning-graph-skill-master.zip
+rm -rf reasoning-graph-skill
+mv reasoning-graph-skill-master reasoning-graph-skill
+
+# 校验 + 渲染工程图
+python3 scripts/check_rg_dag.py --yaml docs/rg-ascendc-engineering.yaml
+python3 scripts/rg_viz.py   # → docs/rg-ascendc-engineering.viz.html
+# 或直接拖 yaml 进 thirdparty/reasoning-graph-skill/assets/rg-viewer.html
+```
+
+方法论：`thirdparty/reasoning-graph-skill/SKILL.md` · 格式：`docs/SCHEMA.md`。  
+机读真理源：`docs/rg-ascendc-engineering.yaml`（四类 kind：fact/inference/decision/question）。
 
 ---
 

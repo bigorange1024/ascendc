@@ -7,12 +7,12 @@
 | T01–T24 | Encrypt/Encaps + liboqs；Q-ULT answered |
 | T25–T27 | **临时** Decrypt/Decaps/往返（T27 NPU 绿；撞名修复）— **不当长期实现** |
 
-## 活跃（下一棒 · 整段重写）
+## 活跃（已迁出）
 
 | ID | 状态 |
 |----|------|
-| **D-RW-*** | **P0**：新目录重写 Decrypt→Decaps→设备往返（见 `AGENT_HANDOFF.md`） |
-| Q-RT-HANG | 仍以 **设备** Encaps↔Decaps 为安心门禁；临时 T27 绿 ≠ 长期收口 |
+| **Decrypt/Decaps 重写** | → [`../decrypt-rebuild-ops/QUEUE.md`](../decrypt-rebuild-ops/QUEUE.md)（`DRW-S0*`） |
+| Q-RT-HANG | 在 Decrypt DAG 跟踪；临时 T27 绿 ≠ 长期收口 |
 
 ## NPU
 
