@@ -28,6 +28,7 @@ BUILD_LIBOQS=0 bash scripts/clone-thirdparty.sh
 | `cann-ntt/` | 外部 clone | https://openi.pcl.ac.cn/serial2007/cann-ntt.git | 默认分支（浅） | 第三方 AscendC 前向 NTT | **`clone-thirdparty.sh`** |
 | `ntt_onnx/` | 外部 clone | https://github.com/bigorange1024/ntt_onnx.git（**私有**） | 默认分支（浅） | NTT/LUT golden（原 `ntt_study`） | **`clone-thirdparty.sh`** + 认证（见下） |
 | `cannbot-skills/` | 外部 clone | https://gitcode.com/cann/cannbot-skills.git | 默认分支（浅） | CANNBot Agent Skills（算子/图/推理等） | **`clone-thirdparty.sh`** |
+| `reasoning-graph-skill/` | **Drive zip**（非 git） | Google Drive id `16TwSu0JPFqL7eVUAAa9CURpmBq8kj0Cp` | zip 快照（2026-09-01） | **推理知识图谱** skill（`SKILL.md` + `rg_*.py`）；积累/校验 DAG | 见下「Drive 手工包」；**勿** vendor 进 `.cursor/skills` |
 
 **已迁出 / 更名（勿再装回旧路径）**：
 
@@ -46,8 +47,30 @@ thirdparty/
 ├── SHA3hp/             # 第三方 AscendC Keccak/SHA3（OpenI）
 ├── cann-ntt/           # 第三方 AscendC NTT（OpenI）
 ├── ntt_onnx/           # NTT/LUT golden（GitHub bigorange1024/ntt_onnx）
-└── cannbot-skills/     # CANNBot Agent Skills（GitCode cann/cannbot-skills）
+├── cannbot-skills/     # CANNBot Agent Skills（GitCode cann/cannbot-skills）
+├── reasoning-graph-skill/          # 推理图谱 skill（Drive zip；见 SOURCE.md）
+└── reasoning-graph-skill-master.zip
 ```
+
+---
+
+## Drive 手工包（非 `clone-thirdparty.sh`）
+
+| 目录 | Drive file id | 用途 |
+|------|---------------|------|
+| `reasoning-graph-skill/` | `16TwSu0JPFqL7eVUAAa9CURpmBq8kj0Cp` | 长程推理外脑：YAML DAG + `rg_validate`/`rg_audit`/`rg_review`；入口 `thirdparty/reasoning-graph-skill/SKILL.md` |
+
+```bash
+# 缺则下载（与 thirdparty/reasoning-graph-skill/SOURCE.md 同）
+curl -L --fail -o thirdparty/reasoning-graph-skill-master.zip \
+  "https://drive.usercontent.google.com/download?id=16TwSu0JPFqL7eVUAAa9CURpmBq8kj0Cp&export=download&confirm=t"
+rm -rf thirdparty/reasoning-graph-skill /tmp/rg-extract
+mkdir -p /tmp/rg-extract
+unzip -q thirdparty/reasoning-graph-skill-master.zip -d /tmp/rg-extract
+mv /tmp/rg-extract/reasoning-graph-skill-master thirdparty/reasoning-graph-skill
+```
+
+**Agent**：积累/维护本仓 `docs/rg-*.yaml` 等推理图谱时读该目录 `SKILL.md`；**禁止**把其内容复制进 `.cursor/skills/`（须用户确认才改 Rule/Skill 树）。与 `cannbot-skills` 一样留在 `thirdparty/`。
 
 ---
 

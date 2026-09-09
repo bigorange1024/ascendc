@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
+
+关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills**
+
 ### 2026-09-08 — [Encrypt×cann-ntt 锁定 · 文档底座](2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md)
 
 关键字：**Host编排+迁入cann-ntt** · **EN01–EN09 SIM齐** · **EN10/EN11 NPU不挂** · **EN12 sticky进行中** · **空闲&lt;4min保活** · **禁抄PKE/KEM**
