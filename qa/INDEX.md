@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30关闸 · KB正确∧不卡章程](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
+### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30关闸 · KB/图推理重写](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
 
-关键字：**工程唯一 KB/DAG** · Cytoscape `rg_viz.py` · KeyGen P01–P03 PASS_CPU · 云机已关
+关键字：**正确∧不卡** · 图按机制/证伪/权衡重写 · `J-HANG-UNREACHABLE-SET` · KeyGen NPU×30 · skill `rg_validate`
 
 ### 2026-09-08 — [Encrypt cannbot · Encaps收口 · T27撞名修复 · 待重写Decaps](2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md)
 

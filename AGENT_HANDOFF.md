@@ -1,6 +1,6 @@
 # Agent 交接（KeyGen 重建 · NPU 收口后）
 
-> **最后刷新**：2026-09-09（Cloud 完成 P04/K01/K02 **NPU×30**）  
+> **最后刷新**：2026-09-09（图谱+KB **推理重写**已合入工作区并校验）  
 > **分支**：`chore/thirdparty-add-cannbot-skills`  
 > **读者**：Local / 下一任 Agent  
 > **入口**：本文件 → `AGENTS.md` → `docs/notes/ascendc-engineering-kb.md` → `docs/rg-ascendc-engineering.yaml` → `graph-tests/keygen-rebuild-ops/{COMMON,QUEUE}.md`
@@ -11,9 +11,9 @@
 
 1. **Decrypt/Decaps 重建已收口**。运营：`graph-tests/decrypt-rebuild-ops/`。  
 2. **KeyGen 重建（PKE+KEM）incubating 关闸**：`RB-K01…K06`；P04≡liboqs_pke；K02≡liboqs_kem；**NPU×30 三档 pass=30/fail=0/hang=0**。  
-3. 门禁 `Q-KEYGEN-HANG` / `Q-KEYGEN-CORRECT` → **answered**（见工程 yaml）。  
-4. **工程 KB/图谱**（2026-09-09 已刷）：目标经验包 = **正确 ∧ 不卡**；六算子 stable↔重建 launch 对表在 KB §3.4 / `F-REBUILD-VS-STABLE-LAUNCH`；刀号 PASS 只写 QUEUE/MATRIX。  
-5. K01 首轮 NPU 暴露：device 侧字符串字面量不可赋 `const char*` → 用 `constexpr uint8_t[]`（`F-DEVICE-STRING-LITERAL-GM`）。
+3. 关闸在图上仅薄指针 `J-REBUILD-TOPO-PASSES-GATES`（≠晋级 stable）；细节在 QUEUE/MATRIX，**不**再拆 `Q-KEYGEN-*` 战役题。  
+4. **工程 KB/图谱**（用户批准后重写）：机制/证伪/权衡为主；战役流水退回 QUEUE；launch 表仅 KB 附录。校验：`check_rg_dag` + skill `rg_validate` OK（40 节点）。viz：`docs/rg-ascendc-engineering.viz.html`。  
+5. K01 首轮 NPU 暴露：device 侧字符串字面量不可赋 `const char*` → 用 `constexpr uint8_t[]`（`F-DEVICE-STRING-GM`）。
 
 ---
 

@@ -1,6 +1,6 @@
-# 2026-09-09 Decrypt/Decaps 收口 · KeyGen NPU×30 关闸 · KB 章程
+# 2026-09-09 Decrypt/Decaps 收口 · KeyGen NPU×30 关闸 · KB/图推理重写
 
-关键词：**Decrypt/Decaps 重写** · **KeyGen PKE/KEM 重建** · **NPU×30** · **KB/DAG 正确∧不卡** · **设备字符串 __gm__**
+关键词：**Decrypt/Decaps 重写** · **KeyGen PKE/KEM 重建** · **NPU×30** · **KB/图机制推理重写** · **设备字符串 __gm__**
 
 ---
 
@@ -144,3 +144,15 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 |------|------|
 | 短 KB | 双门禁 + 反卡死 + NTT/poly-batch/假绿等写码事实 |
 | 图谱 | `D-CORE-KEM-DUAL` / `D-ADMIT-KEM-EXP`；增 `kem-math`/`correctness`；旧 hang-only → inactive；`rg_validate` OK |
+
+### 追加（同日 · 用户批「可以」· 按推理重写图+KB）
+
+用户批评：图上多为实验现象，少有价值推理/教训。批准方案后落地：
+
+| 项 | 结果 |
+|----|------|
+| yaml | 删战役台账式 fact（×30/TRACE/launch 日记）；主干=`J-HANG-UNREACHABLE-SET`→半写/争用/融合面 + 假绿阶梯；证伪 `J-DUAL-CUBE`/`J-EXTRA-LAUNCH` retracted；决策带为何/代价/何时可破 |
+| 关闸 | 仅薄 `J-REBUILD-TOPO-PASSES-GATES`；KeyGen 战役题 `Q-KEYGEN-*` 不再进图 |
+| KB | 与图对齐：§机制/证伪/权衡/假绿阶梯；launch 表→附录 |
+| 校验 | `check_rg_dag.py` + skill `rg_validate` OK；40 节点（Q5/D13/F12/J10）；重渲 viz |
+| 仍开 | `Q-ULT`、`Q-ENCRYPT-STICKY` |
