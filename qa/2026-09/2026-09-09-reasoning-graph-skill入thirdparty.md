@@ -16,3 +16,14 @@
 ## 说明
 
 同机已有 `cann-ntt-author-merged_dsa`（另一 Drive/作者包）；本 zip md5 与作者包不同，勿混淆。
+
+## 同日追加：`rg-encrypt-cann-ntt` 迁 skill 骨架
+
+- 文件：`docs/rg-encrypt-cann-ntt.yaml`（`kind`/`deps`/`status`/`config`；约束 → `D-*`）
+- 硬校验：`python3 thirdparty/reasoning-graph-skill/scripts/rg_validate.py --yaml docs/rg-encrypt-cann-ntt.yaml` → OK  
+  兼容：`python3 scripts/check_rg_dag.py --yaml docs/rg-encrypt-cann-ntt.yaml` → OK（42 nodes）
+- **闭合**：`Q-ULT-NOHANG` ← `I-HOST-ORCH-NPU-NOHANG`（EN10–EN12 + `F-X41-SETDEVICE-LOGICAL0`）
+- **仍 open**：`Q-CORRECTNESS-FULL`、`Q-OLD-L18-STILL-HANG`
+- 软审计：约 12 WARN（多为 EN01–09 evidence 未指到具体 `.log`；`ML-KEM-1024` 触发 observation 假阳性）
+- 渲染：`/opt/cursor/artifacts/rg-encrypt-cann-ntt.html`
+- KB：`docs/notes/Encrypt-cann-ntt-kb.md` §7 已刷新

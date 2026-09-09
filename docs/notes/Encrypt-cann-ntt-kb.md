@@ -114,7 +114,15 @@ Encrypt 需要且仓内已有（禁算子级抄码）：SHAKE/Keccak、SampleNTT
 
 ---
 
-## 7. 下一刀
+## 7. 推理图
 
-- EN11/EN12：**PASS-NOHANG**（SIM + NPU sticky 齐）。  
-- 可选：对照旧 Encrypt l18（只读禁抄）。NPU 作业已按用户要求停。
+- DAG：`docs/rg-encrypt-cann-ntt.yaml`（**2026-09-09** 已迁到 `thirdparty/reasoning-graph-skill` 骨架：`kind`/`deps`/`status`/`config`；约束作 `D-*`）
+- 工具：`rg_validate.py --yaml …`（硬）· `rg_audit.py --yaml …`（软）· `rg_render.py --yaml … --out …`；兼容 `scripts/check_rg_dag.py --yaml …`
+- 渲染：`/opt/cursor/artifacts/rg-encrypt-cann-ntt.html`
+- **已答**：`Q-ULT-NOHANG` → `I-HOST-ORCH-NPU-NOHANG`（EN10–EN12 + X41）
+- **仍开放**：`Q-CORRECTNESS-FULL`（权威逐字节）、`Q-OLD-L18-STILL-HANG`（旧胖 MIX 只读对照）
+
+## 8. 下一刀
+
+- EN11/EN12：**PASS-NOHANG**（SIM + NPU sticky 齐）；NPU 作业已停。
+- 图谱侧：按需收口 `rg_audit` 软 WARN（EN01–09 evidence 指到具体 log）；开放问按任务推进。

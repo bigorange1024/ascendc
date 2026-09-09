@@ -12,7 +12,7 @@
 
 ### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
 
-关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills**
+关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills** · **`rg-encrypt-cann-ntt` 迁骨架** · **Q-ULT answered** · **正确性/旧l18 仍 open**
 
 ### 2026-09-08 — [Encrypt×cann-ntt 锁定 · 文档底座](2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md)
 

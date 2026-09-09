@@ -2,7 +2,7 @@
 
 | 日期 | 纪要 |
 |------|------|
-| 2026-09-09 | [reasoning-graph-skill 入 thirdparty](2026-09-09-reasoning-graph-skill入thirdparty.md) |
+| 2026-09-09 | [reasoning-graph-skill 入 thirdparty · rg-encrypt 迁骨架](2026-09-09-reasoning-graph-skill入thirdparty.md) |
 | 2026-09-08 | [Encrypt×cann-ntt 锁定 · 能力/工作模式/KB/DAG 底座](2026-09-08-Encrypt-cann-ntt文档底座.md) |
 | 2026-09-07 | [Encrypt · 主控下发 ER03 · ER01/ER02 PASS](2026-09-07-Encrypt-cannbot与ER01交接.md) |
 | 2026-09-06 | [Encrypt 卡死重写 · T01–T07 / X15 · NPU 一次测套件](2026-09-06-Encrypt卡死重写T01与T02.md) |
