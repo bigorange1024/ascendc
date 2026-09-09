@@ -581,8 +581,12 @@ changelog:
     F-DEVICE-STRING-LITERAL-GM domain platform→impl-tech（合 domain_pattern）。
 - date: '2026-09-09'
   change: >-
-    KeyGen NPU×30 收口：Q-KEYGEN-HANG / Q-KEYGEN-CORRECT → closed；
-    增 F-DEVICE-STRING-LITERAL-GM（device 字面量 __gm__）。
+    KeyGen NPU×30 收口：Q-KEYGEN-HANG / Q-KEYGEN-CORRECT → answered
+    （answered_by=F-REBUILD-KEYGEN-NO-HANG）；增 F-DEVICE-STRING-LITERAL-GM。
+- date: '2026-09-09'
+  change: >-
+    装入 reasoning-graph-skill（Drive zip）；question 同步 SCHEMA
+    （closed→answered + answered_by）；rg_validate OK 并重渲 viz。
 - date: '2026-09-09'
   change: >-
     章程修订：反卡死为重点风险，正确 KEM 写码经验同入库。
