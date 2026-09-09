@@ -20,7 +20,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| [Encrypt-NPU粘性挂-探索收官-2026-09/](Encrypt-NPU粘性挂-探索收官-2026-09/INDEX.md) | **2026-09-09 收官**：停止既有 l18 debug；结论边界+证据快照；继任=新写 PKE/KEM + 验收 |
+| [Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/](Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/INDEX.md) | **来源分支** `cursor/kem-2launch-sticky-1534`；停止既有 l18 debug；结论+证据；**scripts 不合 main** |
 | [教材KEM实机测量清单.md](教材KEM实机测量清单.md) | 借入实机测 KEM：表 A 14 档 + 表 B 16 档脚本对齐；多 launch 测准口径 |
 | [MLKEM-512-从0到exp完整实现计划.md](MLKEM-512-从0到exp完整实现计划.md) | 真 k=2 + **单 AI Core**；**有条件完成至 incubating**（W0–W4+glue；glue-c `r←η1=3`）；用语：缺项/补缺；权威卡见 `docs/specs/fips203-mlkem512-parameter-card.md` |
 | [MLKEM-768-从0到exp完整实现计划.md](MLKEM-768-从0到exp完整实现计划.md) | 真 k=3 从 0→exp；**有条件完成至 incubating**（W0–W4+glue）；权威表见 `docs/specs/fips203-mlkem768-*` |

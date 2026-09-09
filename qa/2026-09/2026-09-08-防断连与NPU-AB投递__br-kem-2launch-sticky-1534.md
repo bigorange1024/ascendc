@@ -1,4 +1,7 @@
-# 2026-09-08 — 防断连 nohup + cannlab-npu-1 重上线与 NPU-A/B
+# 2026-09-08 — 防断连 nohup + NPU-A/B（__br-kem-2launch-sticky-1534）
+
+**来源分支**：`cursor/kem-2launch-sticky-1534`  
+**合 main 说明**：本纪要可合；文中 `scripts/cannlab/*` **仅本分支使用，不合入 main**。
 
 ## 关键词
 

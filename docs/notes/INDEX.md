@@ -11,7 +11,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| [Encrypt-实机无卡死-知识库.md](Encrypt-实机无卡死-知识库.md) | **探索期知识库**；**2026-09-09 起停止在既有 l18 上 debug**；收官包 → [`research/Encrypt-NPU粘性挂-探索收官-2026-09/`](../research/Encrypt-NPU粘性挂-探索收官-2026-09/INDEX.md) |
+| [Encrypt-实机无卡死-知识库.md](Encrypt-实机无卡死-知识库.md) | **探索期知识库**；停既有 l18 debug；收官包 → [`research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/`](../research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/INDEX.md) |
 
 ## ML-KEM / F203
 

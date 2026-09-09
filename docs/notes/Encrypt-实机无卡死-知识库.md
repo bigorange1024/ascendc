@@ -2,7 +2,7 @@
 
 > **2026-09-09 路线关闭（就「既有 l18/Encrypt 继续 debug」）**  
 > 用户决定 **全新编写 PKE/KEM**；本库保留为探索期证据与禁踩清单。  
-> **收官包**：[docs/research/Encrypt-NPU粘性挂-探索收官-2026-09/](../research/Encrypt-NPU粘性挂-探索收官-2026-09/INDEX.md)  
+> **收官包**：[docs/research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/](../research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/INDEX.md)（来源分支 `cursor/kem-2launch-sticky-1534`）  
 > **勿**再开「改现有 encaps l18 消挂」刀；后续本 Agent 侧重验收/测试。
 
 **焦点（历史）**：Encrypt **实机无卡死且正确**；粘性挂根因 **未钉死**。  

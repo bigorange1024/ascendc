@@ -571,10 +571,10 @@ nodes:
     kind: decision
     by: human
     title: "关闭既有 l18 debug；改新写 PKE/KEM"
-    statement: "2026-09-09：停止在现有 encaps/l18 上挂因刀；探索收官见 docs/research/Encrypt-NPU粘性挂-探索收官-2026-09；继任验收测试"
+    statement: "2026-09-09：停止在现有 encaps/l18 上挂因刀；探索收官见 docs/research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534；scripts 不合 main；继任验收测试"
     deps: [F-n18-ab-trace-contrast, F-e21-post-pack-zero-cc, D-exp-e20-postmark-tail]
     status: verified
-    evidence: "qa/2026-09/2026-09-09-粘性挂探索收官与转向新写.md"
+    evidence: "qa/2026-09/2026-09-09-粘性挂探索收官与转向新写__br-kem-2launch-sticky-1534.md"
     targets: [Q-how-to-write]
 
   - id: D-no-syncall-in-wait
