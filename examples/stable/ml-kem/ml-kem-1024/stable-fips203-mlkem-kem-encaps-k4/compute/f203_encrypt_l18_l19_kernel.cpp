@@ -67,7 +67,52 @@ enum FusedTraceStage : int32_t {
     TR_COUNT = 16,
 };
 
-__aicore__ inline void FusedTraceMark(GM_ADDR traceGm, FusedTraceStage stage, const bool aic, int32_t subBlockID)
+#if !defined(F203_L18_TRACE_SCALAR) || !F203_L18_TRACE_SCALAR
+/** AIV trace 累加器：AIV 分支入口单次 GM→UB 载入，各 Mark 仅改 UB 槽并整表写回 GM */
+struct FusedTraceAivAcc {
+    AscendC::TBuf<AscendC::TPosition::VECCALC> buf;
+};
+
+__aicore__ inline void FusedTraceAivAccInit(GM_ADDR traceGm, AscendC::TPipe &pipe, FusedTraceAivAcc &acc)
+{
+    constexpr int32_t kTraceElems = static_cast<int32_t>(TR_COUNT);
+    pipe.InitBuffer(acc.buf, static_cast<uint32_t>(kTraceElems) * sizeof(int32_t));
+    AscendC::GlobalTensor<int32_t> traceGt;
+    traceGt.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(traceGm));
+    AscendC::LocalTensor<int32_t> ub = acc.buf.Get<int32_t>();
+    AscendC::DataCopy(ub, traceGt, kTraceElems);
+}
+
+__aicore__ inline void FusedTraceMarkAivDataCopyRmw(GM_ADDR traceGm, int32_t slot, FusedTraceAivAcc &acc)
+{
+    constexpr int32_t kTraceElems = static_cast<int32_t>(TR_COUNT);
+    AscendC::GlobalTensor<int32_t> traceGt;
+    traceGt.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(traceGm));
+    AscendC::LocalTensor<int32_t> ub = acc.buf.Get<int32_t>();
+    ub.SetValue(static_cast<uint32_t>(slot), 1);
+    AscendC::DataCopy(traceGt, ub, kTraceElems);
+    AscendC::PipeBarrier<PIPE_ALL>();
+}
+#endif
+
+/**
+ * 写 fused-trace 单槽为 1（FusedTraceStage 下标 → int32[16] 槽位）。
+ *
+ * 默认（NPU-ENCAPS-TRACE-DC / E19b 同构）：AIV0 用整表 int32[16] GM→UB→改单槽→DataCopy 回（64B RMW）；
+ * AIC 保留标量直写（SIM/NPU 不依赖 AIC→Host D2H，与 toy TraceSlotStore 一致）。
+ * 背景：NPU-E19b 证 AIV 标量写经 D2H 多轮可丢槽 15；Encaps NPU-3 挂时 [l18-trace] stages set=0/16 疑同源观测管道。
+ * 结论：仅加固 Trace 写回路径，验证粘性挂是否与标量 Mark 相关；未改 CrossCore FSM / GATE / 业务逻辑。
+ *
+ * 对照：编译 -DF203_L18_TRACE_SCALAR=1 可回退 Encaps 原标量直写 GM（全核）。
+ *
+ * @param traceGm  fused-trace GM 基址；nullptr 时无操作
+ * @param stage    槽下标（TR_AIV_* / TR_AIC_*）
+ * @param aic      当前核是否为 AIC（GetSubBlockNum()==1）
+ * @param subBlockID AIV 子块号；仅 subBlock0 写 trace
+ * @param traceAcc   AIV trace 累加器（AIV 分支入口 Init；AIC 传 nullptr）
+ */
+__aicore__ inline void FusedTraceMark(GM_ADDR traceGm, FusedTraceStage stage, const bool aic, int32_t subBlockID,
+                                      FusedTraceAivAcc *traceAcc)
 {
     if (traceGm == nullptr) {
         return;
@@ -75,8 +120,21 @@ __aicore__ inline void FusedTraceMark(GM_ADDR traceGm, FusedTraceStage stage, co
     if (!aic && subBlockID != 0) {
         return;
     }
+    const int32_t slot = static_cast<int32_t>(stage);
+#if defined(F203_L18_TRACE_SCALAR) && F203_L18_TRACE_SCALAR
+    // 对照路径：Encaps 原标量 GM 写（NPU 多轮后 Host D2H 曾见 0/16 空槽）
     auto *trace = reinterpret_cast<__gm__ int32_t *>(traceGm);
-    trace[static_cast<int32_t>(stage)] = 1;
+    trace[slot] = 1;
+#else
+    if (aic) {
+        // AIC：标量直写；Host TRACE 轮询主要认 AIV0 槽（见 main_kem_encaps SynchronizeStreamMaybeTrace）
+        auto *trace = reinterpret_cast<__gm__ int32_t *>(traceGm);
+        trace[slot] = 1;
+        return;
+    }
+    // AIV0：UB 累加 + 整表 DataCopy 写回 GM（单次载入、多次写回）
+    FusedTraceMarkAivDataCopyRmw(traceGm, slot, *traceAcc);
+#endif
 }
 
 __aicore__ inline void FsmWait(FsmState st, const bool aic, const int32_t subBlockID)
@@ -175,31 +233,38 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
         FsmWait(st, aic, subBlockID);
         st = ST_NTT_AIC_MMAD;
         AicMmadRound(ws, coeffN, LUT_NTT_EVEN_TOP, LUT_NTT_ODD_TOP, static_cast<uint16_t>(nttMRowsLogic));
-        FusedTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIC_NTT_MMAD, aic, subBlockID, nullptr);
         st = ST_NTT_AIV_PACK;
         FsmSet(st, aic, subBlockID);
 
         /* 内积阶段 AIC 空转，直至 AIV 完成 at_jp */
         st = ST_IP_AIV_DONE;
         FsmWait(st, aic, subBlockID);
-        FusedTraceMark(traceGm, TR_AIC_IP_WAIT_DONE, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIC_IP_WAIT_DONE, aic, subBlockID, nullptr);
         st = ST_AT_JP_GATE;
         FsmSet(st, aic, subBlockID);
-        FusedTraceMark(traceGm, TR_AIC_AT_JP_GATE, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIC_AT_JP_GATE, aic, subBlockID, nullptr);
 
         /* ── 行 19 INTT Stage2：与 intt_e1 相同 WAIT1 → MMAD → SET3 ── */
         st = ST_NTT_AIV_SPLIT;
         FsmWait(st, aic, subBlockID);
         AicMmadRound(ws, coeffN, LUT_INTT_EVEN_STACKED, LUT_INTT_ODD_STACKED,
                      static_cast<uint16_t>(inttMRowsLogic));
-        FusedTraceMark(traceGm, TR_AIC_INTT_MMAD, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIC_INTT_MMAD, aic, subBlockID, nullptr);
         st = ST_NTT_AIV_PACK;
         FsmSet(st, aic, subBlockID);
     } else {
+        AscendC::TPipe traceAccPipe;
+        FusedTraceAivAcc traceAcc{};
+        FusedTraceAivAcc *traceAccPtr = nullptr;
         /* ── 行 20/21 前缀：e₂ += μ（AIV0 一次；PipeBarrier 后双 AIV 可见更新后的 e₂ GM）── */
         if (subBlockID == 0 && mGm != nullptr && e2 != nullptr) {
             PrefixEmbedMuIntoE2Gm(mGm, e2, encrypt_at_jp::kN, encrypt_at_jp::kQ);
-            FusedTraceMark(traceGm, TR_AIV_MU_E2, aic, subBlockID);
+            if (traceGm != nullptr) {
+                FusedTraceAivAccInit(traceGm, traceAccPipe, traceAcc);
+                traceAccPtr = &traceAcc;
+            }
+            FusedTraceMark(traceGm, TR_AIV_MU_E2, aic, subBlockID, traceAccPtr);
         }
         AscendC::PipeBarrier<PIPE_ALL>();
 
@@ -211,7 +276,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
             splitNtt.Process();
             KYBER_PIPE_ALL();
             FsmSet(st, aic, subBlockID);
-            FusedTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID);
+            FusedTraceMark(traceGm, TR_AIV_NTT_SPLIT, aic, subBlockID, traceAccPtr);
         }
 
         /* ── 行 18 NTT Pack（与 S3 merge 分作用域，各持独立 TPipe）── */
@@ -230,14 +295,14 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
             mergeNtt.Process();
             KYBER_PIPE_ALL();
         }
-        FusedTraceMark(traceGm, TR_AIV_NTT_YHAT, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIV_NTT_YHAT, aic, subBlockID, traceAccPtr);
 
         /* ★ SYNC-ŷ */
         KYBER_PIPE_ALL();
 
         /* ── 行 18/19：kP=5 内积 uTr pad→8 驻留 UB → INTT k=8 ── */
         {
-            FusedTraceMark(traceGm, TR_AIV_AT_JP_START, aic, subBlockID);
+            FusedTraceMark(traceGm, TR_AIV_AT_JP_START, aic, subBlockID, traceAccPtr);
             const int32_t pBegin = subBlockID * 2;
             const int32_t pEnd = pBegin + 2;
             const uint32_t ubElems = tiling::kInttPolysPerAiv * coeffN;
@@ -278,7 +343,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
                     }
 #endif
                     AscendC::PipeBarrier<PIPE_ALL>();
-                    FusedTraceMark(traceGm, TR_AIV_DECODE_T, aic, subBlockID);
+                    FusedTraceMark(traceGm, TR_AIV_DECODE_T, aic, subBlockID, traceAccPtr);
 
                     if (tHat != nullptr) {
                         AscendC::GlobalTensor<int32_t> tGm;
@@ -304,7 +369,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
                                                                   /*doTrHat*/ false, nullptr, /*unifiedUTrPad8*/ true);
 #endif
             AscendC::PipeBarrier<PIPE_ALL>();
-            FusedTraceMark(traceGm, TR_AIV_AT_JP_DONE, aic, subBlockID);
+            FusedTraceMark(traceGm, TR_AIV_AT_JP_DONE, aic, subBlockID, traceAccPtr);
 
             encrypt_at_jp::dump_u_ntt_halfrows_ub(uNtt, ubUTr, pBegin, pEnd);
             if (uTr != nullptr) {
@@ -316,7 +381,7 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
                 splitIntt.Init(ws + S0, uNtt);
                 splitIntt.ProcessFromLocal(ubUTr);
                 AscendC::PipeBarrier<PIPE_ALL>();
-                FusedTraceMark(traceGm, TR_AIV_INTT_SPLIT, aic, subBlockID);
+                FusedTraceMark(traceGm, TR_AIV_INTT_SPLIT, aic, subBlockID, traceAccPtr);
             }
 
             queUbU.FreeTensor(ubUTr);
@@ -326,12 +391,12 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
         st = ST_IP_AIV_DONE;
         FsmSet(st, aic, subBlockID);
         if (subBlockID == 0) {
-            FusedTraceMark(traceGm, TR_AIV_IP_SIGNAL, aic, subBlockID);
+            FusedTraceMark(traceGm, TR_AIV_IP_SIGNAL, aic, subBlockID, traceAccPtr);
         }
 
         st = ST_AT_JP_GATE;
         FsmWait(st, aic, subBlockID);
-        FusedTraceMark(traceGm, TR_AIV_AT_JP_GATE, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIV_AT_JP_GATE, aic, subBlockID, traceAccPtr);
         KYBER_PIPE_ALL();
 
         /* S0 已含 INTT Stage1；释放 AIC MMAD（flag 1），完成后 AIC SET 3 */
@@ -353,17 +418,17 @@ extern "C" __global__ __aicore__ void f203_encrypt_l18_l19(GM_ADDR uOut, GM_ADDR
             mergeIntt.Process();
             KYBER_PIPE_ALL();
         }
-        FusedTraceMark(traceGm, TR_AIV_INTT_U, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIV_INTT_U, aic, subBlockID, traceAccPtr);
 
         AscendC::PipeBarrier<PIPE_ALL>();
         f203_mod_q::mod_q_add_gm_halfrows(uOut, uOut, e1, subBlockID, encrypt_at_jp::kN, encrypt_at_jp::kQ);
         KYBER_PIPE_ALL();
-        FusedTraceMark(traceGm, TR_AIV_E1_DONE, aic, subBlockID);
+        FusedTraceMark(traceGm, TR_AIV_E1_DONE, aic, subBlockID, traceAccPtr);
 
         if (subBlockID == 0 && e2 != nullptr && vOut != nullptr) {
             f203_mod_q::mod_q_add_gm_single_row(vOut, vOut, e2, encrypt_at_jp::kQ, encrypt_at_jp::kN);
             KYBER_PIPE_ALL();
-            FusedTraceMark(traceGm, TR_AIV_V_DONE, aic, subBlockID);
+            FusedTraceMark(traceGm, TR_AIV_V_DONE, aic, subBlockID, traceAccPtr);
         }
 
         /* ── 行 22–24 内联 tail pack（SIM 单 launch；cGm!=nullptr 时各 AIV 分片写 c）── */

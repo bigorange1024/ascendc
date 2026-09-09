@@ -1,1 +1,1 @@
-e01–e15 ✅；E17/E18 GAP ✅；**E19 EARLY 入口 TRACE SIM ✅**（见 `../EARLY_EMPTY_TRACE.md`）。
+e01–e15 ✅；E17/E18 GAP ✅；**E19 EARLY 入口 TRACE SIM ✅**（见 `../EARLY_EMPTY_TRACE.md`）；**E20 postmark 尾包 SIM ✅**（`toy-e20-postmark-tail/`：全 Mark 后 AIC 早退 + 双 AIV 非对称 stub DataCopy；见 `STATUS.md` / `_outbox/FEEDBACK-E20.md`）。

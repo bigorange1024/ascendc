@@ -19,12 +19,20 @@ CURSOR_PUBKEY="${CURSOR_PUBKEY:-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4+JMqBJWCN
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 1) Tailscale：缺则装，起 tailscaled，入网并开 Tailscale SSH
+# 注意：每次实例启动都是新系统盘 → 新节点；旧 offline 节点会占住 MagicDNS「cannlab-npu」，
+# 新机常被命名为 cannlab-npu-1/-2。Cursor 侧用 lib_ssh.sh 自动挑 **online** 节点，勿写死主机名。
+# 建议 Tailscale authkey 开 **ephemeral**，停机后旧节点自动消失，名字才容易稳定在 cannlab-npu。
 if ! command -v tailscale >/dev/null 2>&1; then curl -fsSL https://tailscale.com/install.sh | sudo bash; fi
 sudo systemctl enable --now tailscaled 2>/dev/null || { sudo nohup tailscaled >/tmp/tailscaled.log 2>&1 & sleep 3; }
-sudo tailscale up --authkey="${TS_AUTHKEY}" --hostname=cannlab-npu --ssh || \
+# --reset：本机状态重绑；hostname 仍可能因冲突变成 -1（admin 删 offline 或 ephemeral key）
+sudo tailscale up --reset --authkey="${TS_AUTHKEY}" --hostname=cannlab-npu --ssh 2>/dev/null || \
+  sudo tailscale up --reset --authkey="${TS_AUTHKEY}" --hostname=cannlab-npu || \
+  sudo tailscale up --authkey="${TS_AUTHKEY}" --hostname=cannlab-npu --ssh || \
   sudo tailscale up --authkey="${TS_AUTHKEY}" --hostname=cannlab-npu
 TSIP="$(sudo tailscale ip -4 2>/dev/null | head -1)"
-
+# 实际 MagicDNS 名（可能是 cannlab-npu-1）
+TS_DNS="$(sudo tailscale status --self 2>/dev/null | awk '{print $2; exit}')"
+TS_DNS="${TS_DNS:-cannlab-npu}"
 # 2) 授权 Cursor 公钥（/home 持久，多为一次性）
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
 grep -qF "${CURSOR_PUBKEY%% *} ${CURSOR_PUBKEY#* }" ~/.ssh/authorized_keys 2>/dev/null || \
@@ -45,5 +53,6 @@ pkill -f agent_watchdog.sh 2>/dev/null || true
 IDLE_MIN="${IDLE_MIN:-30}" setsid nohup bash "${SCRIPT_DIR}/agent_watchdog.sh" >/dev/null 2>&1 < /dev/null &
 
 echo "===== bootstrap done ====="
-echo "ts_ip=${TSIP}  sshd=2222  watchdog=on(IDLE_MIN=${IDLE_MIN:-30})"
+echo "ts_ip=${TSIP}  magicdns=${TS_DNS}  sshd=2222  watchdog=on(IDLE_MIN=${IDLE_MIN:-30})"
+echo "Cursor 侧：bash scripts/cannlab/which_npu.sh   # 自动发现，勿写死主机名"
 ss -ltnp 2>/dev/null | grep ':2222' || echo '!! 2222 未监听'

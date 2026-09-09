@@ -448,34 +448,103 @@ nodes:
     domain: cause
     kind: inference
     derivation: defeasible
-    title: "空 TRACE ⇒ 挂窗在 AIV0 Mark(15) 之前"
-    statement: "D2H 成功且 0/16（无下标15）⇒ AIV0 未完成 PrefixEmbedMu 后的首标；AIC 亦未到 NTT_MMAD；排除 GATE/INTT 中段"
-    deps: [F-n13-trace-empty-r11, J-h-reuse-not-sufficient]
+    title: "（降权）曾推：空 TRACE ⇒ Mark(15) 前"
+    statement: "被 N16/N17 修订：空槽含标量观测假象；挂时 DataCopy 可见 16/16"
+    deps: [F-n13-trace-empty-r11]
+    status: retracted
+    basis: experiment
+    evidence: "FEEDBACK-NPU-E19b；FEEDBACK-NPU-ENCAPS-TRACE-DC"
+
+  - id: F-n17-encaps-tracedc-full
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "N17：Encaps TRACE-DC 挂时 16/16；本卡 0 PASS"
+    statement: "FusedTraceMark DataCopy 后粘性挂时 stages 满；同波 0/12 PASS（HANG/FAIL）；真挂未因观测修法消除"
+    deps: [F-n13-trace-empty-r11]
     status: verified
-    basis: stated
-    evidence: "graph_tests/EARLY_EMPTY_TRACE.md §2"
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-NPU-ENCAPS-TRACE-DC.md"
+
+  - id: J-empty-trace-was-observability
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "空 TRACE 主因是标量写回观测不稳"
+    statement: "E19 第4轮丢槽15；E19b DataCopy×12 绿；Encaps-DC 挂时 16/16 ⇒ 0/16 不可再当 Prefix 前死结案"
+    deps: [F-n17-encaps-tracedc-full]
+    status: verified
+    basis: experiment
+    evidence: "EARLY_EMPTY_TRACE.md §6；N15–N17"
+
+  - id: F-n18-ab-trace-contrast
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "N18：同污染卡 关TRACE 8/12 vs TRACE-DC 0/12"
+    statement: "NPU-A PASS=8 HANG=4；NPU-B PASS=0 HANG=3 FAIL=9（挂时 16/16）。TRACE-DC 暖机后抬失败/挂率；关 TRACE 亦可粘性挂"
+    deps: [F-n17-encaps-tracedc-full]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-NPU-AB.md；npu_ab_summary_20260908_033144"
+
+  - id: J-hang-after-full-trace
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "真挂窗在全 Mark 之后"
+    statement: "挂时 16/16 ⇒ FSM 打点已齐；优先 tail_pack / Host Sync；A/B 显示 TRACE-DC 可抬挂/失败率，探针非无代价"
+    deps: [F-n17-encaps-tracedc-full, J-empty-trace-was-observability, F-n18-ab-trace-contrast]
+    status: verified
+    basis: experiment
+    evidence: "FEEDBACK-NPU-AB；FEEDBACK-NPU-ENCAPS-TRACE-DC"
 
   - id: D-exp-e19
     domain: plan
     kind: decision
     by: agent
     title: "E19：入口极早 TRACE stub（SIM）"
-    statement: "AIC/AIV0 在任何 Wait 前打入口槽；供日后 NPU 区分 H-E3 vs H-E1；禁抄 Encrypt"
-    deps: [J-empty-trace-before-mu-mark, D-sim-then-npu]
+    statement: "AIC/AIV0 在任何 Wait 前打入口槽；供日后 NPU 区分 H-E3/H-E1；禁抄 Encrypt"
+    deps: [D-sim-then-npu]
     status: verified
     basis: experiment
     evidence: "graph_tests/_outbox/FEEDBACK-E19.md；stages set=2/16 : 0 15"
     targets: [Q-root-cause]
 
-  - id: D-next-early-after-empty-trace
+  - id: D-exp-e20-postmark-tail
     domain: plan
     kind: decision
     by: agent
-    title: "下一刀：EARLY 收窄 + E19"
-    statement: "分析已收窄到 μ 前缀前；离线 E19 + 只读 Prefix；授权后再上机入口标对照；禁盲改 FSM"
-    deps: [F-n13-trace-empty-r11, J-empty-trace-before-mu-mark, D-exp-e19, D-sim-then-npu, D-defer-correctness]
-    status: active
+    title: "E20：SIM 末段 AIV-only 尾包 stub"
+    statement: "SIM×8 绿：CrossCore 齐后 AIC 早退 + 双 AIV 非对称 stub DataCopy；audit 无真死等；结构可活≠粘性复现"
+    deps: [J-hang-after-full-trace, D-sim-then-npu, F-n18-ab-trace-contrast]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E20.md；e20-sync-audit.json"
     targets: [Q-root-cause]
+
+  - id: D-exp-e21-l18-tail-audit
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E21：l18 末段只读 + sync_audit"
+    statement: "已证：AIC FsmSet(PACK=3) 后即退；AIV Wait(PACK) 后 merge/mod_q/tail_pack 零 CrossCore；encaps SIM×1 绿；audit 无真死等"
+    deps: [J-hang-after-full-trace, D-graph-and-cannbot]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E21.md；e21-l18-sync-audit.json"
+    targets: [Q-root-cause]
+
+  - id: F-e21-post-pack-zero-cc
+    domain: cause
+    kind: fact
+    provenance: doc
+    title: "l18：INTT PACK 之后 AIV 尾段零 CrossCore"
+    statement: "AIC 最后 CrossCore=FsmSet(3)；AIV 最后=FsmWait(3)；其后 INTT merge、mod_q、V_DONE Mark、tail_pack_shard_gm 均无 Fsm Wait/Set"
+    deps: [D-exp-e21-l18-tail-audit]
+    status: verified
+    basis: code-review
+    evidence: "FEEDBACK-E21 §1；f203_encrypt_l18_l19_kernel.cpp L254–255 / L407–435"
 
   - id: D-next-offline-gap-toys
     domain: plan

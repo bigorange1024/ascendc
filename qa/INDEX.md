@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-08 — [防断连 nohup · cannlab-npu-1 · NPU-A/B 投递](2026-09/2026-09-08-防断连与NPU-AB投递.md)
+
+- **要点**：长 SSH 禁；`remote_job`/`keepalive`/`run_npu_ab_nohup`；主机 `cannlab-npu-1`；job `npu_ab_20260908_040002` RUNNING。
+
 ### 2026-09-07 — [NPU_SUITE · ENCRYPT-GAP · 上机N11–N14 · EARLY](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
 
 关键字：**N11 C2×7绿** · **N12 E17/E18非充分** · **N13 TRACE空槽r11** · **N14污染r1** · **下一刀EARLY** · **请关机**

@@ -60,10 +60,20 @@ sudo tailscale --socket=/var/run/tailscale/tailscaled.sock up --authkey="$TAILSC
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
 printf '%s\n' "$CANNLAB_SSH_KEY" > ~/.ssh/cannlab && chmod 600 ~/.ssh/cannlab
 
-# 3) 连接（用 hostname，IP 会变）
-SSH='ssh -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" -o StrictHostKeyChecking=accept-new -i ~/.ssh/cannlab -p 2222 developer@cannlab-npu'
-eval $SSH '"echo CONNECTED pid1=$(cat /proc/1/comm)"'
+# 3) 发现在线节点（每次云主机启动 IP/MagicDNS 都可能变，勿写死 cannlab-npu / -1）
+bash scripts/cannlab/which_npu.sh
+# 脚本库会自动 pick online；仅排障时：
+#   SSH_HOST_FORCE=cannlab-npu-1 ssh ... developer@$SSH_HOST_FORCE -p 2222
+SSH='ssh -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" -o StrictHostKeyChecking=accept-new -i ~/.ssh/cannlab -p 2222 developer@$(bash scripts/cannlab/which_npu.sh --export | sed -n "s/export SSH_HOST=//p" | tr -d "'\''")'
+# 更简单：直接用仓库封装
+#   source <(bash scripts/cannlab/which_npu.sh --export)
+#   eval $SSH 不推荐手拼；用：
+bash -c 'source scripts/cannlab/lib_ssh.sh && cannlab_pick_host && cannlab_ssh_try "echo CONNECTED"'
 ```
+
+> **主机名会变**：系统盘每次启动重置 → 新 Tailscale 节点；旧 offline 占着 `cannlab-npu` 时新机变成 `cannlab-npu-1`。  
+> **正确用法**：Cursor 侧始终 `cannlab_pick_host` / `which_npu.sh`，**不要**把某次的 `-1` 写进文档当永久配方。  
+> **让名字更稳**：Tailscale authkey 开 **ephemeral**，或在 admin 控制台删掉 offline 的旧 `cannlab-npu*`。
 
 ## 5. 跑真机用例（固定 recipe）
 
@@ -131,7 +141,8 @@ R
 | **持久性** | 重启后 tailscale/sshd 消失 | 仅 `/mnt/workspace`、`/home` 持久；每次开机重跑 `agent_bootstrap.sh` |
 | **GitHub 抖动** | 偶发 `curl github 000` | 多为瞬时；重试即可，实例出网整体可达（gitcode/pypi/github 均 200） |
 | **DERP 延迟/后台挂起** | 经 DERP 中继时 ssh 偏慢；`nohup ... &` 后台跑 `run.sh` 会让 ssh 通道**迟迟不返回** | **前台**跑 `run.sh`（加 `-o ServerAliveInterval=15`），用 `timeout` 兜底；不要在同一 ssh 里后台化再 tail |
-| **闲置节点被摘除** | 会话闲置后**本机** tailscale 节点被摘（`404 node not found`），连 CANNLab 报 SOCKS 失败 | Cursor 侧 `up --reset --authkey="$TAILSCALE_AUTHKEY"` 重注册（见 §4）；新起的 Agent 首次 `up` 不受影响 |
+| **长实验 SSH 被掐 / subagent 空闲断连** | Cursor/subagent 挂着长 SSH 不跑命令 → SOCKS 失败；或 30min 无 touch 心跳 → **watchdog 停容器** | **禁止**长 SSH。通用：`scripts/cannlab/remote_job.sh`；Encaps A/B：`run_npu_ab_nohup.sh`。远端 **nohup + 45s heartbeat**；本机只 `submit`/`poll`/`fetch`。另开 `agent_link_keepalive.sh` 喂本机 Tailscale + 远端心跳。实例重 bootstrap 后 hostname 常为 **`cannlab-npu-1`**（旧 `cannlab-npu` 可能仍 offline）→ `SSH_HOST=cannlab-npu-1` 或让 `lib_ssh.sh` 自动挑 online |
+| **闲置节点被摘除** | 会话闲置后**本机** tailscale 节点被摘（`404 node not found`），连 CANNLab 报 SOCKS 失败 | `agent_link_keepalive.sh` 周期 `status` + 失败时 `up --reset`；或手动 §4 `--reset` |
 | **停机后控制台“异常”** | `sudo kill -TERM 1` / 看门狗停机是**信号杀 tini**，绕过平台停止流程，控制台常显示 **“异常/error”** 而非干净“已停止” | 属预期副作用；**到控制台手动“关机/停止”再确认一次**（权威停计费）。故 SIGTERM/看门狗只当兜底，日常优先控制台关机 |
 
 ## 7. 停卡时（三选一）

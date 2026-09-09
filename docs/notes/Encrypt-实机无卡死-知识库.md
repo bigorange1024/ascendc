@@ -70,6 +70,11 @@
 | N12 | **E17/E18 实机×11 均绿** → l18 FSM stub（复用 1/3 vs 分离 5/6）**非**粘性充分条件 | NPU-2；削弱 H-reuse |
 | N13 | Encaps+`F203_L18_TRACE=1`：PASS×10 → **r11 HANG**；挂时 **`[l18-trace] stages set=0/16`**（空槽） | NPU-3；对齐 N2/EARLY |
 | N14 | 挂后立刻再跑 Encaps：**r1 即挂** + 空 TRACE | NPU-4；再证污染首轮 |
+| N15 | **E19 标量 TRACE**：NPU 前 3 轮 0+15 可见，**第 4 轮 Host 丢槽 15**（设备仍 504）；非 TIMEOUT | FEEDBACK-NPU-E19 |
+| N16 | **E19b 整表 DataCopy RMW**：NPU **×12 全绿** 槽 0+15 | FEEDBACK-NPU-E19b |
+| N17 | Encaps `FusedTraceMark`→DataCopy 后：挂时 TRACE **16/16 非空**（空槽为观测假象）；本卡 12 轮 **0 PASS**（HANG/FAIL 交替）→ 真挂窗宜标在 **全 Mark 之后**（tail/Sync），非 Prefix 前 | FEEDBACK-NPU-ENCAPS-TRACE-DC |
+| N18 | **同污染卡 A/B**：关 TRACE Encaps×12 → **PASS=8 HANG=4**；随即 TRACE-DC×12 → **PASS=0 HANG=3 FAIL=9**（挂时 16/16）。→ TRACE-DC **抬失败/挂率**；关 TRACE 亦能粘性挂。须日后**干净卡**复验 | FEEDBACK-NPU-AB；artifacts `npu_*_20260908_033144*` |
+| N19 | **干净卡**：关 TRACE **PASS×10 → r11/r12 HANG**（复现 N10）；随即 TRACE-DC **r1/r2 即 HANG+16/16** 后停。猎挂默认应 **首挂即停**，禁空等满轮 | FEEDBACK-NPU-AB-CLEAN |
 
 ### 2.1 KeyGen vs Encrypt（结构差 · 可证伪）
 
@@ -152,19 +157,20 @@
 ## 6. 目标分解与当前刀
 
 ```
-积木/GAP toys → 上机 N11–N14 → EARLY 收窄（空 TRACE）→ E19…
-  → 钉 Q-root-cause → 正确性 → 实机无卡死且正确
+… → N15–N17 空 TRACE=观测假象；挂窗→全 Mark 后
+  → N18 同污染卡 A/B：关 TRACE 可绿但会挂；TRACE-DC 暖机后 0 绿
+  → 探针降为 opt-in；钉末段（tail_pack / Host Sync）→ Q-root-cause
 ```
 
 | 状态 | 内容 |
 |------|------|
-| **已证** | N7–N14；H-reuse **非充分**；空 TRACE 管道可信 |
-| **EARLY 收窄** | 挂窗 ∈ AIV0 **Mark(15 μ前缀)之前**（+ AIC 多半卡在 Wait(1)）— [`EARLY_EMPTY_TRACE.md`](../../graph_tests/EARLY_EMPTY_TRACE.md) |
-| **假说序** | H-E1 PrefixEmbedMu / H-E4 多轮资源 ≻ H-E3 调度；**排除** GATE/INTT 中段 |
-| **E19** | 入口极早 TRACE stub **SIM ✅**（FEEDBACK-E19）；供日后 NPU 区分 H-E3 vs H-E1 |
-| **下一刀** | 只读加深 Prefix/TPipe；可选 E20「多轮后再跑前缀量级」；**授权后** NPU 上 E19/Encaps「Mark 挪到 Prefix 前」 |
-| **缓** | ByteDecode；禁未钉窗改 CrossCore FSM |
-
+| **已证** | N7–**N18**；H-reuse 非充分；空 TRACE 主因标量观测；挂时 DataCopy 可 **16/16** |
+| **N18 要点** | 关 TRACE：**8 PASS / 4 HANG**；随即 TRACE-DC：**0 PASS / 3 HANG / 9 FAIL**（挂时满槽） |
+| **真挂窗** | 优先 **末标之后**（`tail_pack` / Host Sync）；粘性 **不依赖** TRACE 探针也会发生 |
+| **探针政策** | `F203_L18_TRACE` / TRACE-DC → **诊断 opt-in**，禁止当生产默开 |
+| **下一刀（离线优先）** | ① **E21 ✅** 末段零 CC ② **E20 ✅** AIC 早退+AIV 尾 stub SIM 可活 ③ 下一步：干净卡复验 / 或针对 Host Sync 等 AIV 长尾的上机假说（仍禁盲改 FSM） |
+| **下一刀（上机，须他 Agent 让出 + 干净卡）** | 关机冷启后复验 A/B（关 TRACE ×12 vs TRACE-DC ×12）；若关 TRACE 仍冷启×10 后挂 → 钉负载/污染；若 TRACE-DC 干净卡仍抬挂 → 钉探针副作用 |
+| **缓** | 盲改 CrossCore FSM；默开 TRACE；并行抢卡 |
 ### 6.1 父 / 子分工（用户锁）
 
 | 角色 | 做 | 不做 |
@@ -196,4 +202,6 @@
 | 2026-09-07 | **工作法纠偏**：ENCRYPT_GAP 清单 + E17/E18 离线；仅剩上机 NPU-1…4 写清反馈分支；父定计划子编码 |
 | 2026-09-07 | **上机 NPU-1…4**：N11–N14（C2×7 绿；E17/E18 非充分；TRACE 空槽@r11；污染 r1）；下一刀 EARLY |
 | 2026-09-07 | **EARLY 收窄**：挂窗在 Mark(15)前；E19 SIM 绿；文 `EARLY_EMPTY_TRACE.md` |
+| 2026-09-08 | **N15–N17**：标量 TRACE 丢槽；DataCopy×12 绿；Encaps 挂时 16/16 → 挂窗改标末段 |
+| 2026-09-08 | **N18**：同污染卡 A/B（关 TRACE 8/12 vs TRACE-DC 0/12）；TRACE-DC 抬失败/挂率；**暂不关机**（他 Agent 用卡） |
 | （v1 摘要） | E01–E16 SIM；N7 单轮全绿；Host-only；正确性后置 |

@@ -87,6 +87,19 @@ AIV1:  （不写 TRACE）Split → Set(1) → …
 
 ---
 
-## 5. 一句话
+## 6. 上机修订（2026-09-08 · N15–N17）
 
-**空 TRACE 把挂窗收到「AIV0 完成 μ 前缀打点之前」（并常伴随 AIC Wait(1)）；套件与 flag-reuse stub 已排除；下一刀是 EARLY 打点与前缀/多轮资源假说，不是继续加 Encrypt 积木。**
+| 事实 | 含义 |
+|------|------|
+| E19 标量第 4 轮丢槽 15 | AIV **标量** fused-trace 对 Host D2H **多轮不稳** |
+| E19b DataCopy×12 绿 | 整表 RMW 可修观测 |
+| Encaps DataCopy 后挂时 **16/16** | 原 **0/16 空槽是观测假象**；设备打点已齐 |
+| 同波 0 PASS | 真 Sync 挂仍在；且 TRACE-DC 实现可能加重不稳 → 须干净卡对照 |
+
+**挂窗改标**：优先查 **最后一次 FusedTraceMark 之后**（`tail_pack_shard_gm`、stream Sync、污染），**不再**默认「Prefix 前 EARLY 死」。
+
+---
+
+## 5. 一句话（修订）
+
+**空 TRACE 曾把分析带偏到「入口前」；E19b/Encaps-DC 证明标量 Mark 不可靠。真粘性挂在 TRACE 已满时仍可 Sync 未回 → 查末段 tail/Sync，并隔离 TRACE 探针对正确性/挂率的干扰。**

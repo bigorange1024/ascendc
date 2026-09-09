@@ -1,22 +1,16 @@
 # AGENT_HANDOFF
 
-**日期**：2026-09-07  
-**分支**：`cursor/kem-2launch-sticky-1534`  
-**真机**：取证已够时请控制台关机
+**日期**：2026-09-08  
+**真机**：实验已 **STOPPED**；请用户 **控制台关机**
 
 ---
 
-## ★ 当前真相
+## ★ 刚发生
 
-| 项 | 状态 |
-|----|------|
-| N11–N14 | 已入库；H-reuse 非充分；TRACE **0/16** |
-| EARLY | 挂窗收窄到 AIV0 **Mark(15 μ前缀)之前** — `EARLY_EMPTY_TRACE.md` |
-| E19 | SIM ✅ 入口标可被 Host 见 |
-| 下一刀 | Prefix/TPipe 只读加深；可选 E20；授权后再上机入口标对照 |
+- 干净卡 A/B：A=10PASS+2HANG(r11/12)；B=HANG×2+16/16 后按用户意见停掉  
+- `run_npu_ab_nohup.sh` 改为默认 **首挂即停**  
+- FEEDBACK：`graph_tests/_outbox/FEEDBACK-NPU-AB-CLEAN.md`
 
----
+## ★ 方法
 
-## ★ 勿做
-
-- 未钉 EARLY 窗就改 CrossCore；正确性先行  
+猎挂默认 `STOP_ON_HANG=1`；要挂率才 `STOP_ON_HANG=0`。
