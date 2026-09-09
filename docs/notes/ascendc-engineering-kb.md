@@ -109,7 +109,7 @@
 **重建基线口诀**：Encrypt/Encaps=2；Decrypt=3；PKE-KG=3；KEM-KG=4；Decaps=5。
 
 **落点**：stable 在 `examples/stable/...`（交付默认）；重建在 `graph-tests/{kg,enc,dec}_related/`（incubating；晋级须 `#交付#`）。  
-KeyGen 重建门禁（正确∧不挂）已关：`Q-KEYGEN-CORRECT` / `Q-KEYGEN-HANG` → closed；证据 `F-REBUILD-KEYGEN-NO-HANG`。
+KeyGen 重建门禁（正确∧不挂）已关：`Q-KEYGEN-CORRECT` / `Q-KEYGEN-HANG` → answered (`answered_by=F-REBUILD-KEYGEN-NO-HANG`)；证据 `F-REBUILD-KEYGEN-NO-HANG`。
 
 ---
 

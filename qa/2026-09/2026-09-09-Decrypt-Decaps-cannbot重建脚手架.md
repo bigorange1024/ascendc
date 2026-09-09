@@ -115,7 +115,7 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 | RB-K04 PKE 全链 | NPU×30 pass=30 ≡liboqs_pke |
 | RB-K05 KEM tail | 首轮 device `const char*`/`__gm__` 编不过 → `kZPrefixBytes`；CPU+SIM+NPU×30 绿 |
 | RB-K06 KEM 全链 | NPU×30 pass=30 ≡liboqs_kem |
-| 门禁 | `Q-KEYGEN-HANG` / `Q-KEYGEN-CORRECT` **closed** |
+| 门禁 | `Q-KEYGEN-HANG` / `Q-KEYGEN-CORRECT` **answered**（`answered_by=F-REBUILD-KEYGEN-NO-HANG`） |
 | 证据 | 远端 `/mnt/workspace/keygen-npu-logs/`；artifacts `keygen-npu-x30/` |
 | 用机 | 作业后停 keepalive；空闲交平台自动关 |
 
@@ -127,7 +127,8 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 |----|------|
 | 短 KB | `docs/notes/ascendc-engineering-kb.md` §3.4：六算子 stable↔重建 **SIM/NPU launch** 对照表 |
 | 图谱 | `F-REBUILD-VS-STABLE-LAUNCH`、`F-REBUILD-KEYGEN-NO-HANG`；`D-SHORT-CROSSCORE-SPLIT` 写入重建基线；`F-DEVICE-STRING-LITERAL-GM` domain→`impl-tech` |
-| 校验 | `check_rg_dag.py` 拓扑 OK（nodes=48；skill zip 未解压则仅拓扑） |
+| 校验 | `check_rg_dag.py` + skill `rg_validate` OK；已重渲 `rg-ascendc-engineering.viz.html` |
+| skill | 自 Drive 装入 `thirdparty/reasoning-graph-skill/`（gitignore；本机 zip 已落盘） |
 | HANDOFF | 指向 KB §3.4 / 图谱节点 |
 
 ---

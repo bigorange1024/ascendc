@@ -191,7 +191,8 @@ nodes:
   - F-LIBOQS-IO-ORACLE
   - D-KEYGEN-ANTI-HANG-TOPO
   - F-DEVICE-STRING-LITERAL-GM
-  status: closed
+  status: answered
+  answered_by: F-REBUILD-KEYGEN-NO-HANG
   resolution: >-
     2026-09-09 cannlab-npu：RB-K04≡liboqs_pke ×30；RB-K06≡liboqs_kem ×30；
     RB-K05 H/z/dk_kem max=0 ×30。
@@ -567,7 +568,8 @@ nodes:
   deps:
   - D-KEYGEN-ANTI-HANG-TOPO
   - F-KEYGEN-MIX-SURFACE
-  status: closed
+  status: answered
+  answered_by: F-REBUILD-KEYGEN-NO-HANG
   resolution: >-
     2026-09-09 cannlab-npu ASCEND_DEVICE_ID=0 budget=180s：
     RB-K04/K05/K06 各 ×30 pass=30 fail=0 hang=0。
