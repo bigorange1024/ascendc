@@ -145,14 +145,13 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 | 短 KB | 双门禁 + 反卡死 + NTT/poly-batch/假绿等写码事实 |
 | 图谱 | `D-CORE-KEM-DUAL` / `D-ADMIT-KEM-EXP`；增 `kem-math`/`correctness`；旧 hang-only → inactive；`rg_validate` OK |
 
-### 追加（同日 · 用户批「可以」· 按推理重写图+KB）
+### 追加（同日 · 工程 KB 手册化刷新）
 
-用户批评：图上多为实验现象，少有价值推理/教训。批准方案后落地：
+用户：图谱像样后，知识库仍须刷新——本地 agent 旧沉淀多为流水账，不起指导作用。
 
 | 项 | 结果 |
 |----|------|
-| yaml | 删战役台账式 fact（×30/TRACE/launch 日记）；主干=`J-HANG-UNREACHABLE-SET`→半写/争用/融合面 + 假绿阶梯；证伪 `J-DUAL-CUBE`/`J-EXTRA-LAUNCH` retracted；决策带为何/代价/何时可破 |
-| 关闸 | 仅薄 `J-REBUILD-TOPO-PASSES-GATES`；KeyGen 战役题 `Q-KEYGEN-*` 不再进图 |
-| KB | 与图对齐：§机制/证伪/权衡/假绿阶梯；launch 表→附录 |
-| 校验 | `check_rg_dag.py` + skill `rg_validate` OK；40 节点（Q5/D13/F12/J10）；重渲 viz |
-| 仍开 | `Q-ULT`、`Q-ENCRYPT-STICKY` |
+| `ascendc-engineering-kb.md` | 扩成写码手册：怎么用 / 机制表 / 默认决策（为何·代价·破例）/ 正确性钉子 / 假绿阶梯 / 证伪 / **开路径 10 问检查单** / 推荐骨架；launch 仅库存表 |
+| 分算子 `*-rebuild-kb.md` | 仍仅指针；去掉过时 `encrypt/`/`decrypt/`/`keygen/` 前缀与 §B 引用 |
+| MIX 反卡死两篇 | 文首改为**案例附录**；冲突以工程 KB+yaml 为准 |
+| INDEX | 标注唯一写码 KB vs 运营积木表 vs 案例附录 |

@@ -17,7 +17,7 @@
 |------|-------------|----------|
 | **PKE KeyGen**（Alg.13） | `seed_d`（约定）→ `ek_pke`(1568)+`dk_pke`(1536) | CPU+NPU ≡liboqs；×N 不挂 |
 | **KEM KeyGen**（Alg.19 / Alg.16） | 同 seed 约定 → `ek`(1568)+`dk_kem`(3168) | CPU+NPU ≡liboqs；×N 不挂 |
-| **关闸** | 干净卡反复 npu | 关 `Q-PKE-KG` / `Q-KEM-KG` / `Q-KG-HANG` |
+| **关闸** | 干净卡反复 npu | 运营 QUEUE done；图上薄指针 `J-REBUILD-TOPO-PASSES-GATES`（≠ stable 晋级） |
 
 **非目标（本阶段）**：`examples/stable-*` 晋级；修旧 alg13/19 探针；在 stable KeyGen 上打补丁冒充重建。
 
@@ -59,7 +59,7 @@
 | **KG6** | KEM：H(ek)+z + dk_kem 拼装 | **closed**（K01 CPU+SIM+NPU×30） |
 | **KG7** | KEM 全链 + 反卡死压测 | **closed**（K02 CPU+NPU×30 ≡liboqs_kem） |
 
-拓扑定稿见 KB §B2 / S0A（禁默认沿用旧「prep AHAT=2 + 单长 MIX」而不论证）。
+拓扑定稿见工程 KB §2 / §7.4；禁默认沿用旧「prep AHAT=2 + 单长 MIX」而不论证。
 
 ---
 

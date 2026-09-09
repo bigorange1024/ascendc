@@ -10,9 +10,9 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30关闸 · KB/图推理重写](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
+### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30 · KB手册化+图推理重写](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
 
-关键字：**正确∧不卡** · 图按机制/证伪/权衡重写 · `J-HANG-UNREACHABLE-SET` · KeyGen NPU×30 · skill `rg_validate`
+关键字：**正确∧不卡** · **KB 手册化**（机制/检查单）· 图推理重写 · KeyGen NPU×30 · MIX 降为案例附录
 
 ### 2026-09-08 — [Encrypt cannbot · Encaps收口 · T27撞名修复 · 待重写Decaps](2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md)
 

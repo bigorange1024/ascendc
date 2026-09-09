@@ -12,7 +12,7 @@
 1. **Decrypt/Decaps 重建已收口**。运营：`graph-tests/decrypt-rebuild-ops/`。  
 2. **KeyGen 重建（PKE+KEM）incubating 关闸**：`RB-K01…K06`；P04≡liboqs_pke；K02≡liboqs_kem；**NPU×30 三档 pass=30/fail=0/hang=0**。  
 3. 关闸在图上仅薄指针 `J-REBUILD-TOPO-PASSES-GATES`（≠晋级 stable）；细节在 QUEUE/MATRIX，**不**再拆 `Q-KEYGEN-*` 战役题。  
-4. **工程 KB/图谱**（用户批准后重写）：机制/证伪/权衡为主；战役流水退回 QUEUE；launch 表仅 KB 附录。校验：`check_rg_dag` + skill `rg_validate` OK（40 节点）。viz：`docs/rg-ascendc-engineering.viz.html`。  
+4. **工程 KB/图谱**（2026-09-09）：**写码手册级** KB（机制/证伪/权衡/检查单）+ 推理图；MIX notes 降为案例附录；战役流水仅 QUEUE/HANDOFF。校验 40 节点 OK。  
 5. K01 首轮 NPU 暴露：device 侧字符串字面量不可赋 `const char*` → 用 `constexpr uint8_t[]`（`F-DEVICE-STRING-GM`）。
 
 ---

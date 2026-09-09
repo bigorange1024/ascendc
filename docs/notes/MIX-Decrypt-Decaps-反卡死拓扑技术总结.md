@@ -1,13 +1,16 @@
-# MIX Decrypt/Decaps 反卡死拓扑 — 技术总结（暂行）
+# MIX Decrypt/Decaps 反卡死拓扑 — 案例附录（暂行）
 
-**读者**：后续在 AscendC 上拼 **Alg.15 Decrypt / Alg.21 Decaps** 长链的实现者与 Agent  
-**目的**：说明 cannbot 重建路径为何能同时满足 **liboqs 正确** 与 **NPU 反复不挂**；给出可迁移不变量  
+> **写码请先读唯一 KB**：[`ascendc-engineering-kb.md`](ascendc-engineering-kb.md) + [`rg-ascendc-engineering.yaml`](../rg-ascendc-engineering.yaml)。  
+> **本文角色**：Decrypt/Decaps 重建的**拓扑案例**（三核切分、I6–I11 展开）；刀号 / ×30 属附录。  
+> 与工程 KB 冲突时 **以 KB + 机读图为准**（2026-09-09 起）。
+
+**读者**：需要 Decrypt 特有半写面 / NTT∥INTT 细节时  
 **案例锚点**：`graph-tests/dec_related/RB-D01`–`RB-D07`；运营 `graph-tests/decrypt-rebuild-ops/`  
 **讨论**：`qa/2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md`  
-**配套**：[`Decrypt-cannbot-rebuild-kb.md`](Decrypt-cannbot-rebuild-kb.md) · DAG `docs/rg-decrypt-cannbot-rebuild.yaml` · 前序 [`MIX-Encrypt-Encaps-反卡死拓扑技术总结.md`](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md)
+**前序案例**：[`MIX-Encrypt-Encaps-反卡死拓扑技术总结.md`](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md)
 
-> **效力**：有证据的暂行模型，非数学证明。证据：砖级 D01–D03×30；D04/K01–K03×30；K04×30 + 补跑≈100；门禁三问均 closed。  
-> **非目标**：本战役 **不** 晋级 `examples/stable-*`；**不** 修旧 alg15/21 / T25–T27；**不** 重做 PKE/KEM KeyGen。
+> **效力**：有证据的暂行案例，非数学证明。  
+> **非目标**：不晋级 stable；不修旧 alg15/21；机制修订走工程 KB/图。
 
 ---
 

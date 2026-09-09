@@ -1,14 +1,15 @@
-# MIX Encrypt/Encaps 反卡死拓扑 — 技术总结（暂行）
+# MIX Encrypt/Encaps 反卡死拓扑 — 案例附录（暂行）
 
-**读者**：后续写 KeyGen 以外 MIX 长链（Encrypt / Encaps / Decaps）的实现者与 Agent  
-**目的**：对照 **graph-tests 重建路径** 与 **stable/pass-fix 既有路径**、以及 **KeyGen**，说明（暂行）实机不挂的工程原因；给出可迁移的设计约束  
-**案例锚点**：`graph-tests/enc_related/RB-T22`–`RB-T24`；对照 `stable-*-kem-encaps-k4` / `pass-fix-*-alg20|alg14`；KeyGen `stable|pass-fix-*-alg19`  
+> **写码请先读唯一 KB**：[`ascendc-engineering-kb.md`](ascendc-engineering-kb.md) + [`rg-ascendc-engineering.yaml`](../rg-ascendc-engineering.yaml)。  
+> **本文角色**：Encrypt/Encaps 重建的**拓扑案例与检查单展开**；刀号 / ×30 / 三路对照属附录。  
+> 与工程 KB 冲突时 **以 KB + 机读图为准**（2026-09-09 起）。
+
+**读者**：需要对照重建 vs stable 拓扑细节时  
+**案例锚点**：`graph-tests/enc_related/RB-T22`–`RB-T24`；对照 `stable-*-kem-encaps-k4` / `pass-fix-*-alg20|alg14`  
 **讨论**：`qa/2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md`  
-**配套**：[`Encrypt-cannbot-rebuild-kb.md`](Encrypt-cannbot-rebuild-kb.md) §B2 · DAG `docs/rg-encrypt-cannbot-rebuild.yaml`
+**运营**：`graph-tests/encrypt-rebuild-ops/`（非知识）
 
-> **效力声明（「暂时」）**：下列原因为 **有证据的暂行模型**，不是数学证明。  
-> 证据：重建路径 NPU 双绿 + T24×30 不挂；stable Encaps 有 `l18_l19` SynchronizeStream 卡死史。  
-> 若未来改回深融合 FSM / flag 8 / 双 AIV 拆 Â 后仍不挂，须修订本模型；若新路径再挂，须新增 X* 并改 DAG。
+> **效力**：有证据的暂行案例，不是数学证明。修订机制/决策请改工程 KB 与 yaml，再视需要回写本节。
 
 ---
 
