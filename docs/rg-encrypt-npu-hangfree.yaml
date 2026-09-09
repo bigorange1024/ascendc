@@ -566,14 +566,16 @@ nodes:
     status: retracted
     targets: [Q-root-cause]
 
-  - id: D-host-mu-default
-    domain: impl
+  - id: D-close-l18-debug-rewrite
+    domain: plan
     kind: decision
     by: human
-    title: "μ 默认 Host 折"
-    statement: "设备 skipNtt 禁 PrefixEmbedMu；μ 由 Host 写入"
-    deps: [D-no-copy-encrypt]
-    status: active
+    title: "关闭既有 l18 debug；改新写 PKE/KEM"
+    statement: "2026-09-09：停止在现有 encaps/l18 上挂因刀；探索收官见 docs/research/Encrypt-NPU粘性挂-探索收官-2026-09；继任验收测试"
+    deps: [F-n18-ab-trace-contrast, F-e21-post-pack-zero-cc, D-exp-e20-postmark-tail]
+    status: verified
+    evidence: "qa/2026-09/2026-09-09-粘性挂探索收官与转向新写.md"
+    targets: [Q-how-to-write]
 
   - id: D-no-syncall-in-wait
     domain: sync

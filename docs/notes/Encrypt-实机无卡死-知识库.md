@@ -1,9 +1,14 @@
 # Encrypt 实机无卡死 — 专属知识库（v2 · cannbot 刷新）
 
-**焦点**：Encrypt **实机无卡死且正确**；当前卡在 **粘性挂根因未钉死**。  
+> **2026-09-09 路线关闭（就「既有 l18/Encrypt 继续 debug」）**  
+> 用户决定 **全新编写 PKE/KEM**；本库保留为探索期证据与禁踩清单。  
+> **收官包**：[docs/research/Encrypt-NPU粘性挂-探索收官-2026-09/](../research/Encrypt-NPU粘性挂-探索收官-2026-09/INDEX.md)  
+> **勿**再开「改现有 encaps l18 消挂」刀；后续本 Agent 侧重验收/测试。
+
+**焦点（历史）**：Encrypt **实机无卡死且正确**；粘性挂根因 **未钉死**。  
 **配套图谱**：[`docs/rg-encrypt-npu-hangfree.yaml`](../rg-encrypt-npu-hangfree.yaml)  
 **计划**：[`graph_tests/ENCRYPT_REWRITE_PLAN.md`](../../graph_tests/ENCRYPT_REWRITE_PLAN.md)  
-**本版**：2026-09-07 **从头刷新**——领域证据保留，**工程层以 cannbot-skills 为准**；此后实验/写码必须 **图谱 + cannbot** 双开。
+**本版**：2026-09-07 **从头刷新**——领域证据保留，**工程层以 cannbot-skills 为准**；探索期实验/写码曾要求 **图谱 + cannbot** 双开。
 
 | 层 | 权威 |
 |----|------|

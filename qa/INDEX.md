@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-09 — [粘性挂探索收官 · 转向新写 PKE/KEM](2026-09/2026-09-09-粘性挂探索收官与转向新写.md)
+
+- **要点**：停既有 l18 debug；收官包 `docs/research/Encrypt-NPU粘性挂-探索收官-2026-09/`；Agent 转验收测试。
+
 ### 2026-09-08 — [防断连 nohup · cannlab-npu-1 · NPU-A/B 投递](2026-09/2026-09-08-防断连与NPU-AB投递.md)
 
 - **要点**：长 SSH 禁；`remote_job`/`keepalive`/`run_npu_ab_nohup`；主机 `cannlab-npu-1`；job `npu_ab_20260908_040002` RUNNING。

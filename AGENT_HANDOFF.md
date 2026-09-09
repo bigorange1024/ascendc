@@ -1,16 +1,20 @@
 # AGENT_HANDOFF
 
-**日期**：2026-09-08  
-**真机**：实验已 **STOPPED**；请用户 **控制台关机**
+**日期**：2026-09-09  
+**分支**：`cursor/kem-2launch-sticky-1534`  
 
 ---
 
-## ★ 刚发生
+## ★ 定位（用户锁）
 
-- 干净卡 A/B：A=10PASS+2HANG(r11/12)；B=HANG×2+16/16 后按用户意见停掉  
-- `run_npu_ab_nohup.sh` 改为默认 **首挂即停**  
-- FEEDBACK：`graph_tests/_outbox/FEEDBACK-NPU-AB-CLEAN.md`
+| 停 | 做 |
+|----|----|
+| 既有 Encrypt/l18 **继续 debug** | 等待 **新写 PKE/KEM** |
+| 把收官包当改码施工单 | 本 Agent：**验收与测试** |
 
-## ★ 方法
+收官包：[`docs/research/Encrypt-NPU粘性挂-探索收官-2026-09/`](docs/research/Encrypt-NPU粘性挂-探索收官-2026-09/INDEX.md)
 
-猎挂默认 `STOP_ON_HANG=1`；要挂率才 `STOP_ON_HANG=0`。
+## ★ Git
+
+1. `c9547ae` — 收尾清算本波调查产物  
+2. （本提交）— 研究收官目录与索引  
