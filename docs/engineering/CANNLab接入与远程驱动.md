@@ -60,10 +60,20 @@ sudo tailscale --socket=/var/run/tailscale/tailscaled.sock up --authkey="$TAILSC
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
 printf '%s\n' "$CANNLAB_SSH_KEY" > ~/.ssh/cannlab && chmod 600 ~/.ssh/cannlab
 
-# 3) 连接（用 hostname，IP 会变）
-SSH='ssh -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" -o StrictHostKeyChecking=accept-new -i ~/.ssh/cannlab -p 2222 developer@cannlab-npu'
-eval $SSH '"echo CONNECTED pid1=$(cat /proc/1/comm)"'
+# 3) 发现在线节点（每次云主机启动 IP/MagicDNS 都可能变，勿写死 cannlab-npu / -1）
+bash scripts/cannlab/which_npu.sh
+# 脚本库会自动 pick online；仅排障时：
+#   SSH_HOST_FORCE=cannlab-npu-1 ssh ... developer@$SSH_HOST_FORCE -p 2222
+SSH='ssh -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" -o StrictHostKeyChecking=accept-new -i ~/.ssh/cannlab -p 2222 developer@$(bash scripts/cannlab/which_npu.sh --export | sed -n "s/export SSH_HOST=//p" | tr -d "'\''")'
+# 更简单：直接用仓库封装
+#   source <(bash scripts/cannlab/which_npu.sh --export)
+#   eval $SSH 不推荐手拼；用：
+bash -c 'source scripts/cannlab/lib_ssh.sh && cannlab_pick_host && cannlab_ssh_try "echo CONNECTED"'
 ```
+
+> **主机名会变**：系统盘每次启动重置 → 新 Tailscale 节点；旧 offline 占着 `cannlab-npu` 时新机变成 `cannlab-npu-1`。  
+> **正确用法**：Cursor 侧始终 `cannlab_pick_host` / `which_npu.sh`，**不要**把某次的 `-1` 写进文档当永久配方。  
+> **让名字更稳**：Tailscale authkey 开 **ephemeral**，或在 admin 控制台删掉 offline 的旧 `cannlab-npu*`。
 
 ## 5. 跑真机用例（固定 recipe）
 
@@ -79,18 +89,60 @@ R
 
 期望尾部：`[verify] KEM KeyGen overall PASS` + `[SUCCESS] ... (npu)`。
 
+### 5.1 Encaps / Decaps 粘性挂取证（~10 分钟，Agent 亲自跑）
+
+> 用途：恢复 **main 口径 stable** 后，在单卡 910B3 上**多轮 / 交叉**跑 Encaps、Decaps，亲眼看粘性挂长什么样。  
+> 不做正确性结案；挂因只记 Host 文案 / 超时 / 轮次。`FORCE_REBUILD=1` 避免旧二进制假绿。
+
+```bash
+# Cursor 侧：前台 SSH（ServerAlive），一次一把刀；CANNLab 工作树先切到目标分支并 pull
+SSH='ssh -o ServerAliveInterval=15 -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" -o StrictHostKeyChecking=accept-new -i ~/.ssh/cannlab -p 2222 developer@cannlab-npu'
+
+eval $SSH '"bash -s"' <<'R'
+set -euo pipefail
+export LD_LIBRARY_PATH=/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64/common:${LD_LIBRARY_PATH:-}
+source /home/developer/Ascend/ascend-toolkit/set_env.sh
+cd /mnt/workspace/ascendc
+git fetch origin && git checkout cursor/kem-2launch-sticky-1534 && git pull --ff-only
+export ASCEND_DEVICE_ID=0 CANNLAB=1 CMAKE_BUILD_JOBS=8
+export KEM_ENCAPS_FORCE_REBUILD=1 KEM_DECAPS_FORCE_REBUILD=1
+ROOT=examples/stable/ml-kem/ml-kem-1024
+# 1) Encaps 多轮（墙钟紧则 TOY 式循环；每轮独立 run.sh）
+for i in 1 2 3 4 5 6 7; do
+  echo "===== ENCAPS round $i ====="
+  # 猎挂默认 ~240s（Host 约 3min 即报 RUNTIME timeout）；勿默认 900
+  timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3" \
+    || { echo "ENCAPS_FAIL_OR_HANG round=$i rc=$?"; break; }
+done
+# 2) Decaps 多轮
+for i in 1 2 3 4 5 6 7; do
+  echo "===== DECAPS round $i ====="
+  timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3" \
+    || { echo "DECAPS_FAIL_OR_HANG round=$i rc=$?"; break; }
+done
+# 3) 交叉：Encaps→Decaps 再 Encaps（各 1～2 轮，看顺序是否触发）
+echo "===== CROSS encaps then decaps ====="
+timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-encaps-k4 && bash run.sh -r npu -v Ascend910B3"
+timeout ${TIMEOUT_SEC:-240} bash -lc "cd $ROOT/stable-fips203-mlkem-kem-decaps-k4 && bash run.sh -r npu -v Ascend910B3"
+echo "===== HANG_OBSERVE_DONE ====="
+R
+```
+
+也可一键：`bash scripts/cannlab/hang_observe_encaps_decaps.sh`（须已能 `ssh cannlab-npu`）。
+
 ## 6. 关键坑（务必记住）
 
 | 坑 | 现象 | 处置 |
 |----|------|------|
-| **设备号** | 卡挂成 `/dev/davinci3`，但 **ACL 逻辑设备号从 0 枚举**；仓库 `npu_device_map.sh` 会按树/节点选 1/2/3 → `aclrtSetDevice` 报 **107001 无效设备** | 单卡实例**必须显式 `ASCEND_DEVICE_ID=0`**（run.sh 会保留显式值） |
+| **设备号** | 卡挂成 `/dev/davinci3`，但 **ACL 逻辑设备号从 0 枚举**；仓库 `npu_device_map.sh` 会按树/节点选 1/2/3 → `aclrtSetDevice` 报 **107001 无效设备** | 单卡实例**必须显式 `ASCEND_DEVICE_ID=0`**（run.sh 会保留显式值）；或 `export CANNLAB=1` / `NPU_SINGLE_CARD=1` 让分卡表默认全 0 |
 | **驱动库** | `npu-smi` / ACL 报 `libc_sec.so`/`libdrvdsmi_host.so` 找不到 | 把 `/usr/local/Ascend/driver/lib64{,/driver,/common}` 加进 `LD_LIBRARY_PATH`（recipe 已含） |
 | **sshd 只听 loopback** | 首次 `sshd -p 2222` 绑到 `127.0.0.1` | 用 `-o ListenAddress=<tailscale ip>`（bootstrap 已处理） |
 | **停机** | `poweroff/halt/shutdown` 无效（容器 PID1=tini，无 systemd）；`kill -9 1` 被内核拦截 | **`sudo kill -TERM 1`**（tini 优雅退出、节点下线）；**权威停计费以控制台“关机/停止”为准** |
 | **持久性** | 重启后 tailscale/sshd 消失 | 仅 `/mnt/workspace`、`/home` 持久；每次开机重跑 `agent_bootstrap.sh` |
 | **GitHub 抖动** | 偶发 `curl github 000` | 多为瞬时；重试即可，实例出网整体可达（gitcode/pypi/github 均 200） |
 | **DERP 延迟/后台挂起** | 经 DERP 中继时 ssh 偏慢；`nohup ... &` 后台跑 `run.sh` 会让 ssh 通道**迟迟不返回** | **前台**跑 `run.sh`（加 `-o ServerAliveInterval=15`），用 `timeout` 兜底；不要在同一 ssh 里后台化再 tail |
-| **闲置节点被摘除** | 会话闲置后**本机** tailscale 节点被摘（`404 node not found`），连 CANNLab 报 SOCKS 失败 | Cursor 侧 `up --reset --authkey="$TAILSCALE_AUTHKEY"` 重注册（见 §4）；新起的 Agent 首次 `up` 不受影响 |
+| **长实验 SSH 被掐 / subagent 空闲断连** | Cursor/subagent 挂着长 SSH 不跑命令 → SOCKS 失败；或 30min 无 touch 心跳 → **watchdog 停容器** | **禁止**长 SSH。通用：`scripts/cannlab/remote_job.sh`；Encaps A/B：`run_npu_ab_nohup.sh`。远端 **nohup + 45s heartbeat**；本机只 `submit`/`poll`/`fetch`。另开 `agent_link_keepalive.sh` 喂本机 Tailscale + 远端心跳。实例重 bootstrap 后 hostname 常为 **`cannlab-npu-1`**（旧 `cannlab-npu` 可能仍 offline）→ `SSH_HOST=cannlab-npu-1` 或让 `lib_ssh.sh` 自动挑 online |
+| **闲置节点被摘除** | 会话闲置后**本机** tailscale 节点被摘（`404 node not found`），连 CANNLab 报 SOCKS 失败 | `agent_link_keepalive.sh` 周期 `status` + 失败时 `up --reset`；或手动 §4 `--reset` |
 | **停机后控制台“异常”** | `sudo kill -TERM 1` / 看门狗停机是**信号杀 tini**，绕过平台停止流程，控制台常显示 **“异常/error”** 而非干净“已停止” | 属预期副作用；**到控制台手动“关机/停止”再确认一次**（权威停计费）。故 SIGTERM/看门狗只当兜底，日常优先控制台关机 |
 
 ## 7. 停卡时（三选一）

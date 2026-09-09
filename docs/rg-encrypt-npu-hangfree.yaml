@@ -1,0 +1,606 @@
+# Encrypt 实机无卡死 · 推理图谱 v2（cannbot 刷新 · 2026-09-07）
+# 知识库：docs/notes/Encrypt-实机无卡死-知识库.md
+# 工具：thirdparty/reasoning-graph-skill-master/
+# 工程层：thirdparty/cannbot-skills/
+
+version: 1
+title: "Encrypt 实机无卡死 · DAG v2"
+
+config:
+  required_fields: [domain]
+  id_prefix_by_kind: {fact: F, inference: J, decision: D, question: Q}
+  fact_provenance_values: [observation, measurement, doc, env-api]
+  inference_derivation_values: [deductive, defeasible]
+  decision_by_values: [human, agent]
+  require_repro_for_provenance: [measurement]
+
+nodes:
+  - id: F-problem
+    domain: verify
+    kind: fact
+    provenance: observation
+    title: "Encrypt 实机会粘性卡死"
+    statement: "Encrypt/Encaps 在 NPU 上出现 SynchronizeStream 粘性卡死，需重拼实现达到无卡死且正确"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09 实机短报；知识库 §2 N1–N6"
+
+  - id: Q-root-cause
+    domain: cause
+    kind: question
+    title: "实机粘性挂的可操作根因？"
+    statement: "何种可构造条件在 NPU 上充分导致 Encrypt 粘性挂，且能指导重写避免？"
+    deps: [F-problem, F-n7-suite-single-pass, F-sim-not-sticky, F-n9-encaps-l18-runtime-3min, F-n10-pollution-vs-cold]
+    status: open
+
+  - id: Q-how-to-write
+    domain: plan
+    kind: question
+    title: "如何重拼 Encrypt 使实机不挂且正确？"
+    statement: "在图谱+cannbot 约束下，自底向上哪条路径得到实机无卡死且正确的 Encrypt？（挂因问题由 D-goal/D-graph targets 瞄准 Q-root-cause，本节点不 deps question）"
+    deps: [D-graph-and-cannbot, F-n7-suite-single-pass, J-suite-not-enough-for-root]
+    status: open
+
+  - id: D-goal
+    domain: method
+    kind: decision
+    by: human
+    title: "最终目标：实机无卡死且正确"
+    statement: "NPU 上 Encrypt 跑完且最终与权威交叉一致；本阶段优先钉挂因"
+    deps: [F-problem]
+    status: active
+    targets: [Q-root-cause, Q-how-to-write]
+
+  - id: D-graph-and-cannbot
+    domain: method
+    kind: decision
+    by: human
+    title: "实验与写码必须图谱+cannbot 双开"
+    statement: "每刀前遍历本图；写/改 AscendC 前按知识库 §0.1 打开 cannbot Skill（优先 sync-audit/crash-debug/api）；就地读 thirdparty/cannbot-skills，不整仓拷进 .cursor/skills"
+    deps: [D-goal]
+    status: active
+    evidence: "用户 2026-09-07：从头刷新库图；此后实验写码充分使用图谱与 cannbot"
+    targets: [Q-how-to-write, Q-root-cause]
+
+  - id: D-roles
+    domain: method
+    kind: decision
+    by: human
+    title: "主控推理；Subagent 执行"
+    statement: "主控维护库+图+派刀；Subagent 按验收编码跑测；按职责不分后缀"
+    deps: [D-goal]
+    status: active
+
+  - id: D-no-copy-encrypt
+    domain: method
+    kind: decision
+    by: human
+    title: "禁抄现 Encrypt 实现"
+    statement: "可读冻结 Encrypt；禁止当模板搬码；积木自底向上重拼"
+    deps: [D-goal]
+    status: active
+
+  - id: D-freeze-existing
+    domain: method
+    kind: decision
+    by: human
+    title: "已有代码冻结只读"
+    statement: "stable/pass 等一律只读；新实验新目录 graph_tests/toys/"
+    deps: [D-no-copy-encrypt]
+    status: active
+
+  - id: D-fail-first
+    domain: method
+    kind: decision
+    by: human
+    title: "失败知识一等公民"
+    statement: "证伪与回退必须入库；禁止只堆成功路径；retracted 禁复踩"
+    deps: [D-goal]
+    status: active
+
+  - id: D-sim-then-npu
+    domain: method
+    kind: decision
+    by: human
+    title: "SIM 穷尽结构后再上机"
+    statement: "SIM 能做尽做；整份 NPU 须用户授权（910B3 有时限）"
+    deps: [D-goal]
+    status: active
+
+  - id: D-defer-correctness
+    domain: method
+    kind: decision
+    by: human
+    title: "正确性后置于挂因"
+    statement: "ByteDecode/KAT/权威交叉在钉住粘性挂可操作根因之前不做"
+    deps: [D-goal, F-n1-hang-after-launch]
+    status: active
+    targets: [Q-root-cause]
+
+  - id: D-host-trace-only-npu
+    domain: method
+    kind: decision
+    by: agent
+    title: "NPU 挂因只认 Host 1xx"
+    statement: "设备 AscendC::printf 常不可见；套件 TOY_NPU_HOST_ONLY；缺 200 且已有 111 记未粘性挂"
+    deps: [F-n2-empty-device-trace, D-graph-and-cannbot]
+    status: active
+    targets: [Q-root-cause]
+
+  - id: D-typein-feedback
+    domain: method
+    kind: decision
+    by: human
+    title: "上机反馈只打字"
+    statement: "用户不能回传任何文件；只打 REPORT:/三位码"
+    deps: [D-goal]
+    status: active
+
+  - id: F-cannbot-crosscore-rules
+    domain: sync
+    kind: fact
+    provenance: doc
+    title: "cannbot：CrossCore 配对与 flagId 规则"
+    statement: "CrossCore Set/Wait 须路径可达且配对；flagId 0–15；禁与 Matmul 高阶 API 混用；SyncAll 不对称会死等（SYNC-03/04/07/08/12）"
+    deps: []
+    status: verified
+    basis: stated
+    evidence: "thirdparty/cannbot-skills/ops/ascendc-api-best-practices/references/api-crosscore-sync.md；ascendc-sync-audit/references/sync-checklist.md"
+    repro: "ls thirdparty/cannbot-skills/ops/ascendc-sync-audit/references/sync-checklist.md"
+
+  - id: F-cannbot-audit-mix-false-positive
+    domain: sync
+    kind: fact
+    provenance: measurement
+    title: "sync_audit 对单文件 MIX 易报 SYNC-03 同侧"
+    statement: "E01/E13/E15 与只读 l18 均报 SYNC-03「同侧」高优；同文件 ASCEND_IS_AIC/AIV 分支下为候选假阳性，须人工确认，禁止据此自动改绿核"
+    deps: [F-cannbot-crosscore-rules]
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/sync-audit-e13.json；知识库 §3.3"
+    repro: "python3 thirdparty/cannbot-skills/ops/ascendc-sync-audit/scripts/sync_audit.py graph_tests/toys/toy-e13-encrypt-shaped-glue/mmad_custom.cpp --check all --format json"
+
+  - id: F-cannbot-deadlock-triage
+    domain: sync
+    kind: fact
+    provenance: doc
+    title: "cannbot 死等分诊树可用"
+    statement: "卡死优先查 CrossCore 路径 Set 是否可达、Set/Wait 配对、残留 CrossCore、SyncAll 不对称、Wait 先于 Set"
+    deps: [F-cannbot-crosscore-rules]
+    status: verified
+    basis: stated
+    evidence: "thirdparty/cannbot-skills/ops/ascendc-sync-audit/workflows/deadlock-triage.md"
+    repro: "test -f thirdparty/cannbot-skills/ops/ascendc-sync-audit/workflows/deadlock-triage.md"
+
+  - id: F-n1-hang-after-launch
+    domain: verify
+    kind: fact
+    provenance: observation
+    title: "挂在 launch 文案后 Sync 未回"
+    statement: "Host 已打印 launch l18/prep 后 aclrtSynchronizeStream 不返回"
+    deps: [F-problem]
+    status: verified
+    basis: experiment
+    evidence: "知识库 N1/N5"
+
+  - id: F-n2-empty-device-trace
+    domain: verify
+    kind: fact
+    provenance: observation
+    title: "挂时设备 TRACE 常空；NPU printf 常不可见"
+    statement: "粘性挂时设备 mark 常不可见；NPU 挂因取证以 Host 1xx 为准"
+    deps: [F-n1-hang-after-launch]
+    status: verified
+    basis: experiment
+    evidence: "知识库 N2"
+
+  - id: F-n3-keygen-safe
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "KeyGen 未同类粘性挂"
+    statement: "同卡 KeyGen 路径未表现 Encrypt 类粘性挂 → 偏 Encrypt 特有编排"
+    deps: [F-problem]
+    status: verified
+    basis: experiment
+    evidence: "知识库 N3 §2.1"
+
+  - id: F-toys-sim-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "E01–E15 SIM 积木/粘合/Â2×2 绿"
+    statement: "自底向上 toys 至 e15 全 Â SampleNTT；SampleNTT 须独立 launch（E14）"
+    deps: []
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/toys/；知识库 §4"
+    repro: "test -d graph_tests/toys/toy-e15-samplentt-a-full-2x2"
+
+  - id: F-n7-suite-single-pass
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "NPU_SUITE 单轮 C0–C2 全绿"
+    statement: "2026-09-07 用户回报 C0/C1/C2 均 PASS last=111（Host-only）"
+    deps: [F-toys-sim-pass, D-host-trace-only-npu]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-07-NPU套件单轮全绿与RxN.md"
+    repro: "cd graph_tests/npu_suite && bash run_all_npu.sh -v Ascend910B4"
+
+  - id: F-n8-decaps-phase-d-hang
+    domain: cause
+    kind: fact
+    provenance: measurement
+    title: "Decaps 可挂在 Phase-D decrypt_device_fused"
+    statement: "CANNLab 910B3：Decaps 多轮后 Host 已 print launch f203_decrypt_device_fused，无 npu_launch 回，TIMEOUT124"
+    deps: [F-problem, F-n1-hang-after-launch]
+    status: verified
+    basis: experiment
+    evidence: "qa/2026-09/2026-09-07-NPU套件单轮全绿与RxN.md；hang_observe log"
+
+  - id: F-n9-encaps-l18-runtime-3min
+    domain: cause
+    kind: fact
+    provenance: measurement
+    title: "Encaps 挂面：l18_l19 + RUNTIME 3min timeout"
+    statement: "Host 已 print launch 2 f203_encrypt_l18_l19；RUNTIME SynchronizeExecutedTask report three minutes timeout（pendingNum=1）；可重复报；无 duration 回"
+    deps: [F-n1-hang-after-launch]
+    status: verified
+    basis: experiment
+    evidence: "hang_hunt_evidence_20260907_170641/ENCAPS_round1.log"
+
+  - id: F-n10-pollution-vs-cold
+    domain: cause
+    kind: fact
+    provenance: measurement
+    title: "冷启动多轮粘性 + 污染后粘性并存"
+    statement: "干净卡 Encaps PASS×10 后 r11 HANG@l18_l19+RUNTIME 3min；另 Decaps 挂/杀进程后 Encaps 可首轮即挂。两现象并存"
+    deps: [F-n8-decaps-phase-d-hang, F-n9-encaps-l18-runtime-3min]
+    status: verified
+    basis: experiment
+    evidence: "hang_hunt_short_20260907_173539；qa/2026-09-07"
+
+  - id: F-sim-not-sticky
+    domain: verify
+    kind: fact
+    provenance: measurement
+    title: "SIM 不能复现粘性挂"
+    statement: "E01–E15 与缺 SET 的可构造 SIM124 均不能等同实机粘性挂"
+    deps: [F-toys-sim-pass]
+    status: verified
+    basis: experiment
+    evidence: "知识库 §3.1；FEEDBACK-E01–E15；2026-09-07 SIM smoke 仍绿"
+    repro: "ls graph_tests/_outbox/FEEDBACK-E15.md"
+
+  - id: F-omit-set4-sim-hang
+    domain: sync
+    kind: fact
+    provenance: measurement
+    title: "缺 SET(4) 在 SIM 可构造 124"
+    statement: "AIC Wait(4) 而 AIV 不 SET → SIM timeout；真且有用，≠ 实机粘性充分条件"
+    deps: [F-cannbot-crosscore-rules]
+    status: verified
+    basis: experiment
+    evidence: "冻结 skel / E01 OMIT；知识库 §3.1"
+    repro: "grep -n OMIT_SET4 graph_tests/toys/toy-e01-2launch-set4-trace-repeat/run.sh"
+
+  - id: F-samplentt-own-launch
+    domain: impl
+    kind: fact
+    provenance: measurement
+    title: "SampleNTT 须独立 launch/phase"
+    statement: "与真链同 MIX 嵌入 SampleNTT 可致 SIM 挂/TPipe 争用；E14 起独立 phase"
+    deps: [F-toys-sim-pass]
+    status: verified
+    basis: experiment
+    evidence: "FEEDBACK-E14；知识库 §4"
+    repro: "test -f graph_tests/_outbox/FEEDBACK-E14.md"
+
+  - id: F-fail-first-history
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "历史证伪清单已入库"
+    statement: "见知识库 §3.1 ✗ 行与旧 hang 图 retracted 节点"
+    deps: []
+    status: verified
+    basis: stated
+    evidence: "docs/notes/Encrypt-实机无卡死-知识库.md §3.1"
+
+  - id: J-suite-not-enough-for-root
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "套件单轮绿 ⇒ 挂因在多轮或 ENCRYPT-GAP"
+    statement: "N7 表明套件覆盖结构单轮不粘性；根因候选为 R×N 粘性或未覆盖的 Encrypt 特有同步/编排"
+    deps: [F-n7-suite-single-pass, F-sim-not-sticky, F-n1-hang-after-launch]
+    status: unverified
+    basis: heuristic
+    evidence: "BRANCHING B3；知识库 §6"
+
+  - id: J-use-cannbot-on-gap
+    domain: plan
+    kind: inference
+    derivation: defeasible
+    title: "ENCRYPT-GAP 刀必须先 cannbot 审计"
+    statement: "对照只读 l18 与新刀源码时，先 sync_audit+deadlock-triage，再单因子改同步/编排"
+    deps: [J-suite-not-enough-for-root, F-cannbot-deadlock-triage, D-graph-and-cannbot]
+    status: unverified
+    basis: heuristic
+    evidence: "知识库 §0.1 §3.2"
+
+  - id: J-retracted-sufficiency
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "若干充分条件已证伪"
+    statement: "仅双 Cube/仅 GATE/仅 launch 次数/仅 stub flag1/3 等不足以解释粘性挂；禁复踩"
+    deps: [F-fail-first-history]
+    status: verified
+    basis: experiment
+    evidence: "知识库 §3.1"
+
+  - id: F-encrypt-gap-inventory
+    domain: cause
+    kind: fact
+    provenance: analysis
+    title: "ENCRYPT-GAP 结构差已列清单"
+    statement: "套件未覆盖而 l18 有：INTT 复用 flag 1/3、GATE 4→8 语义、单 MIX NTT→IP→GATE→INTT 序等；详见 ENCRYPT_GAP.md；禁把仅 GATE/仅 stub1/3 当充分条件复测"
+    deps: [J-suite-not-enough-for-root, F-n7-suite-single-pass, F-n9-encaps-l18-runtime-3min]
+    status: verified
+    basis: stated
+    evidence: "graph_tests/ENCRYPT_GAP.md §1"
+
+  - id: D-exp-e17
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E17：l18 FSM stub + INTT 复用 1/3（SIM）"
+    statement: "单 launch MIX stub：伪 NTT 1/3 → GATE 4/8 → 伪 INTT 复用 1/3；≥8 轮 SIM + sync_audit；禁抄 Encrypt 业务"
+    deps: [F-encrypt-gap-inventory, J-use-cannbot-on-gap, D-sim-then-npu, J-retracted-sufficiency]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E17.md；/opt/cursor/artifacts/e17-default-sim.log"
+    targets: [Q-root-cause]
+
+  - id: D-exp-e18
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E18：同序但 INTT 分离 5/6（SIM）"
+    statement: "相对 E17 单因子改 INTT 通道为 5/6；SIM + sync_audit；与 E17 成对，供日后授权上机对照"
+    deps: [D-exp-e17]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E18.md；/opt/cursor/artifacts/e18-default-sim.log"
+    targets: [Q-root-cause]
+
+  - id: F-e17-e18-sim-pass
+    domain: cause
+    kind: fact
+    provenance: experiment
+    title: "E17/E18 SIM 均绿（GAP stub）"
+    statement: "复用 1/3 与分离 5/6 的 l18 同步序 stub 在 SIM×8 均可活；无真死等红线；不复现粘性"
+    deps: [D-exp-e17, D-exp-e18, F-sim-not-sticky]
+    status: verified
+    basis: experiment
+    evidence: "FEEDBACK-E17/E18"
+
+  - id: F-n11-suite-rxn-clean
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-1：C2×7 全绿（B3-clean）"
+    statement: "套件最高档 C2 多轮 7 不粘；挂因不在套件覆盖结构的多轮粘性（本机本波）"
+    deps: [F-n7-suite-single-pass]
+    status: verified
+    basis: experiment
+    evidence: "/opt/cursor/artifacts/npu_wave_20260907/SUMMARY.md；SUMMARY R×N C2x7:OK"
+
+  - id: F-n12-e17-e18-npu-pass
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-2：E17/E18×11 均绿"
+    statement: "l18 同步序 stub（复用1/3 与分离5/6）实机 11 轮不粘；H-reuse 作为充分条件被削弱"
+    deps: [F-e17-e18-sim-pass, F-n11-suite-rxn-clean]
+    status: verified
+    basis: experiment
+    evidence: "REPORT: E17/E18 PASS last=111"
+
+  - id: F-n13-trace-empty-r11
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-3：Encaps r11 挂且 TRACE 0/16"
+    statement: "F203_L18_TRACE=1 下 PASS×10 后 r11 挂于 launch2 l18_l19；轮询见 stages set=0/16（空槽）→ 卡点在首个 FusedTraceMark 之前或 TRACE 不可见"
+    deps: [F-n9-encaps-l18-runtime-3min, F-n10-pollution-vs-cold, D-host-trace-only-npu]
+    status: verified
+    basis: experiment
+    evidence: "npu3_encaps_trace；[l18-trace] stages set=0/16"
+
+  - id: F-n14-pollute-r1-empty
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "NPU-4：挂后首轮再挂+空 TRACE"
+    statement: "r11 挂后立刻 Encaps r1 再挂；同样 launch2 + stages 0/16"
+    deps: [F-n13-trace-empty-r11, F-n10-pollution-vs-cold]
+    status: verified
+    basis: experiment
+    evidence: "npu4_pollute run.log"
+
+  - id: J-h-reuse-not-sufficient
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "H-reuse stub 非粘性充分条件"
+    statement: "E17 与 E18 实机均绿 ⇒ 仅 NTT→GATE→INTT 复用1/3 的 stub 序不足以触发粘性；须 EARLY/业务负载/多 launch 状态等更深因子"
+    deps: [F-n12-e17-e18-npu-pass, J-retracted-sufficiency]
+    status: verified
+    basis: experiment
+    evidence: "ENCRYPT_GAP NPU-2 反馈分支「两者都绿」"
+
+  - id: J-empty-trace-before-mu-mark
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "（降权）曾推：空 TRACE ⇒ Mark(15) 前"
+    statement: "被 N16/N17 修订：空槽含标量观测假象；挂时 DataCopy 可见 16/16"
+    deps: [F-n13-trace-empty-r11]
+    status: retracted
+    basis: experiment
+    evidence: "FEEDBACK-NPU-E19b；FEEDBACK-NPU-ENCAPS-TRACE-DC"
+
+  - id: F-n17-encaps-tracedc-full
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "N17：Encaps TRACE-DC 挂时 16/16；本卡 0 PASS"
+    statement: "FusedTraceMark DataCopy 后粘性挂时 stages 满；同波 0/12 PASS（HANG/FAIL）；真挂未因观测修法消除"
+    deps: [F-n13-trace-empty-r11]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-NPU-ENCAPS-TRACE-DC.md"
+
+  - id: J-empty-trace-was-observability
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "空 TRACE 主因是标量写回观测不稳"
+    statement: "E19 第4轮丢槽15；E19b DataCopy×12 绿；Encaps-DC 挂时 16/16 ⇒ 0/16 不可再当 Prefix 前死结案"
+    deps: [F-n17-encaps-tracedc-full]
+    status: verified
+    basis: experiment
+    evidence: "EARLY_EMPTY_TRACE.md §6；N15–N17"
+
+  - id: F-n18-ab-trace-contrast
+    domain: cause
+    kind: fact
+    provenance: observation
+    title: "N18：同污染卡 关TRACE 8/12 vs TRACE-DC 0/12"
+    statement: "NPU-A PASS=8 HANG=4；NPU-B PASS=0 HANG=3 FAIL=9（挂时 16/16）。TRACE-DC 暖机后抬失败/挂率；关 TRACE 亦可粘性挂"
+    deps: [F-n17-encaps-tracedc-full]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-NPU-AB.md；npu_ab_summary_20260908_033144"
+
+  - id: J-hang-after-full-trace
+    domain: cause
+    kind: inference
+    derivation: defeasible
+    title: "真挂窗在全 Mark 之后"
+    statement: "挂时 16/16 ⇒ FSM 打点已齐；优先 tail_pack / Host Sync；A/B 显示 TRACE-DC 可抬挂/失败率，探针非无代价"
+    deps: [F-n17-encaps-tracedc-full, J-empty-trace-was-observability, F-n18-ab-trace-contrast]
+    status: verified
+    basis: experiment
+    evidence: "FEEDBACK-NPU-AB；FEEDBACK-NPU-ENCAPS-TRACE-DC"
+
+  - id: D-exp-e19
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E19：入口极早 TRACE stub（SIM）"
+    statement: "AIC/AIV0 在任何 Wait 前打入口槽；供日后 NPU 区分 H-E3/H-E1；禁抄 Encrypt"
+    deps: [D-sim-then-npu]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E19.md；stages set=2/16 : 0 15"
+    targets: [Q-root-cause]
+
+  - id: D-exp-e20-postmark-tail
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E20：SIM 末段 AIV-only 尾包 stub"
+    statement: "SIM×8 绿：CrossCore 齐后 AIC 早退 + 双 AIV 非对称 stub DataCopy；audit 无真死等；结构可活≠粘性复现"
+    deps: [J-hang-after-full-trace, D-sim-then-npu, F-n18-ab-trace-contrast]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E20.md；e20-sync-audit.json"
+    targets: [Q-root-cause]
+
+  - id: D-exp-e21-l18-tail-audit
+    domain: plan
+    kind: decision
+    by: agent
+    title: "E21：l18 末段只读 + sync_audit"
+    statement: "已证：AIC FsmSet(PACK=3) 后即退；AIV Wait(PACK) 后 merge/mod_q/tail_pack 零 CrossCore；encaps SIM×1 绿；audit 无真死等"
+    deps: [J-hang-after-full-trace, D-graph-and-cannbot]
+    status: verified
+    basis: experiment
+    evidence: "graph_tests/_outbox/FEEDBACK-E21.md；e21-l18-sync-audit.json"
+    targets: [Q-root-cause]
+
+  - id: F-e21-post-pack-zero-cc
+    domain: cause
+    kind: fact
+    provenance: doc
+    title: "l18：INTT PACK 之后 AIV 尾段零 CrossCore"
+    statement: "AIC 最后 CrossCore=FsmSet(3)；AIV 最后=FsmWait(3)；其后 INTT merge、mod_q、V_DONE Mark、tail_pack_shard_gm 均无 Fsm Wait/Set"
+    deps: [D-exp-e21-l18-tail-audit]
+    status: verified
+    basis: code-review
+    evidence: "FEEDBACK-E21 §1；f203_encrypt_l18_l19_kernel.cpp L254–255 / L407–435"
+
+  - id: D-next-offline-gap-toys
+    domain: plan
+    kind: decision
+    by: agent
+    title: "（归档）离线 E17/E18 + 上机 NPU-1…4 已完成"
+    statement: "被 D-next-early-after-empty-trace 取代"
+    deps: [F-encrypt-gap-inventory, F-e17-e18-sim-pass]
+    status: retracted
+    targets: [Q-root-cause]
+
+  - id: D-next-rxn-or-gap
+    domain: plan
+    kind: decision
+    by: agent
+    title: "（归档）曾：干净卡对照 → R×N / ENCRYPT-GAP"
+    statement: "已被 D-next-offline-gap-toys 取代：离线 GAP toys 优先；R×N 降为授权后 NPU-1"
+    deps: [J-suite-not-enough-for-root]
+    status: retracted
+    targets: [Q-root-cause]
+
+  - id: D-close-l18-debug-rewrite
+    domain: plan
+    kind: decision
+    by: human
+    title: "关闭既有 l18 debug；改新写 PKE/KEM"
+    statement: "2026-09-09：停止在现有 encaps/l18 上挂因刀；探索收官见 docs/research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534；scripts 不合 main；继任验收测试"
+    deps: [F-n18-ab-trace-contrast, F-e21-post-pack-zero-cc, D-exp-e20-postmark-tail]
+    status: verified
+    evidence: "qa/2026-09/2026-09-09-粘性挂探索收官与转向新写__br-kem-2launch-sticky-1534.md"
+    targets: [Q-how-to-write]
+
+  - id: D-no-syncall-in-wait
+    domain: sync
+    kind: decision
+    by: agent
+    title: "禁 AIC Wait 中 SyncAll"
+    statement: "与 cannbot SYNC-12 / 本仓历史禁令一致"
+    deps: [F-cannbot-crosscore-rules, D-graph-and-cannbot]
+    status: active
+
+changelog:
+  - date: "2026-09-07"
+    change: |
+      v2 从头刷新：压缩 E01–E16 台账为 F-toys-sim-pass；
+      升格 D-graph-and-cannbot；纳入 cannbot CrossCore/审计假阳性事实；
+      下一刀 D-next-rxn-or-gap（R×N | ENCRYPT-GAP）。
+  - date: "2026-09-07"
+    change: |
+      CANNLab 取证入库：F-n8 Decaps Phase-D、F-n9 Encaps l18+RUNTIME 3min、
+      F-n10 污染 vs 冷启动；刷新 D-next-rxn-or-gap。
+  - date: "2026-09-07"
+    change: |
+      工作法纠偏：ENCRYPT_GAP 清单 + E17/E18 离线刀；D-next-offline-gap-toys；
+      旧 D-next-rxn-or-gap retracted；上机 NPU-1…4 规格见 ENCRYPT_GAP.md §3。
+  - date: "2026-09-07"
+    change: |
+      上机 N11–N14：C2×7 绿；E17/E18 非充分；TRACE 0/16@r11；污染 r1。
+      D-next-early-after-empty-trace；D-next-offline-gap-toys retracted。

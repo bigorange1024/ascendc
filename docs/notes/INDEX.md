@@ -7,6 +7,12 @@
 
 ---
 
+## Encrypt 实机无卡死（主线知识库）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-实机无卡死-知识库.md](Encrypt-实机无卡死-知识库.md) | **探索期知识库**；停既有 l18 debug；收官包 → [`research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/`](../research/Encrypt-NPU粘性挂-探索收官-2026-09__br-kem-2launch-sticky-1534/INDEX.md) |
+
 ## ML-KEM / F203
 
 | 文件 | 说明 |
