@@ -12,8 +12,8 @@
 1. **Decrypt/Decaps 重建已收口**。运营：`graph-tests/decrypt-rebuild-ops/`。  
 2. **KeyGen 重建（PKE+KEM）incubating 关闸**：`RB-K01…K06`；P04≡liboqs_pke；K02≡liboqs_kem；**NPU×30 三档 pass=30/fail=0/hang=0**。  
 3. 门禁 `Q-KEYGEN-HANG` / `Q-KEYGEN-CORRECT` → **closed**（见工程 yaml）。  
-4. **工程 KB/图谱**：目标经验包 = **正确 ∧ 不卡**；刀号 PASS 只写 QUEUE/MATRIX，不进短 KB。  
-5. K01 首轮 NPU 暴露：device 侧字符串字面量不可赋 `const char*` → 用 `constexpr uint8_t[]`（已入库 KB）。
+4. **工程 KB/图谱**（2026-09-09 已刷）：目标经验包 = **正确 ∧ 不卡**；六算子 stable↔重建 launch 对表在 KB §3.4 / `F-REBUILD-VS-STABLE-LAUNCH`；刀号 PASS 只写 QUEUE/MATRIX。  
+5. K01 首轮 NPU 暴露：device 侧字符串字面量不可赋 `const char*` → 用 `constexpr uint8_t[]`（`F-DEVICE-STRING-LITERAL-GM`）。
 
 ---
 

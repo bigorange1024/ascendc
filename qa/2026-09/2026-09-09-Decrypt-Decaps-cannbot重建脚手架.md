@@ -119,6 +119,17 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 | 证据 | 远端 `/mnt/workspace/keygen-npu-logs/`；artifacts `keygen-npu-x30/` |
 | 用机 | 作业后停 keepalive；空闲交平台自动关 |
 
+### 追加（同日 · KB/图谱刷新提交）
+
+用户要求刷新知识库与图谱并提交一版：
+
+| 项 | 落点 |
+|----|------|
+| 短 KB | `docs/notes/ascendc-engineering-kb.md` §3.4：六算子 stable↔重建 **SIM/NPU launch** 对照表 |
+| 图谱 | `F-REBUILD-VS-STABLE-LAUNCH`、`F-REBUILD-KEYGEN-NO-HANG`；`D-SHORT-CROSSCORE-SPLIT` 写入重建基线；`F-DEVICE-STRING-LITERAL-GM` domain→`impl-tech` |
+| 校验 | `check_rg_dag.py` 拓扑 OK（nodes=48；skill zip 未解压则仅拓扑） |
+| HANDOFF | 指向 KB §3.4 / 图谱节点 |
+
 ---
 
 ## 9. 工程 KB/图谱章程（同日迭代）

@@ -2,7 +2,9 @@ version: 1
 title: AscendC MIX 反卡死 · 推理图谱
 review:
   last_reviewed: '2026-09-09'
-  note: 反卡死为重点；正确 KEM 写码经验同入库；禁战役刀号流水
+  note: >-
+    反卡死为重点；正确 KEM 写码经验同入库；禁战役刀号流水。
+    已入库：六算子 stable↔重建 SIM/NPU launch 数对照；KeyGen NPU×30 关闸。
 config:
   required_fields:
   - domain
@@ -194,7 +196,7 @@ nodes:
     2026-09-09 cannlab-npu：RB-K04≡liboqs_pke ×30；RB-K06≡liboqs_kem ×30；
     RB-K05 H/z/dk_kem max=0 ×30。
 - id: F-DEVICE-STRING-LITERAL-GM
-  domain: platform
+  domain: impl-tech
   kind: fact
   provenance: observation
   title: 设备侧字符串字面量是 __gm__
@@ -205,6 +207,36 @@ nodes:
   status: verified
   basis: experiment
   evidence: 2026-09-09 RB-K05 kg_kem_tail_custom.cpp:78 NPU 编译错；改 kZPrefixBytes 后 ×30 绿
+- id: F-REBUILD-VS-STABLE-LAUNCH
+  domain: impl-tech
+  kind: fact
+  provenance: measurement
+  title: 重建相对 stable 的 SIM/NPU launch 数（六算子）
+  statement: >-
+    ML-KEM-1024 生产路径（SIM/NPU；非 CPU 孪生分叉）：PKE KeyGen 2→3；Encrypt 2→2；
+    Decrypt 1→3；KEM KeyGen 2→4；Encaps 2→2；Decaps 3→5。次数相同≠拓扑同构
+    （重建多为 blockDim=1、短 MIX、Host mid-sync）。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: >-
+    stable customspec；graph-tests kg_related/RB-K04|K06、enc_related/RB-T19|T22|T26、
+    dec_related/RB-D04 LAYOUT（2026-09-09 对表）
+- id: F-REBUILD-KEYGEN-NO-HANG
+  domain: keygen
+  kind: fact
+  provenance: observation
+  title: KeyGen 重建 NPU×30 不挂且 ≡liboqs（暂行）
+  statement: >-
+    重建 PKE/KEM KeyGen（RB-K04/K05/K06）在干净卡 NPU×30 下 pass=30/fail=0/hang=0，
+    且 I/O ≡ liboqs；≠已晋级 stable。
+  deps:
+  - F-LIBOQS-IO-ORACLE
+  - F-DEVICE-STRING-LITERAL-GM
+  - F-REBUILD-VS-STABLE-LAUNCH
+  status: verified
+  basis: experiment
+  evidence: 2026-09-09 cannlab-npu；/mnt/workspace/keygen-npu-logs/K0{4,5,6}-x30.*
 - id: F-HANG-SYNC
   domain: verify-test
   kind: fact
@@ -408,13 +440,16 @@ nodes:
   kind: decision
   by: human
   title: 跨核面要短：拆 Host launch
-  statement: 无 CrossCore 的 prep 与有 CrossCore 的 MIX 勿默认同核深融合；Host mid-sync 作屏障；重建 Encrypt 双 launch / Decrypt
-    三 launch
+  statement: >-
+    无 CrossCore 的 prep 与有 CrossCore 的 MIX 勿默认同核深融合；Host mid-sync 作屏障。
+    重建基线：Encrypt/Encaps 2；Decrypt 3；PKE KeyGen 3；KEM KeyGen 4；Decaps 5
+    （相对 stable 的增减见 F-REBUILD-VS-STABLE-LAUNCH）。
   deps:
   - F-HANG-L18
   - J-HANG-NEEDS-HANDSHAKE-BREAK
+  - F-REBUILD-VS-STABLE-LAUNCH
   status: active
-  evidence: MIX-Encrypt/Decrypt 反卡死总结 I1/I6–I7；重建路径
+  evidence: MIX-Encrypt/Decrypt 反卡死总结 I1/I6–I7；KeyGen RB-K*；LAYOUT 对表 2026-09-09
 - id: D-FLAG-134-ONLY
   domain: impl-tech
   kind: decision
@@ -500,17 +535,20 @@ nodes:
   kind: decision
   by: human
   title: KeyGen 重建须同时满足反卡死与权威正确
-  statement: 在反卡死约束下重拼 PKE/KEM KeyGen；正确性以 liboqs I/O 为准；禁抄算子级树；卡死门禁用干净卡 NPU×N
+  statement: >-
+    在反卡死约束下重拼 PKE/KEM KeyGen；正确性以 liboqs I/O 为准；禁抄算子级树；
+    卡死门禁用干净卡 NPU×N。incubating 关闸见 F-REBUILD-KEYGEN-NO-HANG；晋级 stable 另需 #交付#。
   deps:
   - F-REBUILD-DECRYPT-NO-HANG
   - F-KEYGEN-MIX-SURFACE
   - F-LIBOQS-IO-ORACLE
   - F-POLYBATCH
+  - F-REBUILD-KEYGEN-NO-HANG
   status: active
   targets:
   - Q-KEYGEN-HANG
   - Q-KEYGEN-CORRECT
-  evidence: KeyGen S0 2026-09-09；章程正确∧不卡
+  evidence: KeyGen S0→NPU×30 2026-09-09；章程正确∧不卡
 - id: Q-ENCRYPT-ROOT
   domain: cause
   kind: question
@@ -534,6 +572,11 @@ nodes:
     2026-09-09 cannlab-npu ASCEND_DEVICE_ID=0 budget=180s：
     RB-K04/K05/K06 各 ×30 pass=30 fail=0 hang=0。
 changelog:
+- date: '2026-09-09'
+  change: >-
+    刷新：F-REBUILD-VS-STABLE-LAUNCH（六算子 launch 对表）；
+    F-REBUILD-KEYGEN-NO-HANG；D-SHORT-CROSSCORE-SPLIT 写入重建 launch 基线；
+    F-DEVICE-STRING-LITERAL-GM domain platform→impl-tech（合 domain_pattern）。
 - date: '2026-09-09'
   change: >-
     KeyGen NPU×30 收口：Q-KEYGEN-HANG / Q-KEYGEN-CORRECT → closed；

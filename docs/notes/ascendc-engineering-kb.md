@@ -5,7 +5,7 @@
 > **不是知识**＝某次战役的 launch 拼法日记、刀号 PASS（→ QUEUE / HANDOFF）。  
 > **图谱**：[`docs/rg-ascendc-engineering.yaml`](../rg-ascendc-engineering.yaml) · `python3 scripts/rg_viz.py`  
 > **长文展开**：NTT 契约 · MIX 反卡死总结 · DataCopy/TQue 等 notes  
-> **刷新**：2026-09-09（章程：反卡死重点 + 正确写码经验同包；KeyGen NPU×30 收口后补设备字符串事实）
+> **刷新**：2026-09-09（六算子 stable↔重建 launch 对照；KeyGen NPU×30 关闸；设备字符串 `__gm__`）
 
 ---
 
@@ -52,11 +52,12 @@
 | 省略与 `Wait(4)` 配对的 `SET(4)` → SIM 可 124 |
 | basename 撞名 → auto_gen 吞核 / 507000 |
 | 旧 fused 二进制未 FORCE → 工程粘性 |
+| `__aicore__` 字符串字面量是 `__gm__ char[]`，不可赋 `const char*`（CPU 可过、NPU 编不过）→ `constexpr uint8_t[]` |
 
 ### 2.3 已撤回假说
 
 - 「同核双 Cube ⇒ 充分挂因」**retracted**  
-- 「Host launch 计数加多 ⇒ 充分修复」**retracted**（若拆 launch 有效，有效的是消除断裂/争用）
+- 「Host launch 计数加多 ⇒ 充分修复」**retracted**（若拆 launch 有效，有效的是消除断裂/争用，不是「次数本身」）
 
 ---
 
@@ -83,12 +84,32 @@
 | 业务 GM 写出 | UB + DataCopy；禁依赖 `GlobalTensor::SetValue`（CPU 假绿） |
 | 交叉同 ISA | 禁 x86 `liboqs_*_ref` 覆盖 aarch64 真机 |
 | 半成品 | prep 写出未全局可见就开 NTT → û 等半成品（既是错数源，也可通向挂） |
-| 设备侧字符串 | `__aicore__` 内字面量为 `__gm__ char[]`，**不可**赋给 `const char*`（CPU 孪生可过、NPU 编不过）；前缀常量用 `constexpr uint8_t[]` |
+| 设备侧字符串 | 见 §2.2；前缀常量用 `constexpr uint8_t[]` 拷 UB |
 
-### 3.3 与「不挂」的交界（写码时必须同时想）
+### 3.3 与「不挂」的交界
 
 - 长 CrossCore / 深 GATE FSM / 多写者半表：放大「到不了 Set」面（反卡死）**且**放大半成品错数面（正确性）。  
-- 收窄握手面、保证生产者全量可达，是 **正确∧不卡** 的共同地基，不是「只为不挂的额外手续」。
+- 收窄握手面、保证生产者全量可达，是 **正确∧不卡** 的共同地基。
+
+### 3.4 stable ↔ 重建：六算子 Host launch 数（SIM/NPU 生产口径）
+
+> 图谱节点：`F-REBUILD-VS-STABLE-LAUNCH`。  
+> **不含** CPU 孪生分叉（旧 Encrypt/Encaps CPU 常 5、Decaps CPU 常 6）。  
+> **次数相同 ≠ 拓扑同构**（重建多为 `blockDim=1`、短 MIX、Host mid-sync）。
+
+| 算子 | FIPS | stable | 重建（graph-tests） |
+|------|------|--------|---------------------|
+| PKE KeyGen | Alg.13 | **2** | **3**（`RB-K04`） |
+| PKE Encrypt | Alg.14 | **2** | **2**（`RB-T19`） |
+| PKE Decrypt | Alg.15 | **1** | **3**（`RB-D04`） |
+| KEM KeyGen | Alg.19 | **2** | **4**（`RB-K06`） |
+| KEM Encaps | Alg.20 | **2** | **2**（`RB-T22`） |
+| KEM Decaps | Alg.21 | **3** | **5**（`RB-T26`） |
+
+**重建基线口诀**：Encrypt/Encaps=2；Decrypt=3；PKE-KG=3；KEM-KG=4；Decaps=5。
+
+**落点**：stable 在 `examples/stable/...`（交付默认）；重建在 `graph-tests/{kg,enc,dec}_related/`（incubating；晋级须 `#交付#`）。  
+KeyGen 重建门禁（正确∧不挂）已关：`Q-KEYGEN-CORRECT` / `Q-KEYGEN-HANG` → closed；证据 `F-REBUILD-KEYGEN-NO-HANG`。
 
 ---
 
