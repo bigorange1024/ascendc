@@ -21,6 +21,6 @@
 
 ## 当前快照（2026-09-09）
 
-- 战役 **启动**；S0 拓扑已锁（KB §B2/B3）  
-- 下一刀：**KGR-P01** prep 壳（编码）  
-- 云机：默认未开；上板前请用户 bootstrap  
+- 战役 **incubating 关闸**：P01–P04 / K01–K02 CPU 绿；P04/K01/K02 **NPU×30** 全绿  
+- 门禁：`Q-KEYGEN-HANG` / `Q-KEYGEN-CORRECT` **closed**  
+- 晋级 `examples/stable-*`：**未做**（须用户 `#交付#`）  

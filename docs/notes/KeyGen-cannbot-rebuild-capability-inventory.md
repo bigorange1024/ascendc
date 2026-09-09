@@ -55,9 +55,9 @@
 | **KG2** | PRF+CBD → ŝ/ê | **closed**（P01 同刀） |
 | **KG3** | NTT(ŝ/ê) MIX | **closed**（P02 PASS_CPU） |
 | **KG4** | Â∘ŝ+ê + ByteEncode₁₂ + ek‖ρ | **closed**（P03 PASS_CPU） |
-| **KG5** | PKE 全链拼装 + liboqs | **PASS_CPU**（P04；NPU wait_npu） |
-| **KG6** | KEM：H(ek)+z + dk_kem 拼装 | **PASS_CPU**（K01；NPU wait_npu） |
-| **KG7** | KEM 全链 + 反卡死压测 | **PASS_CPU**（K02≡liboqs_kem）；**NPU×30 open** |
+| **KG5** | PKE 全链拼装 + liboqs | **closed**（P04 CPU+NPU×30） |
+| **KG6** | KEM：H(ek)+z + dk_kem 拼装 | **closed**（K01 CPU+SIM+NPU×30） |
+| **KG7** | KEM 全链 + 反卡死压测 | **closed**（K02 CPU+NPU×30 ≡liboqs_kem） |
 
 拓扑定稿见 KB §B2 / S0A（禁默认沿用旧「prep AHAT=2 + 单长 MIX」而不论证）。
 
@@ -101,4 +101,4 @@
 
 ---
 
-**状态**：2026-09-09 — 战役启动；KG1–KG7 open；实现落 `graph-tests/kg_related/RB-K*`。
+**状态**：2026-09-09 — incubating 关闸（CPU+NPU×30）；实现落 `graph-tests/kg_related/RB-K*`。

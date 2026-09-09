@@ -2,6 +2,6 @@
 
 | 日期 | 纪要 |
 |------|------|
-| 2026-09-09 | [Decrypt收口 · KeyGen · KB正确∧不卡章程](2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md) |
+| 2026-09-09 | [Decrypt收口 · KeyGen NPU×30关闸 · KB正确∧不卡章程](2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md) |
 | 2026-09-08 | [Encrypt cannbot · 收口 + T27撞名修复 + 待重写Decaps](2026-09-08-Encrypt-cannbot重建脚手架.md) |
 | 2026-09-01 | [有界演示 · 合稿删 · 方法论两阶段收口](2026-09-01-有界演示路径拓扑与合稿衔接片删除.md) |

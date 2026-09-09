@@ -1,12 +1,11 @@
 ID: PASS
-cmd: bash run.sh -r cpu -v Ascend910B4
-exit: 0
-wall_min: ~0.4（kernel≈5.2s；含编译总 ~23s）
-sync_audit: clean（无红线；SYNC-05×2 薄封装假阳性 + SYNC-09 性能）
+cmd: ASCEND_DEVICE_ID=0 KERNEL_COMPUTE_BUDGET_SEC=180 bash run.sh -r npu -v Ascend910B3（×30）
+exit: 0（×30 全绿）
+wall_min: ~13（×30；单轮 kernel≈3.3s + 编译/安装开销）
+sync_audit: clean（既有 CPU 刀）
 notes:
-  - 新建 `graph-tests/kg_related/RB-K04-pke-full/`；三 launch Host mid-sync
-  - basename：`kg_prep_custom`（链 K01）/`kg_ntt_custom`/`kg_dot_encode_custom`
-  - 对拍：liboqs_pke_ref=`/home/yuanye/ascendc/scripts/liboqs_pke_ref`；SEED_D=20260619；ek/dk max=0
-  - 禁抄 KeyGen；k02_inc/k03_inc 隔离；未改 KB/DAG
-  - **npu: wait_npu**（云机关机；本刀未 SSH/-r npu）
-next_hint: 主控开机后 NPU×30；或并行开 KGR-K01（若采纳本 PASS_CPU）
+  - 主机 cannlab-npu；工作树 /mnt/workspace/ascendc-keygen @ dc44067
+  - 对拍 liboqs_pke_ref；ek/dk max=0；PASS_SYNC+PASS_IO
+  - NPU×30：pass=30 fail=0 hang=0（STOP_ON_FAIL=1）
+  - 日志：/mnt/workspace/keygen-npu-logs/K04-x30.{log,exit}
+next_hint: 战役已关闸；晋级 stable 须用户 #交付#

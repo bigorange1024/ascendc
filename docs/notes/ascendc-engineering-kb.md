@@ -5,7 +5,7 @@
 > **不是知识**＝某次战役的 launch 拼法日记、刀号 PASS（→ QUEUE / HANDOFF）。  
 > **图谱**：[`docs/rg-ascendc-engineering.yaml`](../rg-ascendc-engineering.yaml) · `python3 scripts/rg_viz.py`  
 > **长文展开**：NTT 契约 · MIX 反卡死总结 · DataCopy/TQue 等 notes  
-> **刷新**：2026-09-09（章程：反卡死重点 + 正确写码经验同包）
+> **刷新**：2026-09-09（章程：反卡死重点 + 正确写码经验同包；KeyGen NPU×30 收口后补设备字符串事实）
 
 ---
 
@@ -83,6 +83,7 @@
 | 业务 GM 写出 | UB + DataCopy；禁依赖 `GlobalTensor::SetValue`（CPU 假绿） |
 | 交叉同 ISA | 禁 x86 `liboqs_*_ref` 覆盖 aarch64 真机 |
 | 半成品 | prep 写出未全局可见就开 NTT → û 等半成品（既是错数源，也可通向挂） |
+| 设备侧字符串 | `__aicore__` 内字面量为 `__gm__ char[]`，**不可**赋给 `const char*`（CPU 孪生可过、NPU 编不过）；前缀常量用 `constexpr uint8_t[]` |
 
 ### 3.3 与「不挂」的交界（写码时必须同时想）
 

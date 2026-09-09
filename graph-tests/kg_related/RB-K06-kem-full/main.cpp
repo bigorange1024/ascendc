@@ -65,7 +65,9 @@ constexpr size_t kEBytes = kK * kPolyN * sizeof(int32_t);
 constexpr size_t kPrfBytes = kSrcRows * 128U;
 constexpr size_t kSrcBytes = kSrcRows * kPolyN * sizeof(int32_t);
 constexpr size_t kShakeTilingBytes = sizeof(ShakeGeneralTilingData);
+#ifdef ASCENDC_CPU_DEBUG
 constexpr size_t kMinAlloc = 1024;
+#endif
 constexpr uint32_t kPrfBatch = 8U;
 constexpr uint32_t kPrfMaxMsgLen = 64U;
 constexpr uint32_t kPrfOutLen = 128U;

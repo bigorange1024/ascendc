@@ -27,8 +27,10 @@ constexpr size_t kDkPkeBytes = 1536;
 constexpr size_t kHashBytes = 32;
 constexpr size_t kDkKemBytes = 3168;
 constexpr size_t kSeedPad = 32;
-/** tikicpulib GmAlloc 最小粒度 */
+#ifdef ASCENDC_CPU_DEBUG
+/** tikicpulib GmAlloc 最小粒度（仅 CPU 孪生路径使用；NPU/SIM 走 aclrtMalloc） */
 constexpr size_t kMinAlloc = 1024;
+#endif
 }  // namespace
 
 int32_t main(int32_t argc, char *argv[])

@@ -188,7 +188,23 @@ nodes:
   deps:
   - F-LIBOQS-IO-ORACLE
   - D-KEYGEN-ANTI-HANG-TOPO
-  status: open
+  - F-DEVICE-STRING-LITERAL-GM
+  status: closed
+  resolution: >-
+    2026-09-09 cannlab-npu：RB-K04≡liboqs_pke ×30；RB-K06≡liboqs_kem ×30；
+    RB-K05 H/z/dk_kem max=0 ×30。
+- id: F-DEVICE-STRING-LITERAL-GM
+  domain: platform
+  kind: fact
+  provenance: observation
+  title: 设备侧字符串字面量是 __gm__
+  statement: >-
+    __aicore__ 内 C 字符串字面量类型为 const __gm__ char[]，不可初始化 const char*；
+    CPU 孪生可过、NPU/device 编译失败。前缀/常量消息须 constexpr uint8_t 表拷入 UB。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: 2026-09-09 RB-K05 kg_kem_tail_custom.cpp:78 NPU 编译错；改 kZPrefixBytes 后 ×30 绿
 - id: F-HANG-SYNC
   domain: verify-test
   kind: fact
@@ -513,8 +529,15 @@ nodes:
   deps:
   - D-KEYGEN-ANTI-HANG-TOPO
   - F-KEYGEN-MIX-SURFACE
-  status: open
+  status: closed
+  resolution: >-
+    2026-09-09 cannlab-npu ASCEND_DEVICE_ID=0 budget=180s：
+    RB-K04/K05/K06 各 ×30 pass=30 fail=0 hang=0。
 changelog:
+- date: '2026-09-09'
+  change: >-
+    KeyGen NPU×30 收口：Q-KEYGEN-HANG / Q-KEYGEN-CORRECT → closed；
+    增 F-DEVICE-STRING-LITERAL-GM（device 字面量 __gm__）。
 - date: '2026-09-09'
   change: >-
     章程修订：反卡死为重点风险，正确 KEM 写码经验同入库。

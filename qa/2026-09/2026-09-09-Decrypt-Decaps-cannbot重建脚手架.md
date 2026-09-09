@@ -1,6 +1,6 @@
-# 2026-09-09 Decrypt/Decaps cannbot 重建脚手架与 S0 设计派发
+# 2026-09-09 Decrypt/Decaps 收口 · KeyGen NPU×30 关闸 · KB 章程
 
-关键词：**Decrypt/Decaps 重写** · **能力清单** · **工作模式** · **KB/DAG** · **DRW-S0A/S0B** · **禁抄 T25–T27**
+关键词：**Decrypt/Decaps 重写** · **KeyGen PKE/KEM 重建** · **NPU×30** · **KB/DAG 正确∧不卡** · **设备字符串 __gm__**
 
 ---
 
@@ -105,6 +105,19 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 | K01 回收 | [`KGR-K01`](../../graph-tests/keygen-rebuild-ops/tasks/KGR-K01-kem-tail/FEEDBACK.md)；K02 已开 |
 | K02 回收 | [`KGR-K02`](../../graph-tests/keygen-rebuild-ops/tasks/KGR-K02-kem-full/FEEDBACK.md) PASS_CPU≡liboqs_kem；**待开机 NPU×30** |
 | Local→Cloud 交接 | 2026-09-09 下班：HANDOFF 已写给 Cloud Agent；推送 `chore/thirdparty-add-cannbot-skills` |
+
+### 追加（同日 · Cloud NPU×30 收口）
+
+用户开机 `cannlab-npu` 后 Cloud 上板：
+
+| 档 | 结果 |
+|----|------|
+| RB-K04 PKE 全链 | NPU×30 pass=30 ≡liboqs_pke |
+| RB-K05 KEM tail | 首轮 device `const char*`/`__gm__` 编不过 → `kZPrefixBytes`；CPU+SIM+NPU×30 绿 |
+| RB-K06 KEM 全链 | NPU×30 pass=30 ≡liboqs_kem |
+| 门禁 | `Q-KEYGEN-HANG` / `Q-KEYGEN-CORRECT` **closed** |
+| 证据 | 远端 `/mnt/workspace/keygen-npu-logs/`；artifacts `keygen-npu-x30/` |
+| 用机 | 作业后停 keepalive；空闲交平台自动关 |
 
 ---
 

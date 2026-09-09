@@ -74,11 +74,15 @@ __aicore__ inline uint32_t U32ToDecimal(uint8_t *dst, uint32_t v)
  */
 __aicore__ inline void DerandZFromSeedD(uint32_t seedD, uint8_t *zOut)
 {
-    // 前缀常量：与 scripts/liboqs_kem_fixture.py k==4 分支逐字节一致
-    const char *prefix = "exp-mlkem-f203-kem-k4:SEED_Z=";
+    // 前缀常量：与 scripts/liboqs_kem_fixture.py k==4 分支逐字节一致。
+    // 背景：NPU/device 侧字符串字面量类型为 __gm__ char[]，不可赋给 const char*（CPU 孪生可过、真机编不过）。
+    // 结论：用 UB 侧 constexpr uint8_t 表；未采用 const char* / reinterpret_cast。
+    constexpr uint8_t kZPrefixBytes[kZPrefixLen] = {
+        'e', 'x', 'p', '-', 'm', 'l', 'k', 'e', 'm', '-', 'f', '2', '0', '3', '-',
+        'k', 'e', 'm', '-', 'k', '4', ':', 'S', 'E', 'E', 'D', '_', 'Z', '='};
     uint8_t msg[kZMsgMax];
     for (uint32_t i = 0; i < kZPrefixLen; ++i) {
-        msg[i] = static_cast<uint8_t>(prefix[i]);
+        msg[i] = kZPrefixBytes[i];
     }
     const uint32_t digLen = U32ToDecimal(msg + kZPrefixLen, seedD);
     const uint32_t msgLen = kZPrefixLen + digLen;

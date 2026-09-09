@@ -1,12 +1,11 @@
 ID: PASS
-cmd: bash run.sh -r cpu -v Ascend910B4
-exit: 0
-wall_min: ~0.3（kernel≈1.05s；含编译总 ~16s）
-sync_audit: clean（无红线；仅 SYNC-09 性能）
+cmd: ASCEND_DEVICE_ID=0 KERNEL_COMPUTE_BUDGET_SEC=180 bash run.sh -r npu -v Ascend910B3（×30）
+exit: 0（×30 全绿）
+wall_min: ~8（×30；单轮 kernel≈3.3s）
+sync_audit: clean（既有 CPU 刀）
 notes:
-  - 新建 `graph-tests/kg_related/RB-K05-kem-tail/`；basename `kg_kem_tail_custom`；AIV-only；BLOCK_DIM=1
-  - 对拍：host oracle（SHA3-256(ek)+z 域分离+拼接）；H/z/dk_kem max=0
-  - z=`SHA3-256("exp-mlkem-f203-kem-k4:SEED_Z=20260619")`；上游 RB-K04 ek/dk_pke
-  - 禁抄 KeyGen；未 fork Encaps 整核；X12 DataCopy；未改 KB/DAG
-  - **npu: wait_npu**（云机关机；本刀未 SSH/-r npu）
-next_hint: 主控开机后可 NPU；或开 KGR-K02 四 launch 全链 + liboqs_kem_ref
+  - 首轮 NPU 编不过：device 侧 `const char* = "..."` → `__gm__ char[]` 不可赋（CPU 孪生曾假过）
+  - 修复：`constexpr uint8_t kZPrefixBytes[]`；K05/K06 同改；CPU+SIM 复验绿
+  - NPU×30：pass=30 fail=0 hang=0；H/z/dk_kem max=0
+  - 日志：/mnt/workspace/keygen-npu-logs/K05-x30.{log,exit}
+next_hint: 战役已关闸
