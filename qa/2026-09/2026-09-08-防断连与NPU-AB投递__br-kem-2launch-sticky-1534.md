@@ -1,0 +1,40 @@
+# 2026-09-08 — 防断连 nohup + NPU-A/B（__br-kem-2launch-sticky-1534）
+
+**来源分支**：`cursor/kem-2launch-sticky-1534`  
+**合 main 说明**：本纪要可合；文中 `scripts/cannlab/*` **仅本分支使用，不合入 main**。
+
+## 关键词
+
+CANNLab 断连、`cannlab-npu-1`、`agent_link_keepalive`、`remote_job`、NPU-A/B nohup
+
+## 决策 / 动作
+
+1. **断连根因**：subagent **长 SSH 空闲** → SOCKS/Tailscale 挂；或远端 **30min 无** `touch .agent_heartbeat` → watchdog 停容器。
+2. **对策（落地）**：
+   - `scripts/cannlab/lib_ssh.sh` — 短连 + 重试 + Tailscale reset + 自动挑 online host
+   - `scripts/cannlab/remote_job.sh` — 通用 nohup 投递 / poll / fetch
+   - `scripts/cannlab/agent_link_keepalive.sh` — 本机 40s 戳 TS + 远端心跳
+   - `run_npu_ab_nohup.sh` — Encaps A/B 专用（改用 lib）
+3. **用户重 bootstrap**：`ts_ip=100.97.98.72` → MagicDNS **`cannlab-npu-1`**（旧 `cannlab-npu` offline）。
+4. **NPU-A/B**：已 `submit` → `/mnt/workspace/jobs/npu_ab_20260908_040002`，STATUS=RUNNING，PHASE A r1 起；本机 keepalive pid 记 `/tmp/cannlab_keepalive.pid`。
+
+## 勿做
+
+- 再让 subagent 挂长 SSH 跑多轮 Encaps  
+- 连 offline 的旧 `cannlab-npu` 不换 `-1`  
+
+## 补充：主机每次启动会变
+
+- 勿记 `SSH_HOST=cannlab-npu-1`；用 `which_npu.sh` / 脚本内 `cannlab_pick_host`。
+- bootstrap 已 `--reset` 并打印 `magicdns=`；名字稳靠 ephemeral key 或删 offline 节点。
+
+## NPU-A/B 收口 + 暂不关机
+
+- 权威结果见 `FEEDBACK-NPU-AB.md`（N18）；图谱 `D-npu-ab` verified。
+- **用户指示：先不关机**，另一 Agent 要用 NPU；禁控制台停 / `kill -TERM 1`；本侧 keepalive 可留着喂心跳。
+
+## 干净卡 A/B（用户放行 · 100.85.76.12）
+
+- job：`npu_ab_20260908_114644` → 用户批评空等满轮后 **STOPPED**；结果见 `FEEDBACK-NPU-AB-CLEAN.md`（N19）
+- 脚本改正：默认 `STOP_ON_HANG=1 MAX_HANG=1`
+- **请控制台关机**
