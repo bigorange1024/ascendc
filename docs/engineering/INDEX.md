@@ -12,6 +12,7 @@
 | [NPU真机环境说明.md](NPU真机环境说明.md) | WSL / Cloud / 真机对照；`scripts/runtime_env.sh`；`-r auto` / `-r verify`；WSL 禁 npu；探针接入范围；**§3.1 只读体检**、**§3.2 借入机体检回填（9.1.0-beta.3 / aarch64）**、**§4 上板适配清单**；**§4.1/`MSPROF_MODE=app` 多 launch 测准**、**§4.6 教材 14 档** |
 | [实机一次搬码验收清单.md](实机一次搬码验收清单.md) | 借入 NPU **一条命令测全**：`npu_kem_one_trip.sh` + `BRING_BACK.tar.gz`；E1 trace 在教材 Encaps 之前 |
 | [CANNLab接入与远程驱动.md](CANNLab接入与远程驱动.md) | Cursor Agent 经 **Tailscale 免密驱动 GitCode CANNLab 真机 910B3**；Secrets（`TAILSCALE_AUTHKEY`/`CANNLAB_SSH_KEY`）、`scripts/cannlab/` 引导脚本、`ASCEND_DEVICE_ID=0`、容器停机（SIGTERM→tini / 控制台）、看门狗 |
+| [HiDevLab-WebIDE操作手册.md](HiDevLab-WebIDE操作手册.md) | **HiDevLab 真机主路径**：WebIDE + Git 配方协作（**独立维护**）；A2/CANN ubuntu；`ASCEND_DEVICE_ID=0`；SSH直连仅救急（~5min）；脚本 `scripts/hidevlab/webide_recipe.sh` |
 | [../notes/AscendC多环境运行纪要.md](../notes/AscendC多环境运行纪要.md) | 多环境**原理纪要**（不变量、Clang/`sim_env`、门禁纪律） |
 
 ---
