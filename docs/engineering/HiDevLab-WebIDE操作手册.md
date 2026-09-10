@@ -66,16 +66,19 @@ Cursor Cloud Agent（判读、改下一刀）
 
 1. 环境列表 → 目标环境 **连接 → WebIDE**（官方首选）。  
 2. 打开终端（`` Ctrl+` `` 或菜单 Terminal）。  
-3. **每次开机后先跑一次**（仓库已在 `/workspace/ascendc` 时）：
+3. **每次开机后先跑一次**：
 
 ```bash
-bash /workspace/ascendc/scripts/hidevlab/webide_boot.sh
+bash /workspace/hidevlab_boot.sh
 ```
 
-默认**不** `git pull`（避免 GitHub 网络卡住）。需要更新代码时再：`HIDEVLAB_PULL=1 bash …/webide_boot.sh`（自带超时）。  
-作用：`source` CANN、设 `LD_LIBRARY_PATH` 与 `ASCEND_DEVICE_ID=0`、写 `/workspace/hidevlab_env.sh`、打印体检。  
-同一会话后续终端可：`source /workspace/hidevlab_env.sh`。  
-**这不会**让 Cloud Agent 自动 SSH 连上；只是给人侧 WebIDE 一键就绪。
+脚本建议落在 **`/workspace/hidevlab_boot.sh`**（不依赖 `git pull`；本环境常无法访问 `github.com:443`）。仓库内同步副本：`scripts/hidevlab/webide_boot.sh`。  
+
+默认**不**访问 GitHub；只 `source` CANN、设 `LD_LIBRARY_PATH` / `ASCEND_DEVICE_ID=0`、写 `/workspace/hidevlab_env.sh`、打印体检。  
+同会话其它终端：`source /workspace/hidevlab_env.sh`。  
+**不会**让 Cloud Agent 自动 SSH 连上。
+
+若机器上还没有 `/workspace/hidevlab_boot.sh`，用手册附录或 Agent 提供的安装粘贴块生成一次即可。
 
 4. **可选（人肉写码）**：连接 → Cursor / VS Code，装 **`openLibing ResourceManager`**（见平台用户指南 IDE 节）。这是**本机 IDE** 路径，**不**替代本手册的 Agent 配方协作。
 
