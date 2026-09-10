@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-10 — [Launch压缩 · Decrypt→1 独立 D09 · NPU×30](2026-09/2026-09-10-launch-reduce-D09.md)
+
+关键字：**RB-D09 新树** · 禁改 D08 · SyncAll 环外 · Compress₁ 常数 · **PASS_NPU×30** · QUEUE 1–7 全绿
+
 ### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30 · KB手册化+图推理重写](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
 
 关键字：**正确∧不卡** · **KB 手册化**（机制/检查单）· 图推理重写 · KeyGen NPU×30 · MIX 降为案例附录

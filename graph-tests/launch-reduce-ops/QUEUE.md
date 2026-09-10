@@ -8,4 +8,4 @@
 | 4 | LR-KG-F2 | **PASS_NPU×30** | KEM →2（RB-K09，kem_tail 进 MIX） |
 | 5 | LR-DP-F1 | **PASS_NPU×30** | Decaps →4（T28 融合 Decrypt + Encaps2） |
 | 6 | LR-DP-F2 | **PASS_NPU×30** | Decaps →3（T29 prep 融 MIX） |
-| 7 | LR-DC-F2 | **IN_PROGRESS** | Decrypt →1（RB-D09 新建树；不改 D08） |
+| 7 | LR-DC-F2 | **PASS_NPU×30** | Decrypt →1（RB-D09 新建树；不改 D08） |

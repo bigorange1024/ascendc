@@ -11,7 +11,7 @@
 
 - AIV0 前缀 `PrepUnpackDecrypt`（T25 NPU 安全路径）→ 全核 `SyncAll`（Wait 环外，sync_audit SYNC-12 信息级）→ 复用 flag 1/3 两轮 NTT/INTT
 - 未采用：独立 prep launch、flag 5/7、SoftSync、Wait 环内 SyncAll
-- DC-F2（Decrypt→1）未单独建 D09；证据并入本刀 L1
+- DC-F2 已另建独立 `RB-D09-decrypt-1launch`（2026-09-10 **PASS_NPU×30**）；本刀 L1 仍可作旁证
 
 ## sync_audit
 
