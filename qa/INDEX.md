@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-10 — [HiDevLab WebIDE 主路径](2026-09/2026-09-10-HiDevLab-WebIDE主路径.md)
+
+关键字：**HiDevLab** · **WebIDE 主路径** · **SSH直连 5min 非主通道** · **webide_recipe.sh** · **独立手册** · A2/CANN9.1 ubuntu/910B3
+
 ### 2026-09-09 — [粘性挂探索收官 · 转向新写 __br-kem-2launch-sticky-1534](2026-09/2026-09-09-粘性挂探索收官与转向新写__br-kem-2launch-sticky-1534.md)
 
 - **要点**：停既有 l18 debug；收官包带分支后缀；**scripts 不合 main**；Agent 转验收测试。来源分支 `cursor/kem-2launch-sticky-1534`。
