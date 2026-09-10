@@ -20,4 +20,5 @@ HiDevLab **SSH直连**约 5 分钟票 → **非** Agent 主通道。
 
 ## P0
 
-HiDevLab WebIDE **`add_custom` NPU 冒烟已 PASS**（910B3 / 逻辑设备 0）。下一刀按任务出 `webide_recipe.sh` 配方即可。
+HiDevLab WebIDE **`add_custom` NPU 冒烟已 PASS**。  
+开机后人口令：`bash /workspace/ascendc/scripts/hidevlab/webide_boot.sh`（再粘贴配方）。
