@@ -52,3 +52,14 @@
 | D09 / T30 | 455.74 / 1719.22 |
 
 keepalive 已停。
+
+---
+
+## D09 · msopprof cycle 深采（板重开后）
+
+- 主机：`cannlab-npu` 100.107.100.36；物理卡 7 → `ASCEND_DEVICE_ID=0`。  
+- **成功**：`OpBasicInfo` Freq 1800/1800；`aic/aiv_total_cycles`（cube0 722923 / vector0 813361 / vector1 722750）；归档 `docs/perf/round_002/`。  
+- **失败**：`TimelineDetail` dump 解析失败 → 无 instruction timeline JSON。  
+- 结论：vector0 **scalar≈97%** cycle → SCALAR/等待，非 Cube。  
+- 登记：[`active_npu_perf_summary.md`](../active_npu_perf_summary.md) D09 节。
+

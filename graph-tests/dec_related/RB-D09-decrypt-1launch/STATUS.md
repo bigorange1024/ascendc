@@ -32,7 +32,11 @@ AIV0 PrepUnpack → ALL SyncAll → AIC/AIV 两轮 flag1/3（NTT+dot / INTT+extr
 
 | 项 | 值 |
 |----|-----|
-| Σ Task Duration | **455.74 µs**（0.456 ms） |
-| `d09_decrypt_fused_custom` | 455.74 µs（单 launch） |
-| 采集 | ops-profiling 2026-09-10 · `docs/perf/round_001/` |
-| 主 MIX | cube_util 4.44% · AIV scalar 51.8% · 头开销 5.6% |
+| Σ Task Duration | **455.74 µs**（ops-profiling）/ **454.58 µs**（msopprof） |
+| `d09_decrypt_fused_custom` | 单 launch |
+| Freq | **1800 / 1800** MHz（满频） |
+| cube0 cycles | **722923**（401.62 µs） |
+| vector0 cycles | **813361**（451.87 µs；**scalar≈96.9%**） |
+| vector1 cycles | **722750**（401.53 µs） |
+| 采集 | ops-profiling `round_001`；msopprof Default → `docs/perf/round_002/` |
+| Timeline | `TimelineDetail` dump 失败；无 PipeTimeline |
