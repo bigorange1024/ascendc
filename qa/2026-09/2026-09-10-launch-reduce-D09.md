@@ -35,3 +35,8 @@
 
 - L2 prep 前缀含 SampleNTT/CBD，SyncAll 后 AIV0 工作量仍大（SIM ~400s）；NPU 超时/半写需上板验证。
 - Encaps 融合核内 flag 1/3 复用 + GATE4：与 T29 compute 同构握手，但前缀重排后首段 Wait 前无「空握手」，需 NPU 确认。
+
+## NPU 关闸补记
+
+- T30 NPU 冒烟 PASS；×30 ok=30 fail=0。
+- QUEUE 1–8 全绿。
