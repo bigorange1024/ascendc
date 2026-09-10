@@ -20,3 +20,11 @@
 ## 下一刀
 
 WebIDE 内跑 `webide_recipe.sh add_custom` 冒烟，回传日志。
+
+## 同日追加：add_custom 真机冒烟 PASS
+
+- 容器 `ede7a5a508b2`；物理 NPU **7** / `/dev/davinci7`；逻辑仍 `ASCEND_DEVICE_ID=0`
+- 分支 `cursor/hidevlab-cloud-npu-9099@3f2c2ed`
+- `ASCEND_DEVICE_ID=0 CANNLAB=1 bash run.sh -r npu -v Ascend910B3`
+- 结果：`[SUCCESS] output matches golden (Ascend910B3)`（md5 与 golden 一致）
+- 备注：`runtime_env` 曾打印 `soc=Ascend910B4`，以显式 `-v Ascend910B3` 为准已正确上板
