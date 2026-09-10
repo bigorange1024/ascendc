@@ -81,15 +81,16 @@ find /usr/local/Ascend -maxdepth 3 -name set_env.sh 2>/dev/null
 df -h /workspace | tail -1
 ```
 
-**本环境实测基线（2026-09-10，`DevEnv_185447`）**：
+**本环境实测基线（2026-09-10，`DevEnv_185447` / 容器 `ede7a5a508b2`）**：
 
 | 项 | 值 |
 |----|-----|
 | OS | Ubuntu 22.04 aarch64 |
 | CANN | **9.1.0**（`/usr/local/Ascend/cann` → `cann-9.1.0`） |
-| NPU | **910B3**；`npu-smi` 显示 **NPU 5**；节点 `/dev/davinci5` |
-| ACL 逻辑设备 | 单卡实例仍用 **`ASCEND_DEVICE_ID=0`**（物理号≠逻辑号） |
+| NPU | **910B3**；物理号会变（曾见 NPU **5** / **7**，节点 `/dev/davinciN`） |
+| ACL 逻辑设备 | 单卡实例仍用 **`ASCEND_DEVICE_ID=0`**（物理号≠逻辑号；须显式，否则 `npu_device_map` 可能选 tests→3） |
 | 编译器 | `source /usr/local/Ascend/cann/set_env.sh` 后有 `ccec` |
+| 冒烟 | `add_custom` `-r npu -v Ascend910B3` → **`[SUCCESS] output matches golden (Ascend910B3)`**（2026-09-10 WebIDE） |
 
 ---
 

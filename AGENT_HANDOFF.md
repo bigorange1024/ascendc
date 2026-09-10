@@ -20,4 +20,4 @@ HiDevLab **SSH直连**约 5 分钟票 → **非** Agent 主通道。
 
 ## P0
 
-人侧 WebIDE：`git pull` → 粘贴 `webide_recipe.sh` 冒烟 `add_custom -r npu` → 回传日志。
+HiDevLab WebIDE **`add_custom` NPU 冒烟已 PASS**（910B3 / 逻辑设备 0）。下一刀按任务出 `webide_recipe.sh` 配方即可。
