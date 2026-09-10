@@ -26,17 +26,10 @@
 - Host：**L1** `t30_dec_fused_custom`（Decrypt 全链）+ **L2** `t30_enc_fused_custom`（prep G/CBD/Â…→SyncAll→NTT 路径）+ Host FO。
 - magic `0x54333032`；namespace `t30_dec`/`t30_enc`/`rb_t30`；Compress₁ C=41285357。
 
-### 结果（Cloud）
+### 结果
 
-- CPU **PASS**；SIM_DIRECT **PASS**（K≡liboqs、c'≡c、launches=2、TRACE 齐）。
-- NPU×30 **未跑**（本机无卡）。
-
-### 风险
-
-- L2 prep 前缀含 SampleNTT/CBD，SyncAll 后 AIV0 工作量仍大（SIM ~400s）；NPU 超时/半写需上板验证。
-- Encaps 融合核内 flag 1/3 复用 + GATE4：与 T29 compute 同构握手，但前缀重排后首段 Wait 前无「空握手」，需 NPU 确认。
-
-## NPU 关闸补记
-
-- T30 NPU 冒烟 PASS；×30 ok=30 fail=0。
-- QUEUE 1–8 全绿。
+- Cloud：CPU **PASS**；SIM_DIRECT **PASS**。
+- **NPU 冒烟 PASS**（≈2.25s）；**NPU×30 ok=30 fail=0**。
+- QUEUE 1–8 全绿；Decaps=**2**（优于 stable=3）。
+- 证据：`t30-smoke-20260910-153112.log` · `t30-x30-20260910-153535.log`。
+- keepalive 已停；板可关。
