@@ -10,7 +10,7 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-10 — [Launch压缩 · Decrypt→1 独立 D09 · NPU×30](2026-09/2026-09-10-launch-reduce-D09.md)
+### 2026-09-10 — [Launch压缩 · D09 Decrypt→1 · T30 Decaps→2](2026-09/2026-09-10-launch-reduce-D09.md)
 
 关键字：**RB-D09 新树** · 禁改 D08 · SyncAll 环外 · Compress₁ 常数 · **PASS_NPU×30** · QUEUE 1–7 全绿
 

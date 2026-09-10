@@ -29,3 +29,4 @@
 运营任务书：[`../encrypt-rebuild-ops/`](../encrypt-rebuild-ops/INDEX.md)。
 | [`RB-T28-decaps-4launch/`](RB-T28-decaps-4launch/) | T28 / LR-DP-F1 | Decaps 4 launch：Decrypt(NTT+INTT 融) + Encaps2；**PASS_NPU×30** |
 | [`RB-T29-decaps-3launch/`](RB-T29-decaps-3launch/) | T29 / LR-DP-F2 | Decaps 3 launch：Decrypt(prep+NTT+INTT 融) + Encaps2；**PASS_NPU×30** |
+| [`RB-T30-decaps-2launch/`](RB-T30-decaps-2launch/) | T30 / LR-DP-F3 | Decaps **2** launch：Decrypt 融 + Encaps 融（新写）；实验中 |
