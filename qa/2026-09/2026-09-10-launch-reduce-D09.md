@@ -33,3 +33,26 @@
 - QUEUE 1–8 全绿；Decaps=**2**（优于 stable=3）。
 - 证据：`t30-smoke-20260910-153112.log` · `t30-x30-20260910-153535.log`。
 - keepalive 已停；板可关。
+
+---
+
+## 性能收口（ops-profiling，纠正自造 wall 口径）
+
+### 决策
+
+- 用户批评：测试须跟 **cannbot-skills `ops/ops-profiling`** / 官方 profiling 指导，禁止闷头自造 host `wall_sec`。
+- 标准路径：`msprof_profile_run.sh --warm-up=3` → `msprof_perf_summary.py`；设备真值 = PipeUtilization `op_summary` **Task Duration**。
+
+### 结果（910B3 · 六档 `summary_rc=0`）
+
+| 算子 | launches | Σ Task Duration |
+|------|----------|-----------------|
+| PKE KeyGen K07 | 2 | 1126.58 µs |
+| KEM KeyGen K09 | 2 | 1227.12 µs |
+| PKE Encrypt T19 | 2 | 1238.78 µs |
+| KEM Encaps T23 | 2 | 1283.54 µs |
+| PKE Decrypt D09 | 1 | 455.74 µs |
+| KEM Decaps T30 | 2 | 1719.22 µs |
+
+- 套件：`…/ops-profiling-rebuild-20260910-160409/`；共性：cube_util≈2–4%、AIV scalar≈50–65%。
+- keepalive 再确认已停。
