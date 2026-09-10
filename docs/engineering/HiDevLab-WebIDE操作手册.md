@@ -66,9 +66,28 @@ Cursor Cloud Agent（判读、改下一刀）
 
 1. 环境列表 → 目标环境 **连接 → WebIDE**（官方首选）。  
 2. 打开终端（`` Ctrl+` `` 或菜单 Terminal）。  
-3. **可选（人肉写码）**：连接 → Cursor / VS Code，装 **`openLibing ResourceManager`**（见平台用户指南 IDE 节）。这是**本机 IDE** 路径，**不**替代本手册的 Agent 配方协作。
+3. **每次开机后先跑一次**（仓库已在 `/workspace/ascendc` 时）：
 
-首次进入建议只读体检（粘贴整块）：
+```bash
+bash /workspace/ascendc/scripts/hidevlab/webide_boot.sh
+```
+
+作用：`git pull` 当前/指定分支、`source` CANN、设 `LD_LIBRARY_PATH` 与 `ASCEND_DEVICE_ID=0`、写 `/workspace/hidevlab_env.sh`、打印 `npu-smi`/`ccec` 体检。  
+同一会话后续终端可：`source /workspace/hidevlab_env.sh`。  
+**这不会**让 Cloud Agent 自动 SSH 连上；只是给人侧 WebIDE 一键就绪。
+
+4. **可选（人肉写码）**：连接 → Cursor / VS Code，装 **`openLibing ResourceManager`**（见平台用户指南 IDE 节）。这是**本机 IDE** 路径，**不**替代本手册的 Agent 配方协作。
+
+首次进入若仓库尚未 clone，先：
+
+```bash
+cd /workspace
+git clone --branch <分支名> --single-branch \
+  https://github.com/bigorange1024/ascendc.git ascendc
+bash /workspace/ascendc/scripts/hidevlab/webide_boot.sh
+```
+
+或用下面体检块（`webide_boot.sh` 已覆盖绝大部分）：
 
 ```bash
 whoami; hostname; uname -m
@@ -259,7 +278,8 @@ Agent **默认不**维护长期 `~/.ssh/hidevlab_*` 依赖；若临时用过，�
 ## 11. 检查清单（每次上机）
 
 - [ ] 环境运行中；WebIDE 能开终端  
-- [ ] `/workspace/ascendc` 在目标分支且 `git pull` 最新  
+- [ ] 已跑 `bash /workspace/ascendc/scripts/hidevlab/webide_boot.sh`（或等价配好 env）  
+- [ ] `/workspace/ascendc` 在目标分支且为最新  
 - [ ] `source cann` + `LD_LIBRARY_PATH` + `ASCEND_DEVICE_ID=0`  
 - [ ] `-v Ascend910B3` 与 `npu-smi` 一致  
 - [ ] 配方跑完；日志尾部已回传 Agent  
