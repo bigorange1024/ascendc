@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-10 — [HiDevLab WebIDE 主路径](2026-09/2026-09-10-HiDevLab-WebIDE主路径.md)
+
+关键字：**HiDevLab** · **WebIDE** · **hidevlab_boot.sh** · **SSH 5min 非主通道** · **机上无 GitHub** · **add_custom NPU 冒烟 PASS**
+
 ### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
 
 关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills** · **`rg-encrypt-cann-ntt` 迁骨架** · **Q-ULT answered** · **正确性/旧l18 仍 open**

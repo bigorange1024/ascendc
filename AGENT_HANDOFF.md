@@ -1,6 +1,6 @@
 # Agent 交接 — 每日刷新
 
-> **最后刷新**：2026-09-09（`rg-encrypt-cann-ntt.yaml` 已迁 skill 骨架；`Q-ULT-NOHANG` 已答；NPU 仍停）  
+> **最后刷新**：2026-09-10（fe53：同步 main 的 HiDevLab WebIDE 脚本/手册；本线仍为 Encrypt×cann-ntt）  
 > Git：本线文档可提交推送；`thirdparty/` 本身不进仓
 
 ## 依赖
@@ -11,12 +11,14 @@
 | 登记 | `docs/engineering/thirdparty-本地依赖.md` → Drive 手工包 |
 | Encrypt×cann-ntt DAG | `docs/rg-encrypt-cann-ntt.yaml` |
 | KB | `docs/notes/Encrypt-cann-ntt-kb.md` §7 |
+| HiDevLab WebIDE | [`docs/engineering/HiDevLab-WebIDE操作手册.md`](docs/engineering/HiDevLab-WebIDE操作手册.md) · `scripts/hidevlab/` · 开机 `bash /workspace/hidevlab_boot.sh` |
 
 积累/维护 `docs/rg-*.yaml`：**先读该 SKILL**；勿复制进 `.cursor/skills`。
 
 ## 真机 / 上轮结论
 
-EN10–EN12 NPU **PASS-NOHANG**（详见 KB）；NPU 作业已停。
+- Encrypt×cann-ntt：EN10–EN12 NPU **PASS-NOHANG**（详见 KB）；此前 NPU 作业曾停。  
+- HiDevLab（新）：WebIDE 主路径；`add_custom` NPU 冒烟 **PASS**；机上常无法访问 GitHub（勿依赖 `git pull`）。
 
 ## 图谱状态（2026-09-09）
 
@@ -27,4 +29,4 @@ EN10–EN12 NPU **PASS-NOHANG**（详见 KB）；NPU 作业已停。
 
 ## P0
 
-无 NPU：按开放问或用户下一指令继续沉淀图谱 / 设计只读对照；换机须重下 Drive zip。
+按用户下一指令；HiDevLab 开机口令：`bash /workspace/hidevlab_boot.sh`。

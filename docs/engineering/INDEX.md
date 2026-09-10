@@ -14,6 +14,7 @@
 | [Encrypt卡死重写-实机操作卡.md](Encrypt卡死重写-实机操作卡.md) | **明天上机照着做**（测什么 / 一条命令 / 只打字 TYPE_BACK） |
 | [Encrypt卡死重写-实机一次测清单.md](Encrypt卡死重写-实机一次测清单.md) | Encrypt 卡死一次测详版：`npu_hang_rewrite_one_trip.sh`（N0–N10）；**只打字反馈** |
 | [Encrypt卡死重写-sync清单.txt](Encrypt卡死重写-sync清单.txt) | 上机最小 sync 路径列表（toys + stable 1024 四档 + 脚本） |
+| [HiDevLab-WebIDE操作手册.md](HiDevLab-WebIDE操作手册.md) | **HiDevLab 真机主路径**（WebIDE + 配方；**独立维护**）；开机 `bash /workspace/hidevlab_boot.sh`；脚本 `scripts/hidevlab/`；SSH直连仅救急（~5min） |
 | [../notes/AscendC多环境运行纪要.md](../notes/AscendC多环境运行纪要.md) | 多环境**原理纪要**（不变量、Clang/`sim_env`、门禁纪律） |
 
 ---
