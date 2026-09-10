@@ -12,5 +12,6 @@
 | [`RB-K04-pke-full`](RB-K04-pke-full/) | KGR-P04 | **PASS_CPU + NPU×30**（2026-09-09） |
 | [`RB-K05-kem-tail`](RB-K05-kem-tail/) | KGR-K01 | **PASS_CPU+SIM + NPU×30**（2026-09-09；`kZPrefixBytes`） |
 | [`RB-K06-kem-full`](RB-K06-kem-full/) | KGR-K02 | **PASS_CPU + NPU×30**（2026-09-09） |
-| [`RB-K07-pke-2launch`](RB-K07-pke-2launch/) | LR-KG-F1 | **PASS_CPU**（NPU 待跑；2026-09-09；自 RB-K04 派生，Host 3→2 launch，融合 MIX 内串行两段握手） |
-| RB-K08-kem-3launch | LR-KG-F2b | KEM 4→3（融合 MIX+kem_tail）| WIP |
+| [`RB-K07-pke-2launch`](RB-K07-pke-2launch/) | LR-KG-F1 | **PASS_NPU×30**（Host 2；Σ Task Duration 1127µs · [PERF](../launch-reduce-ops/PERF.md)） |
+| [`RB-K08-kem-3launch`](RB-K08-kem-3launch/) | LR-KG-F2b | **PASS_NPU×30**（KEM 4→3） |
+| [`RB-K09-kem-2launch`](RB-K09-kem-2launch/) | LR-KG-F2 | **PASS_NPU×30**（Host 2；Σ 1227µs · [PERF](../launch-reduce-ops/PERF.md)） |

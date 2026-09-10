@@ -15,4 +15,4 @@
 | `RB-D06-decaps-fo/` | DRW-K03 | **PASS_CPU + PASS_NPU**（FO 合法+拒绝≡liboqs） |
 | `RB-D07-enc-decaps-rt/` | DRW-K04 | **PASS_CPU**（K_dec≡K_enc≡liboqs；**wait_npu×30**） |
 | `RB-D08-decrypt-2launch/` | LR-DC-F1 | **PASS_NPU×30**（Decrypt 2 launch） |
-| `RB-D09-decrypt-1launch/` | LR-DC-F2 | **PASS_NPU×30**（Decrypt 1 launch；独立新树，不改 D08） |
+| `RB-D09-decrypt-1launch/` | LR-DC-F2 | **PASS_NPU×30**（Decrypt 1；Σ **456µs** · [PERF](../launch-reduce-ops/PERF.md)） |
