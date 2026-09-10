@@ -1,6 +1,6 @@
 # Agent 交接（Launch 压缩 · NPU）
 
-> **最后刷新**：2026-09-10（NPU 性能登记表落盘；keepalive 已停）  
+> **最后刷新**：2026-09-10（D09 msopprof 真实 cycle 已登；Timeline dump 失败；keepalive 仍开）  
 > **分支**：`cursor/launch-reduce-npu-pass-23e1`  
 > **入口**：[`graph-tests/launch-reduce-ops/PLAN.md`](graph-tests/launch-reduce-ops/PLAN.md)
 
@@ -8,15 +8,14 @@
 
 ## ★ 当前真相
 
-1. Launch 压缩 **QUEUE 1–8 全绿**：KG=2、Decrypt=1、Decaps=**2**。  
-2. **NPU 性能登记**：[`qa/active_npu_perf_summary.md`](qa/active_npu_perf_summary.md)（仿 `active_sim_regress_summary` 版式；**未改** SIM tick 表）。  
-3. Σ Task Duration（910B3）：K07 1127 · K09 1227 · T19 1239 · T23 1284 · D09 **456** · T30 1719（µs）。  
-4. keepalive **已停**。
+1. QUEUE 1–8 全绿；NPU 性能总表 [`qa/active_npu_perf_summary.md`](qa/active_npu_perf_summary.md)。  
+2. **D09 深采**：Freq 1800/1800；cube0 **722923** cyc、vector0 **813361** cyc（scalar≈**97%**）→ SCALAR/握手主导。  
+3. Timeline：无 `PipeTimeline`；`TimelineDetail` dump 失败 → 尚无 JSON 时间轴图。  
+4. 板：`cannlab-npu`（100.107.100.36），物理 NPU7→`ASCEND_DEVICE_ID=0`；keepalive 开着。
 
 ---
 
 ## ★ 开机后立刻做
 
-1. `which_npu.sh` → 需上板再 keepalive  
-2. 新档上板后刷新 `qa/active_npu_perf_summary.md` + 用例 `STATUS`  
-3. 无新刀则保持放机
+1. （可选）修 TimelineDetail dump，或直接针对 vector0 scalar 优化  
+2. 无新刀则说一声放机（停 keepalive）
