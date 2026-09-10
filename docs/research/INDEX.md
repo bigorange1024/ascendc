@@ -20,7 +20,7 @@
 
 | 文件 | 说明 |
 |------|------|
-| [教材KEM实机测量清单.md](教材KEM实机测量清单.md) | 借入实机测 KEM：表 A 14 档 + 表 B 16 档脚本对齐；多 launch 测准口径 |
+| [教材KEM实机测量清单.md](教材KEM实机测量清单.md) | 借入实机测 KEM：表 A 14 档 + 表 B 16 档脚本对齐；多 launch 测准口径；ops-profiling 深度链交叉引用 |
 | [MLKEM-512-从0到exp完整实现计划.md](MLKEM-512-从0到exp完整实现计划.md) | 真 k=2 + **单 AI Core**；**有条件完成至 incubating**（W0–W4+glue；glue-c `r←η1=3`）；用语：缺项/补缺；权威卡见 `docs/specs/fips203-mlkem512-parameter-card.md` |
 | [MLKEM-768-从0到exp完整实现计划.md](MLKEM-768-从0到exp完整实现计划.md) | 真 k=3 从 0→exp；**有条件完成至 incubating**（W0–W4+glue）；权威表见 `docs/specs/fips203-mlkem768-*` |
 | [教材与调研文档写作指导.md](教材与调研文档写作指导.md) | **写文档口味**：文风、禁翻译腔/工程黑话、Ascend 字体、图示与指标；2026-08-20 刷新 |

@@ -25,3 +25,14 @@ AIV0 PrepUnpack → ALL SyncAll → AIC/AIV 两轮 flag1/3（NTT+dot / INTT+extr
 | sync_audit | 无红线（SYNC-05 遗留 + SYNC-09 + SYNC-12） | `launch-reduce-ops/tasks/LR-DC-F2/logs/sync_audit.json` |
 | NPU 冒烟 | **PASS** | `/mnt/workspace/launch-reduce-logs/d09-smoke-20260910-143857.log` |
 | NPU×30 | **PASS ok=30 fail=0**（每轮换 SEED_D） | `/mnt/workspace/launch-reduce-logs/d09-x30-20260910-144039.log` |
+
+## 性能（NPU · 设备真值）
+
+口径见 [`../../launch-reduce-ops/PERF.md`](../../launch-reduce-ops/PERF.md)。
+
+| 项 | 值 |
+|----|-----|
+| Σ Task Duration | **455.74 µs**（0.456 ms） |
+| `d09_decrypt_fused_custom` | 455.74 µs（单 launch） |
+| 采集 | ops-profiling 2026-09-10 · `docs/perf/round_001/` |
+| 主 MIX | cube_util 4.44% · AIV scalar 51.8% · 头开销 5.6% |

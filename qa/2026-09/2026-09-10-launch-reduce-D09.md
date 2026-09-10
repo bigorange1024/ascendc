@@ -36,12 +36,13 @@
 
 ---
 
-## 性能收口（ops-profiling，纠正自造 wall 口径）
+## 性能收口（对齐教材三层口径 · ops-profiling 采设备真值）
 
 ### 决策
 
-- 用户批评：测试须跟 **cannbot-skills `ops/ops-profiling`** / 官方 profiling 指导，禁止闷头自造 host `wall_sec`。
-- 标准路径：`msprof_profile_run.sh --warm-up=3` → `msprof_perf_summary.py`；设备真值 = PipeUtilization `op_summary` **Task Duration**。
+- 工程填表权威：[`docs/research/教材KEM实机测量清单.md`](../../docs/research/教材KEM实机测量清单.md) — **1 设备 Task Duration → 2 Host launch → 3 wall**；禁止 host wall 当结论。
+- 本轮重建树用 cannbot **`ops/ops-profiling`**（`msprof_profile_run.sh` + `msprof_perf_summary.py`）采层 1；数字落盘 [`PERF.md`](../../graph-tests/launch-reduce-ops/PERF.md) + 各用例 `STATUS.md`。
+- 规则写入 [`COMMON.md`](../../graph-tests/launch-reduce-ops/COMMON.md)。
 
 ### 结果（910B3 · 六档 `summary_rc=0`）
 

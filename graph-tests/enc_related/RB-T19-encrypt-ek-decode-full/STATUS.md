@@ -33,3 +33,15 @@
 - ek=BE₁₂(t̂)‖ρ；设备 Decode₁₂→OFF_T_HAT
 
 运营回报：[`../../encrypt-rebuild-ops/tasks/T19-encrypt-ek-decode-full/FEEDBACK.md`](../../encrypt-rebuild-ops/tasks/T19-encrypt-ek-decode-full/FEEDBACK.md)
+
+## 性能（NPU · 设备真值 · 2026-09-10）
+
+口径见 [`../../launch-reduce-ops/PERF.md`](../../launch-reduce-ops/PERF.md)（对齐教材；非本刀 launch 压缩目标，仅同机对照测量）。
+
+| 项 | 值 |
+|----|-----|
+| Host launches | 2 |
+| Σ Task Duration | **1238.78 µs**（1.239 ms） |
+| `prep_custom` | 19.68 µs |
+| `compute_custom` | 1219.10 µs |
+| 采集 | ops-profiling · `docs/perf/round_001/` |
