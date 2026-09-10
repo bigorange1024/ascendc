@@ -10,7 +10,7 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-10 — [Launch压缩 · D09 Decrypt→1 · T30 Decaps→2](2026-09/2026-09-10-launch-reduce-D09.md)
+### 2026-09-10 — [Launch压缩 · D09/T30 · ops-profiling 设备时](2026-09/2026-09-10-launch-reduce-D09.md)
 
 关键字：**RB-D09** · **RB-T30** · Decaps→**2** · 禁改 D08 · SyncAll 环外 · Compress₁ 常数 · **PASS_NPU×30** · QUEUE 1–8；Decaps→2
 
