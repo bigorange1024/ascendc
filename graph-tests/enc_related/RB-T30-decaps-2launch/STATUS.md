@@ -18,7 +18,7 @@
 
 ## 性能（NPU · 设备真值）
 
-口径见 [`../../launch-reduce-ops/PERF.md`](../../launch-reduce-ops/PERF.md)。
+登记见 [`qa/active_npu_perf_summary.md`](../../../qa/active_npu_perf_summary.md)。
 
 | 项 | 值 |
 |----|-----|

@@ -8,22 +8,16 @@
 - **禁止**新写 CPU/SIM 测试路径作门禁；既有 `run.sh` 可保留但 **Agent 不得跑 `-r cpu|-r sim` 结案**。  
 - 加压：中间 ×30；预算 180s；干净卡。
 
-## 性能记录（对齐工程教材口径）
+## 性能记录
 
-权威说明：[`docs/research/教材KEM实机测量清单.md`](../../docs/research/教材KEM实机测量清单.md)「多 launch 测准」。本战役填表见 [`PERF.md`](PERF.md)。
+权威登记：[`qa/active_npu_perf_summary.md`](../../qa/active_npu_perf_summary.md)（仿 SIM tick 一览版式；**勿改** [`active_sim_regress_summary.md`](../../qa/active_sim_regress_summary.md)）。
 
-| 优先级 | 填什么 | 禁止 |
-|--------|--------|------|
-| **1 设备真值** | 各 kernel **Task Duration** 求和（教材：`kernel_details` → `[msprof_kernel_total]`；本轮重建：ops-profiling `op_summary` 同行字段） | 终端一行 duration、自造 host wall |
-| **2 Host 逐 launch** | `[npu_launch]` / JSONL（有则记） | 用其冒充设备真值 |
-| **3 进程墙钟** | `[wall_sec]` 仅对照 | **不得**写入「算子性能」结论格 |
+| 填什么 | 禁止 |
+|--------|------|
+| 各 kernel **Task Duration** 求和（ops-profiling `op_summary`） | host `[wall_sec]` / 自造 wall |
+| 上板通过后刷新登记表 + 用例 `STATUS.md`「性能」节 | 只改 STATUS 不登总表 |
 
-采集工具：
-
-- 教材 / stable KEM：`RUN_WITH_MSPROF=1 MSPROF_MODE=app` + `scripts/npu_msprof_summarize.py`
-- 深度瓶颈：`thirdparty/cannbot-skills/ops/ops-profiling`（`msprof_profile_run.sh` + `msprof_perf_summary.py`）→ 用例 `docs/perf/round_*`
-
-数字落盘：**本目录 `PERF.md` + 各用例 `STATUS.md`「性能」节**；原始 PROF 可留远端，摘要数字须进 git。
+采集：`thirdparty/cannbot-skills/ops/ops-profiling`（`msprof_profile_run.sh` + `msprof_perf_summary.py`）。
 
 ## cannbot
 

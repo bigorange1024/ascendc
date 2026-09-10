@@ -11,7 +11,7 @@ Host：`kg_prep_custom` → mid-sync → `kg_ntt_dot_encode_custom` → sync（2
 
 ## 性能（NPU · 设备真值）
 
-口径见 [`../../launch-reduce-ops/PERF.md`](../../launch-reduce-ops/PERF.md)（对齐教材三层；本行 = Task Duration）。
+登记见 [`qa/active_npu_perf_summary.md`](../../../qa/active_npu_perf_summary.md)。
 
 | 项 | 值 |
 |----|-----|

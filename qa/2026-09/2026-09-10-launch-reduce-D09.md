@@ -36,24 +36,19 @@
 
 ---
 
-## 性能收口（对齐教材三层口径 · ops-profiling 采设备真值）
+## 性能收口（新建 `qa/active_npu_perf_summary.md`）
 
 ### 决策
 
-- 工程填表权威：[`docs/research/教材KEM实机测量清单.md`](../../docs/research/教材KEM实机测量清单.md) — **1 设备 Task Duration → 2 Host launch → 3 wall**；禁止 host wall 当结论。
-- 本轮重建树用 cannbot **`ops/ops-profiling`**（`msprof_profile_run.sh` + `msprof_perf_summary.py`）采层 1；数字落盘 [`PERF.md`](../../graph-tests/launch-reduce-ops/PERF.md) + 各用例 `STATUS.md`。
-- 规则写入 [`COMMON.md`](../../graph-tests/launch-reduce-ops/COMMON.md)。
+- 版式参考 [`active_sim_regress_summary.md`](../active_sim_regress_summary.md)；**不改**该 SIM tick 表、不跑 SIM。
+- NPU 数字单独登记：[`active_npu_perf_summary.md`](../active_npu_perf_summary.md)；采集用 cannbot `ops-profiling`（Task Duration Σ）。
 
-### 结果（910B3 · 六档 `summary_rc=0`）
+### 结果（910B3）
 
-| 算子 | launches | Σ Task Duration |
-|------|----------|-----------------|
-| PKE KeyGen K07 | 2 | 1126.58 µs |
-| KEM KeyGen K09 | 2 | 1227.12 µs |
-| PKE Encrypt T19 | 2 | 1238.78 µs |
-| KEM Encaps T23 | 2 | 1283.54 µs |
-| PKE Decrypt D09 | 1 | 455.74 µs |
-| KEM Decaps T30 | 2 | 1719.22 µs |
+| ID | Σ Task Duration (µs) |
+|----|----------------------|
+| K07 / K09 | 1126.58 / 1227.12 |
+| T19 / T23 | 1238.78 / 1283.54 |
+| D09 / T30 | 455.74 / 1719.22 |
 
-- 套件：`…/ops-profiling-rebuild-20260910-160409/`；共性：cube_util≈2–4%、AIV scalar≈50–65%。
-- keepalive 再确认已停。
+keepalive 已停。

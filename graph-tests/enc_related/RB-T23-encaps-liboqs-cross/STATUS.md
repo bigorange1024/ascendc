@@ -37,7 +37,7 @@
 
 ## 性能（NPU · 设备真值 · 2026-09-10）
 
-口径见 [`../../launch-reduce-ops/PERF.md`](../../launch-reduce-ops/PERF.md)（对齐教材；非本刀 launch 压缩目标，仅同机对照测量）。
+登记见 [`qa/active_npu_perf_summary.md`](../../../qa/active_npu_perf_summary.md)（对照测；非 launch 压缩刀）。
 
 | 项 | 值 |
 |----|-----|

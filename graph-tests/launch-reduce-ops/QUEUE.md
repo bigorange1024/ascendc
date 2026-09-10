@@ -11,4 +11,4 @@
 | 7 | LR-DC-F2 | **PASS_NPU×30** | Decrypt →1（RB-D09）；Σ **456µs** |
 | 8 | LR-DP-F3 | **PASS_NPU×30** | Decaps →2（RB-T30）；Σ 1719µs |
 
-性能填表权威：[`PERF.md`](PERF.md)（对齐教材三层口径）。
+性能填表权威：[`qa/active_npu_perf_summary.md`](../../qa/active_npu_perf_summary.md)。

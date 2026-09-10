@@ -86,9 +86,3 @@ KEM 一条算子在 device 上会 **KernelLaunch 多次**（Encaps≈2，Decaps�
 Profiling 产物：`MSPROF_MODE=app` 对**真实进程跑一遍**做应用级采集（不是把第一条 kernel 重放 8 次）。目录：`<用例>/prof_npu/<bin>/`（内含 `OPPROF_*`）。汇总：`python3 scripts/npu_msprof_summarize.py <用例>`。
 
 correctness G5 有的路径会连续 launch 再一次 sync：host JSONL 可能是「一批」；**逐 kernel 仍以 csv 为准**。
-
-### 深度瓶颈（可选，与上表优先级 1 同属设备 Task Duration）
-
-cannbot [`ops-profiling`](../../thirdparty/cannbot-skills/ops/ops-profiling/SKILL.md)：`msprof_profile_run.sh`（7 组 aic-metrics）+ `msprof_perf_summary.py` → 用例 `docs/perf/round_*`。  
-填「整算子耗时」仍用各 op **Task Duration 求和**；**不得**用 host wall 替代。  
-重建六档实机表：[`graph-tests/launch-reduce-ops/PERF.md`](../../graph-tests/launch-reduce-ops/PERF.md)（2026-09-10 · 910B3）。

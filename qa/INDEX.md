@@ -10,7 +10,7 @@
 
 ## 按时间（新→旧）
 
-### 2026-09-10 — [Launch压缩 · D09/T30 · 性能按教材口径落盘](2026-09/2026-09-10-launch-reduce-D09.md)
+### 2026-09-10 — [Launch压缩 · D09/T30 · 新建 NPU 性能一览](2026-09/2026-09-10-launch-reduce-D09.md)
 
 关键字：**RB-D09** · **RB-T30** · Decaps→**2** · 禁改 D08 · SyncAll 环外 · Compress₁ 常数 · **PASS_NPU×30** · QUEUE 1–8；Decaps→2
 
@@ -227,7 +227,7 @@ library/docs/qa 分工 · 仅根 README · 各目录 INDEX 侧重点
 | **路径** | `qa/YYYY-MM/YYYY-MM-DD-<中文关键词>.md` |
 | **每日一篇** | 同一自然日**只有一份**纪要；新讨论**刷新/追加**到当日文件，**禁止**同日新建第二个 `.md` |
 | **标题** | 文件名与文首标题含当日讨论**关键词**（可随当日追加话题更新文件名/标题，须同步 INDEX） |
-| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`**、可选 **[`active_sim_regress_summary.md`](active_sim_regress_summary.md)**（活跃 SIM tick）与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
+| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`**、可选 **[`active_sim_regress_summary.md`](active_sim_regress_summary.md)**（SIM tick）、**[`active_npu_perf_summary.md`](active_npu_perf_summary.md)**（NPU Task Duration）与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
 
 ---
 
