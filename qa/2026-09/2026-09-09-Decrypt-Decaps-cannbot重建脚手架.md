@@ -145,13 +145,13 @@ Encrypt/Encaps（T22–T24）**已收口，勿重开**。
 | 短 KB | 双门禁 + 反卡死 + NTT/poly-batch/假绿等写码事实 |
 | 图谱 | `D-CORE-KEM-DUAL` / `D-ADMIT-KEM-EXP`；增 `kem-math`/`correctness`；旧 hang-only → inactive；`rg_validate` OK |
 
-### 追加（同日 · 工程 KB 手册化刷新）
+### 追加（同日夜 · Launch 压缩计划 · 待 NPU）
 
-用户：图谱像样后，知识库仍须刷新——本地 agent 旧沉淀多为流水账，不起指导作用。
+用户要求：压低 KeyGen/Decaps launch（旧 stable 更合理；Encaps 已少 launch）；**只做 NPU**、充分用 cannbot-skills、经验及时总结；空闲&gt;3min 会断连；无指示不推送。
 
 | 项 | 结果 |
 |----|------|
-| `ascendc-engineering-kb.md` | 扩成写码手册：怎么用 / 机制表 / 默认决策（为何·代价·破例）/ 正确性钉子 / 假绿阶梯 / 证伪 / **开路径 10 问检查单** / 推荐骨架；launch 仅库存表 |
-| 分算子 `*-rebuild-kb.md` | 仍仅指针；去掉过时 `encrypt/`/`decrypt/`/`keygen/` 前缀与 §B 引用 |
-| MIX 反卡死两篇 | 文首改为**案例附录**；冲突以工程 KB+yaml 为准 |
-| INDEX | 标注唯一写码 KB vs 运营积木表 vs 案例附录 |
+| 计划 | `graph-tests/launch-reduce-ops/PLAN.md` 全套波次（W0 基线→KG-F1/F2→DC-F1→Decaps→DC-F2） |
+| 目标锁 | PKE/KEM KG→**2**；Decaps→**3**；Decrypt 中转 ≤2 优先试 1 |
+| 探活 | `which_npu` 失败 → **未启 keepalive**；短周期轮询等开机 |
+| Git | 计划已落盘工作区；**未 commit** |

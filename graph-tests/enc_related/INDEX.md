@@ -27,3 +27,5 @@
 | [`RB-T27-encaps-decaps-device-rt/`](RB-T27-encaps-decaps-device-rt/) | T27 | 设备 Encaps→设备 Decaps 往返；K'≡K；liboqs 交叉；X12 DataCopy 写出 |
 
 运营任务书：[`../encrypt-rebuild-ops/`](../encrypt-rebuild-ops/INDEX.md)。
+| [`RB-T28-decaps-4launch/`](RB-T28-decaps-4launch/) | T28 / LR-DP-F1 | Decaps 4 launch：Decrypt(NTT+INTT 融) + Encaps2；**PASS_NPU×30** |
+| [`RB-T29-decaps-3launch/`](RB-T29-decaps-3launch/) | T29 / LR-DP-F2 | Decaps 3 launch：Decrypt(prep+NTT+INTT 融) + Encaps2；**PASS_NPU×30** |
