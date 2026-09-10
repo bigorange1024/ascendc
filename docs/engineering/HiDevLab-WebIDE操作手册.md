@@ -72,7 +72,8 @@ Cursor Cloud Agent（判读、改下一刀）
 bash /workspace/ascendc/scripts/hidevlab/webide_boot.sh
 ```
 
-作用：`git pull` 当前/指定分支、`source` CANN、设 `LD_LIBRARY_PATH` 与 `ASCEND_DEVICE_ID=0`、写 `/workspace/hidevlab_env.sh`、打印 `npu-smi`/`ccec` 体检。  
+默认**不** `git pull`（避免 GitHub 网络卡住）。需要更新代码时再：`HIDEVLAB_PULL=1 bash …/webide_boot.sh`（自带超时）。  
+作用：`source` CANN、设 `LD_LIBRARY_PATH` 与 `ASCEND_DEVICE_ID=0`、写 `/workspace/hidevlab_env.sh`、打印体检。  
 同一会话后续终端可：`source /workspace/hidevlab_env.sh`。  
 **这不会**让 Cloud Agent 自动 SSH 连上；只是给人侧 WebIDE 一键就绪。
 
