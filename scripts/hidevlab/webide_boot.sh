@@ -28,8 +28,11 @@ if [[ -z "${CANN_SET_ENV}" ]]; then
   exit 1
 fi
 
+# Ascend set_env.sh 会读未定义的 LD_LIBRARY_PATH 等；短暂关闭 nounset
+set +u
 # shellcheck disable=SC1090
 source "${CANN_SET_ENV}"
+set -u
 export LD_LIBRARY_PATH="/usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64/driver:/usr/local/Ascend/driver/lib64/common:${LD_LIBRARY_PATH:-}"
 export ASCEND_DEVICE_ID="${DEVICE_ID}"
 export CANNLAB=1
