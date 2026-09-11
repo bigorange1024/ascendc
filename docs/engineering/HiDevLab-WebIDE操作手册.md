@@ -240,6 +240,10 @@ bash scripts/hidevlab/webide_recipe.sh --branch cursor/hidevlab-cloud-npu-9099 -
 
 ## 7.1 Tailscale 驱动 Agent 访问（可选 · 让 Cloud Agent 免密连进来）
 
+> **其他 Agent 连服务器的短文（优先读）**：[`HiDevLab-Agent连接.md`](HiDevLab-Agent连接.md)  
+> （WebIDE 常无 git；Cursor Agent 在本仓 `git pull` 后跑 `agent_connect.sh`。）
+
+
 > **WebIDE 仍是主路径**；本节给「让 Cloud Agent 直接经 tailnet 连 HiDevLab」的可选通道。
 > 与 GitCode CANNLab **分开维护**：入口脚本
 > [`scripts/hidevlab/webide_start.sh`](../../scripts/hidevlab/webide_start.sh)

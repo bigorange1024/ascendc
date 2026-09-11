@@ -16,6 +16,7 @@
 | [Encrypt卡死重写-sync清单.txt](Encrypt卡死重写-sync清单.txt) | 上机最小 sync 路径列表（toys + stable 1024 四档 + 脚本） |
 | [CANNLab接入与远程驱动.md](CANNLab接入与远程驱动.md) | Cursor Agent 经 **Tailscale 免密驱动 GitCode CANNLab 真机 910B3**；Secrets（`TAILSCALE_AUTHKEY`/`CANNLAB_SSH_KEY`）、`scripts/cannlab/` 引导脚本、`ASCEND_DEVICE_ID=0`、容器停机（SIGTERM→tini / 控制台）、看门狗 |
 | [HiDevLab-WebIDE操作手册.md](HiDevLab-WebIDE操作手册.md) | **HiDevLab 真机主路径**：WebIDE + Git 配方协作（**独立维护**）；A2/CANN ubuntu；`ASCEND_DEVICE_ID=0`；SSH直连仅救急（~5min）。§7.1 可选 Tailscale：人侧 `scripts/hidevlab/webide_start.sh`，Agent 侧 `agent_connect.sh` + `materialize_ssh_key.sh` |
+| [HiDevLab-Agent连接.md](HiDevLab-Agent连接.md) | **其他 Cursor Agent 连 HiDevLab**：人侧 WebIDE（常无 git）跑 `webide_start.sh`；Agent 侧 `git pull` + `agent_connect.sh`；Secret 与排障 |
 | [../notes/AscendC多环境运行纪要.md](../notes/AscendC多环境运行纪要.md) | 多环境**原理纪要**（不变量、Clang/`sim_env`、门禁纪律） |
 
 ---
