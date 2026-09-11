@@ -1,0 +1,13 @@
+275:[INFO]  causal: Launch1 PREP_DONE seen
+276:[INFO]  causal: Launch2 NTT(1/3)->GATE(4)->INTT(1/3 reuse) linked
+277:[INFO]  causal: AIV0 pack(u,v->c) done after INTT
+280:[INFO] Total tick: 129256
+282:[wall_sec] 61.717
+283:[kernel-run-timeout] wall_sec=61.717 budget=300s rc=0 bin=ascendc_kernels_bbit
+284:[camodel_sim_log] moved 2 stray artifact(s) -> /home/yuanye/ascendc/graph-tests/enc_related/RB-T09-encrypt-shaped-2launch/sim_log
+292:[PASS_SYNC] dual-launch causal + dual Cube + prep/pack TRACE ok
+293:[PASS_IO] c[1568] == golden_c
+294:[PASS_IO] y_e1_e2_dev match
+295:[PASS_IO] rho_dev match
+296:[SUCCESS] PASS_SYNC + PASS_IO — RB-T09 dual launch
+297:[SUCCESS] RB-T09-encrypt-shaped-2launch (sim)

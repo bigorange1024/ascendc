@@ -1,0 +1,6 @@
+SOC=Ascend910B4 RUN_MODE=cpu RB-T08=host-uv-topology
+[gen_data] Â=(4, 4, 256) ŷ=(4, 256) t̂=(4, 256) e1=(4, 256) e2=(256,) μ ones=128
+[gen_data] golden u sum=1693592 v sum=410314
+[uv_topology_host] wrote u[4,256] v[256] sum_u=1693592 sum_v=410314
+[SUCCESS] u,v match golden (Host uv topology / G3)
+[SUCCESS] RB-T08-uv-topology (cpu/host)

@@ -1,0 +1,14 @@
+247:[INFO]  Host: SynchronizeStream returned
+255:[INFO]  causal: SET1+WAIT3 seen
+256:[INFO]  causal: device SampleNTT(ρ) wrote Â
+257:[INFO]  causal: device NTT(y) wrote ŷ
+260:Model RUN TIME: 456703 ms
+261:[INFO] Total tick: 956912
+263:[wall_sec] 457.362
+264:[kernel-run-timeout] wall_sec=457.362 budget=1200s rc=0 bin=ascendc_kernels_bbit
+270:[OK] a_hat max_abs=0 n=4096
+271:[OK] y_hat max_abs=0 n=1024
+272:[PASS_SYNC] SampleNTT+NTT(1/3) causal + Cube ok
+273:[PASS_IO] Â and ŷ match golden (device MIX)
+274:[SUCCESS] RB-T14 PASS_SYNC + PASS_IO
+275:[SUCCESS] RB-T14-device-ahat-yhat (sim)

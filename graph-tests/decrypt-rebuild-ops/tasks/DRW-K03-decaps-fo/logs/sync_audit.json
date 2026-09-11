@@ -1,0 +1,52 @@
+{
+  "files_scanned": [
+    "graph-tests/dec_related/RB-D06-decaps-fo/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/dec_related/RB-D06-decaps-fo/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/dec_related/RB-D06-decaps-fo/data_utils.h",
+    "graph-tests/dec_related/RB-D06-decaps-fo/decaps_fo_custom.cpp",
+    "graph-tests/dec_related/RB-D06-decaps-fo/main.cpp"
+  ],
+  "event_count": 2,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/dec_related/RB-D06-decaps-fo/decaps_fo_custom.cpp",
+      "line": 85,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/dec_related/RB-D06-decaps-fo/decaps_fo_custom.cpp",
+      "line": 121,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 85,
+      "file": "graph-tests/dec_related/RB-D06-decaps-fo/decaps_fo_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 121,
+      "file": "graph-tests/dec_related/RB-D06-decaps-fo/decaps_fo_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

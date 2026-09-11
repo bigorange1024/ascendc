@@ -1,0 +1,40 @@
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/yuanye/ascendc/graph-tests/enc_related/RB-T18-device-bytedecode12-ek/build
+[ 25%] Building CXX object CMakeFiles/ascendc_kernels_cpu.dir/mmad_custom.cpp.o
+[ 50%] Linking CXX shared library libascendc_kernels_cpu.so
+[ 50%] Built target ascendc_kernels_cpu
+[ 75%] Building CXX object CMakeFiles/ascendc_kernels_bbit.dir/main.cpp.o
+[100%] Linking CXX executable ascendc_kernels_bbit
+[100%] Built target ascendc_kernels_bbit
+-- Install configuration: "Debug"
+-- Installing: /home/yuanye/ascendc/graph-tests/enc_related/RB-T18-device-bytedecode12-ek/out/lib/libascendc_kernels_cpu.so
+-- Set runtime path of "/home/yuanye/ascendc/graph-tests/enc_related/RB-T18-device-bytedecode12-ek/out/lib/libascendc_kernels_cpu.so" to ""
+-- Installing: /home/yuanye/ascendc/graph-tests/enc_related/RB-T18-device-bytedecode12-ek/out/bin/ascendc_kernels_bbit
+-- Set runtime path of "/home/yuanye/ascendc/graph-tests/enc_related/RB-T18-device-bytedecode12-ek/out/bin/ascendc_kernels_bbit" to ""
+[gen_data] ek=1568B body=1536B rho=32B t_hat_max=3328 coeffs=1024
+[INFO]  Host: TRACE HOST_PRE marked, launching MIX device-bytedecode12-ek (CPU twin)
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 121098] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 121099] exit success!
+[SUCCESS][AIV_1][pid 121100] exit success!
+[INFO]  TRACE map dump (slot=magic):
+[INFO]    [0] HOST_PRE          = 0x484F5354
+[INFO]    [1] AIV0_PRE_SET1     = 0xA1010001
+[INFO]    [5] AIV0_POST_WAIT3   = 0xA1030003
+[INFO]    [8] AIV0_BD12_DONE    = 0x42443132
+[INFO]    [6] HOST_POST_SYNC    = 0x484F5355
+[INFO]  causal: BD12 SET1+WAIT3 seen
+[INFO]  causal: device ByteDecode12(ek) wrote t_hat
+[INFO]  phases: BD12(1/3)->t_hat all linked
+[INFO]  RB-T18 device-bytedecode12-ek done
+[wall_sec] 0.492
+[kernel-run-timeout] wall_sec=0.492 budget=120s rc=0 bin=ascendc_kernels_bbit
+[OK] t_hat max_abs=0 n=1024
+[PASS_SYNC] BD12(1/3) causal + Cube ok
+[PASS_IO] t_hat match golden (device MIX)
+[SUCCESS] RB-T18 PASS_SYNC + PASS_IO
+[SUCCESS] RB-T18-device-bytedecode12-ek (cpu)

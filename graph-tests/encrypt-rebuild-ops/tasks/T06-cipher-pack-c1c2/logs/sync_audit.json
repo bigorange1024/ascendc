@@ -1,0 +1,170 @@
+{
+  "files_scanned": [
+    "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp"
+  ],
+  "event_count": 8,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 139,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 139,
+      "message": "同一函数连续 PipeBarrier 过多: 8 个 in <global>",
+      "detail": "行: [139, 144, 146, 149, 154, 159, 161, 164]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 144,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 146,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 149,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 154,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 159,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 161,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "line": 164,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 139,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 144,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 146,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 149,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 154,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 159,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 161,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 164,
+      "file": "graph-tests/bricks/RB-T06-cipher-pack/cipher_pack_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

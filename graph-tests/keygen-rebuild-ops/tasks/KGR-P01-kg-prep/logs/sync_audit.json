@@ -1,0 +1,155 @@
+{
+  "files_scanned": [
+    "graph-tests/kg_related/RB-K01-kg-prep/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/kg_related/RB-K01-kg-prep/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/kg_related/RB-K01-kg-prep/data_utils.h",
+    "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+    "graph-tests/kg_related/RB-K01-kg-prep/main.cpp"
+  ],
+  "event_count": 7,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 77,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 77,
+      "message": "同一函数连续 PipeBarrier 过多: 7 个 in <global>",
+      "detail": "行: [77, 82, 86, 104, 108, 116, 120]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 82,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 86,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 104,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 108,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 116,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "line": 120,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 77,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 82,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 86,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 104,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 108,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 116,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 120,
+      "file": "graph-tests/kg_related/RB-K01-kg-prep/kg_prep_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

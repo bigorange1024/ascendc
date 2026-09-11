@@ -1,0 +1,558 @@
+version: 1
+title: AscendC · 正确∧不卡 · 推理图谱
+review:
+  last_reviewed: '2026-09-09'
+  note: >-
+    2026-09-09 重写：以机制推理/证伪教训/设计权衡为主；战役现象与×30流水退回 QUEUE/MATRIX/KB附录。
+config:
+  required_fields:
+  - domain
+  id_prefix_by_kind:
+    fact: F
+    inference: J
+    decision: D
+    question: Q
+  domain_pattern: ^(goals|rg-hygiene|fail-lessons|impl-tech|verify-test|cause|kem-math|correctness)$
+  fact_provenance_values:
+  - observation
+  - measurement
+  - doc
+  - env-api
+  inference_derivation_values:
+  - deductive
+  - defeasible
+  decision_by_values:
+  - human
+  - agent
+nodes:
+
+# ─── 目标问题 ─────────────────────────────────────────────
+- id: Q-ULT
+  domain: goals
+  kind: question
+  title: 如何写出正确且不卡的 KEM 算子？
+  statement: >-
+    在 AscendC/NPU 上实现 ML-KEM（KeyGen/Encaps/Decaps 等）时，何种可复用机制与拓扑选择，
+    能同时保证 liboqs I/O 正确，且反复加压无 SynchronizeStream 卡死？
+  deps: []
+  status: open
+
+- id: Q-HANG-MECH
+  domain: cause
+  kind: question
+  title: 跨核挂死的可操作机制是什么？
+  statement: Host Sync 不回时，何种设备侧条件是充分/可构造的解释（可指导下一次怎么写）？
+  deps: []
+  status: answered
+  answered_by: J-HANG-UNREACHABLE-SET
+
+- id: Q-FALSE-GREEN
+  domain: verify-test
+  kind: question
+  title: 何种「绿」不能结案？
+  statement: CPU/SIM/NPU 单轮对拍绿各自证明什么？什么假绿会误导排错与交付？
+  deps: []
+  status: answered
+  answered_by: J-EVIDENCE-LADDER
+
+- id: Q-TOPO-TRADEOFF
+  domain: impl-tech
+  kind: question
+  title: 何时拆 launch、何时允许融合？
+  statement: >-
+    多 Host launch + mid-sync 与单核深融合如何权衡反卡死面与性能？重建基线何时可再融合？
+  deps: []
+  status: answered
+  answered_by: J-FUSION-EXPANDS-SURFACE
+
+- id: Q-ENCRYPT-STICKY
+  domain: cause
+  kind: question
+  title: Encrypt 粘性挂的充分条件？
+  statement: >-
+    何种可构造条件在干净卡上充分导致粘性挂并指导重写？握手断裂已部分钉死；粘性充分条件仍开。
+  deps:
+  - J-HANG-UNREACHABLE-SET
+  - J-SIM-NOT-STICKY
+  status: open
+
+# ─── 图谱卫生 ─────────────────────────────────────────────
+- id: D-DUAL-GATE
+  domain: goals
+  kind: decision
+  by: human
+  title: 交付门禁=正确 ∧ 不卡
+  statement: >-
+    卡死是优先风险类，但不是唯一目标。交付须两门都过：权威 I/O 正确 + NPU 加压不挂。
+    证其一不蕴含另一。刀号/×30 流水不进图（进 QUEUE/MATRIX）。
+  deps:
+  - F-LIBOQS-IO
+  - J-HANG-UNREACHABLE-SET
+  status: active
+  targets:
+  - Q-ULT
+
+- id: D-ADMIT-RETESTABLE
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: 入库=可再测机制∨证伪∨权衡
+  statement: >-
+    节点须能指导下次写码：机制推理（前提→结论→可复验预测）、证伪教训、或带代价的设计权衡。
+    禁止：战役现象台账、目录索引、launch 拼法日记、仅「某刀绿了」。
+  deps:
+  - D-DUAL-GATE
+  status: active
+
+- id: D-FAIL-FIRST
+  domain: rg-hygiene
+  kind: decision
+  by: human
+  title: 证伪一等公民
+  statement: 被推翻的假说标 retracted 并留证据；回退方案标 inactive。禁止只堆测过绿。
+  deps:
+  - D-ADMIT-RETESTABLE
+  status: active
+
+# ─── 平台最小事实（支撑推理，非战役日记） ─────────────────
+- id: F-CC-WAIT-NEEDS-SET
+  domain: impl-tech
+  kind: fact
+  provenance: env-api
+  title: CrossCore Wait 须有可达 Set
+  statement: AscendC CrossCore 握手中，Wait(f) 要求对端本次执行路径上可达 Set(f)；否则同步永不完成。
+  deps: []
+  status: verified
+  basis: stated
+  evidence: CANN AscendC CrossCore / 反卡死 notes
+
+- id: F-FLAG-57-HANGS
+  domain: impl-tech
+  kind: fact
+  provenance: observation
+  title: CrossCore flag 5/7 触发挂/超时
+  statement: 本仓多次实测：使用 CrossCore flag 5 或 7 会超时或挂死。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: Encrypt/Decrypt 重建禁令与探针
+
+- id: F-AIC-WAIT-SYNCALL-DEADLOCK
+  domain: impl-tech
+  kind: fact
+  provenance: observation
+  title: AIC 在 Wait 中 SyncAll → 互锁
+  statement: AIC 已进入 CrossCore Wait 后再 SyncAll/IBWait，会与对端形成互锁。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: MIX 反卡死总结
+
+- id: F-SOFTSYNC-HANGS
+  domain: impl-tech
+  kind: fact
+  provenance: observation
+  title: 自造 SoftSync 会挂
+  statement: 绕过硬件 CrossCore、自造 AIC↔AIV SoftSync 路径，本仓复现为挂死。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: Decrypt fused SoftSync 史
+
+- id: F-SIM-NOT-STICKY
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: SIM 不复现粘性挂
+  statement: CAModel SIM 可构造缺 SET→timeout，但不能代理实机粘性/污染挂。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: Encrypt hangfree / Cloud SIM 对照
+
+- id: F-POLLUTION-AFTER-KILL
+  domain: verify-test
+  kind: fact
+  provenance: observation
+  title: 杀挂后同卡污染
+  statement: timeout/杀进程后同 ASCEND_DEVICE_ID 连环挂是次生污染，不能单独解释干净卡首次挂。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: Encrypt hang 取证 N10 等
+
+- id: F-LIBOQS-IO
+  domain: correctness
+  kind: fact
+  provenance: doc
+  title: 正确性=权威 I/O 等价
+  statement: 交付正确性以同 ISA 权威（liboqs）字节/多项式 I/O 等价为准；golden 是 oracle，不要求与参考源码同构。
+  deps: []
+  status: verified
+  basis: stated
+  evidence: Rule golden 门禁
+
+- id: F-SETVALUE-FALSE-GREEN
+  domain: correctness
+  kind: fact
+  provenance: observation
+  title: SetValue→GM 可 CPU 假绿
+  statement: 业务 GM 依赖 GlobalTensor::SetValue 时，CPU 孪生可对拍绿、NPU 错字节。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: X12；Decrypt I8
+
+- id: F-DEVICE-STRING-GM
+  domain: impl-tech
+  kind: fact
+  provenance: observation
+  title: 设备字符串字面量是 __gm__
+  statement: >-
+    __aicore__ 内 C 字符串字面量为 const __gm__ char[]，不可赋给 const char*；
+    CPU 可过、NPU 编不过。常量须 constexpr uint8_t[] 入 UB。
+  deps: []
+  status: verified
+  basis: experiment
+  evidence: 2026-09-09 RB-K05 NPU 编译错
+
+- id: F-POLYBATCH
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: poly-batch：完整 poly 单 AIV
+  statement: Stage2 后每个 AIV 握有完整 poly 的 hi+lo；禁止 limbsplit。
+  deps: []
+  status: verified
+  basis: stated
+  evidence: MLKEM-NTT-实现总结.md
+
+- id: F-LIMB-LO-ARITH
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: limb 低位用算术
+  statement: 'lo = v - (v>>6)*64；禁止 And(v,63)。'
+  deps: []
+  status: verified
+  basis: stated
+  evidence: MLKEM-NTT 向量与标量实现指南
+
+- id: F-NTT-S123-NO-GATHER
+  domain: kem-math
+  kind: fact
+  provenance: doc
+  title: NTT S1–S3 禁 Gather
+  statement: Gather 禁令仅覆盖 Tag5T 三段式 NTT；其后 basemul/ByteEncode 另议。
+  deps:
+  - F-POLYBATCH
+  status: verified
+  basis: stated
+  evidence: MLKEM-NTT 指南 §Gather 范围
+
+# ─── 核心推理（机制） ─────────────────────────────────────
+- id: J-HANG-UNREACHABLE-SET
+  domain: cause
+  kind: inference
+  derivation: defeasible
+  title: 跨核挂 ≈ Wait 而对端不可达 Set
+  statement: >-
+    前提：F-CC-WAIT-NEEDS-SET。结论：Host SynchronizeStream 长期不回的可操作主因，是某核已 Wait(f)
+    而对端本次执行中 Set(f) 不可达（含 Wait 环内再阻塞）。可复验预测：人为省略配对 SET → SIM/结构路径可 timeout；
+    修复须恢复可达 Set，而非「加 launch 次数」。
+  deps:
+  - F-CC-WAIT-NEEDS-SET
+  status: verified
+  basis: experiment
+  evidence: 缺 SET(4) SIM 124；Encrypt/Decrypt 握手排错
+
+- id: J-HALF-TABLE-BLOCKS-SET
+  domain: cause
+  kind: inference
+  derivation: defeasible
+  title: 半写共享表 → 永不 Set 或错数
+  statement: >-
+    若多写者共享 Â/CBD 等表被假定「已满」却半写且无全局可见屏障，则消费者可能永远到不了 Set，
+    或带着半成品继续算。预测：prep∥NTT 同 launch 无屏障 → û 半成品（错）且放大挂面。
+  deps:
+  - J-HANG-UNREACHABLE-SET
+  status: verified
+  basis: experiment
+  evidence: MIX-Decrypt 反卡死 §1.1；X14
+
+- id: J-FLAG-CONTENTION
+  domain: cause
+  kind: inference
+  derivation: defeasible
+  title: 同组 flag 被两段 MIX 争用 → 错或互锁
+  statement: >-
+    NTT 与 INTT（或两段深 GATE）共用 flag 1–3 且同 launch/无隔离时，会出现错数或死锁史。
+    预测：拆成两核 + Host mid-sync 消除争用面。
+  deps:
+  - J-HANG-UNREACHABLE-SET
+  status: verified
+  basis: experiment
+  evidence: MIX-Decrypt I6–I7；fused SoftSync/GATE 史
+
+- id: J-SIM-NOT-STICKY
+  domain: verify-test
+  kind: inference
+  derivation: defeasible
+  title: SIM 只证结构假说，不证粘性挂
+  statement: >-
+    由 F-SIM-NOT-STICKY：缺 SET 类结构错误可在 SIM 构造；粘性/污染挂须干净卡 NPU。
+    预测：仅 SIM 绿不能关闭「不挂」门禁。
+  deps:
+  - F-SIM-NOT-STICKY
+  - J-HANG-UNREACHABLE-SET
+  status: verified
+  basis: experiment
+  evidence: Encrypt hangfree；Cloud SIM 对照
+
+- id: J-EVIDENCE-LADDER
+  domain: verify-test
+  kind: inference
+  derivation: defeasible
+  title: 绿阶梯：各层证明力不同
+  statement: >-
+    CPU 对拍绿 ⇏ NPU 字节正确（见 SetValue 假绿）；SIM 绿 ⇏ 粘性不挂；NPU 单轮绿 ⇏ 加压不挂。
+    可复验：同拓扑须干净卡 NPU×N 才关闭不挂门；权威交叉须同 ISA liboqs。
+  deps:
+  - F-SETVALUE-FALSE-GREEN
+  - J-SIM-NOT-STICKY
+  - F-LIBOQS-IO
+  - F-POLLUTION-AFTER-KILL
+  status: verified
+  basis: experiment
+  evidence: 假绿三问；Decrypt/KeyGen 加压章程
+
+- id: J-FUSION-EXPANDS-SURFACE
+  domain: impl-tech
+  kind: inference
+  derivation: defeasible
+  title: 深融合扩大握手面与半成品面
+  statement: >-
+    把无 CrossCore 的 prep 与有 CrossCore 的 MIX、或 NTT 与 INTT，融进单长核，会同时放大
+    「到不了 Set」面与半成品错数面。拆 Host launch + mid-sync 用屏障换更短握手。
+    代价：更多 Host sync / 可能更高墙钟。可复验：同语义下拆分后 NPU 加压挂率下降（Encaps/Decrypt/KeyGen 重建）。
+  deps:
+  - J-HANG-UNREACHABLE-SET
+  - J-HALF-TABLE-BLOCKS-SET
+  - J-FLAG-CONTENTION
+  status: verified
+  basis: experiment
+  evidence: Encrypt/Decrypt/KeyGen 重建路径 vs stable 深融合
+
+- id: J-SHORT-CROSSCORE-HELPS-BOTH
+  domain: impl-tech
+  kind: inference
+  derivation: defeasible
+  title: 收窄握手是正确∧不卡的共同地基
+  statement: >-
+    保证生产者全量可达、共享表单写者或写后屏障、flag 不争用，同时降低挂死与错数。
+    「只为不挂加手续」是误读——同一机制服务双门禁。
+  deps:
+  - J-FUSION-EXPANDS-SURFACE
+  - F-LIBOQS-IO
+  - D-DUAL-GATE
+  status: verified
+  basis: heuristic
+  evidence: 工程 KB §3.3；重建战役共性
+
+# ─── 证伪教训 ─────────────────────────────────────────────
+- id: J-DUAL-CUBE-NOT-SUFFICIENT
+  domain: fail-lessons
+  kind: inference
+  derivation: defeasible
+  title: 「同核双 Cube ⇒ 充分挂因」已证伪
+  statement: 同核两轮 Cube 不是卡死充分条件；优先查握手断裂。留痕防重踩。
+  deps:
+  - J-HANG-UNREACHABLE-SET
+  status: retracted
+  basis: experiment
+  evidence: rg-kem-decrypt-hang；Encrypt hang rewrite
+  retracted_by: J-HANG-UNREACHABLE-SET
+
+- id: J-EXTRA-LAUNCH-NOT-FIX
+  domain: fail-lessons
+  kind: inference
+  derivation: defeasible
+  title: 「多加 Host launch ⇒ 充分修复」已证伪
+  statement: >-
+    滥增 launch 次数本身不是修复；若拆 launch 有效，有效的是消除断裂/争用/半写。
+    把「加次数」当推荐属伤效率反模式。
+  deps:
+  - J-FUSION-EXPANDS-SURFACE
+  status: retracted
+  basis: experiment
+  evidence: Encrypt hang-rewrite X4
+  retracted_by: J-FUSION-EXPANDS-SURFACE
+
+# ─── 设计权衡（决策） ─────────────────────────────────────
+- id: D-HARD-SYNC-BANS
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 硬禁：flag5/7、Wait 内 SyncAll、SoftSync
+  statement: >-
+    永禁 CrossCore flag 5/7；AIC 在 CrossCore Wait 中禁 SyncAll/IBWait；禁自造 SoftSync。
+    为何：均直接制造不可达 Set 或互锁。代价：无——无合法替代需求。破例：无。
+  deps:
+  - F-FLAG-57-HANGS
+  - F-AIC-WAIT-SYNCALL-DEADLOCK
+  - F-SOFTSYNC-HANGS
+  - J-HANG-UNREACHABLE-SET
+  status: active
+
+- id: D-SHORT-CROSSCORE
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 默认短 CrossCore：拆 launch + mid-sync
+  statement: >-
+    默认：无 CrossCore 的 prep 与 MIX 分开；NTT 与 INTT 分核；Host 每次 launch 后 mid-sync。
+    为何：J-FUSION-EXPANDS-SURFACE。代价：更多 sync、可能更高墙钟。
+    何时可破：握手面已证明极短、无半写、且有 NPU×N + 性能数据支持再融合——须新决策节点，禁默默融回。
+  deps:
+  - J-FUSION-EXPANDS-SURFACE
+  - J-SHORT-CROSSCORE-HELPS-BOTH
+  status: active
+  targets:
+  - Q-TOPO-TRADEOFF
+
+- id: D-FLAG-134
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 重建默认 flag∈{1,3,4}
+  statement: >-
+    短表：1/3 复用 Cube 握手 + 4=GATE。不用 5/7；不把 8 深 FSM 当默认模板。
+    代价：表达力受限。破例：须单独论证 GATE 语义与 Wait 可达性。
+  deps:
+  - D-HARD-SYNC-BANS
+  - D-SHORT-CROSSCORE
+  status: active
+
+- id: D-BLOCKDIM1-SHARED
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: 共享全局表默认单写者（BLOCK_DIM=1）
+  statement: >-
+    Â/CBD 等全局表默认单 AIV 写满再握手。为何：J-HALF-TABLE-BLOCKS-SET。
+    代价：放弃 prep 双 AIV 并行 tick。何时可破：分片无交叠 + 内嵌 SHAKE 用 ProcessInline 语义已证、且有性能收益——须新决策，勿默默 AHAT=2。
+  deps:
+  - J-HALF-TABLE-BLOCKS-SET
+  status: active
+
+- id: D-SPLIT-NTT-INTT
+  domain: impl-tech
+  kind: decision
+  by: human
+  title: Decrypt：NTT 与 INTT 分核
+  statement: >-
+    Decrypt 路径 NTT/dot 与 INTT/extract 分 kernel + Host sync。为何：J-FLAG-CONTENTION。
+    代价：相对 stable 单核 fused 增加 launch。破例：同 D-SHORT-CROSSCORE。
+  deps:
+  - J-FLAG-CONTENTION
+  - D-SHORT-CROSSCORE
+  status: active
+
+- id: D-SIM-THEN-NPU
+  domain: verify-test
+  kind: decision
+  by: human
+  title: 结构假说先 SIM；粘性认 NPU
+  statement: >-
+    缺 SET 等结构假说先 SIM 构造；粘性/污染挂只认干净卡 NPU。CPU 不作卡死证据。
+    依据：J-EVIDENCE-LADDER / J-SIM-NOT-STICKY。
+  deps:
+  - J-EVIDENCE-LADDER
+  - J-SIM-NOT-STICKY
+  status: active
+  targets:
+  - Q-FALSE-GREEN
+
+- id: D-NPU-STRESS
+  domain: verify-test
+  kind: decision
+  by: human
+  title: 不挂门禁用 NPU×30/×100
+  statement: >-
+    单轮 NPU 绿不关闭不挂门禁；中间代码×30、算子级×100；预算约 180s；干净卡；
+    须排除 F-POLLUTION-AFTER-KILL。挂死→事实入图，禁只加超时。
+  deps:
+  - D-SIM-THEN-NPU
+  - F-POLLUTION-AFTER-KILL
+  status: active
+
+- id: D-NO-FORK-L18
+  domain: fail-lessons
+  kind: decision
+  by: human
+  title: 禁照抄现 Encrypt/l18 深 GATE 当模板
+  statement: >-
+    重建路径禁止整文件 fork 现 stable/l18 深 GATE FSM。可参考契约与反卡死原则。
+    为何：该面与粘性挂史高度相关（Q-ENCRYPT-STICKY 仍开）。
+  deps:
+  - J-HANG-UNREACHABLE-SET
+  - D-SHORT-CROSSCORE
+  status: active
+  targets:
+  - Q-ENCRYPT-STICKY
+
+- id: D-CORRECTNESS-WRITEOUT
+  domain: correctness
+  kind: decision
+  by: human
+  title: 业务写出 UB+DataCopy；权威同 ISA
+  statement: >-
+    业务 GM 禁依赖 SetValue；交叉用同 ISA liboqs。设备常量字符串用 uint8 表。
+    为何：F-SETVALUE-FALSE-GREEN / F-DEVICE-STRING-GM / F-LIBOQS-IO。
+  deps:
+  - F-SETVALUE-FALSE-GREEN
+  - F-DEVICE-STRING-GM
+  - F-LIBOQS-IO
+  status: active
+
+- id: D-KEM-MATH-INVARIANTS
+  domain: kem-math
+  kind: decision
+  by: human
+  title: 锁 NTT 不变量：poly-batch / limb / Gather 范围
+  statement: >-
+    实现须保持 poly-batch、limb 算术低位、NTT S1–S3 禁 Gather。换参数组不得默默破坏。
+  deps:
+  - F-POLYBATCH
+  - F-LIMB-LO-ARITH
+  - F-NTT-S123-NO-GATHER
+  status: active
+
+# ─── 关闸证据（极薄；战役细节在 QUEUE） ───────────────────
+- id: J-REBUILD-TOPO-PASSES-GATES
+  domain: impl-tech
+  kind: inference
+  derivation: defeasible
+  title: 短 CrossCore 重建拓扑可通过双门禁（暂行）
+  statement: >-
+    在 D-SHORT-CROSSCORE / D-HARD-SYNC-BANS / D-CORRECTNESS-WRITEOUT / D-NPU-STRESS 约束下重拼的
+    Encaps/Decrypt/KeyGen 路径，已观察到 NPU 加压不挂且 liboqs I/O 绿。
+    预测：违反短握手或假绿阶梯会重新打开门禁。≠已晋级 stable；≠Encrypt 粘性充分条件已解。
+  deps:
+  - D-SHORT-CROSSCORE
+  - D-NPU-STRESS
+  - D-CORRECTNESS-WRITEOUT
+  - J-SHORT-CROSSCORE-HELPS-BOTH
+  status: verified
+  basis: experiment
+  evidence: >-
+    Encrypt T22–T24；Decrypt D04/K04；KeyGen RB-K04/K05/K06 NPU×30（细节见 QUEUE/MATRIX，不进本图展开）
+
+changelog:
+- date: '2026-09-09'
+  change: >-
+    全图重写：机制推理（J-HANG-UNREACHABLE-SET 等）+ 证伪教训 + 带代价决策为主；
+    删除战役现象台账式 fact（×30/TRACE/launch 计数等）；关闸仅留 J-REBUILD-TOPO-PASSES-GATES 薄指针。
+- date: '2026-09-09'
+  change: >-
+    装入 reasoning-graph-skill；此前 question closed→answered 口径已并入本重写。

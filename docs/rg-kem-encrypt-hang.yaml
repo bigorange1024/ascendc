@@ -1,3 +1,5 @@
+# 【对照源只读】来自分支 fe53 或 1534；新卡死断言请写入 rg-ascendc-engineering.yaml
+
 # 推理图谱：ML-KEM Encrypt 卡死排查（初始 W0）
 # 工具：thirdparty/reasoning-graph-skill-master/
 # 主控独占写；subagent 只读参考（除非任务明示允许改指定节点）

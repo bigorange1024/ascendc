@@ -1,0 +1,13 @@
+[SUCCESS][AIC_0][pid 103210] exit success!
+[SUCCESS][AIV_0][pid 103211] exit success!
+[SUCCESS][AIV_1][pid 103212] exit success!
+[INFO]  causal: NTT SET1+WAIT3 seen
+[INFO]  causal: device NTT(y) wrote ŷ
+[INFO]  phases: NTT(1/3)->YHAT all linked
+[wall_sec] 0.481
+[kernel-run-timeout] wall_sec=0.481 budget=120s rc=0 bin=ascendc_kernels_bbit
+[OK] y_hat max_abs=0 n=1024
+[PASS_SYNC] NTT(1/3) causal + Cube ok
+[PASS_IO] ŷ match golden (device MIX)
+[SUCCESS] RB-T12 PASS_SYNC + PASS_IO
+[SUCCESS] RB-T12-device-ntt-y (cpu)

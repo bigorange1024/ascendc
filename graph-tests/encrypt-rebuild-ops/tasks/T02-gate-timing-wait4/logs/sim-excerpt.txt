@@ -1,0 +1,11 @@
+[INFO]  causal: SET4 seen + WAIT3 seen => AIC WAIT4 + Cube + WAIT1 + SET3 completed
+[INFO]  gate: AIC entered Wait(4) before AIV Set(4) (expected; woken by Set)
+[INFO] Total tick: 5142
+[WARN] TRACE[2]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[3]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[4]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[6]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[9]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[WARN] TRACE[10]=0x00000000 (soft; SIM 上 AIC/AIV1 标量 TRACE 常空)
+[SUCCESS] SET4 / WAIT4+1/3(causal+Cube) / WAIT3 / sync 后 — out+TRACE+mat_c ok
+[SUCCESS] RB-T02-gate-timing-wait4 (sim)

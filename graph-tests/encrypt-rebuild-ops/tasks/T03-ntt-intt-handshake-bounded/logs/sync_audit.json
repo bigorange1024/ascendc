@@ -1,0 +1,260 @@
+{
+  "files_scanned": [
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_aic_device-prefix/src/ascendc_kernels_sim_aic_device-build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_aic_device-prefix/src/ascendc_kernels_sim_aic_device-build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_aiv_device-prefix/src/ascendc_kernels_sim_aiv_device-build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_aiv_device-prefix/src/ascendc_kernels_sim_aiv_device-build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_host-prefix/src/ascendc_kernels_sim_host-build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_host-prefix/src/ascendc_kernels_sim_host-build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_precompile-prefix/src/ascendc_kernels_sim_precompile-build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_precompile-prefix/src/ascendc_kernels_sim_precompile-build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_preprocess-prefix/src/ascendc_kernels_sim_preprocess-build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/ascendc_kernels_sim_preprocess-prefix/src/ascendc_kernels_sim_preprocess-build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/auto_gen/ascendc_kernels_sim/auto_gen_mmad_custom.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/auto_gen/ascendc_kernels_sim/host_stub.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/include/ascendc_kernels_sim/aclrtlaunch_mmad_custom.h",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/build/include/ascendc_kernels_sim/aclrtlaunch_triple_chevrons_func.h",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/data_utils.h",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/light_cube.hpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/main.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/out/include/ascendc_kernels_sim/aclrtlaunch_mmad_custom.h",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/out/include/ascendc_kernels_sim/aclrtlaunch_triple_chevrons_func.h",
+    "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/tiling.h"
+  ],
+  "event_count": 12,
+  "findings": [
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 39,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@39 后调用 CrossSet()@44（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 29,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 32,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 38,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 40,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 46,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 48,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 86,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 86,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in <global>",
+      "detail": "行: [86, 100, 137, 140]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 100,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 137,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "line": 140,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 29,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 32,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 38,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 39,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 40,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 46,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 47,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 48,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 86,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 100,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 137,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 140,
+      "file": "graph-tests/toys/RB-T03-ntt-gate-intt-bounded/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

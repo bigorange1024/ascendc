@@ -1,0 +1,10 @@
+[SUCCESS][AIC_0][pid 95591] exit success!
+[SUCCESS][AIV_0][pid 95592] exit success!
+[SUCCESS][AIV_1][pid 95593] exit success!
+[INFO]  phases: NTT(1/3)->MUL->GATE(4)->INTT(1/3)->UV all linked
+[wall_sec] 0.655
+[kernel-run-timeout] wall_sec=0.655 budget=120s rc=0 bin=ascendc_kernels_bbit
+[PASS_SYNC] NTT(1/3)+GATE(4)+INTT(1/3) causal + dual Cube ok
+[PASS_IO] u,v match golden (device MIX)
+[SUCCESS] RB-T10 PASS_SYNC + PASS_IO
+[SUCCESS] RB-T10-uv-device-mix (cpu)

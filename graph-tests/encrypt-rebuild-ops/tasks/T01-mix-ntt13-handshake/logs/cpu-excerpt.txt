@@ -1,0 +1,21 @@
+[INFO]  Host: TRACE HOST_PRE marked, launching MIX kernel (CPU twin)
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 68985] exit success!
+[SUCCESS][AIV_0][pid 68986] exit success!
+[SUCCESS][AIV_1][pid 68987] exit success!
+[INFO]  TRACE map dump (slot=magic):
+[INFO]    [0] HOST_PRE        = 0x484F5354
+[INFO]    [1] AIV0_PRE_SET1   = 0xA1010001  (SET1)
+[INFO]    [2] AIV1_PRE_SET1   = 0xA1110001  (SET1)
+[INFO]    [3] AIC_POST_WAIT1  = 0xC1010001  (WAIT1 direct)
+[INFO]    [4] AIC_PRE_SET3    = 0xC1030003  (SET3 direct)
+[INFO]    [5] AIV0_POST_WAIT3 = 0xA1030003  (after WAIT3)
+[INFO]    [6] AIV1_POST_WAIT3 = 0xA1130003  (after WAIT3)
+[INFO]    [7] HOST_POST_SYNC  = 0x484F5355  (sync 后)
+[INFO]  causal: SET1 seen + WAIT3 seen => AIC WAIT1 + SET3 completed (handshake)
+[INFO]  direct: WAIT1 TRACE slot set
+[INFO]  direct: SET3 TRACE slot set
+[wall_sec] 0.384
+[kernel-run-timeout] wall_sec=0.384 budget=60s rc=0 bin=ascendc_kernels_bbit
+[SUCCESS] SET1 / WAIT1+SET3(causal+Cube) / WAIT3 / sync 后 — out+TRACE+mat_c ok
+[SUCCESS] RB-T01-mix-ntt13-handshake (cpu)

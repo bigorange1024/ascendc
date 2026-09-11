@@ -1,0 +1,18 @@
+[INFO]  phases: NTT(1/3)->MUL->GATE(4)->INTT(1/3)->UV all linked
+[INFO] Total tick: 778232
+[wall_sec] 356.309
+[kernel-run-timeout] wall_sec=356.309 budget=600s rc=0 bin=ascendc_kernels_bbit
+[WARN] TRACE[2] AIV1 PRE_SET1_NTT 空；已由 AIV0[1] 验收
+[WARN] TRACE[16] AIV1 POST_WAIT3_NTT 空；已由 AIV0[5] 验收
+[WARN] TRACE[14] AIV1 PRE_SET4 空；已由 AIV0[6] 验收
+[WARN] TRACE[15] AIV1 PRE_SET1_INTT 空；已由 AIV0[9] 验收
+[WARN] TRACE[13] AIV1 POST_WAIT3_INTT 空；已由 AIV0[12] 验收
+[WARN] TRACE[3]=0x00000000 (soft expect 0xC1010001)
+[WARN] TRACE[4]=0x00000000 (soft expect 0xC1030003)
+[WARN] TRACE[7]=0x00000000 (soft expect 0xC1040004)
+[WARN] TRACE[10]=0x00000000 (soft expect 0xC1011001)
+[WARN] TRACE[11]=0x00000000 (soft expect 0xC1031003)
+[PASS_SYNC] NTT(1/3)+GATE(4)+INTT(1/3) causal + dual Cube ok
+[PASS_IO] u,v match golden (device MIX)
+[SUCCESS] RB-T10 PASS_SYNC + PASS_IO
+[SUCCESS] RB-T10-uv-device-mix (sim)

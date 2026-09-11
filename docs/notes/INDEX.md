@@ -42,6 +42,18 @@
 | [F203-KEM-Alg20-Encaps设备全链技术总结.md](F203-KEM-Alg20-Encaps设备全链技术总结.md) | **Alg.20 KEM Encaps**；stable [`stable-…-kem-encaps-k4`](../../examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-kem-encaps-k4/) · device [`pass-fix-…-encaps-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg20-kem-encaps-device-k4/) |
 | [F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md](F203-KEM-Alg21-Decaps设备全链与SIM单session技术总结.md) | **Alg.21 KEM Decaps**；交付 device [`pass-fix-…-device-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-k4/) · CT 专题 [`pass-fix-…-device-ct-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg21-kem-decaps-device-ct-k4/)；历史 correctness **已冻结**（[`FROZEN.md`](../../ascendc-tests/frozen/frozen-fix-f203-alg21-kem-decaps-correctness-k4/FROZEN.md)） |
 | [F203-Encrypt-compute-行18-19-UB驻留技术总结.md](F203-Encrypt-compute-行18-19-UB驻留技术总结.md) | **Alg.14 compute** 内积→INTT **UB 驻留**、MIX GATE 握手、SIM 标量/MTE 可见性；[`pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4`](../../ascendc-tests/ml-kem/ml-kem-1024/pass-fix-f203-alg14-lines2-18-19-21-encrypt-compute-k4/) |
+| [Decrypt-cannbot-rebuild-capability-inventory.md](Decrypt-cannbot-rebuild-capability-inventory.md) | **Decrypt/Decaps 重建**积木与缺口（DG1–DG7）；禁抄 T25–T27/alg15/21 |
+| [Decrypt-cannbot-rebuild-work-mode.md](Decrypt-cannbot-rebuild-work-mode.md) | Decrypt/Decaps 主控↔subagent 工作模式 · cannbot 路由 |
+| [Decrypt-cannbot-rebuild-kb.md](Decrypt-cannbot-rebuild-kb.md) | **归档指针** → ascendc-engineering-kb |
+| [ascendc-engineering-kb.md](ascendc-engineering-kb.md) | **全工程唯一写码 KB**：机制 / 证伪 / 权衡 / 假绿阶梯 / 开路径检查单（对齐推理图） |
+| [KeyGen-cannbot-rebuild-capability-inventory.md](KeyGen-cannbot-rebuild-capability-inventory.md) | KeyGen **积木运营表**（KG1–KG7；非推理正文） |
+| [KeyGen-cannbot-rebuild-work-mode.md](KeyGen-cannbot-rebuild-work-mode.md) | KeyGen 角色/分流（KB/DAG 指向工程文件） |
+| [KeyGen-cannbot-rebuild-kb.md](KeyGen-cannbot-rebuild-kb.md) | **归档指针** → ascendc-engineering-kb |
+| [MIX-Decrypt-Decaps-反卡死拓扑技术总结.md](MIX-Decrypt-Decaps-反卡死拓扑技术总结.md) | **案例附录**（三核拓扑）；写码以工程 KB 为准 |
+| [MIX-Encrypt-Encaps-反卡死拓扑技术总结.md](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md) | **案例附录**（Encrypt/Encaps 拓扑）；写码以工程 KB 为准 |
+| [Encrypt-cannbot-rebuild-kb.md](Encrypt-cannbot-rebuild-kb.md) | **归档指针** → ascendc-engineering-kb |
+| [`docs/rg-ascendc-engineering.yaml`](../rg-ascendc-engineering.yaml) | **全工程唯一**机读推理 DAG |
+| [`docs/rg-ascendc-engineering.viz.html`](../rg-ascendc-engineering.viz.html) | 可视化（`scripts/rg_viz.py`） |
 
 ## AscendC 平台
 
@@ -53,6 +65,19 @@
 | [AscendC-CPU与SIM实现分叉开发指南.md](AscendC-CPU与SIM实现分叉开发指南.md) | **强制** `ASCENDC_BUILD_CPU/SIM` + `ASCENDC_SIM_HOST_MODE` 全仓登记；§4.1 新代码写法；附录 A/B 案例 |
 | [AscendC-多核MatMul-tiling技术总结.md](AscendC-多核MatMul-tiling技术总结.md) | 多 AIC `SetSingleShape`（frozen 探针） |
 | [AscendC多环境运行纪要.md](AscendC多环境运行纪要.md) | **WSL / Cloud / 真机**：三档 cpu|sim|npu、`runtime_env`、Clang `-Werror`、SIM dump 分轨 |
+
+## Encrypt cannbot 重建（方法脚手架；非算子交付）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-cannbot-rebuild-capability-inventory.md](Encrypt-cannbot-rebuild-capability-inventory.md) | Alg.14/Encaps 积木；**G1–G5 已关**；禁抄索引 |
+| [Encrypt-cannbot-rebuild-work-mode.md](Encrypt-cannbot-rebuild-work-mode.md) | 主控设计 + subagent 编码；cannbot 路由；实验环 |
+| [Encrypt-cannbot-rebuild-kb.md](Encrypt-cannbot-rebuild-kb.md) | **归档指针** → ascendc-engineering-kb |
+| [MIX-Encrypt-Encaps-反卡死拓扑技术总结.md](MIX-Encrypt-Encaps-反卡死拓扑技术总结.md) | **案例附录**；机制/决策以工程 KB + yaml 为准 |
+| [`docs/rg-ascendc-engineering.yaml`](../rg-ascendc-engineering.yaml) | **全工程**机读推理 DAG |
+| [`docs/rg-ascendc-engineering.viz.html`](../rg-ascendc-engineering.viz.html) | `python3 scripts/rg_viz.py` |
+| [`docs/rg-encrypt-cannbot-rebuild.yaml`](../rg-encrypt-cannbot-rebuild.yaml) | **归档指针** |
+| [`graph-tests/INDEX.md`](../../graph-tests/INDEX.md) | 试验场索引（一刀一目录） |
 
 ## 治理与模板
 

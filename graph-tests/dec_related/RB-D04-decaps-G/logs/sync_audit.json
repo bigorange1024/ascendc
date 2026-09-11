@@ -1,0 +1,52 @@
+{
+  "files_scanned": [
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/build/CMakeFiles/3.22.1/CompilerIdC/CMakeCCompilerId.c",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/build/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/data_utils.h",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/decaps_g_custom.cpp",
+    "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/main.cpp"
+  ],
+  "event_count": 2,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/decaps_g_custom.cpp",
+      "line": 77,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/decaps_g_custom.cpp",
+      "line": 96,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 77,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/decaps_g_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 96,
+      "file": "/home/yuanye/ascendc/graph-tests/dec_related/RB-D04-decaps-G/decaps_g_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

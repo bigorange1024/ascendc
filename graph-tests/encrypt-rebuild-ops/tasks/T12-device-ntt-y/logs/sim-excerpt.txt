@@ -1,0 +1,15 @@
+[INFO]  causal: NTT SET1+WAIT3 seen
+[INFO]  causal: device NTT(y) wrote ŷ
+[INFO]  phases: NTT(1/3)->YHAT all linked
+[INFO] Total tick: 282419
+[wall_sec] 133.981
+[kernel-run-timeout] wall_sec=133.981 budget=600s rc=0 bin=ascendc_kernels_bbit
+[WARN] TRACE[2] AIV1 PRE_SET1_NTT 空；已由 AIV0[1] 验收
+[WARN] TRACE[7] AIV1 POST_WAIT3_NTT 空；已由 AIV0[5] 验收
+[WARN] TRACE[3]=0x00000000 (soft expect 0xC1010001)
+[WARN] TRACE[4]=0x00000000 (soft expect 0xC1030003)
+[OK] y_hat max_abs=0 n=1024
+[PASS_SYNC] NTT(1/3) causal + Cube ok
+[PASS_IO] ŷ match golden (device MIX)
+[SUCCESS] RB-T12 PASS_SYNC + PASS_IO
+[SUCCESS] RB-T12-device-ntt-y (sim)

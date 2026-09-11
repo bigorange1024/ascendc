@@ -1,0 +1,204 @@
+{
+  "files_scanned": [
+    "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/light_cube.hpp",
+    "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp"
+  ],
+  "event_count": 11,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 25,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 28,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 37,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 39,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 48,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 50,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 86,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 104,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "line": 107,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 25,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 28,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 37,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 38,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 39,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 48,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 49,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 50,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 86,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 104,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 107,
+      "file": "/home/yuanye/ascendc/graph-tests/toys/RB-T01-mix-ntt13-handshake/mmad_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

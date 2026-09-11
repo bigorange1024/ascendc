@@ -1,0 +1,6 @@
+[INFO] Total tick: 57699
+[wall_sec] 27.445
+[kernel-run-timeout] wall_sec=27.445 budget=120s rc=0 bin=ascendc_kernels_bbit
+[camodel_sim_log] moved 2 stray artifact(s) -> /home/yuanye/ascendc/graph-tests/bricks/RB-T06-cipher-pack/sim_log
+[SUCCESS] c[1568] matches golden (c1=1408B @0, c2=160B @1408)
+[SUCCESS] RB-T06-cipher-pack (sim)

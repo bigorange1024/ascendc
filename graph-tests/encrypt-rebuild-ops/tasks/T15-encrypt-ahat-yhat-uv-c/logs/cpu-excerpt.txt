@@ -1,0 +1,40 @@
+[TmSim]: Run in serial mode.
+[SUCCESS][CORE_0][pid 117012] exit success!
+[INFO]  Host: mid-sync after Launch1, Launch2 compute_custom (CPU MIX twin)
+[TmSim]: Run in serial mode.
+[SUCCESS][AIC_0][pid 117013] exit success!
+[TmSim]: Run in serial mode.
+[SUCCESS][AIV_0][pid 117014] exit success!
+[SUCCESS][AIV_1][pid 117015] exit success!
+[INFO]  TRACE map dump (slot=magic):
+[INFO]    [0] HOST_PRE             = 0x484F5354
+[INFO]    [1] PREP_DONE            = 0x50524550
+[INFO]    [2] AIV0_PRE_SET1_NTT    = 0xA1010001
+[INFO]    [6] AIV0_POST_WAIT3_NTT  = 0xA1030003
+[INFO]    [22] AIV0_AHAT_DONE       = 0x41484154
+[INFO]    [23] AIV0_YHAT_DONE       = 0x59484154
+[INFO]    [7] AIV0_MUL_DONE        = 0x4D554C44
+[INFO]    [8] AIV0_PRE_SET4        = 0xA1040004
+[INFO]    [10] HOST_MID_SYNC        = 0x484F4D49
+[INFO]    [11] AIV0_PRE_SET1_INTT   = 0xA1011001
+[INFO]    [14] AIV0_POST_WAIT3_INTT = 0xA1031003
+[INFO]    [15] AIV0_UV_DONE         = 0x5556444E
+[INFO]    [16] AIV0_PACK_DONE       = 0x5041434B
+[INFO]    [17] HOST_POST_SYNC       = 0x484F5355
+[INFO]  causal: Launch1 PREP_DONE seen
+[INFO]  causal: device SampleNTT+NTT wrote Â,ŷ
+[INFO]  causal: Launch2 NTT->AHAT/YHAT->MUL->GATE->INTT linked
+[INFO]  causal: device INTT+noise wrote u,v
+[INFO]  causal: AIV0 pack(u,v->c) done after UV
+[wall_sec] 6.553
+[kernel-run-timeout] wall_sec=6.553 budget=600s rc=0 bin=ascendc_kernels_bbit
+[PASS_SYNC] dual-launch causal + AHAT/YHAT + dual Cube + pack TRACE ok
+[PASS_IO] c match
+[PASS_IO] u max_abs=0 n=1024
+[PASS_IO] v max_abs=0 n=256
+[PASS_IO] a_hat max_abs=0 n=4096
+[PASS_IO] y_hat max_abs=0 n=1024
+[PASS_IO] y_e1_e2_dev match
+[PASS_IO] rho_dev match
+[SUCCESS] PASS_SYNC + PASS_IO — RB-T15 encrypt ahat-yhat-uv-c
+[SUCCESS] RB-T15-encrypt-ahat-yhat-uv-c (cpu)
