@@ -1,0 +1,375 @@
+{
+  "files_scanned": [
+    "aic_func.hpp",
+    "aiv_func.hpp",
+    "basic.hpp",
+    "enc_aiv_stub_common.hpp",
+    "enc_matvec_real.cpp",
+    "enc_pack_compress_real.cpp",
+    "enc_prep_cbd_real.cpp",
+    "mmad_custom.cpp",
+    "ntt_vec.hpp",
+    "tiling.h"
+  ],
+  "event_count": 20,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "mmad_custom.cpp",
+      "line": 25,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "mmad_custom.cpp",
+      "line": 30,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_pack_compress_real.cpp",
+      "line": 92,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_pack_compress_real.cpp",
+      "line": 104,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 121,
+      "message": "同一函数连续 PipeBarrier 过多: 13 个 in <global>",
+      "detail": "行: [121, 130, 142, 155, 160, 162, 167, 179, 183, 126, 139, 144, 150]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 121,
+      "message": "同一文件 PipeBarrier<PIPE_V> 过多: 7 个",
+      "detail": "行: [121, 130, 142, 155, 167, 179, 183]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_prep_cbd_real.cpp",
+      "line": 126,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-11",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 128,
+      "message": "EnQue→DeQue 后无计算，TQue 当 TBuf 用",
+      "detail": "EnQue@127 → DeQue@128，DeQue 后无计算操作；EnQue/DeQue 的隐式同步被浪费"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_prep_cbd_real.cpp",
+      "line": 139,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-11",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 140,
+      "message": "EnQue→DeQue 后无计算，TQue 当 TBuf 用",
+      "detail": "EnQue@139 → DeQue@140，DeQue 后无计算操作；EnQue/DeQue 的隐式同步被浪费"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_prep_cbd_real.cpp",
+      "line": 144,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_prep_cbd_real.cpp",
+      "line": 150,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-11",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 153,
+      "message": "EnQue→DeQue 后无计算，TQue 当 TBuf 用",
+      "detail": "EnQue@152 → DeQue@153，DeQue 后无计算操作；EnQue/DeQue 的隐式同步被浪费"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 160,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "enc_matvec_real.cpp",
+      "line": 162,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-11",
+      "severity": "性能",
+      "file": "enc_pack_compress_real.cpp",
+      "line": 163,
+      "message": "EnQue→DeQue 后无计算，TQue 当 TBuf 用",
+      "detail": "EnQue@162 → DeQue@163，DeQue 后无计算操作；EnQue/DeQue 的隐式同步被浪费"
+    },
+    {
+      "code": "SYNC-11",
+      "severity": "性能",
+      "file": "enc_pack_compress_real.cpp",
+      "line": 180,
+      "message": "EnQue→DeQue 后无计算，TQue 当 TBuf 用",
+      "detail": "EnQue@179 → DeQue@180，DeQue 后无计算操作；EnQue/DeQue 的隐式同步被浪费"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 121,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 130,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 142,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 155,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 160,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 162,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 167,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 179,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 183,
+      "file": "enc_matvec_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 92,
+      "file": "enc_pack_compress_real.cpp",
+      "func": "__aicore__ inline void PackOnePoly",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 104,
+      "file": "enc_pack_compress_real.cpp",
+      "func": "__aicore__ inline void PackOnePoly",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 126,
+      "file": "enc_prep_cbd_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 139,
+      "file": "enc_prep_cbd_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 144,
+      "file": "enc_prep_cbd_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 150,
+      "file": "enc_prep_cbd_real.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 25,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __WAIT",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "STATE",
+      "line": 26,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __WAIT",
+      "raw": "CrossCoreWaitFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 30,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __SET",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "STATE",
+      "line": 31,
+      "file": "mmad_custom.cpp",
+      "func": "__aicore__ inline void __SET",
+      "raw": "CrossCoreSetFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 104,
+      "file": "ntt_vec.hpp",
+      "func": "__aicore__ inline void split_vec_int7x4",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

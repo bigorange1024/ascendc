@@ -1,5 +1,6 @@
 # 【对照源只读】来自分支 fe53 或 1534；新卡死断言请写入 rg-ascendc-engineering.yaml
 
+
 # 推理图谱 · Decrypt fused（Alg.15）卡死排查
 # 用途：服务 debug 的可推翻知识 +「提假设 → toy 实验 → 反向审查」。
 # 与 Encrypt 图分离：docs/rg-encrypt-l18.yaml 不回答本线问题。

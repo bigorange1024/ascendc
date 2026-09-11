@@ -36,6 +36,7 @@ REPOS=(
   "cannbot-skills|https://gitcode.com/cann/cannbot-skills.git||1|CANNBot Agent Skills（GitCode；AscendC/图/推理等可复用技能）"
 
   "cannbot-skills|https://gitcode.com/cann/cannbot-skills.git||1|CANN Bot Skills（gitcode cann/cannbot-skills）"
+
 )
 
 should_process() {

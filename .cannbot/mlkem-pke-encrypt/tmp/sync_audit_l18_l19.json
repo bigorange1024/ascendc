@@ -1,0 +1,305 @@
+重建完成: /workspace/thirdparty/cannbot-skills/ops/ascendc-sync-audit/data/sync_cases.db（333 条 case）
+[case_retriever] sync_cases.db 缺失，已从 sync_cases.jsonl 自动重建
+{
+  "files_scanned": [
+    "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp"
+  ],
+  "event_count": 15,
+  "findings": [
+    {
+      "code": "SYNC-03",
+      "severity": "高",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 87,
+      "message": "CrossCore Set/Wait 同侧（），疑似配对错误: flag=st",
+      "detail": "Set/Wait 都在  块内；CrossCore 应跨核（AIC↔AIV），请确认 Set/Wait 是否放错侧别块 | 历史 case: cann/ops-transformer PR#6619 (cross_core) | 修复提示: 确保每个 WaitFlag 有对应 SetFlag，所有路径都触发 SetFlag | diff证据: @@ -315,6 +315,10 @@ __aicore__ inline void MhcPreKernelSplitBS<T, P>::V0Prologue(uint32_t curNdLen,..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 86,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 95,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 146,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 146,
+      "message": "同一函数连续 PipeBarrier 过多: 5 个 in __aicore__ inline void PrefixEmbedMuIntoE2Gm",
+      "detail": "行: [146, 148, 150, 152, 154]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 148,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 150,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 152,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 154,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 204,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 204,
+      "message": "同一函数连续 PipeBarrier 过多: 6 个 in AicMmadRound",
+      "detail": "行: [204, 280, 289, 306, 318, 358]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 280,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 289,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 306,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 318,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "line": 358,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 86,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void FsmWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "st",
+      "line": 87,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void FsmWait",
+      "raw": "CrossCoreWaitFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 95,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void FsmSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "st",
+      "line": 96,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void FsmSet",
+      "raw": "CrossCoreSetFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 146,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void PrefixEmbedMuIntoE2Gm",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 148,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void PrefixEmbedMuIntoE2Gm",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 150,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void PrefixEmbedMuIntoE2Gm",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 152,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void PrefixEmbedMuIntoE2Gm",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 154,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "__aicore__ inline void PrefixEmbedMuIntoE2Gm",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 204,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "AicMmadRound",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 280,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "AicMmadRound",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 289,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "AicMmadRound",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 306,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "AicMmadRound",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 318,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "AicMmadRound",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 358,
+      "file": "/workspace/examples/stable/ml-kem/ml-kem-1024/stable-fips203-mlkem-pke-encrypt-k4/compute/f203_encrypt_l18_l19_kernel.cpp",
+      "func": "AicMmadRound",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

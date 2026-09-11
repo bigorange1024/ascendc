@@ -46,6 +46,30 @@
 
 关键字：**Q-ULT** · T23/T24 liboqs · **T27 NPU绿** · auto_gen **prep_custom撞名** · 507000 · **整段重写 Decrypt/Decaps** · **Cloud交替HANDOFF** · 预算180s
 
+### 2026-09-10 — [HiDevLab WebIDE 主路径](2026-09/2026-09-10-HiDevLab-WebIDE主路径.md)
+
+关键字：**HiDevLab** · **WebIDE** · **hidevlab_boot.sh** · **SSH 5min 非主通道** · **机上无 GitHub** · **add_custom NPU 冒烟 PASS**
+
+### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
+
+关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills** · **`rg-encrypt-cann-ntt` 迁骨架** · **Q-ULT answered** · **正确性/旧l18 仍 open**
+
+### 2026-09-08 — [Encrypt×cann-ntt 锁定 · 文档底座](2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md)
+
+关键字：**Host编排+迁入cann-ntt** · **EN01–EN09 SIM齐** · **EN10/EN11 NPU不挂** · **EN12 sticky进行中** · **空闲&lt;4min保活** · **禁抄PKE/KEM**
+
+### 2026-09-07 — [Encrypt · cannbot + ER01/ER02](2026-09/2026-09-07-Encrypt-cannbot与ER01交接.md)
+
+关键字：**主控/subagent** · **ER03 PASS/X27** · **ER05 PASS/X29 · SIM暂停等NPU** · **禁 commit/push**
+### 2026-09-06 — [Encrypt 卡死重写 · T01 PASS · 开 T02](2026-09/2026-09-06-Encrypt卡死重写T01与T02.md)
+
+关键字：**限时实验** · **禁复踩失败路线** · **每刀前遍历 KB+图** · **T01 1/3 握手 PASS** · **T02 生产 GATE 时序**
+
+### 2026-09-03 — [Encrypt 卡死 · 推理图谱 · toy 近目标](2026-09/2026-09-03-Encrypt卡死图谱与toy近目标.md)
+
+关键字：**`docs/rg-encrypt-l18.yaml`** · **Decrypt 独立 `rg-decrypt-fused.yaml`** · **DGT-1 SoftSync toy** · **Q-ULT NPU 不卡+正确** · **GT-1..7 SIM 绿** · **DataCopy TRACE** · **`graph-tests/`** · 禁全量 SIM 磨 FSM · 禁空耗催上机
+
+
 ### 2026-09-01 — [有界演示 · 合稿删 · 方法论两阶段收口](2026-09/2026-09-01-有界演示路径拓扑与合稿衔接片删除.md)
 
 关键字：有界演示 **入目标边数锁定** · 缺项路径一次画全 · 合稿衔接片 **已删** · 对外 **两阶段（补缺/推进）** · **约束→形式语言** · **状态→自动机** · 清单→依赖差分（阶段 1 内）· 领导向三句验收

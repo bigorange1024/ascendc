@@ -54,6 +54,12 @@ ascendc-tests/
 | [**fix-decrypt-skel-mix-chain-toy/**](fix-decrypt-skel-mix-chain-toy/) | **Decrypt fused 握手 toy**：SoftSync+两轮 GATE+stub Cube；magic `SKELDEC1`/`0x04`；`SKEL_OMIT_SET4=1`⇒**124** | — | **✓** TASK-009：A wall≈3.9s；B budget60 **124** |
 | [**fix-encrypt-clean-hostmu-2launch/**](fix-encrypt-clean-hostmu-2launch/) | **干净 Encrypt 加法**：P0 握手 + **P1a 早 TRACE**；Hostμ；无 PrefixEmbed；Wait(4)↔SET(4) | — | **✓** P1a：magic/`0x2A` + TRACE AIV 0–3；下一刀 P1b |
 | [**pass-merged-kyber-mix-ntt256/**](pass-merged-kyber-mix-ntt256/) | **授权示例**：Kyber 单 poly n=256 MIX NTT；**非** FIPS Tag5T；SIM **10348** tick | ✓ | ✓ |
+| [**fix-toy-encrypt-fsm-ntt1/**](fix-toy-encrypt-fsm-ntt1/) | **GT-20260903-1**：Encrypt NTT 同构 CrossCore **flag 1/3**；桩哈希+极轻 MMAD；**不对正确性**；只认 SIM | — | **✓**（tick 8000） |
+| [**pass-toy-encrypt-fsm-gate-intt1/**](pass-toy-encrypt-fsm-gate-intt1/) | **GT-20260903-2**：GATE **4↔8** 后再 INTT 同构 **flag 1/3**；跳过短 NTT；**不对正确性**；只认 SIM | — | **✓**（tick 10911） |
+| [**pass-toy-encrypt-fsm-l18-skel1/**](pass-toy-encrypt-fsm-l18-skel1/) | **GT-20260903-3**：同核 **NTT 1/3→GATE→INTT 1/3** + 简易 TRACE；**不对正确性**；只认 SIM | — | **✓**（tick 14193；TRACE 4/8） |
+| [**fix-toy-decrypt-fsm-softsync1/**](fix-toy-decrypt-fsm-softsync1/) | **DGT-20260903-1**：Decrypt 同构 **SoftSyncArrive**（AIV0 写 slot0 / AIV1 忙等）；AIC 无 Wait 仅极轻 MMAD；**不对正确性**；只认 SIM | — | **✓**（tick 3979；TRACE SoftSync 2/2） |
+| [**fix-toy-decrypt-fsm-soft-gate1/**](fix-toy-decrypt-fsm-soft-gate1/) | **DGT-20260903-2**：SoftSyncArrive 后再一轮 GATE **4↔8**（prep 段末同构）；禁 SyncAll@AIC-Wait；无 NTT/INTT；**不对正确性**；只认 SIM | — | **✓**（tick 5073；TRACE Soft+GATE 2/2） |
+| [**pass-toy-decrypt-fsm-fused-skel1/**](pass-toy-decrypt-fsm-fused-skel1/) | **DGT-20260903-3/4**：Decrypt 同构 **Soft×2 + GATE 4↔8×2 + NTT/INTT 1/3** + GT-4 TRACE；Host `TOY_LAUNCH_REPEAT` 默认 16 同进程多 launch；**不对正确性**；只认 SIM | — | **✓**（×16 sync done；tick 181191） |
 
 ---
 

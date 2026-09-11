@@ -16,6 +16,7 @@
 #include "f203_decrypt_g4_run.hpp"
 #include "f203_decrypt_layout.h"
 #include "f203_decrypt_ntt_u_tiling.h"
+#include "f203_decrypt_trace_layout.h"
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
@@ -29,7 +30,7 @@
 extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
     GM_ADDR dkGm, GM_ADDR cGm, GM_ADDR uGm, GM_ADDR vGm, GM_ADDR sHatGm, GM_ADDR uHatGm, GM_ADDR wHatGm,
     GM_ADDR wPaddedGm, GM_ADDR wTimeGm, GM_ADDR mGm, GM_ADDR nttWsGm, GM_ADDR inttWsGm, GM_ADDR softSyncGm,
-    TilingData tiling);
+    GM_ADDR traceGm, TilingData tiling);
 #endif
 
 #include <cstdio>
@@ -38,6 +39,11 @@ extern "C" __global__ __aicore__ void f203_decrypt_device_fused(
 #include <iostream>
 #include <string>
 #include <vector>
+#ifndef ASCENDC_CPU_DEBUG
+#include <atomic>
+#include <chrono>
+#include <thread>
+#endif
 
 bool WriteFile(const std::string &filePath, const void *buffer, size_t size);
 
@@ -56,6 +62,86 @@ namespace {
 constexpr uint32_t kBlockDim = 1U;
 /** softSyncGm：int32[2] 哨兵（prep / su_dot+pad）；Host 须清零，否则 AIV1 自旋死等。 */
 constexpr size_t kSoftSyncBytes = 64U;
+
+#ifndef ASCENDC_CPU_DEBUG
+/** TRACE 缓冲字节（见 f203_decrypt_trace_layout.h）。 */
+constexpr size_t kDecryptTraceDevBytes = f203_decrypt_trace::kTraceDevBytes;
+constexpr int kDecryptTraceStages = static_cast<int>(f203_decrypt_trace::kTraceSlots);
+/**
+ * 轮询 decrypt TRACE（每槽 stride=8 int32）+ 可选 softSync[0..1]；卡死时 stderr 定位段。
+ */
+static aclError SynchronizeDecryptMaybeTrace(aclrtStream stream, void *traceDev, int32_t *traceHost, void *softSyncDev,
+                                             int32_t *softSyncHost)
+{
+    if (traceDev == nullptr || traceHost == nullptr) {
+        return aclrtSynchronizeStream(stream);
+    }
+
+    std::atomic<aclError> syncRc{ACL_ERROR_NONE};
+    std::atomic<bool> done{false};
+    std::thread syncer([&]() {
+        syncRc.store(aclrtSynchronizeStream(stream), std::memory_order_release);
+        done.store(true, std::memory_order_release);
+    });
+
+    int lastPop = -1;
+    int32_t lastSoft0 = -1;
+    int32_t lastSoft1 = -1;
+    constexpr int kPollMs = 500;
+    constexpr uint32_t kAlign = f203_decrypt_trace::kAlignInts;
+
+    while (!done.load(std::memory_order_acquire)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(kPollMs));
+        if (done.load(std::memory_order_acquire)) {
+            break;
+        }
+        std::memset(traceHost, 0, kDecryptTraceDevBytes);
+        (void)aclrtMemcpy(traceHost, kDecryptTraceDevBytes, traceDev, kDecryptTraceDevBytes,
+                          ACL_MEMCPY_DEVICE_TO_HOST);
+        int pop = 0;
+        for (int i = 0; i < kDecryptTraceStages; ++i) {
+            if (traceHost[i * static_cast<int>(kAlign)] != 0) {
+                ++pop;
+            }
+        }
+        if (softSyncDev != nullptr && softSyncHost != nullptr) {
+            (void)aclrtMemcpy(softSyncHost, 2 * sizeof(int32_t), softSyncDev, 2 * sizeof(int32_t),
+                              ACL_MEMCPY_DEVICE_TO_HOST);
+        }
+        const bool softChanged =
+            softSyncHost != nullptr && (softSyncHost[0] != lastSoft0 || softSyncHost[1] != lastSoft1);
+        if (pop != lastPop || softChanged) {
+            lastPop = pop;
+            if (softSyncHost != nullptr) {
+                lastSoft0 = softSyncHost[0];
+                lastSoft1 = softSyncHost[1];
+            }
+            std::fprintf(stderr, "[decrypt-trace] stages set=%d/%d :", pop, kDecryptTraceStages);
+            for (int i = 0; i < kDecryptTraceStages; ++i) {
+                if (traceHost[i * static_cast<int>(kAlign)] != 0) {
+                    std::fprintf(stderr, " %d", i);
+                }
+            }
+            if (softSyncHost != nullptr) {
+                std::fprintf(stderr, " | softSync=[%d,%d]", softSyncHost[0], softSyncHost[1]);
+            }
+            std::fprintf(stderr, "\n");
+            std::fflush(stderr);
+        }
+    }
+    syncer.join();
+    return syncRc.load(std::memory_order_acquire);
+}
+
+/** Host 预填 trace 末尾 ones 模板，供 AIC DataCopy 写槽。 */
+static void fill_decrypt_trace_ones(int32_t *traceHost)
+{
+    auto *ones = traceHost + static_cast<int>(f203_decrypt_trace::kOnesOffBytes / sizeof(int32_t));
+    for (uint32_t i = 0; i < f203_decrypt_trace::kAlignInts; ++i) {
+        ones[i] = 1;
+    }
+}
+#endif
 
 /**
  * 将 even/odd stacked LUT 拷入 NTT/INTT workspace 固定偏移。
@@ -107,7 +193,7 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
 
     AscendC::SetKernelMode(KernelMode::MIX_MODE);
     ICPU_RUN_KF(f203_decrypt_device_fused, kBlockDim, dkGm, cGm, uGm, vGm, sHatGm, uHatGm, wHatGm, wPaddedGm,
-                wTimeGm, mGm, nttWsGm, inttWsGm, softSyncGm, tilingData);
+                wTimeGm, mGm, nttWsGm, inttWsGm, softSyncGm, static_cast<GM_ADDR>(nullptr), tilingData);
 
     std::memcpy(m_out, mGm, F203_MSG_BYTES);
 
@@ -152,7 +238,11 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     uint8_t *nttWsDev = nullptr;
     uint8_t *inttWsDev = nullptr;
     uint8_t *softSyncDev = nullptr;
+    uint8_t *traceDev = nullptr;
+    int32_t *traceHost = nullptr;
+    int32_t *softSyncPollHost = nullptr;
     TilingData *tilingHost = nullptr;
+    const bool decryptTrace = ascendc_acl::EnvFlagOn("F203_DECRYPT_TRACE");
 
     CHECK_ACL(aclrtMalloc((void **)&cDev, F203_CT_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&dkDev, F203_DK_PKE_BYTES, ACL_MEM_MALLOC_HUGE_FIRST));
@@ -167,6 +257,16 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     CHECK_ACL(aclrtMalloc((void **)&nttWsDev, wssize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&inttWsDev, wssize, ACL_MEM_MALLOC_HUGE_FIRST));
     CHECK_ACL(aclrtMalloc((void **)&softSyncDev, kSoftSyncBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+    if (decryptTrace) {
+        CHECK_ACL(aclrtMalloc((void **)&traceDev, kDecryptTraceDevBytes, ACL_MEM_MALLOC_HUGE_FIRST));
+        CHECK_ACL(aclrtMallocHost((void **)&traceHost, kDecryptTraceDevBytes));
+        CHECK_ACL(aclrtMallocHost((void **)&softSyncPollHost, 2 * sizeof(int32_t)));
+        std::memset(traceHost, 0, kDecryptTraceDevBytes);
+        fill_decrypt_trace_ones(traceHost);
+        CHECK_ACL(aclrtMemcpy(traceDev, kDecryptTraceDevBytes, traceHost, kDecryptTraceDevBytes,
+                              ACL_MEMCPY_HOST_TO_DEVICE));
+        std::fprintf(stderr, "[main_decrypt] F203_DECRYPT_TRACE=1：轮询 fused-trace + softSync\n");
+    }
     CHECK_ACL(aclrtMallocHost((void **)&tilingHost, sizeof(TilingData)));
     *tilingHost = tilingData;
 
@@ -184,11 +284,15 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
 
     const uint32_t ret = ACLRT_LAUNCH_KERNEL(f203_decrypt_device_fused)(
         kBlockDim, stream, dkDev, cDev, uDev, vDev, sHatDev, uHatDev, wHatDev, wPaddedDev, wTimeDev, mDev, nttWsDev,
-        inttWsDev, softSyncDev, tilingHost);
+        inttWsDev, softSyncDev, traceDev, tilingHost);
     if (ret != 0) {
         return 30;
     }
-    CHECK_ACL(aclrtSynchronizeStream(stream));
+    if (decryptTrace) {
+        CHECK_ACL(SynchronizeDecryptMaybeTrace(stream, traceDev, traceHost, softSyncDev, softSyncPollHost));
+    } else {
+        CHECK_ACL(aclrtSynchronizeStream(stream));
+    }
     /* 生产契约：仅回传 m；中间态不 D2H */
     CHECK_ACL(aclrtMemcpy(m_out, F203_MSG_BYTES, mDev, F203_MSG_BYTES, ACL_MEMCPY_DEVICE_TO_HOST));
 
@@ -205,6 +309,15 @@ int run_device_session(const uint8_t *dk, const uint8_t *c, const uint8_t *lut_n
     CHECK_ACL(aclrtFree(nttWsDev));
     CHECK_ACL(aclrtFree(inttWsDev));
     CHECK_ACL(aclrtFree(softSyncDev));
+    if (traceDev != nullptr) {
+        CHECK_ACL(aclrtFree(traceDev));
+    }
+    if (traceHost != nullptr) {
+        CHECK_ACL(aclrtFreeHost(traceHost));
+    }
+    if (softSyncPollHost != nullptr) {
+        CHECK_ACL(aclrtFreeHost(softSyncPollHost));
+    }
     CHECK_ACL(aclrtFreeHost(tilingHost));
     CHECK_ACL(aclrtDestroyStream(stream));
     // ResetDevice+Finalize 由 aclGuard 析构统一执行（含早退路径）

@@ -10,6 +10,13 @@
 
 **最后刷新**：2026-09-07（合入 CANNLab 远程驱动文档/脚本；npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0；CANNLab 单卡强制 **0**）
 
+> **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh)  
+> **HiDevLab 真机（WebIDE 主路径）**：[`docs/engineering/HiDevLab-WebIDE操作手册.md`](docs/engineering/HiDevLab-WebIDE操作手册.md)（开机 `bash /workspace/hidevlab_boot.sh`；配方 `scripts/hidevlab/`；勿把 SSH直连当 Agent 长连接）  
+> **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
+
+**最后刷新**：2026-09-10（fe53 同步 HiDevLab WebIDE 脚本/手册；npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0）
+
+
 ---
 
 ## 1. 开任务顺序（强制）

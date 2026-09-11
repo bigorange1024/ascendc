@@ -1,0 +1,467 @@
+version: 1
+title: Encrypt × cann-ntt Host编排 · 推理图谱
+updated: '2026-09-09'
+config:
+  required_fields:
+  - domain
+  id_prefix_by_kind:
+    fact: F
+    inference: I
+    decision: D
+    question: Q
+  fact_provenance_values:
+  - observation
+  - measurement
+  - doc
+  - env-api
+  inference_derivation_values:
+  - deductive
+  - defeasible
+  decision_by_values:
+  - human
+  - agent
+  require_repro_for_provenance:
+  - measurement
+review:
+  last_reviewed: '2026-09-09'
+  note: 迁入reasoning-graph-skill骨架；Q-ULT由I-HOST-ORCH-NPU-NOHANG回答；正确性与旧l18对照仍open
+nodes:
+- id: F-USER-ROUTE-LOCK
+  domain: foundation
+  kind: fact
+  statement: 用户锁定Encrypt×cann-ntt路线：Host多段编排+迁入cann-ntt；参数集ML-KEM-1024；主目标不卡死；落点graph-tests/enc_cann_ntt；主控不写核
+  deps: []
+  status: verified
+  basis: stated
+  provenance: observation
+  evidence: qa/2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md
+- id: Q-ULT-NOHANG
+  kind: question
+  statement: Host多段+迁入cann-ntt的Encrypt形路径在目标NPU运行时是否绝对不卡死？
+  deps:
+  - F-SIM-BRICKS-COMPLETE-EN01-09
+  - F-EN10-NPU-NOHANG
+  - F-EN11-NPU-MULTI-OK
+  - F-EN12-NPU-STICKY-OK
+  status: answered
+  domain: goals
+  answered_by: I-HOST-ORCH-NPU-NOHANG
+- id: D-LOCK-20260908
+  kind: decision
+  statement: 采纳用户锁定的Encrypt×cann-ntt实现与协作约束（详见F-USER-ROUTE-LOCK）
+  deps:
+  - F-USER-ROUTE-LOCK
+  status: active
+  evidence: docs/notes/Encrypt-cann-ntt-kb.md; qa/2026-09/2026-09-08-改定位AIV-only-cann-ntt口述.md
+  domain: architecture
+  by: human
+- id: F-CAP-INVENTORY
+  kind: fact
+  statement: Alg.14基础能力清单已落盘（哈希/采样/NTT缺口/内积/编解码/Compress；禁算子级抄码）
+  deps:
+  - D-LOCK-20260908
+  status: verified
+  evidence: docs/notes/Encrypt-cann-ntt-capability-inventory.md
+  domain: foundation
+  basis: stated
+  provenance: doc
+- id: F-WORKMODE
+  kind: fact
+  statement: 工作模式清单已落盘（主控设计+cannbot；subagent编码；KB/DAG只读给subagent）
+  deps:
+  - D-LOCK-20260908
+  status: verified
+  evidence: docs/notes/Encrypt-cann-ntt-workmode.md
+  domain: foundation
+  basis: stated
+  provenance: doc
+- id: F-KB-SEED
+  kind: fact
+  statement: 本线KB初建（架构不变量A1–A6；继承禁令B1–B7；迁入要点C1–C5）
+  deps:
+  - D-LOCK-20260908
+  - F-CAP-INVENTORY
+  - F-WORKMODE
+  status: verified
+  evidence: docs/notes/Encrypt-cann-ntt-kb.md
+  domain: foundation
+  basis: stated
+  provenance: doc
+- id: F-INHERIT-HANG-BANS
+  kind: fact
+  statement: 本线继承旧hang线已沉淀的同步禁令集合（见Encrypt-hang-rewrite-kb），不在本线复验为新发现
+  deps:
+  - D-LOCK-20260908
+  status: verified
+  evidence: docs/notes/Encrypt-hang-rewrite-kb.md; docs/notes/Encrypt-cann-ntt-kb.md
+  domain: foundation
+  basis: stated
+  provenance: doc
+- id: F-CANN-NTT-IS-MIX-BAT
+  kind: fact
+  statement: 已发表cann-ntt为MIX+Cube BAT矩阵NTT；ntt_vec为digit/Barrett；非AIV-only butterfly
+  deps:
+  - D-LOCK-20260908
+  status: verified
+  evidence: thirdparty/cann-ntt/README.md; docs/notes/Encrypt-cann-ntt-kb.md
+  domain: evidence
+  basis: stated
+  provenance: doc
+- id: D-ARCH-HOST-SEGMENTS
+  kind: decision
+  statement: Encrypt拆Host多段：Prep/Matvec/Pack偏AIV_ONLY；NTT/INTT独立短MIX launch；禁胖核GATE4/8
+  deps:
+  - F-KB-SEED
+  - F-INHERIT-HANG-BANS
+  - F-CANN-NTT-IS-MIX-BAT
+  status: active
+  evidence: docs/notes/Encrypt-cann-ntt-kb.md
+  domain: architecture
+  by: agent
+- id: D-DOC-BASE-READY
+  kind: decision
+  statement: 文档底座完成；允许主控写EN01任务书；未下发前禁止编码
+  deps:
+  - F-CAP-INVENTORY
+  - F-WORKMODE
+  - F-KB-SEED
+  - D-ARCH-HOST-SEGMENTS
+  status: active
+  evidence: graph-tests/enc_cann_ntt/INDEX.md
+  domain: architecture
+  by: agent
+- id: D-EXP-EN01
+  kind: decision
+  statement: EN01 PASS-NOHANG：迁入KEM-256正向NTT；CPU+SIM不挂；golden match；sync红线0（初扫SYNC-02已修）
+  deps:
+  - D-DOC-BASE-READY
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN01-TASK.md; graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/STATUS.md; graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/sync_audit.json
+  domain: experiments
+  by: agent
+- id: F-EN01-NTT-PORT-OK
+  kind: fact
+  statement: N0积木可用（作者包Kyber档迁入graph-tests）；SIM tick≈11356；X30迁入须先sync_audit
+  deps:
+  - D-EXP-EN01
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN01-kem256-ntt-port && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: D-EXP-EN02
+  kind: decision
+  statement: EN02 PASS-NOHANG：Host NTT→INTT双launch；CPU+SIM；tick≈20685；红线0；X31 M4打包对齐
+  deps:
+  - F-EN01-NTT-PORT-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN02-TASK.md; graph-tests/enc_cann_ntt/EN02-ntt-intt-2launch/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN02-INTT-2LAUNCH-OK
+  kind: fact
+  statement: INTT积木+同session双launch粘性可用；可开Encrypt形Host多段桩
+  deps:
+  - D-EXP-EN02
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN02-ntt-intt-2launch/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN02-ntt-intt-2launch && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: D-EXP-EN03
+  kind: decision
+  statement: EN03 PASS-NOHANG：Encrypt形Host五段桩；tick≈29824；红线0；X32桩核CPU AIV_ONLY/SIM MIX占位
+  deps:
+  - F-EN02-INTT-2LAUNCH-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN03-TASK.md; graph-tests/enc_cann_ntt/EN03-encrypt-host-skel/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN03-HOST-SKEL-OK
+  kind: fact
+  statement: Host五段壳可用；可换真Matvec积木
+  deps:
+  - D-EXP-EN03
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN03-encrypt-host-skel/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN03-encrypt-host-skel && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: D-EXP-EN04
+  kind: decision
+  statement: EN04 PASS-NOHANG：真Matvec接入五段壳；SIM tick≈194125；红线0；X33按笔记重写
+  deps:
+  - F-EN03-HOST-SKEL-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN04-TASK.md; graph-tests/enc_cann_ntt/EN04-matvec-realbrick/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN04-MATVEC-OK
+  kind: fact
+  statement: 真NTT域Matvec可独立AIV launch夹在迁入NTT/INTT之间不挂
+  deps:
+  - D-EXP-EN04
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN04-matvec-realbrick/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN04-matvec-realbrick && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: D-EXP-EN05
+  kind: decision
+  statement: EN05 PASS-NOHANG：Prep=设备PRF+CBD η2；tick≈246253；红线0；Â仍Host；X34
+  deps:
+  - F-EN04-MATVEC-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN05-TASK.md; graph-tests/enc_cann_ntt/EN05-prep-sample-realbrick/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN05-PREP-CBD-OK
+  kind: fact
+  statement: 设备CBD Prep可接入五段壳；SampleNTT设备端仍开
+  deps:
+  - D-EXP-EN05
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN05-prep-sample-realbrick/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN05-prep-sample-realbrick && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash
+    run.sh -r sim -v Ascend910B4
+- id: D-EXP-EN06
+  kind: decision
+  statement: EN06 PASS-NOHANG：Pack Compress11/5+ByteEncode c=1568B；tick≈296054；红线0；X35
+  deps:
+  - F-EN05-PREP-CBD-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN06-TASK.md; graph-tests/enc_cann_ntt/EN06-pack-compress-realbrick/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN06-PACK-OK
+  kind: fact
+  statement: 五段积木形态齐（NTT/INTT/Matvec/CBD Prep/Pack）；缺段间贯通与设备SampleNTT
+  deps:
+  - D-EXP-EN06
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN06-pack-compress-realbrick/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN06-pack-compress-realbrick && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash
+    run.sh -r sim -v Ascend910B4
+- id: D-EXP-EN07
+  kind: decision
+  statement: EN07 PASS-NOHANG：贯通Prep.y→NTT→Matvec→INTT→Pack.u；tick≈296064；红线0；X36
+  deps:
+  - F-EN06-PACK-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN07-TASK.md; graph-tests/enc_cann_ntt/EN07-pipeline-wired/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN07-WIRED-OK
+  kind: fact
+  statement: Host五段主路径GM贯通可用；可做粘性多轮
+  deps:
+  - D-EXP-EN07
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN07-pipeline-wired/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN07-pipeline-wired && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: D-EXP-EN08
+  kind: decision
+  statement: EN08 PASS-NOHANG：贯通链R=4粘性；SIM tick≈1168427；红线0；X37
+  deps:
+  - F-EN07-WIRED-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN08-TASK.md; graph-tests/enc_cann_ntt/EN08-wired-sticky-rounds/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN08-STICKY-OK
+  kind: fact
+  statement: SIM上真积木贯通链粘性多轮不挂
+  deps:
+  - D-EXP-EN08
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN08-wired-sticky-rounds/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN08-wired-sticky-rounds && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: F-SIM-MILESTONE-EN01-08
+  kind: fact
+  statement: EN01至EN08构成CPU+SIM不挂的Host编排Encrypt形主路径（当时仍缺设备SampleNTT）
+  deps:
+  - F-EN08-STICKY-OK
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/INDEX.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: 见 EN01–EN08 各 STATUS.md；汇总 graph-tests/enc_cann_ntt/INDEX.md
+- id: D-EXP-EN09
+  kind: decision
+  statement: EN09 PASS-NOHANG：设备SampleNTT全Â[4×4]喂Matvec；tick≈755040；红线0；X38
+  deps:
+  - F-SIM-MILESTONE-EN01-08
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN09-TASK.md; graph-tests/enc_cann_ntt/EN09-samplentt-device/STATUS.md
+  domain: experiments
+  by: agent
+- id: F-EN09-SAMPLENTT-OK
+  kind: fact
+  statement: 设备SampleNTT已能产出全矩阵Â并直喂Matvec
+  deps:
+  - D-EXP-EN09
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/EN09-samplentt-device/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN09-samplentt-device && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh
+    -r sim -v Ascend910B4
+- id: F-SIM-BRICKS-COMPLETE-EN01-09
+  kind: fact
+  statement: EN01至EN09的CPU+SIM不挂用例齐套
+  deps:
+  - F-EN09-SAMPLENTT-OK
+  status: verified
+  evidence: graph-tests/enc_cann_ntt/INDEX.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: 见 EN01–EN09 STATUS；INDEX 里程碑
+- id: D-NPU-WAIT-ULT
+  kind: decision
+  statement: EN10已跑：NPU 910B3/dev4 上 EN09 贯通链 PASS-NOHANG+golden；见X39
+  deps:
+  - F-SIM-BRICKS-COMPLETE-EN01-09
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN10-TASK.md; docs/notes/Encrypt-cann-ntt-kb.md
+  domain: experiments
+  by: agent
+- id: F-EN10-NPU-NOHANG
+  kind: fact
+  statement: NPU910B3上EN09贯通链单轮kernel完成且SynchronizeStream未卡死；全段golden match；wall约2.25s
+  deps:
+  - D-NPU-WAIT-ULT
+  status: verified
+  evidence: /opt/cursor/artifacts/EN10-npu.log; graph-tests/enc_cann_ntt/EN10-TASK.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: 远程 EN09：ASCEND_DEVICE_ID=4 bash run.sh -r npu -v Ascend910B3；日志 /opt/cursor/artifacts/EN10-npu.log
+- id: D-EXP-EN11
+  kind: decision
+  statement: EN11 NPU进程级连续多轮EN09；主门禁不挂；保活加压
+  deps:
+  - F-EN10-NPU-NOHANG
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN11-TASK.md; docs/notes/Encrypt-cann-ntt-kb.md
+  domain: experiments
+  by: agent
+- id: F-EN11-NPU-MULTI-OK
+  kind: fact
+  statement: NPU上EN09链进程级连续多轮不挂（含R=200加压）
+  deps:
+  - D-EXP-EN11
+  status: verified
+  evidence: /opt/cursor/artifacts/EN11e-npu-loop.log
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: 远程 EN09 快路径 R=200；日志 /opt/cursor/artifacts/EN11e-npu-loop.log
+- id: D-EXP-EN12
+  kind: decision
+  statement: EN12同进程sticky SampleNTT贯通链；NPU R=32/64 PASS-NOHANG（X41 deviceId=0）
+  deps:
+  - F-EN11-NPU-MULTI-OK
+  status: active
+  evidence: graph-tests/enc_cann_ntt/EN12-TASK.md; docs/notes/Encrypt-cann-ntt-kb.md
+  domain: experiments
+  by: agent
+- id: F-EN12-NPU-STICKY-OK
+  kind: fact
+  statement: NPU上同session sticky SampleNTT贯通链不挂（R=32与R=64）且round-1 golden match
+  deps:
+  - D-EXP-EN12
+  status: verified
+  evidence: /opt/cursor/artifacts/EN12b-npu.log; graph-tests/enc_cann_ntt/EN12-samplentt-sticky/STATUS.md
+  domain: evidence
+  basis: experiment
+  provenance: measurement
+  repro: cd EN12-samplentt-sticky && ASCEND_DEVICE_ID=4 bash run.sh -r npu -v Ascend910B3；日志 /opt/cursor/artifacts/EN12b-npu.log
+- id: D-NO-COPY-PKE-KEM
+  kind: decision
+  statement: 禁止参考实现或照抄PKE/KEM算子级代码；准全链仅契约；frozen只读判决
+  deps:
+  - D-LOCK-20260908
+  status: active
+  evidence: docs/notes/Encrypt-cann-ntt-capability-inventory.md
+  domain: architecture
+  by: human
+- id: D-CONTROLLER-NO-KERNEL
+  kind: decision
+  statement: 主控不写核；subagent按任务书编码；须用cannbot-skills设计与审计
+  deps:
+  - F-WORKMODE
+  status: active
+  evidence: docs/notes/Encrypt-cann-ntt-workmode.md
+  domain: architecture
+  by: human
+- id: F-X41-SETDEVICE-LOGICAL0
+  domain: evidence
+  kind: fact
+  statement: 本仓Host用例aclrtSetDevice必须使用逻辑设备号0
+  deps:
+  - F-EN12-NPU-STICKY-OK
+  status: verified
+  basis: experiment
+  provenance: measurement
+  evidence: /opt/cursor/artifacts/EN12b-npu.log; docs/notes/Encrypt-cann-ntt-kb.md
+  repro: 对照 EN12 初版 SetDevice(4) 失败 vs deviceId=0 成功；见 KB X41
+- id: I-HOST-ORCH-NPU-NOHANG
+  domain: evidence
+  kind: inference
+  statement: Host多段编排+迁入cann-ntt的Encrypt形路径在910B3上未观察到SynchronizeStream卡死（含进程多轮与同session sticky）
+  deps:
+  - F-EN10-NPU-NOHANG
+  - F-EN11-NPU-MULTI-OK
+  - F-EN12-NPU-STICKY-OK
+  - F-X41-SETDEVICE-LOGICAL0
+  status: verified
+  derivation: defeasible
+  basis: experiment
+  evidence: /opt/cursor/artifacts/EN10-npu.log; /opt/cursor/artifacts/EN11e-npu-loop.log; /opt/cursor/artifacts/EN12b-npu.log
+- id: Q-CORRECTNESS-FULL
+  domain: goals
+  kind: question
+  statement: 该Host编排路径是否达到与权威实现（liboqs/KAT）逐字节一致的全Encrypt正确性？
+  deps:
+  - I-HOST-ORCH-NPU-NOHANG
+  status: open
+- id: Q-OLD-L18-STILL-HANG
+  domain: goals
+  kind: question
+  statement: 旧胖MIX Encrypt（l18类）在同机910B3上是否仍SynchronizeStream卡死？（只读对照，禁抄核）
+  deps:
+  - I-HOST-ORCH-NPU-NOHANG
+  - F-INHERIT-HANG-BANS
+  status: open
+changelog:
+- date: '2026-09-09'
+  change: rg_audit软警告收口：原子化statement、补STATUS/artifact evidence、Q-ULT answered_by=I-HOST-ORCH-NPU-NOHANG。
+- date: '2026-09-09'
+  change: 迁到reasoning-graph skill方言(kind/deps/status)；闭合Q-ULT→I-HOST-ORCH-NPU-NOHANG；开Q-CORRECTNESS-FULL与Q-OLD-L18-STILL-HANG；登记F-X41。
+- date: '2026-09-08'
+  change: 初建Encrypt×cann-ntt DAG（旧type/depends_on方言）。

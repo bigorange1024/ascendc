@@ -1,0 +1,317 @@
+{
+  "files_scanned": [
+    "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aic_func.hpp",
+    "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+    "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/basic.hpp",
+    "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/kyber_limb6.hpp",
+    "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+    "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/tiling.h"
+  ],
+  "event_count": 10,
+  "findings": [
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 56,
+      "message": "疑似 MTE2 搬入后未同步即计算: Duplicate@56 (搬入@54)",
+      "detail": "候选：DataCopy 后、Vector 计算前需 EnQue/DeQue 或 SetFlag/WaitFlag<MTE2_V> | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 59,
+      "message": "疑似 V 计算后未同步即 Scalar 读: Scalar@59 (计算@56)",
+      "detail": "候选：Vector 计算（如 ReduceSum）后、GetValue 前需 V→S 同步（PipeBarrier<PIPE_V> 或 SetFlag/WaitFlag<V_S>） | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 59,
+      "message": "变量 seed 跨流水缺同步: MTE2(MTE2_write)@L54 → S(S_read)@L59",
+      "detail": "seed 在 L54 被 MTE2 写入，在 L59 被 S 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 65,
+      "message": "变量 work 跨流水缺同步: MTE2(MTE2_write)@L57 → V(V_read)@L65",
+      "detail": "work 在 L57 被 MTE2 写入，在 L65 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 66,
+      "message": "变量 work 跨流水缺同步: MTE2(MTE2_write)@L57 → V(V_write)@L66",
+      "detail": "work 在 L57 被 MTE2 写入，在 L66 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 66,
+      "message": "变量 work 跨流水缺同步: MTE2(MTE2_write)@L57 → V(V_read)@L66",
+      "detail": "work 在 L57 被 MTE2 写入，在 L66 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "line": 102,
+      "message": "疑似 V 计算后未同步即 Scalar 读: Scalar@102 (计算@101)",
+      "detail": "候选：Vector 计算（如 ReduceSum）后、GetValue 前需 V→S 同步（PipeBarrier<PIPE_V> 或 SetFlag/WaitFlag<V_S>） | 历史 case: cann/ops-math PR#703 (pipe_barrier_missing) | 修复提示: 在异步搬出后、SetFlag 释放 buffer 前加 PipeBarrier<PIPE_ALL>() | diff证据: @@ -38,6 +38,14 @@ private:\n     __aicore__ inline void valueMove(uint64_t valueOffset, uint64_t ubV..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 126,
+      "message": "变量 sample 跨流水缺同步: MTE2(MTE2_write)@L122 → S(S_read)@L126",
+      "detail": "sample 在 L122 被 MTE2 写入，在 L126 被 S 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 187,
+      "message": "疑似 MTE2 搬入后未同步即计算: Muls@187 (搬入@183)",
+      "detail": "候选：DataCopy 后、Vector 计算前需 EnQue/DeQue 或 SetFlag/WaitFlag<MTE2_V> | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 187,
+      "message": "疑似 MTE2 搬入后未同步即计算: Muls@187 (搬入@184)",
+      "detail": "候选：DataCopy 后、Vector 计算前需 EnQue/DeQue 或 SetFlag/WaitFlag<MTE2_V> | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 187,
+      "message": "变量 b 跨流水缺同步: MTE2(MTE2_write)@L184 → V(V_write)@L187",
+      "detail": "b 在 L184 被 MTE2 写入，在 L187 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 187,
+      "message": "变量 b 跨流水缺同步: MTE2(MTE2_write)@L184 → V(V_read)@L187",
+      "detail": "b 在 L184 被 MTE2 写入，在 L187 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 188,
+      "message": "变量 a 跨流水缺同步: MTE2(MTE2_write)@L183 → V(V_read)@L188",
+      "detail": "a 在 L183 被 MTE2 写入，在 L188 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 189,
+      "message": "变量 acc 跨流水缺同步: MTE2(MTE2_write)@L176 → V(V_write)@L189",
+      "detail": "acc 在 L176 被 MTE2 写入，在 L189 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 189,
+      "message": "变量 acc 跨流水缺同步: MTE2(MTE2_write)@L176 → V(V_read)@L189",
+      "detail": "acc 在 L176 被 MTE2 写入，在 L189 被 V 读取，中间无 EnQue/DeQue/SetFlag/WaitFlag/PipeBarrier 同步 | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-02",
+      "severity": "红线",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 233,
+      "message": "疑似 V 计算后未同步即 Scalar 读: Scalar@233 (计算@232)",
+      "detail": "候选：Vector 计算（如 ReduceSum）后、GetValue 前需 V→S 同步（PipeBarrier<PIPE_V> 或 SetFlag/WaitFlag<V_S>） | 历史 case: cann/ops-transformer PR#4007 (buffer_index_mismatch) | 修复提示: 将 buffer 索引统一为 flag 索引变量（如 biasBufId_ = scaleL1BufId） | diff证据: @@ -30,6 +30,7 @@ constexpr uint64_t SINGLE_BUFFER = 1;\n constexpr uint64_t DOUBLE_BUFFER = 2;\n cons..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/kyber_limb6.hpp",
+      "line": 13,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "line": 50,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "line": 58,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 68,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 85,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "line": 96,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "line": 107,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "line": 194,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 68,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 85,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 194,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 13,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/kyber_limb6.hpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 50,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "st",
+      "line": 51,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmWait",
+      "raw": "CrossCoreWaitFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 58,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "st",
+      "line": 59,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmSet",
+      "raw": "CrossCoreSetFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 96,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "func": "__aicore__ inline void ToyTraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 107,
+      "file": "/workspace/graph-tests/enc_related/ER01-encrypt-shaped-2launch-skel/mmad_custom.cpp",
+      "func": "__aicore__ inline void ToyTraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

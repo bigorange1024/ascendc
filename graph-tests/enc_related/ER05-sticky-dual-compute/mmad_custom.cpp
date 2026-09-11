@@ -1,0 +1,278 @@
+/**
+ * @file mmad_custom.cpp
+ * @brief ER04：Encrypt 外形双 launch + GATE 256×32 + NTT/INTT 真 Cube×16（phase=PREP / COMPUTE）。
+ *
+ * 图谱：D-EXP-ER04；基线 ER03 壳 + ER02 同步纪律；本刀验「真 Cube 体量」是否足以 SIM 复现挂。
+ *
+ * Host 串行：
+ *   Launch1 phase=PREP：双 AIV 轻量 mixing → SAMPLE_OUT；AIC 立即返回（无 CrossCore）
+ *   Launch2 phase=COMPUTE：NTT 1/3（Cube×16）+ GATE 4/8（真 Vec MAC 256×32）+ INTT 1/3（Cube×16）
+ *
+ * COMPUTE 握手（禁 SyncAll@AIC-Wait、禁 SoftSync、禁 INTT flag 5/7、禁空转 for）：
+ *   NTT：双 AIV SET(1) → AIC WAIT(1)+真 Cube×kCubeRounds → AIC SET(3) → 双 AIV WAIT(3)
+ *   GATE（生产时序）：
+ *     AIC：SET(3) 后 TRACE(403) → WAIT(4)（先占坑）
+ *     AIV：WAIT(3) 后真 Vec MAC（256 elems × 32 rounds）→ TRACE(204/304) → 双 AIV SET(4)
+ *     AIC：WAIT(4) 返回 → TRACE(404) → SET(8)
+ *     AIV：WAIT(8) → TRACE(205/305)
+ *   INTT（复用 flag 1/3，非 5/7）：
+ *     AIC：SET(8) 后 → WAIT(1)+真 Cube×kCubeRounds → SET(3)
+ *     AIV：WAIT(8) 后 → 桩写 S0 → SET(1) → WAIT(3) → 完成标记
+ *
+ * AscendC API：CrossCoreSetFlag/WaitFlag、DataCopy、Duplicate、Mul/Add/Muls、Mmad、
+ * TQue EnQue/DeQue、PipeBarrier 等复用查阅索引（GT-20260903-* / ER01–ER03）；
+ * ER02 纪律保持：MTE2↔V/S 的 EnQue/DeQue 与 PipeBarrier<PIPE_V>（无新 HardEvent API）。
+ */
+#include "aic_func.hpp"
+#include "aiv_func.hpp"
+#include "basic.hpp"
+#include "kernel_operator.h"
+#include "kyber_limb6.hpp"
+#include "tiling.h"
+
+/**
+ * CrossCore FSM：NTT/INTT 用 1/3；GATE 用 4/8。
+ * **禁止** 使用 5/7（KB X1）。
+ */
+enum FsmState : uint16_t {
+    ST_AIV_SPLIT = 1,
+    ST_AIC_MMAD = 2,
+    ST_AIV_PACK = 3,
+    ST_GATE_AIV = 4,
+    ST_GATE_AIC = 8,
+};
+
+/**
+ * 等待对端 CrossCore 置位；通道 <2, PIPE_MTE2>。
+ * 背景：AIC 在 Wait 期间 **禁止** SyncAll（KB X2）。
+ */
+__aicore__ inline void FsmWait(FsmState st)
+{
+    AscendC::PipeBarrier<PIPE_ALL>();
+    AscendC::CrossCoreWaitFlag<2, PIPE_MTE2>(st);
+    KYBER_PIPE_ALL();
+}
+
+/** 向对端广播 FSM 完成。 */
+__aicore__ inline void FsmSet(FsmState st)
+{
+    AscendC::PipeBarrier<PIPE_ALL>();
+    AscendC::CrossCoreSetFlag<2, PIPE_MTE2>(st);
+    KYBER_PIPE_ALL();
+}
+
+/**
+ * TRACE 写槽：LocalTensor 赋值后 DataCopy 到 GM；禁止 `__gm__ int32` 直写（KB X9）。
+ * @param traceGm TRACE GM 基址（可空）
+ * @param ws      workspace（AIC 读 TRACE_ONES）
+ * @param slot    逻辑槽
+ * @param aic     true=AIC（走 A1+ones 模板）
+ */
+__aicore__ inline void ToyTraceMark(GM_ADDR traceGm, GM_ADDR ws, ToyTraceSlot slot, const bool aic,
+                                    int32_t /*subBlockID*/)
+{
+    if (traceGm == nullptr) {
+        return;
+    }
+
+    constexpr uint32_t kAlign = static_cast<uint32_t>(tiling::kTraceAlignInts);
+    const uint32_t slotOffInts = static_cast<uint32_t>(slot) * kAlign;
+
+    AscendC::GlobalTensor<int32_t> dstGm;
+    dstGm.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(traceGm) + slotOffInts, kAlign);
+
+    AscendC::TPipe pipe;
+    if (aic) {
+        AscendC::GlobalTensor<int32_t> onesGm;
+        onesGm.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(ws + tiling::TRACE_ONES), kAlign);
+
+        AscendC::TQue<AscendC::TPosition::A1, 1> a1Q;
+        pipe.InitBuffer(a1Q, 1, kAlign * sizeof(int32_t));
+        AscendC::LocalTensor<int32_t> t = a1Q.AllocTensor<int32_t>();
+        AscendC::DataCopy(t, onesGm, kAlign);
+        a1Q.EnQue(t);
+        t = a1Q.DeQue<int32_t>();
+        AscendC::DataCopy(dstGm, t, kAlign);
+        a1Q.FreeTensor(t);
+        AscendC::PipeBarrier<PIPE_ALL>();
+    } else {
+        AscendC::TQue<AscendC::TPosition::VECOUT, 1> outQ;
+        pipe.InitBuffer(outQ, 1, kAlign * sizeof(int32_t));
+        AscendC::LocalTensor<int32_t> t = outQ.AllocTensor<int32_t>();
+        AscendC::Duplicate(t, static_cast<int32_t>(0), kAlign);
+        // ER02：V→S，Duplicate 后 SetValue 前同步（SYNC-02）
+        AscendC::PipeBarrier<PIPE_V>();
+        t.SetValue(0, static_cast<int32_t>(1));
+        outQ.EnQue(t);
+        t = outQ.DeQue<int32_t>();
+        AscendC::DataCopy(dstGm, t, kAlign);
+        outQ.FreeTensor(t);
+        AscendC::PipeBarrier<PIPE_ALL>();
+    }
+}
+
+/**
+ * NTT/INTT 段真 Cube 多轮加压：同对象 Init 一次，再 Process×kCubeRounds。
+ *
+ * 背景：ER04-TASK 要求 NTT 与 INTT 各 16 次真 Mmad（几何仍 16×32×32）；禁空转 for。
+ * 结论：每轮完整 CopyIn→SplitA/B→Mmad→Fixpipe；输出覆写同一 MAT_C（正确性非门禁）。
+ * 未采用项：每轮重新 Init（无必要）；假循环（仅计数不加 Mmad）。
+ */
+__aicore__ inline void RunCubeMmadRounds(GM_ADDR ws)
+{
+    AicMmad mmad(static_cast<uint16_t>(tiling::kRows), static_cast<uint16_t>(tiling::kDim),
+                 static_cast<uint16_t>(tiling::kCols));
+    mmad.Init();
+    // 真体积：每轮完整 Process（含 AscendC::Mmad），共 tiling::kCubeRounds=16（ER04-TASK）
+    for (uint32_t r = 0; r < static_cast<uint32_t>(tiling::kCubeRounds); ++r) {
+        mmad.Process(ws + tiling::MAT_C, ws + tiling::S0, ws + tiling::LUT);
+    }
+    KYBER_PIPE_ALL();
+}
+
+/**
+ * Launch1 prep：仅 AIV 做采样桩；AIC 立即返回（无 CrossCore，避免空等）。
+ * 结论：prep 与计算壳分 launch，外形贴近 Encrypt；桩体量有界、无 SHAKE。
+ */
+__aicore__ inline void RunPrepPhase(GM_ADDR /*out*/, GM_ADDR ws, GM_ADDR trace, const bool aic,
+                                    int32_t subBlockID)
+{
+    if (aic) {
+        return;
+    }
+    ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_SAMPLE_START : TR_AIV1_SAMPLE_START, aic,
+                 subBlockID);
+    {
+        AivSampleStub sample(subBlockID);
+        sample.Init(ws);
+        sample.Process();
+        KYBER_PIPE_ALL();
+    }
+    ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_SAMPLE_DONE : TR_AIV1_SAMPLE_DONE, aic,
+                 subBlockID);
+}
+
+/**
+ * Launch2 计算壳：AIC / AIV 按生产 GATE 时序跑完整 NTT→GATE→INTT。
+ * 未采用项：INTT 换 5/7；对称 GATE；假循环体量；擅自加大 GATE/Cube 几何。
+ */
+__aicore__ inline void RunComputePhase(GM_ADDR out, GM_ADDR ws, GM_ADDR trace, const bool aic,
+                                       int32_t subBlockID)
+{
+    FsmState st;
+
+    if (aic) {
+        st = ST_AIV_SPLIT;
+        FsmWait(st);
+        ToyTraceMark(trace, ws, TR_AIC_WAIT1, aic, subBlockID);
+
+        // NTT 段：真 Cube × kCubeRounds（ER04 加压点）
+        RunCubeMmadRounds(ws);
+
+        ToyTraceMark(trace, ws, TR_AIC_SET3, aic, subBlockID);
+        st = ST_AIV_PACK;
+        FsmSet(st);
+
+        /* 生产 GATE：NTT 后 AIC 立刻 WAIT(4) 占坑 */
+        ToyTraceMark(trace, ws, TR_AIC_WAIT4, aic, subBlockID);
+        st = ST_GATE_AIV;
+        FsmWait(st);
+
+        ToyTraceMark(trace, ws, TR_AIC_SET8, aic, subBlockID);
+        st = ST_GATE_AIC;
+        FsmSet(st);
+
+        st = ST_AIV_SPLIT;
+        FsmWait(st);
+        ToyTraceMark(trace, ws, TR_AIC_INTT_WAIT1, aic, subBlockID);
+
+        // INTT 段：再跑一轮真 Cube × kCubeRounds（与 NTT 对称加压）
+        RunCubeMmadRounds(ws);
+
+        ToyTraceMark(trace, ws, TR_AIC_INTT_SET3, aic, subBlockID);
+        st = ST_AIV_PACK;
+        FsmSet(st);
+    } else {
+        /* NTT：SAMPLE_OUT → S0 → SET(1) */
+        {
+            AivStubHashSplit split(subBlockID);
+            split.Init(ws);
+            split.Process();
+            KYBER_PIPE_ALL();
+        }
+        {
+            st = ST_AIV_SPLIT;
+            ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_SET1 : TR_AIV1_SET1, aic, subBlockID);
+            FsmSet(st);
+        }
+
+        st = ST_AIV_PACK;
+        FsmWait(st);
+        ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_WAIT3 : TR_AIV1_WAIT3, aic, subBlockID);
+
+        /* GATE：真积木 Vec MAC（256×32）后再双 AIV SET(4) */
+        {
+            AivGateRealBrickMac brick(subBlockID);
+            brick.Init(ws);
+            brick.Process();
+            KYBER_PIPE_ALL();
+        }
+        {
+            st = ST_GATE_AIV;
+            ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_SET4 : TR_AIV1_SET4, aic, subBlockID);
+            FsmSet(st);
+        }
+
+        st = ST_GATE_AIC;
+        FsmWait(st);
+        ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_WAIT8 : TR_AIV1_WAIT8, aic, subBlockID);
+
+        {
+            AivStubHashSplit splitIntt(subBlockID);
+            splitIntt.Init(ws);
+            splitIntt.Process();
+            KYBER_PIPE_ALL();
+        }
+        {
+            st = ST_AIV_SPLIT;
+            ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_INTT_SET1 : TR_AIV1_INTT_SET1, aic,
+                         subBlockID);
+            FsmSet(st);
+        }
+
+        st = ST_AIV_PACK;
+        FsmWait(st);
+        ToyTraceMark(trace, ws, subBlockID == 0 ? TR_AIV0_INTT_WAIT3 : TR_AIV1_INTT_WAIT3, aic,
+                     subBlockID);
+
+        {
+            AivDoneMark mark(subBlockID);
+            mark.Init(out);
+            mark.Process();
+            KYBER_PIPE_ALL();
+        }
+    }
+}
+
+/**
+ * 入口：按 tiling.phase 分派 PREP / COMPUTE。
+ * @param out   完成标记 GM（仅 COMPUTE 写）
+ * @param ws    workspace
+ * @param trace TRACE GM
+ * @param tiling phase∈{0,1}
+ */
+extern "C" __global__ __aicore__ void mmad_custom(GM_ADDR out, GM_ADDR ws, GM_ADDR trace,
+                                                    TilingData tiling)
+{
+    KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
+
+    const bool aic = AscendC::GetSubBlockNum() == 1;
+    const int32_t subBlockID = static_cast<int32_t>(AscendC::GetSubBlockIdx());
+    const int32_t phase = tiling.phase;
+
+    if (phase == ER01_PHASE_PREP) {
+        RunPrepPhase(out, ws, trace, aic, subBlockID);
+        return;
+    }
+    RunComputePhase(out, ws, trace, aic, subBlockID);
+}

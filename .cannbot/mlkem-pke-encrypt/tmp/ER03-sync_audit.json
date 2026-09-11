@@ -1,0 +1,268 @@
+{
+  "files_scanned": [
+    "graph-tests/enc_related/ER03-gate-realbrick-volume/aic_func.hpp",
+    "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+    "graph-tests/enc_related/ER03-gate-realbrick-volume/basic.hpp",
+    "graph-tests/enc_related/ER03-gate-realbrick-volume/kyber_limb6.hpp",
+    "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+    "graph-tests/enc_related/ER03-gate-realbrick-volume/tiling.h"
+  ],
+  "event_count": 15,
+  "findings": [
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/kyber_limb6.hpp",
+      "line": 13,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "line": 51,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "line": 59,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "line": 68,
+      "message": "同一函数连续 PipeBarrier 过多: 7 个 in __aicore__ inline void Process",
+      "detail": "行: [68, 77, 85, 89, 104, 235, 276]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "line": 77,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "line": 85,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "line": 97,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "line": 104,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "line": 110,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-11",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "line": 210,
+      "message": "EnQue→DeQue 后无计算，TQue 当 TBuf 用",
+      "detail": "EnQue@209 → DeQue@210，DeQue 后无计算操作；EnQue/DeQue 的隐式同步被浪费"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "line": 235,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 68,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 77,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 85,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 89,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 104,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 235,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 276,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/aiv_func.hpp",
+      "func": "__aicore__ inline void Process",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 13,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/kyber_limb6.hpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 51,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "st",
+      "line": 52,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmWait",
+      "raw": "CrossCoreWaitFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 59,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "st",
+      "line": 60,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void FsmSet",
+      "raw": "CrossCoreSetFlag<2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 97,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void ToyTraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_V",
+      "flag_id": "",
+      "line": 104,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void ToyTraceMark",
+      "raw": "PipeBarrier<PIPE_V>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 110,
+      "file": "graph-tests/enc_related/ER03-gate-realbrick-volume/mmad_custom.cpp",
+      "func": "__aicore__ inline void ToyTraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

@@ -42,6 +42,10 @@
 | **P1** | **T21** | **调研**：能否用 [`thirdparty/SHA3hp`](../thirdparty/SHA3hp/) 把设备侧 **SHA3-256/512**（现 `library/shared/keccak_f1600_kernel` 标量）改成 AscendC 实现；范围含 KEM 尾 `H(ek)`/`z` 与 KeyGen prep `G(d‖k)` | **初步结论（2026-07-13）**：SHA3hp≠现成 SHA3-256/512；与既有 SHAKE **同系**；permute 已在用；详见当日纪要 §6；**待用户拍板** |
 | **P0** | **T-decrypt-hang** | PKE Decrypt fused 实机卡死：单独图谱 `docs/rg-kem-decrypt-hang.yaml`；toy 沉 SoftSync/GATE；**未沉机制不上机** | **打开**（2026-09-03 W0 + TASK-009） |
 | **P0** | **T2-npu-l18** | Encaps/Decaps 实机卡在 `l18_l19` SynchronizeStream：按 [2026-08-05 纪要](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md) E0–E2（`F203_L18_TRACE`）收证据；**未读 trace 禁改 FSM** | **诊断已冻结**；实机跑 [`scripts/npu_kem_real_machine_suite.sh`](../scripts/npu_kem_real_machine_suite.sh)（`SKIP_L18_RISK=0` + `PHASE=e1`）；**Decrypt hang 另线** |
+
+| **P0** | **T-decrypt-fused-hang** | stable decrypt prod input-only 卡死：独立图谱 [`docs/rg-decrypt-fused.yaml`](../docs/rg-decrypt-fused.yaml)；DGT-1..4 toy SIM 未挂；**禁**以催上机替代更近生产体量实验 | **打开**（2026-09-03） |
+| **P0** | **T2-npu-l18** | Encaps/Decaps 实机卡在 `l18_l19` SynchronizeStream：按 [2026-08-05 纪要](2026-08/2026-08-05-l18卡死初步诊断与实机最小实验.md) E0–E2（`F203_L18_TRACE`）收证据；**未读 trace 禁改 FSM** | **诊断已冻结**；实机跑 [`scripts/npu_kem_real_machine_suite.sh`](../scripts/npu_kem_real_machine_suite.sh)（`SKIP_L18_RISK=0` + `PHASE=e1`） |
+
 | **P1** | **T2-npu** | PKE/KEM **NPU 实机**验收（原 T2 中 NPU 段） | 待有卡环境；先关 T2-npu-l18 |
 | **P1** | **T2-npu-env** | 实机 env 适配（`env.sh` 回写 CANN_HOME、`run.sh` REPO_ROOT、`ASCEND_DEVICE_ID`） | **已合入** 1024 探针×7+stable×7；**08-18** 分卡 1/2/3；**08-19** 教材 14 档 + incubating/frozen `run.sh` 对齐 `npu_case_env` + `MSPROF_MODE=app`（[`npu_kem_textbook_perf.sh`](../scripts/npu_kem_textbook_perf.sh)） |
 | **P2** | **T2-npu-link** | 512 / 768 / incubating 用例 `run.sh` 里 12 处 `ln -sfn` 仍写**绝对**路径（git 存的多为 Cloud `/workspace/…`），跑一次就把工作区弄脏 | 1024 五处已改 `ln -sfnr`（相对链）；其余留待各自任务顺带改并自验 |

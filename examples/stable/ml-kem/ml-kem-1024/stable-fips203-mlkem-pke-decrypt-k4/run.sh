@@ -25,6 +25,7 @@
 #   SIM_DIRECT=0 bash run.sh -r sim -v Ascend910B4
 #   bash run.sh -r npu …                      # 仅真机；WSL 由 runtime_env 拒绝
 #   COMPRESS_1_VEC=0 / DECOMPRESS_D_VEC=0 bash run.sh ...
+#   F203_DECRYPT_TRACE=1 bash run.sh -r npu …   # 卡死定位：轮询 fused-trace + softSync
 #
 # 分流：scripts/runtime_env.sh · docs/engineering/NPU真机环境说明.md
 #
