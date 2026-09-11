@@ -23,14 +23,17 @@ PUB="${CURSOR_PUBKEY:-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4+JMqBJWCNaAyd3fvpTH
 WS="${WORKSPACE_ROOT:-/workspace}"
 PERSIST="${HIDEVLAB_PERSIST_DIR:-$WS/user_data}"
 TS_HOME="${TS_HOME:-$PERSIST/tailscale}"
-SOCK="$TS_HOME/run/tailscaled.sock"
+# Unix socket 不能放在 Gluster/NFS（user_data 上会 bind: permission denied → 假死）
+# 必须用本地盘；bin/state 仍可在 user_data 持久化
+SOCK_DIR="${TS_SOCK_DIR:-/tmp/hidevlab-ts}"
+SOCK="$SOCK_DIR/tailscaled.sock"
 LOG="${HIDEVLAB_TS_LOG:-$PERSIST/hidevlab_ts.log}"
 ENV_OUT="${HIDEVLAB_TS_ENV:-$PERSIST/hidevlab_tailscale.env}"
 CURL_MAX="${TS_CURL_MAX_SEC:-90}"
 UP_MAX="${TS_UP_MAX_SEC:-60}"
 SERVE_MAX="${TS_SERVE_MAX_SEC:-20}"
 
-mkdir -p "$TS_HOME/bin" "$TS_HOME/state" "$TS_HOME/run" "$WS" "$PERSIST"
+mkdir -p "$TS_HOME/bin" "$TS_HOME/state" "$TS_HOME/run" "$SOCK_DIR" "$WS" "$PERSIST"
 # 让 tee 尽快刷出，避免「没输出像死了」
 export PYTHONUNBUFFERED=1
 log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG"; }
@@ -142,7 +145,7 @@ if ! pgrep -f "$TS_HOME/bin/tailscaled" >/dev/null 2>&1; then
   tail -40 "$TS_HOME/tailscaled.log" 2>/dev/null | tee -a "$LOG" || true
   exit 12
 fi
-log "tailscaled ok (sock=$SOCK)"
+log "tailscaled ok (sock=$SOCK)  # socket 在本地盘，勿改回 user_data"
 
 # ---------- 3) up（带超时）----------
 log "step3: tailscale up (timeout ${UP_MAX}s) hostname=$TS_HOSTNAME"

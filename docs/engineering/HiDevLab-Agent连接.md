@@ -117,7 +117,22 @@ ssh -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" \
 
 ### 4.1 WebIDE 跑 `webide_start.sh` 停住
 
-多半卡在**首次下载** `pkgs.tailscale.com`（盒子出网差会无限转圈；新脚本有 **90s 超时**）。
+多半是下面两类之一：
+
+**A. Unix socket 建在 `user_data`（Gluster/NFS）上 → `bind: permission denied`**  
+脚本会空等 socket，看起来像「停住」。**必须把 socket 放到 `/tmp/hidevlab-ts/`**（本地盘）。新版 `hidevlab_ts.sh` 已如此；若盒子上还是旧脚本，在 WebIDE 执行：
+
+```bash
+# 一键把盒子上的 hidevlab_ts.sh 改成用 /tmp socket（无需 git）
+sed -i 's|SOCK="$TS_HOME/run/tailscaled.sock"|SOCK_DIR="${TS_SOCK_DIR:-/tmp/hidevlab-ts}"\nSOCK="$SOCK_DIR/tailscaled.sock"|' \
+  /workspace/user_data/hidevlab_ts.sh
+# 若 sed 没改到，直接导出：
+#   跑之前加：  export TS_SOCK_DIR=/tmp/hidevlab-ts
+```
+
+更好：向 Agent 再开一条短时 SSH，让 Agent 把整文件覆盖上去。
+
+**B. 首次下载** `pkgs.tailscale.com`（盒子出网差会无限转圈；新脚本有 **90s 超时**）。
 
 ```bash
 # 1) 先 Ctrl-C 停掉旧进程；拉最新脚本到持久盘后再跑（见下「更新脚本」）
