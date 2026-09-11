@@ -6,10 +6,11 @@
 > **Cloud VM 环境细节**：[`Cursor-Cloud环境说明.md`](Cursor-Cloud环境说明.md)（非 WSL 启动/运行坑与 SIM 绕过）  
 > **三环境 / 真机**：[`docs/engineering/NPU真机环境说明.md`](docs/engineering/NPU真机环境说明.md) · [`scripts/runtime_env.sh`](scripts/runtime_env.sh) 
 > **GitCode CANNLab 真机远程驱动**：[`docs/engineering/CANNLab接入与远程驱动.md`](docs/engineering/CANNLab接入与远程驱动.md)（Tailscale 免密 + `scripts/cannlab/`；`ASCEND_DEVICE_ID=0`；容器停机 SIGTERM→tini/控制台）  
-> **HiDevLab 真机（WebIDE 主路径）**：[`docs/engineering/HiDevLab-WebIDE操作手册.md`](docs/engineering/HiDevLab-WebIDE操作手册.md)（**独立维护**；配方 `scripts/hidevlab/webide_recipe.sh`；勿把 SSH直连当 Agent 长连接）  
+> **HiDevLab 真机（WebIDE 主路径）**：[`docs/engineering/HiDevLab-WebIDE操作手册.md`](docs/engineering/HiDevLab-WebIDE操作手册.md)（**独立维护**；配方 `scripts/hidevlab/webide_recipe.sh`）  
+> **HiDevLab · 其他 Agent 怎么连服务器**：[`docs/engineering/HiDevLab-Agent连接.md`](docs/engineering/HiDevLab-Agent连接.md)（**开任务先读**；Cursor 侧 `git pull` + `agent_connect.sh`；WebIDE 常无 git，人侧跑 `/workspace/user_data/webide_start.sh`）  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-09-10（增补 HiDevLab WebIDE 手册入口；npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0）
+**最后刷新**：2026-09-11（增补 HiDevLab-Agent连接 入口；WebIDE 无 git 时的人/Agent 分工）
 
 ---
 

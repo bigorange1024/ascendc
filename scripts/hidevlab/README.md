@@ -1,3 +1,5 @@
+**Agent 连服务器（先读）**：[`../../docs/engineering/HiDevLab-Agent连接.md`](../../docs/engineering/HiDevLab-Agent连接.md) · 短入口 [`CONNECT.md`](CONNECT.md)
+
 # scripts/hidevlab — HiDevLab（昇腾在线开发）辅助
 
 与 GitCode CANNLab（`scripts/cannlab/`）**分开维护**。
