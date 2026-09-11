@@ -1,32 +1,31 @@
 # Agent 交接 — 每日刷新
 
-> **最后刷新**：2026-09-10（fe53：同步 main 的 HiDevLab WebIDE 脚本/手册；本线仍为 Encrypt×cann-ntt）  
-> Git：本线文档可提交推送；`thirdparty/` 本身不进仓
+> **最后刷新**：2026-09-11（新环境：加法已绿；TS 节点在线但 serve:2222 断；等跳板修壳）  
+> Git：未授权不 commit/push
 
-## 依赖
+## 白话现状
 
-| 项 | 路径 |
-|----|------|
-| 推理图谱 skill | `thirdparty/reasoning-graph-skill/SKILL.md`（Drive `16TwSu0…`；见 `SOURCE.md`） |
-| 登记 | `docs/engineering/thirdparty-本地依赖.md` → Drive 手工包 |
-| Encrypt×cann-ntt DAG | `docs/rg-encrypt-cann-ntt.yaml` |
-| KB | `docs/notes/Encrypt-cann-ntt-kb.md` §7 |
-| HiDevLab WebIDE | [`docs/engineering/HiDevLab-WebIDE操作手册.md`](docs/engineering/HiDevLab-WebIDE操作手册.md) · `scripts/hidevlab/` · 开机 `bash /workspace/hidevlab_boot.sh` |
+- **新机已重建**：物理卡是 `/dev/davinci2`（不是旧的 davinci7），加法 NPU 对拍**已绿** → 卡干净。
+- **完整仓已传到** `/workspace/ascendc`（含贯通链 EN12、hidevlab 脚本）。
+- **Tailscale 节点仍在**：`hidevlab-npu` / `100.70.113.117`，ping 通。
+- **但 Agent SSH 断了**：userspace 入站靠 `serve tcp:2222`；现在 SOCKS 连 2222 失败（多半是机上 `sshd:2222` 或 `serve` 掉了）。**不是**让你再在 WebIDE 跑整段入网。
 
-积累/维护 `docs/rg-*.yaml`：**先读该 SKILL**；勿复制进 `.cursor/skills`。
+## 硬约束
 
-## 真机 / 上轮结论
+- 只做**新贯通链**（`graph-tests/enc_cann_ntt/`）；**禁止**再跑旧 Encaps 猎挂。
+- **禁止**拉看门狗/心跳保活。
 
-- Encrypt×cann-ntt：EN10–EN12 NPU **PASS-NOHANG**（详见 KB）；此前 NPU 作业曾停。  
-- HiDevLab（新）：WebIDE 主路径；`add_custom` NPU 冒烟 **PASS**；机上常无法访问 GitHub（勿依赖 `git pull`）。
+## P0（请人选一条）
 
-## 图谱状态（2026-09-09）
+1. **推荐**：控制台再点一次 **SSH直连**，把 `ssh -J …` + 密码贴过来 → 我远程只重启 `sshd:2222` + `tailscale serve`，然后继续 EN12 CPU→NPU。  
+2. 或者在 WebIDE **只跑下面短修复**（不要跑整段 `hidevlab_ts.sh`）：
 
-- `rg_validate` / `check_rg_dag`：**OK**（42 nodes）
-- `Q-ULT-NOHANG`：**answered** ← `I-HOST-ORCH-NPU-NOHANG`
-- 仍 **open**：`Q-CORRECTNESS-FULL`、`Q-OLD-L18-STILL-HANG`
-- 渲染：`/opt/cursor/artifacts/rg-encrypt-cann-ntt.html`
+```bash
+TS=/workspace/tailscale/bin/tailscale; SOCK=/workspace/tailscale/run/tailscaled.sock
+pkill -f 'sshd.*2222' 2>/dev/null || true
+/usr/sbin/sshd -p 2222 -o ListenAddress=127.0.0.1 -o PermitRootLogin=prohibit-password -o PasswordAuthentication=no -o PubkeyAuthentication=yes -o PidFile=/tmp/sshd2222.pid
+"$TS" --socket="$SOCK" serve --bg --tcp 2222 tcp://127.0.0.1:2222
+"$TS" --socket="$SOCK" serve status | head
+```
 
-## P0
-
-按用户下一指令；HiDevLab 开机口令：`bash /workspace/hidevlab_boot.sh`。
+修好后说一声，我继续跑「SampleNTT 贯通链粘性多轮」真机实验。

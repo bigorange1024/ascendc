@@ -12,7 +12,7 @@
 
 ### 2026-09-10 — [HiDevLab WebIDE 主路径](2026-09/2026-09-10-HiDevLab-WebIDE主路径.md)
 
-关键字：**HiDevLab** · **WebIDE** · **hidevlab_boot.sh** · **SSH 5min 非主通道** · **机上无 GitHub** · **add_custom NPU 冒烟 PASS**
+关键字：**HiDevLab** · **Tailscale userspace+serve** · **旧 Encaps 第2轮仍挂** · **Encrypt×8 不挂** · **静默卡脏须重启** · **加法健康检查** · **贯通链 DeviceGuard**
 
 ### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
 

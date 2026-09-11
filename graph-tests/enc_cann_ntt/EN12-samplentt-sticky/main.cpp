@@ -22,6 +22,7 @@
 
 #ifndef ASCENDC_CPU_DEBUG
 #include "acl/acl.h"
+#include "acl_session/acl_session.hpp"
 #include "aclrtlaunch_mmad_custom.h"
 #include "aclrtlaunch_enc_samplentt_real.h"
 #include "aclrtlaunch_enc_prep_cbd_real.h"
@@ -293,6 +294,9 @@ int32_t main(int32_t argc, char *argv[])
     // 结论：与 EN09 对齐，固定 logical deviceId=0。
     int32_t deviceId = 0;
     CHECK_ACL(aclrtSetDevice(deviceId));
+    // 早退 / SIGINT / SIGTERM 时 ResetDevice+Finalize，减轻「猎挂杀进程 → 同卡后续算子结果错」
+    // （HiDevLab 容器内不可 npu-smi reset；DeviceGuard 不能保证清干净 Cube 残留，但比裸退好）。
+    ascendc_acl::DeviceGuard aclGuard(deviceId);
     aclrtStream stream = nullptr;
     CHECK_ACL(aclrtCreateStream(&stream));
 
@@ -487,8 +491,7 @@ int32_t main(int32_t argc, char *argv[])
     CHECK_ACL(aclrtFreeHost(tiling));
 
     CHECK_ACL(aclrtDestroyStream(stream));
-    CHECK_ACL(aclrtResetDevice(deviceId));
-    CHECK_ACL(aclFinalize());
+    // ResetDevice+Finalize 由 aclGuard 析构统一执行（含中途 return / 信号路径）
 #endif
     std::printf("[EN12] sticky R=%d rounds finished OK (SampleNTT+pipeline wired)\n", rounds);
     return 0;

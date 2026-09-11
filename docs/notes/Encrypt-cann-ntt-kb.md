@@ -101,10 +101,14 @@ Encrypt 需要且仓内已有（禁算子级抄码）：SHAKE/Keccak、SampleNTT
 | S10 | EN10 NPU(910B3/dev4) 跑 EN09 贯通链 **不卡死** 且全段 golden match | **真机不挂证据**（本 Host 编排路径）；非旧 l18 胖 MIX |
 | S11 | EN11 NPU 进程级连续多轮 EN09（EN11d R=8；EN11e R=200 soft=0 hang=0）**不挂** | **多轮重启 session 亦不挂** |
 | S12 | EN12 sticky：CPU+SIM R=16（tick≈12.0M）+ NPU R=32/64 **不挂** 且 round-1 golden | **同 session 粘性多轮**；NPU wall(R=32)≈2.06s；SetDevice 须 0（X41） |
+| S13 | HiDevLab（CANN 9.1 / 910B3）：stable **PKE Encrypt** 单次+进程级×8 **不挂**且 c golden | 同机旧 Encrypt **单发**可不挂；与 Encaps 多轮画像不同 |
+| X42 | HiDevLab Encaps：R1 SUCCESS（~2s）→ R2 卡在 `f203_encrypt_l18_l19` launch（NPU 进程仍占卡，>4min 无 wall） | **`Q-OLD-L18-STILL-HANG`=仍会挂**（Encaps 多轮）；猎挂后 SIGTERM 杀进程 → 随后 add_custom/EN12 **NPU golden 坏、CPU 仍绿**（容器内 `npu-smi reset` 不可用）→ **须控制台重启环境**恢复 NPU |
+| X44 | 猎挂后「静默卡脏」：`npu-smi` Process 空 + Health=OK，但 add_custom 对拍失败（前 4096 元对、后段错）；EN12 画像 SampleNTT/Prep/NTT 常绿、Matvec/INTT/Pack 错 | **勿用 Process 段当干净依据**；用 `scripts/hidevlab/npu_golden_health.sh`；HiDevLab 只能控制台重启 |
 | X38 | 独立 AIV + shared SHAKE 串行 16 poly 控 UB | 勿抄 Encrypt/alg7 整核 |
 | X39 | 真机：MagicDNS `cannlab-npu` / `100.68.205.47:2222`；userspace TS 须 SOCKS；key 需 PEM 头；`ASCEND_DEVICE_ID=4`；SOC=`Ascend910B3`；空闲&lt;4min | 发现勿写死旧 IP；保活 ServerAlive+作业心跳 |
 | X40 | 快路径须 `LD_LIBRARY_PATH=out/lib`；校验脚本名 `verify_result.py`；禁 `pkill -f` 匹配自身 SSH 命令行；勿依赖 `/usr/bin/time` | 远程循环脚本先落地文件再 nohup |
 | X41 | Host `aclrtSetDevice` 必须逻辑 **0**（EN01–EN11 惯例）；`ASCEND_DEVICE_ID=4` 只给 run.sh 选卡，不可 SetDevice(4)→107002+segfault | sticky 勿误读 env 改 deviceId |
+| X43 | HiDevLab Tailscale：无 TUN → userspace + `serve --tcp 2222`；人侧一键 `/workspace/hidevlab_ts.sh`；禁 `--ssh`/apt 装 TS；numpy 走 `/usr/local/python3.12.13` | Agent 经 SOCKS/DERP 长连 |
 
 ---
 
@@ -116,13 +120,14 @@ Encrypt 需要且仓内已有（禁算子级抄码）：SHAKE/Keccak、SampleNTT
 
 ## 7. 推理图
 
-- DAG：`docs/rg-encrypt-cann-ntt.yaml`（**2026-09-09** 已迁到 `thirdparty/reasoning-graph-skill` 骨架：`kind`/`deps`/`status`/`config`；约束作 `D-*`）
-- 工具：`rg_validate.py --yaml …`（硬）· `rg_audit.py --yaml …`（软）· `rg_render.py --yaml … --out …`；兼容 `scripts/check_rg_dag.py --yaml …`
-- 渲染：`/opt/cursor/artifacts/rg-encrypt-cann-ntt.html`
-- **已答**：`Q-ULT-NOHANG` → `I-HOST-ORCH-NPU-NOHANG`（EN10–EN12 + X41）
-- **仍开放**：`Q-CORRECTNESS-FULL`（权威逐字节）、`Q-OLD-L18-STILL-HANG`（旧胖 MIX 只读对照）
+- DAG：`docs/rg-encrypt-cann-ntt.yaml`
+- **已答**：`Q-ULT-NOHANG` → `I-HOST-ORCH-NPU-NOHANG`（EN10–EN12）
+- **已答（对照）**：`Q-OLD-L18-STILL-HANG` → **仍挂**（HiDevLab Encaps R2@`l18_l19`；证据 X42；PKE Encrypt 单发×8 不挂≠Encaps）
+- **仍开放**：`Q-CORRECTNESS-FULL`（权威 liboqs/KAT；机上无 thirdparty/liboqs；EN12 自洽 golden 曾绿，猎挂后 NPU 需重启后再验）
 
 ## 8. 下一刀
 
-- EN11/EN12：**PASS-NOHANG**（SIM + NPU sticky 齐）；NPU 作业已停。
-- 图谱侧：按需收口 `rg_audit` 软 WARN（EN01–09 evidence 指到具体 log）；开放问按任务推进。
+1. **人**：HiDevLab 控制台**关机再启动**（恢复 NPU；容器内不可 reset）→ `bash /workspace/hidevlab_ts.sh`  
+2. 重启后：`bash scripts/hidevlab/npu_golden_health.sh`（加法冒烟）→ SampleNTT 贯通链粘性多轮（EN12）R=16 golden → 再开权威交叉（装 liboqs 或 python）  
+3. Host 侧已补：EN12 `DeviceGuard`；上机前可用 `HIDEVLAB_NPU_HEALTH=1` 拦脏卡  
+4. 图谱：登记 F/I 闭合旧 Encaps 行18挂死问题（见 changelog）

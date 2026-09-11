@@ -7,6 +7,7 @@
 #   bash scripts/hidevlab/webide_recipe.sh add_custom
 #   bash scripts/hidevlab/webide_recipe.sh kem-keygen
 #   bash scripts/hidevlab/webide_recipe.sh --branch <br> --case add_custom
+#   bash scripts/hidevlab/webide_recipe.sh tailscale-bootstrap
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -20,7 +21,7 @@ WORKTREE="/workspace/ascendc"
 usage() {
   cat <<'U'
 Usage: webide_recipe.sh [--branch BR] [--case NAME] [CASE]
-  CASE: add_custom (default) | kem-keygen | kem-encaps | kem-decaps | probe
+  CASE: add_custom (default) | kem-keygen | kem-encaps | kem-decaps | probe | tailscale-bootstrap
 Env:
   HIDEVLAB_BRANCH  覆盖默认分支（否则用当前 git 分支或 main）
   HIDEVLAB_SOC     默认 Ascend910B3
@@ -72,12 +73,36 @@ case "$CASE" in
     REL="."
     EXPECT='npu-smi 显示 910B3 OK；ccec 在 PATH'
     ;;
+  tailscale-bootstrap|ts-boot)
+    REL="scripts/hidevlab"
+    EXPECT='===== hidevlab bootstrap done ===== 且 2222 监听；把 .hidevlab_tailscale.env 贴回 Agent'
+    ;;
   *)
     echo "unknown case: $CASE" >&2
     usage >&2
     exit 2
     ;;
 esac
+
+if [[ "$CASE" == "tailscale-bootstrap" || "$CASE" == "ts-boot" ]]; then
+  echo "【HiDevLab WebIDE · Tailscale 开机一次】"
+  echo "手册: docs/engineering/HiDevLab-WebIDE操作手册.md § Tailscale"
+  echo
+  echo "粘贴（一行，同 cannlab；**禁止**加 --ssh）："
+  echo
+  echo "<<<<<<< WEBIDE_PASTE"
+  cat <<'EOF'
+TS_AUTHKEY='tskey-auth-XXXX' bash /workspace/ascendc/scripts/hidevlab/agent_bootstrap.sh
+cat /workspace/.hidevlab_tailscale.env
+tailscale status | head -20
+EOF
+  echo ">>>>>>> WEBIDE_PASTE"
+  echo
+  echo "期望尾部关键字: ${EXPECT}"
+  echo "回传: ts_ip=… 与 tailscale status 前几行"
+  echo "终端崩: 见手册 §9.1；先 Reload Window，勿贴长块。"
+  exit 0
+fi
 
 COMMON_ENV=$(cat <<EOF
 source /usr/local/Ascend/cann/set_env.sh
@@ -126,4 +151,4 @@ echo
 echo "期望尾部关键字: ${EXPECT}"
 echo "回传: 从编译结束到结尾的完整终端输出（可截断中间刷屏）"
 echo
-echo "说明: 本脚本不发起 SSH；SSH直连约 5 分钟票，非本路径。"
+echo "说明: 主路径是 Tailscale（webide_recipe.sh tailscale-bootstrap）；本输出为人肉兜底单刀。"

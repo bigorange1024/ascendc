@@ -457,8 +457,43 @@ nodes:
   deps:
   - I-HOST-ORCH-NPU-NOHANG
   - F-INHERIT-HANG-BANS
-  status: open
+  status: answered
+  answered_by: I-OLD-L18-ENCAPS-STILL-HANG
+- id: F-HIDEVLAB-ENCRYPT-8X-NOHANG
+  domain: evidence
+  kind: fact
+  statement: HiDevLab 910B3/CANN9.1 上 stable PKE Encrypt 单次与进程级连续8轮均不挂且c与golden一致
+  deps:
+  - I-HOST-ORCH-NPU-NOHANG
+  status: verified
+  basis: experiment
+  provenance: measurement
+  evidence: /workspace/old_encrypt_npu_loop.log; docs/notes/Encrypt-cann-ntt-kb.md
+  repro: ASCEND_DEVICE_ID=0 KERNEL_COMPUTE_BUDGET_SEC=120 bash run.sh -r npu -v Ascend910B3 ×8（stable-fips203-mlkem-pke-encrypt-k4）
+- id: F-HIDEVLAB-ENCAPS-R2-L18-HANG
+  domain: evidence
+  kind: fact
+  statement: HiDevLab Encaps 第1轮SUCCESS后第2轮卡在f203_encrypt_l18_l19（NPU进程占卡，无wall_sec）
+  deps:
+  - I-HOST-ORCH-NPU-NOHANG
+  status: verified
+  basis: experiment
+  provenance: measurement
+  evidence: /opt/cursor/artifacts/hidevlab_l18_hang_evidence.txt; /workspace/old_encaps_npu_loop.log
+  repro: ASCEND_DEVICE_ID=0 连续 bash run.sh -r npu -v Ascend910B3（stable-fips203-mlkem-kem-encaps-k4）；R1 OK R2 hang@l18_l19
+- id: I-OLD-L18-ENCAPS-STILL-HANG
+  domain: evidence
+  kind: inference
+  statement: 旧l18胖MIX路径在HiDevLab上仍会卡死（至少体现在KEM Encaps多轮第二发）；PKE Encrypt单发不挂不能否定该问
+  deps:
+  - F-HIDEVLAB-ENCAPS-R2-L18-HANG
+  - F-HIDEVLAB-ENCRYPT-8X-NOHANG
+  status: verified
+  derivation: defeasible
+  basis: experiment
 changelog:
+- date: '2026-09-10'
+  change: HiDevLab上机；闭合Q-OLD-L18→I-OLD-L18-ENCAPS-STILL-HANG（Encaps R2挂；Encrypt×8不挂）；登记F-HIDEVLAB-*；Q-CORRECTNESS-FULL仍open。
 - date: '2026-09-09'
   change: rg_audit软警告收口：原子化statement、补STATUS/artifact evidence、Q-ULT answered_by=I-HOST-ORCH-NPU-NOHANG。
 - date: '2026-09-09'
