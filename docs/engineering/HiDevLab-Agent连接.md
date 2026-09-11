@@ -46,6 +46,26 @@ TS_AUTHKEY='tskey-…' bash /workspace/user_data/webide_start.sh
 
 ---
 
+
+## 1.1 盒子无 git：如何更新脚本
+
+仓库改了之后，**不要指望 WebIDE `git pull`**。任选：
+
+1. **Cursor Agent 连上后推文件**（推荐，通了之后）：
+   ```bash
+   bash scripts/hidevlab/agent_connect.sh --exec 'mkdir -p /workspace/user_data'
+   # 再 scp/ssh 把 webide_start.sh hidevlab_ts.sh 拷到 /workspace/user_data/
+   ```
+2. **WebIDE 里新建文件**：把仓库里 `scripts/hidevlab/webide_start.sh`、`hidevlab_ts.sh` 内容粘贴保存到 `/workspace/user_data/`，`chmod +x`。
+3. 若盒子能访问 GitHub raw（少见）：
+   ```bash
+   # 示例；分支名按实际
+   base=https://raw.githubusercontent.com/bigorange1024/ascendc/cursor/hidevlab-webide-start-ffc6/scripts/hidevlab
+   curl -fsSL "$base/webide_start.sh" -o /workspace/user_data/webide_start.sh
+   curl -fsSL "$base/hidevlab_ts.sh"   -o /workspace/user_data/hidevlab_ts.sh
+   chmod +x /workspace/user_data/*.sh
+   ```
+
 ## 2. 其他 Agent（Cursor 上拉取本仓后执行）
 
 ```bash
@@ -93,12 +113,33 @@ ssh -o ProxyCommand="nc -X 5 -x 127.0.0.1:1055 %h %p" \
 
 ---
 
-## 4. 连不上时（按序）
+## 4. 连不上 / 人侧「跑着不动」时
 
-1. **人侧没跑 / sshd 掉了**（HiDevLab 空闲关机或手工进程被收）→ WebIDE 再跑 `webide_start.sh`  
-2. **`tailscale status` 里没有 hidevlab-npu / offline** → 同上  
-3. **Agent 缺 Secret** → Dashboard 检查 `TAILSCALE_AUTHKEY`、`CANNLAB_SSH_KEY`  
-4. **`error in libcrypto`** → 不要改 Dashboard；确认跑的是带 `materialize_ssh_key.sh` 的分支  
+### 4.1 WebIDE 跑 `webide_start.sh` 停住
+
+多半卡在**首次下载** `pkgs.tailscale.com`（盒子出网差会无限转圈；新脚本有 **90s 超时**）。
+
+```bash
+# 1) 先 Ctrl-C 停掉旧进程；拉最新脚本到持久盘后再跑（见下「更新脚本」）
+# 2) 看卡在哪一步（应不断刷 [日期] stepN: …）
+tail -f /workspace/user_data/hidevlab_ts.log
+
+# 3) 出网不行：在能上网的机器下载静态包，拷进盒子后重跑
+#    arch: aarch64→arm64, x86_64→amd64
+curl -fL -o tailscale_latest_arm64.tgz \
+  https://pkgs.tailscale.com/stable/tailscale_latest_arm64.tgz
+# 拷到盒子：/workspace/user_data/tailscale_latest_arm64.tgz
+TS_AUTHKEY='…' bash /workspace/user_data/webide_start.sh
+```
+
+`webide_start.sh` **默认 `SKIP_BOOT=1`**（不起 npu-smi）；要顺带配 CANN 用 `BOOT=1`。
+
+### 4.2 Agent 连不上
+
+1. **人侧没跑 / sshd 掉了** → WebIDE 再跑 `webide_start.sh`  
+2. **tailnet 无 hidevlab-npu / offline** → 同上  
+3. **Agent 缺 Secret** → `TAILSCALE_AUTHKEY`、`CANNLAB_SSH_KEY`  
+4. **`error in libcrypto`** → 勿改 Dashboard；用带 `materialize_ssh_key.sh` 的分支  
 5. **hostname 不对** → 看人贴的 `ts_hostname=`，设 `HIDEVLAB_HOST`
 
 多 Agent **可同时 SSH**；真机上板建议串行，避免抢同一张卡。
