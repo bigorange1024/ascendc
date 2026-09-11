@@ -1,0 +1,2 @@
+Op Name,Op Type,Task Duration(us),Block Dim,Mix Block Dim,Device Id,Pid,Current Freq,Rated Freq,
+d09_decrypt_fused_custom_0_mix_aic,mix,454.299988,1,2,0,4805,1800,1800,

@@ -2,6 +2,7 @@
 
 | 日期 | 纪要 |
 |------|------|
+| 2026-09-11 | [PKE Decrypt 单 launch · profiling 收口](2026-09-11-PKE-Decrypt-单launch-profiling收口.md) |
 | 2026-09-10 | [Launch压缩 · D09/T30 · NPU 性能一览](2026-09-10-launch-reduce-D09.md) |
 | 2026-09-09 | [Decrypt收口 · KeyGen NPU×30 · KB手册化+图推理重写](2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md) |
 | 2026-09-08 | [Encrypt cannbot · 收口 + T27撞名修复 + 待重写Decaps](2026-09-08-Encrypt-cannbot重建脚手架.md) |

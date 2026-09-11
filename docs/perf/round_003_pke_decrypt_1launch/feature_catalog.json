@@ -1,0 +1,534 @@
+{
+  "schema": "msopprof-collection/v2",
+  "default_preset": "complete",
+  "presets": {
+    "fast": [
+      "details",
+      "raw-data"
+    ],
+    "core": [
+      "details",
+      "roofline",
+      "timeline",
+      "raw-data"
+    ],
+    "complete": [
+      "details",
+      "memory-detail",
+      "roofline",
+      "timeline",
+      "source",
+      "warp-stall",
+      "instruction-timeline",
+      "onchip-memory",
+      "raw-data"
+    ],
+    "deep": [
+      "details",
+      "memory-detail",
+      "roofline",
+      "timeline",
+      "source",
+      "warp-stall",
+      "instruction-timeline",
+      "timeline-detail",
+      "kernel-scale",
+      "onchip-memory",
+      "raw-data"
+    ]
+  },
+  "features": {
+    "details": {
+      "block_id": "details",
+      "block_ids": [
+        "details",
+        "memory_detail"
+      ],
+      "display_name": "Details",
+      "metric_candidates": [
+        "Occupancy"
+      ],
+      "metric_policies": {
+        "details": [
+          "Occupancy"
+        ],
+        "memory_detail": [
+          "MemoryDetail",
+          "Default"
+        ]
+      },
+      "output_directory": "01_details",
+      "output_directories": {
+        "details": "01_details",
+        "memory_detail": "07_memory_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "details": "visualize_data.bin",
+        "memory_detail": "visualize_data.bin"
+      },
+      "purpose": "Collect inter-core occupancy and load-balance evidence for the occupancy portion of the composite Details page.",
+      "use_cases": [
+        "Check inter-core load balance",
+        "Compare physical-core duration, throughput, and cache-hit indicators"
+      ],
+      "cost": "medium"
+    },
+    "occupancy": {
+      "block_id": "details",
+      "block_ids": [
+        "details"
+      ],
+      "display_name": "Details",
+      "metric_candidates": [
+        "Occupancy"
+      ],
+      "metric_policies": {
+        "details": [
+          "Occupancy"
+        ]
+      },
+      "output_directory": "01_details",
+      "output_directories": {
+        "details": "01_details"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "details": "visualize_data.bin"
+      },
+      "purpose": "Collect inter-core occupancy and load-balance evidence for the occupancy portion of the composite Details page.",
+      "use_cases": [
+        "Check inter-core load balance",
+        "Compare physical-core duration, throughput, and cache-hit indicators"
+      ],
+      "cost": "medium"
+    },
+    "compute": {
+      "block_id": "memory_detail",
+      "block_ids": [
+        "memory_detail"
+      ],
+      "display_name": "Memory Detail",
+      "metric_candidates": [
+        "MemoryDetail",
+        "Default"
+      ],
+      "metric_policies": {
+        "memory_detail": [
+          "MemoryDetail",
+          "Default"
+        ]
+      },
+      "output_directory": "07_memory_detail",
+      "output_directories": {
+        "memory_detail": "07_memory_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "memory_detail": "visualize_data.bin"
+      },
+      "purpose": "Canonical targeted Memory Workload replay: prefer MemoryDetail; fall back to Default without adding a duplicate replay.",
+      "use_cases": [
+        "Build authoritative per-block directed memory edge tables",
+        "Inspect detailed memory behavior and native tables"
+      ],
+      "cost": "medium"
+    },
+    "memory": {
+      "block_id": "memory_detail",
+      "block_ids": [
+        "memory_detail"
+      ],
+      "display_name": "Memory Detail",
+      "metric_candidates": [
+        "MemoryDetail",
+        "Default"
+      ],
+      "metric_policies": {
+        "memory_detail": [
+          "MemoryDetail",
+          "Default"
+        ]
+      },
+      "output_directory": "07_memory_detail",
+      "output_directories": {
+        "memory_detail": "07_memory_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "memory_detail": "visualize_data.bin"
+      },
+      "purpose": "Canonical targeted Memory Workload replay: prefer MemoryDetail; fall back to Default without adding a duplicate replay.",
+      "use_cases": [
+        "Build authoritative per-block directed memory edge tables",
+        "Inspect detailed memory behavior and native tables"
+      ],
+      "cost": "medium"
+    },
+    "cache": {
+      "block_id": "memory_detail",
+      "block_ids": [
+        "memory_detail"
+      ],
+      "display_name": "Memory Detail",
+      "metric_candidates": [
+        "MemoryDetail",
+        "Default"
+      ],
+      "metric_policies": {
+        "memory_detail": [
+          "MemoryDetail",
+          "Default"
+        ]
+      },
+      "output_directory": "07_memory_detail",
+      "output_directories": {
+        "memory_detail": "07_memory_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "memory_detail": "visualize_data.bin"
+      },
+      "purpose": "Canonical targeted Memory Workload replay: prefer MemoryDetail; fall back to Default without adding a duplicate replay.",
+      "use_cases": [
+        "Build authoritative per-block directed memory edge tables",
+        "Inspect detailed memory behavior and native tables"
+      ],
+      "cost": "medium"
+    },
+    "advice": {
+      "block_id": "memory_detail",
+      "block_ids": [
+        "memory_detail"
+      ],
+      "display_name": "Memory Detail",
+      "metric_candidates": [
+        "MemoryDetail",
+        "Default"
+      ],
+      "metric_policies": {
+        "memory_detail": [
+          "MemoryDetail",
+          "Default"
+        ]
+      },
+      "output_directory": "07_memory_detail",
+      "output_directories": {
+        "memory_detail": "07_memory_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "memory_detail": "visualize_data.bin"
+      },
+      "purpose": "Canonical targeted Memory Workload replay: prefer MemoryDetail; fall back to Default without adding a duplicate replay.",
+      "use_cases": [
+        "Build authoritative per-block directed memory edge tables",
+        "Inspect detailed memory behavior and native tables"
+      ],
+      "cost": "medium"
+    },
+    "roofline": {
+      "block_id": "roofline",
+      "block_ids": [
+        "roofline"
+      ],
+      "display_name": "Roofline",
+      "metric_candidates": [
+        "Roofline"
+      ],
+      "metric_policies": {
+        "roofline": [
+          "Roofline"
+        ]
+      },
+      "output_directory": "02_roofline",
+      "output_directories": {
+        "roofline": "02_roofline"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "roofline": "visualize_data.bin"
+      },
+      "purpose": "Collect Roofline-specific records and bottleneck classification without replacing canonical Details data.",
+      "use_cases": [
+        "Classify compute-vs-memory bound behavior",
+        "Plot actual Roofline points when present"
+      ],
+      "cost": "medium"
+    },
+    "timeline": {
+      "block_id": "timeline",
+      "block_ids": [
+        "timeline"
+      ],
+      "display_name": "Pipe Timeline",
+      "metric_candidates": [
+        "PipeTimeline",
+        "pipeTimeLine"
+      ],
+      "metric_policies": {
+        "timeline": [
+          "PipeTimeline",
+          "pipeTimeLine"
+        ]
+      },
+      "output_directory": "03_timeline",
+      "output_directories": {
+        "timeline": "03_timeline"
+      },
+      "primary_artifact": "trace.json",
+      "primary_artifacts": {
+        "timeline": "trace.json"
+      },
+      "purpose": "Collect sampled per-pipe execution intervals for lane-based timing analysis.",
+      "use_cases": [
+        "Inspect Vector/Scalar/MTE overlap",
+        "Compare sampled cores and subcores",
+        "Locate long execution intervals"
+      ],
+      "cost": "high"
+    },
+    "source": {
+      "block_id": "source",
+      "block_ids": [
+        "source"
+      ],
+      "display_name": "Source Hotspot",
+      "metric_candidates": [
+        "Source"
+      ],
+      "metric_policies": {
+        "source": [
+          "Source"
+        ]
+      },
+      "output_directory": "04_source",
+      "output_directories": {
+        "source": "04_source"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "source": "visualize_data.bin"
+      },
+      "purpose": "Collect source-to-instruction mappings and optionally augment the Source explorer with compatible PCSampling stall evidence.",
+      "use_cases": [
+        "Locate hot or stalled source lines",
+        "Link instructions and source code",
+        "Inspect GPR lifetimes",
+        "Inspect stall-reason composition"
+      ],
+      "cost": "medium"
+    },
+    "warp-stall": {
+      "block_id": "warp_stall",
+      "block_ids": [
+        "warp_stall"
+      ],
+      "display_name": "Warp Stall",
+      "metric_candidates": [
+        "PCSampling",
+        "PcSampling"
+      ],
+      "metric_policies": {
+        "warp_stall": [
+          "PCSampling",
+          "PcSampling"
+        ]
+      },
+      "output_directory": "05_warp_stall",
+      "output_directories": {
+        "warp_stall": "05_warp_stall"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "warp_stall": "visualize_data.bin"
+      },
+      "purpose": "Collect SIMT stall samples and warp-level bottleneck evidence.",
+      "use_cases": [
+        "Classify warp stall reasons",
+        "Find high-stall PCs"
+      ],
+      "cost": "medium"
+    },
+    "instruction-timeline": {
+      "block_id": "instruction_timeline",
+      "block_ids": [
+        "instruction_timeline"
+      ],
+      "display_name": "Instruction Timeline",
+      "metric_candidates": [
+        "instrTimeLine",
+        "TimelineDetail,Default",
+        "TimelineDetail"
+      ],
+      "metric_policies": {
+        "instruction_timeline": [
+          "instrTimeLine",
+          "TimelineDetail,Default",
+          "TimelineDetail"
+        ]
+      },
+      "output_directory": "06_instruction_timeline",
+      "output_directories": {
+        "instruction_timeline": "06_instruction_timeline"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "instruction_timeline": "visualize_data.bin"
+      },
+      "purpose": "Collect instruction-granularity timeline data when exposed by the installed CLI.",
+      "use_cases": [
+        "Inspect instruction ordering",
+        "Locate instruction-level latency"
+      ],
+      "cost": "high"
+    },
+    "memory-detail": {
+      "block_id": "memory_detail",
+      "block_ids": [
+        "memory_detail"
+      ],
+      "display_name": "Memory Detail",
+      "metric_candidates": [
+        "MemoryDetail",
+        "Default"
+      ],
+      "metric_policies": {
+        "memory_detail": [
+          "MemoryDetail",
+          "Default"
+        ]
+      },
+      "output_directory": "07_memory_detail",
+      "output_directories": {
+        "memory_detail": "07_memory_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "memory_detail": "visualize_data.bin"
+      },
+      "purpose": "Canonical targeted Memory Workload replay: prefer MemoryDetail; fall back to Default without adding a duplicate replay.",
+      "use_cases": [
+        "Build authoritative per-block directed memory edge tables",
+        "Inspect detailed memory behavior and native tables"
+      ],
+      "cost": "medium"
+    },
+    "raw-data": {
+      "block_id": "raw_data",
+      "block_ids": [
+        "raw_data"
+      ],
+      "display_name": "Raw Data",
+      "metric_candidates": [
+        "Default"
+      ],
+      "metric_policies": {
+        "raw_data": [
+          "Default"
+        ]
+      },
+      "output_directory": "08_raw_data",
+      "output_directories": {
+        "raw_data": "08_raw_data"
+      },
+      "primary_artifact": "CSV",
+      "primary_artifacts": {
+        "raw_data": "CSV"
+      },
+      "purpose": "Collect the standard CSV suite only when no richer already-requested replay has produced it.",
+      "use_cases": [
+        "Inspect raw per-block counters",
+        "Verify visualized values",
+        "Export data for external analysis"
+      ],
+      "cost": "low"
+    },
+    "timeline-detail": {
+      "block_id": "timeline_detail",
+      "block_ids": [
+        "timeline_detail"
+      ],
+      "display_name": "Timeline Detail",
+      "metric_candidates": [
+        "TimelineDetail,Default",
+        "TimelineDetail"
+      ],
+      "metric_policies": {
+        "timeline_detail": [
+          "TimelineDetail,Default",
+          "TimelineDetail"
+        ]
+      },
+      "output_directory": "09_timeline_detail",
+      "output_directories": {
+        "timeline_detail": "09_timeline_detail"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "timeline_detail": "visualize_data.bin"
+      },
+      "purpose": "Scenario-specific fallback for simulation instruction timeline and code-hotspot data when the installed CLI exposes TimelineDetail.",
+      "use_cases": [
+        "Framework operator instruction timeline",
+        "Simulation code hotspot"
+      ],
+      "cost": "high"
+    },
+    "kernel-scale": {
+      "block_id": "kernel_scale",
+      "block_ids": [
+        "kernel_scale"
+      ],
+      "display_name": "Kernel Scale",
+      "metric_candidates": [
+        "KernelScale"
+      ],
+      "metric_policies": {
+        "kernel_scale": [
+          "KernelScale"
+        ]
+      },
+      "output_directory": "10_kernel_scale",
+      "output_directories": {
+        "kernel_scale": "10_kernel_scale"
+      },
+      "primary_artifact": "visualize_data.bin",
+      "primary_artifacts": {
+        "kernel_scale": "visualize_data.bin"
+      },
+      "purpose": "Collect explicitly instrumented kernel-scale regions when the operator source or binary contains MetricsProfStart/MetricsProfStop markers.",
+      "use_cases": [
+        "Measure a selected code region",
+        "Compare instrumented kernel phases or loop bodies"
+      ],
+      "cost": "high"
+    },
+    "onchip-memory": {
+      "block_id": "onchip_memory",
+      "block_ids": [
+        "onchip_memory"
+      ],
+      "display_name": "On-Chip Memory",
+      "metric_candidates": [],
+      "metric_policies": {
+        "onchip_memory": []
+      },
+      "output_directory": "11_onchip_memory",
+      "output_directories": {
+        "onchip_memory": "11_onchip_memory"
+      },
+      "primary_artifact": "memory_info.json",
+      "primary_artifacts": {
+        "onchip_memory": "memory_info.json"
+      },
+      "purpose": "Discover and preserve the compiler-generated memory_info.json sidecar; do not replace it with msprof MemoryDetail counters.",
+      "use_cases": [
+        "On-chip memory lifetime map",
+        "Peak/fragmentation inspection",
+        "UB bank distribution"
+      ],
+      "cost": "low"
+    }
+  }
+}

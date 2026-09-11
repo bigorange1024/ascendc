@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-11 — [PKE Decrypt 单 launch · profiling 收口](2026-09/2026-09-11-PKE-Decrypt-单launch-profiling收口.md)
+
+关键字：**PKE Decrypt 单 Host launch 融合核** · Chrome Trace JSON · HTML 报告 · TimelineDetail dump 失败钉死 · vector0 scalar≈96.8% · 汇报禁用暗号 ID
+
 ### 2026-09-10 — [Launch压缩 · D09/T30 · 新建 NPU 性能一览](2026-09/2026-09-10-launch-reduce-D09.md)
 
 关键字：**RB-D09** · **RB-T30** · Decaps→**2** · 禁改 D08 · SyncAll 环外 · Compress₁ 常数 · **PASS_NPU×30** · QUEUE 1–8；Decaps→2
