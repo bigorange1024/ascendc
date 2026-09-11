@@ -5,7 +5,7 @@
 > **不**与 GitCode CANNLab / Tailscale 手册混用：那条线见 [`CANNLab接入与远程驱动.md`](CANNLab接入与远程驱动.md)。  
 > **平台**：https://hidevlab.huawei.com/ · 用户指南 IDE 节：https://hidevlab.huawei.com/support/userGuide?currentKey=ide  
 
-**最后刷新**：2026-09-10（§1.1 对齐平台官方配额/路径原文）
+**最后刷新**：2026-09-11（§7.1 入口改为 `webide_start.sh` 一键开机；新增 `agent_connect.sh` + `materialize_ssh_key.sh` 私钥兜底，无需改 Dashboard）
 
 ---
 
@@ -237,6 +237,54 @@ bash scripts/hidevlab/webide_recipe.sh --branch cursor/hidevlab-cloud-npu-9099 -
 **禁止**：把 CANNLab 的 `cannlab-npu` / 旧 IP 写进本手册当 HiDevLab 默认；两套并行时以**当前任务指定的环境**为准。
 
 ---
+
+## 7.1 Tailscale 驱动 Agent 访问（可选 · 让 Cloud Agent 免密连进来）
+
+> **WebIDE 仍是主路径**；本节给「让 Cloud Agent 直接经 tailnet 连 HiDevLab」的可选通道。
+> 与 GitCode CANNLab **分开维护**：入口脚本
+> [`scripts/hidevlab/webide_start.sh`](../../scripts/hidevlab/webide_start.sh)
+> （内部调 `hidevlab_ts.sh`），**不要**沿用 `cannlab-npu` 或 `scripts/cannlab/`（§7 / §10）。
+
+**为什么与 CANNLab 不同——HiDevLab 容器无 `CAP_NET_ADMIN`**：`CapBnd` 无 bit12
+（2026-09-11 实测 `0xa80425fb`），内核态 tailscaled 必报 `operation not permitted`。
+只能 **userspace-networking**：netstack 把 `tailnet:2222` → `127.0.0.1:2222`，
+本地 sshd **绑 loopback**（切勿绑 TSIP）。
+
+#### 人侧：每次开机只跑这一条
+
+```bash
+# 首次（仓库树在 /workspace/ascendc）：
+TS_AUTHKEY='tskey-你的key' bash /workspace/ascendc/scripts/hidevlab/webide_start.sh
+
+# 之后推荐（脚本已落到持久盘 /workspace/user_data，overlay 重启也不丢）：
+TS_AUTHKEY='tskey-你的key' bash /workspace/user_data/webide_start.sh
+```
+
+看到 `===== READY =====` + `ts_ip=100.x` + `sshd 127.0.0.1:2222` 即成功。
+摘要在 `/workspace/user_data/hidevlab_tailscale.env`（可贴回 Agent；**勿贴 TS_AUTHKEY**）。
+
+`SKIP_BOOT=1` 可跳过 CANN 环境配置（只要 tailnet/sshd）。
+
+#### Agent 侧：一键探活 / 跑命令
+
+```bash
+bash scripts/hidevlab/agent_connect.sh
+bash scripts/hidevlab/agent_connect.sh --exec 'npu-smi info | head'
+# 私钥一律走兜底重建（Secret 缺头尾 / 被压成单行也能用，无需改 Dashboard）：
+#   bash scripts/hidevlab/materialize_ssh_key.sh ~/.ssh/hidevlab
+```
+
+需要 Secret：`TAILSCALE_AUTHKEY`（或 `TS_AUTHKEY`）、`CANNLAB_SSH_KEY`。
+
+**坑（2026-09-11 全踩过）**：
+
+| 现象 | 原因 | 处置 |
+|------|------|------|
+| tailscaled `operation not permitted` | 无 `CAP_NET_ADMIN`/无 TUN | 必须 userspace（`hidevlab_ts.sh` 已固定） |
+| 日志刷 `127.0.0.1:2222: transport endpoint is not connected` | netstack 已转发但本地无 sshd | 重跑 `webide_start.sh`（会起 loopback sshd） |
+| `ssh -i` 报 `error in libcrypto` | Secret 丢头尾或换行被压成空格单行 | **不必改 Dashboard**：`materialize_ssh_key.sh` / `agent_connect.sh` 自动重建 |
+| SOCKS 偶发失败 | DERP 冷启动 | `agent_connect.sh` 已内置重试 |
+| `/workspace/*.sh` 重启后没了 | overlay 易失；持久盘只有 `user_data` | 用 `webide_start.sh`（自动拷到 `/workspace/user_data/`） |
 
 ## 8. SSH直连（非主路径 · 仅说明）
 
