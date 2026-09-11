@@ -1,54 +1,32 @@
 # HiDevLab WebIDE 操作手册（独立维护）
 
-> **用途**：在 **HiDevLab（昇腾在线开发）** 上跑本仓 AscendC / 真机 NPU；**Agent 长连主路径 = Tailscale**（WebIDE 仅开机打通一次）。  
-> **禁止**「SSH直连」当主通道（跳板约 **5 分钟**失效，见 §8）。  
-> 与 GitCode CANNLab **同构、分目录**：CANNLab 见 [`CANNLab接入与远程驱动.md`](CANNLab接入与远程驱动.md)；本册只写 HiDevLab。  
+> **用途**：在 **HiDevLab（昇腾在线开发）** 上用 **WebIDE** 跑本仓 AscendC / 真机 NPU，作为 **Cursor Cloud Agent 协作真机** 的**主路径**。  
+> **不**用「SSH直连」当主通道（跳板命令约 **5 分钟**失效，见 §8）。  
+> **不**与 GitCode CANNLab / Tailscale 手册混用：那条线见 [`CANNLab接入与远程驱动.md`](CANNLab接入与远程驱动.md)。  
 > **平台**：https://hidevlab.huawei.com/ · 用户指南 IDE 节：https://hidevlab.huawei.com/support/userGuide?currentKey=ide  
 
-**最后刷新**：2026-09-10（§0/§0.1 Tailscale 长连为主路径）
+**最后刷新**：2026-09-11（§7.1 入口改为 `webide_start.sh` 一键开机；新增 `agent_connect.sh` + `materialize_ssh_key.sh` 私钥兜底，无需改 Dashboard）
 
 ---
 
 ## 0. 一句话模型
 
 ```
-人：控制台启动环境 → WebIDE 跑 agent_bootstrap.sh（每次开机一次）
-        │  Tailscale 入网 hostname=hidevlab-npu + :2222 sshd
+Cursor Cloud Agent（改代码 / 推 Git / 出配方）
+        │  git push 分支
         ▼
-Cursor Cloud Agent（userspace Tailscale + SOCKS:1055）
-        │  ssh -p 2222 root@hidevlab-npu*（密钥 CANNLAB_SSH_KEY）
+   GitHub（bigorange1024/ascendc）
+        │  WebIDE 里 git pull
         ▼
-HiDevLab（A2 · CANN · 1×910B3）── Agent 亲自跑 run.sh -r npu
+HiDevLab 云主机（A2 · CANN · 1×910B3）── WebIDE 终端执行 run.sh -r npu
+        │  把日志 / 结尾 SUCCESS·FAIL 贴回聊天
+        ▼
+Cursor Cloud Agent（判读、改下一刀）
 ```
 
-- **人只做**：开机、进 WebIDE、**粘贴 Tailscale bootstrap 一次**（把 `ts_ip` / status 贴回 Agent）。  
-- **Agent 做**：长连后自行编译、上板、读日志；不再靠人逐条贴 `run.sh`。  
-- **禁止**：把跳板「SSH直连」当实验主通道。  
-- 脚本：[`scripts/hidevlab/agent_bootstrap.sh`](../../scripts/hidevlab/agent_bootstrap.sh)、[`lib_ssh.sh`](../../scripts/hidevlab/lib_ssh.sh)。
-
-### 0.1 Tailscale 怎么操作（人 · WebIDE · 每次开机）
-
-**只记一行**（脚本已在机：`/workspace/hidevlab_ts.sh`；首次/再开自动判断要不要重下静态包）：
-
-```bash
-TS_AUTHKEY='你的key' bash /workspace/hidevlab_ts.sh
-```
-
-建议后台（防终端被网络变更掐死）：
-
-```bash
-TS_AUTHKEY='你的key' nohup bash /workspace/hidevlab_ts.sh >/workspace/hidevlab_ts.log 2>&1 & echo PID=$!
-# 崩了重连后：
-tail -80 /workspace/hidevlab_ts.log
-cat /workspace/.hidevlab_tailscale.env
-```
-
-- key 用 Cloud Secret `TAILSCALE_AUTHKEY`，**不要贴聊天**。  
-- 成功：出现 `===== hidevlab_ts done =====`，且有 `ts_ip=100.…`。  
-- 回传：只贴 `/workspace/.hidevlab_tailscale.env`。  
-- **硬禁** `tailscale up --ssh`、禁止 apt 装 Tailscale。
-
-机上若没有该脚本：让 Agent 推一次，或从仓 `scripts/hidevlab/hidevlab_ts.sh` 拷到 `/workspace/hidevlab_ts.sh`。
+- **Agent 不直连** HiDevLab 长 SSH。  
+- **人（或人在 WebIDE）** 负责：开机、进 WebIDE、粘贴 Agent 给的配方、回传日志。  
+- 配方生成器：[`scripts/hidevlab/webide_recipe.sh`](../../scripts/hidevlab/webide_recipe.sh)。
 
 ---
 
@@ -167,14 +145,12 @@ bash scripts/clone-thirdparty.sh   # 较慢；仅冒烟可先跳过
 
 ---
 
-## 4. Agent ↔ HiDevLab 协作协议（强制）
+## 4. Agent ↔ WebIDE 协作协议（强制）
 
 | 角色 | 做 | 不做 |
 |------|----|------|
-| **人（WebIDE）** | 开机 → **§0.1 Tailscale bootstrap 一次** → 把 `ts_ip`/status 贴回 | 用跳板 SSH直连当主通道；改未约定参数绕过 |
-| **Cloud Agent** | Tailscale 长连后亲自 `run.sh`；改代码按约定分支推送；断连时再请人重跑 bootstrap | 依赖「SSH直连」；把跳板 token / 连接密码写入 Git |
-
-> 兜底（无 Tailscale 时）：仍可用 `webide_recipe.sh` 让人粘贴单刀；**非正式主路径**。
+| **Cloud Agent** | 在约定分支改代码、`commit`/`push`；用 `webide_recipe.sh` 生成**可粘贴**配方；根据回传日志定下一刀 | 依赖「SSH直连」长会话；把跳板 token / 连接密码写入 Git |
+| **人（WebIDE）** | 开机 → WebIDE → `git pull` → 粘贴配方 → 把**完整尾日志**贴回聊天 | 改 Agent 未指定的分支参数绕过失败 |
 
 ### 4.1 一刀标准格式（Agent 输出）
 
@@ -262,6 +238,54 @@ bash scripts/hidevlab/webide_recipe.sh --branch cursor/hidevlab-cloud-npu-9099 -
 
 ---
 
+## 7.1 Tailscale 驱动 Agent 访问（可选 · 让 Cloud Agent 免密连进来）
+
+> **WebIDE 仍是主路径**；本节给「让 Cloud Agent 直接经 tailnet 连 HiDevLab」的可选通道。
+> 与 GitCode CANNLab **分开维护**：入口脚本
+> [`scripts/hidevlab/webide_start.sh`](../../scripts/hidevlab/webide_start.sh)
+> （内部调 `hidevlab_ts.sh`），**不要**沿用 `cannlab-npu` 或 `scripts/cannlab/`（§7 / §10）。
+
+**为什么与 CANNLab 不同——HiDevLab 容器无 `CAP_NET_ADMIN`**：`CapBnd` 无 bit12
+（2026-09-11 实测 `0xa80425fb`），内核态 tailscaled 必报 `operation not permitted`。
+只能 **userspace-networking**：netstack 把 `tailnet:2222` → `127.0.0.1:2222`，
+本地 sshd **绑 loopback**（切勿绑 TSIP）。
+
+#### 人侧：每次开机只跑这一条
+
+```bash
+# 首次（仓库树在 /workspace/ascendc）：
+TS_AUTHKEY='tskey-你的key' bash /workspace/ascendc/scripts/hidevlab/webide_start.sh
+
+# 之后推荐（脚本已落到持久盘 /workspace/user_data，overlay 重启也不丢）：
+TS_AUTHKEY='tskey-你的key' bash /workspace/user_data/webide_start.sh
+```
+
+看到 `===== READY =====` + `ts_ip=100.x` + `sshd 127.0.0.1:2222` 即成功。
+摘要在 `/workspace/user_data/hidevlab_tailscale.env`（可贴回 Agent；**勿贴 TS_AUTHKEY**）。
+
+`SKIP_BOOT=1` 可跳过 CANN 环境配置（只要 tailnet/sshd）。
+
+#### Agent 侧：一键探活 / 跑命令
+
+```bash
+bash scripts/hidevlab/agent_connect.sh
+bash scripts/hidevlab/agent_connect.sh --exec 'npu-smi info | head'
+# 私钥一律走兜底重建（Secret 缺头尾 / 被压成单行也能用，无需改 Dashboard）：
+#   bash scripts/hidevlab/materialize_ssh_key.sh ~/.ssh/hidevlab
+```
+
+需要 Secret：`TAILSCALE_AUTHKEY`（或 `TS_AUTHKEY`）、`CANNLAB_SSH_KEY`。
+
+**坑（2026-09-11 全踩过）**：
+
+| 现象 | 原因 | 处置 |
+|------|------|------|
+| tailscaled `operation not permitted` | 无 `CAP_NET_ADMIN`/无 TUN | 必须 userspace（`hidevlab_ts.sh` 已固定） |
+| 日志刷 `127.0.0.1:2222: transport endpoint is not connected` | netstack 已转发但本地无 sshd | 重跑 `webide_start.sh`（会起 loopback sshd） |
+| `ssh -i` 报 `error in libcrypto` | Secret 丢头尾或换行被压成空格单行 | **不必改 Dashboard**：`materialize_ssh_key.sh` / `agent_connect.sh` 自动重建 |
+| SOCKS 偶发失败 | DERP 冷启动 | `agent_connect.sh` 已内置重试 |
+| `/workspace/*.sh` 重启后没了 | overlay 易失；持久盘只有 `user_data` | 用 `webide_start.sh`（自动拷到 `/workspace/user_data/`） |
+
 ## 8. SSH直连（非主路径 · 仅说明）
 
 平台「连接 → SSH直连」会给出：
@@ -285,37 +309,12 @@ Agent **默认不**维护长期 `~/.ssh/hidevlab_*` 依赖；若临时用过，�
 
 | 现象 | 优先检查 |
 |------|----------|
-| **终端起不来 / 一跑就崩** | **§9.1**（VS Code 终端启动失败） |
 | `npu-smi: libc_sec.so` | `LD_LIBRARY_PATH` 是否含 driver `lib64{,/driver,/common}` |
 | `ccec: command not found` | 是否 `source /usr/local/Ascend/cann/set_env.sh` |
 | `aclrtSetDevice` 107001 | 是否误用物理卡号；改回 `ASCEND_DEVICE_ID=0` |
-| `git pull` 鉴权失败 / 超时 | 本环境常封 `github.com:443`；改用已落盘树或归档同步 |
+| `git pull` 鉴权失败 | PAT/权限；或改为公开可读分支 |
 | 环境变「已关机」 | 空闲 1h；控制台再启动后 WebIDE 重进，`git status` 看 `/workspace` 是否还在 |
 | 卡时耗尽 | 控制台配额；停非必要实例 |
-| Agent 连不上 `hidevlab-npu` | 是否重跑过 bootstrap；`which_npu.sh` 是否挑到 `-1`；禁 `--ssh` |
-
-### 9.1 终端启动失败（VS Code / WebIDE）
-
-官方排障：https://aka.ms/vscode-troubleshoot-terminal-launch  
-
-本环境常见诱因与处置：
-
-| 诱因 | 处置 |
-|------|------|
-| 粘贴**超长**脚本 / 大 heredoc | **只跑一行** `TS_AUTHKEY=… bash …/agent_bootstrap.sh`；落盘用 Agent 给的短块 |
-| `tailscale up --ssh` 抢 **22** | **禁止**；只用仓库脚本（VPN + **2222**） |
-| shell profile / `terminal.integrated.*` 坏了 | Command Palette → **Terminal: Select Default Profile** → `bash`；Settings 搜 `@modified` 清相关项；**Developer: Reload Window** |
-| 终端进程已死、面板假死 | 杀掉全部 Terminal → 新开；仍不行则 **断开 WebIDE 重连**；再不行控制台 **关机→启动**（`/workspace` 常还在） |
-| 需看退出码 | 记通知里的 exit code，按官方页对 shell 查；本镜像默认用 `/bin/bash` |
-
-恢复后优先验证：
-
-```bash
-echo OK; whoami; pwd
-```
-
-再跑 bootstrap 一行，不要重贴长块。
-
 
 ---
 
