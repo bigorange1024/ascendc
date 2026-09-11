@@ -1,0 +1,195 @@
+# Decrypt 融合核 · scalar/握手优化 · 推理图谱
+# 工具：thirdparty/reasoning-graph-skill/scripts/rg_{validate,audit,query,render}.py --yaml 本文件
+# 准入：只收服务「D09 性能瓶颈归因 / 假说证伪 / 上板决策」的节点。
+# 禁入：把 hang 图结论当性能解；把「采不到指令 Timeline」当新实验；用 CPU/SIM 当性能证据。
+
+version: 1
+title: "PKE Decrypt 1-launch 融合核 · scalar/握手优化"
+
+config:
+  required_fields: [domain]
+  id_prefix_by_kind: {fact: F, inference: J, decision: D, question: Q, experiment: E}
+  fact_provenance_values: [observation, measurement, doc, code]
+  inference_derivation_values: [deductive, defeasible]
+
+review:
+  last_reviewed: "2026-09-11"
+  note: "profiling 收口后建图；W0/W1 待跑/待填；假说 H1–H4 待上板证伪"
+
+nodes:
+  - id: Q-GOAL
+    domain: goals
+    kind: question
+    title: "用户验收问题"
+    statement: "在 Host launch 仍为 1、m≡liboqs、NPU×30 绿的前提下，能否把 Decrypt 融合核 Σ Task Duration 相对 D09 基线降 ≥10%，并用 msopprof 说明 scalar/握手气泡变薄？"
+    status: open
+
+  - id: F-LAUNCH1
+    domain: baseline
+    kind: fact
+    title: "D09 已是 1 launch 且正确性绿"
+    statement: "RB-D09-decrypt-1launch Host 1 launch；NPU×30 PASS；MAGIC/m 契约成立"
+    provenance: measurement
+    evidence: "graph-tests/dec_related/RB-D09-decrypt-1launch/STATUS.md"
+    status: established
+
+  - id: F-US-BASE
+    domain: baseline
+    kind: fact
+    title: "基线 Σ ≈ 455–456 µs"
+    statement: "ops-profiling Σ Task Duration ≈ 455.74 µs；msopprof Task ≈ 454.3 µs；Freq 1800/1800"
+    provenance: measurement
+    evidence: "qa/active_npu_perf_summary.md；docs/perf/round_003_pke_decrypt_1launch/"
+    status: established
+
+  - id: F-SCALAR968
+    domain: baseline
+    kind: fact
+    title: "vector0 scalar ≈ 96.8%"
+    statement: "PipeUtilization：vector0 total_cycles 主导且 scalar≈96.8%；cube≈0；见 scalar_wait_id / CrossCore 等待"
+    provenance: measurement
+    evidence: "docs/perf/round_003_pke_decrypt_1launch/PipeUtilization.csv"
+    status: established
+
+  - id: F-NO-INSTR-TL
+    domain: baseline
+    kind: fact
+    title: "核内指令 Timeline 不可得"
+    statement: "TimelineDetail dump kernel args 失败；CLI 无 PipeTimeline；应用级 Chrome Trace 已有且足够定位到 scalar/握手层"
+    provenance: observation
+    evidence: "docs/perf/round_003_pke_decrypt_1launch/README.md"
+    status: established
+
+  - id: F-DEVICE-FLOW
+    domain: baseline
+    kind: fact
+    title: "设备流结构"
+    statement: "AIV0 PrepUnpack → SyncAll（Wait 环外）→ 两轮 flag{1,3}：AIC Cube NTT/INTT ↔ AIV0 NTT+dot / INTT+extract；AIV1 仅握手"
+    provenance: code
+    evidence: "graph-tests/dec_related/RB-D09-decrypt-1launch/d09_decrypt_fused_custom.cpp"
+    status: established
+
+  - id: F-CODE-SCALAR-LOOPS
+    domain: baseline
+    kind: fact
+    title: "源码可见大块标量环"
+    statement: "prep_device_math 含 poly_byte_decode12_scalar_gm 与逐系数环；ntt/intt_device_math 含多层 for 蝶形与逐系数环；CrossWait/CrossSet 外包 PipeBarrier ALL"
+    provenance: code
+    evidence: "prep_device_math.hpp；ntt_device_math.hpp；intt_device_math.hpp；d09_decrypt_fused_custom.cpp"
+    status: established
+
+  - id: J-BOTTLENECK-CLASS
+    domain: reasoning
+    kind: inference
+    title: "瓶颈类属"
+    statement: "主瓶颈属于 scalar 执行与/或跨核握手气泡，而非 Cube/MTE 算力墙"
+    derivation: defeasible
+    deps: [F-SCALAR968, F-US-BASE, F-DEVICE-FLOW]
+    status: accepted
+
+  - id: J-NOT-REPROFILE-TL
+    domain: reasoning
+    kind: inference
+    title: "禁止再采指令 Timeline 当主刀"
+    statement: "F-NO-INSTR-TL 已钉死工具链限制；下一刀必须是改实现并回测 µs/scalar%，不是重复 TimelineDetail"
+    derivation: deductive
+    deps: [F-NO-INSTR-TL, J-BOTTLENECK-CLASS]
+    status: accepted
+
+  - id: Q1-PREP-SHARE
+    domain: open
+    kind: question
+    title: "Prep/解码占多少 wall？"
+    statement: "PrepUnpack + ByteDecode₁₂ 标量 GM 环在 454 µs 中占比是高/中/低？"
+    deps: [F-CODE-SCALAR-LOOPS, J-BOTTLENECK-CLASS]
+    status: open
+
+  - id: Q2-NTT-SHARE
+    domain: open
+    kind: question
+    title: "NTT/INTT 标量蝶形占多少 wall？"
+    statement: "ntt/intt_device_math 标量 for 环占比是高/中/低？"
+    deps: [F-CODE-SCALAR-LOOPS, J-BOTTLENECK-CLASS]
+    status: open
+
+  - id: Q3-HS-SHARE
+    domain: open
+    kind: question
+    title: "握手+屏障气泡占多少 wall？"
+    statement: "两轮 CrossSet/Wait + 双侧 PipeBarrier ALL + SyncAll 气泡占比是高/中/低？"
+    deps: [F-DEVICE-FLOW, F-SCALAR968]
+    status: open
+
+  - id: Q4-DUAL-AIV
+    domain: open
+    kind: question
+    title: "双 AIV 拆分是否值得？"
+    statement: "AIV1 仅握手时，把 poly 维分给 AIV1 能否显著降 wall，且不引入新挂？"
+    deps: [F-DEVICE-FLOW, Q1-PREP-SHARE, Q2-NTT-SHARE]
+    status: open
+
+  - id: E-W0
+    domain: experiments
+    kind: experiment
+    title: "DS-W0 基线复测"
+    statement: "不改代码；NPU 复测 Σ µs 与 scalar%；偏差>5% 先查环境"
+    deps: [F-US-BASE, F-SCALAR968]
+    status: planned
+
+  - id: E-W1
+    domain: experiments
+    kind: experiment
+    title: "DS-W1 静态热点清单"
+    statement: "统计握手次数与标量环；给 H1–H4 排出唯一上板序"
+    deps: [F-CODE-SCALAR-LOOPS, F-DEVICE-FLOW]
+    status: planned
+
+  - id: E-H1
+    domain: experiments
+    kind: experiment
+    title: "H1 握手屏障减薄"
+    statement: "新树 RB-D10a：收窄 CrossSet/Wait 外包 PipeBarrier；测 µs/scalar%/正确性"
+    deps: [E-W0, E-W1, Q3-HS-SHARE]
+    status: planned
+
+  - id: E-H2
+    domain: experiments
+    kind: experiment
+    title: "H2 Prep/解码向量化"
+    statement: "新树 RB-D10b：替换 scalar GM 解码/解包热环"
+    deps: [E-W0, E-W1, Q1-PREP-SHARE]
+    status: planned
+
+  - id: E-H3
+    domain: experiments
+    kind: experiment
+    title: "H3 NTT/INTT 向量化"
+    statement: "新树 RB-D10c：打掉标量蝶形主环"
+    deps: [E-W0, E-W1, Q2-NTT-SHARE]
+    status: planned
+
+  - id: E-H4
+    domain: experiments
+    kind: experiment
+    title: "H4 双 AIV 分担"
+    statement: "新树 RB-D10d：仅当前刀收益不足时开启"
+    deps: [E-H1, E-H2, E-H3, Q4-DUAL-AIV]
+    status: planned
+
+  - id: D-EXEC-ORDER
+    domain: decisions
+    kind: decision
+    by: agent
+    title: "上板序决策规则"
+    statement: "W0→W1 后，按「热点档高 + 风险低」选下一刀；NPU 一次一刀；<3% 收益即证伪换刀；挂/错数停并写证伪，不硬融"
+    deps: [J-BOTTLENECK-CLASS, J-NOT-REPROFILE-TL]
+    status: accepted
+
+  - id: D-SUCCESS
+    domain: decisions
+    kind: decision
+    by: human
+    title: "成功阈值"
+    statement: "有条件成功=Σ µs≤0.90×基线且×30绿且 launch=1；强成功=≤0.80×；辅证 scalar%↓≥10pt"
+    deps: [Q-GOAL, F-US-BASE]
+    status: accepted

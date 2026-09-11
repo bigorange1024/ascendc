@@ -1,9 +1,10 @@
 # Launch 压缩战役 · 全套 NPU 实验计划
 
-> **状态**：QUEUE 1–8 **PASS_NPU×30**；NPU 性能见 [`qa/active_npu_perf_summary.md`](../../qa/active_npu_perf_summary.md)（2026-09-10）。  
-> **分支工作区**：当前检出可改；**禁止擅自 commit/push**（仅用户明确授权后）。  
+> **状态**：QUEUE 1–8 **PASS_NPU×30**（战役收口）。NPU 性能见 [`qa/active_npu_perf_summary.md`](../../qa/active_npu_perf_summary.md)。  
+> **性能后续（活跃）**：Decrypt 1-launch 融合核 scalar/握手优化 → [`../decrypt-scalar-opt/PLAN.md`](../decrypt-scalar-opt/PLAN.md)。  
+> **分支工作区**：`cursor/kem-2launch-sticky-1534`；**禁止擅自开分支 / commit/push**（仅用户明确授权后）。  
 > **验收真源**：仅 **NPU**（`-r npu`）。**禁止**为本战役新写/依赖 CPU、SIM 作结案依据。  
-> **工具**：强制 `thirdparty/cannbot-skills`（至少 `ascendc-sync-audit`；性能深度用 `ops-profiling`；经验总结走 plugin 口径落盘本目录）。  
+> **工具**：强制 `thirdparty/cannbot-skills`（至少 `ascendc-sync-audit`；性能深度用 `ops-profiling`）。  
 > **空闲**：NPU 会话 **空转 ≤3 分钟**——刀间立刻下一刀或停 keepalive 放机。
 
 ---

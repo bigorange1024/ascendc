@@ -2,6 +2,7 @@
 
 | 日期 | 纪要 |
 |------|------|
+| 2026-09-11 | [Decrypt scalar/握手优化 · 实验计划落盘](2026-09-11-Decrypt-scalar-握手优化-实验计划.md) |
 | 2026-09-11 | [PKE Decrypt 单 launch · profiling 收口](2026-09-11-PKE-Decrypt-单launch-profiling收口.md) |
 | 2026-09-10 | [Launch压缩 · D09/T30 · NPU 性能一览](2026-09-10-launch-reduce-D09.md) |
 | 2026-09-10 | [HiDevLab WebIDE 主路径](2026-09-10-HiDevLab-WebIDE主路径.md) |

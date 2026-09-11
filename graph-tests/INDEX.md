@@ -1,23 +1,24 @@
 # graph-tests — cannbot 重建试验场
 
 > **用途**：一刀一目录的积木拼装 / 同步探针；**不是** `examples/` 交付树。  
-> **当前主线（2026-09-09 夜）**：**Launch 压缩** → [`launch-reduce-ops/`](launch-reduce-ops/INDEX.md)（NPU-only；KeyGen→2 / Decaps→3）  
-> **已收口**：Encrypt/Encaps · Decrypt/Decaps 重建门禁 · KeyGen 重建×30（launch 偏多，待压）
+> **当前主线（2026-09-11）**：**Decrypt scalar/握手优化** → [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md)（NPU-only；D09 基线已 1-launch）  
+> **已收口**：Launch 压缩 QUEUE 1–8 · Encrypt/Encaps · Decrypt/Decaps 重建门禁 · KeyGen 重建×30
 
-## 状态（2026-09-09）
+## 状态（2026-09-11）
 
 | 项 | 说明 |
 |----|------|
+| **Decrypt scalar 优化** | 计划+图谱+W1 **已锁**；**下一刀 DS-W0 上机复测** → H2 Prep 向量化 |
+| Launch 压缩 | QUEUE 1–8 **PASS_NPU×30**（归档） |
 | Encrypt/Encaps | T22–T24 **收口**（launch=2，参照） |
-| Decrypt/Decaps | 门禁收口；**launch=5 待压→3** |
-| KeyGen | NPU×30 关闸；**PKE=3/KEM=4 待压→2** |
-| **Launch 压缩** | 计划已锁；**待 NPU 开机**；禁 CPU/SIM 结案 |
+| Decrypt/Decaps | 重建门禁收口；D09=1 launch；性能刀见上 |
 
 ## 目录
 
 | 路径 | 含义 |
 |------|------|
-| [`launch-reduce-ops/`](launch-reduce-ops/INDEX.md) | **活跃**：降 launch 全套 NPU 计划 |
+| [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md) | **活跃**：Decrypt 融合核 scalar/握手优化 |
+| [`launch-reduce-ops/`](launch-reduce-ops/INDEX.md) | 已收口：降 launch 全套 NPU 计划 |
 | [`keygen-rebuild-ops/`](keygen-rebuild-ops/INDEX.md) | KeyGen 任务/反馈（基线） |
 | [`kg_related/`](kg_related/INDEX.md) | KeyGen 重写实现（`RB-K*`） |
 | [`decrypt-rebuild-ops/`](decrypt-rebuild-ops/INDEX.md) | Decrypt/Decaps（已收口基线） |

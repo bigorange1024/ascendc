@@ -10,6 +10,10 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-11 — [Decrypt scalar/握手优化 · 实验计划落盘](2026-09/2026-09-11-Decrypt-scalar-握手优化-实验计划.md)
+
+关键字：**计划已锁可上机** · 图谱 `rg-decrypt-scalar-opt` · W1 热点 H2→H3→H1→H4 · 下一刀 **DS-W0 板上复测** · 禁擅自开分支
+
 ### 2026-09-11 — [PKE Decrypt 单 launch · profiling 收口](2026-09/2026-09-11-PKE-Decrypt-单launch-profiling收口.md)
 
 关键字：**PKE Decrypt 单 Host launch 融合核** · Chrome Trace JSON · HTML 报告 · TimelineDetail dump 失败钉死 · vector0 scalar≈96.8% · 汇报禁用暗号 ID
