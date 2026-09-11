@@ -1,0 +1,34 @@
+{
+  "html": "report.html",
+  "payload": "report_payload.json",
+  "requested_pages": [
+    "details",
+    "roofline",
+    "timeline",
+    "cache",
+    "raw-data"
+  ],
+  "rendered_pages": [
+    "details",
+    "roofline",
+    "cache",
+    "raw-data"
+  ],
+  "omitted_modules": [
+    {
+      "page": "timeline",
+      "available": false,
+      "collector_block": "timeline",
+      "collector_status": "unavailable",
+      "metric": null,
+      "reason": "Installed msprof op CLI exposes none of: PipeTimeline, pipeTimeLine.",
+      "evidence": {
+        "event_count": 0,
+        "lane_count": 0
+      }
+    }
+  ],
+  "unavailable_policy": "omit",
+  "timing": "_internal/visualization_timing.json",
+  "compact_payload": true
+}

@@ -1,0 +1,2115 @@
+{
+  "files_scanned": [
+    "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+    "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+    "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+    "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+    "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/light_cube.hpp",
+    "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/tiling.h"
+  ],
+  "event_count": 108,
+  "findings": [
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 33,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 DecCrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@33 后调用 DecCrossSet()@37（类型解析: T30LightCube(唯一类兜底)）；DecCrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 DecCrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 36,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 EncCrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@36 后调用 EncCrossSet()@40（类型解析: T30LightCube(唯一类兜底)）；EncCrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 EncCrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 24,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 27,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 27,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 30,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 32,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 34,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 35,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 37,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 39,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 41,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 42,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 44,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 73,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 73,
+      "message": "同一函数连续 PipeBarrier 过多: 12 个 in <global>",
+      "detail": "行: [73, 75, 78, 89, 96, 129, 132, 86, 97, 107, 151, 154]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 75,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 77,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 78,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-12",
+      "severity": "信息",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 80,
+      "message": "SyncAll 全核同步：确认所有核都到达此点（顶层直排，视为合法用法）",
+      "detail": "顶层直排的 SyncAll 为正常全核同步；注意分支不对称与单核场景"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 86,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-12",
+      "severity": "信息",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 88,
+      "message": "SyncAll 全核同步：确认所有核都到达此点（顶层直排，视为合法用法）",
+      "detail": "顶层直排的 SyncAll 为正常全核同步；注意分支不对称与单核场景"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 89,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 89,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 96,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 97,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 100,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 107,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 128,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 128,
+      "message": "同一函数连续 PipeBarrier 过多: 5 个 in __aicore__ inline void PrepEncapsPrefix",
+      "detail": "行: [128, 130, 139, 141, 143]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 129,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 130,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "line": 132,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 139,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 139,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 141,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 143,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 147,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 147,
+      "message": "同一函数连续 PipeBarrier 过多: 14 个 in AscendC::DataCopy",
+      "detail": "行: [147, 191, 194, 202, 204, 209, 212, 219, 221, 226, 228, 420, 441, 446]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 151,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "line": 154,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 177,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 185,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 187,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 191,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 194,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 202,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 204,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 208,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 209,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 211,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 212,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 219,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 221,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 226,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 228,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 278,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 284,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 284,
+      "message": "同一函数连续 PipeBarrier 过多: 7 个 in __aicore__ inline void RunNttSuDot",
+      "detail": "行: [284, 286, 291, 298, 303, 309, 312]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 286,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 290,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 291,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 294,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 296,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 298,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 303,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 308,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 309,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 312,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 333,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 366,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 366,
+      "message": "同一函数连续 PipeBarrier 过多: 8 个 in __aicore__ inline void RunInttExtractM",
+      "detail": "行: [366, 368, 370, 372, 375, 390, 392, 394]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 368,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 370,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 372,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 375,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 390,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 392,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "line": 394,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 412,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 420,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 441,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 446,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 485,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 485,
+      "message": "同一函数连续 PipeBarrier 过多: 9 个 in __aicore__ inline void AssembleUvNttDomain",
+      "detail": "行: [485, 491, 495, 498, 504, 512, 517, 523, 526]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 491,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 495,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 498,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 504,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 512,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 517,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 523,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 526,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 568,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 568,
+      "message": "同一函数连续 PipeBarrier 过多: 9 个 in __aicore__ inline void InttAddNoiseUv",
+      "detail": "行: [568, 570, 575, 582, 587, 589, 591, 598, 600]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 570,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 575,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 582,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 587,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 589,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 591,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 598,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 600,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 702,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 702,
+      "message": "同一函数连续 PipeBarrier 过多: 10 个 in __aicore__ inline void PackCiphertext",
+      "detail": "行: [702, 707, 709, 712, 714, 718, 723, 725, 728, 731]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 707,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 709,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 712,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 714,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 718,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 723,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 725,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 728,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "line": 731,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 139,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void DecLoadPoly",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 147,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 191,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 194,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 202,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 204,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 209,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 212,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 219,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 221,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 226,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 228,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 284,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 286,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 291,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 298,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 303,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 309,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 312,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunNttSuDot",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 366,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 368,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 370,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 372,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 375,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 390,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 392,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 394,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/decrypt_math.hpp",
+      "func": "__aicore__ inline void RunInttExtractM",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 24,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecTrace",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 27,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecTrace",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 32,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecCrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 33,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecCrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 34,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecCrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 39,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecCrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 40,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecCrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 41,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "__aicore__ inline void DecCrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 73,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 75,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 78,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "syncall",
+      "event_type": "syncall",
+      "flag_id": "",
+      "line": 80,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "SyncAll(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 89,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 96,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 129,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 132,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/decrypt/t30_dec_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 77,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void RunEncapsHeadG",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 89,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void RunEncapsHeadG",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 100,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void RunEncapsHeadG",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 128,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PrepEncapsPrefix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 130,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PrepEncapsPrefix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 139,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PrepEncapsPrefix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 141,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PrepEncapsPrefix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 143,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PrepEncapsPrefix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 177,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void EmbedMuFromMsg",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 185,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void EmbedMuFromMsg",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 187,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void EmbedMuFromMsg",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 208,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void DecodeTHatFromEk",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 211,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void DecodeTHatFromEk",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 278,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void Cbd9FromPrf",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 290,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void SampleNoiseCbd",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 294,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void SampleNoiseCbd",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 296,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void SampleNoiseCbd",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 308,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void SampleAHatMatrix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 333,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void SampleAHatMatrix",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 412,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void EncLoadPoly",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 420,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 441,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 446,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 485,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 491,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 495,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 498,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 504,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 512,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 517,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 523,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 526,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void AssembleUvNttDomain",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 568,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 570,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 575,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 582,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 587,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 589,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 591,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 598,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 600,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void InttAddNoiseUv",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 702,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 707,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 709,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 712,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 714,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 718,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 723,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 725,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 728,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 731,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/encrypt_math.hpp",
+      "func": "__aicore__ inline void PackCiphertext",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 27,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncTrace",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 30,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncTrace",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 35,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncCrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 36,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncCrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 37,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncCrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 42,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncCrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 43,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncCrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 44,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "__aicore__ inline void EncCrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 86,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "syncall",
+      "event_type": "syncall",
+      "flag_id": "",
+      "line": 88,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "SyncAll(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 97,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 107,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 151,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 154,
+      "file": "/workspace/graph-tests/enc_related/RB-T30-decaps-2launch/encrypt/t30_enc_fused_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}

@@ -182,20 +182,22 @@ Decrypt 子链 + Re-Encrypt + FO：**段边界清晰 + mid-sync**；勿把上一
 
 ### 7.4 KeyGen 类（重建默认）
 
-prep（采样/表）与带 Cube 的 NTT/内积/编码 **切开**；KEM 尾（H(ek)/z/拼 dk）可 AIV-only 另 launch。具体刀号与目录 → `graph-tests/keygen-rebuild-ops/`（不进主文）。
+prep（采样/表）与带 Cube 的 NTT/内积/编码 **切开**；KEM 尾（H(ek)/z/拼 dk）可 AIV-only 另 launch。具体刀号 → `graph-tests/keygen-rebuild-ops/`。
+
+**Launch 压缩（进行中）**：目标对齐 stable 数量级——PKE/KEM KeyGen **→2**、Decaps **→3**（Encaps=2 为参照）。假说与波次见 `graph-tests/launch-reduce-ops/PLAN.md`。结案前不改写 §2 默认；成功/证伪后再立破例决策。
 
 次数对照（仅库存，**≠拓扑同构**）：
 
-| 算子 | stable launch | 重建 launch |
-|------|---------------|-------------|
-| PKE KeyGen | 2 | 3 |
-| PKE Encrypt | 2 | 2 |
-| PKE Decrypt | 1 | 3 |
-| KEM KeyGen | 2 | 4 |
-| KEM Encaps | 2 | 2 |
-| KEM Decaps | 3 | 5 |
+| 算子 | stable launch | 重建 launch | 压缩目标 |
+|------|---------------|-------------|----------|
+| PKE KeyGen | 2 | 3 | **2** |
+| PKE Encrypt | 2 | 2 | — |
+| PKE Decrypt | 1 | 3 | ≤2（优先 1） |
+| KEM KeyGen | 2 | 4 | **2** |
+| KEM Encaps | 2 | 2 | — |
+| KEM Decaps | 3 | 5 | **3** |
 
-口诀：Encaps/Encrypt=2；Decrypt=3；PKE-KG=3；KEM-KG=4；Decaps=5。
+口诀（重建基线）：Encaps/Encrypt=2；Decrypt=3；PKE-KG=3；KEM-KG=4；Decaps=5。
 
 ---
 
@@ -207,6 +209,7 @@ prep（采样/表）与带 Cube 的 NTT/内积/编码 **切开**；KEM 尾（H(e
 | ≠ 晋级 `examples/stable-*` | 须用户 `#交付#` + customspec |
 | `Q-ENCRYPT-STICKY` **仍开** | 粘性挂充分条件未钉死；禁把「某刀绿了」当充分条件关闭 |
 | `Q-ULT` **仍开** | 总目标持续；本 KB 是可执行子集，不是证明完备 |
+| Launch 压缩 | NPU 计划已锁；**待开机**；不以 CPU/SIM 结案 |
 
 ---
 
@@ -221,7 +224,7 @@ prep（采样/表）与带 Cube 的 NTT/内积/编码 **切开**；KEM 尾（H(e
 | SIM 507000 / session | `AscendC-CAModel-SIM-funckey与单session约束知识库.md` |
 | Encrypt/Decrypt 拓扑案例附录 | `MIX-*-反卡死拓扑技术总结.md`（**以本文决策为准**；文中刀号仅附录） |
 
-**战役运营（非知识）**：`graph-tests/{encrypt,decrypt,keygen}-rebuild-ops/` · `AGENT_HANDOFF.md` · 当日 `qa/`。  
+**战役运营（非知识）**：`graph-tests/launch-reduce-ops/`（活跃）· `graph-tests/{encrypt,decrypt,keygen}-rebuild-ops/` · `AGENT_HANDOFF.md` · 当日 `qa/`。  
 **分算子旧 KB**：`*-cannbot-rebuild-kb.md` 仅为指针，勿双源维护。
 
 ---

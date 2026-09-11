@@ -1,0 +1,6 @@
+======== A) msopprof TimelineDetail + dump=on ========
+A_RC=0
+A_RESULT=DUMP_FAIL
+======== B) msopprof Default+PipeUtilization (baseline cycles) ========
+======== C) msprof app collect + export text/json ========
+PROF_DIR=/mnt/workspace/launch-reduce-logs/pke-decrypt-1launch-prof-20260911-104959/C_msprof_app/PROF_000001_20260911105011458_00004873DDRIDMGF

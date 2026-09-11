@@ -10,21 +10,56 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-11 — [PKE Decrypt 单 launch · profiling 收口](2026-09/2026-09-11-PKE-Decrypt-单launch-profiling收口.md)
+
+关键字：**PKE Decrypt 单 Host launch 融合核** · Chrome Trace JSON · HTML 报告 · TimelineDetail dump 失败钉死 · vector0 scalar≈96.8% · 汇报禁用暗号 ID
+
+### 2026-09-10 — [Launch压缩 · D09/T30 · 新建 NPU 性能一览](2026-09/2026-09-10-launch-reduce-D09.md)
+
+关键字：**RB-D09** · **RB-T30** · Decaps→**2** · 禁改 D08 · SyncAll 环外 · Compress₁ 常数 · **PASS_NPU×30** · QUEUE 1–8；Decaps→2
+
+### 2026-09-10 — [HiDevLab WebIDE 主路径](2026-09/2026-09-10-HiDevLab-WebIDE主路径.md)
+
+关键字：**HiDevLab** · **WebIDE** · **hidevlab_boot.sh** · **SSH 5min 非主通道** · **机上无 GitHub** · **add_custom NPU 冒烟 PASS**
+
+### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30 · KB手册化+图推理重写](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
+
+关键字：**正确∧不卡** · **KB 手册化**（机制/检查单）· 图推理重写 · KeyGen NPU×30 · MIX 降为案例附录
+
 ### 2026-09-09 — [粘性挂探索收官 · 转向新写 __br-kem-2launch-sticky-1534](2026-09/2026-09-09-粘性挂探索收官与转向新写__br-kem-2launch-sticky-1534.md)
 
 - **要点**：停既有 l18 debug；收官包带分支后缀；**scripts 不合 main**；Agent 转验收测试。来源分支 `cursor/kem-2launch-sticky-1534`。
+
+### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
+
+关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills** · **`rg-encrypt-cann-ntt` 迁骨架** · **Q-ULT answered** · **正确性/旧l18 仍 open**
+
+### 2026-09-08 — [Encrypt cannbot · Encaps收口 · T27撞名修复 · 待重写Decaps](2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md)
+
+关键字：**Q-ULT** · T23/T24 liboqs · **T27 NPU绿** · auto_gen **prep_custom撞名** · 507000 · **整段重写 Decrypt/Decaps** · **Cloud交替HANDOFF** · 预算180s
 
 ### 2026-09-08 — [防断连 · NPU-A/B __br-kem-2launch-sticky-1534](2026-09/2026-09-08-防断连与NPU-AB投递__br-kem-2launch-sticky-1534.md)
 
 - **要点**：长 SSH 禁；`remote_job`/`keepalive`/`run_npu_ab_nohup`；主机自动发现（勿写死）。来源分支 `cursor/kem-2launch-sticky-1534`。
 
+### 2026-09-08 — [Encrypt×cann-ntt 锁定 · 文档底座](2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md)
+
+关键字：**Host编排+迁入cann-ntt** · **EN01–EN09 SIM齐** · **EN10/EN11 NPU不挂** · **EN12 sticky进行中** · **空闲&lt;4min保活** · **禁抄PKE/KEM**
+
 ### 2026-09-07 — [NPU_SUITE · ENCRYPT-GAP · 上机N11–N14 · EARLY](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
 
 关键字：**N11 C2×7绿** · **N12 E17/E18非充分** · **N13 TRACE空槽r11** · **N14污染r1** · **下一刀EARLY** · **请关机**
 
+### 2026-09-07 — [Encrypt · cannbot + ER01/ER02](2026-09/2026-09-07-Encrypt-cannbot与ER01交接.md)
+
+关键字：**主控/subagent** · **ER03 PASS/X27** · **ER05 PASS/X29 · SIM暂停等NPU** · **禁 commit/push**
 ### 2026-09-06 — [Encrypt 无卡死：知识库+新图谱](2026-09/2026-09-06-Encrypt无卡死知识库与新图谱.md)
 
 关键字：**专属知识库** · **rg-encrypt-npu-hangfree** · E01–E07 toys · SHAKE+NTT+basemul+INTT · SET4 · ≠Tag5T
+
+### 2026-09-06 — [Encrypt 卡死重写 · T01 PASS · 开 T02](2026-09/2026-09-06-Encrypt卡死重写T01与T02.md)
+
+关键字：**限时实验** · **禁复踩失败路线** · **每刀前遍历 KB+图** · **T01 1/3 握手 PASS** · **T02 生产 GATE 时序**
 
 ### 2026-09-04 — [PKE Enc/Dec 实机短报 · 老挂点](2026-09/2026-09-04-PKE-EncryptDecrypt实机短报老挂点.md)
 
@@ -34,41 +69,14 @@
 
 关键字：**prep_ntt|l18** · **GATE 4/8** · TRACE **`0/16` 空** · Host 折 μ SIM 绿 · **Decrypt hang 单独开图** · 勿升 notes
 
-### 2026-09-02 — [实机 l18 粘性 · TRACE 107002 · 安全拆分（当日 3-launch）](2026-09/2026-09-02-实机l18粘性与TRACE-107002.md)
-
-关键字：**粘性≠out** · **`107002` CONTEXT_NULL** · TRACE 子线程未 SetDevice · 当日默认 prep|ntt|l18 · fused 嫌疑双 Cube · 终态见 09-03
-
-### 2026-09-09 — [Decrypt收口 · KeyGen NPU×30 · KB手册化+图推理重写](2026-09/2026-09-09-Decrypt-Decaps-cannbot重建脚手架.md)
-
-关键字：**正确∧不卡** · **KB 手册化**（机制/检查单）· 图推理重写 · KeyGen NPU×30 · MIX 降为案例附录
-
-### 2026-09-08 — [Encrypt cannbot · Encaps收口 · T27撞名修复 · 待重写Decaps](2026-09/2026-09-08-Encrypt-cannbot重建脚手架.md)
-
-关键字：**Q-ULT** · T23/T24 liboqs · **T27 NPU绿** · auto_gen **prep_custom撞名** · 507000 · **整段重写 Decrypt/Decaps** · **Cloud交替HANDOFF** · 预算180s
-
-### 2026-09-10 — [HiDevLab WebIDE 主路径](2026-09/2026-09-10-HiDevLab-WebIDE主路径.md)
-
-关键字：**HiDevLab** · **WebIDE** · **hidevlab_boot.sh** · **SSH 5min 非主通道** · **机上无 GitHub** · **add_custom NPU 冒烟 PASS**
-
-### 2026-09-09 — [reasoning-graph-skill 入 thirdparty](2026-09/2026-09-09-reasoning-graph-skill入thirdparty.md)
-
-关键字：**Drive zip** · **推理图谱 skill** · **thirdparty/reasoning-graph-skill** · **勿 vendor .cursor/skills** · **`rg-encrypt-cann-ntt` 迁骨架** · **Q-ULT answered** · **正确性/旧l18 仍 open**
-
-### 2026-09-08 — [Encrypt×cann-ntt 锁定 · 文档底座](2026-09/2026-09-08-Encrypt-cann-ntt文档底座.md)
-
-关键字：**Host编排+迁入cann-ntt** · **EN01–EN09 SIM齐** · **EN10/EN11 NPU不挂** · **EN12 sticky进行中** · **空闲&lt;4min保活** · **禁抄PKE/KEM**
-
-### 2026-09-07 — [Encrypt · cannbot + ER01/ER02](2026-09/2026-09-07-Encrypt-cannbot与ER01交接.md)
-
-关键字：**主控/subagent** · **ER03 PASS/X27** · **ER05 PASS/X29 · SIM暂停等NPU** · **禁 commit/push**
-### 2026-09-06 — [Encrypt 卡死重写 · T01 PASS · 开 T02](2026-09/2026-09-06-Encrypt卡死重写T01与T02.md)
-
-关键字：**限时实验** · **禁复踩失败路线** · **每刀前遍历 KB+图** · **T01 1/3 握手 PASS** · **T02 生产 GATE 时序**
-
 ### 2026-09-03 — [Encrypt 卡死 · 推理图谱 · toy 近目标](2026-09/2026-09-03-Encrypt卡死图谱与toy近目标.md)
 
 关键字：**`docs/rg-encrypt-l18.yaml`** · **Decrypt 独立 `rg-decrypt-fused.yaml`** · **DGT-1 SoftSync toy** · **Q-ULT NPU 不卡+正确** · **GT-1..7 SIM 绿** · **DataCopy TRACE** · **`graph-tests/`** · 禁全量 SIM 磨 FSM · 禁空耗催上机
 
+
+### 2026-09-02 — [实机 l18 粘性 · TRACE 107002 · 安全拆分（当日 3-launch）](2026-09/2026-09-02-实机l18粘性与TRACE-107002.md)
+
+关键字：**粘性≠out** · **`107002` CONTEXT_NULL** · TRACE 子线程未 SetDevice · 当日默认 prep|ntt|l18 · fused 嫌疑双 Cube · 终态见 09-03
 
 ### 2026-09-01 — [有界演示 · 合稿删 · 方法论两阶段收口](2026-09/2026-09-01-有界演示路径拓扑与合稿衔接片删除.md)
 
@@ -275,7 +283,7 @@ library/docs/qa 分工 · 仅根 README · 各目录 INDEX 侧重点
 | **路径** | `qa/YYYY-MM/YYYY-MM-DD-<中文关键词>.md` |
 | **每日一篇** | 同一自然日**只有一份**纪要；新讨论**刷新/追加**到当日文件，**禁止**同日新建第二个 `.md` |
 | **标题** | 文件名与文首标题含当日讨论**关键词**（可随当日追加话题更新文件名/标题，须同步 INDEX） |
-| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`**、可选 **[`active_sim_regress_summary.md`](active_sim_regress_summary.md)**（活跃 SIM tick）与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
+| **根目录** | `qa/` 根下仅 **`INDEX.md`**、**`TODO.md`**、可选 **[`active_sim_regress_summary.md`](active_sim_regress_summary.md)**（SIM tick）、**[`active_npu_perf_summary.md`](active_npu_perf_summary.md)**（NPU Task Duration）与 **`YYYY-MM/`** 月目录，**不**直接放日纪要 |
 
 ---
 

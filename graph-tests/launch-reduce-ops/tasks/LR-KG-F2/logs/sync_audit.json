@@ -1,0 +1,1357 @@
+{
+  "files_scanned": [
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/data_utils.h",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/light_cube.hpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/tiling.h",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/light_cube.hpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/tiling.h",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+    "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/main.cpp"
+  ],
+  "event_count": 69,
+  "findings": [
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 31,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@31 后调用 CrossSet()@36（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 31,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@31 后调用 CrossSet()@36（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-05",
+      "severity": "高",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 34,
+      "message": "CrossCoreWaitFlag PIPE 方向与后续操作不匹配: WaitFlag<PIPE_MTE2> 后调用 CrossSet()，其内部首个操作是 PIPE_MTE3",
+      "detail": "WaitFlag<PIPE_MTE2>@34 后调用 CrossSet()@38（类型解析: LightCube(唯一类兜底)）；CrossSet 内部首个操作 DataCopy 归属 PIPE_MTE3，与 PIPE_MTE2 不匹配。建议：若 CrossSet 内部首个操作是 V（如 Relu），WaitFlag 应用 PIPE_V；若是 MTE3（如 DataCopyPad），应用 PIPE_MTE3 | 历史 case: cann/ops-transformer PR#3921 (flag_pair) | 修复提示: 补齐缺失的 SetFlag 或 WaitFlag，确保所有路径都触发 SetFlag | diff证据: @@ -595,6 +595,7 @@ __aicore__ inline void MlaPrologVecS1CubS2<MLAPT>::VectorBufferInit() {\n     // ..."
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 21,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 21,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 21,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in __aicore__ static inline void TraceMark",
+      "detail": "行: [21, 24, 21, 24]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 24,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 24,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 25,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 28,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 30,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 30,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 30,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in __aicore__ static inline void CrossWait",
+      "detail": "行: [30, 32, 30, 32]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 32,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 32,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 33,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 35,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 38,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 38,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 38,
+      "message": "同一函数连续 PipeBarrier 过多: 4 个 in __aicore__ static inline void CrossSet",
+      "detail": "行: [38, 40, 38, 40]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 40,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 40,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 40,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 42,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "line": 72,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 78,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 79,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 79,
+      "message": "同一函数连续 PipeBarrier 过多: 16 个 in <global>",
+      "detail": "行: [79, 106, 109, 149, 175, 184, 195, 203, 78, 105, 108, 84, 93, 139, 141, 144]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "line": 81,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "line": 81,
+      "message": "同一函数连续 PipeBarrier 过多: 21 个 in AscendC::DataCopy",
+      "detail": "行: [81, 124, 132, 141, 166, 182, 188, 190, 196, 202, 208, 214, 217, 219, 224, 226, 228, 234, 237, 240, 242]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 84,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 91,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 93,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 100,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 105,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 106,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "line": 108,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "line": 109,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "line": 124,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "line": 128,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "line": 128,
+      "message": "同一函数连续 PipeBarrier 过多: 5 个 in __aicore__ inline void KemTailRun",
+      "detail": "行: [128, 154, 163, 174, 182]；分析是否可合并"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "line": 132,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 139,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "line": 141,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 141,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "line": 144,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "line": 149,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "line": 154,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "line": 163,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 166,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "line": 174,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "line": 175,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 182,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "line": 182,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "line": 184,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 188,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 190,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "line": 195,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 196,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 202,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "line": 203,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 208,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 214,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 217,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 219,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 224,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 226,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 228,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 234,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 237,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 240,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    },
+    {
+      "code": "SYNC-09",
+      "severity": "性能",
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "line": 242,
+      "message": "PipeBarrier<PIPE_ALL> 粒度过粗",
+      "detail": "若仅需 V 排序可用 PipeBarrier<PIPE_V>；确认无跨 PIPE 依赖后再收窄"
+    }
+  ],
+  "events": [
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 72,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "func": "__aicore__ inline void CopyPolyIn",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 81,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 124,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 132,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 141,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k02_inc/ntt_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 91,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "__aicore__ inline void CopyAHatPolyIn",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 100,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "__aicore__ inline void CopyPolyOut",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 166,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 182,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 188,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 190,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 196,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 202,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 208,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 214,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 217,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 219,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 224,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 226,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 228,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 234,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 237,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 240,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 242,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/k03_inc/dot_encode_device_math.hpp",
+      "func": "AscendC::DataCopy",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 128,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "func": "__aicore__ inline void KemTailRun",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 154,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "func": "__aicore__ inline void KemTailRun",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 163,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "func": "__aicore__ inline void KemTailRun",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 174,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "func": "__aicore__ inline void KemTailRun",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 182,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kem_tail_device.hpp",
+      "func": "__aicore__ inline void KemTailRun",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 21,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 24,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 30,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 31,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 32,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 38,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 39,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 40,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "__aicore__ static inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 79,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 106,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 109,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 149,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 175,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 184,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 195,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 203,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_kem_tail_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 21,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 24,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 30,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 31,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 32,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 38,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 39,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 40,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "__aicore__ static inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 78,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 105,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 108,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 25,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 28,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void TraceMark",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 33,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cwait",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 34,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "CrossCoreWaitFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 35,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void CrossWait",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 40,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "cset",
+      "event_type": "crosscore",
+      "flag_id": "flagId",
+      "line": 41,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "CrossCoreSetFlag<0x2, PIPE_MTE2>(",
+      "side": "",
+      "pipe_param": "PIPE_MTE2"
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 42,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "__aicore__ inline void CrossSet",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 84,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 93,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 139,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 141,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    },
+    {
+      "kind": "pipebarrier",
+      "event_type": "PIPE_ALL",
+      "flag_id": "",
+      "line": 144,
+      "file": "/workspace/graph-tests/kg_related/RB-K09-kem-2launch/kg_ntt_dot_encode_custom.cpp",
+      "func": "<global>",
+      "raw": "PipeBarrier<PIPE_ALL>(",
+      "side": "",
+      "pipe_param": ""
+    }
+  ]
+}
