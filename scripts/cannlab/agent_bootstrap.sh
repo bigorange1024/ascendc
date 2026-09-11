@@ -33,6 +33,7 @@ TSIP="$(sudo tailscale ip -4 2>/dev/null | head -1)"
 # 实际 MagicDNS 名（可能是 cannlab-npu-1）
 TS_DNS="$(sudo tailscale status --self 2>/dev/null | awk '{print $2; exit}')"
 TS_DNS="${TS_DNS:-cannlab-npu}"
+
 # 2) 授权 Cursor 公钥（/home 持久，多为一次性）
 mkdir -p ~/.ssh && chmod 700 ~/.ssh
 grep -qF "${CURSOR_PUBKEY%% *} ${CURSOR_PUBKEY#* }" ~/.ssh/authorized_keys 2>/dev/null || \

@@ -12,11 +12,11 @@
 
 ### 2026-09-09 — [粘性挂探索收官 · 转向新写 __br-kem-2launch-sticky-1534](2026-09/2026-09-09-粘性挂探索收官与转向新写__br-kem-2launch-sticky-1534.md)
 
-- **要点**：停既有 l18 debug；收官包带分支后缀；**scripts 不合 main**；Agent 转验收测试。
+- **要点**：停既有 l18 debug；收官包带分支后缀；**scripts 不合 main**；Agent 转验收测试。来源分支 `cursor/kem-2launch-sticky-1534`。
 
 ### 2026-09-08 — [防断连 · NPU-A/B __br-kem-2launch-sticky-1534](2026-09/2026-09-08-防断连与NPU-AB投递__br-kem-2launch-sticky-1534.md)
 
-- **要点**：长 SSH 禁；`remote_job`/`keepalive`/`run_npu_ab_nohup`；主机 `cannlab-npu-1`；job `npu_ab_20260908_040002` RUNNING。
+- **要点**：长 SSH 禁；`remote_job`/`keepalive`/`run_npu_ab_nohup`；主机自动发现（勿写死）。来源分支 `cursor/kem-2launch-sticky-1534`。
 
 ### 2026-09-07 — [NPU_SUITE · ENCRYPT-GAP · 上机N11–N14 · EARLY](2026-09/2026-09-07-NPU套件单轮全绿与RxN.md)
 

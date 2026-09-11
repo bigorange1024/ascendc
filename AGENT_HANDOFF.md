@@ -1,6 +1,6 @@
 # AGENT_HANDOFF
 
-**日期**：2026-09-09  
+**日期**：2026-09-09（2026-09-11 合并 `cursor/encrypt-hang-archive-to-main-23e1`）  
 **分支**：`cursor/kem-2launch-sticky-1534`
 
 ---
