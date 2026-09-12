@@ -130,13 +130,28 @@ R
 
 也可一键：`bash scripts/cannlab/hang_observe_encaps_decaps.sh`（须已能 `ssh cannlab-npu`）。
 
+## 5.1 Agent 连通性纪律（强制 · 2026-09-12 用户钉死）
+
+> **浪费卡时的典型坏行为**：SSH/SOCKS 已经失败，仍指数退避空转重连、长时间不向用户汇报。
+
+| 禁止 | 要求 |
+|------|------|
+| **傻等 / 空等**服务器恢复（无新信息地挂着） | 单次探测用 **硬超时**（建议 `timeout 10–12s` + `ConnectTimeout≤8`） |
+| **无限重连**或接近无限的长退避链（如 8 次×最长 60s）还不说话 | `cannlab_ssh_try` **最多 2 次**短试；失败立即停 |
+| 连不上却继续假装在跑 NPU / 不报状态 | **立刻反馈**：「连不上」+ 证据一行（SOCKS 错 / `rx 0` / 仅 `127.0.0.1:2222`） |
+| bootstrap 后只见 `127.0.0.1:2222` 仍死磕 | 判定 **sshd 未绑 Tailscale IP**；请用户重 bootstrap / 重启；**不要**自己空转等到好 |
+
+**通的判据（须同时）**：`which_npu` 能 pick online 节点；`ss -ltn | grep 2222` 含 **`100.x:2222`**（不能只有 loopback）；短 SSH 回 `CONNECTED`。
+
+**不通时 Agent 话术**：直接说「连不上，请重启/重 bootstrap」，附 `ssh_rc` / SOCKS 原文；等用户下一句再测。禁止沉默重试烧额度。
+
 ## 6. 关键坑（务必记住）
 
 | 坑 | 现象 | 处置 |
 |----|------|------|
 | **设备号** | 卡挂成 `/dev/davinci3`，但 **ACL 逻辑设备号从 0 枚举**；仓库 `npu_device_map.sh` 会按树/节点选 1/2/3 → `aclrtSetDevice` 报 **107001 无效设备** | 单卡实例**必须显式 `ASCEND_DEVICE_ID=0`**（run.sh 会保留显式值）；或 `export CANNLAB=1` / `NPU_SINGLE_CARD=1` 让分卡表默认全 0 |
 | **驱动库** | `npu-smi` / ACL 报 `libc_sec.so`/`libdrvdsmi_host.so` 找不到 | 把 `/usr/local/Ascend/driver/lib64{,/driver,/common}` 加进 `LD_LIBRARY_PATH`（recipe 已含） |
-| **sshd 只听 loopback** | 首次 `sshd -p 2222` 绑到 `127.0.0.1` | 用 `-o ListenAddress=<tailscale ip>`（bootstrap 已处理） |
+| **sshd 只听 loopback** | 首次 `sshd -p 2222` 绑到 `127.0.0.1`；Agent 侧 SOCKS 失败、`rx 0` | 用 `-o ListenAddress=<tailscale ip>`（bootstrap 已处理）；**只有 `127.0.0.1:2222` = 未就绪**，Agent 须立刻反馈请用户重 bootstrap，禁止空等 |
 | **停机** | `poweroff/halt/shutdown` 无效（容器 PID1=tini，无 systemd）；`kill -9 1` 被内核拦截 | **`sudo kill -TERM 1`**（tini 优雅退出、节点下线）；**权威停计费以控制台“关机/停止”为准** |
 | **持久性** | 重启后 tailscale/sshd 消失 | 仅 `/mnt/workspace`、`/home` 持久；每次开机重跑 `agent_bootstrap.sh` |
 | **GitHub 抖动** | 偶发 `curl github 000` | 多为瞬时；重试即可，实例出网整体可达（gitcode/pypi/github 均 200） |

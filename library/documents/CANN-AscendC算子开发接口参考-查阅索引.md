@@ -49,6 +49,7 @@
 
 按时间倒序追加（最新在上）。
 
+| 2026-09-12 | **EN15/EP06 cann-ntt Encrypt/Encaps Host=2** | 复用 EN13：`KERNEL_TYPE_AIV_ONLY`/`MIX_AIC_1_2`、`DataCopy`/`TPipe`/`TQue`/`TBuf`/`Duplicate`/`Add`/`GetValue`/`SetValue`/`PipeBarrier`、`CrossCoreSetFlag|WaitFlag` modeId=0x2（flag **仅 1/2/3**）、`SyncAll`（**Wait 环外**阶段隔离）；Cube 族随 `enc_mmad_phase`；**无新增 AscendC API** | 双入口 `enc_prep_l1`+`enc_compute_l2`；L1 AIV 融 SampleNTT+CBD；L2 MIX 串 NTT→matvec→dot→INTT×2→加噪→pack；禁 GATE 4/8；Host mid-sync Âᵀ；权威 liboqs；本战役禁 npu |
 | 2026-09-12 | **AE 全 AscendC（消 Host Â/t̂/采样）** | 复用 AE-E/AE-P：`Gather`/`Mul`/`DataCopy`/`TPipe`/`TBuf`/`GetValue`/`SetValue`/`PipeBarrier`/`Duplicate`；`Shake128OneShot`/`Shake256OneShot`/`Sha3OneShot`（shared keccak，**无新增矢量 API**）；`poly_byte_decode12_scalar_gm`（shared）；`KERNEL_TYPE_AIV_ONLY` | 单 AIV 单 launch：Encrypt=`ek\|m\|coins`；Encaps=`ek\|m`；设备 CBD+SampleNTT×16+ByteDecode₁₂+Encrypt；禁 Cube/CrossCore；权威 liboqs |
 | 2026-09-12 | **AE-P Encaps 强完成 FO+CBD** | `Sha3OneShot`/`Shake256OneShot`（shared keccak）；复用 AE-E Gather/Mul/… | 同 launch：H/G→K + SHAKE256+CBD η=2→y/e；Â/t̂ 仍 Host；禁 Cube |
 | 2026-09-12 | **AE-E 单 AIV Encrypt** | `Gather`/`Mul`/`Muls`/`Add`/`Sub`/`ShiftLeft`/`ShiftRight`/`Adds`/`DataCopy`/`Duplicate`/`TPipe`/`TBuf`/`PipeBarrier`（复用 AV01）；`KERNEL_TYPE_AIV_ONLY` | 单 launch Encrypt；NTT=AV01；INTT=互逆 GS+×128^{-1}；basemul 偶奇 Gather+Vec Mul；禁 Cube/CrossCore；HOST_SAMPLE；对拍 liboqs |

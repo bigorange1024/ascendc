@@ -23,9 +23,19 @@ Encrypt **Host 多段编排 + 迁入 cann-ntt NTT** 试验场（ML-KEM-1024；�
 | EN10 | [EN10-TASK.md](EN10-TASK.md) → NPU 跑 EN09 | **PASS-NOHANG**（910B3/dev4） |
 | EN11 | [EN11-TASK.md](EN11-TASK.md) → NPU 连续多轮 EN09 | **PASS-NOHANG**（EN11e R=200 soft=0 hang=0） |
 | EN12 | [EN12-TASK.md](EN12-TASK.md) → [`EN12-samplentt-sticky/`](EN12-samplentt-sticky/) | **PASS-NOHANG**（CPU+SIM sticky R=16；NPU sticky R=32/64；EN12d 加压） |
+| EN13 | [EN13-TASK.md](EN13-TASK.md) → [`EN13-encrypt-liboqs-cross/`](EN13-encrypt-liboqs-cross/) | **PASS**（cpu+SIM；`c`≡liboqs max=0；tick≈813k） |
+| EN14 | [EN14-TASK.md](EN14-TASK.md) → [`EN14-encrypt-cross-sticky/`](EN14-encrypt-cross-sticky/) | **PASS**（sticky R=8；每轮 c≡liboqs；SIM tick≈6455278） |
+| EP01 | [EP01-TASK.md](EP01-TASK.md) → [`EP01-encaps-host-skel/`](EP01-encaps-host-skel/) | **PASS**（Host H/G 壳；c=1568 K=32） |
+| EP02 | [EP02-TASK.md](EP02-TASK.md) → [`EP02-encaps-call-encrypt/`](EP02-encaps-call-encrypt/) | **PASS**（真调 Encrypt；自洽 c/K） |
+| EP03 | [EP03-TASK.md](EP03-TASK.md) → [`EP03-encaps-device-hash/`](EP03-encaps-device-hash/) | **DEFERRED_HOST** |
+| EP04 | [EP04-TASK.md](EP04-TASK.md) → [`EP04-encaps-liboqs-cross/`](EP04-encaps-liboqs-cross/) | **PASS**（c/K≡liboqs；SIM tick≈812819） |
+| EP05 | [EP05-TASK.md](EP05-TASK.md) → [`EP05-encaps-sticky-sim/`](EP05-encaps-sticky-sim/) | **PASS**（sticky R=16；每轮 c/K≡liboqs；SIM tick≈12897130） |
+| EN15 | — → [`EN15-encrypt-2launch/`](EN15-encrypt-2launch/) | **PASS**（Host launch=**2**；cpu+SIM；c≡liboqs max=0；tick≈898767） |
+| EP06 | — → [`EP06-encaps-2launch/`](EP06-encaps-2launch/) | **PASS**（Host launch=**2**；Host FO+Encrypt；c/K≡liboqs；tick≈898662） |
 
-**SIM 里程碑**：EN01–EN09 齐套；EN12 sticky R=16 SIM 不挂（kernel≈1881s）。  
-**NPU**：EN10 + EN11 进程多轮 + EN12 sticky 均不挂（KB S10–S12；X39–X41）。  
+**SIM 里程碑**：EN01–EN09 齐套；EN12 sticky；**EN13–EN14 Encrypt×liboqs**；**EP01–EP05 Encaps（EP03 后置）** — 战役 [`../enc-encaps-cann-ntt-sim/`](../enc-encaps-cann-ntt-sim/INDEX.md) **SIM 强完成**。  
+**少 launch（2026-09-12）**：[`../encrypt-encaps-low-launch/`](../encrypt-encaps-low-launch/INDEX.md) — **EN15/EP06** 否决 8-launch 交付形态，锁定 Host=2。  
+**NPU**：EN10 + EN11 进程多轮 + EN12 sticky 均不挂（KB S10–S12；X39–X41）；旧编号 EN15/EP10 NPU 仍待用户授权（与本 EN15 2-launch SIM 刀不同）。  
 
 **禁止**：抄 PKE/KEM 算子核；抄 `enc_related/ER0*` 核当模板；未跑任务书要求的 sync_audit 声称完成。  
 **旧 hang 线**：[`../enc_related/`](../enc_related/) 只读教训。

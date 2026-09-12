@@ -2,7 +2,7 @@
 
 | 日期 | 纪要 |
 |------|------|
-| 2026-09-12 | [单 AIV 全向量 Encrypt/Encaps · SIM 全 AscendC](2026-09-12-单AIV全向量-Encrypt-Encaps-SIM.md) |
+| 2026-09-12 | [单 AIV 全向量 Encrypt/Encaps · SIM](2026-09-12-单AIV全向量-Encrypt-Encaps-SIM.md)（NPU 防挂死×30；**少 launch 收口** AIV=1 / cann-ntt=2 EN15+EP06；禁傻等） |
 | 2026-09-12 | [单 AIV ML-KEM NTT 抽取与 SIM 对比](2026-09-12-单AIV-MLKEM-NTT抽取与SIM对比.md) |
 | 2026-09-11 | [Encrypt+Encaps × cann-ntt · SIM-only 强完成（EN14→EP05）](2026-09-11-Encrypt-Encaps-cann-ntt-SIM战役计划.md) |
 | 2026-09-11 | [Decrypt scalar · DS-H2 Prep 向量化强成功（Σ≈335µs≈0.74×）](2026-09-11-Decrypt-scalar-DS-H2-Prep向量化.md) |

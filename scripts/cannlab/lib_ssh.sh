@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
-# CANNLab 短连 SSH 公共库：SOCKS + ServerAlive + 失败时重试 / Tailscale reset
+# CANNLab 短连 SSH 公共库：SOCKS + ServerAlive + 有限短重试
 # 被 remote_job.sh / run_npu_ab_nohup.sh / agent_link_keepalive.sh / which_npu.sh source。
 #
 # 重要：云主机每次启动都是新节点（IP / MagicDNS 会变：cannlab-npu、cannlab-npu-1…）。
 # 默认 **自动挑 online 的 cannlab-npu***，不要写死主机名。仅 SSH_HOST_FORCE 可强制。
+#
+# 连通纪律（2026-09-12 用户钉死，见 docs/engineering/CANNLab接入与远程驱动.md §5.1）：
+#   禁止傻等/空等、禁止长退避无限重连还不反馈；cannlab_ssh_try 默认最多 2 次短试，
+#   ConnectTimeout 默认 8s；失败打印 VERDICT=DISCONNECTED 后立即返回。
 # shellcheck disable=SC2034
 
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/cannlab}"
@@ -19,7 +23,7 @@ cannlab_ssh_base() {
   _out=(ssh
     -o ServerAliveInterval=15
     -o ServerAliveCountMax=4
-    -o ConnectTimeout=25
+    -o ConnectTimeout="${CANNLAB_SSH_CONNECT_TIMEOUT:-8}"
     -o ProxyCommand="nc -X 5 -x ${SOCKS} %h %p"
     -o StrictHostKeyChecking=accept-new
     -i "${SSH_KEY}"
@@ -32,7 +36,7 @@ cannlab_scp_opts() {
   local -n _out="$1"
   _out=(-o ProxyCommand="nc -X 5 -x ${SOCKS} %h %p"
     -o StrictHostKeyChecking=accept-new
-    -o ConnectTimeout=25
+    -o ConnectTimeout="${CANNLAB_SSH_CONNECT_TIMEOUT:-8}"
     -i "${SSH_KEY}"
     -P "${SSH_PORT}"
   )
@@ -104,29 +108,29 @@ cannlab_pick_host() {
   return 1
 }
 
+# 连通探测：最多短试 2 次；失败立即返回并打印 VERDICT（2026-09-12：禁傻等/无限重连不反馈）
+# 覆盖：CANNLAB_SSH_MAX_ATTEMPTS（默认 2）、CANNLAB_SSH_RETRY_SLEEP（默认 2）
 cannlab_ssh_try() {
-  local n=1 delay=4
+  local n=1
+  local max="${CANNLAB_SSH_MAX_ATTEMPTS:-2}"
+  local delay="${CANNLAB_SSH_RETRY_SLEEP:-2}"
   local sshc=()
   # 每次尝试前重 pick（节点可能刚上线或换名）
   cannlab_pick_host || true
   cannlab_ssh_base sshc
-  while [ "$n" -le 8 ]; do
+  while [ "$n" -le "${max}" ]; do
     cannlab_ensure_tailscale
     cannlab_pick_host || true
     cannlab_ssh_base sshc
     if "${sshc[@]}" "$@"; then
       return 0
     fi
-    echo "[cannlab-ssh] fail attempt ${n} host=${SSH_HOST:-?} ; sleep ${delay}s" >&2
-    if [ -n "${TAILSCALE_AUTHKEY:-}" ] && [ $((n % 2)) -eq 0 ]; then
-      sudo tailscale --socket="${TS_SOCK}" up --reset \
-        --authkey="${TAILSCALE_AUTHKEY}" --hostname="${TS_HOSTNAME}" >/dev/null 2>&1 || true
-      sleep 2
+    echo "[cannlab-ssh] fail attempt ${n}/${max} host=${SSH_HOST:-?}" >&2
+    if [ "$n" -lt "${max}" ]; then
+      sleep "${delay}"
     fi
-    sleep "${delay}"
-    delay=$((delay * 2))
-    [ "${delay}" -gt 60 ] && delay=60
     n=$((n + 1))
   done
+  echo "[cannlab-ssh] VERDICT=DISCONNECTED host=${SSH_HOST:-?} — 禁止继续空等重连；请向用户反馈并等重 bootstrap" >&2
   return 1
 }

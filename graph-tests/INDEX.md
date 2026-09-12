@@ -2,9 +2,11 @@
 
 > **用途**：一刀一目录的积木拼装 / 同步探针；**不是** `examples/` 交付树。  
 > **当前主线（2026-09-12）**：  
-> 1. **Encrypt+Encaps × cann-ntt · SIM-only** → [`enc-encaps-cann-ntt-sim/`](enc-encaps-cann-ntt-sim/INDEX.md)（**禁 NPU/禁空转**；先 SIM 正确性与 Encaps）  
-> 2. Decrypt scalar/握手优化 → [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md)（NPU；用户休息时勿占板）  
-> **已收口**：Launch 压缩 QUEUE 1–8 · Encrypt/Encaps · Decrypt/Decaps 重建门禁 · KeyGen 重建×30
+> 1. **Encrypt/Encaps 少 Host launch（争 1）** → [`encrypt-encaps-low-launch/`](encrypt-encaps-low-launch/INDEX.md)（**否决 8-launch 接线版当交付**；历史对照为 2）  
+> 2. 单 AIV 全向量资产 → [`aiv-kem-vector-sim/`](aiv-kem-vector-sim/INDEX.md)（本战役优先复用）  
+> 3. Decrypt scalar/握手优化 → [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md)（NPU；错峰）  
+> **旁路**：cann-ntt SIM 积木 [`enc-encaps-cann-ntt-sim/`](enc-encaps-cann-ntt-sim/INDEX.md)（正确性参照，**非**少 launch 终点）  
+> **已收口**：Launch 压缩 QUEUE 1–8 · Encrypt/Encaps 对照 launch=2 · Decrypt/Decaps 门禁 · KeyGen×30
 
 ## 状态（2026-09-11）
 
@@ -20,8 +22,9 @@
 | 路径 | 含义 |
 |------|------|
 | [`aiv_ntt/`](aiv_ntt/INDEX.md) | **单 AIV ML-KEM NTT 积木**（AV01 PASS；SIM tick≈7871；对照 EN01） |
-| [`aiv-kem-vector-sim/`](aiv-kem-vector-sim/INDEX.md) | **单 AIV·全 AscendC** Encrypt/Encaps SIM **PASS**（资产见 ASSETS.md；与 cann-ntt 正交） |
-| [`enc-encaps-cann-ntt-sim/`](enc-encaps-cann-ntt-sim/INDEX.md) | **SIM 强完成**（EN14→EP05）；NPU 刀仍封锁至用户授权 |
+| [`encrypt-encaps-low-launch/`](encrypt-encaps-low-launch/INDEX.md) | **P0** Encrypt/Encaps **少 Host launch（主攻 1）**；禁 8-launch 接线版当交付 |
+| [`aiv-kem-vector-sim/`](aiv-kem-vector-sim/INDEX.md) | **单 AIV·全 AscendC** Encrypt/Encaps SIM **PASS**（少 launch 优先资产） |
+| [`enc-encaps-cann-ntt-sim/`](enc-encaps-cann-ntt-sim/INDEX.md) | cann-ntt SIM 积木强完成；**非**少 launch 交付终点 |
 | [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md) | Decrypt 融合核 scalar/握手优化（NPU；与上条错峰） |
 | [`launch-reduce-ops/`](launch-reduce-ops/INDEX.md) | 已收口：降 launch 全套 NPU 计划 |
 | [`keygen-rebuild-ops/`](keygen-rebuild-ops/INDEX.md) | KeyGen 任务/反馈（基线） |

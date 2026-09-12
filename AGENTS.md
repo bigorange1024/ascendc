@@ -14,7 +14,7 @@
 > **HiDevLab 真机（WebIDE 主路径）**：[`docs/engineering/HiDevLab-WebIDE操作手册.md`](docs/engineering/HiDevLab-WebIDE操作手册.md)（开机 `bash /workspace/hidevlab_boot.sh`；配方 `scripts/hidevlab/`；勿把 SSH直连当 Agent 长连接）  
 > **本文件角色**：Cloud / 任意 coding agent 的**短入口**；不复制长文，只给必读路径与硬门禁。
 
-**最后刷新**：2026-09-10（fe53 同步 HiDevLab WebIDE 脚本/手册；npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0）
+**最后刷新**：2026-09-12（CANNLab：**禁傻等/无限重连不反馈** §5.1；npu 按树分卡 **stable=1 / examples=2 / tests=3**；SIM 仍强制 0）
 
 
 ---
@@ -66,6 +66,7 @@ bash scripts/clone-thirdparty.sh
 | Rule/Skill | `.cursor/rules/`、`.cursor/skills/` 变更须用户当次确认 |
 | 验收声称 | 同用例目录须 **CPU + `SIM_DIRECT=1` sim** 双过；用例根无 stray dump |
 | thirdparty | **先** `clone-thirdparty.sh`（含 liboqs **build**）；缺库时 golden/KAT 会挂 |
+| **CANNLab 连通** | **禁止傻等/空等** SSH；**禁止**长退避无限重连却不汇报。短超时探测（≤12s），`cannlab_ssh_try`≤2 次；失败立刻说「连不上」+ 证据。详 [`docs/engineering/CANNLab接入与远程驱动.md`](docs/engineering/CANNLab接入与远程驱动.md) §5.1 |
 
 Skill 符号冲突（同句 `【】` 与 `#…#`）→ **告警、禁止仓库操作**。
 

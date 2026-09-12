@@ -16,4 +16,5 @@
 | `RB-D07-enc-decaps-rt/` | DRW-K04 | **PASS_CPU**（K_dec≡K_enc≡liboqs；**wait_npu×30**） |
 | `RB-D08-decrypt-2launch/` | LR-DC-F1 | **PASS_NPU×30**（Decrypt 2 launch） |
 | `RB-D09-decrypt-1launch/` | LR-DC-F2 | **PASS_NPU×30**（Decrypt 1；Σ **456µs** · [NPU表](../../qa/active_npu_perf_summary.md)） |
-| （性能后续） | [`../decrypt-scalar-opt/`](../decrypt-scalar-opt/INDEX.md) | **计划已锁**：scalar/握手优化；上板序 H2→H3→H1→H4；禁改本表 D08/D09 源码，新树 `RB-D10*` |
+| `RB-D10b-prep-vec/` | DS-H2 | **PASS_NPU×30 · 强成功**（Σ **334.88µs** ≈0.74×W0） |
+| （性能战役） | [`../decrypt-scalar-opt/`](../decrypt-scalar-opt/INDEX.md) | 上板序 H2→H3→H1→H4；新树 `RB-D10*` |

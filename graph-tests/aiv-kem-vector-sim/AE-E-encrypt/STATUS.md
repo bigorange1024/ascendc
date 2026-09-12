@@ -35,10 +35,11 @@ SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
 
 | 模式 | exit | max diff | tick / wall |
 |------|------|----------|-------------|
-| CPU | 0 | **c max=0** | wall≈2.6s |
-| SIM | 0 | **c max=0** | **Total tick = 1885454**；wall≈386s |
+| CPU | 0 | **c max=0** | wall≈2.6–3.0s |
+| SIM | 0 | **c max=0** | **Total tick = 1885464**；wall≈420s |
 
-日志：`/opt/cursor/artifacts/aiv-kem-vector-sim/AE-E-fullascendc-{cpu,sim}.log`
+日志（少 launch · SIM 战役）：`/opt/cursor/artifacts/low-launch-sim/aiv-ae-e-{cpu,sim}.log`  
+Host launch 审计：`ACLRT_LAUNCH_KERNEL` ×**1**（`main.cpp`）；反馈见 `graph-tests/encrypt-encaps-low-launch/tasks/A1-aiv-encrypt/FEEDBACK.md`
 
 ## 4. sync_audit
 

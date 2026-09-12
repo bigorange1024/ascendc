@@ -13,21 +13,21 @@
 ---
 
 
-## ★ 当前 P0（2026-09-12）：单 AIV 全向量 Encrypt/Encaps · SIM **完成（全 AscendC）**
+## ★ 当前 P0（2026-09-12 夜已收口）：Encrypt/Encaps **少 Host launch · SIM 全实验**
 
-**战役**：[`graph-tests/aiv-kem-vector-sim/`](graph-tests/aiv-kem-vector-sim/INDEX.md)  
-**图谱**：[`docs/rg-encrypt-aiv-vector.yaml`](docs/rg-encrypt-aiv-vector.yaml)  
-**KB**：[`docs/notes/Encrypt-aiv-vector-kb.md`](docs/notes/Encrypt-aiv-vector-kb.md)
+**战役**：[`graph-tests/encrypt-encaps-low-launch/`](graph-tests/encrypt-encaps-low-launch/INDEX.md) · **QUEUE 全 DONE**
 
-| 出口 | 状态 | 摘要 |
-|------|------|------|
-| AE-E2 Encrypt | **PASS**（主控复验） | 输入仅 `ek\|m\|coins`；DEVICE_FULL；c≡liboqs max=0；SIM tick≈**1885458** |
-| AE-P2 Encaps | **PASS**（主控复验） | 输入仅 `ek\|m`；FO+CBD+SampleNTT+Decode+Encrypt；c/K≡liboqs max=0；SIM tick≈**1977711** |
+| 锁定 | 结果 |
+|------|------|
+| AIV NTT Encrypt/Encaps **Host launch=1** | AE-E / AE-P：**cpu+SIM PASS**；c(/K)≡liboqs max=0 |
+| cann-ntt Encrypt/Encaps **Host launch=2** | **EN15** / **EP06** 新建融合用例：**cpu+SIM PASS**；否决 EN13/EP04 的 8-launch 交付形态 |
+| 运行态 | 仅 cpu + `SIM_DIRECT=1` sim；**未上 NPU** |
 
-**架构收益**：单 AIV 可串多例、无组件同步；多 AIV=多任务并行。  
-**正交旧线**：enc-encaps-cann-ntt-sim SIM 强完成仍在；NPU 仍 BLOCKED_UNTIL_USER。  
-**Git**：用户授权后推送 sticky 当前分支；资产清单 `graph-tests/aiv-kem-vector-sim/ASSETS.md`。  
-**复验日志**：`/opt/cursor/artifacts/aiv-kem-vector-sim/MAIN-AE-*-full-*.log`
+证据：`/opt/cursor/artifacts/low-launch-sim/SUMMARY.txt`。
+
+**下一刀（待你醒）**：是否授权 commit/push；是否开 NPU sticky/perf；是否要把 Decrypt 线并进同一 launch 口径表。
+
+**旁证（已做）**：NPU 防挂死 ×30 两线均不挂；profiling 已拉回本地——**快不等于形态正确**；本战役已按 launch 口径收口。
 
 
 ## ★ 旁路 P0（旧）（用户休息 · SIM-only）

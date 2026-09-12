@@ -12,7 +12,7 @@
 
 ### 2026-09-12 — [单 AIV 全向量 Encrypt/Encaps · SIM](2026-09/2026-09-12-单AIV全向量-Encrypt-Encaps-SIM.md)
 
-关键字：**DEVICE_FULL** · 单 AIV 单 launch · SampleNTT+ByteDecode 设备化 · liboqs max=0 · tick≈1.89M/1.98M · 多 AIV=多任务 · 禁擅推送后用户授权入库
+关键字：**DEVICE_FULL** · 单 AIV 单 launch · SampleNTT+ByteDecode 设备化 · liboqs max=0 · NPU 防挂死×30 · **少 launch 收口**：AIV=1 / cann-ntt=2（EN15/EP06 cpu+SIM PASS）· **禁傻等**（CANNLab §5.1）
 
 ### 2026-09-12 — [单 AIV ML-KEM NTT 抽取与 SIM 对比](2026-09/2026-09-12-单AIV-MLKEM-NTT抽取与SIM对比.md)
 

@@ -1,0 +1,293 @@
+version: 1
+title: Encrypt+Encaps × cann-ntt · SIM-only 战役推理图谱
+updated: '2026-09-11'
+config:
+  required_fields:
+  - domain
+  id_prefix_by_kind:
+    fact: F
+    inference: I
+    decision: D
+    question: Q
+  fact_provenance_values:
+  - observation
+  - measurement
+  - doc
+  - env-api
+  inference_derivation_values:
+  - deductive
+  - defeasible
+  decision_by_values:
+  - human
+  - agent
+  require_repro_for_provenance:
+  - measurement
+review:
+  last_reviewed: '2026-09-11'
+  note: SIM-only；NPU封锁；继承EN01-12不挂；主攻Encrypt正确性与Encaps形
+changelog:
+- date: '2026-09-11'
+  change: 建图；锁定SIM-only战役；挂W0–W3与NPU封锁决策
+- date: '2026-09-11'
+  change: EN13 PASS 关闭 Q-ENCRYPT-LIBOQS-BYTE；EN14 sticky 启动
+- date: '2026-09-11'
+  change: SIM 战役强完成；关闭 Encaps 两问；EP05 sticky R=16 PASS
+nodes:
+- id: F-USER-SIM-ONLY
+  domain: foundation
+  kind: fact
+  statement: 用户要求本阶段只用SIM（CPU+SIM_DIRECT）；休息期间禁止占NPU与keepalive空转
+  deps: []
+  status: verified
+  basis: stated
+  provenance: observation
+  evidence: graph-tests/enc-encaps-cann-ntt-sim/PLAN.md§0
+
+- id: F-INHERIT-EN01-12-NOHANG
+  domain: foundation
+  kind: fact
+  statement: enc_cann_ntt EN01–EN12已证明Host多段+cann-ntt短MIX在SIM（及曾授权NPU）可不挂
+  deps: []
+  status: verified
+  basis: experiment
+  provenance: doc
+  evidence: graph-tests/enc_cann_ntt/INDEX.md; docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-CANN-NTT-IS-MIX
+  domain: foundation
+  kind: fact
+  statement: cann-ntt KEM路径为MIX（AIC Cube MMAD + AIV digit-split/merge），非纯Vector
+  deps: []
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN01-kem256-ntt-port && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4；核注释/STATUS写明AIC+AIV
+  evidence: graph-tests/enc_cann_ntt/EN01-kem256-ntt-port/STATUS.md; /opt/cursor/artifacts/ntt-sim-compare/COMPARE.md
+
+- id: D-LOCK-SIM-CAMPAIGN
+  domain: architecture
+  kind: decision
+  statement: 开Encrypt正确性+Encaps形SIM战役；NTT积木锁定cann-ntt；不上NPU直至用户授权
+  deps:
+  - F-USER-SIM-ONLY
+  - F-INHERIT-EN01-12-NOHANG
+  - F-CANN-NTT-IS-MIX
+  status: active
+  by: human
+  evidence: graph-tests/enc-encaps-cann-ntt-sim/PLAN.md
+
+- id: D-ARCH-HOST-MULTI-SHORT-MIX
+  domain: architecture
+  kind: decision
+  statement: 保持NTT/INTT独立短MIX launch；Prep/Matvec/Pack偏AIV；禁胖MIX GATE
+  deps:
+  - D-LOCK-SIM-CAMPAIGN
+  status: active
+  by: human
+  evidence: docs/notes/Encrypt-cann-ntt-kb.md
+
+- id: F-PLAN-QUEUED
+  domain: experiments
+  kind: fact
+  statement: SIM-only全套计划与QUEUE已落盘；NPU刀标记BLOCKED_UNTIL_USER
+  deps:
+  - D-LOCK-SIM-CAMPAIGN
+  status: verified
+  basis: stated
+  provenance: doc
+  evidence: graph-tests/enc-encaps-cann-ntt-sim/PLAN.md; QUEUE.md; INDEX.md
+
+- id: I-SIM-FIRST-THEN-NPU
+  domain: goals
+  kind: inference
+  statement: 先SIM闭环正确性与Encaps形，再在用户授权下做NPU，可降低空转烧板与假绿风险
+  deps:
+  - F-USER-SIM-ONLY
+  - F-INHERIT-EN01-12-NOHANG
+  - F-PLAN-QUEUED
+  status: verified
+  derivation: defeasible
+  basis: stated
+
+- id: Q-ENCRYPT-LIBOQS-BYTE
+  domain: goals
+  kind: question
+  statement: 在SIM上，cann-ntt Host编排Encrypt的密文c能否与liboqs同种子逐字节一致？
+  deps:
+  - D-LOCK-SIM-CAMPAIGN
+  - F-INHERIT-EN01-12-NOHANG
+  status: answered
+  answered_by: F-EN13-LIBOQS-BYTE-PASS
+
+- id: Q-ENCAPS-SIM-NOHANG
+  domain: goals
+  kind: question
+  statement: Encaps Host壳（G/H + 调Encrypt）在SIM上多轮是否不挂？
+  deps:
+  - D-LOCK-SIM-CAMPAIGN
+  status: answered
+  answered_by: F-EP05-STICKY-SIM-PASS
+
+- id: Q-ENCAPS-LIBOQS-CROSS
+  domain: goals
+  kind: question
+  statement: Encaps输出c/K在SIM上能否与liboqs Encaps交叉一致？
+  deps:
+  - D-LOCK-SIM-CAMPAIGN
+  - D-ARCH-HOST-MULTI-SHORT-MIX
+  status: answered
+  answered_by: F-EP04-LIBOQS-CROSS-PASS
+
+- id: Q-NPU-WHEN
+  domain: goals
+  kind: question
+  statement: 何时允许把本战役结果拿到NPU验证？
+  deps:
+  - F-USER-SIM-ONLY
+  - I-SIM-FIRST-THEN-NPU
+  status: open
+
+- id: D-EXP-EE-W0A
+  domain: experiments
+  kind: decision
+  statement: EE-W0a落盘PLAN/QUEUE/图谱（本节点）
+  deps:
+  - F-PLAN-QUEUED
+  status: active
+  by: agent
+
+- id: D-EXP-EE-W0B
+  domain: experiments
+  kind: decision
+  statement: 下一刀EE-W0b复跑EN09/EN07 cpu+SIM确认基线可复现
+  deps:
+  - D-EXP-EE-W0A
+  - F-INHERIT-EN01-12-NOHANG
+  status: active
+  by: agent
+
+- id: D-EXP-EN13
+  domain: experiments
+  kind: decision
+  statement: 计划刀EN13 Encrypt×liboqs SIM交叉（目标回答Q-ENCRYPT-LIBOQS-BYTE）
+  deps:
+  - D-EXP-EE-W0B
+  - D-ARCH-HOST-MULTI-SHORT-MIX
+  status: active
+  by: agent
+
+- id: D-EXP-EN14
+  domain: experiments
+  kind: decision
+  statement: 计划刀EN14 Encrypt交叉后SIM sticky
+  deps:
+  - D-EXP-EN13
+  status: active
+  by: agent
+
+- id: D-EXP-EP01
+  domain: experiments
+  kind: decision
+  statement: 计划刀EP01 Encaps Host壳
+  deps:
+  - D-EXP-EN13
+  - D-LOCK-SIM-CAMPAIGN
+  status: active
+  by: agent
+
+- id: D-EXP-EP02
+  domain: experiments
+  kind: decision
+  statement: 计划刀EP02 Encaps真调Encrypt
+  deps:
+  - D-EXP-EP01
+  status: active
+  by: agent
+
+- id: D-EXP-EP04
+  domain: experiments
+  kind: decision
+  statement: 计划刀EP04 Encaps×liboqs交叉（目标回答Q-ENCAPS-LIBOQS-CROSS）
+  deps:
+  - D-EXP-EP02
+  status: active
+  by: agent
+
+- id: D-EXP-EP05
+  domain: experiments
+  kind: decision
+  statement: 计划刀EP05 Encaps SIM sticky R≥16
+  deps:
+  - D-EXP-EP02
+  status: active
+  by: agent
+
+- id: D-EXP-NPU-BLOCKED
+  domain: experiments
+  kind: decision
+  statement: EN15/EP10等NPU刀保持BLOCKED_UNTIL_USER；未获用户授权不下发
+  deps:
+  - F-USER-SIM-ONLY
+  - I-SIM-FIRST-THEN-NPU
+  status: active
+  by: human
+
+- id: F-EN13-LIBOQS-BYTE-PASS
+  domain: experiments
+  kind: fact
+  statement: EN13 SIM-only 下 Encrypt c 与 liboqs PKE 同种子逐字节一致（cpu+SIM max=0；SIM tick≈812698）
+  deps:
+  - D-EXP-EN13
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EN13-encrypt-liboqs-cross && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/enc_cann_ntt/EN13-encrypt-liboqs-cross/STATUS.md; graph-tests/enc-encaps-cann-ntt-sim/tasks/EN13/FEEDBACK.md; /opt/cursor/artifacts/enc-encaps-sim/en13-sim.log
+
+- id: D-EXP-EN14-RUN
+  domain: experiments
+  kind: decision
+  statement: EN14 Encrypt×liboqs sticky SIM R=8 已完成；仍禁 NPU
+  deps:
+  - F-EN13-LIBOQS-BYTE-PASS
+  - D-EXP-EN14
+  status: inactive
+  by: agent
+
+- id: F-EP04-LIBOQS-CROSS-PASS
+  domain: experiments
+  kind: fact
+  statement: EP04 SIM-only 下 Encaps c/K 与 liboqs Encaps 同种子逐字节一致（cpu+SIM max=0；SIM tick≈812819）
+  deps:
+  - D-EXP-EP04
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EP04-encaps-liboqs-cross && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/enc_cann_ntt/EP04-encaps-liboqs-cross/STATUS.md; graph-tests/enc-encaps-cann-ntt-sim/tasks/EP04/FEEDBACK.md
+
+- id: F-EP05-STICKY-SIM-PASS
+  domain: experiments
+  kind: fact
+  statement: EP05 Encaps sticky SIM R=16 不挂且每轮 c/K≡liboqs（SIM tick≈12897130；wall≈2050s）
+  deps:
+  - D-EXP-EP05
+  - F-EP04-LIBOQS-CROSS-PASS
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/enc_cann_ntt/EP05-encaps-sticky-sim && EP05_ROUNDS=16 bash run.sh -r cpu -v Ascend910B4 && EP05_ROUNDS=16 SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/enc_cann_ntt/EP05-encaps-sticky-sim/STATUS.md; graph-tests/enc-encaps-cann-ntt-sim/tasks/EP05/FEEDBACK.md; /opt/cursor/artifacts/enc-encaps-sim/ep05-sim.log
+
+- id: F-SIM-CAMPAIGN-STRONG-DONE
+  domain: experiments
+  kind: fact
+  statement: Encrypt+Encaps×cann-ntt SIM-only 强完成（EN13/14 + EP01/02/04/05 全绿；EP03 DEFERRED_HOST；NPU 仍封锁）
+  deps:
+  - F-EN13-LIBOQS-BYTE-PASS
+  - F-EP04-LIBOQS-CROSS-PASS
+  - F-EP05-STICKY-SIM-PASS
+  status: verified
+  basis: experiment
+  provenance: observation
+  evidence: graph-tests/enc-encaps-cann-ntt-sim/QUEUE.md
