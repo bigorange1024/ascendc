@@ -16,6 +16,9 @@
 
 namespace F203SeDeviceKeccak {
 
+/** SHAKE128 rate = 168 = 200 - 2*16（FIPS 202）；域分隔后缀 0x1F。 */
+constexpr uint32_t SHAKE128_RATE = 168U;
+/** SHAKE256 rate = 136 = 200 - 2*32；域分隔后缀 0x1F。 */
 constexpr uint32_t SHAKE256_RATE = 136U;
 
 __aicore__ inline uint64_t LoadPartialLane(const uint8_t *p, uint32_t n)
@@ -88,6 +91,10 @@ __aicore__ inline void Sha3OneShot(uint8_t *md, int mdlen, const uint8_t *in, ui
     }
 }
 
+/**
+ * SHAKE256 一次吸收 + 挤出 outlen 字节（后缀 0x1F，rate=136）。
+ * 用途：PRF(coins‖nonce)→CBD、J(z‖c) 等。
+ */
 __aicore__ inline void Shake256OneShot(uint8_t *out, uint32_t outlen, const uint8_t *in, uint32_t inlen)
 {
     uint64_t a[25];
@@ -121,6 +128,54 @@ __aicore__ inline void Shake256OneShot(uint8_t *out, uint32_t outlen, const uint
         uint32_t chunk = outlen - produced;
         if (chunk > SHAKE256_RATE) {
             chunk = SHAKE256_RATE;
+        }
+        StoreOutputBytes(out + produced, a, 0, chunk);
+        produced += chunk;
+        if (produced < outlen) {
+            KeccakF1600Kernel::PermuteChain(a);
+        }
+    }
+}
+
+/**
+ * SHAKE128 一次吸收 + 挤出 outlen 字节（后缀 0x1F，rate=168）。
+ * 用途：FIPS 203 Alg.7 SampleNTT — XOF(ρ‖j‖i) 挤出 672B 再拒绝采样。
+ * 实现与 Shake256OneShot 同构，仅 rate 不同；禁止改用 SHA3 定长后缀 0x06。
+ */
+__aicore__ inline void Shake128OneShot(uint8_t *out, uint32_t outlen, const uint8_t *in, uint32_t inlen)
+{
+    uint64_t a[25];
+    for (int i = 0; i < 25; ++i) {
+        a[i] = 0;
+    }
+
+    uint32_t offset = 0;
+    while (offset + SHAKE128_RATE <= inlen) {
+        XorBytes(a, in + offset, SHAKE128_RATE);
+        KeccakF1600Kernel::PermuteChain(a);
+        offset += SHAKE128_RATE;
+    }
+
+    const uint32_t rem = inlen - offset;
+    XorBytes(a, in + offset, rem);
+
+    // SHAKE 域分隔：末块末字节位图 0x1F（非 SHA3 的 0x06）
+    const uint32_t suffixLane = rem / 8U;
+    const uint32_t suffixShift = (rem % 8U) * 8U;
+    a[suffixLane] ^= static_cast<uint64_t>(0x1fU) << suffixShift;
+
+    const uint32_t padPos = SHAKE128_RATE - 1U;
+    const uint32_t padLane = padPos / 8U;
+    const uint32_t padShift = (padPos % 8U) * 8U;
+    a[padLane] ^= static_cast<uint64_t>(0x80U) << padShift;
+
+    KeccakF1600Kernel::PermuteChain(a);
+
+    uint32_t produced = 0;
+    while (produced < outlen) {
+        uint32_t chunk = outlen - produced;
+        if (chunk > SHAKE128_RATE) {
+            chunk = SHAKE128_RATE;
         }
         StoreOutputBytes(out + produced, a, 0, chunk);
         produced += chunk;

@@ -1,7 +1,9 @@
 # graph-tests — cannbot 重建试验场
 
 > **用途**：一刀一目录的积木拼装 / 同步探针；**不是** `examples/` 交付树。  
-> **当前主线（2026-09-11）**：**Decrypt scalar/握手优化** → [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md)（NPU-only；D09 基线已 1-launch）  
+> **当前主线（2026-09-12）**：  
+> 1. **Encrypt+Encaps × cann-ntt · SIM-only** → [`enc-encaps-cann-ntt-sim/`](enc-encaps-cann-ntt-sim/INDEX.md)（**禁 NPU/禁空转**；先 SIM 正确性与 Encaps）  
+> 2. Decrypt scalar/握手优化 → [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md)（NPU；用户休息时勿占板）  
 > **已收口**：Launch 压缩 QUEUE 1–8 · Encrypt/Encaps · Decrypt/Decaps 重建门禁 · KeyGen 重建×30
 
 ## 状态（2026-09-11）
@@ -17,7 +19,10 @@
 
 | 路径 | 含义 |
 |------|------|
-| [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md) | **活跃**：Decrypt 融合核 scalar/握手优化 |
+| [`aiv_ntt/`](aiv_ntt/INDEX.md) | **单 AIV ML-KEM NTT 积木**（AV01 PASS；SIM tick≈7871；对照 EN01） |
+| [`aiv-kem-vector-sim/`](aiv-kem-vector-sim/INDEX.md) | **单 AIV·全 AscendC** Encrypt/Encaps SIM **PASS**（资产见 ASSETS.md；与 cann-ntt 正交） |
+| [`enc-encaps-cann-ntt-sim/`](enc-encaps-cann-ntt-sim/INDEX.md) | **SIM 强完成**（EN14→EP05）；NPU 刀仍封锁至用户授权 |
+| [`decrypt-scalar-opt/`](decrypt-scalar-opt/INDEX.md) | Decrypt 融合核 scalar/握手优化（NPU；与上条错峰） |
 | [`launch-reduce-ops/`](launch-reduce-ops/INDEX.md) | 已收口：降 launch 全套 NPU 计划 |
 | [`keygen-rebuild-ops/`](keygen-rebuild-ops/INDEX.md) | KeyGen 任务/反馈（基线） |
 | [`kg_related/`](kg_related/INDEX.md) | KeyGen 重写实现（`RB-K*`） |

@@ -85,7 +85,17 @@
 |------|------|
 | [Encrypt-hang-rewrite-kb.md](Encrypt-hang-rewrite-kb.md) | **旧线知识库**：SynchronizeStream 卡死；配套 [`rg-encrypt-hang-rewrite.yaml`](../rg-encrypt-hang-rewrite.yaml) |
 
-## Encrypt × cann-ntt Host 编排（当前主线 · 2026-09-08）
+## Encrypt × 单 AIV 全向量（SIM 完成 · 2026-09-12）
+
+| 文件 | 说明 |
+|------|------|
+| [Encrypt-aiv-vector-kb.md](Encrypt-aiv-vector-kb.md) | **本线知识库**：AIV-only、全 AscendC、多 AIV=多任务 |
+| [Encrypt-aiv-vector-capability-inventory.md](Encrypt-aiv-vector-capability-inventory.md) | Alg.14/20 能力清单（DEVICE_FULL） |
+| [`docs/rg-encrypt-aiv-vector.yaml`](../rg-encrypt-aiv-vector.yaml) | 推理图谱 |
+| [`graph-tests/aiv-kem-vector-sim/ASSETS.md`](../../graph-tests/aiv-kem-vector-sim/ASSETS.md) | **代码资产清单** |
+| [`graph-tests/aiv-kem-vector-sim/`](../../graph-tests/aiv-kem-vector-sim/INDEX.md) | Encrypt/Encaps 试验场 |
+
+## Encrypt × cann-ntt Host 编排（正交线 · 2026-09-08）
 
 | 文件 | 说明 |
 |------|------|

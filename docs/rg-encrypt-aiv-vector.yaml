@@ -1,0 +1,226 @@
+version: 1
+title: Encrypt+Encaps · 单 AIV 全向量 · SIM 推理图谱
+updated: '2026-09-12'
+changelog:
+  - date: '2026-09-12'
+    change: |
+      用户开单AIV全向量Encrypt/Encaps SIM战役；W0落盘；AV01为NTT基线；INTT须新建。
+  - date: '2026-09-12'
+    change: |
+      主控复验AE-E2 PASS、AE-P2弱PASS；挂F-AE-E2/F-AE-P2-WEAK；四问answered。
+  - date: '2026-09-12'
+    change: |
+      AE-P2强完成复验PASS（DEVICE_FO+CBD）；挂F-AE-P2-STRONG；Q-ENCAPS改answered_by强节点。
+  - date: '2026-09-12'
+    change: |
+      用户L8加锁：全AscendC；旧HOST_SAMPLE完成口径作废；挂F-USER-FULL-ASCENDC与Q-FULL-ASCENDC；AE-E2/AE-P2改superseded边界。
+  - date: '2026-09-12'
+    change: |
+      全AscendC兑现：挂F-AE-E2-FULL/F-AE-P2-FULL；Q-FULL-ASCENDC answered；主控复验cpu+SIM max=0。
+config:
+  required_fields: [domain]
+  id_prefix_by_kind: {fact: F, inference: I, decision: D, question: Q}
+  fact_provenance_values: [observation, measurement, doc, env-api]
+  inference_derivation_values: [deductive, defeasible]
+  decision_by_values: [human, agent]
+  require_repro_for_provenance: [measurement]
+review:
+  last_reviewed: '2026-09-12'
+  note: 端到端SIM；主控+subagent；禁分支推送
+nodes:
+- id: F-USER-AIV-VECTOR-LINE
+  domain: foundation
+  kind: fact
+  statement: 用户要求新开单AIV全向量线：底层NTT/SHA3/内积/编解码/压缩均至少用Vector；目标单AIV单launch的ML-KEM-1024 Encrypt与Encaps；SIM做完不停顿；主控设计subagent编码；禁擅自分支推送
+  deps: []
+  status: verified
+  basis: stated
+  provenance: observation
+  evidence: user message 2026-09-12
+- id: F-USER-FULL-ASCENDC
+  domain: foundation
+  kind: fact
+  statement: 用户加锁：密码学步骤必须全部AscendC实现；Host不得预喂Â/t̂/y/e等中间态；仅允许ek|m(|coins)+常量表+workspace GM
+  deps: [F-USER-AIV-VECTOR-LINE]
+  status: verified
+  basis: stated
+  provenance: observation
+  evidence: user message 2026-09-12 full AscendC
+- id: Q-FULL-ASCENDC-LIBOQS
+  domain: goals
+  kind: question
+  statement: 在全AscendC输入契约下，单AIV单launch Encrypt与Encaps能否与liboqs一致（SIM）？
+  deps: [F-USER-FULL-ASCENDC, D-LOCK-AIV-VECTOR-CAMPAIGN]
+  status: answered
+  answered_by: F-AE-P2-FULL-ASCENDC-LIBOQS-PASS
+- id: F-AV01-AIV-NTT-PASS
+  domain: foundation
+  kind: fact
+  statement: AV01单AIV单poly ML-KEM正向NTT已在CPU+SIM对拍PASS，SIM Total tick≈7871
+  deps: []
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/aiv_ntt/AV01-single-aiv-mlkem-ntt && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/aiv_ntt/AV01-single-aiv-mlkem-ntt/STATUS.md
+- id: F-CANN-NTT-LINE-ORTHOGONAL
+  domain: foundation
+  kind: fact
+  statement: enc_cann_ntt线为MIX/Cube多launch，与本线正交；本线禁抄其核、禁Cube
+  deps: []
+  status: verified
+  basis: stated
+  provenance: doc
+  evidence: docs/notes/Encrypt-cann-ntt-kb.md; docs/notes/Encrypt-aiv-vector-kb.md
+- id: F-NO-INTT-IN-AV01-PKG
+  domain: foundation
+  kind: fact
+  statement: thirdparty/ntt与AV01仅含正向NTT，无INTT；Encrypt所需INTT须本线新建向量实现
+  deps: []
+  status: verified
+  basis: experiment
+  provenance: observation
+  evidence: thirdparty/ntt; graph-tests/aiv_ntt/AV01-single-aiv-mlkem-ntt/STATUS.md
+- id: F-W0-CAMPAIGN-LANDED
+  domain: experiments
+  kind: fact
+  statement: aiv-kem-vector-sim战役W0已落盘（INDEX/PLAN/QUEUE/KB/能力清单/本图谱）
+  deps: []
+  status: verified
+  basis: stated
+  provenance: doc
+  evidence: graph-tests/aiv-kem-vector-sim/
+- id: D-LOCK-AIV-VECTOR-CAMPAIGN
+  domain: architecture
+  kind: decision
+  statement: 开aiv-kem-vector-sim战役；不变量见Encrypt-aiv-vector-kb L1–L7；SIM-only直至用户授NPU
+  deps: [F-USER-AIV-VECTOR-LINE, F-AV01-AIV-NTT-PASS, F-CANN-NTT-LINE-ORTHOGONAL, F-W0-CAMPAIGN-LANDED]
+  status: active
+  by: human
+  evidence: graph-tests/aiv-kem-vector-sim/PLAN.md
+  targets: [Q-ENCRYPT-1LAUNCH-LIBOQS, Q-ENCAPS-1LAUNCH-LIBOQS]
+- id: D-ROLE-MAIN-SUBAGENT
+  domain: process
+  kind: decision
+  statement: 主控维护图谱/KB/QUEUE并下发；编码subagent实现；每刀sync_audit；禁空等用户直至AE-E2与AE-P2
+  deps: [F-USER-AIV-VECTOR-LINE, D-LOCK-AIV-VECTOR-CAMPAIGN]
+  status: active
+  by: human
+  evidence: user message 2026-09-12
+- id: I-NEED-INTT-BEFORE-ENCRYPT
+  domain: architecture
+  kind: inference
+  statement: 无向量INTT则无法在AIV-only单launch内完成Alg.14的u/v时域还原，故INTT为Encrypt前置硬缺口
+  deps: [F-NO-INTT-IN-AV01-PKG, D-LOCK-AIV-VECTOR-CAMPAIGN]
+  status: verified
+  basis: stated
+  derivation: deductive
+  evidence: docs/notes/Encrypt-aiv-vector-capability-inventory.md
+  targets: [Q-VECTOR-INTT]
+- id: F-AIV-PARALLEL-MODEL
+  domain: architecture
+  kind: fact
+  statement: 用户确认AIV线收益：单AIV可串行多用例且无需组件同步；有多少AIV即可并行多少用例（任务间无Sync）
+  deps: [F-USER-AIV-VECTOR-LINE]
+  status: verified
+  basis: stated
+  provenance: observation
+  evidence: user message 2026-09-12
+- id: Q-POLYVEC-NTT
+  domain: goals
+  kind: question
+  statement: 单AIV上k=4 polyvec正向NTT向量路径能否CPU+SIM对拍？
+  deps: [D-LOCK-AIV-VECTOR-CAMPAIGN, F-AV01-AIV-NTT-PASS]
+  status: answered
+  answered_by: F-AE-E2-FULL-ASCENDC-LIBOQS-PASS
+- id: Q-VECTOR-INTT
+  domain: goals
+  kind: question
+  statement: 与AV01同族的向量INTT能否对拍（互逆根正确）？
+  deps: [I-NEED-INTT-BEFORE-ENCRYPT, F-NO-INTT-IN-AV01-PKG]
+  status: answered
+  answered_by: F-AE-E2-FULL-ASCENDC-LIBOQS-PASS
+- id: Q-ENCRYPT-1LAUNCH-LIBOQS
+  domain: goals
+  kind: question
+  statement: 单AIV单launch Encrypt(c)能否与liboqs ML-KEM-1024逐字节一致（SIM）？
+  deps: [D-LOCK-AIV-VECTOR-CAMPAIGN, I-NEED-INTT-BEFORE-ENCRYPT, F-USER-FULL-ASCENDC]
+  status: answered
+  answered_by: F-AE-E2-FULL-ASCENDC-LIBOQS-PASS
+- id: Q-ENCAPS-1LAUNCH-LIBOQS
+  domain: goals
+  kind: question
+  statement: 单AIV单launch Encaps(c,K)能否与liboqs一致（SIM）？
+  deps: [D-LOCK-AIV-VECTOR-CAMPAIGN, F-USER-FULL-ASCENDC]
+  status: answered
+  answered_by: F-AE-P2-FULL-ASCENDC-LIBOQS-PASS
+
+- id: F-AE-E2-LIBOQS-PASS
+  domain: experiments
+  kind: fact
+  statement: 过渡刀：AE-E在HOST_SAMPLE边界下c≡liboqs max=0；SIM tick≈1200108（历史测量仍成立；最终口径见F-AE-E2-FULL）
+  deps: [D-LOCK-AIV-VECTOR-CAMPAIGN, I-NEED-INTT-BEFORE-ENCRYPT]
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/aiv-kem-vector-sim/AE-E-encrypt && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/aiv-kem-vector-sim/AE-E-encrypt/STATUS.md; /opt/cursor/artifacts/aiv-kem-vector-sim/VERIFY-AE-E-sim.log
+- id: F-AE-P2-WEAK-LIBOQS-PASS
+  domain: experiments
+  kind: fact
+  statement: 过渡刀：AE-P弱完成 Host FO + Encrypt；c/K≡liboqs；SIM tick≈1199602
+  deps: [F-AE-E2-LIBOQS-PASS]
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/aiv-kem-vector-sim/AE-P-encaps && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/aiv-kem-vector-sim/AE-P-encaps/STATUS.md; /opt/cursor/artifacts/aiv-kem-vector-sim/VERIFY-AE-P-sim.log
+- id: F-AE-P2-STRONG-LIBOQS-PASS
+  domain: experiments
+  kind: fact
+  statement: 过渡刀：AE-P DEVICE_FO+CBD+Encrypt；Â/t̂仍HOST；c/K≡liboqs；SIM tick≈1384945
+  deps: [F-AE-E2-LIBOQS-PASS, F-AE-P2-WEAK-LIBOQS-PASS]
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/aiv-kem-vector-sim/AE-P-encaps && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/aiv-kem-vector-sim/AE-P-encaps/STATUS.md; /opt/cursor/artifacts/aiv-kem-vector-sim/VERIFY-AE-P-strong-sim.log
+
+- id: F-AE-E2-FULL-ASCENDC-LIBOQS-PASS
+  domain: experiments
+  kind: fact
+  statement: AE-E全AscendC：输入仅ek|m|coins+表；同launch CBD+SampleNTT×16+ByteDecode12+Encrypt；cpu+SIM下c≡liboqs max=0；SIM Total tick≈1885458
+  deps: [F-USER-FULL-ASCENDC, D-LOCK-AIV-VECTOR-CAMPAIGN, I-NEED-INTT-BEFORE-ENCRYPT]
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/aiv-kem-vector-sim/AE-E-encrypt && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/aiv-kem-vector-sim/AE-E-encrypt/STATUS.md; /opt/cursor/artifacts/aiv-kem-vector-sim/MAIN-AE-E-full-sim.log
+- id: F-AE-P2-FULL-ASCENDC-LIBOQS-PASS
+  domain: experiments
+  kind: fact
+  statement: AE-P全AscendC：输入仅ek|m+表；同launch FO+CBD+SampleNTT+ByteDecode+Encrypt；cpu+SIM下c与K≡liboqs max=0；SIM Total tick≈1977711
+  deps: [F-USER-FULL-ASCENDC, F-AE-E2-FULL-ASCENDC-LIBOQS-PASS]
+  status: verified
+  basis: experiment
+  provenance: measurement
+  repro: cd graph-tests/aiv-kem-vector-sim/AE-P-encaps && bash run.sh -r cpu -v Ascend910B4 && SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
+  evidence: graph-tests/aiv-kem-vector-sim/AE-P-encaps/STATUS.md; /opt/cursor/artifacts/aiv-kem-vector-sim/MAIN-AE-P-full-sim.log
+- id: I-ENCRYPT-1LAUNCH-ANSWERED
+  domain: goals
+  kind: inference
+  statement: Q-ENCRYPT-1LAUNCH-LIBOQS 已由 F-AE-E2-FULL-ASCENDC-LIBOQS-PASS 在全AscendC契约下肯定回答
+  deps: [F-AE-E2-FULL-ASCENDC-LIBOQS-PASS]
+  status: verified
+  basis: experiment
+  derivation: deductive
+  evidence: F-AE-E2-FULL-ASCENDC-LIBOQS-PASS
+- id: I-FULL-ASCENDC-ANSWERED
+  domain: goals
+  kind: inference
+  statement: Q-FULL-ASCENDC-LIBOQS 已由 F-AE-E2-FULL 与 F-AE-P2-FULL 肯定回答
+  deps: [F-AE-E2-FULL-ASCENDC-LIBOQS-PASS, F-AE-P2-FULL-ASCENDC-LIBOQS-PASS]
+  status: verified
+  basis: experiment
+  derivation: deductive
+  evidence: F-AE-P2-FULL-ASCENDC-LIBOQS-PASS

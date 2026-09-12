@@ -10,6 +10,18 @@
 
 ## 按时间（新→旧）
 
+### 2026-09-12 — [单 AIV 全向量 Encrypt/Encaps · SIM](2026-09/2026-09-12-单AIV全向量-Encrypt-Encaps-SIM.md)
+
+关键字：**DEVICE_FULL** · 单 AIV 单 launch · SampleNTT+ByteDecode 设备化 · liboqs max=0 · tick≈1.89M/1.98M · 多 AIV=多任务 · 禁擅推送后用户授权入库
+
+### 2026-09-12 — [单 AIV ML-KEM NTT 抽取与 SIM 对比](2026-09/2026-09-12-单AIV-MLKEM-NTT抽取与SIM对比.md)
+
+关键字：**AV01** · Gather 蝶形 · SIM tick≈7871 · 对照 EN01 Cube
+
+### 2026-09-11 — [Encrypt+Encaps × cann-ntt · SIM-only 战役计划](2026-09/2026-09-11-Encrypt-Encaps-cann-ntt-SIM战役计划.md)
+
+关键字：**SIM-only 强完成** · EN13–EN14 Encrypt×liboqs · EP01–EP05 Encaps（EP03 DEFERRED）· INTT×3303 · 图谱 `rg-enc-encaps-cann-ntt-sim`
+
 ### 2026-09-11 — [Decrypt scalar/握手优化 · 实验计划落盘](2026-09/2026-09-11-Decrypt-scalar-握手优化-实验计划.md)
 
 关键字：**计划已锁可上机** · 图谱 `rg-decrypt-scalar-opt` · W1 热点 H2→H3→H1→H4 · 下一刀 **DS-W0 板上复测** · 禁擅自开分支
@@ -295,3 +307,4 @@ library/docs/qa 分工 · 仅根 README · 各目录 INDEX 侧重点
 
 - 当日有新讨论 → 编辑 `qa/YYYY-MM/YYYY-MM-DD-….md`，更新本 INDEX **一行**关键字、当月 `INDEX.md`、`TODO.md`（若有遗留变更）。
 - 新日 → 在对应月目录**新建一篇**，勿复制昨日文件当模板除非有意延续结构。
+- 2026-09-12：单 AIV ML-KEM NTT 抽取 AV01；SIM tick≈7871；对照 EN01；作基础积木、Encrypt 重写另议
