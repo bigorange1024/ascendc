@@ -1,5 +1,5 @@
 #!/bin/bash
-# EN15-encrypt-2launch：Alg.14 Encrypt × liboqs PKE 交叉；R=1；本战役禁 -r npu；Host launch=2。
+# EN15-encrypt-2launch：Alg.14 Encrypt × liboqs PKE 交叉；R=1；NPU 已开（上机测卡死/profiling）；Host launch=2。
 # 基线：复制 EN09；补 ek/m/coins、t̂ decode、e1/e2/μ、Âᵀ matvec、⟨t̂,ŷ⟩、真 Pack。
 #
 # Usage（默认）：
@@ -38,15 +38,10 @@ while :; do
     esac
 done
 
-# NPU locked out for low-launch SIM campaign
-if [ "${RUN_MODE}" = "npu" ]; then
-    echo "[ERROR] EN15 本战役禁止 -r npu" >&2
-    exit 2
-fi
-
+# 2026-09-12：用户授权上机测卡死/profiling → 打开 NPU（CANNLab 单卡 ASCEND_DEVICE_ID=0）
 # shellcheck source=/dev/null
 source "${REPO_ROOT}/scripts/runtime_env.sh"
-export ASCENDC_CASE_SUPPORTS_NPU=0
+export ASCENDC_CASE_SUPPORTS_NPU=1
 runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
 
 set +e
@@ -76,7 +71,12 @@ fi
 export ASCEND_TOOLKIT_HOME="${_ASCEND_INSTALL_PATH}"
 export ASCEND_HOME_PATH="${_ASCEND_INSTALL_PATH}"
 export ASCEND_CANN_PACKAGE_PATH="${_ASCEND_INSTALL_PATH}"
-if [ "${RUN_MODE}" = "sim" ]; then
+
+if [ "${RUN_MODE}" = "npu" ]; then
+    # shellcheck source=/dev/null
+    source "${REPO_ROOT}/scripts/npu_device_map.sh"
+    npu_device_map_apply "${CURRENT_DIR}"
+elif [ "${RUN_MODE}" = "sim" ]; then
     export ASCEND_DEVICE_ID=0
 fi
 echo "SOC=${SOC_VERSION} RUN_MODE=${RUN_MODE} CANN=${_ASCEND_INSTALL_PATH} ASCEND_DEVICE_ID=${ASCEND_DEVICE_ID:-n/a}"
@@ -85,6 +85,8 @@ if [ "${RUN_MODE}" = "sim" ]; then
     export LD_LIBRARY_PATH=${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:$LD_LIBRARY_PATH
 elif [ "${RUN_MODE}" = "cpu" ]; then
     export LD_LIBRARY_PATH=${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib:${_ASCEND_INSTALL_PATH}/tools/tikicpulib/lib/${SOC_VERSION}:${_ASCEND_INSTALL_PATH}/tools/simulator/${SOC_VERSION}/lib:$LD_LIBRARY_PATH
+elif [ "${RUN_MODE}" = "npu" ]; then
+    export LD_LIBRARY_PATH=${_ASCEND_INSTALL_PATH}/lib64:$LD_LIBRARY_PATH
 fi
 
 set -e
