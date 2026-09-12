@@ -40,13 +40,9 @@ done
 
 # shellcheck source=/dev/null
 source "${REPO_ROOT}/scripts/runtime_env.sh"
-export ASCENDC_CASE_SUPPORTS_NPU=0
+# 2026-09-12：用户授权上机 → 打开 NPU（CANNLab 单卡请 ASCEND_DEVICE_ID=0）
+export ASCENDC_CASE_SUPPORTS_NPU=1
 runtime_env_dispatch "${BASH_SOURCE[0]}" "${_ORIG_ARGS[@]}"
-
-if [ "${RUN_MODE}" = "npu" ]; then
-    echo "[ERROR] AE-E 本刀禁 -r npu（仅 cpu + SIM_DIRECT sim；NPU 需用户另授）" >&2
-    exit 2
-fi
 
 set +e
 # shellcheck source=/dev/null
