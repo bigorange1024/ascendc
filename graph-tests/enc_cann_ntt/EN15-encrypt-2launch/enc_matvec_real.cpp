@@ -1,14 +1,13 @@
 /**
  * EN04 · L3 Matvec 真积木（NTT 域 4×4×1 内积）
  *
- * 作用：独立 AIV launch 计算 t̂[p] = mod_q(Σ_j Â[p,j] ∘ ŝ[j])（无 ê）。
+ * 作用：Encrypt 路径 û[p] = mod_q(Σ_j Â[j,p] ∘ ŷ[j])（无 ê）= (Âᵀ∘ŷ)_p。
  * ∘ = FIPS 203 Alg.11/12 paired basemul（γ_i = ζ^{2·BitRev7(i)+1} mod q）。
- * 布局（行主序，与 F203-innerproduct-k4 笔记契约一致）：
- *   flat_A(p,j,c) = (p·K + j)·N + c；flat_s(j,c) = j·N + c；flat_t(p,c) = p·N + c。
- * 输入：a_hat [K·K·N] int32、s_hat [K·N] int32、gammas [N/2] int32；K=4,N=256,q=3329。
- * 输出：t_hat [K·N] int32。
- * 背景：KB A2/X32 — CPU=`AIV_ONLY`，SIM=无握手 MIX 占位（AIC 即 return）；禁 GATE 4/8。
- * 未采用：抄 Encrypt/alg14/ER 核；粘贴 innerproduct 探针整文件；AIC 陪跑空等。
+ * 布局：SampleNTT 写 flat(i,j,c)=(i·K+j)·N+c = A[i,j]；本核读 flat(j,p) 实现转置语义。
+ *   flat_s(j,c)=j·N+c；flat_u(p,c)=p·N+c。禁止 Host 物化 Âᵀ。
+ * 输入：a_hat [K·K·N] int32（未转置）、s_hat/ŷ [K·N]、gammas [N/2]；K=4,N=256,q=3329。
+ * 输出：u_hat/t_hat [K·N] int32。
+ * 背景：KB A2/X32；禁 GATE 4/8。未采用：Host mid D2H 转置。
  */
 #include "enc_aiv_stub_common.hpp"
 #include "f203_mod_q/mod_q_vec.hpp"
@@ -144,8 +143,9 @@ extern "C" __global__ __aicore__ void enc_matvec_real(GM_ADDR t_hat, GM_ADDR a_h
         }
 
         for (int32_t p = 0; p < k; ++p) {
+            // 读 A[j,p]（非 A[p,j]）：等价 Âᵀ 而不物化转置
             const uint32_t a_off =
-                (static_cast<uint32_t>(p) * static_cast<uint32_t>(k) + static_cast<uint32_t>(j)) * nU;
+                (static_cast<uint32_t>(j) * static_cast<uint32_t>(k) + static_cast<uint32_t>(p)) * nU;
             {
                 AscendC::LocalTensor<int32_t> in_local = que_in.AllocTensor<int32_t>();
                 AscendC::DataCopy(in_local, gm_a[a_off], nU);

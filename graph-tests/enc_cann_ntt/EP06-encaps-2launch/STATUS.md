@@ -1,38 +1,17 @@
 # EP06-encaps-2launch · STATUS
 
-> DAG：本战役 `encrypt-encaps-low-launch` · C2  
-> 日期：2026-09-12  
-> 结论：**PASS**（CPU + `SIM_DIRECT=1` sim；`c`/`K` vs liboqs Encaps **max=0**；Host launch=**2**）
+> 日期：2026-09-13（I/O 整改）
+> 结论：**整改中 / SIM 待验** — 输入仅 `ek_kem|m` + LUT；Host FO 内存派生 r（不落盘）；Encrypt 同 EN15 设备噪声/μ
 
-## 目标
+## 外形
 
-将 EP04 的多段 Encaps×liboqs 接线，收敛为 **prep + compute = 2 Host launch**，且 `c`/`K` 仍 ≡ liboqs。
+| 阶段 | 内容 |
+|------|------|
+| Host FO | H(ek)/G(m‖H)→K（写 output）与 r（仅内存→H2D） |
+| L1/L2 | 同 EN15：设备 CBD y/e1/e2，μ←m；无 mid 业务 H2D |
 
-## Host 外形
+## 门禁
 
-| 段 | 内容 |
-|----|------|
-| Host H/G | Encaps 头：H/G→K（无 launch） |
-| L1 | `enc_prep_l1`：SampleNTT + CBD |
-| mid | Â→Âᵀ；上传 t̂/e/μ/矩阵（无 launch） |
-| L2 | `enc_compute_l2`：NTT→matvec→dot→INTT×2→加噪→pack→c |
-
-## 验收
-
-```bash
-bash run.sh -r cpu -v Ascend910B4
-SIM_DIRECT=1 bash run.sh -r sim -v Ascend910B4
-```
-
-| 模式 | exit | wall | tick | host_launch | c/K max |
-|------|------|------|------|-------------|---------|
-| CPU | 0 | ~2.2s | — | 2 | **0** |
-| SIM | 0 | ~138s | ~898662 | 2 | **0** |
-
-日志：`/opt/cursor/artifacts/low-launch-sim/ep06-cpu.log`、`ep06-sim.log`。
-
-## 禁令
-
-- 本战役禁 `-r npu`  
-- 不以 EP04 多 launch 接线版宣称交付形态  
-- 未抄 `frozen/` / `enc_related/RB-T*` 核源码
+- Host launch = 2（FO 不计）
+- 禁止预填 `sigma/coins/e1/e2/mu/rho/t_hat` 作为工程输入
+- `c`/`K` vs liboqs max=0

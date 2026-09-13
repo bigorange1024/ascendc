@@ -6,15 +6,15 @@ EN15-encrypt-2launch · Alg.14 Host golden + 设备输入
 权威交叉：liboqs PKE Encrypt（scripts/liboqs_pke_fixture.py）→ c[1568]。
 本脚本：
   1) 生成/复用 fixture（ek_pke, m, coins, c）
-  2) 派生设备输入：ρ、coins（Prep 种子）、t_hat、gammas、M4_ntt/M4_intt、e1/e2/μ
+  2) 仅落盘算法输入 ek_pke/m/coins + LUT（gammas/M4）；中间态内存对拍
   3) Host 全量 Alg.14 自洽 golden（须先 c ≡ liboqs max=0，再接线设备）
 
 Alg.14 段序（与 main 对齐）：
-  L0 SampleNTT(ρ)→Â；Host 转置为 Âᵀ 喂 Matvec
-  L1 Prep(coins)→y（nonce 0..3）；e1/e2 Host CBD（nonce 4..8）
+  设备 SampleNTT(ρ)→Â；matvec 换下标≡Âᵀ（无 Host 转置）
+  设备 CBD→y/e1/e2（nonce 0..8）
   L2 NTT(y)→ŷ
   L3a Matvec(Âᵀ,ŷ)→û；L3b Dot(t̂,ŷ)→v̂
-  L4 INTT(û)；Host INTT(v̂)；Host +e1/+e2+μ
+  设备 INTT + e1/e2 + μ←m
   L5 Pack(u,v)→c
 """
 
@@ -241,24 +241,18 @@ def gen_encrypt_pipeline() -> None:
     shutil.copyfile(fix_dir / "ek_pke.bin", "./input/ek_pke.bin")
     shutil.copyfile(fix_dir / "m.bin", "./input/m.bin")
     shutil.copyfile(fix_dir / "coins.bin", "./input/coins.bin")
-    shutil.copyfile(fix_dir / "c.bin", "./input/c_liboqs.bin")
-    # 权威 golden：设备最终须写出 output/c.bin 并与之 max=0
+        # 权威 golden：设备最终须写出 output/c.bin 并与之 max=0
     shutil.copyfile(fix_dir / "c.bin", "./output/golden_c.bin")
     shutil.copyfile(fix_dir / "c.bin", "./output/c_liboqs.bin")
 
     rho = ek[EK_T_BYTES:C_BYTES]
     t_bytes = ek[:EK_T_BYTES]
-    Path("./input/rho.bin").write_bytes(rho)
-    # Prep 读「σ」槽，Encrypt 语义下为 coins/r
-    Path("./input/coins.bin").write_bytes(coins)
-    Path("./input/sigma.bin").write_bytes(coins)  # Prep 核仍叫 sigma
 
     # ---- t̂ = ByteDecode₁₂(t)（Host）----
     t_hat = np.zeros((K, n), dtype=np.int32)
     for i in range(K):
         t_hat[i] = byte_decode12(t_bytes[i * 384 : (i + 1) * 384])
-    t_hat.reshape(-1).tofile("./input/t_hat.bin")
-    print(f"[INFO] ByteDecode12 t_hat elems={t_hat.size}")
+    print(f"[INFO] ByteDecode12 t_hat elems={t_hat.size} (memory only)")
 
     # ---- Â = SampleNTT(ρ‖j‖i)；再 Âᵀ 扁平供 Matvec ----
     a_hat = np.zeros((K, K, n), dtype=np.int32)
@@ -266,11 +260,9 @@ def gen_encrypt_pipeline() -> None:
         for j in range(K):
             a_hat[i, j] = sample_ntt_poly(rho, j, i)
     a_flat = a_hat.reshape(-1)
-    a_flat.tofile("./output/golden_a_hat.bin")
     # 转置：A_T[p,j]=A[j,p]，使既有 matvec(t[p]+=A[p,j]∘s[j]) 实现 Âᵀ∘ŷ
     a_t = np.transpose(a_hat, (1, 0, 2)).copy()
-    a_t.reshape(-1).tofile("./output/golden_a_hat_T.bin")
-    print(f"[INFO] SampleNTT Â + Host Âᵀ ready")
+    print(f"[INFO] SampleNTT Â ready (Âᵀ via matvec index; no Host transpose dump)")
 
     # ---- CBD：y←PRF(r,0..3)；e1←4..7；e2←8 ----
     y_rows = [se.sample_poly_cbd2(se.prf_shake256(coins, i)) for i in range(K)]
@@ -279,11 +271,7 @@ def gen_encrypt_pipeline() -> None:
     y = np.concatenate(y_rows).astype(np.int32)
     e1 = np.concatenate(e1_rows).astype(np.int32)
     mu = decompress1_mu(m)
-    y.tofile("./output/golden_prep.bin")
-    e1.tofile("./input/e1.bin")
-    e2.tofile("./input/e2.bin")
-    mu.tofile("./input/mu.bin")
-    print(f"[INFO] CBD y/e1/e2 + μ embed Host-side")
+    print("[INFO] CBD y/e1/e2 + μ computed in memory (not written as input)")
 
     # ---- NTT(y) ----
     ntt_kyber.M = ntt_kyber.kyber_ntt_matrix(n=n, q=q)
@@ -293,7 +281,6 @@ def gen_encrypt_pipeline() -> None:
     y_hat = np.concatenate(y_hat_list)
     y_hat_m = y_hat.reshape(K, n)
     pack_m4_from_dense(ntt_kyber.M).tofile("./input/M4_ntt.bin")
-    y_hat.tofile("./output/golden_ntt.bin")
 
     # ---- û = Âᵀ ∘ ŷ；v̂ = ⟨t̂,ŷ⟩ ----
     gammas = gen_gammas()
@@ -309,12 +296,9 @@ def gen_encrypt_pipeline() -> None:
     for i in range(K):
         v_hat_acc += multiply_ntts(t_hat[i], y_hat_m[i], gammas).astype(np.int64)
     v_hat = np.mod(v_hat_acc, q).astype(np.int32)
-    u_hat.reshape(-1).tofile("./output/golden_matvec.bin")
-    v_hat.tofile("./output/golden_dot.bin")
     # INTT(v̂) 走设备时：垫成 K poly（仅 poly0 有值）
     v_hat_pad = np.zeros((K, n), dtype=np.int32)
     v_hat_pad[0] = v_hat
-    v_hat_pad.reshape(-1).tofile("./output/golden_v_hat_pad.bin")
 
     # ---- INTT + 噪声 ----
     u = np.concatenate(
@@ -326,22 +310,13 @@ def gen_encrypt_pipeline() -> None:
     v = np.asarray(inv.mlkem_inverse_ntt([int(x) for x in v_hat.tolist()]), dtype=np.int32)
     m_inv = inv.build_mlkem_inverse_matrix_int32()
     pack_m4_from_dense(m_inv).tofile("./input/M4_intt.bin")
-    u.tofile("./output/golden_intt_u.bin")
-    v.tofile("./output/golden_intt_v.bin")
 
     u_noisy = np.mod(u.astype(np.int64) + e1.astype(np.int64), q).astype(np.int32)
     v_noisy = np.mod(
         v.astype(np.int64) + e2.astype(np.int64) + mu.astype(np.int64), q
     ).astype(np.int32)
-    u_noisy.tofile("./output/golden_u_noisy.bin")
-    v_noisy.tofile("./output/golden_v_noisy.bin")
-    # 给 Pack 的 Host 侧对照（设备路径由 main 写回）
-    u_noisy.tofile("./input/u_pack_expected.bin")
-    v_noisy.tofile("./input/v_pack.bin")
 
     c_host = pack_ciphertext(u_noisy, v_noisy)
-    Path("./output/golden_pack.bin").write_bytes(c_host)
-    Path("./output/golden_c_host.bin").write_bytes(c_host)
 
     bad = sum(1 for a, b in zip(c_host, c_liboqs) if a != b)
     print(f"[GATE] Host Alg.14 c vs liboqs bad_bytes={bad}/{C_BYTES}")
@@ -351,7 +326,20 @@ def gen_encrypt_pipeline() -> None:
                 print(f"[GATE] first diff @{i}: host={a:02x} liboqs={b:02x}")
                 break
         raise SystemExit("EN13 Host golden c ≠ liboqs — 禁止继续接线设备")
-    print("[OK] Host Alg.14 c ≡ liboqs max=0；设备输入已写")
+    forbidden = [
+        "rho.bin", "sigma.bin", "t_hat.bin", "e1.bin", "e2.bin", "mu.bin",
+        "u_pack_expected.bin", "v_pack.bin", "c_liboqs.bin",
+    ]
+    for name in forbidden:
+        fp = Path("./input") / name
+        if fp.is_file():
+            fp.unlink()
+            print(f"[CLEAN] removed forbidden input/{name}")
+    for fp in Path("./output").glob("golden_*.bin"):
+        if fp.name != "golden_c.bin":
+            fp.unlink()
+            print(f"[CLEAN] removed {fp}")
+    print("[OK] Host Alg.14 c ≡ liboqs max=0；仅 ek_pke|m|coins|LUT + golden_c")
 
 
 if __name__ == "__main__":

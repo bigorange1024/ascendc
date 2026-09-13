@@ -144,8 +144,9 @@ extern "C" __global__ __aicore__ void enc_matvec_real(GM_ADDR t_hat, GM_ADDR a_h
         }
 
         for (int32_t p = 0; p < k; ++p) {
+            // Encrypt/Encaps：读 A[j,p] ⇒ (Âᵀ∘ŷ)；禁止 Host 物化 Âᵀ
             const uint32_t a_off =
-                (static_cast<uint32_t>(p) * static_cast<uint32_t>(k) + static_cast<uint32_t>(j)) * nU;
+                (static_cast<uint32_t>(j) * static_cast<uint32_t>(k) + static_cast<uint32_t>(p)) * nU;
             {
                 AscendC::LocalTensor<int32_t> in_local = que_in.AllocTensor<int32_t>();
                 AscendC::DataCopy(in_local, gm_a[a_off], nU);

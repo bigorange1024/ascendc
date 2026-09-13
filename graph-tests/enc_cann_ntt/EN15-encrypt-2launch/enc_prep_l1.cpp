@@ -1,9 +1,8 @@
 /**
  * EN15 · L1 prep 融合核（1 Host launch）
  *
- * 作用：同核串级完成 SampleNTT(ρ)→Â 与 Prep CBD(coins)→y。
- * 输入：rho[32]、sigma/coins[32]；输出：a_hat[K·K·N]、y[K·N]。
- * Host mid-sync（L1→L2）：Â 转置为 Âᵀ、上传 t̂/gammas/e1/e2/μ/M4。
+ * 作用：同核串级完成 SampleNTT(ρ)→Â 与 Prep CBD(coins)→y/e1/e2（nonce 0..8）。
+ * 输入：rho[32]、sigma/coins[32]；输出：a_hat、y、e1、e2（设备 GM，禁止落成 Host 可读中间 .bin）。
  * CPU=AIV_ONLY；SIM=MIX 占位（AIC 立即 return）。禁 GATE 4/8。
  */
 #include "enc_aiv_stub_common.hpp"
@@ -103,9 +102,99 @@ __aicore__ inline void SamplePolyCbdEta2Row(AscendC::LocalTensor<int32_t> &dst, 
 /**
  * L1 入口：采样 Â + CBD(y)。
  */
-extern "C" __global__ __aicore__ void enc_prep_l1(GM_ADDR a_hat, GM_ADDR y_out, GM_ADDR rho,
-                                                  GM_ADDR sigma, int32_t k, int32_t n, int32_t q,
-                                                  int32_t nonce0)
+
+/**
+ * CBD 一段：自 nonceBase 起采 nPolys 个 poly，写入 dst（设备 GM）。
+ * y: nPolys=k nonceBase=nonce0；e1: nPolys=k nonceBase=nonce0+k；e2: nPolys=1 nonceBase=nonce0+2k。
+ */
+__aicore__ inline void EncPrepCbdPolys(GM_ADDR dst, GM_ADDR sigma, uint32_t nPolys, int32_t nonceBase,
+                                       int32_t k, int32_t n, int32_t q)
+{
+    if (k != 4 || n != 256 || q != enc_cbd_ns::kQ || nPolys == 0U || nPolys > 4U) {
+        return;
+    }
+    const uint32_t nn = static_cast<uint32_t>(n);
+    const uint32_t outElems = nPolys * nn;
+
+    AscendC::GlobalTensor<int32_t> gmOut;
+    AscendC::GlobalTensor<uint8_t> gmSigma;
+    gmOut.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(dst), outElems);
+    gmSigma.SetGlobalBuffer(reinterpret_cast<__gm__ uint8_t *>(sigma), enc_cbd_ns::kSigmaBytes);
+
+    AscendC::TPipe pipe;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> queSigma;
+    AscendC::TQue<AscendC::TPosition::VECOUT, 1> queOut;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufShake;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufLen;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufPrf;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufStaging;
+
+    const uint32_t sigmaUb = ShakeXofUb::CeilAlign32(enc_cbd_ns::kSigmaBytes);
+    const uint32_t xBytes = nPolys * enc_cbd_ns::kMsgRowBytes;
+    const uint32_t yBytes = nPolys * enc_cbd_ns::kPrfBytes;
+    const uint32_t lenBytes =
+        ShakeXofUb::CeilAlign32(nPolys * static_cast<uint32_t>(sizeof(uint32_t)));
+    const uint32_t coeffBytes = outElems * static_cast<uint32_t>(sizeof(int32_t));
+
+    pipe.InitBuffer(queSigma, 1, sigmaUb);
+    pipe.InitBuffer(queOut, 1, coeffBytes);
+    pipe.InitBuffer(bufShake, xBytes);
+    pipe.InitBuffer(bufLen, lenBytes);
+    pipe.InitBuffer(bufPrf, yBytes);
+    pipe.InitBuffer(bufStaging, ShakeXofKernel::SHAKE_XOF_STAGING_BYTES);
+
+    AscendC::LocalTensor<uint8_t> sigmaLocal = queSigma.AllocTensor<uint8_t>();
+    AscendC::DataCopy(sigmaLocal, gmSigma, sigmaUb);
+    queSigma.EnQue(sigmaLocal);
+    sigmaLocal = queSigma.DeQue<uint8_t>();
+
+    AscendC::LocalTensor<uint8_t> xUb = bufShake.Get<uint8_t>();
+    AscendC::LocalTensor<uint32_t> lenUb = bufLen.Get<uint32_t>();
+    AscendC::LocalTensor<uint8_t> yUb = bufPrf.Get<uint8_t>();
+    AscendC::LocalTensor<uint8_t> staging = bufStaging.Get<uint8_t>();
+
+    for (uint32_t i = 0; i < xBytes; ++i) {
+        xUb.SetValue(i, static_cast<uint8_t>(0));
+    }
+    AscendC::PipeBarrier<PIPE_ALL>();
+
+    uint8_t sigmaStack[enc_cbd_ns::kSigmaBytes];
+    for (uint32_t i = 0; i < enc_cbd_ns::kSigmaBytes; ++i) {
+        sigmaStack[i] = sigmaLocal.GetValue(i);
+    }
+    queSigma.FreeTensor(sigmaLocal);
+
+    for (uint32_t row = 0; row < nPolys; ++row) {
+        const uint8_t nonce = static_cast<uint8_t>(static_cast<uint32_t>(nonceBase) + row);
+        ShakeXofUb::FillShakeRowUb(sigmaStack, enc_cbd_ns::kSigmaBytes, nonce, xUb,
+                                   row * enc_cbd_ns::kMsgRowBytes);
+        lenUb.SetValue(row, enc_cbd_ns::kMsgLen);
+    }
+    AscendC::PipeBarrier<PIPE_ALL>();
+
+    ShakeGeneralTilingData shakeTiling;
+    ShakeXofUb::FillShakeTilingUb(shakeTiling, nPolys, enc_cbd_ns::kMsgRowBytes,
+                                 enc_cbd_ns::kPrfBytes, enc_cbd_ns::kShake256Rate);
+    ShakeXofUb::RunKernelShakeGeneralUb(xUb, lenUb, yUb, staging, &shakeTiling);
+    AscendC::PipeBarrier<PIPE_ALL>();
+
+    AscendC::LocalTensor<int32_t> outLocal = queOut.AllocTensor<int32_t>();
+    for (uint32_t row = 0; row < nPolys; ++row) {
+        enc_cbd_ns::SamplePolyCbdEta2Row(outLocal, row * nn, yUb, row * enc_cbd_ns::kPrfBytes, q);
+    }
+    AscendC::PipeBarrier<PIPE_ALL>();
+    queOut.EnQue(outLocal);
+    outLocal = queOut.DeQue<int32_t>();
+    AscendC::DataCopy(gmOut, outLocal, outElems);
+    queOut.FreeTensor(outLocal);
+}
+
+/**
+ * L1 入口：采样 Â + CBD(y/e1/e2)。
+ */
+extern "C" __global__ __aicore__ void enc_prep_l1(GM_ADDR a_hat, GM_ADDR y_out, GM_ADDR e1_out,
+                                                  GM_ADDR e2_out, GM_ADDR rho, GM_ADDR sigma,
+                                                  int32_t k, int32_t n, int32_t q, int32_t nonce0)
 {
     ENC_STUB_KERNEL_TASK_TYPE();
     if (EncStubSkipIfAicPlaceholder()) {
@@ -213,87 +302,9 @@ extern "C" __global__ __aicore__ void enc_prep_l1(GM_ADDR a_hat, GM_ADDR y_out, 
 
     }
 
-    // -------- Prep CBD(σ)→y --------
-    {
-        GM_ADDR dst = y_out;
 
-// 已锁参数护栏（歧义时不擅自改参；仅早退避免坏 launch）
-    if (k != 4 || n != 256 || q != enc_cbd_ns::kQ) {
-        return;
-    }
-    const uint32_t kk = static_cast<uint32_t>(k);
-    const uint32_t nn = static_cast<uint32_t>(n);
-    const uint32_t outElems = kk * nn;
-
-    AscendC::GlobalTensor<int32_t> gmOut;
-    AscendC::GlobalTensor<uint8_t> gmSigma;
-    gmOut.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(dst), outElems);
-    gmSigma.SetGlobalBuffer(reinterpret_cast<__gm__ uint8_t *>(sigma), enc_cbd_ns::kSigmaBytes);
-
-    AscendC::TPipe pipe;
-    AscendC::TQue<AscendC::TPosition::VECIN, 1> queSigma;
-    AscendC::TQue<AscendC::TPosition::VECOUT, 1> queOut;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> bufShake;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> bufLen;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> bufPrf;
-    AscendC::TBuf<AscendC::TPosition::VECCALC> bufStaging;
-
-    const uint32_t sigmaUb = ShakeXofUb::CeilAlign32(enc_cbd_ns::kSigmaBytes);
-    const uint32_t xBytes = kk * enc_cbd_ns::kMsgRowBytes;
-    const uint32_t yBytes = kk * enc_cbd_ns::kPrfBytes;
-    const uint32_t lenBytes = ShakeXofUb::CeilAlign32(kk * static_cast<uint32_t>(sizeof(uint32_t)));
-    const uint32_t coeffBytes = outElems * static_cast<uint32_t>(sizeof(int32_t));
-
-    pipe.InitBuffer(queSigma, 1, sigmaUb);
-    pipe.InitBuffer(queOut, 1, coeffBytes);
-    pipe.InitBuffer(bufShake, xBytes);
-    pipe.InitBuffer(bufLen, lenBytes);
-    pipe.InitBuffer(bufPrf, yBytes);
-    pipe.InitBuffer(bufStaging, ShakeXofKernel::SHAKE_XOF_STAGING_BYTES);
-
-    // GM σ → UB
-    AscendC::LocalTensor<uint8_t> sigmaLocal = queSigma.AllocTensor<uint8_t>();
-    AscendC::DataCopy(sigmaLocal, gmSigma, sigmaUb);
-    queSigma.EnQue(sigmaLocal);
-    sigmaLocal = queSigma.DeQue<uint8_t>();
-
-    AscendC::LocalTensor<uint8_t> xUb = bufShake.Get<uint8_t>();
-    AscendC::LocalTensor<uint32_t> lenUb = bufLen.Get<uint32_t>();
-    AscendC::LocalTensor<uint8_t> yUb = bufPrf.Get<uint8_t>();
-    AscendC::LocalTensor<uint8_t> staging = bufStaging.Get<uint8_t>();
-
-    for (uint32_t i = 0; i < xBytes; ++i) {
-        xUb.SetValue(i, static_cast<uint8_t>(0));
-    }
-    AscendC::PipeBarrier<PIPE_ALL>();
-
-    uint8_t sigmaStack[enc_cbd_ns::kSigmaBytes];
-    for (uint32_t i = 0; i < enc_cbd_ns::kSigmaBytes; ++i) {
-        sigmaStack[i] = sigmaLocal.GetValue(i);
-    }
-    queSigma.FreeTensor(sigmaLocal);
-
-    for (uint32_t row = 0; row < kk; ++row) {
-        const uint8_t nonce = static_cast<uint8_t>(static_cast<uint32_t>(nonce0) + row);
-        ShakeXofUb::FillShakeRowUb(sigmaStack, enc_cbd_ns::kSigmaBytes, nonce, xUb, row * enc_cbd_ns::kMsgRowBytes);
-        lenUb.SetValue(row, enc_cbd_ns::kMsgLen);
-    }
-    AscendC::PipeBarrier<PIPE_ALL>();
-
-    ShakeGeneralTilingData shakeTiling;
-    ShakeXofUb::FillShakeTilingUb(shakeTiling, kk, enc_cbd_ns::kMsgRowBytes, enc_cbd_ns::kPrfBytes, enc_cbd_ns::kShake256Rate);
-    ShakeXofUb::RunKernelShakeGeneralUb(xUb, lenUb, yUb, staging, &shakeTiling);
-    AscendC::PipeBarrier<PIPE_ALL>();
-
-    AscendC::LocalTensor<int32_t> outLocal = queOut.AllocTensor<int32_t>();
-    for (uint32_t row = 0; row < kk; ++row) {
-        enc_cbd_ns::SamplePolyCbdEta2Row(outLocal, row * nn, yUb, row * enc_cbd_ns::kPrfBytes, q);
-    }
-    AscendC::PipeBarrier<PIPE_ALL>();
-    queOut.EnQue(outLocal);
-    outLocal = queOut.DeQue<int32_t>();
-    AscendC::DataCopy(gmOut, outLocal, outElems);
-    queOut.FreeTensor(outLocal);
-
-    }
+    // -------- Prep CBD(σ)→y / e1 / e2 --------
+    EncPrepCbdPolys(y_out, sigma, static_cast<uint32_t>(k), nonce0, k, n, q);
+    EncPrepCbdPolys(e1_out, sigma, static_cast<uint32_t>(k), nonce0 + k, k, n, q);
+    EncPrepCbdPolys(e2_out, sigma, 1U, nonce0 + 2 * k, k, n, q);
 }

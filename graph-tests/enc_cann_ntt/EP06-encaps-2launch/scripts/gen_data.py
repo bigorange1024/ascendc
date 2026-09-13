@@ -249,22 +249,17 @@ def gen_encrypt_pipeline() -> None:
 
     Path("./input/ek_kem.bin").write_bytes(ek)
     Path("./input/m.bin").write_bytes(m)
-    Path("./input/coins.bin").write_bytes(coins)
-    Path("./input/sigma.bin").write_bytes(coins)  # Prep 核仍叫 sigma；Encrypt 语义=r
-    Path("./input/K_expected.bin").write_bytes(k_ref)
     Path("./output/golden_c.bin").write_bytes(c_ref)
     Path("./output/golden_K.bin").write_bytes(k_ref)
     Path("./output/c_ref_encaps.bin").write_bytes(c_ref)
 
     rho = ek[EK_T_BYTES:C_BYTES]
     t_bytes = ek[:EK_T_BYTES]
-    Path("./input/rho.bin").write_bytes(rho)
 
     # ---- t̂ = ByteDecode₁₂(t)（Host）----
     t_hat = np.zeros((K, n), dtype=np.int32)
     for i in range(K):
         t_hat[i] = byte_decode12(t_bytes[i * 384 : (i + 1) * 384])
-    t_hat.reshape(-1).tofile("./input/t_hat.bin")
     print(f"[INFO] ByteDecode12 t_hat elems={t_hat.size}")
 
     # ---- Â = SampleNTT(ρ‖j‖i)；再 Âᵀ 扁平供 Matvec ----
@@ -273,10 +268,8 @@ def gen_encrypt_pipeline() -> None:
         for j in range(K):
             a_hat[i, j] = sample_ntt_poly(rho, j, i)
     a_flat = a_hat.reshape(-1)
-    a_flat.tofile("./output/golden_a_hat.bin")
     a_t = np.transpose(a_hat, (1, 0, 2)).copy()
-    a_t.reshape(-1).tofile("./output/golden_a_hat_T.bin")
-    print(f"[INFO] SampleNTT Â + Host Âᵀ ready")
+    print(f"[INFO] SampleNTT Â ready (Âᵀ via matvec index; no Host transpose dump)")
 
     # ---- CBD：y←PRF(r,0..3)；e1←4..7；e2←8 ----
     y_rows = [se.sample_poly_cbd2(se.prf_shake256(coins, i)) for i in range(K)]
@@ -285,11 +278,7 @@ def gen_encrypt_pipeline() -> None:
     y = np.concatenate(y_rows).astype(np.int32)
     e1 = np.concatenate(e1_rows).astype(np.int32)
     mu = decompress1_mu(m)
-    y.tofile("./output/golden_prep.bin")
-    e1.tofile("./input/e1.bin")
-    e2.tofile("./input/e2.bin")
-    mu.tofile("./input/mu.bin")
-    print(f"[INFO] CBD y/e1/e2 + μ embed Host-side (coins=r from G)")
+    print(f"[INFO] CBD y/e1/e2 + μ in memory for Host gate only (device regenerates)")
 
     # ---- NTT(y) ----
     ntt_kyber.M = ntt_kyber.kyber_ntt_matrix(n=n, q=q)
@@ -299,7 +288,6 @@ def gen_encrypt_pipeline() -> None:
     y_hat = np.concatenate(y_hat_list)
     y_hat_m = y_hat.reshape(K, n)
     pack_m4_from_dense(ntt_kyber.M).tofile("./input/M4_ntt.bin")
-    y_hat.tofile("./output/golden_ntt.bin")
 
     # ---- û = Âᵀ ∘ ŷ；v̂ = ⟨t̂,ŷ⟩ ----
     gammas = gen_gammas()
@@ -314,11 +302,8 @@ def gen_encrypt_pipeline() -> None:
     for i in range(K):
         v_hat_acc += multiply_ntts(t_hat[i], y_hat_m[i], gammas).astype(np.int64)
     v_hat = np.mod(v_hat_acc, q).astype(np.int32)
-    u_hat.reshape(-1).tofile("./output/golden_matvec.bin")
-    v_hat.tofile("./output/golden_dot.bin")
     v_hat_pad = np.zeros((K, n), dtype=np.int32)
     v_hat_pad[0] = v_hat
-    v_hat_pad.reshape(-1).tofile("./output/golden_v_hat_pad.bin")
 
     # ---- INTT + 噪声 ----
     u = np.concatenate(
@@ -330,21 +315,13 @@ def gen_encrypt_pipeline() -> None:
     v = np.asarray(inv.mlkem_inverse_ntt([int(x) for x in v_hat.tolist()]), dtype=np.int32)
     m_inv = inv.build_mlkem_inverse_matrix_int32()
     pack_m4_from_dense(m_inv).tofile("./input/M4_intt.bin")
-    u.tofile("./output/golden_intt_u.bin")
-    v.tofile("./output/golden_intt_v.bin")
 
     u_noisy = np.mod(u.astype(np.int64) + e1.astype(np.int64), q).astype(np.int32)
     v_noisy = np.mod(
         v.astype(np.int64) + e2.astype(np.int64) + mu.astype(np.int64), q
     ).astype(np.int32)
-    u_noisy.tofile("./output/golden_u_noisy.bin")
-    v_noisy.tofile("./output/golden_v_noisy.bin")
-    u_noisy.tofile("./input/u_pack_expected.bin")
-    v_noisy.tofile("./input/v_pack.bin")
 
     c_host = pack_ciphertext(u_noisy, v_noisy)
-    Path("./output/golden_pack.bin").write_bytes(c_host)
-    Path("./output/golden_c_host.bin").write_bytes(c_host)
 
     bad = sum(1 for a, b in zip(c_host, c_ref) if a != b)
     print(f"[GATE] Host Alg.14 c vs encaps-ref bad_bytes={bad}/{C_BYTES}")
@@ -354,7 +331,24 @@ def gen_encrypt_pipeline() -> None:
                 print(f"[GATE] first diff @{i}: host={a:02x} ref={b:02x}")
                 break
         raise SystemExit("EP04 Host golden c ≠ encaps ref — 禁止接线设备")
-    print("[OK] Host Encaps→Encrypt c ≡ ref；设备输入已写")
+    scrub_intermediate_bins()
+    print("[OK] Host Encaps→Encrypt c ≡ ref；仅 ek_kem|m|LUT + golden_c/K")
+
+
+def scrub_intermediate_bins() -> None:
+    forbidden = [
+        "rho.bin", "sigma.bin", "coins.bin", "t_hat.bin", "e1.bin", "e2.bin", "mu.bin",
+        "u_pack_expected.bin", "v_pack.bin", "K_expected.bin",
+    ]
+    for name in forbidden:
+        fp = Path("./input") / name
+        if fp.is_file():
+            fp.unlink()
+            print(f"[CLEAN] removed input/{name}")
+    for fp in Path("./output").glob("golden_*.bin"):
+        if fp.name not in {"golden_c.bin", "golden_K.bin"}:
+            fp.unlink()
+            print(f"[CLEAN] removed {fp}")
 
 
 if __name__ == "__main__":

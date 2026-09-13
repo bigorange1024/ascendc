@@ -228,8 +228,10 @@ __aicore__ inline void EncMatvecRealImpl(GM_ADDR t_hat, GM_ADDR a_hat, GM_ADDR s
         }
 
         for (int32_t p = 0; p < k; ++p) {
+            // Encrypt：Â 存 flat(i,j)=A[i,j]；读 A[j,p] ⇒ û_p=Σ_j A[j,p]∘ŷ_j = (Âᵀ∘ŷ)_p
+            // （换下标即转置；禁止 Host 物化 Âᵀ 再按 (p,j) 读）
             const uint32_t a_off =
-                (static_cast<uint32_t>(p) * static_cast<uint32_t>(k) + static_cast<uint32_t>(j)) * nU;
+                (static_cast<uint32_t>(j) * static_cast<uint32_t>(k) + static_cast<uint32_t>(p)) * nU;
             {
                 AscendC::LocalTensor<int32_t> in_local = que_in.AllocTensor<int32_t>();
                 AscendC::DataCopy(in_local, gm_a[a_off], nU);

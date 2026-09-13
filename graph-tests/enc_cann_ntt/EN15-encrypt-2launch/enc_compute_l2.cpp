@@ -2,7 +2,7 @@
  * EN15 · L2 compute 融合核（1 Host launch）
  *
  * 设备内串级（禁 GATE 4/8；阶段间 SyncAll 在 Wait 环外）：
- *   NTT(y) → Matvec(Âᵀ∘ŷ) → Dot(⟨t̂,ŷ⟩) → INTT(û) → INTT(v̂ pad) → +e1/e2/μ → Pack→c
+ *   NTT(y) → Matvec(读A[j,p]≡Âᵀ∘ŷ，无物化转置) → Dot(⟨t̂,ŷ⟩) → INTT(û) → INTT(v̂ pad) → +e1/e2 + μ←m → Pack→c
  * CrossCore 仅 cann-ntt 阶段复用 flag 1/2/3；AIV 积木段 AIC/AIV1 空等 SyncAll。
  * 背景：用户锁定 Host launch=2；否决 EN13 的 8×ACLRT_LAUNCH_KERNEL 交付形态。
  * 未采用：自研 SoftSync；把 SampleNTT 融进本 MIX。
@@ -118,6 +118,61 @@ __aicore__ inline void EncPadVHatGm(GM_ADDR dstPad, GM_ADDR vHat, int32_t k, int
     queOut.FreeTensor(outL);
 }
 
+
+/**
+ * Alg.14：m[32] → Decompress₁ → 就地加到 v[n]（half_q=(q+1)/2）。
+ * 禁止 Host 预解压 μ 文件作为输入。
+ */
+__aicore__ inline void EncMuEmbedAddGm(GM_ADDR v, GM_ADDR m, int32_t n, int32_t q)
+{
+    const uint32_t nU = static_cast<uint32_t>(n);
+    const int32_t halfQ = (q + 1) / 2;
+    AscendC::GlobalTensor<int32_t> gmV;
+    AscendC::GlobalTensor<uint8_t> gmM;
+    gmV.SetGlobalBuffer(reinterpret_cast<__gm__ int32_t *>(v), nU);
+    gmM.SetGlobalBuffer(reinterpret_cast<__gm__ uint8_t *>(m), 32U);
+
+    AscendC::TPipe pipe;
+    AscendC::TQue<AscendC::TPosition::VECIN, 1> queIn;
+    AscendC::TQue<AscendC::TPosition::VECOUT, 1> queOut;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufV;
+    AscendC::TBuf<AscendC::TPosition::VECCALC> bufM;
+    pipe.InitBuffer(queIn, 1, nU * sizeof(int32_t));
+    pipe.InitBuffer(queOut, 1, nU * sizeof(int32_t));
+    pipe.InitBuffer(bufV, nU * sizeof(int32_t));
+    pipe.InitBuffer(bufM, 32);
+
+    AscendC::LocalTensor<int32_t> vL = bufV.Get<int32_t>();
+    AscendC::LocalTensor<uint8_t> mL = bufM.Get<uint8_t>();
+    {
+        AscendC::LocalTensor<int32_t> inL = queIn.AllocTensor<int32_t>();
+        AscendC::DataCopy(inL, gmV, nU);
+        queIn.EnQue(inL);
+        inL = queIn.DeQue<int32_t>();
+        AscendC::DataCopy(vL, inL, nU);
+        queIn.FreeTensor(inL);
+    }
+    AscendC::DataCopy(mL, gmM, 32);
+    AscendC::PipeBarrier<PIPE_ALL>();
+    for (uint32_t i = 0; i < nU; ++i) {
+        const uint32_t byte = static_cast<uint32_t>(mL.GetValue(i / 8U));
+        const int32_t bit = static_cast<int32_t>((byte >> (i % 8U)) & 1U);
+        int64_t s = static_cast<int64_t>(vL.GetValue(i)) + static_cast<int64_t>(bit * halfQ);
+        s %= q;
+        if (s < 0) {
+            s += q;
+        }
+        vL.SetValue(i, static_cast<int32_t>(s));
+    }
+    AscendC::PipeBarrier<PIPE_ALL>();
+    AscendC::LocalTensor<int32_t> outL = queOut.AllocTensor<int32_t>();
+    AscendC::DataCopy(outL, vL, nU);
+    queOut.EnQue(outL);
+    outL = queOut.DeQue<int32_t>();
+    AscendC::DataCopy(gmV, outL, nU);
+    queOut.FreeTensor(outL);
+}
+
 /** 拷贝 GM 首 poly：src[0:n) → dst[0:n)。 */
 __aicore__ inline void EncCopyPoly0Gm(GM_ADDR dst, GM_ADDR src, int32_t n)
 {
@@ -158,8 +213,8 @@ __aicore__ inline void EncCopyPoly0Gm(GM_ADDR dst, GM_ADDR src, int32_t n)
  *   [4vec+poly, 4vec+2poly) vOut
  */
 extern "C" __global__ __aicore__ void enc_compute_l2(
-    GM_ADDR c_out, GM_ADDR y_in, GM_ADDR a_hat_T, GM_ADDR t_pub, GM_ADDR gammas, GM_ADDR e1,
-    GM_ADDR e2, GM_ADDR mu, GM_ADDR ws_ntt, GM_ADDR ws_intt, GM_ADDR scratch, TilingData tiling)
+    GM_ADDR c_out, GM_ADDR y_in, GM_ADDR a_hat, GM_ADDR t_pub, GM_ADDR gammas, GM_ADDR e1,
+    GM_ADDR e2, GM_ADDR m, GM_ADDR ws_ntt, GM_ADDR ws_intt, GM_ADDR scratch, TilingData tiling)
 {
     KERNEL_TASK_TYPE_DEFAULT(KERNEL_TYPE_MIX_AIC_1_2);
 
@@ -188,7 +243,7 @@ extern "C" __global__ __aicore__ void enc_compute_l2(
 
     // -------- Phase Matvec + Dot（仅 AIV0）--------
     if (!AIC && subBlockID == 0) {
-        EncMatvecRealImpl(uHat, a_hat_T, sHat, gammas, k, n, q);
+        EncMatvecRealImpl(uHat, a_hat, sHat, gammas, k, n, q);
         EncDotRealImpl(vHat, t_pub, sHat, gammas, k, n, q);
     }
     AscendC::SyncAll();
@@ -212,7 +267,7 @@ extern "C" __global__ __aicore__ void enc_compute_l2(
         EncCopyPoly0Gm(vOut, vInttDst, n);
         EncAddModQGm(uOut, uOut, e1, k * n, q);
         EncAddModQGm(vOut, vOut, e2, n, q);
-        EncAddModQGm(vOut, vOut, mu, n, q);
+        EncMuEmbedAddGm(vOut, m, n, q);
         EncPackCompressRealImpl(c_out, uOut, vOut, k, n, q);
     }
 }
